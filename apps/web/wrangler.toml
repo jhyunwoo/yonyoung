@@ -1,0 +1,20 @@
+name = "yonyoung-web"
+main = ".open-next/worker.js"
+compatibility_date = "2026-02-13"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[[services]]
+binding = "API_SERVICE"
+service = "yonyoung-api"
+
+[vars]
+API_BASE_URL = "http://127.0.0.1:8787"
+NEXT_PUBLIC_API_BASE_PATH = "/api/proxy"
+
+[observability]
+enabled = true

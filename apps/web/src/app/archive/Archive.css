@@ -1,0 +1,46 @@
+.archive-page {
+  padding-top: 80px;
+  min-height: 100vh;
+}
+
+.archive-header {
+  text-align: center;
+  padding: 4rem 0 2rem;
+  border-bottom: 1px solid var(--secondary-color);
+  margin-bottom: 2rem;
+}
+
+.archive-header .container {
+  max-width: 1400px; /* ImageGrid의 max-width와 일치시켜 끝부분을 맞춤 */
+  position: relative;
+}
+
+.archive-header h1 {
+  margin-bottom: 1rem;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: var(--text-light);
+  margin-bottom: 1rem;
+}
+
+.upload-trigger-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: #666; /* ABOUT 페이지 본문과 같은 회색 */
+  cursor: pointer;
+  padding: 0.2rem;
+  line-height: 1;
+  transition: color 0.3s ease, transform 0.2s ease;
+  display: block;
+  margin: 0.5rem 0 -1rem auto; /* 오른쪽 정렬로 변경 */
+  position: relative;
+  z-index: 1;
+}
+
+.upload-trigger-btn:hover {
+  color: var(--primary-color);
+  transform: scale(1.1);
+}

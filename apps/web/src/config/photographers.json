@@ -1,0 +1,186 @@
+[
+  {
+    "generation": "60기",
+    "members": [
+      {
+        "name": "김고운",
+        "type": "준회원",
+        "email": "",
+        "instagram": "",
+        "website": "",
+        "mainPhoto": "",
+        "generation": "60기",
+        "works": []
+      },
+      {
+        "name": "윤새연",
+        "type": "준회원",
+        "email": "",
+        "instagram": "",
+        "website": "",
+        "mainPhoto": "",
+        "generation": "60기",
+        "works": []
+      },
+      {
+        "name": "강지인",
+        "type": "준회원",
+        "email": "",
+        "instagram": "",
+        "website": "",
+        "mainPhoto": "",
+        "generation": "60기",
+        "works": []
+      },
+      {
+        "name": "박서연",
+        "type": "준회원",
+        "email": "",
+        "instagram": "",
+        "website": "",
+        "mainPhoto": "",
+        "generation": "60기",
+        "works": []
+      },
+      {
+        "name": "이민지",
+        "type": "준회원",
+        "email": "",
+        "instagram": "",
+        "website": "",
+        "mainPhoto": "",
+        "generation": "60기",
+        "works": []
+      },
+      {
+        "name": "김민재",
+        "type": "준회원",
+        "email": "",
+        "instagram": "",
+        "website": "",
+        "mainPhoto": "/images/photographers/1768718789204_KakaoTalk_20260118_031201964_08.jpg",
+        "generation": "60기",
+        "works": []
+      },
+      {
+        "name": "김세헌",
+        "type": "준회원",
+        "email": "kimse0604@naver.com",
+        "instagram": "",
+        "website": "",
+        "mainPhoto": "/images/photographers/1768718828473_KakaoTalk_20260118_031201964_07.jpg",
+        "generation": "60기",
+        "works": [
+          "/images/photographers/1768718972379_DSC_2673.jpg",
+          "/images/photographers/1768718981212_DSC_1713.jpg",
+          "/images/photographers/1768718992248_DSC_2306.jpg"
+        ]
+      }
+    ]
+  },
+  {
+    "generation": "59기",
+    "members": [
+      {
+        "name": "김현식",
+        "type": "정회원",
+        "email": "",
+        "instagram": "",
+        "website": "",
+        "mainPhoto": "/images/photographers/1768718475043_KakaoTalk_20260112_143118801.jpg",
+        "generation": "59기",
+        "works": []
+      },
+      {
+        "name": "정종윤",
+        "type": "정회원",
+        "email": "",
+        "instagram": "",
+        "website": "",
+        "mainPhoto": "",
+        "generation": "59기",
+        "works": []
+      },
+      {
+        "name": "김채연",
+        "type": "준회원",
+        "email": "",
+        "instagram": "",
+        "website": "",
+        "mainPhoto": "",
+        "generation": "59기",
+        "works": []
+      },
+      {
+        "name": "박미래",
+        "type": "정회원",
+        "email": "",
+        "instagram": "",
+        "website": "",
+        "mainPhoto": "",
+        "generation": "59기",
+        "works": []
+      },
+      {
+        "name": "박민규",
+        "type": "정회원",
+        "email": "",
+        "instagram": "",
+        "website": "",
+        "mainPhoto": "",
+        "generation": "59기",
+        "works": []
+      },
+      {
+        "name": "조성민",
+        "type": "정회원",
+        "email": "",
+        "instagram": "",
+        "website": "",
+        "mainPhoto": "",
+        "generation": "59기",
+        "works": []
+      },
+      {
+        "name": "오유진",
+        "type": "정회원",
+        "email": "",
+        "instagram": "",
+        "website": "",
+        "mainPhoto": "",
+        "generation": "59기",
+        "works": []
+      }
+    ]
+  },
+  {
+    "generation": "58기",
+    "members": [
+      {
+        "name": "심정섭",
+        "type": "정회원",
+        "email": "",
+        "instagram": "",
+        "website": "",
+        "mainPhoto": "",
+        "generation": "58기",
+        "works": []
+      }
+    ]
+  },
+  {
+    "generation": "20기",
+    "members": [
+      {
+        "name": "누군가",
+        "type": "정회원",
+        "email": "",
+        "instagram": "",
+        "website": "",
+        "mainPhoto": "",
+        "generation": "20기",
+        "works": []
+      }
+    ]
+  }
+]

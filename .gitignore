@@ -1,0 +1,42 @@
+# dependencies
+node_modules
+.pnp
+.pnp.js
+
+# testing
+coverage
+.playwright
+playwright-report
+
+# turborepo
+.turbo
+
+# next
+.next
+out
+
+# build outputs
+dist
+storybook-static
+
+# env
+.env
+.env.*
+!.env.example
+
+# logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# os
+.DS_Store
+
+# cloudflare
+.wrangler
+.dev.vars
+
+# misc
+*.tsbuildinfo
+yonyoung-web-preview/

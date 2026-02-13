@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["@cloudflare/workers-types"],
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "@yonyoung/auth/server": ["../../packages/auth/src/server.ts"],
+      "@yonyoung/db": ["../../packages/db/src/index.ts"],
+      "@yonyoung/schemas": ["../../packages/schemas/src/index.ts"]
+    },
+    "tsBuildInfoFile": "node_modules/.cache/tsbuildinfo.json"
+  },
+  "include": ["src/**/*.ts"]
+}

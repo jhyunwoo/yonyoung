@@ -1,0 +1,27 @@
+{
+  "name": "yonyoung",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.26.2",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel --filter=@yonyoung/web --filter=@yonyoung/api",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "format": "turbo run format",
+    "storybook": "pnpm --filter @yonyoung/web storybook",
+    "seed": "pnpm --filter @yonyoung/db seed",
+    "db:migrate": "pnpm --filter @yonyoung/db migrate"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.2",
+    "globals": "^16.5.0",
+    "prettier": "^3.6.2",
+    "turbo": "^2.8.7",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.2"
+  }
+}

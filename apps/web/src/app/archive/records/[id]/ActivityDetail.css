@@ -1,0 +1,76 @@
+/* AI_STYLE_UPDATE_V2 */
+.activity-detail-page {
+  padding-top: 80px; /* 네비게이션 바 높이 고려 */
+  min-height: 100vh;
+  background-color: #fff;
+}
+
+.detail-header {
+  background: white;
+  padding: 3rem 0;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 0; /* 사진 영역과 바로 이어지도록 */
+}
+
+.title-section {
+  display: flex;
+  align-items: baseline; /* 제목과 날짜 높이 맞춤 */
+  gap: 0.75rem; /* 간격을 더 좁게 조정 */
+  margin-bottom: 1rem;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  margin-right: 0.5rem;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-btn:hover {
+  background-color: #f0f0f0;
+}
+
+.detail-header h1 {
+  font-size: 2.5rem;
+  margin: 0;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.activity-date {
+  font-size: 1.2rem;
+  color: #666;
+  font-weight: 400;
+}
+
+.detail-content {
+  padding: 2rem 0 5rem;
+  background-color: #fff;
+}
+
+@media (max-width: 768px) {
+  .title-section {
+    flex-direction: row; /* 모바일에서도 가로 유지 */
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+
+  .activity-date {
+    font-size: 1rem;
+  }
+
+  .detail-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .detail-header {
+    padding: 2rem 0;
+  }
+}

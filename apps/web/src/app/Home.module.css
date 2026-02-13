@@ -1,0 +1,112 @@
+.previewSection {
+  padding: 4rem 0;
+  background-color: white;
+}
+
+.previewSection h2 {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.previewGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.previewItem {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  cursor: pointer;
+  background-color: var(--secondary-color);
+  transition: transform 0.3s ease;
+}
+
+.previewItem:hover {
+  transform: scale(1.05);
+}
+
+.previewImage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.previewOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  padding: 1.5rem;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.previewItem:hover .previewOverlay {
+  opacity: 1;
+}
+
+.previewOverlay h3 {
+  color: white;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.previewDate {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  margin-top: 0.25rem;
+}
+
+.viewAllContainer {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.viewAllLink {
+  display: inline-block;
+  padding: 1rem 2rem;
+  border: 2px solid var(--primary-color);
+  color: var(--primary-color);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: all 0.3s ease;
+}
+
+.viewAllLink:hover {
+  background-color: var(--primary-color);
+  color: white;
+  opacity: 1;
+}
+
+@media (max-width: 1024px) {
+  .previewGrid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .previewSection {
+    padding: 2rem 0;
+  }
+
+  .previewGrid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+  }
+
+  .previewOverlay {
+    opacity: 1;
+    padding: 1rem;
+  }
+
+  .previewOverlay h3 {
+    font-size: 0.9rem;
+  }
+}

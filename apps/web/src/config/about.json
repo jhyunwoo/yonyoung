@@ -1,0 +1,34 @@
+{
+  "activities": [
+    {
+      "month": "March",
+      "title": "리크루팅"
+    },
+    {
+      "month": "May",
+      "title": "연세대학교 대동제 보도 사진전"
+    },
+    {
+      "month": "June",
+      "title": "MT"
+    },
+    {
+      "month": "August",
+      "title": "정기 사진전"
+    },
+    {
+      "month": "October",
+      "title": "정기연고전 보도 사진전"
+    },
+    {
+      "month": "February",
+      "title": "신인 사진전"
+    }
+  ],
+  "history": [
+    {
+      "year": "1966",
+      "title": "연영회 창단"
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+[
+  {
+    "id": 1768676006199,
+    "title": "연영회 60주년 특별 전시회: 피곤하다",
+    "date": "2026.10.01 ~ 2026.10.05",
+    "location": "연세대학교 교육과학관 교수학습자료실",
+    "image": "/images/exhibitions/1768676006170_김세헌_신인전_2주차_3.jpg",
+    "images": [
+      "/images/exhibitions/1768676006170_김세헌_신인전_2주차_3.jpg",
+      "/images/exhibitions/1768739793219_0_DSC_2439.jpg",
+      "/images/exhibitions/1768739793220_1_DSC_1713.jpg",
+      "/images/exhibitions/1768739793220_2_DSC_2156.jpg",
+      "/images/exhibitions/1768739793221_3_DSC_2196.jpg",
+      "/images/exhibitions/1768739793221_4_DSC_2343.jpg"
+    ],
+    "description": "",
+    "coverImage": "/images/exhibitions/1768676006170_김세헌_신인전_2주차_3.jpg"
+  },
+  {
+    "id": 1,
+    "title": "60기 신인사진전: 선(線) 보이다",
+    "date": "2026.02.12 ~ 2026.02.14",
+    "location": "연세대학교 백양누리 무악로타리홀",
+    "image": "/images/exhibitions/DSC_3543.jpg",
+    "description": "연영회 60기 부원들의 첫 걸음을 선보이는 신인사진전입니다."
+  },
+  {
+    "id": 2,
+    "title": "59회 정기사진전",
+    "date": "2025.11.10 ~ 2025.11.15",
+    "location": "무악 1학사",
+    "image": "/images/exhibitions/DSC_3655.jpg",
+    "description": "59기 부원들의 정기 사진전입니다."
+  },
+  {
+    "id": 3,
+    "title": "59기 신인사진전",
+    "date": "2025.03.12 ~ 2025.03.17",
+    "location": "백양누리 무악로타리홀",
+    "image": "/images/exhibitions/DSC_3717.jpg",
+    "description": "58기 부원들의 신인 사진전입니다."
+  },
+  {
+    "id": 4,
+    "title": "58회 정기사진전",
+    "date": "2024.11.20 ~ 2024.11.25",
+    "location": "김민재 집 안방",
+    "image": "/images/exhibitions/DSC_3393.jpg",
+    "description": "57기 부원들의 정기 사진전입니다."
+  },
+  {
+    "id": 5,
+    "title": "58기 신인사진전",
+    "date": "2024.03.10 ~ 2024.03.15",
+    "location": "백양누리 무악로타리홀",
+    "image": "/images/exhibitions/DSC_2633-2.jpg",
+    "description": "56기 부원들의 신인 사진전입니다."
+  },
+  {
+    "id": 6,
+    "title": "57회 정기사진전",
+    "date": "2023.11.15 ~ 2023.11.20",
+    "location": "수원 왕갈비통닭 갤러리",
+    "image": "/images/exhibitions/IMG_6137.jpg",
+    "description": "55기 부원들의 정기 사진전입니다."
+  }
+]

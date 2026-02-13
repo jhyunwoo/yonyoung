@@ -1,0 +1,29 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "target": "ES2018",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "noEmit": true,
+    "incremental": true,
+    "jsx": "preserve",
+    "plugins": [{ "name": "next" }],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@yonyoung/ui": ["../../packages/ui/src/index.tsx"],
+      "@yonyoung/contracts": ["../../packages/contracts/src/index.ts"],
+      "@yonyoung/schemas": ["../../packages/schemas/src/index.ts"],
+      "@yonyoung/auth": ["../../packages/auth/src/client.ts"],
+      "@yonyoung/api-app": ["../api/src/app-type.ts"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}

@@ -1,0 +1,57 @@
+[
+  {
+    "name": "Instagram",
+    "url": "https://www.instagram.com/yonyoungpage?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==",
+    "icon": "📸",
+    "category": "promotion"
+  },
+  {
+    "name": "Open Kakao",
+    "url": "https://open.kakao.com/o/snVWZ4th",
+    "icon": "💬",
+    "category": "inquiry"
+  },
+  {
+    "name": "Website",
+    "url": "http://localhost:3000/",
+    "category": "promotion"
+  },
+  {
+    "name": "YSVPN",
+    "url": "https://ysvpn.yonsei.ac.kr/",
+    "icon": "👍",
+    "category": "activity"
+  },
+  {
+    "name": "연영서버",
+    "url": "https://165.132.176.27:8080/welcome/",
+    "icon": "📁",
+    "category": "activity"
+  },
+  {
+    "name": "대광 엔터프라이즈",
+    "url": "http://sirui.co.kr/",
+    "icon": "📷",
+    "category": "sponsor"
+  },
+  {
+    "name": "캘빈라이트",
+    "url": "http://kelvinlight.kr/",
+    "category": "sponsor"
+  },
+  {
+    "name": "스파이더 홀스터",
+    "url": "https://spiderholster.com/",
+    "category": "sponsor"
+  },
+  {
+    "name": "60기 운영진 회의록",
+    "url": "https://www.notion.so/YonYoung-Team-60-2eb4b0f0803580a4ad42d8b9843be873",
+    "category": "private"
+  },
+  {
+    "name": "웹사이트 관리자 모드",
+    "url": "http://localhost:3000/linktree",
+    "category": "private"
+  }
+]

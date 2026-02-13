@@ -1,0 +1,155 @@
+.about-page {
+  padding-top: 80px;
+  min-height: 100vh;
+  font-size: 0.8rem;
+}
+
+.about-hero {
+  text-align: center;
+  padding: 2rem 0;
+  border-bottom: none;
+  margin-bottom: 1.5rem;
+}
+
+.about-hero h1 {
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: none;
+}
+
+.subtitle {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  display: none;
+}
+
+.about-content {
+  max-width: 800px;
+  margin: 0 auto;
+  font-size: 0.8rem;
+}
+
+.about-section {
+  margin-bottom: 4rem;
+}
+
+.about-section p {
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--text-light);
+}
+
+.about-section h2 {
+  margin-bottom: 2.5rem;
+  padding-bottom: 0;
+  border-bottom: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+/* 연간 활동 타임라인 (2열) */
+.activity-section {
+  margin-bottom: 4rem;
+}
+
+.activity-columns {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2.5rem;
+}
+
+.activity-columns.single-column {
+  grid-template-columns: 1fr;
+  max-width: none;
+  margin: 0;
+}
+
+.activity-column {
+  position: relative;
+  padding-left: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.activity-column::before {
+  content: '';
+  position: absolute;
+  left: 0.3rem;
+  top: 0.4rem;
+  bottom: 0.4rem;
+  width: 1.5px;
+  background-color: var(--secondary-color);
+}
+
+.activity-timeline-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.activity-timeline-item .dot {
+  position: absolute;
+  left: 0.3rem;
+  width: 8px;
+  height: 8px;
+  background-color: var(--primary-color);
+  border-radius: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+.activity-timeline-item .content {
+  display: flex;
+  align-items: baseline;
+  gap: 1.5rem;
+  padding-left: 1.5rem;
+}
+
+.activity-timeline-item .month {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  min-width: 80px;
+}
+
+.activity-timeline-item .title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-light);
+}
+
+
+@media (max-width: 768px) {
+  .about-hero {
+    padding: 2rem 0;
+  }
+
+  .activity-columns {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .activity-column {
+    padding-left: 1.5rem;
+    gap: 1.5rem;
+  }
+
+  .activity-timeline-item .content {
+    flex-direction: column;
+    gap: 0.3rem;
+    padding-left: 1.5rem;
+  }
+
+  .activity-timeline-item .month {
+    font-size: 1rem;
+    min-width: auto;
+  }
+
+  .activity-timeline-item .title {
+    font-size: 1rem;
+  }
+
+}

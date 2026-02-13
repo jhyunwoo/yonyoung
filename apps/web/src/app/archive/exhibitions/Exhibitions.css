@@ -1,0 +1,313 @@
+.exhibitions-page {
+  padding-top: 80px;
+  min-height: 100vh;
+}
+
+.exhibitions-header {
+  text-align: center;
+  padding: 4rem 0 2rem;
+  border-bottom: 1px solid var(--secondary-color);
+  margin-bottom: 4rem;
+}
+
+.exhibitions-header .container {
+  max-width: 1400px;
+  position: relative;
+}
+
+.exhibitions-header h1 {
+  margin-bottom: 1rem;
+}
+
+.upload-trigger-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: #666;
+  cursor: pointer;
+  padding: 0.2rem;
+  line-height: 1;
+  transition: color 0.3s ease, transform 0.2s ease;
+  display: block;
+  margin: 0.5rem 0 -1rem auto;
+  position: relative;
+  z-index: 1;
+}
+
+.upload-trigger-btn:hover {
+  color: var(--primary-color);
+  transform: scale(1.1);
+}
+
+.exhibitions-content {
+  padding-bottom: 4rem;
+}
+
+.exhibitions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2.5rem;
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.exhibition-card {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background-color: #000;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.exhibition-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.exhibition-card.admin-active .exhibition-info {
+  min-height: 60%;
+}
+
+.exhibition-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.exhibition-info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 3rem 1.5rem 1.5rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.6) 60%, transparent 100%);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 50%;
+  z-index: 2;
+}
+
+.exhibition-info h2 {
+  margin-bottom: 0.4rem;
+  font-size: 1.15rem;
+  line-height: 1.3;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.exhibition-date {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 0.3rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.exhibition-location {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.85rem;
+  margin-bottom: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* 관리자 액션 */
+.admin-actions {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 10;
+}
+
+.admin-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: transform 0.2s, background-color 0.2s;
+  color: white;
+}
+
+.admin-btn.edit { background-color: rgba(0, 123, 255, 0.8); }
+.admin-btn.delete { background-color: rgba(220, 53, 69, 0.8); }
+
+.admin-btn:hover { transform: scale(1.1); }
+.admin-btn.edit:hover { background-color: rgba(0, 123, 255, 1); }
+.admin-btn.delete:hover { background-color: rgba(220, 53, 69, 1); }
+
+.empty-exhibitions {
+  text-align: center;
+  padding: 4rem 0;
+  color: var(--text-light);
+}
+
+/* 팝업 스타일 */
+.exhibition-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 2rem;
+}
+
+.exhibition-popup-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  background-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup-slideshow {
+  position: relative;
+  width: auto;
+  height: auto;
+}
+
+.popup-slide {
+  position: relative;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+  display: none;
+}
+
+.popup-slide.active {
+  opacity: 1;
+  display: block;
+}
+
+.popup-image {
+  max-width: 90vw;
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+  display: block;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  object-fit: contain; /* 원본 비율 유지 */
+}
+
+.popup-close-btn {
+  position: absolute;
+  top: -2rem;
+  right: -2rem;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2.5rem;
+  cursor: pointer;
+  z-index: 2010;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.popup-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  border: none;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2010;
+  backdrop-filter: blur(5px);
+}
+
+.popup-nav-btn.prev { left: -4rem; }
+.popup-nav-btn.next { right: -4rem; }
+
+.popup-info-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 5rem 2.5rem 2.5rem;
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+  color: white;
+  z-index: 2005;
+  pointer-events: none;
+  text-align: left; /* 왼쪽 정렬 */
+}
+
+.popup-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  color: #fff;
+}
+
+.popup-date {
+  font-size: 1rem;
+  color: #fff;
+  opacity: 0.9;
+}
+
+.popup-indicators {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.8rem;
+  z-index: 2010;
+}
+
+.indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.4);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.indicator-dot.active {
+  background-color: #fff;
+  transform: scale(1.2);
+}
+
+@media (max-width: 1100px) {
+  .popup-nav-btn.prev { left: 1rem; }
+  .popup-nav-btn.next { right: 1rem; }
+  .popup-close-btn { top: 1rem; right: 1rem; }
+}
+
+@media (max-width: 768px) {
+  .exhibitions-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding: 0 1.5rem;
+    max-width: 400px;
+  }
+  
+  .exhibition-popup-overlay { padding: 1rem; }
+  .popup-image { max-width: 95vw; max-height: 80vh; }
+  .popup-title { font-size: 1.4rem; }
+}

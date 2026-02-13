@@ -1,0 +1,33 @@
+.supporters-page {
+  padding-top: 120px;
+  min-height: 100vh;
+  background-color: #ffffff;
+}
+
+.supporters-header {
+  text-align: center;
+  margin-bottom: 5rem;
+}
+
+.supporters-header h1 {
+  font-size: 3rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+  color: #000;
+}
+
+.supporters-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}
+
+.empty-message {
+  font-size: 1.2rem;
+  color: #999;
+  border: 1px dashed #ccc;
+  padding: 4rem 8rem;
+  border-radius: 0;
+}

@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "title": "작품 시리즈 1",
+    "images": [
+      "/images/works/work1-1.jpg",
+      "/images/works/work1-2.jpg",
+      "/images/works/work1-3.jpg"
+    ],
+    "description": "작품 설명입니다.",
+    "year": "2024"
+  },
+  {
+    "id": 2,
+    "title": "작품 시리즈 2",
+    "images": [
+      "/images/works/work2-1.jpg",
+      "/images/works/work2-2.jpg"
+    ],
+    "description": "작품 설명입니다.",
+    "year": "2024"
+  }
+]

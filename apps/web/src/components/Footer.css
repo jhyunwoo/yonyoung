@@ -1,0 +1,112 @@
+.footer {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  padding: 4rem 0 2rem;
+  margin-top: 4rem;
+}
+
+.footer .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.footer-top {
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #333;
+  margin-bottom: 2rem;
+}
+
+/* 네비게이션 로고 스타일 복사 및 조정 */
+.footer .logo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+}
+
+.footer .logo-image {
+  height: 1.92rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: brightness(0) invert(1); /* 검정 로고를 흰색으로 반전 (다크 배경 대응) */
+}
+
+.footer .logo-text {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  text-align: left;
+  line-height: 1.2;
+}
+
+.footer .logo-text span {
+  letter-spacing: -0.05em;
+  display: block;
+}
+
+.footer .logo-text br {
+  display: none;
+}
+
+.footer-bottom {
+  margin-bottom: 3rem;
+}
+
+.footer-info-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.5rem;
+}
+
+.footer-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.info-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+}
+
+.info-content {
+  font-size: 0.9rem;
+  color: #ccc;
+  line-height: 1.6;
+  word-break: break-all;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer-info-item a.info-content:hover {
+  color: #ffffff;
+}
+
+/* 반응형 설정 */
+@media (max-width: 1024px) {
+  .footer-info-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .footer {
+    padding: 3rem 0 1.5rem;
+  }
+  
+  .footer-info-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .footer-top {
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+}
