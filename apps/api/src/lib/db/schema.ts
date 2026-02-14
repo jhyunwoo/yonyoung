@@ -254,6 +254,24 @@ export const exhibitionImages = sqliteTable(
   ],
 );
 
+export const linktree = sqliteTable("linktree", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+});
+
+export const linktreeItems = sqliteTable(
+  "linktree_items",
+  {
+    id: text("id").primaryKey(),
+    linktreeId: text("linktree_id")
+      .notNull()
+      .references(() => linktree.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    link: text("link").notNull(),
+  },
+  (table) => [index("linktree_items_linktree_id_idx").on(table.linktreeId)],
+);
+
 export const generationsRelations = relations(generations, ({ many }) => ({
   users: many(user),
   activities: many(activities),
@@ -323,3 +341,14 @@ export const exhibitionImagesRelations = relations(
     }),
   }),
 );
+
+export const linktreeRelations = relations(linktree, ({ many }) => ({
+  items: many(linktreeItems),
+}));
+
+export const linktreeItemsRelations = relations(linktreeItems, ({ one }) => ({
+  linktree: one(linktree, {
+    fields: [linktreeItems.linktreeId],
+    references: [linktree.id],
+  }),
+}));
