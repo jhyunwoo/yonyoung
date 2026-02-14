@@ -1,8 +1,8 @@
 import { passkey } from "@better-auth/passkey";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth } from "better-auth";
-import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./db/schema";
+import createDB from "./db";
 
 type AuthEnv = {
   baseURL: string;
@@ -90,7 +90,7 @@ const resolveAuthEnv = (allowDevDefaults = false): AuthEnv => {
 };
 
 const createAuthWithEnv = (database: D1Database, env: AuthEnv) => {
-  const db = drizzle(database, { schema });
+  const db = createDB(database);
 
   return betterAuth({
     baseURL: env.baseURL,
