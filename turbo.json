@@ -8,7 +8,8 @@
       "outputs": [".next/**", "!.next/cache/**"]
     },
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["^lint"],
+      "env": ["AUTH_API_URL", "NEXT_PUBLIC_AUTH_API_URL"]
     },
     "check-types": {
       "dependsOn": ["^check-types"]
