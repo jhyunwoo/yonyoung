@@ -19,6 +19,20 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+## Auth Environment Variables
+
+Set the following environment variables in `.env.local` (or your runtime environment):
+
+```bash
+AUTH_API_URL=http://localhost:8787
+NEXT_PUBLIC_AUTH_API_URL=http://localhost:8787
+```
+
+Passkey login requirement:
+
+- API `PASSKEY_ORIGIN` must match the actual web origin where sign-in runs.
+- For local development, `http://localhost:3000` is recommended as the web origin.
+
 ## Preview
 
 Preview the application locally on the Cloudflare runtime:

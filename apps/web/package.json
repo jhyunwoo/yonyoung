@@ -13,16 +13,18 @@
 		"cf-typegen": "wrangler types --env-interface CloudflareEnv ./cloudflare-env.d.ts"
 	},
 	"dependencies": {
+		"@better-auth/passkey": "^1.4.18",
 		"@opennextjs/cloudflare": "^1.15.1",
+		"@repo/ui": "workspace:*",
+		"better-auth": "^1.4.18",
 		"next": "16.1.5",
 		"react": "19.1.5",
-		"react-dom": "19.1.5",
-		"@repo/ui": "workspace:*"
+		"react-dom": "19.1.5"
 	},
 	"devDependencies": {
+		"@eslint/eslintrc": "^3",
 		"@repo/eslint-config": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
-		"@eslint/eslintrc": "^3",
 		"@tailwindcss/postcss": "^4",
 		"@types/node": "^20.19.33",
 		"@types/react": "^19.1.5",
