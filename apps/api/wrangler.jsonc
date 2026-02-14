@@ -24,7 +24,14 @@
 			"database_id": "2b8373ca-0dd5-486f-aa2f-4847e5e2b79a",
 			"remote": true
 		}
-	]
+	],
+	"vars": {
+		"BETTER_AUTH_URL": "http://localhost:8787",
+		"BETTER_AUTH_TRUSTED_ORIGINS": "http://localhost:3000",
+		"PASSKEY_RP_ID": "localhost",
+		"PASSKEY_RP_NAME": "Yonyoung",
+		"PASSKEY_ORIGIN": "http://localhost:8787"
+	}
 	/**
 	 * Smart Placement
 	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
