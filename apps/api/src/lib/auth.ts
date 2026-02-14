@@ -119,6 +119,11 @@ const createAuthWithEnv = (database: D1Database, env: AuthEnv) => {
           input: false,
           defaultValue: "user",
         },
+        generationId: {
+          type: "string",
+          required: false,
+          input: false,
+        },
       },
     },
     plugins: [
