@@ -37,6 +37,11 @@ Required runtime variables:
 - `PASSKEY_RP_ID`
 - `PASSKEY_RP_NAME`
 - `PASSKEY_ORIGIN`
+- `R2_S3_ENDPOINT`
+- `R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY`
+- `R2_BUCKET`
+- `R2_PUBLIC_BASE_URL`
 
 Required for Drizzle migration scripts:
 
@@ -63,6 +68,41 @@ http://localhost:8787/api/auth/callback/google
 - `PASSKEY_RP_ID` should be the effective top-level domain (for example `example.com`).
 - `PASSKEY_ORIGIN` should be the API origin without a trailing slash (for example `https://api.example.com`).
 - For local development, `localhost` is valid.
+
+## R2 Presigned Upload Setup
+
+This API issues AWS S3 compatible presigned `PUT` URLs for Cloudflare R2.
+
+- `R2_S3_ENDPOINT`: `https://<account-id>.r2.cloudflarestorage.com`
+- `R2_ACCESS_KEY_ID`: R2 API token Access Key
+- `R2_SECRET_ACCESS_KEY`: R2 API token Secret Key
+- `R2_BUCKET`: target bucket name
+- `R2_PUBLIC_BASE_URL`: public CDN/base URL used to store image URL in DB
+
+## CRUD Endpoints
+
+Protected resources (all require auth session):
+
+- `/api/generations`
+- `/api/activities`
+- `/api/supporters`
+- `/api/exhibitions`
+- `/api/linktree`
+- `/api/users`
+
+Presigned upload endpoints:
+
+- `POST /api/activities/presign/cover`
+- `POST /api/activities/presign/detail`
+- `POST /api/exhibitions/presign/cover`
+- `POST /api/exhibitions/presign/detail`
+- `POST /api/supporters/presign/logo`
+- `POST /api/users/presign/profile`
+
+## User Permission Note
+
+- `member` role can only read their own user data.
+- `member` role can update/delete only their own profile.
 
 ## Local Development
 
