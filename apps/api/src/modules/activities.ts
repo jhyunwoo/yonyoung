@@ -1,49 +1,171 @@
-import { Hono } from "hono";
-import { z } from "zod";
+import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import HonoAppType from "../types/honoAppType";
-import {
-  badRequest,
-  noContent,
-  notFound,
-  ok,
-} from "../lib/http/response";
+import { badRequest, noContent, notFound, ok } from "../lib/http/response";
 import { parseBody, parseParams } from "../lib/validation/request";
 import { AppDependencies } from "../lib/services/dependencies";
 import { requireActor, requirePermission } from "../lib/http/authz";
+import {
+  createdResponse,
+  dataResponse,
+  errorResponses,
+  jsonBody,
+  noContentResponse,
+} from "../lib/openapi/responses";
+import {
+  ApiActivityImageSchema,
+  ApiActivitySchema,
+  ApiCreateActivityImageSchema,
+  ApiCreateActivitySchema,
+  ApiIdParamSchema,
+  ApiImageIdParamSchema,
+  ApiUpdateActivityImageSchema,
+  ApiUpdateActivitySchema,
+} from "../lib/openapi/schemas";
 
-type App = Hono<HonoAppType>;
+type App = OpenAPIHono<HonoAppType>;
 
-const idParamSchema = z.object({
-  id: z.uuid("id 형식이 올바르지 않습니다."),
+const listActivitiesRoute = createRoute({
+  method: "get",
+  path: "/api/activities",
+  tags: ["Activities"],
+  operationId: "listActivities",
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: dataResponse(ApiActivitySchema.array(), "활동 목록 조회 성공"),
+    401: errorResponses[401],
+    403: errorResponses[403],
+  },
 });
 
-const imageParamsSchema = z.object({
-  id: z.uuid("id 형식이 올바르지 않습니다."),
-  imageId: z.uuid("imageId 형식이 올바르지 않습니다."),
+const createActivityRoute = createRoute({
+  method: "post",
+  path: "/api/activities",
+  tags: ["Activities"],
+  operationId: "createActivity",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: jsonBody(ApiCreateActivitySchema, "활동 생성 요청"),
+  },
+  responses: {
+    201: createdResponse(ApiActivitySchema, "활동 생성 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+  },
 });
 
-const createActivitySchema = z.object({
-  title: z.string().min(1),
-  description: z.string().min(1),
-  activityDate: z.number().int().positive(),
-  coverImageUrl: z.string().url(),
-  generationId: z.uuid("generationId 형식이 올바르지 않습니다."),
+const getActivityByIdRoute = createRoute({
+  method: "get",
+  path: "/api/activities/{id}",
+  tags: ["Activities"],
+  operationId: "getActivityById",
+  security: [{ cookieAuth: [] }],
+  request: { params: ApiIdParamSchema },
+  responses: {
+    200: dataResponse(ApiActivitySchema, "활동 상세 조회 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
 });
 
-const updateActivitySchema = createActivitySchema.partial();
-
-const createActivityImageSchema = z.object({
-  imageUrl: z.string().url(),
-  sortOrder: z.number().int().nonnegative().default(0),
+const updateActivityRoute = createRoute({
+  method: "patch",
+  path: "/api/activities/{id}",
+  tags: ["Activities"],
+  operationId: "updateActivity",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiIdParamSchema,
+    body: jsonBody(ApiUpdateActivitySchema, "활동 수정 요청"),
+  },
+  responses: {
+    200: dataResponse(ApiActivitySchema, "활동 수정 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
 });
 
-const updateActivityImageSchema = createActivityImageSchema.partial();
+const deleteActivityRoute = createRoute({
+  method: "delete",
+  path: "/api/activities/{id}",
+  tags: ["Activities"],
+  operationId: "deleteActivity",
+  security: [{ cookieAuth: [] }],
+  request: { params: ApiIdParamSchema },
+  responses: {
+    204: noContentResponse,
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
+});
+
+const addActivityImageRoute = createRoute({
+  method: "post",
+  path: "/api/activities/{id}/images",
+  tags: ["Activities"],
+  operationId: "addActivityImage",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiIdParamSchema,
+    body: jsonBody(ApiCreateActivityImageSchema, "활동 이미지 추가 요청"),
+  },
+  responses: {
+    201: createdResponse(ApiActivityImageSchema, "활동 이미지 생성 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
+});
+
+const updateActivityImageRoute = createRoute({
+  method: "patch",
+  path: "/api/activities/{id}/images/{imageId}",
+  tags: ["Activities"],
+  operationId: "updateActivityImage",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiImageIdParamSchema,
+    body: jsonBody(ApiUpdateActivityImageSchema, "활동 이미지 수정 요청"),
+  },
+  responses: {
+    200: dataResponse(ApiActivityImageSchema, "활동 이미지 수정 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
+});
+
+const deleteActivityImageRoute = createRoute({
+  method: "delete",
+  path: "/api/activities/{id}/images/{imageId}",
+  tags: ["Activities"],
+  operationId: "deleteActivityImage",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiImageIdParamSchema,
+  },
+  responses: {
+    204: noContentResponse,
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
+});
 
 export const registerActivityRoutes = (
   app: App,
   dependencies: AppDependencies,
 ) => {
-  app.get("/api/activities", async (c) => {
+  app.openapi(listActivitiesRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -57,7 +179,7 @@ export const registerActivityRoutes = (
     return ok(c, data);
   });
 
-  app.post("/api/activities", async (c) => {
+  app.openapi(createActivityRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -67,7 +189,7 @@ export const registerActivityRoutes = (
       return denied;
     }
 
-    const body = await parseBody(c, createActivitySchema);
+    const body = await parseBody(c, ApiCreateActivitySchema);
     if (!body.success) {
       return badRequest(c, body.message);
     }
@@ -76,7 +198,7 @@ export const registerActivityRoutes = (
     return ok(c, data, 201);
   });
 
-  app.get("/api/activities/:id", async (c) => {
+  app.openapi(getActivityByIdRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -86,7 +208,7 @@ export const registerActivityRoutes = (
       return denied;
     }
 
-    const params = parseParams(c, idParamSchema);
+    const params = parseParams(c, ApiIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }
@@ -98,7 +220,7 @@ export const registerActivityRoutes = (
     return ok(c, data);
   });
 
-  app.patch("/api/activities/:id", async (c) => {
+  app.openapi(updateActivityRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -108,12 +230,12 @@ export const registerActivityRoutes = (
       return denied;
     }
 
-    const params = parseParams(c, idParamSchema);
+    const params = parseParams(c, ApiIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }
 
-    const body = await parseBody(c, updateActivitySchema);
+    const body = await parseBody(c, ApiUpdateActivitySchema);
     if (!body.success) {
       return badRequest(c, body.message);
     }
@@ -130,7 +252,7 @@ export const registerActivityRoutes = (
     return ok(c, data);
   });
 
-  app.delete("/api/activities/:id", async (c) => {
+  app.openapi(deleteActivityRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -140,7 +262,7 @@ export const registerActivityRoutes = (
       return denied;
     }
 
-    const params = parseParams(c, idParamSchema);
+    const params = parseParams(c, ApiIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }
@@ -153,7 +275,7 @@ export const registerActivityRoutes = (
   });
 
   // 세부 이미지는 활동 본문 수정과 동일 권한으로 분리 관리한다.
-  app.post("/api/activities/:id/images", async (c) => {
+  app.openapi(addActivityImageRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -163,11 +285,11 @@ export const registerActivityRoutes = (
       return denied;
     }
 
-    const params = parseParams(c, idParamSchema);
+    const params = parseParams(c, ApiIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }
-    const body = await parseBody(c, createActivityImageSchema);
+    const body = await parseBody(c, ApiCreateActivityImageSchema);
     if (!body.success) {
       return badRequest(c, body.message);
     }
@@ -181,7 +303,7 @@ export const registerActivityRoutes = (
     return ok(c, data, 201);
   });
 
-  app.patch("/api/activities/:id/images/:imageId", async (c) => {
+  app.openapi(updateActivityImageRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -191,11 +313,11 @@ export const registerActivityRoutes = (
       return denied;
     }
 
-    const params = parseParams(c, imageParamsSchema);
+    const params = parseParams(c, ApiImageIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }
-    const body = await parseBody(c, updateActivityImageSchema);
+    const body = await parseBody(c, ApiUpdateActivityImageSchema);
     if (!body.success) {
       return badRequest(c, body.message);
     }
@@ -212,7 +334,7 @@ export const registerActivityRoutes = (
     return ok(c, data);
   });
 
-  app.delete("/api/activities/:id/images/:imageId", async (c) => {
+  app.openapi(deleteActivityImageRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -222,7 +344,7 @@ export const registerActivityRoutes = (
       return denied;
     }
 
-    const params = parseParams(c, imageParamsSchema);
+    const params = parseParams(c, ApiImageIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }

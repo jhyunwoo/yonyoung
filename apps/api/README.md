@@ -99,6 +99,17 @@ Presigned upload endpoints:
 - `POST /api/supporters/presign/logo`
 - `POST /api/users/presign/profile`
 
+## API Docs
+
+OpenAPI docs are generated with `@hono/zod-openapi` for internal APIs and merged with Better Auth OpenAPI.
+
+- `GET /api/openapi.json` (auth required)
+- `GET /api/docs` (auth required)
+
+Better Auth schema endpoint is also protected:
+
+- `GET /api/auth/open-api/generate-schema` (auth required)
+
 ## User Permission Note
 
 - `member` role can only read their own user data.

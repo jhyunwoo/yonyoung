@@ -1,5 +1,4 @@
-import { Hono } from "hono";
-import { z } from "zod";
+import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import HonoAppType from "../types/honoAppType";
 import {
   badRequest,
@@ -12,21 +11,110 @@ import {
 import { parseBody, parseParams } from "../lib/validation/request";
 import { AppDependencies } from "../lib/services/dependencies";
 import { requireActor, requirePermission } from "../lib/http/authz";
+import {
+  createdResponse,
+  dataResponse,
+  errorResponses,
+  jsonBody,
+  noContentResponse,
+} from "../lib/openapi/responses";
+import {
+  ApiCreateGenerationSchema,
+  ApiGenerationSchema,
+  ApiIdParamSchema,
+  ApiUpdateGenerationSchema,
+} from "../lib/openapi/schemas";
 
-type App = Hono<HonoAppType>;
+type App = OpenAPIHono<HonoAppType>;
 
-const idParamSchema = z.object({
-  id: z.uuid("id 형식이 올바르지 않습니다."),
+const listGenerationsRoute = createRoute({
+  method: "get",
+  path: "/api/generations",
+  tags: ["Generations"],
+  operationId: "listGenerations",
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: dataResponse(ApiGenerationSchema.array(), "기수 목록 조회 성공"),
+    401: errorResponses[401],
+    403: errorResponses[403],
+  },
 });
 
-const createGenerationSchema = z.object({
-  name: z.string().min(1, "name은 필수입니다."),
-  sortOrder: z.number().int().nonnegative(),
-  startDate: z.number().int().positive(),
-  endDate: z.number().int().positive(),
+const createGenerationRoute = createRoute({
+  method: "post",
+  path: "/api/generations",
+  tags: ["Generations"],
+  operationId: "createGeneration",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: jsonBody(ApiCreateGenerationSchema, "기수 생성 요청"),
+  },
+  responses: {
+    201: createdResponse(ApiGenerationSchema, "기수 생성 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    409: errorResponses[409],
+    500: errorResponses[500],
+  },
 });
 
-const updateGenerationSchema = createGenerationSchema.partial();
+const getGenerationByIdRoute = createRoute({
+  method: "get",
+  path: "/api/generations/{id}",
+  tags: ["Generations"],
+  operationId: "getGenerationById",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiIdParamSchema,
+  },
+  responses: {
+    200: dataResponse(ApiGenerationSchema, "기수 상세 조회 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
+});
+
+const updateGenerationRoute = createRoute({
+  method: "patch",
+  path: "/api/generations/{id}",
+  tags: ["Generations"],
+  operationId: "updateGeneration",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiIdParamSchema,
+    body: jsonBody(ApiUpdateGenerationSchema, "기수 수정 요청"),
+  },
+  responses: {
+    200: dataResponse(ApiGenerationSchema, "기수 수정 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+    409: errorResponses[409],
+    500: errorResponses[500],
+  },
+});
+
+const deleteGenerationRoute = createRoute({
+  method: "delete",
+  path: "/api/generations/{id}",
+  tags: ["Generations"],
+  operationId: "deleteGeneration",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiIdParamSchema,
+  },
+  responses: {
+    204: noContentResponse,
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
+});
 
 const isUniqueError = (error: unknown): boolean => {
   return (
@@ -39,7 +127,7 @@ export const registerGenerationRoutes = (
   app: App,
   dependencies: AppDependencies,
 ) => {
-  app.get("/api/generations", async (c) => {
+  app.openapi(listGenerationsRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -54,7 +142,7 @@ export const registerGenerationRoutes = (
     return ok(c, data);
   });
 
-  app.post("/api/generations", async (c) => {
+  app.openapi(createGenerationRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -65,7 +153,7 @@ export const registerGenerationRoutes = (
       return denied;
     }
 
-    const body = await parseBody(c, createGenerationSchema);
+    const body = await parseBody(c, ApiCreateGenerationSchema);
     if (!body.success) {
       return badRequest(c, body.message);
     }
@@ -81,7 +169,7 @@ export const registerGenerationRoutes = (
     }
   });
 
-  app.get("/api/generations/:id", async (c) => {
+  app.openapi(getGenerationByIdRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -92,7 +180,7 @@ export const registerGenerationRoutes = (
       return denied;
     }
 
-    const params = parseParams(c, idParamSchema);
+    const params = parseParams(c, ApiIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }
@@ -106,7 +194,7 @@ export const registerGenerationRoutes = (
     return ok(c, data);
   });
 
-  app.patch("/api/generations/:id", async (c) => {
+  app.openapi(updateGenerationRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -117,12 +205,12 @@ export const registerGenerationRoutes = (
       return denied;
     }
 
-    const params = parseParams(c, idParamSchema);
+    const params = parseParams(c, ApiIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }
 
-    const body = await parseBody(c, updateGenerationSchema);
+    const body = await parseBody(c, ApiUpdateGenerationSchema);
     if (!body.success) {
       return badRequest(c, body.message);
     }
@@ -147,7 +235,7 @@ export const registerGenerationRoutes = (
     }
   });
 
-  app.delete("/api/generations/:id", async (c) => {
+  app.openapi(deleteGenerationRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -158,7 +246,7 @@ export const registerGenerationRoutes = (
       return denied;
     }
 
-    const params = parseParams(c, idParamSchema);
+    const params = parseParams(c, ApiIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }

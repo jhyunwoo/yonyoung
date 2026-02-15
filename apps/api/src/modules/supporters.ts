@@ -1,36 +1,115 @@
-import { Hono } from "hono";
-import { z } from "zod";
+import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import HonoAppType from "../types/honoAppType";
-import {
-  badRequest,
-  noContent,
-  notFound,
-  ok,
-} from "../lib/http/response";
+import { badRequest, noContent, notFound, ok } from "../lib/http/response";
 import { parseBody, parseParams } from "../lib/validation/request";
 import { AppDependencies } from "../lib/services/dependencies";
 import { requireActor, requirePermission } from "../lib/http/authz";
+import {
+  createdResponse,
+  dataResponse,
+  errorResponses,
+  jsonBody,
+  noContentResponse,
+} from "../lib/openapi/responses";
+import {
+  ApiCreateSupporterSchema,
+  ApiIdParamSchema,
+  ApiSupporterSchema,
+  ApiUpdateSupporterSchema,
+} from "../lib/openapi/schemas";
 
-type App = Hono<HonoAppType>;
+type App = OpenAPIHono<HonoAppType>;
 
-const idParamSchema = z.object({
-  id: z.uuid("id 형식이 올바르지 않습니다."),
+const listSupportersRoute = createRoute({
+  method: "get",
+  path: "/api/supporters",
+  tags: ["Supporters"],
+  operationId: "listSupporters",
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: dataResponse(ApiSupporterSchema.array(), "후원사 목록 조회 성공"),
+    401: errorResponses[401],
+    403: errorResponses[403],
+  },
 });
 
-const createSupporterSchema = z.object({
-  name: z.string().min(1),
-  link: z.string().url(),
-  logoUrl: z.string().url(),
-  expiresAt: z.number().int().positive(),
+const createSupporterRoute = createRoute({
+  method: "post",
+  path: "/api/supporters",
+  tags: ["Supporters"],
+  operationId: "createSupporter",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: jsonBody(ApiCreateSupporterSchema, "후원사 생성 요청"),
+  },
+  responses: {
+    201: createdResponse(ApiSupporterSchema, "후원사 생성 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+  },
 });
 
-const updateSupporterSchema = createSupporterSchema.partial();
+const getSupporterByIdRoute = createRoute({
+  method: "get",
+  path: "/api/supporters/{id}",
+  tags: ["Supporters"],
+  operationId: "getSupporterById",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiIdParamSchema,
+  },
+  responses: {
+    200: dataResponse(ApiSupporterSchema, "후원사 상세 조회 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
+});
+
+const updateSupporterRoute = createRoute({
+  method: "patch",
+  path: "/api/supporters/{id}",
+  tags: ["Supporters"],
+  operationId: "updateSupporter",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiIdParamSchema,
+    body: jsonBody(ApiUpdateSupporterSchema, "후원사 수정 요청"),
+  },
+  responses: {
+    200: dataResponse(ApiSupporterSchema, "후원사 수정 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
+});
+
+const deleteSupporterRoute = createRoute({
+  method: "delete",
+  path: "/api/supporters/{id}",
+  tags: ["Supporters"],
+  operationId: "deleteSupporter",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiIdParamSchema,
+  },
+  responses: {
+    204: noContentResponse,
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
+});
 
 export const registerSupporterRoutes = (
   app: App,
   dependencies: AppDependencies,
 ) => {
-  app.get("/api/supporters", async (c) => {
+  app.openapi(listSupportersRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -44,7 +123,7 @@ export const registerSupporterRoutes = (
     return ok(c, data);
   });
 
-  app.post("/api/supporters", async (c) => {
+  app.openapi(createSupporterRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -54,7 +133,7 @@ export const registerSupporterRoutes = (
       return denied;
     }
 
-    const body = await parseBody(c, createSupporterSchema);
+    const body = await parseBody(c, ApiCreateSupporterSchema);
     if (!body.success) {
       return badRequest(c, body.message);
     }
@@ -63,7 +142,7 @@ export const registerSupporterRoutes = (
     return ok(c, data, 201);
   });
 
-  app.get("/api/supporters/:id", async (c) => {
+  app.openapi(getSupporterByIdRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -73,7 +152,7 @@ export const registerSupporterRoutes = (
       return denied;
     }
 
-    const params = parseParams(c, idParamSchema);
+    const params = parseParams(c, ApiIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }
@@ -85,7 +164,7 @@ export const registerSupporterRoutes = (
     return ok(c, data);
   });
 
-  app.patch("/api/supporters/:id", async (c) => {
+  app.openapi(updateSupporterRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -95,12 +174,12 @@ export const registerSupporterRoutes = (
       return denied;
     }
 
-    const params = parseParams(c, idParamSchema);
+    const params = parseParams(c, ApiIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }
 
-    const body = await parseBody(c, updateSupporterSchema);
+    const body = await parseBody(c, ApiUpdateSupporterSchema);
     if (!body.success) {
       return badRequest(c, body.message);
     }
@@ -117,7 +196,7 @@ export const registerSupporterRoutes = (
     return ok(c, data);
   });
 
-  app.delete("/api/supporters/:id", async (c) => {
+  app.openapi(deleteSupporterRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -127,7 +206,7 @@ export const registerSupporterRoutes = (
       return denied;
     }
 
-    const params = parseParams(c, idParamSchema);
+    const params = parseParams(c, ApiIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }

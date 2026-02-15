@@ -1,5 +1,6 @@
 import { passkey } from "@better-auth/passkey";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { openAPI } from "better-auth/plugins";
 import { betterAuth } from "better-auth";
 import * as schema from "./db/schema";
 import createDB from "./db";
@@ -131,6 +132,9 @@ const createAuthWithEnv = (database: D1Database, env: AuthEnv) => {
         rpID: env.passkeyRpId,
         rpName: env.passkeyRpName,
         origin: env.passkeyOrigin,
+      }),
+      openAPI({
+        disableDefaultReference: true,
       }),
     ],
     advanced: {

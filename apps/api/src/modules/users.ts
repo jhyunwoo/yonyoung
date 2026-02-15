@@ -1,5 +1,4 @@
-import { Hono } from "hono";
-import { z } from "zod";
+import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import HonoAppType from "../types/honoAppType";
 import {
   badRequest,
@@ -12,35 +11,96 @@ import { parseBody, parseParams } from "../lib/validation/request";
 import { AppDependencies } from "../lib/services/dependencies";
 import { requireActor } from "../lib/http/authz";
 import { can } from "../lib/authorization/policy";
+import {
+  dataResponse,
+  errorResponses,
+  jsonBody,
+  noContentResponse,
+} from "../lib/openapi/responses";
+import {
+  ApiAdminUpdateUserSchema,
+  ApiIdParamSchema,
+  ApiMemberProfileUpdateSchema,
+  ApiUserSchema,
+} from "../lib/openapi/schemas";
 
-type App = Hono<HonoAppType>;
+type App = OpenAPIHono<HonoAppType>;
 
-const idParamSchema = z.object({
-  id: z.uuid("id 형식이 올바르지 않습니다."),
+const updateUserRequestSchema = z
+  .union([ApiAdminUpdateUserSchema, ApiMemberProfileUpdateSchema])
+  .openapi("ApiUpdateUserRequest");
+
+const listUsersRoute = createRoute({
+  method: "get",
+  path: "/api/users",
+  tags: ["Users"],
+  operationId: "listUsers",
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: dataResponse(ApiUserSchema.array(), "사용자 목록/본인 조회 성공"),
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
 });
 
-const adminUpdateUserSchema = z
-  .object({
-    name: z.string().min(1).optional(),
-    nickname: z.string().nullable().optional(),
-    image: z.string().url().nullable().optional(),
-    role: z
-      .enum(["president", "vice_president", "manager", "member", "user"])
-      .optional(),
-    generationId: z.uuid("generationId 형식이 올바르지 않습니다.").nullable().optional(),
-  })
-  .strict();
+const getUserByIdRoute = createRoute({
+  method: "get",
+  path: "/api/users/{id}",
+  tags: ["Users"],
+  operationId: "getUserById",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiIdParamSchema,
+  },
+  responses: {
+    200: dataResponse(ApiUserSchema, "사용자 상세 조회 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
+});
 
-const memberProfileUpdateSchema = z
-  .object({
-    name: z.string().min(1).optional(),
-    nickname: z.string().nullable().optional(),
-    image: z.string().url().nullable().optional(),
-  })
-  .strict();
+const updateUserRoute = createRoute({
+  method: "patch",
+  path: "/api/users/{id}",
+  tags: ["Users"],
+  operationId: "updateUser",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiIdParamSchema,
+    body: jsonBody(updateUserRequestSchema, "사용자 수정 요청"),
+  },
+  responses: {
+    200: dataResponse(ApiUserSchema, "사용자 수정 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
+});
+
+const deleteUserRoute = createRoute({
+  method: "delete",
+  path: "/api/users/{id}",
+  tags: ["Users"],
+  operationId: "deleteUser",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiIdParamSchema,
+  },
+  responses: {
+    204: noContentResponse,
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
+});
 
 export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
-  app.get("/api/users", async (c) => {
+  app.openapi(listUsersRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -63,13 +123,13 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
     return forbidden(c);
   });
 
-  app.get("/api/users/:id", async (c) => {
+  app.openapi(getUserByIdRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
     }
 
-    const params = parseParams(c, idParamSchema);
+    const params = parseParams(c, ApiIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }
@@ -89,13 +149,13 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
     return ok(c, data);
   });
 
-  app.patch("/api/users/:id", async (c) => {
+  app.openapi(updateUserRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
     }
 
-    const params = parseParams(c, idParamSchema);
+    const params = parseParams(c, ApiIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }
@@ -104,7 +164,7 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
     const isAdminLike = can(actorResult.actor.role, "user", "update");
 
     if (isAdminLike) {
-      const body = await parseBody(c, adminUpdateUserSchema);
+      const body = await parseBody(c, ApiAdminUpdateUserSchema);
       if (!body.success) {
         return badRequest(c, body.message);
       }
@@ -122,7 +182,7 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
 
     // member는 본인 프로필(name/nickname/image)만 수정 가능하다.
     if (actorResult.actor.role === "member" && isSelf) {
-      const body = await parseBody(c, memberProfileUpdateSchema);
+      const body = await parseBody(c, ApiMemberProfileUpdateSchema);
       if (!body.success) {
         return badRequest(c, body.message);
       }
@@ -141,13 +201,13 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
     return forbidden(c);
   });
 
-  app.delete("/api/users/:id", async (c) => {
+  app.openapi(deleteUserRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
     }
 
-    const params = parseParams(c, idParamSchema);
+    const params = parseParams(c, ApiIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }

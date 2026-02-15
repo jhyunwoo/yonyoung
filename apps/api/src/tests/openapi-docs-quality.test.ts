@@ -1,0 +1,154 @@
+import { describe, expect, it } from "vitest";
+import { createApp } from "../app";
+import { Actor } from "../lib/authorization/types";
+import { OpenAPIDocument } from "../lib/openapi/merge";
+import { REQUIRED_DESCRIPTION_SECTIONS } from "../lib/openapi/descriptions";
+
+const MEMBER_ID = "70000000-0000-4000-8000-000000000001";
+
+const createActor = (): Actor => ({
+  id: MEMBER_ID,
+  role: "member",
+  rawRole: "member",
+  name: "member",
+  email: "member@example.com",
+  generationId: null,
+});
+
+const authOpenApiFixtureWithUnknownPath: OpenAPIDocument = {
+  openapi: "3.1.1",
+  info: {
+    title: "Better Auth",
+    version: "1.0.0",
+  },
+  paths: {
+    "/get-session": {
+      get: {
+        operationId: "getSession",
+        responses: {
+          200: { description: "ok" },
+        },
+      },
+    },
+    "/unknown-runtime-auth-endpoint": {
+      post: {
+        operationId: "unknownAuthOperation",
+        responses: {
+          200: { description: "ok" },
+          400: { description: "bad request" },
+        },
+      },
+    },
+  },
+  components: {
+    schemas: {
+      AuthSession: {
+        type: "object",
+      },
+    },
+  },
+};
+
+describe("OpenAPI docs quality", () => {
+  it("모든 operation에 summary/description과 필수 섹션이 존재해야 한다", async () => {
+    const app = createApp({
+      resolveActor: async () => createActor(),
+      getAuthOpenApiSchema: async () => authOpenApiFixtureWithUnknownPath,
+    });
+
+    const response = await app.request("/api/openapi.json");
+    expect(response.status).toBe(200);
+
+    const body = (await response.json()) as OpenAPIDocument;
+    const paths = body.paths ?? {};
+
+    for (const [path, pathItem] of Object.entries(paths)) {
+      if (!pathItem || typeof pathItem !== "object") {
+        continue;
+      }
+
+      for (const [method, operation] of Object.entries(pathItem)) {
+        const lowerMethod = method.toLowerCase();
+        if (
+          lowerMethod !== "get" &&
+          lowerMethod !== "post" &&
+          lowerMethod !== "put" &&
+          lowerMethod !== "patch" &&
+          lowerMethod !== "delete" &&
+          lowerMethod !== "options" &&
+          lowerMethod !== "head" &&
+          lowerMethod !== "trace"
+        ) {
+          continue;
+        }
+
+        expect(
+          typeof (operation as { summary?: unknown }).summary,
+          `${path}#${method} summary`,
+        ).toBe("string");
+        expect(
+          typeof (operation as { description?: unknown }).description,
+          `${path}#${method} description`,
+        ).toBe("string");
+
+        const description = (operation as { description?: string }).description ?? "";
+        for (const section of REQUIRED_DESCRIPTION_SECTIONS) {
+          expect(description, `${path}#${method} missing ${section}`).toContain(
+            section,
+          );
+        }
+      }
+    }
+  });
+
+  it("보호 라우트 security와 주요 스키마 description/example가 유지되어야 한다", async () => {
+    const app = createApp({
+      resolveActor: async () => createActor(),
+      getAuthOpenApiSchema: async () => authOpenApiFixtureWithUnknownPath,
+    });
+
+    const response = await app.request("/api/openapi.json");
+    expect(response.status).toBe(200);
+
+    const body = (await response.json()) as OpenAPIDocument;
+    const activityPost = body.paths?.["/api/activities"]?.post;
+    expect(activityPost?.security).toEqual([{ cookieAuth: [] }]);
+
+    const schemas = body.components?.schemas ?? {};
+    const apiActivity = schemas.ApiActivity as
+      | { properties?: Record<string, { description?: string; example?: unknown }> }
+      | undefined;
+    const apiExhibition = schemas.ApiExhibition as
+      | { properties?: Record<string, { description?: string; example?: unknown }> }
+      | undefined;
+    const apiUser = schemas.ApiUser as
+      | { properties?: Record<string, { description?: string; example?: unknown }> }
+      | undefined;
+
+    expect(apiActivity?.properties?.title?.description).toContain("활동 제목");
+    expect(apiActivity?.properties?.activityDate?.description).toContain(
+      "Unix timestamp(ms)",
+    );
+    expect(apiExhibition?.properties?.title?.description).toContain("전시 제목");
+    expect(apiUser?.properties?.email?.description).toContain("사용자 이메일");
+    expect(apiUser?.properties?.email?.example).toBe("member@yonyoung.example");
+  });
+
+  it("알 수 없는 auth endpoint도 fallback 설명이 자동 생성되어야 한다", async () => {
+    const app = createApp({
+      resolveActor: async () => createActor(),
+      getAuthOpenApiSchema: async () => authOpenApiFixtureWithUnknownPath,
+    });
+
+    const response = await app.request("/api/openapi.json");
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as OpenAPIDocument;
+
+    const unknownAuthOperation =
+      body.paths?.["/api/auth/unknown-runtime-auth-endpoint"]?.post;
+    expect(typeof unknownAuthOperation?.summary).toBe("string");
+    expect(unknownAuthOperation?.summary?.length ?? 0).toBeGreaterThan(0);
+    expect(unknownAuthOperation?.description).toContain("## 기본 설명");
+    expect(unknownAuthOperation?.description).toContain("## 오류 응답 가이드");
+  });
+});

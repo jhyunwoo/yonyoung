@@ -1,51 +1,175 @@
-import { Hono } from "hono";
-import { z } from "zod";
+import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import HonoAppType from "../types/honoAppType";
-import {
-  badRequest,
-  noContent,
-  notFound,
-  ok,
-} from "../lib/http/response";
+import { badRequest, noContent, notFound, ok } from "../lib/http/response";
 import { parseBody, parseParams } from "../lib/validation/request";
 import { AppDependencies } from "../lib/services/dependencies";
 import { requireActor, requirePermission } from "../lib/http/authz";
+import {
+  createdResponse,
+  dataResponse,
+  errorResponses,
+  jsonBody,
+  noContentResponse,
+} from "../lib/openapi/responses";
+import {
+  ApiCreateExhibitionImageSchema,
+  ApiCreateExhibitionSchema,
+  ApiExhibitionImageSchema,
+  ApiExhibitionSchema,
+  ApiIdParamSchema,
+  ApiImageIdParamSchema,
+  ApiUpdateExhibitionImageSchema,
+  ApiUpdateExhibitionSchema,
+} from "../lib/openapi/schemas";
 
-type App = Hono<HonoAppType>;
+type App = OpenAPIHono<HonoAppType>;
 
-const idParamSchema = z.object({
-  id: z.uuid("id 형식이 올바르지 않습니다."),
+const listExhibitionsRoute = createRoute({
+  method: "get",
+  path: "/api/exhibitions",
+  tags: ["Exhibitions"],
+  operationId: "listExhibitions",
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: dataResponse(ApiExhibitionSchema.array(), "전시 목록 조회 성공"),
+    401: errorResponses[401],
+    403: errorResponses[403],
+  },
 });
 
-const imageParamsSchema = z.object({
-  id: z.uuid("id 형식이 올바르지 않습니다."),
-  imageId: z.uuid("imageId 형식이 올바르지 않습니다."),
+const createExhibitionRoute = createRoute({
+  method: "post",
+  path: "/api/exhibitions",
+  tags: ["Exhibitions"],
+  operationId: "createExhibition",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: jsonBody(ApiCreateExhibitionSchema, "전시 생성 요청"),
+  },
+  responses: {
+    201: createdResponse(ApiExhibitionSchema, "전시 생성 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+  },
 });
 
-const createExhibitionSchema = z.object({
-  title: z.string().min(1),
-  startDate: z.number().int().positive(),
-  endDate: z.number().int().positive(),
-  generationId: z.uuid("generationId 형식이 올바르지 않습니다."),
-  place: z.string().min(1),
-  coverImageUrl: z.string().url(),
-  description: z.string().min(1),
+const getExhibitionByIdRoute = createRoute({
+  method: "get",
+  path: "/api/exhibitions/{id}",
+  tags: ["Exhibitions"],
+  operationId: "getExhibitionById",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiIdParamSchema,
+  },
+  responses: {
+    200: dataResponse(ApiExhibitionSchema, "전시 상세 조회 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
 });
 
-const updateExhibitionSchema = createExhibitionSchema.partial();
-
-const createExhibitionImageSchema = z.object({
-  imageUrl: z.string().url(),
-  sortOrder: z.number().int().nonnegative().default(0),
+const updateExhibitionRoute = createRoute({
+  method: "patch",
+  path: "/api/exhibitions/{id}",
+  tags: ["Exhibitions"],
+  operationId: "updateExhibition",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiIdParamSchema,
+    body: jsonBody(ApiUpdateExhibitionSchema, "전시 수정 요청"),
+  },
+  responses: {
+    200: dataResponse(ApiExhibitionSchema, "전시 수정 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
 });
 
-const updateExhibitionImageSchema = createExhibitionImageSchema.partial();
+const deleteExhibitionRoute = createRoute({
+  method: "delete",
+  path: "/api/exhibitions/{id}",
+  tags: ["Exhibitions"],
+  operationId: "deleteExhibition",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiIdParamSchema,
+  },
+  responses: {
+    204: noContentResponse,
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
+});
+
+const addExhibitionImageRoute = createRoute({
+  method: "post",
+  path: "/api/exhibitions/{id}/images",
+  tags: ["Exhibitions"],
+  operationId: "addExhibitionImage",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiIdParamSchema,
+    body: jsonBody(ApiCreateExhibitionImageSchema, "전시 이미지 추가 요청"),
+  },
+  responses: {
+    201: createdResponse(ApiExhibitionImageSchema, "전시 이미지 생성 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
+});
+
+const updateExhibitionImageRoute = createRoute({
+  method: "patch",
+  path: "/api/exhibitions/{id}/images/{imageId}",
+  tags: ["Exhibitions"],
+  operationId: "updateExhibitionImage",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiImageIdParamSchema,
+    body: jsonBody(ApiUpdateExhibitionImageSchema, "전시 이미지 수정 요청"),
+  },
+  responses: {
+    200: dataResponse(ApiExhibitionImageSchema, "전시 이미지 수정 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
+});
+
+const deleteExhibitionImageRoute = createRoute({
+  method: "delete",
+  path: "/api/exhibitions/{id}/images/{imageId}",
+  tags: ["Exhibitions"],
+  operationId: "deleteExhibitionImage",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiImageIdParamSchema,
+  },
+  responses: {
+    204: noContentResponse,
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
+});
 
 export const registerExhibitionRoutes = (
   app: App,
   dependencies: AppDependencies,
 ) => {
-  app.get("/api/exhibitions", async (c) => {
+  app.openapi(listExhibitionsRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -59,7 +183,7 @@ export const registerExhibitionRoutes = (
     return ok(c, data);
   });
 
-  app.post("/api/exhibitions", async (c) => {
+  app.openapi(createExhibitionRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -69,7 +193,7 @@ export const registerExhibitionRoutes = (
       return denied;
     }
 
-    const body = await parseBody(c, createExhibitionSchema);
+    const body = await parseBody(c, ApiCreateExhibitionSchema);
     if (!body.success) {
       return badRequest(c, body.message);
     }
@@ -78,7 +202,7 @@ export const registerExhibitionRoutes = (
     return ok(c, data, 201);
   });
 
-  app.get("/api/exhibitions/:id", async (c) => {
+  app.openapi(getExhibitionByIdRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -88,7 +212,7 @@ export const registerExhibitionRoutes = (
       return denied;
     }
 
-    const params = parseParams(c, idParamSchema);
+    const params = parseParams(c, ApiIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }
@@ -102,7 +226,7 @@ export const registerExhibitionRoutes = (
     return ok(c, data);
   });
 
-  app.patch("/api/exhibitions/:id", async (c) => {
+  app.openapi(updateExhibitionRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -112,12 +236,12 @@ export const registerExhibitionRoutes = (
       return denied;
     }
 
-    const params = parseParams(c, idParamSchema);
+    const params = parseParams(c, ApiIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }
 
-    const body = await parseBody(c, updateExhibitionSchema);
+    const body = await parseBody(c, ApiUpdateExhibitionSchema);
     if (!body.success) {
       return badRequest(c, body.message);
     }
@@ -134,7 +258,7 @@ export const registerExhibitionRoutes = (
     return ok(c, data);
   });
 
-  app.delete("/api/exhibitions/:id", async (c) => {
+  app.openapi(deleteExhibitionRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -144,7 +268,7 @@ export const registerExhibitionRoutes = (
       return denied;
     }
 
-    const params = parseParams(c, idParamSchema);
+    const params = parseParams(c, ApiIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }
@@ -159,7 +283,7 @@ export const registerExhibitionRoutes = (
   });
 
   // 전시 세부 이미지도 별도 엔드포인트로 분리해 부분 수정이 가능하도록 한다.
-  app.post("/api/exhibitions/:id/images", async (c) => {
+  app.openapi(addExhibitionImageRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -169,11 +293,11 @@ export const registerExhibitionRoutes = (
       return denied;
     }
 
-    const params = parseParams(c, idParamSchema);
+    const params = parseParams(c, ApiIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }
-    const body = await parseBody(c, createExhibitionImageSchema);
+    const body = await parseBody(c, ApiCreateExhibitionImageSchema);
     if (!body.success) {
       return badRequest(c, body.message);
     }
@@ -187,7 +311,7 @@ export const registerExhibitionRoutes = (
     return ok(c, data, 201);
   });
 
-  app.patch("/api/exhibitions/:id/images/:imageId", async (c) => {
+  app.openapi(updateExhibitionImageRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -197,11 +321,11 @@ export const registerExhibitionRoutes = (
       return denied;
     }
 
-    const params = parseParams(c, imageParamsSchema);
+    const params = parseParams(c, ApiImageIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }
-    const body = await parseBody(c, updateExhibitionImageSchema);
+    const body = await parseBody(c, ApiUpdateExhibitionImageSchema);
     if (!body.success) {
       return badRequest(c, body.message);
     }
@@ -218,7 +342,7 @@ export const registerExhibitionRoutes = (
     return ok(c, data);
   });
 
-  app.delete("/api/exhibitions/:id/images/:imageId", async (c) => {
+  app.openapi(deleteExhibitionImageRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -228,7 +352,7 @@ export const registerExhibitionRoutes = (
       return denied;
     }
 
-    const params = parseParams(c, imageParamsSchema);
+    const params = parseParams(c, ApiImageIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }
