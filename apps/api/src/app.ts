@@ -11,6 +11,7 @@ import { registerUploadRoutes } from "./modules/uploads";
 import { registerDocsRoutes } from "./modules/docs";
 import HonoAppType from "./types/honoAppType";
 import { getAuthCorsOrigins } from "./lib/auth";
+import { badRequest } from "./lib/http/response";
 import {
   AppDependencies,
   createDefaultDependencies,
@@ -36,7 +37,20 @@ const messageRoute = createRoute({
 export const createApp = (
   partialDependencies?: Partial<AppDependencies>,
 ) => {
-  const app = new OpenAPIHono<HonoAppType>();
+  const app = new OpenAPIHono<HonoAppType>({
+    defaultHook: (result, c) => {
+      if (result.success) {
+        return;
+      }
+
+      const message =
+        result.error.issues
+          .map((issue) => issue.message)
+          .filter((text) => text.length > 0)
+          .join(", ") || "요청 데이터가 올바르지 않습니다.";
+      return badRequest(c, message);
+    },
+  });
   const corsOrigins = getAuthCorsOrigins();
   const apiCors = cors({
     origin: (origin) => {

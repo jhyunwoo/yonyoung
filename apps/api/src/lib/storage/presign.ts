@@ -23,6 +23,18 @@ const storageEnvKeyMap = {
 
 type StorageEnvKey = keyof typeof storageEnvKeyMap;
 
+export class MissingStorageConfigError extends Error {
+  readonly missingKeys: string[];
+
+  constructor(missingKeys: string[]) {
+    super(
+      `필수 스토리지 설정이 누락되었습니다: ${missingKeys.join(", ")}`,
+    );
+    this.name = "MissingStorageConfigError";
+    this.missingKeys = missingKeys;
+  }
+}
+
 const getEnvValue = (
   env: AppBindings,
   key: StorageEnvKey,
@@ -64,16 +76,25 @@ const resolveStorageEnv = (env: AppBindings): StorageEnv => {
   const bucket = getEnvValue(env, "bucket");
   const publicBaseUrl = getEnvValue(env, "publicBaseUrl");
 
-  if (
-    !endpoint ||
-    !accessKeyId ||
-    !secretAccessKey ||
-    !bucket ||
-    !publicBaseUrl
-  ) {
-    throw new Error(
-      "R2_S3_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, R2_PUBLIC_BASE_URL 설정이 필요합니다.",
-    );
+  const missingKeys: string[] = [];
+  if (!endpoint) {
+    missingKeys.push(storageEnvKeyMap.endpoint);
+  }
+  if (!accessKeyId) {
+    missingKeys.push(storageEnvKeyMap.accessKeyId);
+  }
+  if (!secretAccessKey) {
+    missingKeys.push(storageEnvKeyMap.secretAccessKey);
+  }
+  if (!bucket) {
+    missingKeys.push(storageEnvKeyMap.bucket);
+  }
+  if (!publicBaseUrl) {
+    missingKeys.push(storageEnvKeyMap.publicBaseUrl);
+  }
+
+  if (missingKeys.length > 0) {
+    throw new MissingStorageConfigError(missingKeys);
   }
 
   return {

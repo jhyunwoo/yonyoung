@@ -1,5 +1,6 @@
 import { request as playwrightRequest } from "@playwright/test";
 import type { APIRequestContext, APIResponse, Page } from "@playwright/test";
+import { readE2eRoleMatrixMode } from "./env";
 
 const API_BASE_URL = process.env.E2E_API_URL ?? "http://localhost:8787";
 const ADMIN_API_BASE_PATH = "/api";
@@ -115,7 +116,7 @@ export const adminApiRequest = async <T>(
   return unwrapData<T>(payload);
 };
 
-type FileUploadFlow = "auto" | "always" | "never";
+type FileUploadFlow = "auto" | "file" | "url";
 
 const parseFileUploadFlow = (): FileUploadFlow => {
   const value = process.env.E2E_FILE_UPLOAD_FLOW?.trim().toLowerCase();
@@ -123,12 +124,12 @@ const parseFileUploadFlow = (): FileUploadFlow => {
     return "auto";
   }
 
-  if (["1", "true", "yes", "on", "always"].includes(value)) {
-    return "always";
+  if (["1", "true", "yes", "on", "always", "file"].includes(value)) {
+    return "file";
   }
 
-  if (["0", "false", "no", "off", "never"].includes(value)) {
-    return "never";
+  if (["0", "false", "no", "off", "never", "url"].includes(value)) {
+    return "url";
   }
 
   return "auto";
@@ -136,14 +137,40 @@ const parseFileUploadFlow = (): FileUploadFlow => {
 
 let uploadFlowAvailabilityPromise: Promise<boolean> | null = null;
 
+const probeUploadWithBrowserFetch = async (
+  page: Page,
+  input: { uploadUrl: string; contentType: string },
+): Promise<boolean> =>
+  page.evaluate(
+    async ({ uploadUrl, contentType }) => {
+      try {
+        const response = await fetch(uploadUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Type": contentType,
+          },
+          body: new Blob(["e2e-upload-probe"], { type: contentType }),
+        });
+        return response.ok;
+      } catch {
+        return false;
+      }
+    },
+    {
+      uploadUrl: input.uploadUrl,
+      contentType: input.contentType,
+    },
+  );
+
 export const shouldRunFileUploadFlow = async (
   request: APIRequestContext,
+  page?: Page,
 ): Promise<boolean> => {
   const flow = parseFileUploadFlow();
-  if (flow === "always") {
+  if (flow === "file") {
     return true;
   }
-  if (flow === "never") {
+  if (flow === "url") {
     return false;
   }
 
@@ -173,13 +200,22 @@ export const shouldRunFileUploadFlow = async (
         }
 
         try {
+          const contentType =
+            presign.requiredHeaders?.["Content-Type"] ?? "image/png";
+
+          if (page) {
+            return await probeUploadWithBrowserFetch(page, {
+              uploadUrl: presign.uploadUrl,
+              contentType,
+            });
+          }
+
           const uploadProbe = await request.fetch(presign.uploadUrl, {
             method: "PUT",
             headers: {
-              "Content-Type":
-                presign.requiredHeaders?.["Content-Type"] ?? "image/png",
+              "Content-Type": contentType,
             },
-            data: Buffer.from("e2e-upload-probe"),
+            data: "e2e-upload-probe",
           });
           return uploadProbe.ok();
         } catch {
@@ -207,6 +243,49 @@ export const shouldRunFileUploadFlow = async (
 
   return uploadFlowAvailabilityPromise;
 };
+
+export type E2ERole =
+  | "president"
+  | "vice_president"
+  | "manager"
+  | "member"
+  | "new_member"
+  | "associate_member"
+  | "regular_member"
+  | "unverified";
+
+type AssignableRole =
+  | "president"
+  | "vice_president"
+  | "manager"
+  | "new_member"
+  | "associate_member"
+  | "regular_member"
+  | "unverified";
+
+const CORE_ROLE_MATRIX: E2ERole[] = [
+  "president",
+  "manager",
+  "regular_member",
+  "unverified",
+];
+
+const FULL_ROLE_MATRIX: E2ERole[] = [
+  "president",
+  "vice_president",
+  "manager",
+  "member",
+  "new_member",
+  "associate_member",
+  "regular_member",
+  "unverified",
+];
+
+const toAssignableRole = (role: E2ERole): AssignableRole =>
+  role === "member" ? "regular_member" : role;
+
+export const getRoleMatrixRoles = (): E2ERole[] =>
+  readE2eRoleMatrixMode() === "all" ? [...FULL_ROLE_MATRIX] : [...CORE_ROLE_MATRIX];
 
 export const uniqueText = (prefix: string, label: string): string =>
   `${prefix}-${label}-${Math.random().toString(36).slice(2, 8)}`;
@@ -474,4 +553,116 @@ export const signUpTemporaryUser = async (prefix: string) => {
   } finally {
     await isolatedContext.dispose();
   }
+};
+
+type SessionPayload = {
+  user?: {
+    id?: string;
+    email?: string;
+    role?: string | null;
+  };
+} | null;
+
+const fetchSession = async (
+  requestContext: APIRequestContext,
+): Promise<SessionPayload> => {
+  const response = await requestContext.get(`${API_BASE_URL}/api/auth/get-session`);
+  if (!response.ok()) {
+    return null;
+  }
+
+  return (await response.json().catch(() => null)) as SessionPayload;
+};
+
+export const signOutCurrentSession = async (
+  requestContext: APIRequestContext,
+): Promise<void> => {
+  await requestContext.post(`${API_BASE_URL}/api/auth/sign-out`, {
+    headers: buildAuthHeaders(),
+    data: {},
+    failOnStatusCode: false,
+  });
+};
+
+export const signInWithEmailPassword = async (
+  page: Page,
+  input: {
+    email: string;
+    password: string;
+    expectedRole?: string | null;
+  },
+): Promise<void> => {
+  const response = await page.request.post(`${API_BASE_URL}/api/auth/sign-in/email`, {
+    headers: buildAuthHeaders(),
+    data: {
+      email: input.email,
+      password: input.password,
+      rememberMe: true,
+    },
+  });
+
+  if (!response.ok()) {
+    const payload = await readJsonSafe(response);
+    throw new Error(
+      readErrorMessage(
+        payload,
+        `Email sign-in failed (${response.status()}): ${input.email}`,
+      ),
+    );
+  }
+
+  const session = await fetchSession(page.request);
+  if (!session?.user) {
+    throw new Error(`Session not established after sign-in: ${input.email}`);
+  }
+
+  if (session.user.email !== input.email) {
+    throw new Error(
+      `Signed-in session email mismatch. expected=${input.email} actual=${session.user.email ?? "null"}`,
+    );
+  }
+
+  if (input.expectedRole !== undefined && session.user.role !== input.expectedRole) {
+    throw new Error(
+      `Signed-in session role mismatch. expected=${input.expectedRole ?? "null"} actual=${session.user.role ?? "null"}`,
+    );
+  }
+};
+
+export const provisionRoleUser = async (
+  request: APIRequestContext,
+  input: {
+    prefix: string;
+    role: E2ERole;
+    generationId: string | null;
+  },
+): Promise<{
+  id: string;
+  email: string;
+  password: string;
+  name: string;
+  requestedRole: E2ERole;
+  assignedRole: AssignableRole;
+}> => {
+  const tempUser = await signUpTemporaryUser(input.prefix);
+  const assignedRole = toAssignableRole(input.role);
+
+  await adminApiRequest<{
+    id: string;
+    role: string | null;
+    generationId: string | null;
+  }>(request, {
+    method: "PATCH",
+    path: `/users/${tempUser.id}`,
+    data: {
+      role: assignedRole,
+      generationId: input.generationId,
+    },
+  });
+
+  return {
+    ...tempUser,
+    requestedRole: input.role,
+    assignedRole,
+  };
 };

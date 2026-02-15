@@ -26,6 +26,11 @@ test.describe("generations crud", () => {
     const tempUser = await signUpTemporaryUser(e2ePrefix);
 
     await page.goto("/admin/generations");
+    if ((await page.getByRole("heading", { name: "관리자 로그인" }).count()) > 0) {
+      await ensureAdminSession(page);
+      await page.goto("/admin/generations");
+    }
+    await expect(page.getByTestId("generations-page")).toBeVisible();
 
     await page.getByTestId("generation-create-name").fill(generationName);
     await page.getByTestId("generation-create-sort-order").fill(baseSortOrder);
@@ -34,11 +39,17 @@ test.describe("generations crud", () => {
     await page.getByTestId("generation-create-submit").click();
 
     await expect(page.getByTestId("generations-success")).toContainText("생성");
+    await expect(page.getByTestId("generation-create-submit")).toBeEnabled();
 
     const createdRow = page.locator('[data-testid^="generation-row-"]', {
       hasText: generationName,
     });
     await expect(createdRow).toBeVisible();
+    const createdRowTestId = await createdRow.getAttribute("data-testid");
+    if (!createdRowTestId) {
+      throw new Error("created generation row test id is missing");
+    }
+    const createdGenerationId = createdRowTestId.replace("generation-row-", "");
 
     await createdRow.getByRole("button", { name: /선택|선택됨/ }).click();
     await expect(createdRow.getByRole("button", { name: "선택됨" })).toBeVisible();
@@ -53,10 +64,25 @@ test.describe("generations crud", () => {
     await page.getByTestId("generation-edit-submit").click();
 
     await expect(page.getByTestId("generations-success")).toContainText("수정");
+    await expect(page.getByTestId("generation-edit-submit")).toBeEnabled();
 
-    const updatedRow = page.locator('[data-testid^="generation-row-"]', {
-      hasText: updatedGenerationName,
-    });
+    await expect
+      .poll(
+        async () => {
+          await page.getByTestId("generations-reload-button").click();
+          return (
+            (await page
+              .getByTestId(`generation-row-${createdGenerationId}`)
+              .textContent()) ?? ""
+          );
+        },
+        {
+          timeout: 20_000,
+        },
+      )
+      .toContain(updatedGenerationName);
+
+    const updatedRow = page.getByTestId(`generation-row-${createdGenerationId}`);
     await expect(updatedRow).toBeVisible();
 
     await updatedRow.getByRole("button", { name: /선택|선택됨/ }).click();

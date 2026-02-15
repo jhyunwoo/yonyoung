@@ -245,9 +245,19 @@ export const ApiCreateActivityImageSchema = z
   })
   .openapi("ApiCreateActivityImageInput");
 
-export const ApiUpdateActivityImageSchema = ApiCreateActivityImageSchema.partial().openapi(
-  "ApiUpdateActivityImageInput",
-);
+export const ApiUpdateActivityImageSchema = z
+  .object({
+    imageUrl: urlField(
+      "수정할 활동 세부 이미지 URL",
+      "https://cdn.yonyoung.example/activities/detail/updated-detail.jpg",
+    ).optional(),
+    sortOrder: z.number().int().nonnegative().optional().openapi({
+      description: "수정할 세부 이미지 표시 순서",
+      example: 1,
+    }),
+  })
+  .strict()
+  .openapi("ApiUpdateActivityImageInput");
 
 export const ApiSupporterSchema = z
   .object({
@@ -402,10 +412,19 @@ export const ApiCreateExhibitionImageSchema = z
   })
   .openapi("ApiCreateExhibitionImageInput");
 
-export const ApiUpdateExhibitionImageSchema =
-  ApiCreateExhibitionImageSchema.partial().openapi(
-    "ApiUpdateExhibitionImageInput",
-  );
+export const ApiUpdateExhibitionImageSchema = z
+  .object({
+    imageUrl: urlField(
+      "수정할 전시 세부 이미지 URL",
+      "https://cdn.yonyoung.example/exhibitions/detail/updated-detail.jpg",
+    ).optional(),
+    sortOrder: z.number().int().nonnegative().optional().openapi({
+      description: "수정할 세부 이미지 노출 순서",
+      example: 1,
+    }),
+  })
+  .strict()
+  .openapi("ApiUpdateExhibitionImageInput");
 
 export const ApiLinktreeItemSchema = z
   .object({

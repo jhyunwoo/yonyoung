@@ -26,7 +26,7 @@ test.describe("users crud", () => {
     await ensureAdminSession(page);
 
     const generation = await ensureGeneration(request, e2ePrefix);
-    const runFileUploadFlow = await shouldRunFileUploadFlow(request);
+    const runFileUploadFlow = await shouldRunFileUploadFlow(request, page);
     const tempUser = await signUpTemporaryUser(e2ePrefix);
 
     await page.goto("/admin/users");

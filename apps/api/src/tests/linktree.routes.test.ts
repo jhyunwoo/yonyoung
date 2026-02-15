@@ -1,0 +1,393 @@
+import { describe, expect, it } from "vitest";
+import {
+  IDs,
+  createActor,
+  createDataServiceMock,
+  createLinktree,
+  createLinktreeItem,
+  createTestApp,
+  expectErrorCode,
+  fn,
+  readJson,
+} from "./test-helpers";
+
+describe("linktree routes", () => {
+  it("member 계열 사용자는 링크트리 목록 조회가 가능하다", async () => {
+    const listLinktrees = fn(async () => [createLinktree()]);
+    const app = createTestApp({
+      actor: createActor("associate_member"),
+      dataService: createDataServiceMock({ listLinktrees }),
+    });
+
+    const response = await app.request("/api/linktree");
+    expect(response.status).toBe(200);
+
+    const body = await readJson<{ data: Array<{ id: string }> }>(response);
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0]?.id).toBe(IDs.linktree);
+  });
+
+  it("member 계열 사용자는 링크트리를 생성할 수 없다", async () => {
+    const createLinktreeMock = fn(async () => createLinktree());
+    const app = createTestApp({
+      actor: createActor("regular_member"),
+      dataService: createDataServiceMock({ createLinktree: createLinktreeMock }),
+    });
+
+    const response = await app.request("/api/linktree", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "new-linktree" }),
+    });
+
+    expect(response.status).toBe(403);
+    await expectErrorCode(response, "FORBIDDEN");
+    expect(createLinktreeMock).not.toHaveBeenCalled();
+  });
+
+  it("링크트리 생성 본문이 유효하지 않으면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("manager", IDs.manager) });
+
+    const response = await app.request("/api/linktree", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "" }),
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+
+  it("manager는 링크트리를 생성할 수 있다", async () => {
+    const createLinktreeMock = fn(async () => createLinktree({ name: "new-linktree" }));
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ createLinktree: createLinktreeMock }),
+    });
+
+    const response = await app.request("/api/linktree", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "new-linktree" }),
+    });
+
+    expect(response.status).toBe(201);
+    const body = await readJson<{ data: { name: string } }>(response);
+    expect(body.data.name).toBe("new-linktree");
+    expect(createLinktreeMock).toHaveBeenCalledWith({ name: "new-linktree" });
+  });
+
+  it("링크트리 상세 조회에서 UUID가 유효하지 않으면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("manager", IDs.manager) });
+
+    const response = await app.request("/api/linktree/not-a-uuid");
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+
+  it("존재하지 않는 링크트리 상세 조회는 404를 반환한다", async () => {
+    const getLinktreeById = fn(async () => null);
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ getLinktreeById }),
+    });
+
+    const response = await app.request(`/api/linktree/${IDs.linktree}`);
+    expect(response.status).toBe(404);
+    await expectErrorCode(response, "NOT_FOUND");
+    expect(getLinktreeById).toHaveBeenCalledWith(IDs.linktree);
+  });
+
+  it("링크트리 수정 본문이 비어 있으면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("manager", IDs.manager) });
+
+    const response = await app.request(`/api/linktree/${IDs.linktree}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({}),
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+
+  it("존재하지 않는 링크트리 수정은 404를 반환한다", async () => {
+    const updateLinktree = fn(async () => null);
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ updateLinktree }),
+    });
+
+    const response = await app.request(`/api/linktree/${IDs.linktree}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "updated" }),
+    });
+
+    expect(response.status).toBe(404);
+    await expectErrorCode(response, "NOT_FOUND");
+  });
+
+  it("manager는 링크트리를 수정할 수 있다", async () => {
+    const updateLinktree = fn(async () => createLinktree({ name: "updated" }));
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ updateLinktree }),
+    });
+
+    const response = await app.request(`/api/linktree/${IDs.linktree}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "updated" }),
+    });
+
+    expect(response.status).toBe(200);
+    const body = await readJson<{ data: { name: string } }>(response);
+    expect(body.data.name).toBe("updated");
+  });
+
+  it("member 계열 사용자는 링크트리 삭제 권한이 없다", async () => {
+    const deleteLinktree = fn(async () => true);
+    const app = createTestApp({
+      actor: createActor("regular_member"),
+      dataService: createDataServiceMock({ deleteLinktree }),
+    });
+
+    const response = await app.request(`/api/linktree/${IDs.linktree}`, {
+      method: "DELETE",
+    });
+
+    expect(response.status).toBe(403);
+    await expectErrorCode(response, "FORBIDDEN");
+    expect(deleteLinktree).not.toHaveBeenCalled();
+  });
+
+  it("존재하지 않는 링크트리 삭제는 404를 반환한다", async () => {
+    const deleteLinktree = fn(async () => false);
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ deleteLinktree }),
+    });
+
+    const response = await app.request(`/api/linktree/${IDs.linktree}`, {
+      method: "DELETE",
+    });
+
+    expect(response.status).toBe(404);
+    await expectErrorCode(response, "NOT_FOUND");
+  });
+
+  it("manager는 링크트리를 삭제할 수 있다", async () => {
+    const deleteLinktree = fn(async () => true);
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ deleteLinktree }),
+    });
+
+    const response = await app.request(`/api/linktree/${IDs.linktree}`, {
+      method: "DELETE",
+    });
+
+    expect(response.status).toBe(204);
+    expect(deleteLinktree).toHaveBeenCalledWith(IDs.linktree);
+  });
+
+  it("member 계열 사용자는 링크 아이템 추가가 불가하다", async () => {
+    const addLinktreeItem = fn(async () => createLinktreeItem());
+    const app = createTestApp({
+      actor: createActor("regular_member"),
+      dataService: createDataServiceMock({ addLinktreeItem }),
+    });
+
+    const response = await app.request(`/api/linktree/${IDs.linktree}/items`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        name: "instagram",
+        link: "https://instagram.com/test",
+      }),
+    });
+
+    expect(response.status).toBe(403);
+    await expectErrorCode(response, "FORBIDDEN");
+    expect(addLinktreeItem).not.toHaveBeenCalled();
+  });
+
+  it("링크 아이템 생성 본문이 유효하지 않으면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("manager", IDs.manager) });
+
+    const response = await app.request(`/api/linktree/${IDs.linktree}/items`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "", link: "not-url" }),
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+
+  it("상위 링크트리가 없으면 링크 아이템 생성 시 404를 반환한다", async () => {
+    const addLinktreeItem = fn(async () => null);
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ addLinktreeItem }),
+    });
+
+    const response = await app.request(`/api/linktree/${IDs.linktree}/items`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        name: "instagram",
+        link: "https://instagram.com/test",
+      }),
+    });
+
+    expect(response.status).toBe(404);
+    const body = await readJson<{ error: { message: string } }>(response);
+    expect(body.error.message).toContain("링크트리");
+  });
+
+  it("manager는 링크 아이템을 생성할 수 있다", async () => {
+    const addLinktreeItem = fn(async () => createLinktreeItem());
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ addLinktreeItem }),
+    });
+
+    const payload = {
+      name: "instagram",
+      link: "https://instagram.com/test",
+    };
+
+    const response = await app.request(`/api/linktree/${IDs.linktree}/items`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    expect(response.status).toBe(201);
+    const body = await readJson<{ data: { id: string } }>(response);
+    expect(body.data.id).toBe(IDs.linktreeItem);
+    expect(addLinktreeItem).toHaveBeenCalledWith(IDs.linktree, payload);
+  });
+
+  it("링크 아이템 수정 본문이 비어 있으면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("manager", IDs.manager) });
+
+    const response = await app.request(
+      `/api/linktree/${IDs.linktree}/items/${IDs.linktreeItem}`,
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({}),
+      },
+    );
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+
+  it("존재하지 않는 링크 아이템 수정은 404를 반환한다", async () => {
+    const updateLinktreeItem = fn(async () => null);
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ updateLinktreeItem }),
+    });
+
+    const response = await app.request(
+      `/api/linktree/${IDs.linktree}/items/${IDs.linktreeItem}`,
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: "updated" }),
+      },
+    );
+
+    expect(response.status).toBe(404);
+    const body = await readJson<{ error: { message: string } }>(response);
+    expect(body.error.message).toContain("링크 아이템");
+  });
+
+  it("manager는 링크 아이템을 수정할 수 있다", async () => {
+    const updateLinktreeItem = fn(async () => createLinktreeItem({ name: "updated" }));
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ updateLinktreeItem }),
+    });
+
+    const payload = { name: "updated" };
+    const response = await app.request(
+      `/api/linktree/${IDs.linktree}/items/${IDs.linktreeItem}`,
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      },
+    );
+
+    expect(response.status).toBe(200);
+    const body = await readJson<{ data: { name: string } }>(response);
+    expect(body.data.name).toBe("updated");
+    expect(updateLinktreeItem).toHaveBeenCalledWith(
+      IDs.linktree,
+      IDs.linktreeItem,
+      payload,
+    );
+  });
+
+  it("member 계열 사용자는 링크 아이템 삭제가 불가하다", async () => {
+    const deleteLinktreeItem = fn(async () => true);
+    const app = createTestApp({
+      actor: createActor("regular_member"),
+      dataService: createDataServiceMock({ deleteLinktreeItem }),
+    });
+
+    const response = await app.request(
+      `/api/linktree/${IDs.linktree}/items/${IDs.linktreeItem}`,
+      {
+        method: "DELETE",
+      },
+    );
+
+    expect(response.status).toBe(403);
+    await expectErrorCode(response, "FORBIDDEN");
+    expect(deleteLinktreeItem).not.toHaveBeenCalled();
+  });
+
+  it("존재하지 않는 링크 아이템 삭제는 404를 반환한다", async () => {
+    const deleteLinktreeItem = fn(async () => false);
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ deleteLinktreeItem }),
+    });
+
+    const response = await app.request(
+      `/api/linktree/${IDs.linktree}/items/${IDs.linktreeItem}`,
+      {
+        method: "DELETE",
+      },
+    );
+
+    expect(response.status).toBe(404);
+    const body = await readJson<{ error: { message: string } }>(response);
+    expect(body.error.message).toContain("링크 아이템");
+  });
+
+  it("manager는 링크 아이템을 삭제할 수 있다", async () => {
+    const deleteLinktreeItem = fn(async () => true);
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ deleteLinktreeItem }),
+    });
+
+    const response = await app.request(
+      `/api/linktree/${IDs.linktree}/items/${IDs.linktreeItem}`,
+      {
+        method: "DELETE",
+      },
+    );
+
+    expect(response.status).toBe(204);
+    expect(deleteLinktreeItem).toHaveBeenCalledWith(IDs.linktree, IDs.linktreeItem);
+  });
+});

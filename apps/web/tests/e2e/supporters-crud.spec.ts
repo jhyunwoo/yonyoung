@@ -23,7 +23,7 @@ test.describe("supporters crud", () => {
     test.info().annotations.push({ type: "e2e-prefix", description: e2ePrefix });
     await ensureAdminSession(page);
 
-    const runFileUploadFlow = await shouldRunFileUploadFlow(request);
+    const runFileUploadFlow = await shouldRunFileUploadFlow(request, page);
     const name = uniqueText(e2ePrefix, "supporter");
     const updatedName = `${name}-updated`;
 

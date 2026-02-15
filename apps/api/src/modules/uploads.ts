@@ -6,6 +6,7 @@ import { AppDependencies } from "../lib/services/dependencies";
 import { requireActor } from "../lib/http/authz";
 import { can, isMemberLikeRole } from "../lib/authorization/policy";
 import { Resource } from "../lib/authorization/types";
+import { MissingStorageConfigError } from "../lib/storage/presign";
 import {
   createdResponse,
   errorResponses,
@@ -79,6 +80,12 @@ const registerResourcePresignRoute = (
       });
       return ok(c, data, 201);
     } catch (error) {
+      if (error instanceof MissingStorageConfigError) {
+        return internalError(
+          c,
+          "업로드 스토리지 설정이 누락되었습니다. R2_* 환경변수를 확인해 주세요.",
+        );
+      }
       console.error("presign issue failed", error);
       return internalError(c, "업로드 URL 발급에 실패했습니다.");
     }
@@ -176,6 +183,12 @@ export const registerUploadRoutes = (
       });
       return ok(c, data, 201);
     } catch (error) {
+      if (error instanceof MissingStorageConfigError) {
+        return internalError(
+          c,
+          "업로드 스토리지 설정이 누락되었습니다. R2_* 환경변수를 확인해 주세요.",
+        );
+      }
       console.error("presign issue failed", error);
       return internalError(c, "업로드 URL 발급에 실패했습니다.");
     }

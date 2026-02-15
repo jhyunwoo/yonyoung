@@ -25,7 +25,7 @@ test.describe("exhibitions crud", () => {
     await ensureAdminSession(page);
 
     const generation = await ensureGeneration(request, e2ePrefix);
-    const runFileUploadFlow = await shouldRunFileUploadFlow(request);
+    const runFileUploadFlow = await shouldRunFileUploadFlow(request, page);
     const title = uniqueText(e2ePrefix, "exhibition");
     const updatedTitle = `${title}-updated`;
 

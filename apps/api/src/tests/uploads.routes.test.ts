@@ -1,0 +1,282 @@
+import { describe, expect, it } from "vitest";
+import {
+  IDs,
+  createActor,
+  createPresignServiceMock,
+  createTestApp,
+  expectErrorCode,
+  fn,
+  readJson,
+} from "./test-helpers";
+import { MissingStorageConfigError } from "../lib/storage/presign";
+
+describe("upload presign routes", () => {
+  const resourceRoutes = [
+    {
+      path: "/api/activities/presign/cover",
+      role: "manager" as const,
+      expected: { resource: "activities", slot: "cover" as const },
+    },
+    {
+      path: "/api/activities/presign/detail",
+      role: "manager" as const,
+      expected: { resource: "activities", slot: "detail" as const },
+    },
+    {
+      path: "/api/exhibitions/presign/cover",
+      role: "manager" as const,
+      expected: { resource: "exhibitions", slot: "cover" as const },
+    },
+    {
+      path: "/api/exhibitions/presign/detail",
+      role: "manager" as const,
+      expected: { resource: "exhibitions", slot: "detail" as const },
+    },
+    {
+      path: "/api/supporters/presign/logo",
+      role: "manager" as const,
+      expected: { resource: "supporters", slot: "logo" as const },
+    },
+  ];
+
+  for (const route of resourceRoutes) {
+    it(`${route.path}는 인증되지 않은 요청에 401을 반환한다`, async () => {
+      const app = createTestApp({ actor: null });
+      const response = await app.request(route.path, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ fileName: "cover.png", contentType: "image/png" }),
+      });
+
+      expect(response.status).toBe(401);
+      await expectErrorCode(response, "UNAUTHORIZED");
+    });
+
+    it(`${route.path}는 권한 없는 사용자에게 403을 반환한다`, async () => {
+      const issuePresignedPutUrl = fn(async () => ({
+        uploadUrl: "https://upload.example.com/signed",
+        objectKey: "object-key",
+        publicUrl: "https://cdn.example.com/object-key",
+        requiredHeaders: { "Content-Type": "image/png" },
+      }));
+      const app = createTestApp({
+        actor: createActor("regular_member"),
+        presignService: createPresignServiceMock({ issuePresignedPutUrl }),
+      });
+
+      const response = await app.request(route.path, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ fileName: "cover.png", contentType: "image/png" }),
+      });
+
+      expect(response.status).toBe(403);
+      await expectErrorCode(response, "FORBIDDEN");
+      expect(issuePresignedPutUrl).not.toHaveBeenCalled();
+    });
+
+    it(`${route.path}는 본문 검증 실패 시 400을 반환한다`, async () => {
+      const app = createTestApp({ actor: createActor(route.role, IDs.manager) });
+
+      const response = await app.request(route.path, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ fileName: "" }),
+      });
+
+      expect(response.status).toBe(400);
+      await expectErrorCode(response, "BAD_REQUEST");
+    });
+
+    it(`${route.path}는 presign 생성 성공 시 201과 URL을 반환한다`, async () => {
+      const issuePresignedPutUrl = fn(async () => ({
+        uploadUrl: "https://upload.example.com/signed",
+        objectKey: "object-key",
+        publicUrl: "https://cdn.example.com/object-key",
+        requiredHeaders: { "Content-Type": "image/png" },
+      }));
+      const app = createTestApp({
+        actor: createActor(route.role, IDs.manager),
+        presignService: createPresignServiceMock({ issuePresignedPutUrl }),
+      });
+
+      const response = await app.request(route.path, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ fileName: "cover.png", contentType: "image/png" }),
+      });
+
+      expect(response.status).toBe(201);
+      const body = await readJson<{ data: { uploadUrl: string; publicUrl: string } }>(
+        response,
+      );
+      expect(body.data.uploadUrl).toContain("upload.example.com");
+      expect(body.data.publicUrl).toContain("cdn.example.com");
+      expect(issuePresignedPutUrl).toHaveBeenCalledWith({
+        actorId: IDs.manager,
+        resource: route.expected.resource,
+        slot: route.expected.slot,
+        fileName: "cover.png",
+        contentType: "image/png",
+      });
+    });
+
+    it(`${route.path}는 presign 서비스 예외 시 500을 반환한다`, async () => {
+      const issuePresignedPutUrl = fn(async () => {
+        throw new Error("r2 unavailable");
+      });
+      const app = createTestApp({
+        actor: createActor(route.role, IDs.manager),
+        presignService: createPresignServiceMock({ issuePresignedPutUrl }),
+      });
+
+      const response = await app.request(route.path, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ fileName: "cover.png", contentType: "image/png" }),
+      });
+
+      expect(response.status).toBe(500);
+      await expectErrorCode(response, "INTERNAL_ERROR");
+    });
+  }
+
+  it("R2 설정 누락 에러는 내부 오류로 처리하되 상세 안내 메시지를 반환한다", async () => {
+    const issuePresignedPutUrl = fn(async () => {
+      throw new MissingStorageConfigError(["R2_S3_ENDPOINT", "R2_ACCESS_KEY_ID"]);
+    });
+    const consoleSpy = fn();
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      presignService: createPresignServiceMock({ issuePresignedPutUrl }),
+    });
+
+    const originalConsoleError = console.error;
+    console.error = consoleSpy;
+    try {
+      const response = await app.request("/api/activities/presign/cover", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ fileName: "cover.png", contentType: "image/png" }),
+      });
+
+      expect(response.status).toBe(500);
+      const body = await readJson<{ error: { message: string } }>(response);
+      expect(body.error.message).toContain("R2_*");
+      expect(consoleSpy).not.toHaveBeenCalled();
+    } finally {
+      console.error = originalConsoleError;
+    }
+  });
+
+  it("/api/users/presign/profile는 manager에게 403을 반환한다", async () => {
+    const issuePresignedPutUrl = fn(async () => ({
+      uploadUrl: "https://upload.example.com/signed",
+      objectKey: "users/profile-key",
+      publicUrl: "https://cdn.example.com/users/profile-key",
+      requiredHeaders: { "Content-Type": "image/png" },
+    }));
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      presignService: createPresignServiceMock({ issuePresignedPutUrl }),
+    });
+
+    const response = await app.request("/api/users/presign/profile", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png" }),
+    });
+
+    expect(response.status).toBe(403);
+    await expectErrorCode(response, "FORBIDDEN");
+    expect(issuePresignedPutUrl).not.toHaveBeenCalled();
+  });
+
+  it("/api/users/presign/profile는 member 계열 사용자에게 허용된다", async () => {
+    const issuePresignedPutUrl = fn(async () => ({
+      uploadUrl: "https://upload.example.com/signed",
+      objectKey: "users/profile-key",
+      publicUrl: "https://cdn.example.com/users/profile-key",
+      requiredHeaders: { "Content-Type": "image/png" },
+    }));
+    const app = createTestApp({
+      actor: createActor("associate_member", IDs.member),
+      presignService: createPresignServiceMock({ issuePresignedPutUrl }),
+    });
+
+    const response = await app.request("/api/users/presign/profile", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png" }),
+    });
+
+    expect(response.status).toBe(201);
+    expect(issuePresignedPutUrl).toHaveBeenCalledWith({
+      actorId: IDs.member,
+      resource: "users",
+      slot: "profile",
+      fileName: "profile.png",
+      contentType: "image/png",
+    });
+  });
+
+  it("/api/users/presign/profile는 user update 권한이 있는 관리자에게 허용된다", async () => {
+    const issuePresignedPutUrl = fn(async () => ({
+      uploadUrl: "https://upload.example.com/signed",
+      objectKey: "users/profile-key",
+      publicUrl: "https://cdn.example.com/users/profile-key",
+      requiredHeaders: { "Content-Type": "image/png" },
+    }));
+    const app = createTestApp({
+      actor: createActor("vice_president", IDs.vicePresident),
+      presignService: createPresignServiceMock({ issuePresignedPutUrl }),
+    });
+
+    const response = await app.request("/api/users/presign/profile", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png" }),
+    });
+
+    expect(response.status).toBe(201);
+    expect(issuePresignedPutUrl).toHaveBeenCalledWith({
+      actorId: IDs.vicePresident,
+      resource: "users",
+      slot: "profile",
+      fileName: "profile.png",
+      contentType: "image/png",
+    });
+  });
+
+  it("/api/users/presign/profile 본문이 유효하지 않으면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("associate_member", IDs.member) });
+
+    const response = await app.request("/api/users/presign/profile", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "" }),
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+
+  it("/api/users/presign/profile는 presign 서비스 예외 시 500을 반환한다", async () => {
+    const issuePresignedPutUrl = fn(async () => {
+      throw new Error("r2 unavailable");
+    });
+    const app = createTestApp({
+      actor: createActor("associate_member", IDs.member),
+      presignService: createPresignServiceMock({ issuePresignedPutUrl }),
+    });
+
+    const response = await app.request("/api/users/presign/profile", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png" }),
+    });
+
+    expect(response.status).toBe(500);
+    await expectErrorCode(response, "INTERNAL_ERROR");
+  });
+});

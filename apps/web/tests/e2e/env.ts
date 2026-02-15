@@ -105,6 +105,22 @@ export const readE2eEnv = (key: string, fallback?: string): string => {
   throw new Error(`${key} 환경변수가 필요합니다.`);
 };
 
+export type E2ESuiteMode = "smoke" | "full";
+export type E2ERoleMatrixMode = "core" | "all";
+
+const normalizeTextValue = (value: string | undefined): string =>
+  (value ?? "").trim().toLowerCase();
+
+export const readE2eSuiteMode = (): E2ESuiteMode => {
+  const rawValue = normalizeTextValue(process.env.E2E_SUITE_MODE);
+  return rawValue === "full" ? "full" : "smoke";
+};
+
+export const readE2eRoleMatrixMode = (): E2ERoleMatrixMode => {
+  const rawValue = normalizeTextValue(process.env.E2E_ROLE_MATRIX);
+  return rawValue === "all" ? "all" : "core";
+};
+
 export const requireE2eEnv = (keys: string[]): Record<string, string> => {
   const missingKeys = keys.filter((key) => {
     const value = process.env[key];
@@ -128,4 +144,3 @@ export const requireE2eEnv = (keys: string[]): Record<string, string> => {
   }
   return result;
 };
-
