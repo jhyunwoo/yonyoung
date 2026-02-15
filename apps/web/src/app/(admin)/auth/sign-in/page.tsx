@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
-  signInToAdminWithGoogle,
-  signInToAdminWithPasskey,
+  signInWithGoogle,
+  signInWithPasskey,
 } from "../../../../lib/auth-client-tool";
 
 export default function SignInPage() {
@@ -20,7 +20,10 @@ export default function SignInPage() {
     setIsGooglePending(true);
 
     const callbackURL = `${window.location.origin}/admin`;
-    const result = await signInToAdminWithGoogle(callbackURL);
+    const result = await signInWithGoogle({
+      callbackURL,
+      disableRedirect: true,
+    });
 
     if (!result.ok) {
       setErrorMessage(result.errorMessage);
@@ -28,14 +31,21 @@ export default function SignInPage() {
       return;
     }
 
-    window.location.href = result.redirectUrl;
+    const redirectUrl = result.data?.redirectUrl;
+    if (!redirectUrl) {
+      setErrorMessage("Google 로그인 리다이렉트 URL을 찾을 수 없습니다.");
+      setIsGooglePending(false);
+      return;
+    }
+
+    window.location.href = redirectUrl;
   };
 
   const handlePasskeySignIn = async () => {
     setErrorMessage(null);
     setIsPasskeyPending(true);
 
-    const result = await signInToAdminWithPasskey();
+    const result = await signInWithPasskey();
 
     if (!result.ok) {
       setErrorMessage(result.errorMessage);

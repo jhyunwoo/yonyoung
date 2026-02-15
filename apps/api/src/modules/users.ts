@@ -24,7 +24,7 @@ import {
 } from "../lib/openapi/responses";
 import {
   ApiAdminUpdateUserSchema,
-  ApiIdParamSchema,
+  ApiUserIdParamSchema,
   ApiMemberProfileUpdateSchema,
   ApiUserSchema,
 } from "../lib/openapi/schemas";
@@ -56,7 +56,7 @@ const getUserByIdRoute = createRoute({
   operationId: "getUserById",
   security: [{ cookieAuth: [] }],
   request: {
-    params: ApiIdParamSchema,
+    params: ApiUserIdParamSchema,
   },
   responses: {
     200: dataResponse(ApiUserSchema, "사용자 상세 조회 성공"),
@@ -74,7 +74,7 @@ const updateUserRoute = createRoute({
   operationId: "updateUser",
   security: [{ cookieAuth: [] }],
   request: {
-    params: ApiIdParamSchema,
+    params: ApiUserIdParamSchema,
     body: jsonBody(updateUserRequestSchema, "사용자 수정 요청"),
   },
   responses: {
@@ -93,7 +93,7 @@ const deleteUserRoute = createRoute({
   operationId: "deleteUser",
   security: [{ cookieAuth: [] }],
   request: {
-    params: ApiIdParamSchema,
+    params: ApiUserIdParamSchema,
   },
   responses: {
     204: noContentResponse,
@@ -134,7 +134,7 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
       return actorResult.response;
     }
 
-    const params = parseParams(c, ApiIdParamSchema);
+    const params = parseParams(c, ApiUserIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }
@@ -163,7 +163,7 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
       return actorResult.response;
     }
 
-    const params = parseParams(c, ApiIdParamSchema);
+    const params = parseParams(c, ApiUserIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }
@@ -242,7 +242,7 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
       return actorResult.response;
     }
 
-    const params = parseParams(c, ApiIdParamSchema);
+    const params = parseParams(c, ApiUserIdParamSchema);
     if (!params.success) {
       return badRequest(c, params.message);
     }

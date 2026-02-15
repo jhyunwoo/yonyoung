@@ -6,6 +6,10 @@ describe("authorization policy", () => {
     expect(normalizeRole("user")).toBe("unverified");
   });
 
+  it("제거된 member role 문자열은 regular_member로 정규화한다", () => {
+    expect(normalizeRole("member")).toBe("regular_member");
+  });
+
   it("알 수 없는 role은 unverified로 정규화한다", () => {
     expect(normalizeRole("something-else")).toBe("unverified");
     expect(normalizeRole(null)).toBe("unverified");
@@ -26,11 +30,11 @@ describe("authorization policy", () => {
     expect(can("manager", "activity", "delete")).toBe(true);
   });
 
-  it("부원은 user 일반 조회 권한이 없다", () => {
-    expect(can("member", "user", "read")).toBe(false);
+  it("정회원은 user 일반 조회 권한이 없다", () => {
+    expect(can("regular_member", "user", "read")).toBe(false);
   });
 
-  it("신규 member 계열 role은 기존 member와 동일 권한을 가진다", () => {
+  it("member 계열 role은 동일 권한을 가진다", () => {
     expect(can("new_member", "activity", "read")).toBe(true);
     expect(can("associate_member", "supporter", "update")).toBe(false);
     expect(can("regular_member", "user", "read")).toBe(false);

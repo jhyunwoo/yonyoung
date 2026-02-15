@@ -5,9 +5,13 @@ const SESSION_PATH = "/api/auth/get-session";
 const SESSION_REQUEST_TIMEOUT_MS = 4000;
 
 const normalizeBaseUrl = (value: string): string => value.replace(/\/+$/, "");
-export type { AuthSession } from "./auth-shared";
+export type { AuthRole, AuthSession, AuthUser } from "./auth-shared";
 export {
+  AUTH_ROLE_VALUES,
+  getRoleFromSession,
   canAccessAdminPage,
+  canManageGenerations,
+  isPresidentRole,
   isAdminRole,
   isAdminSession,
   isUnverifiedRole,

@@ -37,6 +37,7 @@ Required runtime variables:
 - `PASSKEY_RP_ID`
 - `PASSKEY_RP_NAME`
 - `PASSKEY_ORIGIN`
+- `BETTER_AUTH_EMAIL_AND_PASSWORD_ENABLED` (optional, default `false`; set `true` for E2E email sign-in)
 - `R2_S3_ENDPOINT`
 - `R2_ACCESS_KEY_ID`
 - `R2_SECRET_ACCESS_KEY`
@@ -112,8 +113,8 @@ Better Auth schema endpoint is also protected:
 
 ## User Permission Note
 
-- `member` role and member-like roles (`new_member`, `associate_member`, `regular_member`) can only read their own user data.
-- `member` role and member-like roles can update/delete only their own profile.
+- Member-like roles (`new_member`, `associate_member`, `regular_member`) can only read their own user data.
+- Member-like roles can update/delete only their own profile.
 
 ## Local Development
 

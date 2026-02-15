@@ -119,7 +119,9 @@ describe("OpenAPI docs quality", () => {
     );
     expect(apiExhibition?.properties?.title?.description).toContain("전시 제목");
     expect(apiUser?.properties?.email?.description).toContain("사용자 이메일");
-    expect(apiUser?.properties?.email?.example).toBe("member@yonyoung.example");
+    expect(apiUser?.properties?.email?.example).toBe(
+      "regular_member@yonyoung.example",
+    );
   });
 
   it("알 수 없는 auth endpoint도 fallback 설명이 자동 생성되어야 한다", async () => {

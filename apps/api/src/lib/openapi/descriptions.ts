@@ -656,7 +656,7 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
   listUsers: mkSpec({
     summary: "사용자 목록/본인 조회",
     overview:
-      "권한에 따라 사용자 목록 또는 본인 정보만 조회합니다. member 계열 role(member/new_member/associate_member/regular_member)은 본인 정보만 반환됩니다.",
+      "권한에 따라 사용자 목록 또는 본인 정보만 조회합니다. member 계열 role(new_member/associate_member/regular_member)은 본인 정보만 반환됩니다.",
     parameters: ["경로/쿼리 파라미터를 사용하지 않습니다."],
     requestBody: ["요청 본문은 사용하지 않습니다."],
     internalFlow: [

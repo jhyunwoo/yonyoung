@@ -13,7 +13,7 @@ CREATE TABLE `__new_user` (
 	FOREIGN KEY (`generation_id`) REFERENCES `generations`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
-INSERT INTO `__new_user`("id", "name", "email", "email_verified", "image", "created_at", "updated_at", "nickname", "role", "generation_id") SELECT "id", "name", "email", "email_verified", "image", "created_at", "updated_at", "nickname", CASE WHEN "role" = 'user' THEN 'member' ELSE "role" END, "generation_id" FROM `user`;--> statement-breakpoint
+INSERT INTO `__new_user`("id", "name", "email", "email_verified", "image", "created_at", "updated_at", "nickname", "role", "generation_id") SELECT "id", "name", "email", "email_verified", "image", "created_at", "updated_at", "nickname", CASE WHEN "role" IN ('user', 'member') THEN 'regular_member' ELSE "role" END, "generation_id" FROM `user`;--> statement-breakpoint
 DROP TABLE `user`;--> statement-breakpoint
 ALTER TABLE `__new_user` RENAME TO `user`;--> statement-breakpoint
 PRAGMA foreign_keys=ON;--> statement-breakpoint

@@ -2,7 +2,6 @@ export const ROLE_VALUES = [
   "president",
   "vice_president",
   "manager",
-  "member",
   "new_member",
   "associate_member",
   "regular_member",

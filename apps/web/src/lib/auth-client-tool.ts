@@ -1,29 +1,32 @@
 "use client";
 
 import { authClient } from "./auth-client";
-import { isAdminRole } from "./auth-shared";
+import {
+  canAccessAdminPage,
+  canManageGenerations,
+  getRoleFromSession,
+  isPresidentRole,
+  isUnverifiedRole,
+} from "./auth-shared";
+import type { AuthRole } from "./auth-shared";
 
 const DEFAULT_AUTH_ERROR_MESSAGE =
   "인증 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.";
 
-type AuthActionResult =
+export type AuthActionResult<T = undefined> =
   | {
       ok: true;
+      data?: T;
     }
   | {
       ok: false;
       errorMessage: string;
     };
 
-type RedirectAuthActionResult =
-  | {
-      ok: true;
-      redirectUrl: string;
-    }
-  | {
-      ok: false;
-      errorMessage: string;
-    };
+type SignInWithGoogleParams = {
+  callbackURL?: string;
+  disableRedirect?: boolean;
+};
 
 export const getAuthErrorMessage = (
   error: unknown,
@@ -42,14 +45,15 @@ export const getAuthErrorMessage = (
   return fallback;
 };
 
-export const signInToAdminWithGoogle = async (
-  callbackURL: string,
-): Promise<RedirectAuthActionResult> => {
+export const signInWithGoogle = async ({
+  callbackURL,
+  disableRedirect = true,
+}: SignInWithGoogleParams): Promise<AuthActionResult<{ redirectUrl: string }>> => {
   try {
     const response = await authClient.signIn.social({
       provider: "google",
       callbackURL,
-      disableRedirect: true,
+      disableRedirect,
     });
 
     if (response.error) {
@@ -59,8 +63,13 @@ export const signInToAdminWithGoogle = async (
       };
     }
 
-    const redirectUrl = response.data?.url;
+    if (!disableRedirect) {
+      return {
+        ok: true,
+      };
+    }
 
+    const redirectUrl = response.data?.url;
     if (!redirectUrl) {
       return {
         ok: false,
@@ -70,7 +79,9 @@ export const signInToAdminWithGoogle = async (
 
     return {
       ok: true,
-      redirectUrl,
+      data: {
+        redirectUrl,
+      },
     };
   } catch (error) {
     return {
@@ -80,7 +91,7 @@ export const signInToAdminWithGoogle = async (
   }
 };
 
-export const signInToAdminWithPasskey = async (): Promise<AuthActionResult> => {
+export const signInWithPasskey = async (): Promise<AuthActionResult> => {
   try {
     const response = await authClient.signIn.passkey();
 
@@ -102,7 +113,7 @@ export const signInToAdminWithPasskey = async (): Promise<AuthActionResult> => {
   }
 };
 
-export const signOutCurrentUser = async (): Promise<AuthActionResult> => {
+export const signOut = async (): Promise<AuthActionResult> => {
   try {
     const response = await authClient.signOut();
 
@@ -124,29 +135,63 @@ export const signOutCurrentUser = async (): Promise<AuthActionResult> => {
   }
 };
 
-export const useClientAuthSession = () => {
+export const useAuthSession = (): {
+  data: ReturnType<typeof authClient.useSession>["data"];
+  error: ReturnType<typeof authClient.useSession>["error"];
+  isPending: ReturnType<typeof authClient.useSession>["isPending"];
+  isRefetching: ReturnType<typeof authClient.useSession>["isRefetching"];
+  refetch: ReturnType<typeof authClient.useSession>["refetch"];
+  session: ReturnType<typeof authClient.useSession>["data"] | null;
+  role: AuthRole | null;
+  isAuthenticated: boolean;
+  isUnverified: boolean;
+  canAccessAdmin: boolean;
+  isPresident: boolean;
+  canManageGenerations: boolean;
+} => {
   const sessionState = authClient.useSession();
   const session = sessionState.data ?? null;
-  const role =
-    session &&
-    typeof session.user === "object" &&
-    session.user !== null &&
-    "role" in session.user &&
-    typeof session.user.role === "string"
-      ? session.user.role
-      : null;
+  const role = getRoleFromSession(session);
+  const isAuthenticated = Boolean(session);
+  const isUnverified = isUnverifiedRole(role);
+  const canAccessAdmin = canAccessAdminPage(session);
+  const isPresident = isPresidentRole(role);
+  const canManageGenerationsValue = canManageGenerations(session);
 
   return {
     ...sessionState,
     session,
     role,
-    isAuthenticated: Boolean(session),
-    isAdmin: isAdminRole(role),
+    isAuthenticated,
+    isUnverified,
+    canAccessAdmin,
+    isPresident,
+    canManageGenerations: canManageGenerationsValue,
   };
 };
 
+// Backward-compatible wrappers
+export const signInToAdminWithGoogle = (
+  callbackURL: string,
+): Promise<AuthActionResult<{ redirectUrl: string }>> =>
+  signInWithGoogle({
+    callbackURL,
+    disableRedirect: true,
+  });
+
+export const signInToAdminWithPasskey = (): Promise<AuthActionResult> =>
+  signInWithPasskey();
+
+export const signOutCurrentUser = (): Promise<AuthActionResult> => signOut();
+
+export const useClientAuthSession = () => useAuthSession();
+
 export const clientAuthTool = {
   getErrorMessage: getAuthErrorMessage,
+  signInWithGoogle,
+  signInWithPasskey,
+  signOut,
+  useAuthSession,
   signInToAdminWithGoogle,
   signInToAdminWithPasskey,
   signOutCurrentUser,

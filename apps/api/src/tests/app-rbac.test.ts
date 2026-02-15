@@ -27,7 +27,7 @@ const createActor = (role: Role, id: string): Actor => ({
 
 const createUser = (
   id: string,
-  role: UserEntity["role"] = "member",
+  role: UserEntity["role"] = "regular_member",
 ): UserEntity => ({
   id,
   name: "tester",
@@ -128,7 +128,7 @@ describe("RBAC routes", () => {
   it("부원의 users 목록 조회는 본인 1건만 반환한다", async () => {
     const getUserById = vi.fn(async (id: string) => createUser(id));
     const app = createTestApp({
-      actor: createActor("member", IDs.member),
+      actor: createActor("regular_member", IDs.member),
       dataService: createDataServiceMock({
         getUserById,
       }),
@@ -163,7 +163,7 @@ describe("RBAC routes", () => {
 
   it("부원은 다른 사용자 상세 조회가 불가하다", async () => {
     const app = createTestApp({
-      actor: createActor("member", IDs.member),
+      actor: createActor("regular_member", IDs.member),
     });
 
     const response = await app.request(`/api/users/${IDs.otherUser}`);
@@ -172,7 +172,7 @@ describe("RBAC routes", () => {
 
   it("부원은 본인 상세 조회가 가능하다", async () => {
     const app = createTestApp({
-      actor: createActor("member", IDs.member),
+      actor: createActor("regular_member", IDs.member),
       dataService: createDataServiceMock({
         getUserById: vi.fn(async () => createUser(IDs.member)),
       }),
@@ -185,7 +185,7 @@ describe("RBAC routes", () => {
   it("부원은 본인 프로필(name/nickname/image)만 수정 가능하다", async () => {
     const updateUser = vi.fn(async () => createUser(IDs.member));
     const app = createTestApp({
-      actor: createActor("member", IDs.member),
+      actor: createActor("regular_member", IDs.member),
       dataService: createDataServiceMock({
         updateUser,
       }),
@@ -209,7 +209,7 @@ describe("RBAC routes", () => {
 
   it("부원은 role/generationId를 수정할 수 없다", async () => {
     const app = createTestApp({
-      actor: createActor("member", IDs.member),
+      actor: createActor("regular_member", IDs.member),
     });
 
     const response = await app.request(`/api/users/${IDs.member}`, {
@@ -230,7 +230,7 @@ describe("RBAC routes", () => {
     const app = createTestApp({
       actor: createActor("vice_president", IDs.member),
       dataService: createDataServiceMock({
-        getUserById: vi.fn(async () => createUser(IDs.otherUser, "member")),
+        getUserById: vi.fn(async () => createUser(IDs.otherUser, "regular_member")),
         updateUser,
       }),
     });
@@ -249,8 +249,8 @@ describe("RBAC routes", () => {
     expect(updateUser).not.toHaveBeenCalled();
   });
 
-  it("관리자는 unverified를 member로 변경할 수 있다", async () => {
-    const updateUser = vi.fn(async () => createUser(IDs.otherUser, "member"));
+  it("관리자는 unverified를 regular_member로 변경할 수 있다", async () => {
+    const updateUser = vi.fn(async () => createUser(IDs.otherUser, "regular_member"));
     const app = createTestApp({
       actor: createActor("vice_president", IDs.member),
       dataService: createDataServiceMock({
@@ -265,18 +265,18 @@ describe("RBAC routes", () => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        role: "member",
+        role: "regular_member",
       }),
     });
 
     expect(response.status).toBe(200);
     expect(updateUser).toHaveBeenCalledWith(IDs.otherUser, {
-      role: "member",
+      role: "regular_member",
     });
   });
 
   it("회장 인원은 권한 변경으로 1명 미만이 될 수 없다", async () => {
-    const updateUser = vi.fn(async () => createUser(IDs.president, "member"));
+    const updateUser = vi.fn(async () => createUser(IDs.president, "regular_member"));
     const app = createTestApp({
       actor: createActor("president", IDs.president),
       dataService: createDataServiceMock({
@@ -292,7 +292,7 @@ describe("RBAC routes", () => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        role: "member",
+        role: "regular_member",
       }),
     });
 
@@ -303,7 +303,7 @@ describe("RBAC routes", () => {
   it("부원은 본인 계정 삭제(탈퇴)가 가능하다", async () => {
     const deleteUser = vi.fn(async () => true);
     const app = createTestApp({
-      actor: createActor("member", IDs.member),
+      actor: createActor("regular_member", IDs.member),
       dataService: createDataServiceMock({
         deleteUser,
       }),
@@ -319,7 +319,7 @@ describe("RBAC routes", () => {
 
   it("부원은 activities 생성이 불가하다", async () => {
     const app = createTestApp({
-      actor: createActor("member", IDs.member),
+      actor: createActor("regular_member", IDs.member),
     });
 
     const response = await app.request("/api/activities", {

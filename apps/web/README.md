@@ -33,6 +33,49 @@ Passkey login requirement:
 - API `PASSKEY_ORIGIN` must match the actual web origin where sign-in runs.
 - For local development, `http://localhost:3000` is recommended as the web origin.
 
+## E2E Environment Variables (Playwright)
+
+E2E tests auto-load environment variables with this priority:
+
+1. already-injected `process.env` (CLI/CI)
+2. `tests/e2e/.env.e2e.local`
+3. `tests/e2e/.env.e2e`
+4. `.env.local` and other default Next env files (fallback)
+
+Setup:
+
+```bash
+cp tests/e2e/.env.e2e.example tests/e2e/.env.e2e
+```
+
+Required keys:
+
+- `E2E_ADMIN_EMAIL`
+- `E2E_ADMIN_PASSWORD`
+
+Optional keys:
+
+- `E2E_BASE_URL` (default: `http://localhost:3000`)
+- `E2E_API_URL` (default: `http://localhost:8787`)
+- `E2E_WORKERS` (default: CI=`2`, local=`CPU cores / 2`)
+
+`E2E_ADMIN_*` 계정은 반드시 `president` 권한이어야 합니다.
+
+API(`apps/api`)에서도 email/password 로그인이 활성화되어야 합니다.
+
+- `apps/api/.dev.vars`에 `BETTER_AUTH_EMAIL_AND_PASSWORD_ENABLED=true` 설정
+- API 서버 재시작
+
+### E2E Timeout Troubleshooting
+
+If `global-setup.ts` fails with a timeout on `/api/auth/sign-in/email`, check whether the API worker is stuck.
+
+Quick checks:
+
+- `http://localhost:8787/message` should respond immediately
+- If it hangs, inspect `apps/api` dev logs
+- A common local cause is Wrangler remote proxy startup failure (`Failed to start the remote proxy session`)
+
 ## Preview
 
 Preview the application locally on the Cloudflare runtime:

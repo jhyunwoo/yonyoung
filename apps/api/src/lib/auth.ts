@@ -14,6 +14,7 @@ type AuthEnv = {
   passkeyRpId: string;
   passkeyRpName: string;
   passkeyOrigin: string;
+  emailAndPasswordEnabled: boolean;
 };
 
 const AUTH_DEV_DEFAULTS = {
@@ -36,6 +37,14 @@ const parseCsv = (value: string): string[] => {
         .filter(Boolean),
     ),
   ];
+};
+
+const parseBooleanEnv = (value: string | undefined, fallback: boolean): boolean => {
+  if (value === undefined || value.trim().length === 0) {
+    return fallback;
+  }
+
+  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
 };
 
 const getEnv = (name: string, fallback?: string): string => {
@@ -87,6 +96,11 @@ const resolveAuthEnv = (allowDevDefaults = false): AuthEnv => {
       "PASSKEY_ORIGIN",
       allowDevDefaults ? AUTH_DEV_DEFAULTS.passkeyOrigin : undefined,
     ),
+    // E2E/CI에서만 email+password 로그인을 열기 위한 토글.
+    emailAndPasswordEnabled: parseBooleanEnv(
+      process.env.BETTER_AUTH_EMAIL_AND_PASSWORD_ENABLED,
+      false,
+    ),
   };
 };
 
@@ -107,6 +121,9 @@ const createAuthWithEnv = (database: D1Database, env: AuthEnv) => {
         clientId: env.googleClientId,
         clientSecret: env.googleClientSecret,
       },
+    },
+    emailAndPassword: {
+      enabled: env.emailAndPasswordEnabled,
     },
     user: {
       additionalFields: {

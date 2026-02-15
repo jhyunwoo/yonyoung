@@ -25,7 +25,6 @@ const noAccess = {
 
 const roleLevel: Record<Role, number> = {
   unverified: 0,
-  member: 1,
   new_member: 1,
   associate_member: 1,
   regular_member: 1,
@@ -43,12 +42,14 @@ export const normalizeRole = (rawRole: string | null | undefined): Role => {
     case "president":
     case "vice_president":
     case "manager":
-    case "member":
     case "new_member":
     case "associate_member":
     case "regular_member":
     case "unverified":
       return rawRole;
+    // legacy 호환: 기존 member 값은 regular_member로 승격 취급
+    case "member":
+      return "regular_member";
     default:
       return "unverified";
   }
@@ -64,7 +65,6 @@ export const canAssignRole = (
 
 export const isMemberLikeRole = (role: Role): boolean => {
   return (
-    role === "member" ||
     role === "new_member" ||
     role === "associate_member" ||
     role === "regular_member"
@@ -95,15 +95,6 @@ const permissionMatrix: PermissionMatrix = {
     exhibition: { create: true, read: true, update: true, delete: false },
     linktree: { create: true, read: true, update: true, delete: true },
     user: { ...readOnly },
-  },
-  member: {
-    generation: { ...readOnly },
-    activity: { ...readOnly },
-    supporter: { ...readOnly },
-    exhibition: { ...readOnly },
-    linktree: { ...readOnly },
-    // member 계열 role은 users 일반 조회를 허용하지 않고 self-only 예외로 처리한다.
-    user: { ...noAccess },
   },
   new_member: {
     generation: { ...readOnly },

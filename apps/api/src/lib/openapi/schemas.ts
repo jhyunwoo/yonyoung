@@ -5,7 +5,7 @@ const EXAMPLE_PARENT_ID = "22222222-2222-4222-8222-222222222222";
 const EXAMPLE_IMAGE_ID = "33333333-3333-4333-8333-333333333333";
 const EXAMPLE_ITEM_ID = "44444444-4444-4444-8444-444444444444";
 const EXAMPLE_GENERATION_ID = "55555555-5555-4555-8555-555555555555";
-const EXAMPLE_USER_ID = "66666666-6666-4666-8666-666666666666";
+const EXAMPLE_USER_ID = "OrYuGkpIFldOIkcrxLrwgzEegsLSJbrh";
 const EXAMPLE_TIMESTAMP_MS = 1735689600000;
 const EXAMPLE_TIMESTAMP_MS_END = 1738368000000;
 
@@ -64,6 +64,15 @@ export const ApiIdParamSchema = z
     }),
   })
   .openapi("ApiIdParam");
+
+export const ApiUserIdParamSchema = z
+  .object({
+    id: z.string().min(1).openapi({
+      description: "사용자 식별자 (better-auth user.id)",
+      example: EXAMPLE_USER_ID,
+    }),
+  })
+  .openapi("ApiUserIdParam");
 
 export const ApiImageIdParamSchema = z
   .object({
@@ -474,7 +483,7 @@ export const ApiUserSchema = z
     }),
     email: z.string().email().openapi({
       description: "사용자 이메일",
-      example: "member@yonyoung.example",
+      example: "regular_member@yonyoung.example",
     }),
     image: z.string().url().nullable().openapi({
       description: "프로필 이미지 URL (없으면 null)",
@@ -486,7 +495,7 @@ export const ApiUserSchema = z
     }),
     role: z.string().nullable().openapi({
       description: "원본 사용자 역할 문자열 (없으면 null)",
-      example: "member",
+      example: "regular_member",
     }),
     generationId: z.string().uuid().nullable().openapi({
       description: "소속 기수 UUID (없으면 null)",
@@ -516,7 +525,6 @@ export const ApiAdminUpdateUserSchema = z
         "president",
         "vice_president",
         "manager",
-        "member",
         "new_member",
         "associate_member",
         "regular_member",
@@ -525,7 +533,7 @@ export const ApiAdminUpdateUserSchema = z
       .optional()
       .openapi({
         description:
-          "역할 문자열(관리자 전용). 기본 가입 역할은 `unverified`이며, 승인 시 `member` 또는 member 계열 role(`new_member`/`associate_member`/`regular_member`)로 변경할 수 있습니다.",
+          "역할 문자열(관리자 전용). 기본 가입 역할은 `unverified`이며, 승인 시 member 계열 role(`new_member`/`associate_member`/`regular_member`)로 변경할 수 있습니다.",
         example: "manager",
       }),
     generationId: z.string().uuid().nullable().optional().openapi({
