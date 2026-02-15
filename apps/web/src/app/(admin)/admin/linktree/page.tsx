@@ -27,6 +27,14 @@ type LinktreeAdminPageProps = {
   generationSortOrder?: number | null;
 };
 
+/**
+ * LinktreeAdminPage 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
+ * @param {
+  generationSortOrder = null,
+} 함수 로직에서 사용하는 입력값입니다.
+ * @returns 렌더링할 JSX 트리를 반환합니다.
+ * @remarks 리렌더링 타이밍에 따라 훅 의존성 배열을 신중히 관리해야 합니다.
+ */
 export default function LinktreeAdminPage({
   generationSortOrder = null,
 }: LinktreeAdminPageProps = {}) {
@@ -45,15 +53,31 @@ export default function LinktreeAdminPage({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const selected = useMemo(
-    () => items.find((item) => item.id === selectedId) ?? null,
+        /**
+     * useMemo 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+     * @returns 함수 실행 결과를 반환합니다.
+     * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+     */
+    () => items.find(/** items.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === selectedId) ?? null,
     [items, selectedId],
   );
 
   const selectedItem = useMemo(
-    () => selected?.items.find((item) => item.id === selectedItemId) ?? null,
+        /**
+     * useMemo 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+     * @returns 함수 실행 결과를 반환합니다.
+     * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+     */
+    () => selected?.items.find(/** selected?.items.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === selectedItemId) ?? null,
     [selected, selectedItemId],
   );
 
+    /**
+   * syncEditForm의 핵심 비즈니스 로직을 수행합니다.
+   * @param item 반복 처리 중인 현재 항목입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const syncEditForm = (item: ApiLinktree | null) => {
     if (!item) {
       setEditForm(emptyLinktreeForm);
@@ -65,6 +89,12 @@ export default function LinktreeAdminPage({
     });
   };
 
+    /**
+   * syncItemEditForm의 핵심 비즈니스 로직을 수행합니다.
+   * @param item 반복 처리 중인 현재 항목입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const syncItemEditForm = (item: ApiLinktreeItem | null) => {
     if (!item) {
       setItemEditForm(emptyItemForm);
@@ -77,6 +107,11 @@ export default function LinktreeAdminPage({
     });
   };
 
+    /**
+   * loadData 외부 또는 내부 소스에서 데이터를 읽어오는 로직을 수행합니다.
+   * @returns 외부 소스에서 읽어 온 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const loadData = async () => {
     setIsLoading(true);
     setErrorMessage(null);
@@ -103,22 +138,22 @@ export default function LinktreeAdminPage({
       }
 
       const nextSelectedId =
-        selectedId && data.some((item) => item.id === selectedId)
+        selectedId && data.some(/** data.some 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === selectedId)
           ? selectedId
           : fallbackId;
       setSelectedId(nextSelectedId);
 
-      const selectedLinktree = data.find((item) => item.id === nextSelectedId) ?? null;
+      const selectedLinktree = data.find(/** data.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === nextSelectedId) ?? null;
       syncEditForm(selectedLinktree);
 
       const nextItemId =
-        selectedItemId && selectedLinktree?.items.some((item) => item.id === selectedItemId)
+        selectedItemId && selectedLinktree?.items.some(/** selectedLinktree?.items.some 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === selectedItemId)
           ? selectedItemId
           : selectedLinktree?.items[0]?.id ?? null;
       setSelectedItemId(nextItemId);
       syncItemEditForm(
         nextItemId
-          ? selectedLinktree?.items.find((item) => item.id === nextItemId) ?? null
+          ? selectedLinktree?.items.find(/** selectedLinktree?.items.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === nextItemId) ?? null
           : null,
       );
     } catch (error) {
@@ -128,11 +163,17 @@ export default function LinktreeAdminPage({
     }
   };
 
-  useEffect(() => {
+  useEffect(/** useEffect 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
     void loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+    /**
+   * handleSelectLinktree의 핵심 비즈니스 로직을 수행합니다.
+   * @param item 반복 처리 중인 현재 항목입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleSelectLinktree = (item: ApiLinktree) => {
     setSelectedId(item.id);
     syncEditForm(item);
@@ -141,11 +182,23 @@ export default function LinktreeAdminPage({
     syncItemEditForm(firstItem);
   };
 
+    /**
+   * handleSelectItem의 핵심 비즈니스 로직을 수행합니다.
+   * @param item 반복 처리 중인 현재 항목입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleSelectItem = (item: ApiLinktreeItem) => {
     setSelectedItemId(item.id);
     syncItemEditForm(item);
   };
 
+    /**
+   * handleCreate의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @param event 함수 로직에서 사용하는 입력값입니다.
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
@@ -167,6 +220,12 @@ export default function LinktreeAdminPage({
     }
   };
 
+    /**
+   * handleUpdate의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @param event 함수 로직에서 사용하는 입력값입니다.
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleUpdate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selected) {
@@ -191,6 +250,11 @@ export default function LinktreeAdminPage({
     }
   };
 
+    /**
+   * handleDelete의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleDelete = async () => {
     if (!selected) {
       return;
@@ -215,6 +279,12 @@ export default function LinktreeAdminPage({
     }
   };
 
+    /**
+   * handleCreateItem의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @param event 함수 로직에서 사용하는 입력값입니다.
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleCreateItem = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selected) {
@@ -241,6 +311,12 @@ export default function LinktreeAdminPage({
     }
   };
 
+    /**
+   * handleUpdateItem의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @param event 함수 로직에서 사용하는 입력값입니다.
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleUpdateItem = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selected || !selectedItem) {
@@ -266,6 +342,11 @@ export default function LinktreeAdminPage({
     }
   };
 
+    /**
+   * handleDeleteItem의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleDeleteItem = async () => {
     if (!selected || !selectedItem) {
       return;
@@ -320,7 +401,7 @@ export default function LinktreeAdminPage({
             <h2 className="text-lg font-semibold">목록</h2>
             <button
               type="button"
-              onClick={() => void loadData()}
+              onClick={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => void loadData()}
               className="rounded-md border border-gray-300 px-2 py-1 text-xs"
               data-testid="linktree-reload-button"
             >
@@ -334,7 +415,7 @@ export default function LinktreeAdminPage({
             <p className="text-sm text-gray-500">데이터가 없습니다.</p>
           ) : (
             <ul className="space-y-2" data-testid="linktree-list">
-              {items.map((item) => (
+              {items.map(/** items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => (
                 <li key={item.id} className="rounded-md border border-gray-200 p-3" data-testid={`linktree-row-${item.id}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -343,7 +424,7 @@ export default function LinktreeAdminPage({
                     </div>
                     <button
                       type="button"
-                      onClick={() => handleSelectLinktree(item)}
+                      onClick={/** items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => handleSelectLinktree(item)}
                       className={`rounded-md px-2 py-1 text-xs font-medium ${
                         selectedId === item.id
                           ? "bg-black text-white"
@@ -368,8 +449,8 @@ export default function LinktreeAdminPage({
               <input
                 type="text"
                 value={createForm.name}
-                onChange={(event) =>
-                  setCreateForm((previous) => ({ ...previous, name: event.target.value }))
+                onChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                  setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, name: event.target.value }))
                 }
                 className="w-full rounded-md border border-gray-300 px-3 py-2"
                 required
@@ -395,8 +476,8 @@ export default function LinktreeAdminPage({
                   <input
                     type="text"
                     value={editForm.name}
-                    onChange={(event) =>
-                      setEditForm((previous) => ({ ...previous, name: event.target.value }))
+                    onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                      setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, name: event.target.value }))
                     }
                     className="w-full rounded-md border border-gray-300 px-3 py-2"
                     required
@@ -441,8 +522,8 @@ export default function LinktreeAdminPage({
                 <input
                   type="text"
                   value={itemCreateForm.name}
-                  onChange={(event) =>
-                    setItemCreateForm((previous) => ({ ...previous, name: event.target.value }))
+                  onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                    setItemCreateForm(/** setItemCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, name: event.target.value }))
                   }
                   className="w-full rounded-md border border-gray-300 px-3 py-2"
                   required
@@ -454,8 +535,8 @@ export default function LinktreeAdminPage({
                 <input
                   type="url"
                   value={itemCreateForm.link}
-                  onChange={(event) =>
-                    setItemCreateForm((previous) => ({ ...previous, link: event.target.value }))
+                  onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                    setItemCreateForm(/** setItemCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, link: event.target.value }))
                   }
                   className="w-full rounded-md border border-gray-300 px-3 py-2"
                   required
@@ -484,7 +565,7 @@ export default function LinktreeAdminPage({
                 <p className="text-sm text-gray-500">아이템이 없습니다.</p>
               ) : (
                 <ul className="mb-4 space-y-2" data-testid="linktree-item-list">
-                  {selected.items.map((item) => (
+                  {selected.items.map(/** selected.items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => (
                     <li key={item.id} className="rounded-md border border-gray-200 p-2" data-testid={`linktree-item-row-${item.id}`}>
                       <div className="flex items-center justify-between gap-2">
                         <div>
@@ -493,7 +574,7 @@ export default function LinktreeAdminPage({
                         </div>
                         <button
                           type="button"
-                          onClick={() => handleSelectItem(item)}
+                          onClick={/** selected.items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => handleSelectItem(item)}
                           className={`rounded-md px-2 py-1 text-xs font-medium ${
                             selectedItemId === item.id
                               ? "bg-black text-white"
@@ -517,8 +598,8 @@ export default function LinktreeAdminPage({
                       <input
                         type="text"
                         value={itemEditForm.name}
-                        onChange={(event) =>
-                          setItemEditForm((previous) => ({ ...previous, name: event.target.value }))
+                        onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                          setItemEditForm(/** setItemEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, name: event.target.value }))
                         }
                         className="w-full rounded-md border border-gray-300 px-3 py-2"
                         required
@@ -531,8 +612,8 @@ export default function LinktreeAdminPage({
                       <input
                         type="url"
                         value={itemEditForm.link}
-                        onChange={(event) =>
-                          setItemEditForm((previous) => ({ ...previous, link: event.target.value }))
+                        onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                          setItemEditForm(/** setItemEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, link: event.target.value }))
                         }
                         className="w-full rounded-md border border-gray-300 px-3 py-2"
                         required

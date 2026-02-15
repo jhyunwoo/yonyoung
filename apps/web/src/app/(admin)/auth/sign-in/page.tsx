@@ -7,6 +7,11 @@ import {
   signInWithPasskey,
 } from "../../../../lib/auth-client-tool";
 
+/**
+ * SignInPage 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
+ * @returns 렌더링할 JSX 트리를 반환합니다.
+ * @remarks UI 상태와 권한 조건이 변경될 때 렌더링 분기가 달라질 수 있습니다.
+ */
 export default function SignInPage() {
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -15,6 +20,11 @@ export default function SignInPage() {
 
   const isPending = isGooglePending || isPasskeyPending;
 
+    /**
+   * handleGoogleSignIn의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleGoogleSignIn = async () => {
     setErrorMessage(null);
     setIsGooglePending(true);
@@ -41,6 +51,11 @@ export default function SignInPage() {
     window.location.href = redirectUrl;
   };
 
+    /**
+   * handlePasskeySignIn의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handlePasskeySignIn = async () => {
     setErrorMessage(null);
     setIsPasskeyPending(true);

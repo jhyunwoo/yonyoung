@@ -28,17 +28,32 @@ const AUTH_DEV_DEFAULTS = {
   googleClientSecret: "replace-with-google-client-secret",
 } as const;
 
+/**
+ * parseCsv 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+ * @param value 함수 로직에서 사용하는 입력값입니다.
+ * @returns 조회/계산된 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const parseCsv = (value: string): string[] => {
   return [
     ...new Set(
       value
         .split(",")
-        .map((entry) => entry.trim())
+        .map(/** value
+        .split(",")
+        .map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param entry 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (entry) => entry.trim())
         .filter(Boolean),
     ),
   ];
 };
 
+/**
+ * parseBooleanEnv 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+ * @param value 함수 로직에서 사용하는 입력값입니다.
+ * @param fallback 함수 로직에서 사용하는 입력값입니다.
+ * @returns 조회/계산된 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const parseBooleanEnv = (value: string | undefined, fallback: boolean): boolean => {
   if (value === undefined || value.trim().length === 0) {
     return fallback;
@@ -47,6 +62,13 @@ const parseBooleanEnv = (value: string | undefined, fallback: boolean): boolean 
   return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
 };
 
+/**
+ * getEnv 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+ * @param name 함수 로직에서 사용하는 입력값입니다.
+ * @param fallback 함수 로직에서 사용하는 입력값입니다.
+ * @returns 조회/계산된 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const getEnv = (name: string, fallback?: string): string => {
   const value = process.env[name] ?? fallback;
   if (!value) {
@@ -55,6 +77,12 @@ const getEnv = (name: string, fallback?: string): string => {
   return value;
 };
 
+/**
+ * resolveAuthEnv 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+ * @param allowDevDefaults 함수 로직에서 사용하는 입력값입니다.
+ * @returns 조회/계산된 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const resolveAuthEnv = (allowDevDefaults = false): AuthEnv => {
   const baseURL = getEnv(
     "BETTER_AUTH_URL",
@@ -104,6 +132,13 @@ const resolveAuthEnv = (allowDevDefaults = false): AuthEnv => {
   };
 };
 
+/**
+ * createAuthWithEnv 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param database 처리 대상 데이터입니다.
+ * @param env 함수 로직에서 사용하는 입력값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const createAuthWithEnv = (database: D1Database, env: AuthEnv) => {
   const db = createDB(database);
 
@@ -163,12 +198,23 @@ const createAuthWithEnv = (database: D1Database, env: AuthEnv) => {
   });
 };
 
+/**
+ * getAuthCorsOrigins 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+ * @returns 조회/계산된 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const getAuthCorsOrigins = (): string[] => {
   return resolveAuthEnv(true).trustedOrigins;
 };
 
 const authCache = new WeakMap<D1Database, ReturnType<typeof betterAuth>>();
 
+/**
+ * createAuth 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param database 처리 대상 데이터입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const createAuth = (database: D1Database) => {
   const cachedAuth = authCache.get(database);
   if (cachedAuth) {

@@ -24,6 +24,14 @@ const RESOURCE_MENU_ITEMS = [
   { resourcePath: "users", label: "Users", shortLabel: "USR" },
 ] as const;
 
+/**
+ * isActiveResourcePath 조건을 평가해 사용 가능 여부를 판별합니다.
+ * @param pathname 리소스 경로 또는 라우팅 경로 문자열입니다.
+ * @param sortOrder 함수 로직에서 사용하는 입력값입니다.
+ * @param resourcePath 응답 데이터 또는 응답 객체입니다.
+ * @returns 조건 판별 결과(boolean)를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const isActiveResourcePath = (
   pathname: string,
   sortOrder: number | null,
@@ -37,6 +45,12 @@ const isActiveResourcePath = (
   return pathname === itemPath || pathname.startsWith(`${itemPath}/`);
 };
 
+/**
+ * AdminSidebar 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
+ * @param { collapsed, onToggle, session } 인증/인가 상태를 포함한 세션 정보입니다.
+ * @returns 렌더링할 JSX 트리를 반환합니다.
+ * @remarks 리렌더링 타이밍에 따라 훅 의존성 배열을 신중히 관리해야 합니다.
+ */
 export default function AdminSidebar({ collapsed, onToggle, session }: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -44,9 +58,14 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
   const [isGenerationLoading, setIsGenerationLoading] = useState(true);
   const canManageGenerationsFlag = canManageGenerations(session);
 
-  useEffect(() => {
+  useEffect(/** useEffect 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
     let isMounted = true;
 
+        /**
+     * loadGenerations 외부 또는 내부 소스에서 데이터를 읽어오는 로직을 수행합니다.
+     * @returns 외부 소스에서 읽어 온 결과를 Promise로 반환합니다.
+     * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+     */
     const loadGenerations = async () => {
       setIsGenerationLoading(true);
       try {
@@ -68,17 +87,27 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
     };
 
     void loadGenerations();
-    return () => {
+    return /** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
       isMounted = false;
     };
   }, []);
 
   const routeContext = useMemo(
+        /**
+     * useMemo 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+     * @returns 함수 실행 결과를 반환합니다.
+     * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+     */
     () => extractGenerationRouteContext(pathname),
     [pathname],
   );
 
   const accessibleGenerations = useMemo(
+        /**
+     * useMemo 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+     * @returns 함수 실행 결과를 반환합니다.
+     * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+     */
     () => getAccessibleGenerations(session, generationList),
     [session, generationList],
   );
@@ -87,6 +116,12 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
     routeContext.sortOrder === null
       ? null
       : accessibleGenerations.find(
+                    /**
+           * accessibleGenerations.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+           * @param generation 함수 로직에서 사용하는 입력값입니다.
+           * @returns 함수 실행 결과를 반환합니다.
+           * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+           */
           (generation) => generation.sortOrder === routeContext.sortOrder,
         ) ?? null;
   const fallbackRouteGeneration =
@@ -110,6 +145,12 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
     generationOptions[0]?.sortOrder ??
     null;
 
+    /**
+   * handleGenerationChange의 핵심 비즈니스 로직을 수행합니다.
+   * @param nextSortOrderRaw 에러 상황을 나타내는 객체입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleGenerationChange = (nextSortOrderRaw: string) => {
     const nextSortOrder = Number.parseInt(nextSortOrderRaw, 10);
     if (!Number.isFinite(nextSortOrder)) {
@@ -161,14 +202,14 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
             <select
               className="mt-1 w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm text-gray-700"
               value={selectedSortOrder ?? ""}
-              onChange={(event) => handleGenerationChange(event.target.value)}
+              onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) => handleGenerationChange(event.target.value)}
               disabled={generationOptions.length === 0 || isGenerationLoading}
               data-testid="admin-generation-select"
             >
               {generationOptions.length === 0 ? (
                 <option value="">선택 가능한 기수 없음</option>
               ) : (
-                generationOptions.map((generation) => (
+                generationOptions.map(/** generationOptions.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param generation 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (generation) => (
                   <option key={generation.id} value={generation.sortOrder}>
                     {generation.sortOrder}기 ({generation.name})
                   </option>
@@ -197,7 +238,7 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
             </li>
           ) : null}
 
-          {RESOURCE_MENU_ITEMS.map((item) => {
+          {RESOURCE_MENU_ITEMS.map(/** RESOURCE_MENU_ITEMS.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => {
             const href =
               selectedSortOrder === null
                 ? "/admin"

@@ -16,9 +16,17 @@ export const generations = sqliteTable(
       .notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" })
       .default(nowTimestamp)
-      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .$onUpdate(/** integer("updated_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .$onUpdate 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => /* @__PURE__ */ new Date())
       .notNull(),
   },
+    /**
+   * sqliteTable 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+   * @param table 함수 로직에서 사용하는 입력값입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+   */
   (table) => [index("generations_start_date_idx").on(table.startDate)],
 );
 
@@ -35,11 +43,13 @@ export const user = sqliteTable("user", {
     .notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" })
     .default(nowTimestamp)
-    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .$onUpdate(/** integer("updated_at", { mode: "timestamp_ms" })
+    .default(nowTimestamp)
+    .$onUpdate 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => /* @__PURE__ */ new Date())
     .notNull(),
   nickname: text("nickname"),
   role: text("role").default("unverified"),
-  generationId: text("generation_id").references(() => generations.id, {
+  generationId: text("generation_id").references(/** text("generation_id").references 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => generations.id, {
     onDelete: "set null",
   }),
 });
@@ -54,14 +64,23 @@ export const session = sqliteTable(
       .default(nowTimestamp)
       .notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .$onUpdate(/** integer("updated_at", { mode: "timestamp_ms" })
+      .$onUpdate 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => /* @__PURE__ */ new Date())
       .notNull(),
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
     userId: text("user_id")
       .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+      .references(/** text("user_id")
+      .notNull()
+      .references 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => user.id, { onDelete: "cascade" }),
   },
+    /**
+   * sqliteTable 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+   * @param table 함수 로직에서 사용하는 입력값입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+   */
   (table) => [index("session_userId_idx").on(table.userId)],
 );
 
@@ -73,7 +92,9 @@ export const account = sqliteTable(
     providerId: text("provider_id").notNull(),
     userId: text("user_id")
       .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+      .references(/** text("user_id")
+      .notNull()
+      .references 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => user.id, { onDelete: "cascade" }),
     accessToken: text("access_token"),
     refreshToken: text("refresh_token"),
     idToken: text("id_token"),
@@ -89,9 +110,16 @@ export const account = sqliteTable(
       .default(nowTimestamp)
       .notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .$onUpdate(/** integer("updated_at", { mode: "timestamp_ms" })
+      .$onUpdate 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => /* @__PURE__ */ new Date())
       .notNull(),
   },
+    /**
+   * sqliteTable 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+   * @param table 함수 로직에서 사용하는 입력값입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+   */
   (table) => [index("account_userId_idx").on(table.userId)],
 );
 
@@ -107,9 +135,17 @@ export const verification = sqliteTable(
       .notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" })
       .default(nowTimestamp)
-      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .$onUpdate(/** integer("updated_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .$onUpdate 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => /* @__PURE__ */ new Date())
       .notNull(),
   },
+    /**
+   * sqliteTable 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+   * @param table 함수 로직에서 사용하는 입력값입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+   */
   (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
 
@@ -121,7 +157,9 @@ export const passkey = sqliteTable(
     publicKey: text("public_key").notNull(),
     userId: text("user_id")
       .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+      .references(/** text("user_id")
+      .notNull()
+      .references 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => user.id, { onDelete: "cascade" }),
     credentialID: text("credential_id").notNull(),
     counter: integer("counter").notNull(),
     deviceType: text("device_type").notNull(),
@@ -130,6 +168,12 @@ export const passkey = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp_ms" }),
     aaguid: text("aaguid"),
   },
+    /**
+   * sqliteTable 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+   * @param table 함수 로직에서 사용하는 입력값입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+   */
   (table) => [
     index("passkey_userId_idx").on(table.userId),
     index("passkey_credentialID_idx").on(table.credentialID),
@@ -146,15 +190,25 @@ export const activities = sqliteTable(
     coverImageUrl: text("cover_image_url").notNull(),
     generationId: text("generation_id")
       .notNull()
-      .references(() => generations.id),
+      .references(/** text("generation_id")
+      .notNull()
+      .references 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => generations.id),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .default(nowTimestamp)
       .notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" })
       .default(nowTimestamp)
-      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .$onUpdate(/** integer("updated_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .$onUpdate 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => /* @__PURE__ */ new Date())
       .notNull(),
   },
+    /**
+   * sqliteTable 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+   * @param table 함수 로직에서 사용하는 입력값입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+   */
   (table) => [
     index("activities_generation_id_idx").on(table.generationId),
     index("activities_activity_date_idx").on(table.activityDate),
@@ -167,7 +221,9 @@ export const activityImages = sqliteTable(
     id: text("id").primaryKey(),
     activityId: text("activity_id")
       .notNull()
-      .references(() => activities.id, { onDelete: "cascade" }),
+      .references(/** text("activity_id")
+      .notNull()
+      .references 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => activities.id, { onDelete: "cascade" }),
     imageUrl: text("image_url").notNull(),
     sortOrder: integer("sort_order").default(0).notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
@@ -175,9 +231,17 @@ export const activityImages = sqliteTable(
       .notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" })
       .default(nowTimestamp)
-      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .$onUpdate(/** integer("updated_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .$onUpdate 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => /* @__PURE__ */ new Date())
       .notNull(),
   },
+    /**
+   * sqliteTable 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+   * @param table 함수 로직에서 사용하는 입력값입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+   */
   (table) => [
     index("activity_images_activity_id_idx").on(table.activityId),
     index("activity_images_sort_order_idx").on(table.sortOrder),
@@ -197,9 +261,17 @@ export const supporters = sqliteTable(
       .notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" })
       .default(nowTimestamp)
-      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .$onUpdate(/** integer("updated_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .$onUpdate 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => /* @__PURE__ */ new Date())
       .notNull(),
   },
+    /**
+   * sqliteTable 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+   * @param table 함수 로직에서 사용하는 입력값입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+   */
   (table) => [index("supporters_expires_at_idx").on(table.expiresAt)],
 );
 
@@ -212,7 +284,9 @@ export const exhibitions = sqliteTable(
     endDate: integer("end_date", { mode: "timestamp_ms" }).notNull(),
     generationId: text("generation_id")
       .notNull()
-      .references(() => generations.id),
+      .references(/** text("generation_id")
+      .notNull()
+      .references 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => generations.id),
     place: text("place").notNull(),
     coverImageUrl: text("cover_image_url").notNull(),
     description: text("description").notNull(),
@@ -221,9 +295,17 @@ export const exhibitions = sqliteTable(
       .notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" })
       .default(nowTimestamp)
-      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .$onUpdate(/** integer("updated_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .$onUpdate 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => /* @__PURE__ */ new Date())
       .notNull(),
   },
+    /**
+   * sqliteTable 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+   * @param table 함수 로직에서 사용하는 입력값입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+   */
   (table) => [
     index("exhibitions_generation_id_idx").on(table.generationId),
     index("exhibitions_start_date_idx").on(table.startDate),
@@ -237,7 +319,9 @@ export const exhibitionImages = sqliteTable(
     id: text("id").primaryKey(),
     exhibitionId: text("exhibition_id")
       .notNull()
-      .references(() => exhibitions.id, { onDelete: "cascade" }),
+      .references(/** text("exhibition_id")
+      .notNull()
+      .references 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => exhibitions.id, { onDelete: "cascade" }),
     imageUrl: text("image_url").notNull(),
     sortOrder: integer("sort_order").default(0).notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
@@ -245,9 +329,17 @@ export const exhibitionImages = sqliteTable(
       .notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" })
       .default(nowTimestamp)
-      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .$onUpdate(/** integer("updated_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .$onUpdate 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => /* @__PURE__ */ new Date())
       .notNull(),
   },
+    /**
+   * sqliteTable 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+   * @param table 함수 로직에서 사용하는 입력값입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+   */
   (table) => [
     index("exhibition_images_exhibition_id_idx").on(table.exhibitionId),
     index("exhibition_images_sort_order_idx").on(table.sortOrder),
@@ -265,20 +357,28 @@ export const linktreeItems = sqliteTable(
     id: text("id").primaryKey(),
     linktreeId: text("linktree_id")
       .notNull()
-      .references(() => linktree.id, { onDelete: "cascade" }),
+      .references(/** text("linktree_id")
+      .notNull()
+      .references 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => linktree.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     link: text("link").notNull(),
   },
+    /**
+   * sqliteTable 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+   * @param table 함수 로직에서 사용하는 입력값입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+   */
   (table) => [index("linktree_items_linktree_id_idx").on(table.linktreeId)],
 );
 
-export const generationsRelations = relations(generations, ({ many }) => ({
+export const generationsRelations = relations(generations, /** relations 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param { many } 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ ({ many }) => ({
   users: many(user),
   activities: many(activities),
   exhibitions: many(exhibitions),
 }));
 
-export const userRelations = relations(user, ({ many, one }) => ({
+export const userRelations = relations(user, /** relations 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param { many, one } 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ ({ many, one }) => ({
   generation: one(generations, {
     fields: [user.generationId],
     references: [generations.id],
@@ -288,28 +388,28 @@ export const userRelations = relations(user, ({ many, one }) => ({
   passkeys: many(passkey),
 }));
 
-export const sessionRelations = relations(session, ({ one }) => ({
+export const sessionRelations = relations(session, /** relations 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param { one } 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ ({ one }) => ({
   user: one(user, {
     fields: [session.userId],
     references: [user.id],
   }),
 }));
 
-export const accountRelations = relations(account, ({ one }) => ({
+export const accountRelations = relations(account, /** relations 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param { one } 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ ({ one }) => ({
   user: one(user, {
     fields: [account.userId],
     references: [user.id],
   }),
 }));
 
-export const passkeyRelations = relations(passkey, ({ one }) => ({
+export const passkeyRelations = relations(passkey, /** relations 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param { one } 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ ({ one }) => ({
   user: one(user, {
     fields: [passkey.userId],
     references: [user.id],
   }),
 }));
 
-export const activitiesRelations = relations(activities, ({ many, one }) => ({
+export const activitiesRelations = relations(activities, /** relations 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param { many, one } 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ ({ many, one }) => ({
   generation: one(generations, {
     fields: [activities.generationId],
     references: [generations.id],
@@ -317,14 +417,14 @@ export const activitiesRelations = relations(activities, ({ many, one }) => ({
   detailImages: many(activityImages),
 }));
 
-export const activityImagesRelations = relations(activityImages, ({ one }) => ({
+export const activityImagesRelations = relations(activityImages, /** relations 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param { one } 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ ({ one }) => ({
   activity: one(activities, {
     fields: [activityImages.activityId],
     references: [activities.id],
   }),
 }));
 
-export const exhibitionsRelations = relations(exhibitions, ({ many, one }) => ({
+export const exhibitionsRelations = relations(exhibitions, /** relations 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param { many, one } 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ ({ many, one }) => ({
   generation: one(generations, {
     fields: [exhibitions.generationId],
     references: [generations.id],
@@ -334,6 +434,12 @@ export const exhibitionsRelations = relations(exhibitions, ({ many, one }) => ({
 
 export const exhibitionImagesRelations = relations(
   exhibitionImages,
+    /**
+   * relations 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+   * @param { one } 함수 로직에서 사용하는 입력값입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+   */
   ({ one }) => ({
     exhibition: one(exhibitions, {
       fields: [exhibitionImages.exhibitionId],
@@ -342,11 +448,11 @@ export const exhibitionImagesRelations = relations(
   }),
 );
 
-export const linktreeRelations = relations(linktree, ({ many }) => ({
+export const linktreeRelations = relations(linktree, /** relations 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param { many } 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ ({ many }) => ({
   items: many(linktreeItems),
 }));
 
-export const linktreeItemsRelations = relations(linktreeItems, ({ one }) => ({
+export const linktreeItemsRelations = relations(linktreeItems, /** relations 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param { one } 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ ({ one }) => ({
   linktree: one(linktree, {
     fields: [linktreeItems.linktreeId],
     references: [linktree.id],

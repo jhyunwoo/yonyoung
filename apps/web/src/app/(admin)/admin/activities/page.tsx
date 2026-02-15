@@ -48,6 +48,15 @@ type ActivitiesAdminPageProps = {
   generationSortOrder?: number | null;
 };
 
+/**
+ * ActivitiesAdminPage 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
+ * @param {
+  generationScoped = false,
+  generationSortOrder = null,
+} 함수 로직에서 사용하는 입력값입니다.
+ * @returns 렌더링할 JSX 트리를 반환합니다.
+ * @remarks 리렌더링 타이밍에 따라 훅 의존성 배열을 신중히 관리해야 합니다.
+ */
 export default function ActivitiesAdminPage({
   generationScoped = false,
   generationSortOrder = null,
@@ -80,15 +89,31 @@ export default function ActivitiesAdminPage({
   const scopedGenerationId = generationScoped ? scopedGeneration?.id ?? null : null;
 
   const selected = useMemo(
-    () => items.find((item) => item.id === selectedId) ?? null,
+        /**
+     * useMemo 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+     * @returns 함수 실행 결과를 반환합니다.
+     * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+     */
+    () => items.find(/** items.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === selectedId) ?? null,
     [items, selectedId],
   );
 
   const selectedImage = useMemo(
-    () => selected?.detailImages.find((image) => image.id === selectedImageId) ?? null,
+        /**
+     * useMemo 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+     * @returns 함수 실행 결과를 반환합니다.
+     * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+     */
+    () => selected?.detailImages.find(/** selected?.detailImages.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param image 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (image) => image.id === selectedImageId) ?? null,
     [selected, selectedImageId],
   );
 
+    /**
+   * syncActivityEditForm의 핵심 비즈니스 로직을 수행합니다.
+   * @param item 반복 처리 중인 현재 항목입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const syncActivityEditForm = (item: ApiActivity | null) => {
     if (!item) {
       setEditForm(emptyActivityForm);
@@ -104,6 +129,12 @@ export default function ActivitiesAdminPage({
     });
   };
 
+    /**
+   * syncDetailEditForm의 핵심 비즈니스 로직을 수행합니다.
+   * @param image 함수 로직에서 사용하는 입력값입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const syncDetailEditForm = (image: ApiActivityImage | null) => {
     if (!image) {
       setDetailEditForm(emptyDetailForm);
@@ -116,6 +147,11 @@ export default function ActivitiesAdminPage({
     });
   };
 
+    /**
+   * loadData 외부 또는 내부 소스에서 데이터를 읽어오는 로직을 수행합니다.
+   * @returns 외부 소스에서 읽어 온 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const loadData = async () => {
     setIsLoading(true);
     setErrorMessage(null);
@@ -127,7 +163,7 @@ export default function ActivitiesAdminPage({
       ]);
 
       const nextScopedGeneration = generationScoped
-        ? generationList.find((generation) => generation.sortOrder === generationSortOrder) ?? null
+        ? generationList.find(/** generationList.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param generation 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (generation) => generation.sortOrder === generationSortOrder) ?? null
         : null;
 
       const visibleGenerations = generationScoped
@@ -138,6 +174,12 @@ export default function ActivitiesAdminPage({
       const visibleActivities =
         generationScoped && nextScopedGeneration
           ? activities.filter(
+                            /**
+               * activities.filter 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+               * @param activity 함수 로직에서 사용하는 입력값입니다.
+               * @returns 함수 실행 결과를 반환합니다.
+               * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+               */
               (activity) => activity.generationId === nextScopedGeneration.id,
             )
           : generationScoped
@@ -148,7 +190,7 @@ export default function ActivitiesAdminPage({
       setItems(visibleActivities);
       setGenerations(visibleGenerations);
 
-      setCreateForm((previous) => ({
+      setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({
         ...previous,
         generationId:
           previous.generationId ||
@@ -184,24 +226,24 @@ export default function ActivitiesAdminPage({
       }
 
       const nextSelectedId =
-        selectedId && visibleActivities.some((item) => item.id === selectedId)
+        selectedId && visibleActivities.some(/** visibleActivities.some 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === selectedId)
           ? selectedId
           : fallbackId;
 
       setSelectedId(nextSelectedId);
       const selectedActivity =
-        visibleActivities.find((item) => item.id === nextSelectedId) ?? null;
+        visibleActivities.find(/** visibleActivities.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === nextSelectedId) ?? null;
       syncActivityEditForm(selectedActivity);
 
       const nextImageId =
-        selectedImageId && selectedActivity?.detailImages.some((image) => image.id === selectedImageId)
+        selectedImageId && selectedActivity?.detailImages.some(/** selectedActivity?.detailImages.some 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param image 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (image) => image.id === selectedImageId)
           ? selectedImageId
           : selectedActivity?.detailImages[0]?.id ?? null;
 
       setSelectedImageId(nextImageId);
       syncDetailEditForm(
         nextImageId
-          ? selectedActivity?.detailImages.find((image) => image.id === nextImageId) ?? null
+          ? selectedActivity?.detailImages.find(/** selectedActivity?.detailImages.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param image 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (image) => image.id === nextImageId) ?? null
           : null,
       );
     } catch (error) {
@@ -211,11 +253,17 @@ export default function ActivitiesAdminPage({
     }
   };
 
-  useEffect(() => {
+  useEffect(/** useEffect 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
     void loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generationScoped, generationSortOrder]);
 
+    /**
+   * handleSelectActivity의 핵심 비즈니스 로직을 수행합니다.
+   * @param item 반복 처리 중인 현재 항목입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleSelectActivity = (item: ApiActivity) => {
     setSelectedId(item.id);
     syncActivityEditForm(item);
@@ -228,6 +276,12 @@ export default function ActivitiesAdminPage({
     setDetailEditFile(null);
   };
 
+    /**
+   * handleSelectDetailImage의 핵심 비즈니스 로직을 수행합니다.
+   * @param image 함수 로직에서 사용하는 입력값입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleSelectDetailImage = (image: ApiActivityImage) => {
     setSelectedImageId(image.id);
     syncDetailEditForm(image);
@@ -235,6 +289,12 @@ export default function ActivitiesAdminPage({
     setDetailEditFile(null);
   };
 
+    /**
+   * handleCreate의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @param event 함수 로직에서 사용하는 입력값입니다.
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
@@ -273,6 +333,12 @@ export default function ActivitiesAdminPage({
     }
   };
 
+    /**
+   * handleUpdate의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @param event 함수 로직에서 사용하는 입력값입니다.
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleUpdate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selected) {
@@ -311,6 +377,11 @@ export default function ActivitiesAdminPage({
     }
   };
 
+    /**
+   * handleDelete의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleDelete = async () => {
     if (!selected) {
       return;
@@ -334,6 +405,12 @@ export default function ActivitiesAdminPage({
     }
   };
 
+    /**
+   * handleCreateDetailImage의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @param event 함수 로직에서 사용하는 입력값입니다.
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleCreateDetailImage = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selected) {
@@ -370,6 +447,12 @@ export default function ActivitiesAdminPage({
     }
   };
 
+    /**
+   * handleUpdateDetailImage의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @param event 함수 로직에서 사용하는 입력값입니다.
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleUpdateDetailImage = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selected || !selectedImage) {
@@ -405,6 +488,11 @@ export default function ActivitiesAdminPage({
     }
   };
 
+    /**
+   * handleDeleteDetailImage의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleDeleteDetailImage = async () => {
     if (!selected || !selectedImage) {
       return;
@@ -461,7 +549,7 @@ export default function ActivitiesAdminPage({
             <h2 className="text-lg font-semibold">목록</h2>
             <button
               type="button"
-              onClick={() => void loadData()}
+              onClick={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => void loadData()}
               className="rounded-md border border-gray-300 px-2 py-1 text-xs"
               data-testid="activities-reload-button"
             >
@@ -475,7 +563,7 @@ export default function ActivitiesAdminPage({
             <p className="text-sm text-gray-500">데이터가 없습니다.</p>
           ) : (
             <ul className="space-y-2" data-testid="activities-list">
-              {items.map((item) => (
+              {items.map(/** items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => (
                 <li key={item.id} className="rounded-md border border-gray-200 p-3" data-testid={`activity-row-${item.id}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -486,7 +574,7 @@ export default function ActivitiesAdminPage({
                     </div>
                     <button
                       type="button"
-                      onClick={() => handleSelectActivity(item)}
+                      onClick={/** items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => handleSelectActivity(item)}
                       className={`rounded-md px-2 py-1 text-xs font-medium ${
                         selectedId === item.id
                           ? "bg-black text-white"
@@ -512,8 +600,8 @@ export default function ActivitiesAdminPage({
                 <input
                   type="text"
                   value={createForm.title}
-                  onChange={(event) =>
-                    setCreateForm((previous) => ({ ...previous, title: event.target.value }))
+                  onChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                    setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, title: event.target.value }))
                   }
                   className="w-full rounded-md border border-gray-300 px-3 py-2"
                   required
@@ -525,8 +613,8 @@ export default function ActivitiesAdminPage({
                 <span className="mb-1 block">description</span>
                 <textarea
                   value={createForm.description}
-                  onChange={(event) =>
-                    setCreateForm((previous) => ({ ...previous, description: event.target.value }))
+                  onChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                    setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, description: event.target.value }))
                   }
                   className="min-h-24 w-full rounded-md border border-gray-300 px-3 py-2"
                   required
@@ -539,8 +627,8 @@ export default function ActivitiesAdminPage({
                 <input
                   type="date"
                   value={createForm.activityDate}
-                  onChange={(event) =>
-                    setCreateForm((previous) => ({ ...previous, activityDate: event.target.value }))
+                  onChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                    setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, activityDate: event.target.value }))
                   }
                   className="w-full rounded-md border border-gray-300 px-3 py-2"
                   required
@@ -560,8 +648,8 @@ export default function ActivitiesAdminPage({
                   <span className="mb-1 block">generationId</span>
                   <select
                     value={createForm.generationId}
-                    onChange={(event) =>
-                      setCreateForm((previous) => ({
+                    onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                      setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({
                         ...previous,
                         generationId: event.target.value,
                       }))
@@ -571,7 +659,7 @@ export default function ActivitiesAdminPage({
                     data-testid="activity-create-generation-id"
                   >
                     <option value="">선택</option>
-                    {generations.map((generation) => (
+                    {generations.map(/** generations.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param generation 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (generation) => (
                       <option key={generation.id} value={generation.id}>
                         {generation.name} ({generation.sortOrder})
                       </option>
@@ -585,8 +673,8 @@ export default function ActivitiesAdminPage({
                 mode={createCoverMode}
                 onModeChange={setCreateCoverMode}
                 urlValue={createForm.coverImageUrl}
-                onUrlChange={(value) =>
-                  setCreateForm((previous) => ({ ...previous, coverImageUrl: value }))
+                onUrlChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param value 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (value) =>
+                  setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, coverImageUrl: value }))
                 }
                 file={createCoverFile}
                 onFileChange={setCreateCoverFile}
@@ -615,8 +703,8 @@ export default function ActivitiesAdminPage({
                     <input
                       type="text"
                       value={editForm.title}
-                      onChange={(event) =>
-                        setEditForm((previous) => ({ ...previous, title: event.target.value }))
+                      onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                        setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, title: event.target.value }))
                       }
                       className="w-full rounded-md border border-gray-300 px-3 py-2"
                       required
@@ -628,8 +716,8 @@ export default function ActivitiesAdminPage({
                     <span className="mb-1 block">description</span>
                     <textarea
                       value={editForm.description}
-                      onChange={(event) =>
-                        setEditForm((previous) => ({ ...previous, description: event.target.value }))
+                      onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                        setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, description: event.target.value }))
                       }
                       className="min-h-24 w-full rounded-md border border-gray-300 px-3 py-2"
                       required
@@ -642,8 +730,8 @@ export default function ActivitiesAdminPage({
                     <input
                       type="date"
                       value={editForm.activityDate}
-                      onChange={(event) =>
-                        setEditForm((previous) => ({ ...previous, activityDate: event.target.value }))
+                      onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                        setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, activityDate: event.target.value }))
                       }
                       className="w-full rounded-md border border-gray-300 px-3 py-2"
                       required
@@ -663,8 +751,8 @@ export default function ActivitiesAdminPage({
                       <span className="mb-1 block">generationId</span>
                       <select
                         value={editForm.generationId}
-                        onChange={(event) =>
-                          setEditForm((previous) => ({
+                        onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                          setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({
                             ...previous,
                             generationId: event.target.value,
                           }))
@@ -674,7 +762,7 @@ export default function ActivitiesAdminPage({
                         data-testid="activity-edit-generation-id"
                       >
                         <option value="">선택</option>
-                        {generations.map((generation) => (
+                        {generations.map(/** generations.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param generation 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (generation) => (
                           <option key={generation.id} value={generation.id}>
                             {generation.name} ({generation.sortOrder})
                           </option>
@@ -688,8 +776,8 @@ export default function ActivitiesAdminPage({
                     mode={editCoverMode}
                     onModeChange={setEditCoverMode}
                     urlValue={editForm.coverImageUrl}
-                    onUrlChange={(value) =>
-                      setEditForm((previous) => ({ ...previous, coverImageUrl: value }))
+                    onUrlChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param value 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (value) =>
+                      setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, coverImageUrl: value }))
                     }
                     file={editCoverFile}
                     onFileChange={setEditCoverFile}
@@ -740,8 +828,8 @@ export default function ActivitiesAdminPage({
                 mode={detailCreateMode}
                 onModeChange={setDetailCreateMode}
                 urlValue={detailCreateForm.imageUrl}
-                onUrlChange={(value) =>
-                  setDetailCreateForm((previous) => ({ ...previous, imageUrl: value }))
+                onUrlChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param value 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (value) =>
+                  setDetailCreateForm(/** setDetailCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, imageUrl: value }))
                 }
                 file={detailCreateFile}
                 onFileChange={setDetailCreateFile}
@@ -754,8 +842,8 @@ export default function ActivitiesAdminPage({
                   type="number"
                   min={0}
                   value={detailCreateForm.sortOrder}
-                  onChange={(event) =>
-                    setDetailCreateForm((previous) => ({ ...previous, sortOrder: event.target.value }))
+                  onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                    setDetailCreateForm(/** setDetailCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, sortOrder: event.target.value }))
                   }
                   className="w-full rounded-md border border-gray-300 px-3 py-2"
                   required
@@ -784,7 +872,7 @@ export default function ActivitiesAdminPage({
                 <p className="text-sm text-gray-500">세부 이미지가 없습니다.</p>
               ) : (
                 <ul className="mb-4 space-y-2" data-testid="activity-detail-list">
-                  {selected.detailImages.map((image) => (
+                  {selected.detailImages.map(/** selected.detailImages.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param image 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (image) => (
                     <li key={image.id} className="rounded-md border border-gray-200 p-2" data-testid={`activity-detail-row-${image.id}`}>
                       <div className="flex items-center justify-between gap-2">
                         <div>
@@ -793,7 +881,7 @@ export default function ActivitiesAdminPage({
                         </div>
                         <button
                           type="button"
-                          onClick={() => handleSelectDetailImage(image)}
+                          onClick={/** selected.detailImages.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => handleSelectDetailImage(image)}
                           className={`rounded-md px-2 py-1 text-xs font-medium ${
                             selectedImageId === image.id
                               ? "bg-black text-white"
@@ -817,8 +905,8 @@ export default function ActivitiesAdminPage({
                       mode={detailEditMode}
                       onModeChange={setDetailEditMode}
                       urlValue={detailEditForm.imageUrl}
-                      onUrlChange={(value) =>
-                        setDetailEditForm((previous) => ({ ...previous, imageUrl: value }))
+                      onUrlChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param value 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (value) =>
+                        setDetailEditForm(/** setDetailEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, imageUrl: value }))
                       }
                       file={detailEditFile}
                       onFileChange={setDetailEditFile}
@@ -831,8 +919,8 @@ export default function ActivitiesAdminPage({
                         type="number"
                         min={0}
                         value={detailEditForm.sortOrder}
-                        onChange={(event) =>
-                          setDetailEditForm((previous) => ({ ...previous, sortOrder: event.target.value }))
+                        onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                          setDetailEditForm(/** setDetailEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, sortOrder: event.target.value }))
                         }
                         className="w-full rounded-md border border-gray-300 px-3 py-2"
                         required

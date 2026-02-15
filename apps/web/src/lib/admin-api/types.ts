@@ -19,6 +19,12 @@ export class AdminApiError extends Error {
   readonly status: number;
   readonly code: string;
 
+    /**
+   * constructor의 핵심 비즈니스 로직을 수행합니다.
+   * @param input 함수 로직에서 사용하는 입력값입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   constructor(input: { status: number; code?: string; message: string }) {
     super(input.message);
     this.name = "AdminApiError";

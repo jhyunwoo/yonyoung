@@ -21,6 +21,13 @@ import {
   LinktreeItemEntity,
 } from "./types";
 
+/**
+ * mapActivitiesWithImages의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+ * @param db 함수 로직에서 사용하는 입력값입니다.
+ * @param rows 함수 로직에서 사용하는 입력값입니다.
+ * @returns 비동기 처리 결과를 Promise로 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const mapActivitiesWithImages = async (
   db: ReturnType<typeof createDB>,
   rows: (typeof activities.$inferSelect)[],
@@ -29,7 +36,7 @@ const mapActivitiesWithImages = async (
     return [];
   }
 
-  const ids = rows.map((row) => row.id);
+  const ids = rows.map(/** rows.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param row 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (row) => row.id);
   const imageRows = await db
     .select()
     .from(activityImages)
@@ -43,12 +50,19 @@ const mapActivitiesWithImages = async (
     imageMap.set(imageRow.activityId, current);
   }
 
-  return rows.map((row) => ({
+  return rows.map(/** rows.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param row 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (row) => ({
     ...row,
     detailImages: imageMap.get(row.id) ?? [],
   }));
 };
 
+/**
+ * mapExhibitionsWithImages의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+ * @param db 함수 로직에서 사용하는 입력값입니다.
+ * @param rows 함수 로직에서 사용하는 입력값입니다.
+ * @returns 비동기 처리 결과를 Promise로 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const mapExhibitionsWithImages = async (
   db: ReturnType<typeof createDB>,
   rows: (typeof exhibitions.$inferSelect)[],
@@ -57,7 +71,7 @@ const mapExhibitionsWithImages = async (
     return [];
   }
 
-  const ids = rows.map((row) => row.id);
+  const ids = rows.map(/** rows.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param row 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (row) => row.id);
   const imageRows = await db
     .select()
     .from(exhibitionImages)
@@ -71,12 +85,19 @@ const mapExhibitionsWithImages = async (
     imageMap.set(imageRow.exhibitionId, current);
   }
 
-  return rows.map((row) => ({
+  return rows.map(/** rows.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param row 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (row) => ({
     ...row,
     detailImages: imageMap.get(row.id) ?? [],
   }));
 };
 
+/**
+ * mapLinktreesWithItems의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+ * @param db 함수 로직에서 사용하는 입력값입니다.
+ * @param rows 함수 로직에서 사용하는 입력값입니다.
+ * @returns 비동기 처리 결과를 Promise로 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const mapLinktreesWithItems = async (
   db: ReturnType<typeof createDB>,
   rows: (typeof linktree.$inferSelect)[],
@@ -85,7 +106,7 @@ const mapLinktreesWithItems = async (
     return [];
   }
 
-  const ids = rows.map((row) => row.id);
+  const ids = rows.map(/** rows.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param row 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (row) => row.id);
   const itemRows = await db
     .select()
     .from(linktreeItems)
@@ -98,19 +119,36 @@ const mapLinktreesWithItems = async (
     itemMap.set(item.linktreeId, current);
   }
 
-  return rows.map((row) => ({
+  return rows.map(/** rows.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param row 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (row) => ({
     ...row,
     items: itemMap.get(row.id) ?? [],
   }));
 };
 
+/**
+ * createDbDataService 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param database 처리 대상 데이터입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+ */
 export const createDbDataService = (database: D1Database): DataService => {
   const db = createDB(database);
 
   return {
+        /**
+     * listGenerations의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+     * @returns 비동기 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async listGenerations() {
       return db.select().from(generations).orderBy(asc(generations.sortOrder));
     },
+        /**
+     * createGeneration 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async createGeneration(input) {
       const id = crypto.randomUUID();
       await db.insert(generations).values({
@@ -124,6 +162,12 @@ export const createDbDataService = (database: D1Database): DataService => {
         where: eq(generations.id, id),
       }))!;
     },
+        /**
+     * getGenerationById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+     * @param id 대상을 식별하기 위한 ID 값입니다.
+     * @returns 조회/계산된 결과 값을 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async getGenerationById(id) {
       return (
         (await db.query.generations.findFirst({
@@ -131,6 +175,13 @@ export const createDbDataService = (database: D1Database): DataService => {
         })) ?? null
       );
     },
+        /**
+     * updateGeneration 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
+     * @param id 대상을 식별하기 위한 ID 값입니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async updateGeneration(id, input) {
       const exists = await db.query.generations.findFirst({
         where: eq(generations.id, id),
@@ -162,6 +213,12 @@ export const createDbDataService = (database: D1Database): DataService => {
         })) ?? null
       );
     },
+        /**
+     * deleteGeneration 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
+     * @param id 대상을 식별하기 위한 ID 값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async deleteGeneration(id) {
       const exists = await db.query.generations.findFirst({
         where: eq(generations.id, id),
@@ -173,6 +230,11 @@ export const createDbDataService = (database: D1Database): DataService => {
       return true;
     },
 
+        /**
+     * listActivities의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+     * @returns 비동기 처리 결과를 Promise로 반환합니다.
+     * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+     */
     async listActivities() {
       const rows = await db
         .select()
@@ -180,6 +242,12 @@ export const createDbDataService = (database: D1Database): DataService => {
         .orderBy(asc(activities.activityDate));
       return mapActivitiesWithImages(db, rows);
     },
+        /**
+     * createActivity 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async createActivity(input) {
       const id = crypto.randomUUID();
       await db.insert(activities).values({
@@ -192,6 +260,12 @@ export const createDbDataService = (database: D1Database): DataService => {
       });
       return (await this.getActivityById(id))!;
     },
+        /**
+     * getActivityById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+     * @param id 대상을 식별하기 위한 ID 값입니다.
+     * @returns 조회/계산된 결과 값을 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async getActivityById(id) {
       const row = await db.query.activities.findFirst({
         where: eq(activities.id, id),
@@ -209,6 +283,13 @@ export const createDbDataService = (database: D1Database): DataService => {
         detailImages: images,
       };
     },
+        /**
+     * updateActivity 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
+     * @param id 대상을 식별하기 위한 ID 값입니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async updateActivity(id, input) {
       const exists = await db.query.activities.findFirst({
         where: eq(activities.id, id),
@@ -239,6 +320,12 @@ export const createDbDataService = (database: D1Database): DataService => {
 
       return this.getActivityById(id);
     },
+        /**
+     * deleteActivity 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
+     * @param id 대상을 식별하기 위한 ID 값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async deleteActivity(id) {
       const exists = await db.query.activities.findFirst({
         where: eq(activities.id, id),
@@ -249,6 +336,13 @@ export const createDbDataService = (database: D1Database): DataService => {
       await db.delete(activities).where(eq(activities.id, id));
       return true;
     },
+        /**
+     * addActivityImage의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+     * @param activityId 대상을 식별하기 위한 ID 값입니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 비동기 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async addActivityImage(activityId, input) {
       const parent = await db.query.activities.findFirst({
         where: eq(activities.id, activityId),
@@ -270,6 +364,14 @@ export const createDbDataService = (database: D1Database): DataService => {
         })) ?? null
       );
     },
+        /**
+     * updateActivityImage 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
+     * @param activityId 대상을 식별하기 위한 ID 값입니다.
+     * @param imageId 대상을 식별하기 위한 ID 값입니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async updateActivityImage(activityId, imageId, input) {
       const exists = await db.query.activityImages.findFirst({
         where: and(
@@ -303,6 +405,13 @@ export const createDbDataService = (database: D1Database): DataService => {
         })) ?? null
       );
     },
+        /**
+     * deleteActivityImage 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
+     * @param activityId 대상을 식별하기 위한 ID 값입니다.
+     * @param imageId 대상을 식별하기 위한 ID 값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async deleteActivityImage(activityId, imageId) {
       const exists = await db.query.activityImages.findFirst({
         where: and(
@@ -324,9 +433,20 @@ export const createDbDataService = (database: D1Database): DataService => {
       return true;
     },
 
+        /**
+     * listSupporters의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+     * @returns 비동기 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async listSupporters() {
       return db.select().from(supporters).orderBy(asc(supporters.expiresAt));
     },
+        /**
+     * createSupporter 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async createSupporter(input) {
       const id = crypto.randomUUID();
       await db.insert(supporters).values({
@@ -340,6 +460,12 @@ export const createDbDataService = (database: D1Database): DataService => {
         where: eq(supporters.id, id),
       }))!;
     },
+        /**
+     * getSupporterById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+     * @param id 대상을 식별하기 위한 ID 값입니다.
+     * @returns 조회/계산된 결과 값을 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async getSupporterById(id) {
       return (
         (await db.query.supporters.findFirst({
@@ -347,6 +473,13 @@ export const createDbDataService = (database: D1Database): DataService => {
         })) ?? null
       );
     },
+        /**
+     * updateSupporter 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
+     * @param id 대상을 식별하기 위한 ID 값입니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async updateSupporter(id, input) {
       const exists = await db.query.supporters.findFirst({
         where: eq(supporters.id, id),
@@ -374,6 +507,12 @@ export const createDbDataService = (database: D1Database): DataService => {
         })) ?? null
       );
     },
+        /**
+     * deleteSupporter 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
+     * @param id 대상을 식별하기 위한 ID 값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async deleteSupporter(id) {
       const exists = await db.query.supporters.findFirst({
         where: eq(supporters.id, id),
@@ -385,6 +524,11 @@ export const createDbDataService = (database: D1Database): DataService => {
       return true;
     },
 
+        /**
+     * listExhibitions의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+     * @returns 비동기 처리 결과를 Promise로 반환합니다.
+     * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+     */
     async listExhibitions() {
       const rows = await db
         .select()
@@ -392,6 +536,12 @@ export const createDbDataService = (database: D1Database): DataService => {
         .orderBy(asc(exhibitions.startDate));
       return mapExhibitionsWithImages(db, rows);
     },
+        /**
+     * createExhibition 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async createExhibition(input) {
       const id = crypto.randomUUID();
       await db.insert(exhibitions).values({
@@ -406,6 +556,12 @@ export const createDbDataService = (database: D1Database): DataService => {
       });
       return (await this.getExhibitionById(id))!;
     },
+        /**
+     * getExhibitionById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+     * @param id 대상을 식별하기 위한 ID 값입니다.
+     * @returns 조회/계산된 결과 값을 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async getExhibitionById(id) {
       const row = await db.query.exhibitions.findFirst({
         where: eq(exhibitions.id, id),
@@ -423,6 +579,13 @@ export const createDbDataService = (database: D1Database): DataService => {
         detailImages: images,
       };
     },
+        /**
+     * updateExhibition 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
+     * @param id 대상을 식별하기 위한 ID 값입니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async updateExhibition(id, input) {
       const exists = await db.query.exhibitions.findFirst({
         where: eq(exhibitions.id, id),
@@ -457,6 +620,12 @@ export const createDbDataService = (database: D1Database): DataService => {
 
       return this.getExhibitionById(id);
     },
+        /**
+     * deleteExhibition 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
+     * @param id 대상을 식별하기 위한 ID 값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async deleteExhibition(id) {
       const exists = await db.query.exhibitions.findFirst({
         where: eq(exhibitions.id, id),
@@ -467,6 +636,13 @@ export const createDbDataService = (database: D1Database): DataService => {
       await db.delete(exhibitions).where(eq(exhibitions.id, id));
       return true;
     },
+        /**
+     * addExhibitionImage의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+     * @param exhibitionId 대상을 식별하기 위한 ID 값입니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 비동기 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async addExhibitionImage(exhibitionId, input) {
       const parent = await db.query.exhibitions.findFirst({
         where: eq(exhibitions.id, exhibitionId),
@@ -488,6 +664,14 @@ export const createDbDataService = (database: D1Database): DataService => {
         })) ?? null
       );
     },
+        /**
+     * updateExhibitionImage 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
+     * @param exhibitionId 대상을 식별하기 위한 ID 값입니다.
+     * @param imageId 대상을 식별하기 위한 ID 값입니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async updateExhibitionImage(exhibitionId, imageId, input) {
       const exists = await db.query.exhibitionImages.findFirst({
         where: and(
@@ -521,6 +705,13 @@ export const createDbDataService = (database: D1Database): DataService => {
         })) ?? null
       );
     },
+        /**
+     * deleteExhibitionImage 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
+     * @param exhibitionId 대상을 식별하기 위한 ID 값입니다.
+     * @param imageId 대상을 식별하기 위한 ID 값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async deleteExhibitionImage(exhibitionId, imageId) {
       const exists = await db.query.exhibitionImages.findFirst({
         where: and(
@@ -542,10 +733,21 @@ export const createDbDataService = (database: D1Database): DataService => {
       return true;
     },
 
+        /**
+     * listLinktrees의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+     * @returns 비동기 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async listLinktrees() {
       const rows = await db.select().from(linktree);
       return mapLinktreesWithItems(db, rows);
     },
+        /**
+     * createLinktree 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async createLinktree(input) {
       const id = crypto.randomUUID();
       await db.insert(linktree).values({
@@ -554,6 +756,12 @@ export const createDbDataService = (database: D1Database): DataService => {
       });
       return (await this.getLinktreeById(id))!;
     },
+        /**
+     * getLinktreeById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+     * @param id 대상을 식별하기 위한 ID 값입니다.
+     * @returns 조회/계산된 결과 값을 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async getLinktreeById(id) {
       const row = await db.query.linktree.findFirst({
         where: eq(linktree.id, id),
@@ -570,6 +778,13 @@ export const createDbDataService = (database: D1Database): DataService => {
         items,
       };
     },
+        /**
+     * updateLinktree 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
+     * @param id 대상을 식별하기 위한 ID 값입니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async updateLinktree(id, input) {
       const exists = await db.query.linktree.findFirst({
         where: eq(linktree.id, id),
@@ -585,6 +800,12 @@ export const createDbDataService = (database: D1Database): DataService => {
         .where(eq(linktree.id, id));
       return this.getLinktreeById(id);
     },
+        /**
+     * deleteLinktree 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
+     * @param id 대상을 식별하기 위한 ID 값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async deleteLinktree(id) {
       const exists = await db.query.linktree.findFirst({
         where: eq(linktree.id, id),
@@ -595,6 +816,13 @@ export const createDbDataService = (database: D1Database): DataService => {
       await db.delete(linktree).where(eq(linktree.id, id));
       return true;
     },
+        /**
+     * addLinktreeItem의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+     * @param linktreeId 대상을 식별하기 위한 ID 값입니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 비동기 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async addLinktreeItem(linktreeId, input) {
       const parent = await db.query.linktree.findFirst({
         where: eq(linktree.id, linktreeId),
@@ -615,6 +843,14 @@ export const createDbDataService = (database: D1Database): DataService => {
         })) ?? null
       );
     },
+        /**
+     * updateLinktreeItem 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
+     * @param linktreeId 대상을 식별하기 위한 ID 값입니다.
+     * @param itemId 대상을 식별하기 위한 ID 값입니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async updateLinktreeItem(linktreeId, itemId, input) {
       const exists = await db.query.linktreeItems.findFirst({
         where: and(
@@ -643,6 +879,13 @@ export const createDbDataService = (database: D1Database): DataService => {
         })) ?? null
       );
     },
+        /**
+     * deleteLinktreeItem 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
+     * @param linktreeId 대상을 식별하기 위한 ID 값입니다.
+     * @param itemId 대상을 식별하기 위한 ID 값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async deleteLinktreeItem(linktreeId, itemId) {
       const exists = await db.query.linktreeItems.findFirst({
         where: and(
@@ -664,14 +907,32 @@ export const createDbDataService = (database: D1Database): DataService => {
       return true;
     },
 
+        /**
+     * listUsers의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+     * @returns 비동기 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async listUsers() {
       return db.select().from(user).orderBy(asc(user.createdAt));
     },
+        /**
+     * getUserById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+     * @param id 대상을 식별하기 위한 ID 값입니다.
+     * @returns 조회/계산된 결과 값을 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async getUserById(id) {
       return (
         (await db.query.user.findFirst({ where: eq(user.id, id) })) ?? null
       );
     },
+        /**
+     * updateUser 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
+     * @param id 대상을 식별하기 위한 ID 값입니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async updateUser(id, input) {
       const exists = await db.query.user.findFirst({
         where: eq(user.id, id),
@@ -697,6 +958,12 @@ export const createDbDataService = (database: D1Database): DataService => {
         (await db.query.user.findFirst({ where: eq(user.id, id) })) ?? null
       );
     },
+        /**
+     * deleteUser 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
+     * @param id 대상을 식별하기 위한 ID 값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
     async deleteUser(id) {
       const exists = await db.query.user.findFirst({
         where: eq(user.id, id),

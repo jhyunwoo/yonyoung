@@ -10,7 +10,7 @@ import HonoAppType from "../types/honoAppType";
 
 type App = OpenAPIHono<HonoAppType>;
 
-export const OPENAPI_BASE_DOCUMENT = {
+const OPENAPI_BASE_DOCUMENT = {
   openapi: "3.1.1",
   info: {
     title: "Yonyoung API",
@@ -63,11 +63,18 @@ const docsRoute = createRoute({
   },
 });
 
+/**
+ * registerDocsRoutes 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param app 함수 로직에서 사용하는 입력값입니다.
+ * @param dependencies 함수 로직에서 사용하는 입력값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 네트워크 실패/타임아웃 상황을 고려해 예외 처리와 기본값 규약을 유지해야 합니다.
+ */
 export const registerDocsRoutes = (
   app: App,
   dependencies: AppDependencies,
 ) => {
-  app.openapi(openApiJsonRoute, async (c): Promise<any> => {
+  app.openapi(openApiJsonRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 네트워크 실패/타임아웃 상황을 고려해 예외 처리와 기본값 규약을 유지해야 합니다. */ async (c): Promise<any> => {
     try {
       const internalDoc = app.getOpenAPI31Document({
         ...OPENAPI_BASE_DOCUMENT,
@@ -89,7 +96,7 @@ export const registerDocsRoutes = (
     theme: "saturn",
   });
 
-  app.openapi(docsRoute, async (c): Promise<any> => {
-    return scalarReference(c, async () => {});
+  app.openapi(docsRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
+    return scalarReference(c, /** scalarReference 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {});
   });
 };

@@ -30,6 +30,14 @@ type SupportersAdminPageProps = {
   generationSortOrder?: number | null;
 };
 
+/**
+ * SupportersAdminPage 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
+ * @param {
+  generationSortOrder = null,
+} 함수 로직에서 사용하는 입력값입니다.
+ * @returns 렌더링할 JSX 트리를 반환합니다.
+ * @remarks 리렌더링 타이밍에 따라 훅 의존성 배열을 신중히 관리해야 합니다.
+ */
 export default function SupportersAdminPage({
   generationSortOrder = null,
 }: SupportersAdminPageProps = {}) {
@@ -49,10 +57,21 @@ export default function SupportersAdminPage({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const selected = useMemo(
-    () => items.find((item) => item.id === selectedId) ?? null,
+        /**
+     * useMemo 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+     * @returns 함수 실행 결과를 반환합니다.
+     * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+     */
+    () => items.find(/** items.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === selectedId) ?? null,
     [items, selectedId],
   );
 
+    /**
+   * syncEditForm의 핵심 비즈니스 로직을 수행합니다.
+   * @param item 반복 처리 중인 현재 항목입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const syncEditForm = (item: ApiSupporter | null) => {
     if (!item) {
       setEditForm(emptyForm);
@@ -67,6 +86,11 @@ export default function SupportersAdminPage({
     });
   };
 
+    /**
+   * loadData 외부 또는 내부 소스에서 데이터를 읽어오는 로직을 수행합니다.
+   * @returns 외부 소스에서 읽어 온 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const loadData = async () => {
     setIsLoading(true);
     setErrorMessage(null);
@@ -87,11 +111,11 @@ export default function SupportersAdminPage({
         }
 
         const nextSelectedId =
-          selectedId && data.some((item) => item.id === selectedId)
+          selectedId && data.some(/** data.some 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === selectedId)
             ? selectedId
             : fallbackId;
         setSelectedId(nextSelectedId);
-        syncEditForm(data.find((item) => item.id === nextSelectedId) ?? null);
+        syncEditForm(data.find(/** data.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === nextSelectedId) ?? null);
       }
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
@@ -100,11 +124,17 @@ export default function SupportersAdminPage({
     }
   };
 
-  useEffect(() => {
+  useEffect(/** useEffect 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
     void loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+    /**
+   * handleSelect의 핵심 비즈니스 로직을 수행합니다.
+   * @param item 반복 처리 중인 현재 항목입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleSelect = (item: ApiSupporter) => {
     setSelectedId(item.id);
     syncEditForm(item);
@@ -112,6 +142,12 @@ export default function SupportersAdminPage({
     setEditFile(null);
   };
 
+    /**
+   * handleCreate의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @param event 함수 로직에서 사용하는 입력값입니다.
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
@@ -146,6 +182,12 @@ export default function SupportersAdminPage({
     }
   };
 
+    /**
+   * handleUpdate의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @param event 함수 로직에서 사용하는 입력값입니다.
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleUpdate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selected) {
@@ -183,6 +225,11 @@ export default function SupportersAdminPage({
     }
   };
 
+    /**
+   * handleDelete의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleDelete = async () => {
     if (!selected) {
       return;
@@ -237,7 +284,7 @@ export default function SupportersAdminPage({
             <h2 className="text-lg font-semibold">목록</h2>
             <button
               type="button"
-              onClick={() => void loadData()}
+              onClick={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => void loadData()}
               className="rounded-md border border-gray-300 px-2 py-1 text-xs"
               data-testid="supporters-reload-button"
             >
@@ -251,7 +298,7 @@ export default function SupportersAdminPage({
             <p className="text-sm text-gray-500">데이터가 없습니다.</p>
           ) : (
             <ul className="space-y-2" data-testid="supporters-list">
-              {items.map((item) => (
+              {items.map(/** items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => (
                 <li key={item.id} className="rounded-md border border-gray-200 p-3" data-testid={`supporter-row-${item.id}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -261,7 +308,7 @@ export default function SupportersAdminPage({
                     </div>
                     <button
                       type="button"
-                      onClick={() => handleSelect(item)}
+                      onClick={/** items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => handleSelect(item)}
                       className={`rounded-md px-2 py-1 text-xs font-medium ${
                         selectedId === item.id
                           ? "bg-black text-white"
@@ -287,8 +334,8 @@ export default function SupportersAdminPage({
                 <input
                   type="text"
                   value={createForm.name}
-                  onChange={(event) =>
-                    setCreateForm((previous) => ({ ...previous, name: event.target.value }))
+                  onChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                    setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, name: event.target.value }))
                   }
                   className="w-full rounded-md border border-gray-300 px-3 py-2"
                   required
@@ -301,8 +348,8 @@ export default function SupportersAdminPage({
                 <input
                   type="url"
                   value={createForm.link}
-                  onChange={(event) =>
-                    setCreateForm((previous) => ({ ...previous, link: event.target.value }))
+                  onChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                    setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, link: event.target.value }))
                   }
                   className="w-full rounded-md border border-gray-300 px-3 py-2"
                   required
@@ -315,8 +362,8 @@ export default function SupportersAdminPage({
                 <input
                   type="date"
                   value={createForm.expiresAt}
-                  onChange={(event) =>
-                    setCreateForm((previous) => ({ ...previous, expiresAt: event.target.value }))
+                  onChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                    setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, expiresAt: event.target.value }))
                   }
                   className="w-full rounded-md border border-gray-300 px-3 py-2"
                   required
@@ -329,8 +376,8 @@ export default function SupportersAdminPage({
                 mode={createMode}
                 onModeChange={setCreateMode}
                 urlValue={createForm.logoUrl}
-                onUrlChange={(value) =>
-                  setCreateForm((previous) => ({ ...previous, logoUrl: value }))
+                onUrlChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param value 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (value) =>
+                  setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, logoUrl: value }))
                 }
                 file={createFile}
                 onFileChange={setCreateFile}
@@ -359,8 +406,8 @@ export default function SupportersAdminPage({
                     <input
                       type="text"
                       value={editForm.name}
-                      onChange={(event) =>
-                        setEditForm((previous) => ({ ...previous, name: event.target.value }))
+                      onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                        setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, name: event.target.value }))
                       }
                       className="w-full rounded-md border border-gray-300 px-3 py-2"
                       required
@@ -373,8 +420,8 @@ export default function SupportersAdminPage({
                     <input
                       type="url"
                       value={editForm.link}
-                      onChange={(event) =>
-                        setEditForm((previous) => ({ ...previous, link: event.target.value }))
+                      onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                        setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, link: event.target.value }))
                       }
                       className="w-full rounded-md border border-gray-300 px-3 py-2"
                       required
@@ -387,8 +434,8 @@ export default function SupportersAdminPage({
                     <input
                       type="date"
                       value={editForm.expiresAt}
-                      onChange={(event) =>
-                        setEditForm((previous) => ({ ...previous, expiresAt: event.target.value }))
+                      onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                        setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, expiresAt: event.target.value }))
                       }
                       className="w-full rounded-md border border-gray-300 px-3 py-2"
                       required
@@ -401,8 +448,8 @@ export default function SupportersAdminPage({
                     mode={editMode}
                     onModeChange={setEditMode}
                     urlValue={editForm.logoUrl}
-                    onUrlChange={(value) =>
-                      setEditForm((previous) => ({ ...previous, logoUrl: value }))
+                    onUrlChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param value 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (value) =>
+                      setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, logoUrl: value }))
                     }
                     file={editFile}
                     onFileChange={setEditFile}

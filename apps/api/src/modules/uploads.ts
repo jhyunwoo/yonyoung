@@ -19,6 +19,13 @@ import {
 
 type App = OpenAPIHono<HonoAppType>;
 
+/**
+ * canCreateOrUpdate 조건을 평가해 사용 가능 여부를 판별합니다.
+ * @param role 권한 판단에 사용되는 역할 정보입니다.
+ * @param resource 응답 데이터 또는 응답 객체입니다.
+ * @returns 조건 판별 결과(boolean)를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const canCreateOrUpdate = (role: Parameters<typeof can>[0], resource: Resource) => {
   return can(role, resource, "create") || can(role, resource, "update");
 };
@@ -29,6 +36,17 @@ const resourceUploadPathMap = {
   supporter: "supporters",
 } as const;
 
+/**
+ * registerResourcePresignRoute 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param app 함수 로직에서 사용하는 입력값입니다.
+ * @param dependencies 함수 로직에서 사용하는 입력값입니다.
+ * @param routePath 리소스 경로 또는 라우팅 경로 문자열입니다.
+ * @param operationId 대상을 식별하기 위한 ID 값입니다.
+ * @param resource 응답 데이터 또는 응답 객체입니다.
+ * @param slot 함수 로직에서 사용하는 입력값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 권한/인증 분기에서 잘못된 흐름이 발생하지 않도록 호출 순서를 유지해야 합니다.
+ */
 const registerResourcePresignRoute = (
   app: App,
   dependencies: AppDependencies,
@@ -55,7 +73,7 @@ const registerResourcePresignRoute = (
     },
   });
 
-  app.openapi(route, async (c): Promise<any> => {
+  app.openapi(route, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 권한/인증 분기에서 잘못된 흐름이 발생하지 않도록 호출 순서를 유지해야 합니다. */ async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -110,6 +128,13 @@ const userProfilePresignRoute = createRoute({
   },
 });
 
+/**
+ * registerUploadRoutes 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param app 함수 로직에서 사용하는 입력값입니다.
+ * @param dependencies 함수 로직에서 사용하는 입력값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 권한/인증 분기에서 잘못된 흐름이 발생하지 않도록 호출 순서를 유지해야 합니다.
+ */
 export const registerUploadRoutes = (
   app: App,
   dependencies: AppDependencies,
@@ -156,7 +181,7 @@ export const registerUploadRoutes = (
   );
 
   // 사용자 프로필 이미지는 관리자 업데이트 권한 또는 member 계열 role 본인 프로필 수정 권한을 기준으로 발급한다.
-  app.openapi(userProfilePresignRoute, async (c): Promise<any> => {
+  app.openapi(userProfilePresignRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 권한/인증 분기에서 잘못된 흐름이 발생하지 않도록 호출 순서를 유지해야 합니다. */ async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;

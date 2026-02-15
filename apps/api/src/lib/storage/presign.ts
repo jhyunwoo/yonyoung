@@ -26,6 +26,12 @@ type StorageEnvKey = keyof typeof storageEnvKeyMap;
 export class MissingStorageConfigError extends Error {
   readonly missingKeys: string[];
 
+    /**
+   * constructor의 핵심 비즈니스 로직을 수행합니다.
+   * @param missingKeys 함수 로직에서 사용하는 입력값입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   constructor(missingKeys: string[]) {
     super(
       `필수 스토리지 설정이 누락되었습니다: ${missingKeys.join(", ")}`,
@@ -35,6 +41,13 @@ export class MissingStorageConfigError extends Error {
   }
 }
 
+/**
+ * getEnvValue 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+ * @param env 함수 로직에서 사용하는 입력값입니다.
+ * @param key 함수 로직에서 사용하는 입력값입니다.
+ * @returns 조회/계산된 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const getEnvValue = (
   env: AppBindings,
   key: StorageEnvKey,
@@ -53,6 +66,12 @@ const getEnvValue = (
   return undefined;
 };
 
+/**
+ * sanitizeFileName의 핵심 비즈니스 로직을 수행합니다.
+ * @param fileName 함수 로직에서 사용하는 입력값입니다.
+ * @returns 함수 실행 결과를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const sanitizeFileName = (fileName: string): string => {
   const trimmed = fileName.trim();
   if (!trimmed) {
@@ -62,13 +81,27 @@ const sanitizeFileName = (fileName: string): string => {
   return trimmed.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
 };
 
+/**
+ * encodeKeyForPublicUrl의 핵심 비즈니스 로직을 수행합니다.
+ * @param key 함수 로직에서 사용하는 입력값입니다.
+ * @returns 함수 실행 결과를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const encodeKeyForPublicUrl = (key: string) => {
   return key
     .split("/")
-    .map((segment) => encodeURIComponent(segment))
+    .map(/** key
+    .split("/")
+    .map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param segment 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (segment) => encodeURIComponent(segment))
     .join("/");
 };
 
+/**
+ * resolveStorageEnv 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+ * @param env 함수 로직에서 사용하는 입력값입니다.
+ * @returns 조회/계산된 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const resolveStorageEnv = (env: AppBindings): StorageEnv => {
   const endpoint = getEnvValue(env, "endpoint");
   const accessKeyId = getEnvValue(env, "accessKeyId");
@@ -106,6 +139,12 @@ const resolveStorageEnv = (env: AppBindings): StorageEnv => {
   };
 };
 
+/**
+ * createR2PresignService 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param env 함수 로직에서 사용하는 입력값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const createR2PresignService = (env: AppBindings): PresignService => {
   const storageEnv = resolveStorageEnv(env);
   const client = new S3Client({
@@ -118,6 +157,12 @@ export const createR2PresignService = (env: AppBindings): PresignService => {
   });
 
   return {
+        /**
+     * issuePresignedPutUrl 조건을 평가해 사용 가능 여부를 판별합니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 조건 판별 결과(boolean)를 반환합니다.
+     * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+     */
     async issuePresignedPutUrl(input) {
       const safeFileName = sanitizeFileName(input.fileName);
       const objectKey = `${input.resource}/${input.actorId}/${input.slot}/${Date.now()}-${safeFileName}`;

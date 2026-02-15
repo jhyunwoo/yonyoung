@@ -1,14 +1,6 @@
 "use client";
 
 import { authClient } from "./auth-client";
-import {
-  canAccessAdminPage,
-  canManageGenerations,
-  getRoleFromSession,
-  isPresidentRole,
-  isUnverifiedRole,
-} from "./auth-shared";
-import type { AuthRole } from "./auth-shared";
 
 const DEFAULT_AUTH_ERROR_MESSAGE =
   "인증 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.";
@@ -28,7 +20,14 @@ type SignInWithGoogleParams = {
   disableRedirect?: boolean;
 };
 
-export const getAuthErrorMessage = (
+/**
+ * getAuthErrorMessage 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+ * @param error 에러 상황을 나타내는 객체입니다.
+ * @param fallback 함수 로직에서 사용하는 입력값입니다.
+ * @returns 조회/계산된 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
+const getAuthErrorMessage = (
   error: unknown,
   fallback = DEFAULT_AUTH_ERROR_MESSAGE,
 ): string => {
@@ -45,6 +44,15 @@ export const getAuthErrorMessage = (
   return fallback;
 };
 
+/**
+ * signInWithGoogle의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+ * @param {
+  callbackURL,
+  disableRedirect = true,
+} 요청/이동 대상 URL 문자열입니다.
+ * @returns 비동기 처리 결과를 Promise로 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const signInWithGoogle = async ({
   callbackURL,
   disableRedirect = true,
@@ -91,6 +99,11 @@ export const signInWithGoogle = async ({
   }
 };
 
+/**
+ * signInWithPasskey의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+ * @returns 비동기 처리 결과를 Promise로 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const signInWithPasskey = async (): Promise<AuthActionResult> => {
   try {
     const response = await authClient.signIn.passkey();
@@ -113,6 +126,11 @@ export const signInWithPasskey = async (): Promise<AuthActionResult> => {
   }
 };
 
+/**
+ * signOut의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+ * @returns 비동기 처리 결과를 Promise로 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const signOut = async (): Promise<AuthActionResult> => {
   try {
     const response = await authClient.signOut();
@@ -134,66 +152,3 @@ export const signOut = async (): Promise<AuthActionResult> => {
     };
   }
 };
-
-export const useAuthSession = (): {
-  data: ReturnType<typeof authClient.useSession>["data"];
-  error: ReturnType<typeof authClient.useSession>["error"];
-  isPending: ReturnType<typeof authClient.useSession>["isPending"];
-  isRefetching: ReturnType<typeof authClient.useSession>["isRefetching"];
-  refetch: ReturnType<typeof authClient.useSession>["refetch"];
-  session: ReturnType<typeof authClient.useSession>["data"] | null;
-  role: AuthRole | null;
-  isAuthenticated: boolean;
-  isUnverified: boolean;
-  canAccessAdmin: boolean;
-  isPresident: boolean;
-  canManageGenerations: boolean;
-} => {
-  const sessionState = authClient.useSession();
-  const session = sessionState.data ?? null;
-  const role = getRoleFromSession(session);
-  const isAuthenticated = Boolean(session);
-  const isUnverified = isUnverifiedRole(role);
-  const canAccessAdmin = canAccessAdminPage(session);
-  const isPresident = isPresidentRole(role);
-  const canManageGenerationsValue = canManageGenerations(session);
-
-  return {
-    ...sessionState,
-    session,
-    role,
-    isAuthenticated,
-    isUnverified,
-    canAccessAdmin,
-    isPresident,
-    canManageGenerations: canManageGenerationsValue,
-  };
-};
-
-// Backward-compatible wrappers
-export const signInToAdminWithGoogle = (
-  callbackURL: string,
-): Promise<AuthActionResult<{ redirectUrl: string }>> =>
-  signInWithGoogle({
-    callbackURL,
-    disableRedirect: true,
-  });
-
-export const signInToAdminWithPasskey = (): Promise<AuthActionResult> =>
-  signInWithPasskey();
-
-export const signOutCurrentUser = (): Promise<AuthActionResult> => signOut();
-
-export const useClientAuthSession = () => useAuthSession();
-
-export const clientAuthTool = {
-  getErrorMessage: getAuthErrorMessage,
-  signInWithGoogle,
-  signInWithPasskey,
-  signOut,
-  useAuthSession,
-  signInToAdminWithGoogle,
-  signInToAdminWithPasskey,
-  signOutCurrentUser,
-  useClientAuthSession,
-} as const;

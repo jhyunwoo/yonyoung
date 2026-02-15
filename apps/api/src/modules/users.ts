@@ -104,8 +104,15 @@ const deleteUserRoute = createRoute({
   },
 });
 
+/**
+ * registerUserRoutes 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param app 함수 로직에서 사용하는 입력값입니다.
+ * @param dependencies 함수 로직에서 사용하는 입력값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 권한/인증 분기에서 잘못된 흐름이 발생하지 않도록 호출 순서를 유지해야 합니다.
+ */
 export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
-  app.openapi(listUsersRoute, async (c): Promise<any> => {
+  app.openapi(listUsersRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 권한/인증 분기에서 잘못된 흐름이 발생하지 않도록 호출 순서를 유지해야 합니다. */ async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -128,7 +135,7 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
     return forbidden(c);
   });
 
-  app.openapi(getUserByIdRoute, async (c): Promise<any> => {
+  app.openapi(getUserByIdRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 권한/인증 분기에서 잘못된 흐름이 발생하지 않도록 호출 순서를 유지해야 합니다. */ async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -157,7 +164,7 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
     return ok(c, data);
   });
 
-  app.openapi(updateUserRoute, async (c): Promise<any> => {
+  app.openapi(updateUserRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 권한/인증 분기에서 잘못된 흐름이 발생하지 않도록 호출 순서를 유지해야 합니다. */ async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -200,6 +207,12 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
         ) {
           const users = await dataService.listUsers();
           const presidentCount = users.filter(
+                        /**
+             * users.filter 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+             * @param candidate 대상을 식별하기 위한 ID 값입니다.
+             * @returns 함수 실행 결과를 반환합니다.
+             * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+             */
             (candidate) => normalizeRole(candidate.role) === "president",
           ).length;
           if (presidentCount <= 1) {
@@ -236,7 +249,7 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
     return forbidden(c);
   });
 
-  app.openapi(deleteUserRoute, async (c): Promise<any> => {
+  app.openapi(deleteUserRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 권한/인증 분기에서 잘못된 흐름이 발생하지 않도록 호출 순서를 유지해야 합니다. */ async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;

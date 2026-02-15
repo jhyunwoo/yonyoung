@@ -1,16 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("./http", () => ({
+vi.mock("./http", /** vi.mock 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => ({
   adminRequest: vi.fn(),
 }));
 
 import { adminRequest } from "./http";
 import { adminResourceApi } from "./resources";
 
-describe("adminResourceApi", () => {
+describe("adminResourceApi", /** describe 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
   const mockAdminRequest = vi.mocked(adminRequest);
 
-  beforeEach(() => {
+  beforeEach(/** beforeEach 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
     mockAdminRequest.mockReset();
     mockAdminRequest.mockResolvedValue(undefined as never);
   });
@@ -24,12 +24,22 @@ describe("adminResourceApi", () => {
   }> = [
     {
       name: "listGenerations",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.listGenerations(),
       expectedPath: "/generations",
       expectedMethod: "GET",
     },
     {
       name: "createGeneration",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () =>
         adminResourceApi.createGeneration({
           name: "10기",
@@ -43,12 +53,22 @@ describe("adminResourceApi", () => {
     },
     {
       name: "getGenerationById",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.getGenerationById("g1"),
       expectedPath: "/generations/g1",
       expectedMethod: "GET",
     },
     {
       name: "updateGeneration",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.updateGeneration("g1", { name: "updated" }),
       expectedPath: "/generations/g1",
       expectedMethod: "PATCH",
@@ -56,18 +76,33 @@ describe("adminResourceApi", () => {
     },
     {
       name: "deleteGeneration",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.deleteGeneration("g1"),
       expectedPath: "/generations/g1",
       expectedMethod: "DELETE",
     },
     {
       name: "listActivities",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.listActivities(),
       expectedPath: "/activities",
       expectedMethod: "GET",
     },
     {
       name: "createActivity",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () =>
         adminResourceApi.createActivity({
           title: "activity",
@@ -88,12 +123,22 @@ describe("adminResourceApi", () => {
     },
     {
       name: "getActivityById",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.getActivityById("a1"),
       expectedPath: "/activities/a1",
       expectedMethod: "GET",
     },
     {
       name: "updateActivity",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.updateActivity("a1", { title: "updated" }),
       expectedPath: "/activities/a1",
       expectedMethod: "PATCH",
@@ -101,12 +146,22 @@ describe("adminResourceApi", () => {
     },
     {
       name: "deleteActivity",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.deleteActivity("a1"),
       expectedPath: "/activities/a1",
       expectedMethod: "DELETE",
     },
     {
       name: "addActivityImage",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () =>
         adminResourceApi.addActivityImage("a1", {
           imageUrl: "https://example.com/detail.jpg",
@@ -118,6 +173,11 @@ describe("adminResourceApi", () => {
     },
     {
       name: "updateActivityImage",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.updateActivityImage("a1", "i1", { sortOrder: 1 }),
       expectedPath: "/activities/a1/images/i1",
       expectedMethod: "PATCH",
@@ -125,18 +185,33 @@ describe("adminResourceApi", () => {
     },
     {
       name: "deleteActivityImage",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.deleteActivityImage("a1", "i1"),
       expectedPath: "/activities/a1/images/i1",
       expectedMethod: "DELETE",
     },
     {
       name: "listSupporters",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.listSupporters(),
       expectedPath: "/supporters",
       expectedMethod: "GET",
     },
     {
       name: "createSupporter",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () =>
         adminResourceApi.createSupporter({
           name: "supporter",
@@ -155,12 +230,22 @@ describe("adminResourceApi", () => {
     },
     {
       name: "getSupporterById",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.getSupporterById("s1"),
       expectedPath: "/supporters/s1",
       expectedMethod: "GET",
     },
     {
       name: "updateSupporter",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.updateSupporter("s1", { name: "updated" }),
       expectedPath: "/supporters/s1",
       expectedMethod: "PATCH",
@@ -168,18 +253,33 @@ describe("adminResourceApi", () => {
     },
     {
       name: "deleteSupporter",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.deleteSupporter("s1"),
       expectedPath: "/supporters/s1",
       expectedMethod: "DELETE",
     },
     {
       name: "listExhibitions",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.listExhibitions(),
       expectedPath: "/exhibitions",
       expectedMethod: "GET",
     },
     {
       name: "createExhibition",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () =>
         adminResourceApi.createExhibition({
           title: "exhibition",
@@ -204,12 +304,22 @@ describe("adminResourceApi", () => {
     },
     {
       name: "getExhibitionById",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.getExhibitionById("e1"),
       expectedPath: "/exhibitions/e1",
       expectedMethod: "GET",
     },
     {
       name: "updateExhibition",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.updateExhibition("e1", { title: "updated" }),
       expectedPath: "/exhibitions/e1",
       expectedMethod: "PATCH",
@@ -217,12 +327,22 @@ describe("adminResourceApi", () => {
     },
     {
       name: "deleteExhibition",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.deleteExhibition("e1"),
       expectedPath: "/exhibitions/e1",
       expectedMethod: "DELETE",
     },
     {
       name: "addExhibitionImage",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () =>
         adminResourceApi.addExhibitionImage("e1", {
           imageUrl: "https://example.com/detail.jpg",
@@ -234,6 +354,11 @@ describe("adminResourceApi", () => {
     },
     {
       name: "updateExhibitionImage",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () =>
         adminResourceApi.updateExhibitionImage("e1", "i1", { sortOrder: 1 }),
       expectedPath: "/exhibitions/e1/images/i1",
@@ -242,18 +367,33 @@ describe("adminResourceApi", () => {
     },
     {
       name: "deleteExhibitionImage",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.deleteExhibitionImage("e1", "i1"),
       expectedPath: "/exhibitions/e1/images/i1",
       expectedMethod: "DELETE",
     },
     {
       name: "listLinktrees",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.listLinktrees(),
       expectedPath: "/linktree",
       expectedMethod: "GET",
     },
     {
       name: "createLinktree",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.createLinktree({ name: "linktree" }),
       expectedPath: "/linktree",
       expectedMethod: "POST",
@@ -261,12 +401,22 @@ describe("adminResourceApi", () => {
     },
     {
       name: "getLinktreeById",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.getLinktreeById("l1"),
       expectedPath: "/linktree/l1",
       expectedMethod: "GET",
     },
     {
       name: "updateLinktree",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.updateLinktree("l1", { name: "updated" }),
       expectedPath: "/linktree/l1",
       expectedMethod: "PATCH",
@@ -274,12 +424,22 @@ describe("adminResourceApi", () => {
     },
     {
       name: "deleteLinktree",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.deleteLinktree("l1"),
       expectedPath: "/linktree/l1",
       expectedMethod: "DELETE",
     },
     {
       name: "addLinktreeItem",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () =>
         adminResourceApi.addLinktreeItem("l1", {
           name: "item",
@@ -291,6 +451,11 @@ describe("adminResourceApi", () => {
     },
     {
       name: "updateLinktreeItem",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () =>
         adminResourceApi.updateLinktreeItem("l1", "i1", {
           name: "updated",
@@ -301,24 +466,44 @@ describe("adminResourceApi", () => {
     },
     {
       name: "deleteLinktreeItem",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.deleteLinktreeItem("l1", "i1"),
       expectedPath: "/linktree/l1/items/i1",
       expectedMethod: "DELETE",
     },
     {
       name: "listUsers",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.listUsers(),
       expectedPath: "/users",
       expectedMethod: "GET",
     },
     {
       name: "getUserById",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.getUserById("u1"),
       expectedPath: "/users/u1",
       expectedMethod: "GET",
     },
     {
       name: "updateUser",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.updateUser("u1", { role: "manager" }),
       expectedPath: "/users/u1",
       expectedMethod: "PATCH",
@@ -326,6 +511,11 @@ describe("adminResourceApi", () => {
     },
     {
       name: "deleteUser",
+            /**
+       * invoke의 핵심 비즈니스 로직을 수행합니다.
+       * @returns 함수 실행 결과를 반환합니다.
+       * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+       */
       invoke: () => adminResourceApi.deleteUser("u1"),
       expectedPath: "/users/u1",
       expectedMethod: "DELETE",
@@ -333,7 +523,7 @@ describe("adminResourceApi", () => {
   ];
 
   for (const scenario of scenarios) {
-    it(`${scenario.name} should call adminRequest with expected arguments`, async () => {
+    it(`${scenario.name} should call adminRequest with expected arguments`, /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
       await scenario.invoke();
 
       expect(mockAdminRequest).toHaveBeenCalledTimes(1);

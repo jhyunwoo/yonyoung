@@ -11,9 +11,9 @@ import {
   readJson,
 } from "./test-helpers";
 
-describe("activity routes", () => {
-  it("member 계열 사용자는 활동 목록 조회가 가능하다", async () => {
-    const listActivities = fn(async () => [createActivity()]);
+describe("activity routes", /** describe 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
+  it("member 계열 사용자는 활동 목록 조회가 가능하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const listActivities = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => [createActivity()]);
     const app = createTestApp({
       actor: createActor("regular_member"),
       dataService: createDataServiceMock({ listActivities }),
@@ -30,8 +30,8 @@ describe("activity routes", () => {
     expect(typeof body.data[0]?.activityDate).toBe("number");
   });
 
-  it("member 계열 사용자는 활동 생성이 불가하다", async () => {
-    const createActivityMock = fn(async () => createActivity());
+  it("member 계열 사용자는 활동 생성이 불가하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const createActivityMock = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createActivity());
     const app = createTestApp({
       actor: createActor("regular_member"),
       dataService: createDataServiceMock({ createActivity: createActivityMock }),
@@ -54,7 +54,7 @@ describe("activity routes", () => {
     expect(createActivityMock).not.toHaveBeenCalled();
   });
 
-  it("활동 생성 본문이 잘못되면 400을 반환한다", async () => {
+  it("활동 생성 본문이 잘못되면 400을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({ actor: createActor("manager", IDs.manager) });
 
     const response = await app.request("/api/activities", {
@@ -69,8 +69,8 @@ describe("activity routes", () => {
     await expectErrorCode(response, "BAD_REQUEST");
   });
 
-  it("manager는 활동을 생성할 수 있다", async () => {
-    const createActivityMock = fn(async () => createActivity({ title: "신규 활동" }));
+  it("manager는 활동을 생성할 수 있다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const createActivityMock = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createActivity({ title: "신규 활동" }));
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
       dataService: createDataServiceMock({ createActivity: createActivityMock }),
@@ -96,7 +96,7 @@ describe("activity routes", () => {
     expect(createActivityMock).toHaveBeenCalledWith(payload);
   });
 
-  it("활동 상세 조회에서 UUID가 유효하지 않으면 400을 반환한다", async () => {
+  it("활동 상세 조회에서 UUID가 유효하지 않으면 400을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({ actor: createActor("regular_member") });
 
     const response = await app.request("/api/activities/not-a-uuid");
@@ -104,8 +104,8 @@ describe("activity routes", () => {
     await expectErrorCode(response, "BAD_REQUEST");
   });
 
-  it("존재하지 않는 활동 상세 조회는 404를 반환한다", async () => {
-    const getActivityById = fn(async () => null);
+  it("존재하지 않는 활동 상세 조회는 404를 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const getActivityById = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => null);
     const app = createTestApp({
       actor: createActor("regular_member"),
       dataService: createDataServiceMock({ getActivityById }),
@@ -117,7 +117,7 @@ describe("activity routes", () => {
     expect(getActivityById).toHaveBeenCalledWith(IDs.activity);
   });
 
-  it("활동 수정 본문이 비어 있으면 400을 반환한다", async () => {
+  it("활동 수정 본문이 비어 있으면 400을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({ actor: createActor("manager", IDs.manager) });
 
     const response = await app.request(`/api/activities/${IDs.activity}`, {
@@ -130,8 +130,8 @@ describe("activity routes", () => {
     await expectErrorCode(response, "BAD_REQUEST");
   });
 
-  it("존재하지 않는 활동 수정은 404를 반환한다", async () => {
-    const updateActivity = fn(async () => null);
+  it("존재하지 않는 활동 수정은 404를 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const updateActivity = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => null);
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
       dataService: createDataServiceMock({ updateActivity }),
@@ -147,8 +147,8 @@ describe("activity routes", () => {
     await expectErrorCode(response, "NOT_FOUND");
   });
 
-  it("manager는 활동을 수정할 수 있다", async () => {
-    const updateActivity = fn(async () => createActivity({ title: "수정" }));
+  it("manager는 활동을 수정할 수 있다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const updateActivity = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createActivity({ title: "수정" }));
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
       dataService: createDataServiceMock({ updateActivity }),
@@ -165,8 +165,8 @@ describe("activity routes", () => {
     expect(body.data.title).toBe("수정");
   });
 
-  it("member 계열 사용자는 활동 삭제가 불가하다", async () => {
-    const deleteActivity = fn(async () => true);
+  it("member 계열 사용자는 활동 삭제가 불가하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const deleteActivity = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => true);
     const app = createTestApp({
       actor: createActor("regular_member"),
       dataService: createDataServiceMock({ deleteActivity }),
@@ -181,8 +181,8 @@ describe("activity routes", () => {
     expect(deleteActivity).not.toHaveBeenCalled();
   });
 
-  it("존재하지 않는 활동 삭제는 404를 반환한다", async () => {
-    const deleteActivity = fn(async () => false);
+  it("존재하지 않는 활동 삭제는 404를 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const deleteActivity = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => false);
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
       dataService: createDataServiceMock({ deleteActivity }),
@@ -196,8 +196,8 @@ describe("activity routes", () => {
     await expectErrorCode(response, "NOT_FOUND");
   });
 
-  it("manager는 활동을 삭제할 수 있다", async () => {
-    const deleteActivity = fn(async () => true);
+  it("manager는 활동을 삭제할 수 있다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const deleteActivity = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => true);
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
       dataService: createDataServiceMock({ deleteActivity }),
@@ -211,8 +211,8 @@ describe("activity routes", () => {
     expect(deleteActivity).toHaveBeenCalledWith(IDs.activity);
   });
 
-  it("member 계열 사용자는 활동 상세 이미지를 추가할 수 없다", async () => {
-    const addActivityImage = fn(async () => createActivityImage());
+  it("member 계열 사용자는 활동 상세 이미지를 추가할 수 없다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const addActivityImage = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createActivityImage());
     const app = createTestApp({
       actor: createActor("regular_member"),
       dataService: createDataServiceMock({ addActivityImage }),
@@ -232,7 +232,7 @@ describe("activity routes", () => {
     expect(addActivityImage).not.toHaveBeenCalled();
   });
 
-  it("활동 상세 이미지 추가 본문이 유효하지 않으면 400을 반환한다", async () => {
+  it("활동 상세 이미지 추가 본문이 유효하지 않으면 400을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({ actor: createActor("manager", IDs.manager) });
 
     const response = await app.request(`/api/activities/${IDs.activity}/images`, {
@@ -245,8 +245,8 @@ describe("activity routes", () => {
     await expectErrorCode(response, "BAD_REQUEST");
   });
 
-  it("상위 활동이 없으면 상세 이미지 추가 시 404를 반환한다", async () => {
-    const addActivityImage = fn(async () => null);
+  it("상위 활동이 없으면 상세 이미지 추가 시 404를 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const addActivityImage = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => null);
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
       dataService: createDataServiceMock({ addActivityImage }),
@@ -266,8 +266,8 @@ describe("activity routes", () => {
     expect(body.error.message).toContain("활동");
   });
 
-  it("manager는 활동 상세 이미지를 추가할 수 있다", async () => {
-    const addActivityImage = fn(async () => createActivityImage());
+  it("manager는 활동 상세 이미지를 추가할 수 있다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const addActivityImage = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createActivityImage());
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
       dataService: createDataServiceMock({ addActivityImage }),
@@ -290,7 +290,7 @@ describe("activity routes", () => {
     expect(addActivityImage).toHaveBeenCalledWith(IDs.activity, payload);
   });
 
-  it("활동 상세 이미지 수정 본문이 비어 있으면 400을 반환한다", async () => {
+  it("활동 상세 이미지 수정 본문이 비어 있으면 400을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({ actor: createActor("manager", IDs.manager) });
 
     const response = await app.request(
@@ -306,8 +306,8 @@ describe("activity routes", () => {
     await expectErrorCode(response, "BAD_REQUEST");
   });
 
-  it("존재하지 않는 활동 상세 이미지 수정은 404를 반환한다", async () => {
-    const updateActivityImage = fn(async () => null);
+  it("존재하지 않는 활동 상세 이미지 수정은 404를 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const updateActivityImage = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => null);
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
       dataService: createDataServiceMock({ updateActivityImage }),
@@ -327,8 +327,8 @@ describe("activity routes", () => {
     expect(body.error.message).toContain("세부 이미지");
   });
 
-  it("manager는 활동 상세 이미지를 수정할 수 있다", async () => {
-    const updateActivityImage = fn(async () => createActivityImage({ sortOrder: 3 }));
+  it("manager는 활동 상세 이미지를 수정할 수 있다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const updateActivityImage = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createActivityImage({ sortOrder: 3 }));
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
       dataService: createDataServiceMock({ updateActivityImage }),
@@ -354,8 +354,8 @@ describe("activity routes", () => {
     );
   });
 
-  it("member 계열 사용자는 활동 상세 이미지 삭제가 불가하다", async () => {
-    const deleteActivityImage = fn(async () => true);
+  it("member 계열 사용자는 활동 상세 이미지 삭제가 불가하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const deleteActivityImage = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => true);
     const app = createTestApp({
       actor: createActor("regular_member"),
       dataService: createDataServiceMock({ deleteActivityImage }),
@@ -373,8 +373,8 @@ describe("activity routes", () => {
     expect(deleteActivityImage).not.toHaveBeenCalled();
   });
 
-  it("존재하지 않는 활동 상세 이미지 삭제는 404를 반환한다", async () => {
-    const deleteActivityImage = fn(async () => false);
+  it("존재하지 않는 활동 상세 이미지 삭제는 404를 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const deleteActivityImage = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => false);
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
       dataService: createDataServiceMock({ deleteActivityImage }),
@@ -392,8 +392,8 @@ describe("activity routes", () => {
     expect(body.error.message).toContain("세부 이미지");
   });
 
-  it("manager는 활동 상세 이미지를 삭제할 수 있다", async () => {
-    const deleteActivityImage = fn(async () => true);
+  it("manager는 활동 상세 이미지를 삭제할 수 있다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const deleteActivityImage = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => true);
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
       dataService: createDataServiceMock({ deleteActivityImage }),

@@ -10,7 +10,7 @@ import {
 } from "./test-helpers";
 import { MissingStorageConfigError } from "../lib/storage/presign";
 
-describe("upload presign routes", () => {
+describe("upload presign routes", /** describe 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
   const resourceRoutes = [
     {
       path: "/api/activities/presign/cover",
@@ -40,7 +40,7 @@ describe("upload presign routes", () => {
   ];
 
   for (const route of resourceRoutes) {
-    it(`${route.path}는 인증되지 않은 요청에 401을 반환한다`, async () => {
+    it(`${route.path}는 인증되지 않은 요청에 401을 반환한다`, /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
       const app = createTestApp({ actor: null });
       const response = await app.request(route.path, {
         method: "POST",
@@ -52,8 +52,8 @@ describe("upload presign routes", () => {
       await expectErrorCode(response, "UNAUTHORIZED");
     });
 
-    it(`${route.path}는 권한 없는 사용자에게 403을 반환한다`, async () => {
-      const issuePresignedPutUrl = fn(async () => ({
+    it(`${route.path}는 권한 없는 사용자에게 403을 반환한다`, /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+      const issuePresignedPutUrl = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => ({
         uploadUrl: "https://upload.example.com/signed",
         objectKey: "object-key",
         publicUrl: "https://cdn.example.com/object-key",
@@ -75,7 +75,7 @@ describe("upload presign routes", () => {
       expect(issuePresignedPutUrl).not.toHaveBeenCalled();
     });
 
-    it(`${route.path}는 본문 검증 실패 시 400을 반환한다`, async () => {
+    it(`${route.path}는 본문 검증 실패 시 400을 반환한다`, /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
       const app = createTestApp({ actor: createActor(route.role, IDs.manager) });
 
       const response = await app.request(route.path, {
@@ -88,8 +88,8 @@ describe("upload presign routes", () => {
       await expectErrorCode(response, "BAD_REQUEST");
     });
 
-    it(`${route.path}는 presign 생성 성공 시 201과 URL을 반환한다`, async () => {
-      const issuePresignedPutUrl = fn(async () => ({
+    it(`${route.path}는 presign 생성 성공 시 201과 URL을 반환한다`, /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+      const issuePresignedPutUrl = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => ({
         uploadUrl: "https://upload.example.com/signed",
         objectKey: "object-key",
         publicUrl: "https://cdn.example.com/object-key",
@@ -121,8 +121,8 @@ describe("upload presign routes", () => {
       });
     });
 
-    it(`${route.path}는 presign 서비스 예외 시 500을 반환한다`, async () => {
-      const issuePresignedPutUrl = fn(async () => {
+    it(`${route.path}는 presign 서비스 예외 시 500을 반환한다`, /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+      const issuePresignedPutUrl = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
         throw new Error("r2 unavailable");
       });
       const app = createTestApp({
@@ -141,8 +141,8 @@ describe("upload presign routes", () => {
     });
   }
 
-  it("R2 설정 누락 에러는 내부 오류로 처리하되 상세 안내 메시지를 반환한다", async () => {
-    const issuePresignedPutUrl = fn(async () => {
+  it("R2 설정 누락 에러는 내부 오류로 처리하되 상세 안내 메시지를 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const issuePresignedPutUrl = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
       throw new MissingStorageConfigError(["R2_S3_ENDPOINT", "R2_ACCESS_KEY_ID"]);
     });
     const consoleSpy = fn();
@@ -169,8 +169,8 @@ describe("upload presign routes", () => {
     }
   });
 
-  it("/api/users/presign/profile는 manager에게 403을 반환한다", async () => {
-    const issuePresignedPutUrl = fn(async () => ({
+  it("/api/users/presign/profile는 manager에게 403을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const issuePresignedPutUrl = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => ({
       uploadUrl: "https://upload.example.com/signed",
       objectKey: "users/profile-key",
       publicUrl: "https://cdn.example.com/users/profile-key",
@@ -192,8 +192,8 @@ describe("upload presign routes", () => {
     expect(issuePresignedPutUrl).not.toHaveBeenCalled();
   });
 
-  it("/api/users/presign/profile는 member 계열 사용자에게 허용된다", async () => {
-    const issuePresignedPutUrl = fn(async () => ({
+  it("/api/users/presign/profile는 member 계열 사용자에게 허용된다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const issuePresignedPutUrl = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => ({
       uploadUrl: "https://upload.example.com/signed",
       objectKey: "users/profile-key",
       publicUrl: "https://cdn.example.com/users/profile-key",
@@ -220,8 +220,8 @@ describe("upload presign routes", () => {
     });
   });
 
-  it("/api/users/presign/profile는 user update 권한이 있는 관리자에게 허용된다", async () => {
-    const issuePresignedPutUrl = fn(async () => ({
+  it("/api/users/presign/profile는 user update 권한이 있는 관리자에게 허용된다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const issuePresignedPutUrl = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => ({
       uploadUrl: "https://upload.example.com/signed",
       objectKey: "users/profile-key",
       publicUrl: "https://cdn.example.com/users/profile-key",
@@ -248,7 +248,7 @@ describe("upload presign routes", () => {
     });
   });
 
-  it("/api/users/presign/profile 본문이 유효하지 않으면 400을 반환한다", async () => {
+  it("/api/users/presign/profile 본문이 유효하지 않으면 400을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({ actor: createActor("associate_member", IDs.member) });
 
     const response = await app.request("/api/users/presign/profile", {
@@ -261,8 +261,8 @@ describe("upload presign routes", () => {
     await expectErrorCode(response, "BAD_REQUEST");
   });
 
-  it("/api/users/presign/profile는 presign 서비스 예외 시 500을 반환한다", async () => {
-    const issuePresignedPutUrl = fn(async () => {
+  it("/api/users/presign/profile는 presign 서비스 예외 시 500을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const issuePresignedPutUrl = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
       throw new Error("r2 unavailable");
     });
     const app = createTestApp({

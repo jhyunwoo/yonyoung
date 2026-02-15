@@ -10,13 +10,13 @@ import {
   readJson,
 } from "./test-helpers";
 
-describe("user routes additional coverage", () => {
-  it("admin 권한 사용자는 users 목록 전체 조회가 가능하다", async () => {
-    const listUsers = fn(async () => [
+describe("user routes additional coverage", /** describe 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
+  it("admin 권한 사용자는 users 목록 전체 조회가 가능하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const listUsers = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => [
       createUser({ id: IDs.member, role: "regular_member" }),
       createUser({ id: IDs.manager, role: "manager" }),
     ]);
-    const getUserById = fn(async () => createUser({ id: IDs.vicePresident }));
+    const getUserById = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createUser({ id: IDs.vicePresident }));
     const app = createTestApp({
       actor: createActor("vice_president", IDs.vicePresident),
       dataService: createDataServiceMock({ listUsers, getUserById }),
@@ -31,8 +31,8 @@ describe("user routes additional coverage", () => {
     expect(getUserById).not.toHaveBeenCalled();
   });
 
-  it("member 계열 사용자의 본인 조회(list users fallback)에서 본인이 없으면 404", async () => {
-    const getUserById = fn(async () => null);
+  it("member 계열 사용자의 본인 조회(list users fallback)에서 본인이 없으면 404", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const getUserById = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => null);
     const app = createTestApp({
       actor: createActor("associate_member", IDs.member),
       dataService: createDataServiceMock({ getUserById }),
@@ -44,8 +44,8 @@ describe("user routes additional coverage", () => {
     expect(getUserById).toHaveBeenCalledWith(IDs.member);
   });
 
-  it("member 계열 사용자의 본인 상세 조회 대상이 없으면 404", async () => {
-    const getUserById = fn(async () => null);
+  it("member 계열 사용자의 본인 상세 조회 대상이 없으면 404", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const getUserById = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => null);
     const app = createTestApp({
       actor: createActor("associate_member", IDs.member),
       dataService: createDataServiceMock({ getUserById }),
@@ -56,12 +56,12 @@ describe("user routes additional coverage", () => {
     await expectErrorCode(response, "NOT_FOUND");
   });
 
-  it("admin 사용자 수정 본문이 비어 있으면 400", async () => {
-    const updateUser = fn(async () => createUser({ id: IDs.otherUser }));
+  it("admin 사용자 수정 본문이 비어 있으면 400", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const updateUser = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createUser({ id: IDs.otherUser }));
     const app = createTestApp({
       actor: createActor("vice_president", IDs.vicePresident),
       dataService: createDataServiceMock({
-        getUserById: fn(async () => createUser({ id: IDs.otherUser, role: "regular_member" })),
+        getUserById: fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createUser({ id: IDs.otherUser, role: "regular_member" })),
         updateUser,
       }),
     });
@@ -77,12 +77,12 @@ describe("user routes additional coverage", () => {
     expect(updateUser).not.toHaveBeenCalled();
   });
 
-  it("admin 사용자 수정 대상이 없으면 404", async () => {
-    const updateUser = fn(async () => createUser({ id: IDs.otherUser }));
+  it("admin 사용자 수정 대상이 없으면 404", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const updateUser = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createUser({ id: IDs.otherUser }));
     const app = createTestApp({
       actor: createActor("vice_president", IDs.vicePresident),
       dataService: createDataServiceMock({
-        getUserById: fn(async () => null),
+        getUserById: fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => null),
         updateUser,
       }),
     });
@@ -98,8 +98,8 @@ describe("user routes additional coverage", () => {
     expect(updateUser).not.toHaveBeenCalled();
   });
 
-  it("admin은 다른 사용자를 삭제할 수 있다", async () => {
-    const deleteUser = fn(async () => true);
+  it("admin은 다른 사용자를 삭제할 수 있다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const deleteUser = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => true);
     const app = createTestApp({
       actor: createActor("vice_president", IDs.vicePresident),
       dataService: createDataServiceMock({ deleteUser }),
@@ -113,8 +113,8 @@ describe("user routes additional coverage", () => {
     expect(deleteUser).toHaveBeenCalledWith(IDs.otherUser);
   });
 
-  it("삭제 대상 사용자가 없으면 404", async () => {
-    const deleteUser = fn(async () => false);
+  it("삭제 대상 사용자가 없으면 404", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const deleteUser = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => false);
     const app = createTestApp({
       actor: createActor("vice_president", IDs.vicePresident),
       dataService: createDataServiceMock({ deleteUser }),
@@ -128,8 +128,8 @@ describe("user routes additional coverage", () => {
     await expectErrorCode(response, "NOT_FOUND");
   });
 
-  it("member 계열 사용자는 타인 계정을 삭제할 수 없다", async () => {
-    const deleteUser = fn(async () => true);
+  it("member 계열 사용자는 타인 계정을 삭제할 수 없다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const deleteUser = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => true);
     const app = createTestApp({
       actor: createActor("regular_member", IDs.member),
       dataService: createDataServiceMock({ deleteUser }),
@@ -144,12 +144,12 @@ describe("user routes additional coverage", () => {
     expect(deleteUser).not.toHaveBeenCalled();
   });
 
-  it("admin 사용자 수정 role이 enum 외 값이면 400", async () => {
-    const updateUser = fn(async () => createUser({ id: IDs.otherUser }));
+  it("admin 사용자 수정 role이 enum 외 값이면 400", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const updateUser = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createUser({ id: IDs.otherUser }));
     const app = createTestApp({
       actor: createActor("vice_president", IDs.vicePresident),
       dataService: createDataServiceMock({
-        getUserById: fn(async () => createUser({ id: IDs.otherUser })),
+        getUserById: fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createUser({ id: IDs.otherUser })),
         updateUser,
       }),
     });

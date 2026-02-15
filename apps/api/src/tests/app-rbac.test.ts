@@ -16,6 +16,13 @@ const IDs = {
   president: "30000000-0000-4000-8000-000000000004",
 } as const;
 
+/**
+ * createActor 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param role 권한 판단에 사용되는 역할 정보입니다.
+ * @param id 대상을 식별하기 위한 ID 값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const createActor = (role: Role, id: string): Actor => ({
   id,
   role,
@@ -25,6 +32,13 @@ const createActor = (role: Role, id: string): Actor => ({
   generationId: null,
 });
 
+/**
+ * createUser 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param id 대상을 식별하기 위한 ID 값입니다.
+ * @param role 권한 판단에 사용되는 역할 정보입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const createUser = (
   id: string,
   role: UserEntity["role"] = "regular_member",
@@ -40,54 +54,101 @@ const createUser = (
   updatedAt: new Date(0),
 });
 
+/**
+ * createDataServiceMock 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param overrides 대상을 식별하기 위한 ID 값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const createDataServiceMock = (overrides: Partial<DataService> = {}): DataService => {
   return new Proxy(overrides as DataService, {
+        /**
+     * get 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+     * @param target 함수 로직에서 사용하는 입력값입니다.
+     * @param prop 함수 로직에서 사용하는 입력값입니다.
+     * @returns 조회/계산된 결과 값을 반환합니다.
+     * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+     */
     get(target, prop) {
       if (prop in target) {
         return target[prop as keyof DataService];
       }
-      return async () => {
+      return /** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
         throw new Error(`Unexpected DataService call: ${String(prop)}`);
       };
     },
   }) as DataService;
 };
 
+/**
+ * createPresignServiceMock 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param overrides 대상을 식별하기 위한 ID 값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const createPresignServiceMock = (
   overrides: Partial<PresignService> = {},
 ): PresignService => {
   return new Proxy(overrides as PresignService, {
+        /**
+     * get 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+     * @param target 함수 로직에서 사용하는 입력값입니다.
+     * @param prop 함수 로직에서 사용하는 입력값입니다.
+     * @returns 조회/계산된 결과 값을 반환합니다.
+     * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+     */
     get(target, prop) {
       if (prop in target) {
         return target[prop as keyof PresignService];
       }
-      return async () => {
+      return /** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
         throw new Error(`Unexpected PresignService call: ${String(prop)}`);
       };
     },
   }) as PresignService;
 };
 
+/**
+ * createTestApp 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param input 함수 로직에서 사용하는 입력값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const createTestApp = (input: {
   actor: Actor | null;
   dataService?: DataService;
   presignService?: PresignService;
 }) => {
   return createApp({
+        /**
+     * resolveActor 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+     * @returns 조회/계산된 결과 값을 반환합니다.
+     * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+     */
     resolveActor: async () => input.actor,
+        /**
+     * getDataService 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+     * @returns 조회/계산된 결과 값을 반환합니다.
+     * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+     */
     getDataService: () => input.dataService ?? createDataServiceMock(),
+        /**
+     * getPresignService 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+     * @returns 조회/계산된 결과 값을 반환합니다.
+     * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+     */
     getPresignService: () => input.presignService ?? createPresignServiceMock(),
   });
 };
 
-describe("RBAC routes", () => {
-  it("미로그인 요청은 401을 반환한다", async () => {
+describe("RBAC routes", /** describe 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
+  it("미로그인 요청은 401을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({ actor: null });
     const response = await app.request("/api/generations");
     expect(response.status).toBe(401);
   });
 
-  it("부회장은 generation 삭제가 불가하다", async () => {
+  it("부회장은 generation 삭제가 불가하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({
       actor: createActor("vice_president", IDs.member),
     });
@@ -98,8 +159,8 @@ describe("RBAC routes", () => {
     expect(response.status).toBe(403);
   });
 
-  it("회장은 generation 삭제가 가능하다", async () => {
-    const deleteGeneration = vi.fn(async () => true);
+  it("회장은 generation 삭제가 가능하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const deleteGeneration = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => true);
     const app = createTestApp({
       actor: createActor("president", IDs.member),
       dataService: createDataServiceMock({
@@ -114,7 +175,7 @@ describe("RBAC routes", () => {
     expect(deleteGeneration).toHaveBeenCalledWith(IDs.generation);
   });
 
-  it("부장은 exhibition 삭제가 불가하다", async () => {
+  it("부장은 exhibition 삭제가 불가하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
     });
@@ -125,8 +186,8 @@ describe("RBAC routes", () => {
     expect(response.status).toBe(403);
   });
 
-  it("부원의 users 목록 조회는 본인 1건만 반환한다", async () => {
-    const getUserById = vi.fn(async (id: string) => createUser(id));
+  it("부원의 users 목록 조회는 본인 1건만 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const getUserById = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param id 대상을 식별하기 위한 ID 값입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (id: string) => createUser(id));
     const app = createTestApp({
       actor: createActor("regular_member", IDs.member),
       dataService: createDataServiceMock({
@@ -143,8 +204,8 @@ describe("RBAC routes", () => {
     expect(getUserById).toHaveBeenCalledWith(IDs.member);
   });
 
-  it("정회원(regular_member)의 users 목록 조회도 본인 1건만 반환한다", async () => {
-    const getUserById = vi.fn(async (id: string) => createUser(id, "regular_member"));
+  it("정회원(regular_member)의 users 목록 조회도 본인 1건만 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const getUserById = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param id 대상을 식별하기 위한 ID 값입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (id: string) => createUser(id, "regular_member"));
     const app = createTestApp({
       actor: createActor("regular_member", IDs.member),
       dataService: createDataServiceMock({
@@ -161,7 +222,7 @@ describe("RBAC routes", () => {
     expect(getUserById).toHaveBeenCalledWith(IDs.member);
   });
 
-  it("부원은 다른 사용자 상세 조회가 불가하다", async () => {
+  it("부원은 다른 사용자 상세 조회가 불가하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({
       actor: createActor("regular_member", IDs.member),
     });
@@ -170,11 +231,11 @@ describe("RBAC routes", () => {
     expect(response.status).toBe(403);
   });
 
-  it("부원은 본인 상세 조회가 가능하다", async () => {
+  it("부원은 본인 상세 조회가 가능하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({
       actor: createActor("regular_member", IDs.member),
       dataService: createDataServiceMock({
-        getUserById: vi.fn(async () => createUser(IDs.member)),
+        getUserById: vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createUser(IDs.member)),
       }),
     });
 
@@ -182,8 +243,8 @@ describe("RBAC routes", () => {
     expect(response.status).toBe(200);
   });
 
-  it("부원은 본인 프로필(name/nickname/image)만 수정 가능하다", async () => {
-    const updateUser = vi.fn(async () => createUser(IDs.member));
+  it("부원은 본인 프로필(name/nickname/image)만 수정 가능하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const updateUser = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createUser(IDs.member));
     const app = createTestApp({
       actor: createActor("regular_member", IDs.member),
       dataService: createDataServiceMock({
@@ -207,7 +268,7 @@ describe("RBAC routes", () => {
     });
   });
 
-  it("부원은 role/generationId를 수정할 수 없다", async () => {
+  it("부원은 role/generationId를 수정할 수 없다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({
       actor: createActor("regular_member", IDs.member),
     });
@@ -225,12 +286,12 @@ describe("RBAC routes", () => {
     expect(response.status).toBe(400);
   });
 
-  it("부회장은 본인보다 높은 등급(회장)으로 변경할 수 없다", async () => {
-    const updateUser = vi.fn(async () => createUser(IDs.otherUser, "president"));
+  it("부회장은 본인보다 높은 등급(회장)으로 변경할 수 없다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const updateUser = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createUser(IDs.otherUser, "president"));
     const app = createTestApp({
       actor: createActor("vice_president", IDs.member),
       dataService: createDataServiceMock({
-        getUserById: vi.fn(async () => createUser(IDs.otherUser, "regular_member")),
+        getUserById: vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createUser(IDs.otherUser, "regular_member")),
         updateUser,
       }),
     });
@@ -249,12 +310,12 @@ describe("RBAC routes", () => {
     expect(updateUser).not.toHaveBeenCalled();
   });
 
-  it("관리자는 unverified를 regular_member로 변경할 수 있다", async () => {
-    const updateUser = vi.fn(async () => createUser(IDs.otherUser, "regular_member"));
+  it("관리자는 unverified를 regular_member로 변경할 수 있다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const updateUser = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createUser(IDs.otherUser, "regular_member"));
     const app = createTestApp({
       actor: createActor("vice_president", IDs.member),
       dataService: createDataServiceMock({
-        getUserById: vi.fn(async () => createUser(IDs.otherUser, "unverified")),
+        getUserById: vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createUser(IDs.otherUser, "unverified")),
         updateUser,
       }),
     });
@@ -275,13 +336,13 @@ describe("RBAC routes", () => {
     });
   });
 
-  it("회장 인원은 권한 변경으로 1명 미만이 될 수 없다", async () => {
-    const updateUser = vi.fn(async () => createUser(IDs.president, "regular_member"));
+  it("회장 인원은 권한 변경으로 1명 미만이 될 수 없다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const updateUser = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createUser(IDs.president, "regular_member"));
     const app = createTestApp({
       actor: createActor("president", IDs.president),
       dataService: createDataServiceMock({
-        getUserById: vi.fn(async () => createUser(IDs.president, "president")),
-        listUsers: vi.fn(async () => [createUser(IDs.president, "president")]),
+        getUserById: vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createUser(IDs.president, "president")),
+        listUsers: vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => [createUser(IDs.president, "president")]),
         updateUser,
       }),
     });
@@ -300,8 +361,8 @@ describe("RBAC routes", () => {
     expect(updateUser).not.toHaveBeenCalled();
   });
 
-  it("부원은 본인 계정 삭제(탈퇴)가 가능하다", async () => {
-    const deleteUser = vi.fn(async () => true);
+  it("부원은 본인 계정 삭제(탈퇴)가 가능하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const deleteUser = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => true);
     const app = createTestApp({
       actor: createActor("regular_member", IDs.member),
       dataService: createDataServiceMock({
@@ -317,7 +378,7 @@ describe("RBAC routes", () => {
     expect(deleteUser).toHaveBeenCalledWith(IDs.member);
   });
 
-  it("부원은 activities 생성이 불가하다", async () => {
+  it("부원은 activities 생성이 불가하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({
       actor: createActor("regular_member", IDs.member),
     });
@@ -339,7 +400,7 @@ describe("RBAC routes", () => {
     expect(response.status).toBe(403);
   });
 
-  it("부장은 사용자 프로필 presign 발급이 불가하다", async () => {
+  it("부장은 사용자 프로필 presign 발급이 불가하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
     });
@@ -358,8 +419,8 @@ describe("RBAC routes", () => {
     expect(response.status).toBe(403);
   });
 
-  it("준회원(associate_member)은 사용자 프로필 presign 발급이 가능하다", async () => {
-    const issuePresignedPutUrl = vi.fn(async () => ({
+  it("준회원(associate_member)은 사용자 프로필 presign 발급이 가능하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const issuePresignedPutUrl = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => ({
       uploadUrl: "https://upload.example.com/signed",
       objectKey: "users/key.png",
       publicUrl: "https://cdn.example.com/users/key.png",
@@ -395,8 +456,8 @@ describe("RBAC routes", () => {
     });
   });
 
-  it("부장은 activities presign 발급이 가능하다", async () => {
-    const issuePresignedPutUrl = vi.fn(async () => ({
+  it("부장은 activities presign 발급이 가능하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const issuePresignedPutUrl = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => ({
       uploadUrl: "https://upload.example.com/signed",
       objectKey: "activities/key.png",
       publicUrl: "https://cdn.example.com/activities/key.png",

@@ -25,6 +25,11 @@ const emptyForm: GenerationFormState = {
   endDate: "",
 };
 
+/**
+ * GenerationsAdminPage 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
+ * @returns 렌더링할 JSX 트리를 반환합니다.
+ * @remarks 리렌더링 타이밍에 따라 훅 의존성 배열을 신중히 관리해야 합니다.
+ */
 export default function GenerationsAdminPage() {
   const [items, setItems] = useState<ApiGeneration[]>([]);
   const [users, setUsers] = useState<ApiUser[]>([]);
@@ -37,22 +42,33 @@ export default function GenerationsAdminPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const selected = useMemo(
-    () => items.find((item) => item.id === selectedId) ?? null,
+        /**
+     * useMemo 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+     * @returns 함수 실행 결과를 반환합니다.
+     * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+     */
+    () => items.find(/** items.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === selectedId) ?? null,
     [items, selectedId],
   );
-  const selectedMembers = useMemo(() => {
+  const selectedMembers = useMemo(/** useMemo 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
     if (!selected) {
       return [];
     }
-    return users.filter((user) => user.generationId === selected.id);
+    return users.filter(/** users.filter 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param user 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (user) => user.generationId === selected.id);
   }, [selected, users]);
-  const assignableUsers = useMemo(() => {
+  const assignableUsers = useMemo(/** useMemo 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
     if (!selected) {
       return [];
     }
-    return users.filter((user) => user.generationId !== selected.id);
+    return users.filter(/** users.filter 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param user 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (user) => user.generationId !== selected.id);
   }, [selected, users]);
 
+    /**
+   * syncEditForm의 핵심 비즈니스 로직을 수행합니다.
+   * @param item 반복 처리 중인 현재 항목입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const syncEditForm = (item: ApiGeneration | null) => {
     if (!item) {
       setEditForm(emptyForm);
@@ -67,6 +83,11 @@ export default function GenerationsAdminPage() {
     });
   };
 
+    /**
+   * loadItems 외부 또는 내부 소스에서 데이터를 읽어오는 로직을 수행합니다.
+   * @returns 외부 소스에서 읽어 온 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const loadItems = async () => {
     setIsLoading(true);
     setErrorMessage(null);
@@ -92,12 +113,12 @@ export default function GenerationsAdminPage() {
         }
 
         const keepSelection =
-          selectedId && generationData.some((item) => item.id === selectedId)
+          selectedId && generationData.some(/** generationData.some 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === selectedId)
             ? selectedId
             : fallbackId;
         setSelectedId(keepSelection);
         const selectedItem =
-          generationData.find((item) => item.id === keepSelection) ?? null;
+          generationData.find(/** generationData.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === keepSelection) ?? null;
         syncEditForm(selectedItem);
       }
     } catch (error) {
@@ -107,11 +128,17 @@ export default function GenerationsAdminPage() {
     }
   };
 
-  useEffect(() => {
+  useEffect(/** useEffect 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
     void loadItems();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+    /**
+   * handleCreate의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @param event 함수 로직에서 사용하는 입력값입니다.
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleCreate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
@@ -135,6 +162,12 @@ export default function GenerationsAdminPage() {
     }
   };
 
+    /**
+   * handleUpdate의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @param event 함수 로직에서 사용하는 입력값입니다.
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleUpdate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selected) {
@@ -161,6 +194,11 @@ export default function GenerationsAdminPage() {
     }
   };
 
+    /**
+   * handleDelete의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleDelete = async () => {
     if (!selected) {
       return;
@@ -186,11 +224,23 @@ export default function GenerationsAdminPage() {
     }
   };
 
+    /**
+   * handleSelect의 핵심 비즈니스 로직을 수행합니다.
+   * @param item 반복 처리 중인 현재 항목입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleSelect = (item: ApiGeneration) => {
     setSelectedId(item.id);
     syncEditForm(item);
   };
 
+    /**
+   * handleAssignMember의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @param userId 대상을 식별하기 위한 ID 값입니다.
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleAssignMember = async (userId: string) => {
     if (!selected) {
       return;
@@ -213,6 +263,12 @@ export default function GenerationsAdminPage() {
     }
   };
 
+    /**
+   * handleUnassignMember의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+   * @param userId 대상을 식별하기 위한 ID 값입니다.
+   * @returns 비동기 처리 결과를 Promise로 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   const handleUnassignMember = async (userId: string) => {
     setIsSubmitting(true);
     setErrorMessage(null);
@@ -256,7 +312,7 @@ export default function GenerationsAdminPage() {
             <h2 className="text-lg font-semibold">목록</h2>
             <button
               type="button"
-              onClick={() => void loadItems()}
+              onClick={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => void loadItems()}
               className="rounded-md border border-gray-300 px-2 py-1 text-xs"
               data-testid="generations-reload-button"
             >
@@ -270,7 +326,7 @@ export default function GenerationsAdminPage() {
             <p className="text-sm text-gray-500">데이터가 없습니다.</p>
           ) : (
             <ul className="space-y-2" data-testid="generations-list">
-              {items.map((item) => (
+              {items.map(/** items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => (
                 <li key={item.id} className="rounded-md border border-gray-200 p-3" data-testid={`generation-row-${item.id}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -281,7 +337,7 @@ export default function GenerationsAdminPage() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => handleSelect(item)}
+                      onClick={/** items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => handleSelect(item)}
                       className={`rounded-md px-2 py-1 text-xs font-medium ${
                         selectedId === item.id
                           ? "bg-black text-white"
@@ -307,8 +363,8 @@ export default function GenerationsAdminPage() {
                 <input
                   type="text"
                   value={createForm.name}
-                  onChange={(event) =>
-                    setCreateForm((previous) => ({ ...previous, name: event.target.value }))
+                  onChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                    setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, name: event.target.value }))
                   }
                   className="w-full rounded-md border border-gray-300 px-3 py-2"
                   required
@@ -322,8 +378,8 @@ export default function GenerationsAdminPage() {
                   type="number"
                   min={0}
                   value={createForm.sortOrder}
-                  onChange={(event) =>
-                    setCreateForm((previous) => ({ ...previous, sortOrder: event.target.value }))
+                  onChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                    setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, sortOrder: event.target.value }))
                   }
                   className="w-full rounded-md border border-gray-300 px-3 py-2"
                   required
@@ -336,8 +392,8 @@ export default function GenerationsAdminPage() {
                 <input
                   type="date"
                   value={createForm.startDate}
-                  onChange={(event) =>
-                    setCreateForm((previous) => ({ ...previous, startDate: event.target.value }))
+                  onChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                    setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, startDate: event.target.value }))
                   }
                   className="w-full rounded-md border border-gray-300 px-3 py-2"
                   required
@@ -350,8 +406,8 @@ export default function GenerationsAdminPage() {
                 <input
                   type="date"
                   value={createForm.endDate}
-                  onChange={(event) =>
-                    setCreateForm((previous) => ({ ...previous, endDate: event.target.value }))
+                  onChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                    setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, endDate: event.target.value }))
                   }
                   className="w-full rounded-md border border-gray-300 px-3 py-2"
                   required
@@ -380,8 +436,8 @@ export default function GenerationsAdminPage() {
                     <input
                       type="text"
                       value={editForm.name}
-                      onChange={(event) =>
-                        setEditForm((previous) => ({ ...previous, name: event.target.value }))
+                      onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                        setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, name: event.target.value }))
                       }
                       className="w-full rounded-md border border-gray-300 px-3 py-2"
                       required
@@ -395,8 +451,8 @@ export default function GenerationsAdminPage() {
                       type="number"
                       min={0}
                       value={editForm.sortOrder}
-                      onChange={(event) =>
-                        setEditForm((previous) => ({ ...previous, sortOrder: event.target.value }))
+                      onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                        setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, sortOrder: event.target.value }))
                       }
                       className="w-full rounded-md border border-gray-300 px-3 py-2"
                       required
@@ -409,8 +465,8 @@ export default function GenerationsAdminPage() {
                     <input
                       type="date"
                       value={editForm.startDate}
-                      onChange={(event) =>
-                        setEditForm((previous) => ({ ...previous, startDate: event.target.value }))
+                      onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                        setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, startDate: event.target.value }))
                       }
                       className="w-full rounded-md border border-gray-300 px-3 py-2"
                       required
@@ -423,8 +479,8 @@ export default function GenerationsAdminPage() {
                     <input
                       type="date"
                       value={editForm.endDate}
-                      onChange={(event) =>
-                        setEditForm((previous) => ({ ...previous, endDate: event.target.value }))
+                      onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
+                        setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, endDate: event.target.value }))
                       }
                       className="w-full rounded-md border border-gray-300 px-3 py-2"
                       required
@@ -474,7 +530,7 @@ export default function GenerationsAdminPage() {
             </p>
           ) : (
             <ul className="space-y-2" data-testid="generation-members-list">
-              {selectedMembers.map((member) => (
+              {selectedMembers.map(/** selectedMembers.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param member 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (member) => (
                 <li
                   key={member.id}
                   className="flex items-center justify-between rounded-md border border-gray-200 p-2"
@@ -486,7 +542,7 @@ export default function GenerationsAdminPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => void handleUnassignMember(member.id)}
+                    onClick={/** selectedMembers.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => void handleUnassignMember(member.id)}
                     disabled={isSubmitting}
                     className="rounded-md border border-red-300 px-2 py-1 text-xs font-medium text-red-600 disabled:opacity-50"
                     data-testid={`generation-member-unassign-${member.id}`}
@@ -509,7 +565,7 @@ export default function GenerationsAdminPage() {
             </p>
           ) : (
             <ul className="space-y-2" data-testid="generation-assignable-list">
-              {assignableUsers.map((member) => (
+              {assignableUsers.map(/** assignableUsers.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param member 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (member) => (
                 <li
                   key={member.id}
                   className="flex items-center justify-between rounded-md border border-gray-200 p-2"
@@ -523,7 +579,7 @@ export default function GenerationsAdminPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => void handleAssignMember(member.id)}
+                    onClick={/** assignableUsers.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => void handleAssignMember(member.id)}
                     disabled={isSubmitting}
                     className="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 disabled:opacity-50"
                     data-testid={`generation-member-assign-${member.id}`}

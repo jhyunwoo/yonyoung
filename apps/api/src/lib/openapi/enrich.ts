@@ -40,10 +40,22 @@ const responseDescriptionByStatus: Record<string, string> = {
 
 type MutableRecord = Record<string, any>;
 
+/**
+ * isRecord 조건을 평가해 사용 가능 여부를 판별합니다.
+ * @param value 함수 로직에서 사용하는 입력값입니다.
+ * @returns 조건 판별 결과(boolean)를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const isRecord = (value: unknown): value is MutableRecord => {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 };
 
+/**
+ * inferParameterDescription의 핵심 비즈니스 로직을 수행합니다.
+ * @param name 함수 로직에서 사용하는 입력값입니다.
+ * @returns 함수 실행 결과를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const inferParameterDescription = (name: string): string => {
   if (name === "id") {
     return "리소스 고유 식별자(UUID)입니다.";
@@ -57,11 +69,24 @@ const inferParameterDescription = (name: string): string => {
   return `${name} 파라미터 값입니다.`;
 };
 
+/**
+ * extractPathParameterNames의 핵심 비즈니스 로직을 수행합니다.
+ * @param path 리소스 경로 또는 라우팅 경로 문자열입니다.
+ * @returns 함수 실행 결과를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const extractPathParameterNames = (path: string): string[] => {
   const matches = path.matchAll(/\{([^}]+)}/g);
-  return [...matches].map((entry) => entry[1]);
+  return [...matches].map(/** [...matches].map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param entry 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (entry) => entry[1]);
 };
 
+/**
+ * ensureParameterDescriptions의 핵심 비즈니스 로직을 수행합니다.
+ * @param operation 함수 로직에서 사용하는 입력값입니다.
+ * @param path 리소스 경로 또는 라우팅 경로 문자열입니다.
+ * @returns 함수 실행 결과를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const ensureParameterDescriptions = (
   operation: MutableRecord,
   path: string,
@@ -102,6 +127,12 @@ const ensureParameterDescriptions = (
   }
 };
 
+/**
+ * ensureRequestBodyDescription의 핵심 비즈니스 로직을 수행합니다.
+ * @param operation 함수 로직에서 사용하는 입력값입니다.
+ * @returns 함수 실행 결과를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const ensureRequestBodyDescription = (operation: MutableRecord) => {
   if (!isRecord(operation.requestBody)) {
     return;
@@ -112,6 +143,13 @@ const ensureRequestBodyDescription = (operation: MutableRecord) => {
   }
 };
 
+/**
+ * mergeDescription의 핵심 비즈니스 로직을 수행합니다.
+ * @param current 함수 로직에서 사용하는 입력값입니다.
+ * @param generated 함수 로직에서 사용하는 입력값입니다.
+ * @returns 함수 실행 결과를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const mergeDescription = (current: unknown, generated: string): string => {
   if (typeof current !== "string" || current.trim().length === 0) {
     return generated;
@@ -122,6 +160,12 @@ const mergeDescription = (current: unknown, generated: string): string => {
   return `${current} ${generated}`;
 };
 
+/**
+ * ensureResponseDescriptions의 핵심 비즈니스 로직을 수행합니다.
+ * @param operation 함수 로직에서 사용하는 입력값입니다.
+ * @returns 함수 실행 결과를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const ensureResponseDescriptions = (operation: MutableRecord) => {
   if (!isRecord(operation.responses)) {
     return;
@@ -142,6 +186,14 @@ const ensureResponseDescriptions = (operation: MutableRecord) => {
   }
 };
 
+/**
+ * toFallbackSummary의 핵심 비즈니스 로직을 수행합니다.
+ * @param method 함수 로직에서 사용하는 입력값입니다.
+ * @param path 리소스 경로 또는 라우팅 경로 문자열입니다.
+ * @param operation 함수 로직에서 사용하는 입력값입니다.
+ * @returns 함수 실행 결과를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const toFallbackSummary = (
   method: string,
   path: string,
@@ -162,6 +214,13 @@ const toFallbackSummary = (
   return `${method.toUpperCase()} ${path} 처리`;
 };
 
+/**
+ * fallbackParameterGuide의 핵심 비즈니스 로직을 수행합니다.
+ * @param path 리소스 경로 또는 라우팅 경로 문자열입니다.
+ * @param operation 함수 로직에서 사용하는 입력값입니다.
+ * @returns 함수 실행 결과를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const fallbackParameterGuide = (
   path: string,
   operation: MutableRecord,
@@ -190,6 +249,12 @@ const fallbackParameterGuide = (
   return result;
 };
 
+/**
+ * fallbackRequestBodyGuide의 핵심 비즈니스 로직을 수행합니다.
+ * @param operation 함수 로직에서 사용하는 입력값입니다.
+ * @returns 함수 실행 결과를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const fallbackRequestBodyGuide = (operation: MutableRecord): string[] => {
   if (!isRecord(operation.requestBody)) {
     return ["요청 본문은 사용하지 않습니다."];
@@ -214,6 +279,12 @@ const fallbackRequestBodyGuide = (operation: MutableRecord): string[] => {
   ];
 };
 
+/**
+ * fallbackResponseGuide의 핵심 비즈니스 로직을 수행합니다.
+ * @param operation 함수 로직에서 사용하는 입력값입니다.
+ * @returns 함수 실행 결과를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const fallbackResponseGuide = (operation: MutableRecord): string[] => {
   if (!isRecord(operation.responses)) {
     return ["응답 코드는 endpoint 구현에 따라 달라질 수 있습니다."];
@@ -225,7 +296,8 @@ const fallbackResponseGuide = (operation: MutableRecord): string[] => {
   }
 
   return statuses
-    .map((status) => {
+    .map(/** statuses
+    .map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param status 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (status) => {
       const message = responseDescriptionByStatus[status];
       if (message) {
         return `\`${status}\`: ${message}`;
@@ -235,6 +307,12 @@ const fallbackResponseGuide = (operation: MutableRecord): string[] => {
     .sort();
 };
 
+/**
+ * fallbackErrorGuide의 핵심 비즈니스 로직을 수행합니다.
+ * @param operation 함수 로직에서 사용하는 입력값입니다.
+ * @returns 함수 실행 결과를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const fallbackErrorGuide = (operation: MutableRecord): string[] => {
   if (!isRecord(operation.responses)) {
     return [
@@ -243,6 +321,12 @@ const fallbackErrorGuide = (operation: MutableRecord): string[] => {
   }
 
   const errorStatuses = Object.keys(operation.responses).filter(
+        /**
+     * Object.keys(operation.responses).filter 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+     * @param status 함수 로직에서 사용하는 입력값입니다.
+     * @returns 함수 실행 결과를 반환합니다.
+     * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+     */
     (status) => Number.isFinite(Number(status)) && Number(status) >= 400,
   );
 
@@ -250,7 +334,7 @@ const fallbackErrorGuide = (operation: MutableRecord): string[] => {
     return ["이 endpoint는 문서상 별도 오류 응답이 정의되어 있지 않습니다."];
   }
 
-  return errorStatuses.map((status) => {
+  return errorStatuses.map(/** errorStatuses.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param status 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (status) => {
     const message = responseDescriptionByStatus[status];
     if (message) {
       return `\`${status}\`: ${message}`;
@@ -259,6 +343,12 @@ const fallbackErrorGuide = (operation: MutableRecord): string[] => {
   });
 };
 
+/**
+ * fallbackPermissionGuide의 핵심 비즈니스 로직을 수행합니다.
+ * @param operation 함수 로직에서 사용하는 입력값입니다.
+ * @returns 함수 실행 결과를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const fallbackPermissionGuide = (operation: MutableRecord): string[] => {
   if (Array.isArray(operation.security) && operation.security.length > 0) {
     return [
@@ -269,6 +359,14 @@ const fallbackPermissionGuide = (operation: MutableRecord): string[] => {
   return ["공개 endpoint이며 별도 인증이 요구되지 않습니다."];
 };
 
+/**
+ * buildFallbackSpec 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+ * @param path 리소스 경로 또는 라우팅 경로 문자열입니다.
+ * @param method 함수 로직에서 사용하는 입력값입니다.
+ * @param operation 함수 로직에서 사용하는 입력값입니다.
+ * @returns 조회/계산된 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const buildFallbackSpec = (
   path: string,
   method: string,
@@ -290,6 +388,12 @@ const buildFallbackSpec = (
   };
 };
 
+/**
+ * enrichOpenApiDocument의 핵심 비즈니스 로직을 수행합니다.
+ * @param sourceDoc 함수 로직에서 사용하는 입력값입니다.
+ * @returns 함수 실행 결과를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const enrichOpenApiDocument = (
   sourceDoc: OpenAPIDocument,
 ): OpenAPIDocument => {

@@ -10,8 +10,8 @@ import {
   readJson,
 } from "./test-helpers";
 
-describe("supporter routes", () => {
-  it("인증되지 않은 요청은 401을 반환한다", async () => {
+describe("supporter routes", /** describe 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
+  it("인증되지 않은 요청은 401을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({ actor: null });
     const response = await app.request("/api/supporters");
 
@@ -19,8 +19,8 @@ describe("supporter routes", () => {
     await expectErrorCode(response, "UNAUTHORIZED");
   });
 
-  it("member 계열 사용자는 후원사 목록 조회가 가능하다", async () => {
-    const listSupporters = fn(async () => [createSupporter()]);
+  it("member 계열 사용자는 후원사 목록 조회가 가능하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const listSupporters = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => [createSupporter()]);
     const app = createTestApp({
       actor: createActor("associate_member"),
       dataService: createDataServiceMock({ listSupporters }),
@@ -37,8 +37,8 @@ describe("supporter routes", () => {
     expect(typeof body.data[0]?.expiresAt).toBe("number");
   });
 
-  it("member 계열 사용자는 후원사를 생성할 수 없다", async () => {
-    const createSupporterMock = fn(async () => createSupporter());
+  it("member 계열 사용자는 후원사를 생성할 수 없다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const createSupporterMock = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createSupporter());
     const app = createTestApp({
       actor: createActor("regular_member"),
       dataService: createDataServiceMock({ createSupporter: createSupporterMock }),
@@ -60,7 +60,7 @@ describe("supporter routes", () => {
     expect(createSupporterMock).not.toHaveBeenCalled();
   });
 
-  it("후원사 생성 본문이 유효하지 않으면 400을 반환한다", async () => {
+  it("후원사 생성 본문이 유효하지 않으면 400을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({ actor: createActor("manager", IDs.manager) });
 
     const response = await app.request("/api/supporters", {
@@ -76,8 +76,8 @@ describe("supporter routes", () => {
     await expectErrorCode(response, "BAD_REQUEST");
   });
 
-  it("manager는 후원사를 생성할 수 있다", async () => {
-    const createSupporterMock = fn(async () => createSupporter({ name: "new-sponsor" }));
+  it("manager는 후원사를 생성할 수 있다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const createSupporterMock = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createSupporter({ name: "new-sponsor" }));
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
       dataService: createDataServiceMock({ createSupporter: createSupporterMock }),
@@ -101,7 +101,7 @@ describe("supporter routes", () => {
     expect(createSupporterMock).toHaveBeenCalledWith(payload);
   });
 
-  it("후원사 상세 조회에서 UUID가 유효하지 않으면 400을 반환한다", async () => {
+  it("후원사 상세 조회에서 UUID가 유효하지 않으면 400을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({ actor: createActor("manager", IDs.manager) });
 
     const response = await app.request("/api/supporters/not-a-uuid");
@@ -109,8 +109,8 @@ describe("supporter routes", () => {
     await expectErrorCode(response, "BAD_REQUEST");
   });
 
-  it("존재하지 않는 후원사 상세 조회는 404를 반환한다", async () => {
-    const getSupporterById = fn(async () => null);
+  it("존재하지 않는 후원사 상세 조회는 404를 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const getSupporterById = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => null);
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
       dataService: createDataServiceMock({ getSupporterById }),
@@ -122,7 +122,7 @@ describe("supporter routes", () => {
     expect(getSupporterById).toHaveBeenCalledWith(IDs.supporter);
   });
 
-  it("후원사 수정 본문이 비어 있으면 400을 반환한다", async () => {
+  it("후원사 수정 본문이 비어 있으면 400을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({ actor: createActor("manager", IDs.manager) });
 
     const response = await app.request(`/api/supporters/${IDs.supporter}`, {
@@ -135,8 +135,8 @@ describe("supporter routes", () => {
     await expectErrorCode(response, "BAD_REQUEST");
   });
 
-  it("존재하지 않는 후원사 수정은 404를 반환한다", async () => {
-    const updateSupporter = fn(async () => null);
+  it("존재하지 않는 후원사 수정은 404를 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const updateSupporter = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => null);
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
       dataService: createDataServiceMock({ updateSupporter }),
@@ -152,8 +152,8 @@ describe("supporter routes", () => {
     await expectErrorCode(response, "NOT_FOUND");
   });
 
-  it("manager는 후원사를 수정할 수 있다", async () => {
-    const updateSupporter = fn(async () => createSupporter({ name: "updated" }));
+  it("manager는 후원사를 수정할 수 있다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const updateSupporter = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createSupporter({ name: "updated" }));
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
       dataService: createDataServiceMock({ updateSupporter }),
@@ -170,8 +170,8 @@ describe("supporter routes", () => {
     expect(body.data.name).toBe("updated");
   });
 
-  it("member 계열 사용자는 후원사 삭제 권한이 없다", async () => {
-    const deleteSupporter = fn(async () => true);
+  it("member 계열 사용자는 후원사 삭제 권한이 없다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const deleteSupporter = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => true);
     const app = createTestApp({
       actor: createActor("regular_member"),
       dataService: createDataServiceMock({ deleteSupporter }),
@@ -186,8 +186,8 @@ describe("supporter routes", () => {
     expect(deleteSupporter).not.toHaveBeenCalled();
   });
 
-  it("존재하지 않는 후원사 삭제는 404를 반환한다", async () => {
-    const deleteSupporter = fn(async () => false);
+  it("존재하지 않는 후원사 삭제는 404를 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const deleteSupporter = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => false);
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
       dataService: createDataServiceMock({ deleteSupporter }),
@@ -201,8 +201,8 @@ describe("supporter routes", () => {
     await expectErrorCode(response, "NOT_FOUND");
   });
 
-  it("manager는 후원사를 삭제할 수 있다", async () => {
-    const deleteSupporter = fn(async () => true);
+  it("manager는 후원사를 삭제할 수 있다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const deleteSupporter = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => true);
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
       dataService: createDataServiceMock({ deleteSupporter }),

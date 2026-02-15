@@ -2,14 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { adminRequest } from "./http";
 import { AdminApiError } from "./types";
 
-describe("adminRequest", () => {
+describe("adminRequest", /** describe 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
   const originalBaseUrl = process.env.NEXT_PUBLIC_AUTH_API_URL;
 
-  beforeEach(() => {
+  beforeEach(/** beforeEach 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
     process.env.NEXT_PUBLIC_AUTH_API_URL = "http://api.example.com/";
   });
 
-  afterEach(() => {
+  afterEach(/** afterEach 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
     vi.restoreAllMocks();
     if (originalBaseUrl === undefined) {
       delete process.env.NEXT_PUBLIC_AUTH_API_URL;
@@ -18,8 +18,8 @@ describe("adminRequest", () => {
     }
   });
 
-  it("GET 요청은 data envelope를 언랩해서 반환한다", async () => {
-    const fetchMock = vi.fn(async () =>
+  it("GET 요청은 data envelope를 언랩해서 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const fetchMock = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () =>
       new Response(JSON.stringify({ data: [{ id: "g1" }] }), {
         status: 200,
         headers: { "content-type": "application/json" },
@@ -40,8 +40,8 @@ describe("adminRequest", () => {
     expect(options.headers).toEqual({ Accept: "application/json" });
   });
 
-  it("POST 요청은 본문을 전송하고 일반 JSON도 그대로 반환한다", async () => {
-    const fetchMock = vi.fn(async () =>
+  it("POST 요청은 본문을 전송하고 일반 JSON도 그대로 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const fetchMock = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () =>
       new Response(JSON.stringify({ ok: true }), {
         status: 200,
         headers: { "content-type": "application/json" },
@@ -64,16 +64,16 @@ describe("adminRequest", () => {
     });
   });
 
-  it("204 응답은 undefined를 반환한다", async () => {
-    const fetchMock = vi.fn(async () => new Response(null, { status: 204 }));
+  it("204 응답은 undefined를 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const fetchMock = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => new Response(null, { status: 204 }));
     vi.stubGlobal("fetch", fetchMock);
 
     const result = await adminRequest<void>("/generations/id", "DELETE");
     expect(result).toBeUndefined();
   });
 
-  it("표준 error envelope 응답은 AdminApiError로 매핑한다", async () => {
-    const fetchMock = vi.fn(async () =>
+  it("표준 error envelope 응답은 AdminApiError로 매핑한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const fetchMock = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () =>
       new Response(
         JSON.stringify({ error: { code: "FORBIDDEN", message: "권한이 없습니다." } }),
         {
@@ -92,8 +92,8 @@ describe("adminRequest", () => {
     });
   });
 
-  it("message 필드만 있는 JSON 에러도 AdminApiError로 매핑한다", async () => {
-    const fetchMock = vi.fn(async () =>
+  it("message 필드만 있는 JSON 에러도 AdminApiError로 매핑한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const fetchMock = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () =>
       new Response(JSON.stringify({ message: "세션이 만료되었습니다." }), {
         status: 401,
         headers: { "content-type": "application/json" },
@@ -108,8 +108,8 @@ describe("adminRequest", () => {
     });
   });
 
-  it("비 JSON 에러 응답은 HTTP 상태 기반 기본 메시지를 사용한다", async () => {
-    const fetchMock = vi.fn(async () =>
+  it("비 JSON 에러 응답은 HTTP 상태 기반 기본 메시지를 사용한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const fetchMock = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () =>
       new Response("bad gateway", {
         status: 502,
         headers: { "content-type": "text/plain" },
@@ -124,10 +124,10 @@ describe("adminRequest", () => {
     });
   });
 
-  it("AbortError는 TIMEOUT 코드(408)로 변환한다", async () => {
+  it("AbortError는 TIMEOUT 코드(408)로 변환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const abortError = new Error("aborted");
     abortError.name = "AbortError";
-    const fetchMock = vi.fn(async () => {
+    const fetchMock = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
       throw abortError;
     });
     vi.stubGlobal("fetch", fetchMock);
@@ -138,8 +138,8 @@ describe("adminRequest", () => {
     });
   });
 
-  it("예상치 못한 런타임 예외는 UNKNOWN(500)으로 매핑한다", async () => {
-    const fetchMock = vi.fn(async () => {
+  it("예상치 못한 런타임 예외는 UNKNOWN(500)으로 매핑한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const fetchMock = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
       throw new Error("network down");
     });
     vi.stubGlobal("fetch", fetchMock);
@@ -151,13 +151,13 @@ describe("adminRequest", () => {
     });
   });
 
-  it("throw된 AdminApiError는 래핑하지 않고 그대로 전달한다", async () => {
+  it("throw된 AdminApiError는 래핑하지 않고 그대로 전달한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const originalError = new AdminApiError({
       status: 499,
       code: "CUSTOM",
       message: "custom message",
     });
-    const fetchMock = vi.fn(async () => {
+    const fetchMock = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
       throw originalError;
     });
     vi.stubGlobal("fetch", fetchMock);

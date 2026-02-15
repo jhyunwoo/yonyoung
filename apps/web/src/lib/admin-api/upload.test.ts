@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("./http", () => ({
+vi.mock("./http", /** vi.mock 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => ({
   adminRequest: vi.fn(),
 }));
 
@@ -8,10 +8,10 @@ import { adminRequest } from "./http";
 import { AdminApiError } from "./types";
 import { PRESIGN_PATHS, resolveImageValue, uploadWithPresign } from "./upload";
 
-describe("upload helpers", () => {
+describe("upload helpers", /** describe 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
   const mockAdminRequest = vi.mocked(adminRequest);
 
-  beforeEach(() => {
+  beforeEach(/** beforeEach 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
     mockAdminRequest.mockReset();
     mockAdminRequest.mockResolvedValue({
       uploadUrl: "https://upload.example.com/signed",
@@ -23,12 +23,12 @@ describe("upload helpers", () => {
     } as never);
   });
 
-  afterEach(() => {
+  afterEach(/** afterEach 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
     vi.restoreAllMocks();
   });
 
-  it("uploadWithPresign은 presign 요청 후 PUT 업로드를 수행하고 publicUrl을 반환한다", async () => {
-    const fetchMock = vi.fn(async () => new Response(null, { status: 200 }));
+  it("uploadWithPresign은 presign 요청 후 PUT 업로드를 수행하고 publicUrl을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const fetchMock = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => new Response(null, { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
 
     const file = new File(["hello"], "photo.png", { type: "image/png" });
@@ -49,8 +49,8 @@ describe("upload helpers", () => {
     expect((options.headers as Headers).get("Content-Type")).toBe("image/png");
   });
 
-  it("file.type이 비어 있으면 확장자로 MIME 타입을 추론한다", async () => {
-    const fetchMock = vi.fn(async () => new Response(null, { status: 200 }));
+  it("file.type이 비어 있으면 확장자로 MIME 타입을 추론한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const fetchMock = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => new Response(null, { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
     mockAdminRequest.mockResolvedValueOnce({
       uploadUrl: "https://upload.example.com/signed",
@@ -74,8 +74,8 @@ describe("upload helpers", () => {
     expect((options.headers as Headers).get("Content-Type")).toBe("image/gif");
   });
 
-  it("알 수 없는 확장자(file.type 없음)는 image/jpeg로 처리한다", async () => {
-    const fetchMock = vi.fn(async () => new Response(null, { status: 200 }));
+  it("알 수 없는 확장자(file.type 없음)는 image/jpeg로 처리한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const fetchMock = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => new Response(null, { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
     mockAdminRequest.mockResolvedValueOnce({
       uploadUrl: "https://upload.example.com/signed",
@@ -96,8 +96,8 @@ describe("upload helpers", () => {
     });
   });
 
-  it("업로드가 실패하면 AdminApiError(UPLOAD_FAILED)를 던진다", async () => {
-    const fetchMock = vi.fn(async () => new Response("forbidden", { status: 403 }));
+  it("업로드가 실패하면 AdminApiError(UPLOAD_FAILED)를 던진다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const fetchMock = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => new Response("forbidden", { status: 403 }));
     vi.stubGlobal("fetch", fetchMock);
 
     const file = new File(["hello"], "photo.png", { type: "image/png" });
@@ -115,7 +115,7 @@ describe("upload helpers", () => {
     });
   });
 
-  it("resolveImageValue(url 모드)는 trim된 URL을 반환한다", async () => {
+  it("resolveImageValue(url 모드)는 trim된 URL을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const result = await resolveImageValue({
       mode: "url",
       urlValue: "  https://example.com/image.jpg  ",
@@ -127,7 +127,7 @@ describe("upload helpers", () => {
     expect(result).toBe("https://example.com/image.jpg");
   });
 
-  it("resolveImageValue(url 모드)에서 빈 URL은 오류를 던진다", async () => {
+  it("resolveImageValue(url 모드)에서 빈 URL은 오류를 던진다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     await expect(
       resolveImageValue({
         mode: "url",
@@ -139,7 +139,7 @@ describe("upload helpers", () => {
     ).rejects.toThrow("대표 이미지 URL을 입력해 주세요.");
   });
 
-  it("resolveImageValue(file 모드)에서 파일이 없으면 오류를 던진다", async () => {
+  it("resolveImageValue(file 모드)에서 파일이 없으면 오류를 던진다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     await expect(
       resolveImageValue({
         mode: "file",
@@ -151,8 +151,8 @@ describe("upload helpers", () => {
     ).rejects.toThrow("프로필 이미지 파일을 선택해 주세요.");
   });
 
-  it("resolveImageValue(file 모드)는 업로드 후 public URL을 반환한다", async () => {
-    const fetchMock = vi.fn(async () => new Response(null, { status: 200 }));
+  it("resolveImageValue(file 모드)는 업로드 후 public URL을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const fetchMock = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => new Response(null, { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
 
     const file = new File(["hello"], "profile.webp", { type: "image/webp" });
@@ -171,8 +171,8 @@ describe("upload helpers", () => {
     });
   });
 
-  it("upload 실패 오류는 AdminApiError 타입으로 유지된다", async () => {
-    const fetchMock = vi.fn(async () => new Response("error", { status: 500 }));
+  it("upload 실패 오류는 AdminApiError 타입으로 유지된다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const fetchMock = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => new Response("error", { status: 500 }));
     vi.stubGlobal("fetch", fetchMock);
 
     const file = new File(["hello"], "photo.png", { type: "image/png" });

@@ -165,11 +165,18 @@ const deleteExhibitionImageRoute = createRoute({
   },
 });
 
+/**
+ * registerExhibitionRoutes 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param app 함수 로직에서 사용하는 입력값입니다.
+ * @param dependencies 함수 로직에서 사용하는 입력값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const registerExhibitionRoutes = (
   app: App,
   dependencies: AppDependencies,
 ) => {
-  app.openapi(listExhibitionsRoute, async (c): Promise<any> => {
+  app.openapi(listExhibitionsRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -183,7 +190,7 @@ export const registerExhibitionRoutes = (
     return ok(c, data);
   });
 
-  app.openapi(createExhibitionRoute, async (c): Promise<any> => {
+  app.openapi(createExhibitionRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -202,7 +209,7 @@ export const registerExhibitionRoutes = (
     return ok(c, data, 201);
   });
 
-  app.openapi(getExhibitionByIdRoute, async (c): Promise<any> => {
+  app.openapi(getExhibitionByIdRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -226,7 +233,7 @@ export const registerExhibitionRoutes = (
     return ok(c, data);
   });
 
-  app.openapi(updateExhibitionRoute, async (c): Promise<any> => {
+  app.openapi(updateExhibitionRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -258,7 +265,7 @@ export const registerExhibitionRoutes = (
     return ok(c, data);
   });
 
-  app.openapi(deleteExhibitionRoute, async (c): Promise<any> => {
+  app.openapi(deleteExhibitionRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -283,7 +290,7 @@ export const registerExhibitionRoutes = (
   });
 
   // 전시 세부 이미지도 별도 엔드포인트로 분리해 부분 수정이 가능하도록 한다.
-  app.openapi(addExhibitionImageRoute, async (c): Promise<any> => {
+  app.openapi(addExhibitionImageRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -311,7 +318,7 @@ export const registerExhibitionRoutes = (
     return ok(c, data, 201);
   });
 
-  app.openapi(updateExhibitionImageRoute, async (c): Promise<any> => {
+  app.openapi(updateExhibitionImageRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -342,7 +349,7 @@ export const registerExhibitionRoutes = (
     return ok(c, data);
   });
 
-  app.openapi(deleteExhibitionImageRoute, async (c): Promise<any> => {
+  app.openapi(deleteExhibitionImageRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;

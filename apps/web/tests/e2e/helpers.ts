@@ -74,7 +74,7 @@ const readErrorMessage = (
   return fallback;
 };
 
-export const adminApiRequest = async <T>(
+const adminApiRequest = async <T>(
   request: APIRequestContext,
   input: {
     method: "GET" | "POST" | "PATCH" | "DELETE";
@@ -347,7 +347,7 @@ export const ensureAdminSession = async (page: Page): Promise<void> => {
   }
 };
 
-export const pickFirstSelectOption = async (
+const pickFirstSelectOption = async (
   page: Page,
   testId: string,
 ): Promise<string> => {
@@ -574,7 +574,7 @@ const fetchSession = async (
   return (await response.json().catch(() => null)) as SessionPayload;
 };
 
-export const signOutCurrentSession = async (
+const signOutCurrentSession = async (
   requestContext: APIRequestContext,
 ): Promise<void> => {
   await requestContext.post(`${API_BASE_URL}/api/auth/sign-out`, {

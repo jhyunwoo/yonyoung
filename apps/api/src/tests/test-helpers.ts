@@ -36,6 +36,13 @@ export const IDs = {
 
 const BASE_DATE = new Date("2030-01-01T00:00:00.000Z");
 
+/**
+ * createActor 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param role 권한 판단에 사용되는 역할 정보입니다.
+ * @param id 대상을 식별하기 위한 ID 값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const createActor = (role: Role, id = IDs.member): Actor => ({
   id,
   role,
@@ -45,6 +52,12 @@ export const createActor = (role: Role, id = IDs.member): Actor => ({
   generationId: null,
 });
 
+/**
+ * createGeneration 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param overrides 대상을 식별하기 위한 ID 값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const createGeneration = (
   overrides: Partial<GenerationEntity> = {},
 ): GenerationEntity => ({
@@ -58,6 +71,12 @@ export const createGeneration = (
   ...overrides,
 });
 
+/**
+ * createActivityImage 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param overrides 대상을 식별하기 위한 ID 값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const createActivityImage = (
   overrides: Partial<ActivityImageEntity> = {},
 ): ActivityImageEntity => ({
@@ -70,6 +89,12 @@ export const createActivityImage = (
   ...overrides,
 });
 
+/**
+ * createActivity 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param overrides 대상을 식별하기 위한 ID 값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const createActivity = (
   overrides: Partial<ActivityEntity> = {},
 ): ActivityEntity => ({
@@ -85,6 +110,12 @@ export const createActivity = (
   ...overrides,
 });
 
+/**
+ * createSupporter 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param overrides 대상을 식별하기 위한 ID 값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const createSupporter = (
   overrides: Partial<SupporterEntity> = {},
 ): SupporterEntity => ({
@@ -98,6 +129,12 @@ export const createSupporter = (
   ...overrides,
 });
 
+/**
+ * createExhibitionImage 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param overrides 대상을 식별하기 위한 ID 값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const createExhibitionImage = (
   overrides: Partial<ExhibitionImageEntity> = {},
 ): ExhibitionImageEntity => ({
@@ -110,6 +147,12 @@ export const createExhibitionImage = (
   ...overrides,
 });
 
+/**
+ * createExhibition 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param overrides 대상을 식별하기 위한 ID 값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const createExhibition = (
   overrides: Partial<ExhibitionEntity> = {},
 ): ExhibitionEntity => ({
@@ -127,6 +170,12 @@ export const createExhibition = (
   ...overrides,
 });
 
+/**
+ * createLinktreeItem 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param overrides 대상을 식별하기 위한 ID 값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const createLinktreeItem = (
   overrides: Partial<LinktreeItemEntity> = {},
 ): LinktreeItemEntity => ({
@@ -137,6 +186,12 @@ export const createLinktreeItem = (
   ...overrides,
 });
 
+/**
+ * createLinktree 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param overrides 대상을 식별하기 위한 ID 값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const createLinktree = (
   overrides: Partial<LinktreeEntity> = {},
 ): LinktreeEntity => ({
@@ -146,6 +201,12 @@ export const createLinktree = (
   ...overrides,
 });
 
+/**
+ * createUser 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param overrides 대상을 식별하기 위한 ID 값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const createUser = (
   overrides: Partial<UserEntity> = {},
 ): UserEntity => ({
@@ -161,30 +222,56 @@ export const createUser = (
   ...overrides,
 });
 
+/**
+ * createDataServiceMock 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param overrides 대상을 식별하기 위한 ID 값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const createDataServiceMock = (
   overrides: Partial<DataService> = {},
 ): DataService => {
   return new Proxy(overrides as DataService, {
+        /**
+     * get 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+     * @param target 함수 로직에서 사용하는 입력값입니다.
+     * @param prop 함수 로직에서 사용하는 입력값입니다.
+     * @returns 조회/계산된 결과 값을 반환합니다.
+     * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+     */
     get(target, prop) {
       if (prop in target) {
         return target[prop as keyof DataService];
       }
-      return async () => {
+      return /** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
         throw new Error(`Unexpected DataService call: ${String(prop)}`);
       };
     },
   }) as DataService;
 };
 
+/**
+ * createPresignServiceMock 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param overrides 대상을 식별하기 위한 ID 값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const createPresignServiceMock = (
   overrides: Partial<PresignService> = {},
 ): PresignService => {
   return new Proxy(overrides as PresignService, {
+        /**
+     * get 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+     * @param target 함수 로직에서 사용하는 입력값입니다.
+     * @param prop 함수 로직에서 사용하는 입력값입니다.
+     * @returns 조회/계산된 결과 값을 반환합니다.
+     * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+     */
     get(target, prop) {
       if (prop in target) {
         return target[prop as keyof PresignService];
       }
-      return async () => {
+      return /** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
         throw new Error(`Unexpected PresignService call: ${String(prop)}`);
       };
     },
@@ -197,6 +284,12 @@ const defaultAuthOpenApiSchema: OpenAPIDocument = {
   paths: {},
 };
 
+/**
+ * createTestApp 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @param input 함수 로직에서 사용하는 입력값입니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const createTestApp = (input: {
   actor: Actor | null;
   dataService?: DataService;
@@ -204,17 +297,45 @@ export const createTestApp = (input: {
   getAuthOpenApiSchema?: () => Promise<OpenAPIDocument>;
 }) => {
   return createApp({
+        /**
+     * resolveActor 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+     * @returns 조회/계산된 결과 값을 반환합니다.
+     * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+     */
     resolveActor: async () => input.actor,
+        /**
+     * getDataService 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+     * @returns 조회/계산된 결과 값을 반환합니다.
+     * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+     */
     getDataService: () => input.dataService ?? createDataServiceMock(),
+        /**
+     * getPresignService 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+     * @returns 조회/계산된 결과 값을 반환합니다.
+     * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+     */
     getPresignService: () => input.presignService ?? createPresignServiceMock(),
-    getAuthOpenApiSchema: input.getAuthOpenApiSchema ?? (async () => defaultAuthOpenApiSchema),
+    getAuthOpenApiSchema: input.getAuthOpenApiSchema ?? (/** createApp 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => defaultAuthOpenApiSchema),
   });
 };
 
+/**
+ * readJson 외부 또는 내부 소스에서 데이터를 읽어오는 로직을 수행합니다.
+ * @param response 응답 데이터 또는 응답 객체입니다.
+ * @returns 외부 소스에서 읽어 온 결과를 Promise로 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const readJson = async <T>(response: Response): Promise<T> => {
   return (await response.json()) as T;
 };
 
+/**
+ * expectErrorCode의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+ * @param response 응답 데이터 또는 응답 객체입니다.
+ * @param code 함수 로직에서 사용하는 입력값입니다.
+ * @returns 비동기 처리 결과를 Promise로 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 export const expectErrorCode = async (
   response: Response,
   code:

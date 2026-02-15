@@ -27,10 +27,33 @@ export type AppDependencies = {
   getAuthOpenApiSchema: GetAuthOpenApiSchema;
 };
 
+/**
+ * createDefaultDependencies 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
+ * @returns 처리 결과 값을 반환합니다.
+ * @remarks 네트워크 실패/타임아웃 상황을 고려해 예외 처리와 기본값 규약을 유지해야 합니다.
+ */
 export const createDefaultDependencies = (): AppDependencies => ({
   resolveActor: getActorFromSession,
+    /**
+   * getDataService 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+   * @param c 요청/실행 컨텍스트 객체입니다.
+   * @returns 조회/계산된 결과 값을 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   getDataService: (c) => createDbDataService(c.env.db),
+    /**
+   * getPresignService 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+   * @param c 요청/실행 컨텍스트 객체입니다.
+   * @returns 조회/계산된 결과 값을 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
   getPresignService: (c) => createR2PresignService(c.env),
+    /**
+   * getAuthOpenApiSchema 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+   * @param c 요청/실행 컨텍스트 객체입니다.
+   * @returns 조회/계산된 결과 값을 반환합니다.
+   * @remarks 네트워크 실패/타임아웃 상황을 고려해 예외 처리와 기본값 규약을 유지해야 합니다.
+   */
   getAuthOpenApiSchema: async (c) => {
     const auth = createAuth(c.env.db);
     const request = new Request(

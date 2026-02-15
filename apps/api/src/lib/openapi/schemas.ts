@@ -9,6 +9,13 @@ const EXAMPLE_USER_ID = "OrYuGkpIFldOIkcrxLrwgzEegsLSJbrh";
 const EXAMPLE_TIMESTAMP_MS = 1735689600000;
 const EXAMPLE_TIMESTAMP_MS_END = 1738368000000;
 
+/**
+ * timestampField의 핵심 비즈니스 로직을 수행합니다.
+ * @param description 함수 로직에서 사용하는 입력값입니다.
+ * @param example 함수 로직에서 사용하는 입력값입니다.
+ * @returns 함수 실행 결과를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const timestampField = (description: string, example = EXAMPLE_TIMESTAMP_MS) =>
   z
     .number()
@@ -18,13 +25,20 @@ const timestampField = (description: string, example = EXAMPLE_TIMESTAMP_MS) =>
       example,
     });
 
+/**
+ * urlField의 핵심 비즈니스 로직을 수행합니다.
+ * @param description 함수 로직에서 사용하는 입력값입니다.
+ * @param example 함수 로직에서 사용하는 입력값입니다.
+ * @returns 함수 실행 결과를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
 const urlField = (description: string, example: string) =>
   z.string().url().openapi({
     description,
     example,
   });
 
-export const ApiErrorCodeSchema = z
+const ApiErrorCodeSchema = z
   .enum([
     "BAD_REQUEST",
     "UNAUTHORIZED",
@@ -35,7 +49,7 @@ export const ApiErrorCodeSchema = z
   ])
   .openapi("ApiErrorCode");
 
-export const ApiErrorSchema = z
+const ApiErrorSchema = z
   .object({
     code: ApiErrorCodeSchema.openapi({
       description: "서버가 분류한 에러 코드",
@@ -590,7 +604,10 @@ export const ApiPresignRequestSchema = z
     contentType: z
       .string()
       .min(1)
-      .refine((value) => value.startsWith("image/"), {
+      .refine(/** z
+      .string()
+      .min(1)
+      .refine 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param value 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (value) => value.startsWith("image/"), {
         message: "이미지 파일만 업로드할 수 있습니다.",
       })
       .openapi({
