@@ -656,17 +656,17 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
   listUsers: mkSpec({
     summary: "사용자 목록/본인 조회",
     overview:
-      "권한에 따라 사용자 목록 또는 본인 정보만 조회합니다. member는 본인 정보만 반환됩니다.",
+      "권한에 따라 사용자 목록 또는 본인 정보만 조회합니다. member 계열 role(member/new_member/associate_member/regular_member)은 본인 정보만 반환됩니다.",
     parameters: ["경로/쿼리 파라미터를 사용하지 않습니다."],
     requestBody: ["요청 본문은 사용하지 않습니다."],
     internalFlow: [
       "세션 확인 후 역할 기반 분기(`can(...)`)를 수행합니다.",
-      "관리 권한이 있으면 전체 목록 조회, member면 본인 단건만 배열 형태로 반환합니다.",
+      "관리 권한이 있으면 전체 목록 조회, member 계열 role이면 본인 단건만 배열 형태로 반환합니다.",
       "권한이 없으면 `403`을 반환합니다.",
     ],
     responseGuide: [
-      "`200`: 사용자 배열 반환. member는 길이 1의 본인 배열을 받습니다.",
-      "`404`: member 본인 row가 DB에 없으면 반환될 수 있습니다.",
+      "`200`: 사용자 배열 반환. member 계열 role은 길이 1의 본인 배열을 받습니다.",
+      "`404`: member 계열 role의 본인 row가 DB에 없으면 반환될 수 있습니다.",
     ],
     errorGuide: [
       "`401`: 인증 없음",
@@ -675,40 +675,40 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     ],
     permission: [
       "관리 역할은 전체 조회 가능",
-      "member는 self-only 정책으로 본인 데이터만 조회 가능",
+      "member 계열 role은 self-only 정책으로 본인 데이터만 조회 가능",
     ],
   }),
   getUserById: mkSpec({
     summary: "사용자 단건 조회",
     overview:
-      "사용자 ID 기준 단건 조회입니다. member는 본인 ID에 대해서만 접근할 수 있습니다.",
+      "사용자 ID 기준 단건 조회입니다. member 계열 role은 본인 ID에 대해서만 접근할 수 있습니다.",
     parameters: ["`id` (path, UUID): 조회 대상 사용자 식별자"],
     requestBody: ["요청 본문은 사용하지 않습니다."],
     internalFlow: [
       "세션 확인 후 본인 여부(`isSelf`)와 역할 권한을 함께 검사합니다.",
-      "member가 타인 ID를 조회하면 명시적으로 `403`을 반환합니다.",
+      "member 계열 role이 타인 ID를 조회하면 명시적으로 `403`을 반환합니다.",
       "대상이 없으면 `404`, 있으면 `200`",
     ],
     responseGuide: ["`200`: `ApiUser` 반환"],
     errorGuide: [
       "`400`: UUID 형식 오류",
       "`401`: 인증 없음",
-      "`403`: 권한 없음 또는 member의 타인 조회 시도",
+      "`403`: 권한 없음 또는 member 계열 role의 타인 조회 시도",
       "`404`: 사용자 없음",
     ],
     permission: [
       "관리 권한 보유자는 모든 사용자 조회 가능",
-      "member는 본인 ID만 허용",
+      "member 계열 role은 본인 ID만 허용",
     ],
   }),
   updateUser: mkSpec({
     summary: "사용자 정보 수정",
     overview:
-      "역할별로 수정 가능 범위가 다릅니다. 관리자는 확장 필드(role/generationId 포함), member는 본인 프로필 필드만 수정 가능합니다.",
+      "역할별로 수정 가능 범위가 다릅니다. 관리자는 확장 필드(role/generationId 포함), member 계열 role은 본인 프로필 필드만 수정 가능합니다.",
     parameters: ["`id` (path, UUID): 수정 대상 사용자 식별자"],
     requestBody: [
       "관리자 요청: `ApiAdminUpdateUserSchema` 기준",
-      "member 본인 요청: `ApiMemberProfileUpdateSchema` 기준(name/nickname/image)",
+      "member 계열 role 본인 요청: `ApiMemberProfileUpdateSchema` 기준(name/nickname/image)",
       "빈 PATCH 본문은 `400` 반환",
     ],
     internalFlow: [
@@ -719,17 +719,17 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     responseGuide: ["`200`: 수정된 `ApiUser` 반환"],
     errorGuide: [
       ...commonErrorGuide,
-      "`403`: member가 본인이 아닌 사용자 수정 시도 시 반환합니다.",
+      "`403`: member 계열 role이 본인이 아닌 사용자 수정 시도 시 반환합니다.",
     ],
     permission: [
       "관리 권한자는 사용자 관리 필드 수정 가능",
-      "member는 본인 프로필 필드만 수정 가능",
+      "member 계열 role은 본인 프로필 필드만 수정 가능",
     ],
   }),
   deleteUser: mkSpec({
     summary: "사용자 삭제(탈퇴 포함)",
     overview:
-      "사용자 계정을 삭제합니다. member는 본인 계정 탈퇴만 가능하며, 관리자는 정책 범위 내에서 삭제할 수 있습니다.",
+      "사용자 계정을 삭제합니다. member 계열 role은 본인 계정 탈퇴만 가능하며, 관리자는 정책 범위 내에서 삭제할 수 있습니다.",
     parameters: ["`id` (path, UUID): 삭제 대상 사용자 식별자"],
     requestBody: ["요청 본문은 사용하지 않습니다."],
     internalFlow: [
@@ -741,7 +741,7 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     errorGuide: [...readOnlyErrorGuide],
     permission: [
       "관리 권한자는 정책 범위 내 사용자 삭제 가능",
-      "member는 self-only 탈퇴만 허용",
+      "member 계열 role은 self-only 탈퇴만 허용",
     ],
   }),
   issueActivityCoverPresign: mkSpec({
@@ -824,18 +824,18 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
   issueUserProfilePresign: mkSpec({
     summary: "사용자 프로필 이미지 업로드 URL 발급",
     overview:
-      "사용자 프로필 이미지 업로드용 presigned URL을 발급합니다. member는 본인 프로필 수정 흐름에서 사용됩니다.",
+      "사용자 프로필 이미지 업로드용 presigned URL을 발급합니다. member 계열 role은 본인 프로필 수정 흐름에서 사용됩니다.",
     parameters: ["경로 파라미터 없음"],
     requestBody: ["`fileName`, `contentType(image/*)`"],
     internalFlow: [
-      "세션 확인 후 관리자 `user:update` 권한 또는 member 본인 프로필 시나리오를 허용합니다.",
+      "세션 확인 후 관리자 `user:update` 권한 또는 member 계열 role 본인 프로필 시나리오를 허용합니다.",
       "본문 검증 후 presign 발급",
       "성공 시 `201`, 실패 시 `500`",
     ],
     responseGuide: ["`201`: presign 발급 정보 반환"],
     errorGuide: [...commonErrorGuide],
     permission: [
-      "관리자 사용자 수정 권한 보유자 또는 member 본인 프로필 수정 흐름에서만 발급",
+      "관리자 사용자 수정 권한 보유자 또는 member 계열 role 본인 프로필 수정 흐름에서만 발급",
     ],
   }),
   getOpenApiDocument: mkSpec({
@@ -845,16 +845,12 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     parameters: ["경로/쿼리 파라미터를 사용하지 않습니다."],
     requestBody: ["요청 본문은 사용하지 않습니다."],
     internalFlow: [
-      "세션 인증을 확인합니다.",
       "내부 OpenAPI 문서를 생성하고 Better Auth 스키마를 조회합니다.",
       "경로/컴포넌트를 병합하고 문서 설명 강화(enrich) 후 반환합니다.",
     ],
     responseGuide: ["`200`: OpenAPI 3.1 JSON 문서 반환"],
-    errorGuide: [
-      "`401`: 로그인 세션이 없는 경우",
-      "`500`: 스키마 병합 또는 생성 실패",
-    ],
-    permission: ["로그인된 사용자만 접근 가능"],
+    errorGuide: ["`500`: 스키마 병합 또는 생성 실패"],
+    permission: ["공개 엔드포인트입니다."],
   }),
   getScalarApiReference: mkSpec({
     summary: "Scalar API 문서 UI 조회",
@@ -863,12 +859,11 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     parameters: ["경로/쿼리 파라미터를 사용하지 않습니다."],
     requestBody: ["요청 본문은 사용하지 않습니다."],
     internalFlow: [
-      "세션 인증을 확인합니다.",
       "Scalar 설정(url=/api/openapi.json)으로 HTML을 렌더링합니다.",
     ],
     responseGuide: ["`200`: `text/html` 문서 UI 반환"],
-    errorGuide: ["`401`: 로그인 세션이 없는 경우 반환"],
-    permission: ["로그인된 사용자만 접근 가능"],
+    errorGuide: ["일반적으로 문서 렌더링 실패 외 비즈니스 오류를 반환하지 않습니다."],
+    permission: ["공개 엔드포인트입니다."],
   }),
   getMessage: mkSpec({
     summary: "시스템 헬스 체크 메시지",
@@ -1020,12 +1015,11 @@ const authSpecMap: AuthSpecMap = {
       parameters: ["파라미터를 사용하지 않습니다."],
       requestBody: ["요청 본문은 사용하지 않습니다."],
       internalFlow: [
-        "인증 미들웨어에서 세션 존재 여부를 확인합니다.",
         "Better Auth OpenAPI 플러그인이 최신 스키마를 생성합니다.",
       ],
       responseGuide: ["`200`: 인증 API 스키마 JSON 반환"],
-      errorGuide: ["`401`: 로그인 세션이 없는 경우 반환"],
-      permission: ["보안을 위해 로그인 사용자만 접근 가능합니다."],
+      errorGuide: ["일반적으로 비즈니스 오류를 반환하지 않습니다."],
+      permission: ["문서 병합을 위해 공개 접근 가능합니다."],
     }),
   },
 };
@@ -1192,15 +1186,13 @@ export const getAuthOperationDocSpec = (
       parameters: ["요청 파라미터를 사용하지 않습니다."],
       requestBody: ["요청 본문 없음"],
       internalFlow: [
-        "문서 보호 미들웨어에서 세션을 검증합니다.",
         "인증 문서 스키마를 생성해 반환합니다.",
       ],
       responseGuide: ["`200`: 인증 OpenAPI 문서 반환"],
-      errorGuide: ["`401`: 로그인되지 않은 요청"],
-      permission: ["로그인된 사용자만 접근 가능합니다."],
+      errorGuide: ["일반적으로 비즈니스 오류를 반환하지 않습니다."],
+      permission: ["문서 병합을 위해 공개 접근 가능합니다."],
     });
   }
 
   return buildUnknownAuthSpec(path, httpMethod);
 };
-

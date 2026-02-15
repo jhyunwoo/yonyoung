@@ -5,7 +5,6 @@ import { enrichOpenApiDocument } from "../lib/openapi/enrich";
 import { mergeOpenApiDocuments } from "../lib/openapi/merge";
 import { errorResponses } from "../lib/openapi/responses";
 import { ApiOpenApiDocumentSchema } from "../lib/openapi/schemas";
-import { requireActor } from "../lib/http/authz";
 import { AppDependencies } from "../lib/services/dependencies";
 import HonoAppType from "../types/honoAppType";
 
@@ -34,7 +33,6 @@ const openApiJsonRoute = createRoute({
   path: "/api/openapi.json",
   tags: ["Docs"],
   operationId: "getOpenApiDocument",
-  security: [{ cookieAuth: [] }],
   responses: {
     200: {
       description: "통합 OpenAPI 문서 조회 성공",
@@ -44,7 +42,6 @@ const openApiJsonRoute = createRoute({
         },
       },
     },
-    401: errorResponses[401],
     500: errorResponses[500],
   },
 });
@@ -54,7 +51,6 @@ const docsRoute = createRoute({
   path: "/api/docs",
   tags: ["Docs"],
   operationId: "getScalarApiReference",
-  security: [{ cookieAuth: [] }],
   responses: {
     200: {
       description: "Scalar API Reference 페이지",
@@ -64,7 +60,6 @@ const docsRoute = createRoute({
         },
       },
     },
-    401: errorResponses[401],
   },
 });
 
@@ -73,11 +68,6 @@ export const registerDocsRoutes = (
   dependencies: AppDependencies,
 ) => {
   app.openapi(openApiJsonRoute, async (c): Promise<any> => {
-    const actorResult = await requireActor(c, dependencies);
-    if ("response" in actorResult) {
-      return actorResult.response;
-    }
-
     try {
       const internalDoc = app.getOpenAPI31Document({
         ...OPENAPI_BASE_DOCUMENT,
@@ -100,11 +90,6 @@ export const registerDocsRoutes = (
   });
 
   app.openapi(docsRoute, async (c): Promise<any> => {
-    const actorResult = await requireActor(c, dependencies);
-    if ("response" in actorResult) {
-      return actorResult.response;
-    }
-
     return scalarReference(c, async () => {});
   });
 };

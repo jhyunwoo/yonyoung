@@ -4,7 +4,7 @@ import { badRequest, forbidden, internalError, ok } from "../lib/http/response";
 import { parseBody } from "../lib/validation/request";
 import { AppDependencies } from "../lib/services/dependencies";
 import { requireActor } from "../lib/http/authz";
-import { can } from "../lib/authorization/policy";
+import { can, isMemberLikeRole } from "../lib/authorization/policy";
 import { Resource } from "../lib/authorization/types";
 import {
   createdResponse,
@@ -148,7 +148,7 @@ export const registerUploadRoutes = (
     "logo",
   );
 
-  // 사용자 프로필 이미지는 관리자 업데이트 권한 또는 member 본인 프로필 수정 권한을 기준으로 발급한다.
+  // 사용자 프로필 이미지는 관리자 업데이트 권한 또는 member 계열 role 본인 프로필 수정 권한을 기준으로 발급한다.
   app.openapi(userProfilePresignRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
@@ -156,7 +156,7 @@ export const registerUploadRoutes = (
     }
 
     const canUserUpdate = can(actorResult.actor.role, "user", "update");
-    const canMemberSelfProfile = actorResult.actor.role === "member";
+    const canMemberSelfProfile = isMemberLikeRole(actorResult.actor.role);
     if (!canUserUpdate && !canMemberSelfProfile) {
       return forbidden(c);
     }

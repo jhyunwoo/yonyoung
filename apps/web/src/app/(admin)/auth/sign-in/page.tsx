@@ -2,24 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { authClient } from "../../../../lib/auth-client";
-
-const DEFAULT_ERROR_MESSAGE =
-  "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.";
-
-const getErrorMessage = (error: unknown): string => {
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "message" in error &&
-    typeof error.message === "string" &&
-    error.message.length > 0
-  ) {
-    return error.message;
-  }
-
-  return DEFAULT_ERROR_MESSAGE;
-};
+import {
+  signInToAdminWithGoogle,
+  signInToAdminWithPasskey,
+} from "../../../../lib/auth-client-tool";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -33,50 +19,32 @@ export default function SignInPage() {
     setErrorMessage(null);
     setIsGooglePending(true);
 
-    try {
-      const callbackURL = `${window.location.origin}/admin`;
-      const response = await authClient.signIn.social({
-        provider: "google",
-        callbackURL,
-        disableRedirect: true,
-      });
+    const callbackURL = `${window.location.origin}/admin`;
+    const result = await signInToAdminWithGoogle(callbackURL);
 
-      if (response.error) {
-        setErrorMessage(getErrorMessage(response.error));
-        return;
-      }
-
-      const redirectUrl = response.data?.url;
-      if (!redirectUrl) {
-        setErrorMessage(DEFAULT_ERROR_MESSAGE);
-        return;
-      }
-
-      window.location.href = redirectUrl;
-    } catch (error) {
-      setErrorMessage(getErrorMessage(error));
-    } finally {
+    if (!result.ok) {
+      setErrorMessage(result.errorMessage);
       setIsGooglePending(false);
+      return;
     }
+
+    window.location.href = result.redirectUrl;
   };
 
   const handlePasskeySignIn = async () => {
     setErrorMessage(null);
     setIsPasskeyPending(true);
 
-    try {
-      const response = await authClient.signIn.passkey();
-      if (response.error) {
-        setErrorMessage(getErrorMessage(response.error));
-        return;
-      }
+    const result = await signInToAdminWithPasskey();
 
-      router.replace("/admin");
-    } catch (error) {
-      setErrorMessage(getErrorMessage(error));
-    } finally {
+    if (!result.ok) {
+      setErrorMessage(result.errorMessage);
       setIsPasskeyPending(false);
+      return;
     }
+
+    router.replace("/admin");
+    router.refresh();
   };
 
   return (

@@ -42,7 +42,7 @@ export const getActorFromSession = async (
   return {
     id: dbUser.id,
     role: normalizeRole(dbUser.role),
-    rawRole: dbUser.role ?? "member",
+    rawRole: dbUser.role ?? "unverified",
     name: dbUser.name,
     email: dbUser.email,
     generationId: dbUser.generationId,

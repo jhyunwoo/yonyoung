@@ -10,7 +10,12 @@ import {
 import { parseBody, parseParams } from "../lib/validation/request";
 import { AppDependencies } from "../lib/services/dependencies";
 import { requireActor } from "../lib/http/authz";
-import { can } from "../lib/authorization/policy";
+import {
+  can,
+  canAssignRole,
+  isMemberLikeRole,
+  normalizeRole,
+} from "../lib/authorization/policy";
 import {
   dataResponse,
   errorResponses,
@@ -106,13 +111,13 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
       return actorResult.response;
     }
 
-    // member의 사용자 조회는 본인만 허용한다.
+    // member 계열 role의 사용자 조회는 본인만 허용한다.
     if (can(actorResult.actor.role, "user", "read")) {
       const data = await dependencies.getDataService(c).listUsers();
       return ok(c, data);
     }
 
-    if (actorResult.actor.role === "member") {
+    if (isMemberLikeRole(actorResult.actor.role)) {
       const me = await dependencies.getDataService(c).getUserById(actorResult.actor.id);
       if (!me) {
         return notFound(c);
@@ -138,8 +143,11 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
     if (!can(actorResult.actor.role, "user", "read") && !isSelf) {
       return forbidden(c);
     }
-    if (actorResult.actor.role === "member" && !isSelf) {
-      return forbidden(c, "부원은 본인 정보만 조회할 수 있습니다.");
+    if (isMemberLikeRole(actorResult.actor.role) && !isSelf) {
+      return forbidden(
+        c,
+        "부원 계열 역할은 본인 정보만 조회할 수 있습니다.",
+      );
     }
 
     const data = await dependencies.getDataService(c).getUserById(params.data.id);
@@ -162,6 +170,7 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
 
     const isSelf = actorResult.actor.id === params.data.id;
     const isAdminLike = can(actorResult.actor.role, "user", "update");
+    const dataService = dependencies.getDataService(c);
 
     if (isAdminLike) {
       const body = await parseBody(c, ApiAdminUpdateUserSchema);
@@ -171,17 +180,45 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
       if (Object.keys(body.data).length === 0) {
         return badRequest(c, "수정할 필드를 하나 이상 전달해야 합니다.");
       }
-      const data = await dependencies
-        .getDataService(c)
-        .updateUser(params.data.id, body.data);
+
+      const currentUser = await dataService.getUserById(params.data.id);
+      if (!currentUser) {
+        return notFound(c);
+      }
+
+      const updateInput = { ...body.data };
+      if (updateInput.role !== undefined) {
+        if (!canAssignRole(actorResult.actor.role, updateInput.role)) {
+          return forbidden(c, "본인보다 높은 등급으로 권한을 변경할 수 없습니다.");
+        }
+
+        const currentNormalizedRole = normalizeRole(currentUser.role);
+        const nextNormalizedRole = normalizeRole(updateInput.role);
+        if (
+          currentNormalizedRole === "president" &&
+          nextNormalizedRole !== "president"
+        ) {
+          const users = await dataService.listUsers();
+          const presidentCount = users.filter(
+            (candidate) => normalizeRole(candidate.role) === "president",
+          ).length;
+          if (presidentCount <= 1) {
+            return badRequest(c, "회장 권한은 최소 1명 이상 유지되어야 합니다.");
+          }
+        }
+
+        updateInput.role = nextNormalizedRole;
+      }
+
+      const data = await dataService.updateUser(params.data.id, updateInput);
       if (!data) {
         return notFound(c);
       }
       return ok(c, data);
     }
 
-    // member는 본인 프로필(name/nickname/image)만 수정 가능하다.
-    if (actorResult.actor.role === "member" && isSelf) {
+    // member 계열 role은 본인 프로필(name/nickname/image)만 수정 가능하다.
+    if (isMemberLikeRole(actorResult.actor.role) && isSelf) {
       const body = await parseBody(c, ApiMemberProfileUpdateSchema);
       if (!body.success) {
         return badRequest(c, body.message);
@@ -189,9 +226,7 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
       if (Object.keys(body.data).length === 0) {
         return badRequest(c, "수정할 필드를 하나 이상 전달해야 합니다.");
       }
-      const data = await dependencies
-        .getDataService(c)
-        .updateUser(params.data.id, body.data);
+      const data = await dataService.updateUser(params.data.id, body.data);
       if (!data) {
         return notFound(c);
       }
@@ -214,7 +249,7 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
 
     const isSelf = actorResult.actor.id === params.data.id;
     if (!can(actorResult.actor.role, "user", "delete")) {
-      if (!(actorResult.actor.role === "member" && isSelf)) {
+      if (!(isMemberLikeRole(actorResult.actor.role) && isSelf)) {
         return forbidden(c);
       }
     }

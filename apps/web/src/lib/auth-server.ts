@@ -1,23 +1,17 @@
+import type { AuthSession } from "./auth-shared";
+
 const DEFAULT_AUTH_API_URL = "http://localhost:8787";
 const SESSION_PATH = "/api/auth/get-session";
 const SESSION_REQUEST_TIMEOUT_MS = 4000;
 
-export type AuthSession = {
-  session: {
-    id: string;
-    userId: string;
-    token: string;
-    expiresAt: string | number;
-  };
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    image?: string | null;
-  };
-};
-
 const normalizeBaseUrl = (value: string): string => value.replace(/\/+$/, "");
+export type { AuthSession } from "./auth-shared";
+export {
+  canAccessAdminPage,
+  isAdminRole,
+  isAdminSession,
+  isUnverifiedRole,
+} from "./auth-shared";
 
 export const resolveAuthApiUrl = (): string => {
   const rawBaseUrl =

@@ -13,6 +13,7 @@ const IDs = {
   member: "30000000-0000-4000-8000-000000000001",
   otherUser: "30000000-0000-4000-8000-000000000002",
   manager: "30000000-0000-4000-8000-000000000003",
+  president: "30000000-0000-4000-8000-000000000004",
 } as const;
 
 const createActor = (role: Role, id: string): Actor => ({
@@ -24,13 +25,16 @@ const createActor = (role: Role, id: string): Actor => ({
   generationId: null,
 });
 
-const createUser = (id: string): UserEntity => ({
+const createUser = (
+  id: string,
+  role: UserEntity["role"] = "member",
+): UserEntity => ({
   id,
   name: "tester",
   email: "tester@example.com",
   image: null,
   nickname: null,
-  role: "member",
+  role,
   generationId: null,
   createdAt: new Date(0),
   updatedAt: new Date(0),
@@ -139,6 +143,24 @@ describe("RBAC routes", () => {
     expect(getUserById).toHaveBeenCalledWith(IDs.member);
   });
 
+  it("정회원(regular_member)의 users 목록 조회도 본인 1건만 반환한다", async () => {
+    const getUserById = vi.fn(async (id: string) => createUser(id, "regular_member"));
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({
+        getUserById,
+      }),
+    });
+
+    const response = await app.request("/api/users");
+    expect(response.status).toBe(200);
+
+    const body = (await response.json()) as { data: UserEntity[] };
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0]?.id).toBe(IDs.member);
+    expect(getUserById).toHaveBeenCalledWith(IDs.member);
+  });
+
   it("부원은 다른 사용자 상세 조회가 불가하다", async () => {
     const app = createTestApp({
       actor: createActor("member", IDs.member),
@@ -203,6 +225,81 @@ describe("RBAC routes", () => {
     expect(response.status).toBe(400);
   });
 
+  it("부회장은 본인보다 높은 등급(회장)으로 변경할 수 없다", async () => {
+    const updateUser = vi.fn(async () => createUser(IDs.otherUser, "president"));
+    const app = createTestApp({
+      actor: createActor("vice_president", IDs.member),
+      dataService: createDataServiceMock({
+        getUserById: vi.fn(async () => createUser(IDs.otherUser, "member")),
+        updateUser,
+      }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.otherUser}`, {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        role: "president",
+      }),
+    });
+
+    expect(response.status).toBe(403);
+    expect(updateUser).not.toHaveBeenCalled();
+  });
+
+  it("관리자는 unverified를 member로 변경할 수 있다", async () => {
+    const updateUser = vi.fn(async () => createUser(IDs.otherUser, "member"));
+    const app = createTestApp({
+      actor: createActor("vice_president", IDs.member),
+      dataService: createDataServiceMock({
+        getUserById: vi.fn(async () => createUser(IDs.otherUser, "unverified")),
+        updateUser,
+      }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.otherUser}`, {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        role: "member",
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(updateUser).toHaveBeenCalledWith(IDs.otherUser, {
+      role: "member",
+    });
+  });
+
+  it("회장 인원은 권한 변경으로 1명 미만이 될 수 없다", async () => {
+    const updateUser = vi.fn(async () => createUser(IDs.president, "member"));
+    const app = createTestApp({
+      actor: createActor("president", IDs.president),
+      dataService: createDataServiceMock({
+        getUserById: vi.fn(async () => createUser(IDs.president, "president")),
+        listUsers: vi.fn(async () => [createUser(IDs.president, "president")]),
+        updateUser,
+      }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.president}`, {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        role: "member",
+      }),
+    });
+
+    expect(response.status).toBe(400);
+    expect(updateUser).not.toHaveBeenCalled();
+  });
+
   it("부원은 본인 계정 삭제(탈퇴)가 가능하다", async () => {
     const deleteUser = vi.fn(async () => true);
     const app = createTestApp({
@@ -259,6 +356,43 @@ describe("RBAC routes", () => {
     });
 
     expect(response.status).toBe(403);
+  });
+
+  it("준회원(associate_member)은 사용자 프로필 presign 발급이 가능하다", async () => {
+    const issuePresignedPutUrl = vi.fn(async () => ({
+      uploadUrl: "https://upload.example.com/signed",
+      objectKey: "users/key.png",
+      publicUrl: "https://cdn.example.com/users/key.png",
+      requiredHeaders: {
+        "Content-Type": "image/png",
+      },
+    }));
+    const app = createTestApp({
+      actor: createActor("associate_member", IDs.member),
+      presignService: createPresignServiceMock({
+        issuePresignedPutUrl,
+      }),
+    });
+
+    const response = await app.request("/api/users/presign/profile", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        fileName: "profile.png",
+        contentType: "image/png",
+      }),
+    });
+
+    expect(response.status).toBe(201);
+    expect(issuePresignedPutUrl).toHaveBeenCalledWith({
+      actorId: IDs.member,
+      resource: "users",
+      slot: "profile",
+      fileName: "profile.png",
+      contentType: "image/png",
+    });
   });
 
   it("부장은 activities presign 발급이 가능하다", async () => {

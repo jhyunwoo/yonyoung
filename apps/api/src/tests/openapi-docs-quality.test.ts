@@ -1,19 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createApp } from "../app";
-import { Actor } from "../lib/authorization/types";
 import { OpenAPIDocument } from "../lib/openapi/merge";
 import { REQUIRED_DESCRIPTION_SECTIONS } from "../lib/openapi/descriptions";
-
-const MEMBER_ID = "70000000-0000-4000-8000-000000000001";
-
-const createActor = (): Actor => ({
-  id: MEMBER_ID,
-  role: "member",
-  rawRole: "member",
-  name: "member",
-  email: "member@example.com",
-  generationId: null,
-});
 
 const authOpenApiFixtureWithUnknownPath: OpenAPIDocument = {
   openapi: "3.1.1",
@@ -52,7 +40,7 @@ const authOpenApiFixtureWithUnknownPath: OpenAPIDocument = {
 describe("OpenAPI docs quality", () => {
   it("모든 operation에 summary/description과 필수 섹션이 존재해야 한다", async () => {
     const app = createApp({
-      resolveActor: async () => createActor(),
+      resolveActor: async () => null,
       getAuthOpenApiSchema: async () => authOpenApiFixtureWithUnknownPath,
     });
 
@@ -103,7 +91,7 @@ describe("OpenAPI docs quality", () => {
 
   it("보호 라우트 security와 주요 스키마 description/example가 유지되어야 한다", async () => {
     const app = createApp({
-      resolveActor: async () => createActor(),
+      resolveActor: async () => null,
       getAuthOpenApiSchema: async () => authOpenApiFixtureWithUnknownPath,
     });
 
@@ -136,7 +124,7 @@ describe("OpenAPI docs quality", () => {
 
   it("알 수 없는 auth endpoint도 fallback 설명이 자동 생성되어야 한다", async () => {
     const app = createApp({
-      resolveActor: async () => createActor(),
+      resolveActor: async () => null,
       getAuthOpenApiSchema: async () => authOpenApiFixtureWithUnknownPath,
     });
 

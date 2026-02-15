@@ -512,11 +512,20 @@ export const ApiAdminUpdateUserSchema = z
       example: "https://cdn.yonyoung.example/users/profile/member-new.png",
     }),
     role: z
-      .enum(["president", "vice_president", "manager", "member", "user"])
+      .enum([
+        "president",
+        "vice_president",
+        "manager",
+        "member",
+        "new_member",
+        "associate_member",
+        "regular_member",
+        "unverified",
+      ])
       .optional()
       .openapi({
         description:
-          "역할 문자열(관리자 전용). `user`는 내부 정책에서 `member`로 정규화될 수 있습니다.",
+          "역할 문자열(관리자 전용). 기본 가입 역할은 `unverified`이며, 승인 시 `member` 또는 member 계열 role(`new_member`/`associate_member`/`regular_member`)로 변경할 수 있습니다.",
         example: "manager",
       }),
     generationId: z.string().uuid().nullable().optional().openapi({

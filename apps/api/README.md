@@ -112,8 +112,8 @@ Better Auth schema endpoint is also protected:
 
 ## User Permission Note
 
-- `member` role can only read their own user data.
-- `member` role can update/delete only their own profile.
+- `member` role and member-like roles (`new_member`, `associate_member`, `regular_member`) can only read their own user data.
+- `member` role and member-like roles can update/delete only their own profile.
 
 ## Local Development
 

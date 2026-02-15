@@ -118,7 +118,7 @@ const createAuthWithEnv = (database: D1Database, env: AuthEnv) => {
           type: "string",
           required: false,
           input: false,
-          defaultValue: "user",
+          defaultValue: "unverified",
         },
         generationId: {
           type: "string",

@@ -3,6 +3,10 @@ export const ROLE_VALUES = [
   "vice_president",
   "manager",
   "member",
+  "new_member",
+  "associate_member",
+  "regular_member",
+  "unverified",
 ] as const;
 
 export type Role = (typeof ROLE_VALUES)[number];

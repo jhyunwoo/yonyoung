@@ -38,7 +38,7 @@ export const user = sqliteTable("user", {
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
   nickname: text("nickname"),
-  role: text("role").default("user"),
+  role: text("role").default("unverified"),
   generationId: text("generation_id").references(() => generations.id, {
     onDelete: "set null",
   }),

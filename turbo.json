@@ -17,6 +17,49 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "start": {
+      "cache": false,
+      "persistent": true
+    },
+    "deploy": {
+      "cache": true,
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [],
+      "env": ["CLOUDFLARE_*", "CF_*", "WRANGLER_*", "AUTH_API_URL", "NEXT_PUBLIC_AUTH_API_URL"]
+    },
+    "upload": {
+      "cache": false
+    },
+    "preview": {
+      "cache": false,
+      "persistent": true
+    },
+    "cf-typegen": {
+      "cache": false
+    },
+    "test": {
+      "cache": false
+    },
+    "test:watch": {
+      "cache": false,
+      "persistent": true
+    },
+    "test:coverage": {
+      "cache": false
+    },
+    "db:generation": {
+      "cache": false
+    },
+    "db:migrate": {
+      "cache": false
+    },
+    "db:push": {
+      "cache": false
+    },
+    "db:studio": {
+      "cache": false,
+      "persistent": true
     }
   }
 }

@@ -1,19 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createApp } from "../app";
-import { Actor } from "../lib/authorization/types";
 import { OpenAPIDocument } from "../lib/openapi/merge";
 import { REQUIRED_DESCRIPTION_SECTIONS } from "../lib/openapi/descriptions";
-
-const MEMBER_ID = "30000000-0000-4000-8000-000000000001";
-
-const createActor = (): Actor => ({
-  id: MEMBER_ID,
-  role: "member",
-  rawRole: "member",
-  name: "member",
-  email: "member@example.com",
-  generationId: null,
-});
 
 const authOpenApiFixture: OpenAPIDocument = {
   openapi: "3.1.1",
@@ -61,29 +49,29 @@ const authOpenApiFixture: OpenAPIDocument = {
 };
 
 describe("OpenAPI docs routes", () => {
-  it("비로그인 접근 시 /api/docs는 401을 반환한다", async () => {
+  it("비로그인 접근 시 /api/docs는 200을 반환한다", async () => {
     const app = createApp({
       resolveActor: async () => null,
       getAuthOpenApiSchema: async () => authOpenApiFixture,
     });
 
     const response = await app.request("/api/docs");
-    expect(response.status).toBe(401);
+    expect(response.status).toBe(200);
   });
 
-  it("비로그인 접근 시 /api/openapi.json은 401을 반환한다", async () => {
+  it("비로그인 접근 시 /api/openapi.json은 200을 반환한다", async () => {
     const app = createApp({
       resolveActor: async () => null,
       getAuthOpenApiSchema: async () => authOpenApiFixture,
     });
 
     const response = await app.request("/api/openapi.json");
-    expect(response.status).toBe(401);
+    expect(response.status).toBe(200);
   });
 
-  it("로그인 상태에서 통합 OpenAPI 문서를 반환한다", async () => {
+  it("공개 상태에서 통합 OpenAPI 문서를 반환한다", async () => {
     const app = createApp({
-      resolveActor: async () => createActor(),
+      resolveActor: async () => null,
       getAuthOpenApiSchema: async () => authOpenApiFixture,
     });
 
@@ -133,9 +121,9 @@ describe("OpenAPI docs routes", () => {
     );
   });
 
-  it("로그인 상태에서 /api/docs 페이지를 반환한다", async () => {
+  it("공개 상태에서 /api/docs 페이지를 반환한다", async () => {
     const app = createApp({
-      resolveActor: async () => createActor(),
+      resolveActor: async () => null,
       getAuthOpenApiSchema: async () => authOpenApiFixture,
     });
 
