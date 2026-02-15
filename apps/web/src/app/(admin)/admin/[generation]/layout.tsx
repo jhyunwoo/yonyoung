@@ -1,10 +1,6 @@
 import { ReactNode } from "react";
-import { redirect } from "next/navigation";
-import {
-  buildGenerationPath,
-  getAccessibleGenerations,
-  resolveGenerationBySortOrder,
-} from "../../../../lib/admin-generation";
+import { forbidden, notFound } from "next/navigation";
+import { getAccessibleGenerations, resolveGenerationBySortOrder } from "../../../../lib/admin-generation";
 import {
   fetchGenerationsFromServer,
   readServerCookieHeader,
@@ -27,26 +23,25 @@ export default async function GenerationScopedLayout({
   const accessible = getAccessibleGenerations(session, generations);
 
   if (accessible.length === 0) {
-    redirect("/admin/unassigned");
+    forbidden();
   }
 
   const defaultGeneration = accessible[0];
   if (!defaultGeneration) {
-    redirect("/admin/unassigned");
+    forbidden();
   }
 
   const selected = resolveGenerationBySortOrder(generations, generation);
   if (!selected) {
-    redirect(buildGenerationPath(defaultGeneration.sortOrder));
+    notFound();
   }
 
   const isAllowed = accessible.some(
     (candidate) => candidate.id === selected.id,
   );
   if (!isAllowed) {
-    redirect(buildGenerationPath(defaultGeneration.sortOrder));
+    forbidden();
   }
 
   return children;
 }
-

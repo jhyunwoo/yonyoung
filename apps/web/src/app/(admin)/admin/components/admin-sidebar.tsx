@@ -200,7 +200,7 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
           {RESOURCE_MENU_ITEMS.map((item) => {
             const href =
               selectedSortOrder === null
-                ? "/admin/unassigned"
+                ? "/admin"
                 : buildGenerationPath(selectedSortOrder, item.resourcePath);
             const active = isActiveResourcePath(
               pathname,

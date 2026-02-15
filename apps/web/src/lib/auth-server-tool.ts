@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { forbidden, redirect } from "next/navigation";
 import { fetchSessionFromApi } from "./auth-server";
 import { canAccessAdminPage, canManageGenerations } from "./auth-shared";
 import type { AuthSession } from "./auth-shared";
@@ -48,7 +48,15 @@ const requireAccess = async (
 
 const requireAdminPageAccess = async (
   redirectTo = SIGN_IN_PATH,
-): Promise<AuthSession> => requireAccess(canAccessAdminPage, redirectTo);
+): Promise<AuthSession> => {
+  const session = await requireSession(redirectTo);
+
+  if (!canAccessAdminPage(session)) {
+    forbidden();
+  }
+
+  return session;
+};
 
 const requirePresidentAccess = async (
   redirectTo = ADMIN_PATH,
