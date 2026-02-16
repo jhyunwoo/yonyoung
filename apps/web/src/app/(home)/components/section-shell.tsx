@@ -29,15 +29,15 @@ export default function SectionShell({
       <div className="mx-auto w-full max-w-6xl">
         <MotionReveal className="mb-8 md:mb-10">
           {eyebrow ? (
-            <p className="mb-2 text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">
+            <p className="mb-2 text-xs uppercase tracking-[0.18em] text-(--text-muted)">
               {eyebrow}
             </p>
           ) : null}
-          <h2 className="font-display text-3xl leading-tight text-[var(--text-primary)] md:text-5xl">
+          <h2 className="font-display text-3xl leading-tight text-(--text-primary) md:text-5xl">
             {title}
           </h2>
           {description ? (
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--text-secondary)] md:text-base">
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-(--text-secondary) md:text-base">
               {description}
             </p>
           ) : null}

@@ -1,6 +1,7 @@
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import HonoAppType from "../types/honoAppType";
 import { badRequest, noContent, notFound, ok } from "../lib/http/response";
+import { purgePublicCachePath } from "../lib/http/public-cache";
 import { parseBody, parseParams } from "../lib/validation/request";
 import { AppDependencies } from "../lib/services/dependencies";
 import { requireActor, requirePermission } from "../lib/http/authz";
@@ -19,6 +20,7 @@ import {
 } from "../lib/openapi/schemas";
 
 type App = OpenAPIHono<HonoAppType>;
+const PUBLIC_SUPPORTERS_CACHE_PATH = "/api/public/supporters";
 
 const listSupportersRoute = createRoute({
   method: "get",
@@ -146,6 +148,7 @@ export const registerSupporterRoutes = (
     }
 
     const data = await dependencies.getDataService(c).createSupporter(body.data);
+    await purgePublicCachePath(c, PUBLIC_SUPPORTERS_CACHE_PATH);
     return ok(c, data, 201);
   });
 
@@ -200,6 +203,7 @@ export const registerSupporterRoutes = (
     if (!data) {
       return notFound(c);
     }
+    await purgePublicCachePath(c, PUBLIC_SUPPORTERS_CACHE_PATH);
     return ok(c, data);
   });
 
@@ -224,6 +228,7 @@ export const registerSupporterRoutes = (
     if (!deleted) {
       return notFound(c);
     }
+    await purgePublicCachePath(c, PUBLIC_SUPPORTERS_CACHE_PATH);
     return noContent(c);
   });
 };

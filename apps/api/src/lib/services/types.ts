@@ -108,6 +108,7 @@ export type DataService = {
   deleteGeneration: (id: string) => Promise<boolean>;
 
   listActivities: () => Promise<ActivityEntity[]>;
+  listPublicActivities: () => Promise<ActivityEntity[]>;
   createActivity: (input: {
     title: string;
     description: string;
@@ -139,6 +140,7 @@ export type DataService = {
   deleteActivityImage: (activityId: string, imageId: string) => Promise<boolean>;
 
   listSupporters: () => Promise<SupporterEntity[]>;
+  listPublicSupporters: (nowMs: number) => Promise<SupporterEntity[]>;
   createSupporter: (input: {
     name: string;
     link: string;
@@ -158,6 +160,7 @@ export type DataService = {
   deleteSupporter: (id: string) => Promise<boolean>;
 
   listExhibitions: () => Promise<ExhibitionEntity[]>;
+  listPublicExhibitions: () => Promise<ExhibitionEntity[]>;
   createExhibition: (input: {
     title: string;
     startDate: number;

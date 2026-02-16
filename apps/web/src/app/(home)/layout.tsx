@@ -40,7 +40,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.svg" type="image/svg+xml"></link>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] antialiased">
+      <body className="min-h-screen bg-(--bg-primary) text-(--text-primary) antialiased">
         <SiteHeader />
         <main>{children}</main>
         <SiteFooter />

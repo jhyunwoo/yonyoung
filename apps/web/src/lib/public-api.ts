@@ -14,6 +14,10 @@ type PublicApiDataEnvelope<T> = {
   data: T;
 };
 
+type PublicGetOptions = {
+  useNoStore?: boolean;
+};
+
 export type PublicLinkItem = ApiLinktreeItem & {
   groupName: string;
 };
@@ -43,14 +47,20 @@ const parseEnvelope = <T>(value: unknown): T => {
   return (value as PublicApiDataEnvelope<T>).data;
 };
 
-const publicGet = async <T>(path: string): Promise<T> => {
+const publicGet = async <T>(
+  path: string,
+  options?: PublicGetOptions,
+): Promise<T> => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const requestCacheOptions = options?.useNoStore
+    ? ({ cache: "no-store" } as const)
+    : ({ next: { revalidate: 60 } } as const);
 
   try {
     const response = await fetch(resolvePublicApiUrl(path), {
       method: "GET",
-      cache: "no-store",
+      ...requestCacheOptions,
       signal: controller.signal,
       headers: {
         Accept: "application/json",
@@ -75,7 +85,7 @@ export const listPublicExhibitions = async (): Promise<ApiExhibition[]> =>
   publicGet<ApiExhibition[]>("/api/public/exhibitions");
 
 export const listPublicSupporters = async (): Promise<ApiSupporter[]> =>
-  publicGet<ApiSupporter[]>("/api/public/supporters");
+  publicGet<ApiSupporter[]>("/api/public/supporters", { useNoStore: true });
 
 export const listPublicLinktrees = async (): Promise<ApiLinktree[]> =>
   publicGet<ApiLinktree[]>("/api/public/linktree");

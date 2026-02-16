@@ -42,7 +42,7 @@ export default function HeroShowcase({
   return (
     <section
       ref={rootRef}
-      className="relative overflow-hidden border-b border-[var(--surface-border)] px-4 pb-16 pt-14 md:px-6 md:pb-20 md:pt-18"
+      className="relative overflow-hidden border-b border-(--surface-border) px-4 pb-16 pt-14 md:px-6 md:pb-20 md:pt-18"
       data-testid="home-hero"
     >
       <div className="hero-glow -left-16 top-10" />
@@ -50,13 +50,13 @@ export default function HeroShowcase({
 
       <div className="mx-auto grid w-full max-w-6xl gap-8 md:grid-cols-[1.1fr_0.9fr] md:items-end">
         <motion.div style={shouldReduceMotion ? undefined : { y: textOffset }}>
-          <p className="mb-3 text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+          <p className="mb-3 text-xs uppercase tracking-[0.2em] text-(--text-muted)">
             Yonsei University Central Photography Club
           </p>
-          <h1 className="font-display text-5xl leading-[0.94] text-[var(--text-primary)] md:text-7xl">
+          <h1 className="font-display text-5xl leading-[0.94] text-(--text-primary) md:text-7xl">
             연영회
           </h1>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-[var(--text-secondary)] md:text-lg">
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-(--text-secondary) md:text-lg">
             1966년부터 이어온 연세대학교 중앙사진동아리. 기록과 전시, 그리고 서로의
             시선이 만나는 장소를 만듭니다.
           </p>
@@ -64,14 +64,14 @@ export default function HeroShowcase({
             <Link
               href="/archive"
               data-testid="home-cta-archive"
-              className="rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-medium text-[var(--accent-foreground)] transition hover:opacity-90"
+              className="rounded-full bg-(--accent) px-5 py-2.5 text-sm font-medium text-(--accent-foreground) transition hover:opacity-90"
             >
               활동 아카이브 보기
             </Link>
             <Link
               href="/about"
               data-testid="home-cta-about"
-              className="rounded-full border border-[var(--surface-border)] bg-[var(--surface-elevated)] px-5 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+              className="rounded-full border border-(--surface-border) bg-(--surface-elevated) px-5 py-2.5 text-sm font-medium text-(--text-primary) transition hover:border-(--accent) hover:text-(--accent)"
             >
               동아리 소개 보기
             </Link>
@@ -85,7 +85,7 @@ export default function HeroShowcase({
           <motion.article
             whileHover={shouldReduceMotion ? undefined : { y: -4, scale: 1.01 }}
             transition={{ type: "spring", damping: 20, stiffness: 260 }}
-            className="overflow-hidden rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-elevated)] shadow-[0_20px_60px_-40px_var(--shadow-strong)]"
+            className="overflow-hidden rounded-2xl border border-(--surface-border) bg-(--surface-elevated) shadow-[0_20px_60px_-40px_var(--shadow-strong)]"
           >
             <div className="relative aspect-[4/3]">
               {featuredExhibition ? (
@@ -96,20 +96,20 @@ export default function HeroShowcase({
                   data-testid="home-hero-exhibition-image"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-[var(--surface-muted)] text-sm text-[var(--text-muted)]">
+                <div className="flex h-full w-full items-center justify-center bg-(--surface-muted) text-sm text-(--text-muted)">
                   전시 데이터를 불러오는 중입니다.
                 </div>
               )}
             </div>
             <div className="space-y-2 p-4" data-testid="home-hero-exhibition-meta">
-              <p className="text-xs uppercase tracking-[0.16em] text-[var(--text-muted)]">
+              <p className="text-xs uppercase tracking-[0.16em] text-(--text-muted)">
                 Latest Exhibition
               </p>
-              <h2 className="font-display text-2xl text-[var(--text-primary)]">
+              <h2 className="font-display text-2xl text-(--text-primary)">
                 {featuredExhibition?.title ?? "준비 중"}
               </h2>
               {featuredExhibition ? (
-                <p className="text-sm text-[var(--text-secondary)]">
+                <p className="text-sm text-(--text-secondary)">
                   {formatDateRange(featuredExhibition.startDate, featuredExhibition.endDate)} ·{" "}
                   {featuredExhibition.place}
                 </p>
@@ -120,23 +120,23 @@ export default function HeroShowcase({
           <div className="grid grid-cols-2 gap-3">
             <motion.div
               whileHover={shouldReduceMotion ? undefined : { y: -4 }}
-              className="rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-elevated)] p-4"
+              className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-4"
             >
-              <p className="text-xs uppercase tracking-[0.14em] text-[var(--text-muted)]">
+              <p className="text-xs uppercase tracking-[0.14em] text-(--text-muted)">
                 Recent Activity
               </p>
-              <p className="mt-2 line-clamp-2 text-sm font-medium text-[var(--text-primary)]">
+              <p className="mt-2 line-clamp-2 text-sm font-medium text-(--text-primary)">
                 {firstActivity?.title ?? "활동 업데이트 예정"}
               </p>
             </motion.div>
             <motion.div
               whileHover={shouldReduceMotion ? undefined : { y: -4 }}
-              className="rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-elevated)] p-4"
+              className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-4"
             >
-              <p className="text-xs uppercase tracking-[0.14em] text-[var(--text-muted)]">
+              <p className="text-xs uppercase tracking-[0.14em] text-(--text-muted)">
                 Since
               </p>
-              <p className="mt-2 font-display text-3xl text-[var(--text-primary)]">1966</p>
+              <p className="mt-2 font-display text-3xl text-(--text-primary)">1966</p>
             </motion.div>
           </div>
         </motion.div>

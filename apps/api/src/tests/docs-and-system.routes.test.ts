@@ -25,6 +25,8 @@ describe("docs and system routes", /** describe 실행 과정에서 필요한 �
 
     const response = await app.request("/message");
     expect(response.status).toBe(200);
+    expect(response.headers.get("server-timing")).toContain("total;dur=");
+    expect(response.headers.get("x-response-time")).toMatch(/ms$/);
     const body = await response.text();
     expect(body).toBe("Hello Hono!");
   });

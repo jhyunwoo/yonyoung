@@ -40,8 +40,8 @@ export default function SiteHeader() {
       [
         "sticky top-0 z-50 border-b transition-all",
         isScrolled
-          ? "border-[var(--surface-border)] bg-[color:var(--surface-elevated)]/95 backdrop-blur-xl"
-          : "border-transparent bg-[color:var(--surface-elevated)]/70 backdrop-blur-md",
+          ? "border-(--surface-border) bg-(--surface-elevated)/95 backdrop-blur-xl"
+          : "border-transparent bg-(--surface-elevated)/70 backdrop-blur-md",
       ].join(" "),
     [isScrolled],
   );
@@ -54,18 +54,23 @@ export default function SiteHeader() {
           className="group inline-flex items-center gap-3"
           data-testid="public-logo-link"
         >
-          <div className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--surface-border)] bg-[var(--surface-muted)] text-sm font-semibold text-[var(--text-primary)]">
+          <div className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-(--surface-border) bg-(--surface-muted) text-sm font-semibold text-(--text-primary)">
             Y
           </div>
           <div className="leading-tight">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
+            <p className="text-[11px] uppercase tracking-[0.18em] text-(--text-muted)">
               Yonsei Photo Club
             </p>
-            <p className="font-display text-xl text-[var(--text-primary)]">연영회</p>
+            <p className="font-display text-xl text-(--text-primary)">
+              연영회
+            </p>
           </div>
         </Link>
 
-        <nav className="hidden items-center gap-2 md:flex" data-testid="public-nav-desktop">
+        <nav
+          className="hidden items-center gap-2 md:flex"
+          data-testid="public-nav-desktop"
+        >
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -76,8 +81,8 @@ export default function SiteHeader() {
                 className={[
                   "rounded-full px-4 py-2 text-sm transition",
                   isActive
-                    ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
-                    : "text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]",
+                    ? "bg-(--accent) text-white"
+                    : "text-(--text-secondary) hover:bg-(--surface-muted) hover:text-(--text-primary)",
                 ].join(" ")}
               >
                 {item.label}
@@ -92,7 +97,7 @@ export default function SiteHeader() {
           <button
             type="button"
             onClick={() => setIsMenuOpen((prev) => !prev)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--surface-border)] bg-[var(--surface-elevated)] text-[var(--text-primary)]"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-(--surface-border) bg-(--surface-elevated) text-(--text-primary)"
             aria-label="모바일 메뉴 토글"
             aria-expanded={isMenuOpen}
             data-testid="public-nav-toggle"
@@ -109,7 +114,7 @@ export default function SiteHeader() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="border-t border-[var(--surface-border)] bg-[var(--surface-elevated)] px-4 py-4 md:hidden"
+            className="border-t border-(--surface-border) bg-(--surface-elevated) px-4 py-4 md:hidden"
             data-testid="public-nav-mobile"
           >
             <ul className="space-y-2">
@@ -123,8 +128,8 @@ export default function SiteHeader() {
                       className={[
                         "block rounded-xl px-4 py-3 text-sm transition",
                         isActive
-                          ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
-                          : "bg-[var(--surface-muted)] text-[var(--text-secondary)]",
+                          ? "bg-(--accent) text-white"
+                          : "bg-(--surface-muted) text-(--text-secondary)",
                       ].join(" ")}
                     >
                       {item.label}

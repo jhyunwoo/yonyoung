@@ -19,15 +19,15 @@ export default async function DonatePage() {
   return (
     <div className="pb-16 md:pb-20">
       <section className="px-4 pb-8 pt-14 md:px-6 md:pb-12 md:pt-18">
-        <div className="mx-auto w-full max-w-6xl rounded-3xl border border-[var(--surface-border)] bg-[var(--surface-elevated)] p-6 md:p-10">
+        <div className="mx-auto w-full max-w-6xl rounded-3xl border border-(--surface-border) bg-(--surface-elevated) p-6 md:p-10">
           <MotionReveal>
-            <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+            <p className="text-xs uppercase tracking-[0.2em] text-(--text-muted)">
               Donate & Partner
             </p>
-            <h1 className="mt-3 font-display text-4xl leading-tight text-[var(--text-primary)] md:text-6xl">
+            <h1 className="mt-3 font-display text-4xl leading-tight text-(--text-primary) md:text-6xl">
               연영회의 전시와 기록을 함께 만들어주세요
             </h1>
-            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)] md:text-base">
+            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-(--text-secondary) md:text-base">
               후원과 제휴는 학생들이 더 많은 기록과 전시를 시도할 수 있게 만드는
               실질적인 힘이 됩니다.
             </p>
@@ -56,11 +56,11 @@ export default async function DonatePage() {
             },
           ].map((item, index) => (
             <MotionReveal key={item.title} delay={index * 0.05}>
-              <article className="rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-elevated)] p-5">
-                <h2 className="font-display text-3xl text-[var(--text-primary)]">
+              <article className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-5">
+                <h2 className="font-display text-3xl text-(--text-primary)">
                   {item.title}
                 </h2>
-                <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
+                <p className="mt-2 text-sm leading-relaxed text-(--text-secondary)">
                   {item.body}
                 </p>
               </article>
@@ -73,7 +73,7 @@ export default async function DonatePage() {
         eyebrow="Current Partners"
         title="현재 후원사"
         description="현재 연영회와 함께하고 있는 파트너입니다."
-        className="bg-[color:var(--surface-elevated)]/60"
+        className="bg-(--surface-elevated)/60"
       >
         <div
           className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
@@ -81,7 +81,7 @@ export default async function DonatePage() {
         >
           {supporters.length === 0 ? (
             <MotionReveal>
-              <div className="rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-elevated)] p-6 text-sm text-[var(--text-secondary)]">
+              <div className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-6 text-sm text-(--text-secondary)">
                 공개된 후원사 정보가 없습니다.
               </div>
             </MotionReveal>
@@ -93,19 +93,19 @@ export default async function DonatePage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   data-testid={`donate-supporter-card-${supporter.id}`}
-                  className="group block rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-elevated)] p-4 transition hover:border-[var(--accent)]"
+                  className="group block rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-4 transition hover:border-(--accent)"
                 >
-                  <div className="mb-4 flex h-12 items-center justify-center rounded-xl bg-[var(--surface-muted)] px-3">
+                  <div className="mb-4 flex h-12 items-center justify-center rounded-xl bg-(--surface-muted) px-3">
                     <img
                       src={supporter.logoUrl}
                       alt={supporter.name}
                       className="max-h-8 w-auto object-contain"
                     />
                   </div>
-                  <p className="text-sm font-medium text-[var(--text-primary)]">
+                  <p className="text-sm font-medium text-(--text-primary)">
                     {supporter.name}
                   </p>
-                  <p className="mt-1 text-xs text-[var(--text-muted)]">
+                  <p className="mt-1 text-xs text-(--text-muted)">
                     만료일 {dateFormatter.format(supporter.expiresAt)}
                   </p>
                 </a>

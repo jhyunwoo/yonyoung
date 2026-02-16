@@ -98,6 +98,21 @@ export const createApp = (
     name: "better-auth.session_token",
   });
 
+  app.use("*", async (c, next) => {
+    const startedAt = performance.now();
+
+    await next();
+
+    const durationMs = performance.now() - startedAt;
+    const timingMetric = `total;dur=${durationMs.toFixed(2)}`;
+    const existing = c.res.headers.get("Server-Timing");
+    c.res.headers.set(
+      "Server-Timing",
+      existing ? `${existing}, ${timingMetric}` : timingMetric,
+    );
+    c.res.headers.set("X-Response-Time", `${durationMs.toFixed(2)}ms`);
+  });
+
   app.use("/api/*", apiCors);
   app.options("/api/*", apiCors);
 

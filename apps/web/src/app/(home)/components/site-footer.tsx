@@ -8,24 +8,24 @@ const currentYear = new Date().getFullYear();
 export default function SiteFooter() {
   return (
     <footer
-      className="border-t border-[var(--surface-border)] bg-[var(--surface-elevated)]"
+      className="border-t border-(--surface-border) bg-(--surface-elevated)"
       data-testid="public-footer"
     >
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10 md:flex-row md:items-end md:justify-between md:px-6">
         <div>
-          <p className="font-display text-2xl text-[var(--text-primary)]">연영회</p>
-          <p className="mt-2 text-sm text-[var(--text-muted)]">
+          <p className="font-display text-2xl text-(--text-primary)">연영회</p>
+          <p className="mt-2 text-sm text-(--text-muted)">
             연세대학교 중앙사진동아리
           </p>
-          <p className="mt-3 text-sm text-[var(--text-secondary)]">
+          <p className="mt-3 text-sm text-(--text-secondary)">
             One Step Closer to Your Light
           </p>
         </div>
-        <div className="space-y-2 text-sm text-[var(--text-secondary)]">
+        <div className="space-y-2 text-sm text-(--text-secondary)">
           <p>Email: kimse0604@naver.com</p>
           <p>Instagram: @yonyoungpage</p>
           <p>Open Kakao: open.kakao.com/o/snVWZ4th</p>
-          <p className="text-[var(--text-muted)]">© {currentYear} YeonYoungHoe</p>
+          <p className="text-(--text-muted)">© {currentYear} YeonYoungHoe</p>
         </div>
       </div>
     </footer>

@@ -101,6 +101,40 @@ describe("supporter routes", /** describe 실행 과정에서 필요한 연산�
     expect(createSupporterMock).toHaveBeenCalledWith(payload);
   });
 
+  it("후원사 생성 시 공개 후원사 캐시를 무효화한다", async () => {
+    const originalCaches = (globalThis as { caches?: unknown }).caches;
+    const deleteMock = fn(async () => true);
+    (globalThis as { caches?: unknown }).caches = {
+      default: { delete: deleteMock },
+    };
+
+    try {
+      const createSupporterMock = fn(async () => createSupporter({ name: "new-sponsor" }));
+      const app = createTestApp({
+        actor: createActor("manager", IDs.manager),
+        dataService: createDataServiceMock({ createSupporter: createSupporterMock }),
+      });
+
+      await app.request("/api/supporters", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: "new-sponsor",
+          link: "https://example.com/sponsor",
+          logoUrl: "https://example.com/logo.png",
+          expiresAt: Date.parse("2031-01-01T00:00:00.000Z"),
+        }),
+      });
+
+      expect(deleteMock).toHaveBeenCalledTimes(1);
+      const [request] = deleteMock.mock.calls[0] ?? [];
+      expect(request).toBeInstanceOf(Request);
+      expect((request as Request).url).toContain("/api/public/supporters");
+    } finally {
+      (globalThis as { caches?: unknown }).caches = originalCaches;
+    }
+  });
+
   it("후원사 상세 조회에서 UUID가 유효하지 않으면 400을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({ actor: createActor("manager", IDs.manager) });
 

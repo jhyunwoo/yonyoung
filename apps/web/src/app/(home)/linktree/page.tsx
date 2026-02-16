@@ -22,15 +22,15 @@ export default async function LinktreePage() {
   return (
     <div className="pb-16 md:pb-20">
       <section className="px-4 pb-8 pt-14 md:px-6 md:pb-12 md:pt-18">
-        <div className="mx-auto w-full max-w-6xl rounded-3xl border border-[var(--surface-border)] bg-[var(--surface-elevated)] p-6 md:p-10">
+        <div className="mx-auto w-full max-w-6xl rounded-3xl border border-(--surface-border) bg-(--surface-elevated) p-6 md:p-10">
           <MotionReveal>
-            <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+            <p className="text-xs uppercase tracking-[0.2em] text-(--text-muted)">
               Linktree
             </p>
-            <h1 className="mt-3 font-display text-4xl leading-tight text-[var(--text-primary)] md:text-6xl">
+            <h1 className="mt-3 font-display text-4xl leading-tight text-(--text-primary) md:text-6xl">
               연영회 공식 링크 모음
             </h1>
-            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)] md:text-base">
+            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-(--text-secondary) md:text-base">
               인스타그램, 문의 채널, 활동 관련 외부 링크를 한 곳에서 확인할 수 있습니다.
             </p>
           </MotionReveal>
@@ -45,7 +45,7 @@ export default async function LinktreePage() {
         <div className="space-y-6" data-testid="linktree-groups">
           {groupedItems.length === 0 ? (
             <MotionReveal>
-              <div className="rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-elevated)] p-6 text-sm text-[var(--text-secondary)]">
+              <div className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-6 text-sm text-(--text-secondary)">
                 공개된 링크 그룹이 없습니다.
               </div>
             </MotionReveal>
@@ -53,10 +53,10 @@ export default async function LinktreePage() {
             groupedItems.map((group, groupIndex) => (
               <MotionReveal key={group.id} delay={groupIndex * 0.06}>
                 <section
-                  className="rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-elevated)] p-5"
+                  className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-5"
                   data-testid={`linktree-group-card-${group.id}`}
                 >
-                  <h2 className="font-display text-3xl text-[var(--text-primary)]">
+                  <h2 className="font-display text-3xl text-(--text-primary)">
                     {group.name}
                   </h2>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -70,12 +70,12 @@ export default async function LinktreePage() {
                           target="_blank"
                           rel="noopener noreferrer"
                           data-testid={`linktree-item-card-${item.id}`}
-                          className="block rounded-xl border border-[var(--surface-border)] bg-[var(--surface-muted)] px-4 py-3 transition hover:-translate-y-0.5 hover:border-[var(--accent)]"
+                          className="block rounded-xl border border-(--surface-border) bg-(--surface-muted) px-4 py-3 transition hover:-translate-y-0.5 hover:border-(--accent)"
                         >
-                          <p className="text-sm font-medium text-[var(--text-primary)]">
+                          <p className="text-sm font-medium text-(--text-primary)">
                             {item.name}
                           </p>
-                          <p className="mt-1 truncate text-xs text-[var(--text-secondary)]">
+                          <p className="mt-1 truncate text-xs text-(--text-secondary)">
                             {item.link}
                           </p>
                         </a>

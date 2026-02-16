@@ -43,7 +43,7 @@ export default function ThemeToggle() {
     <button
       type="button"
       onClick={toggleTheme}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--surface-border)] bg-[var(--surface-elevated)] text-[var(--text-primary)] transition hover:scale-105 hover:border-[var(--accent)] hover:text-[var(--accent)]"
+      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-(--surface-border) bg-(--surface-elevated) text-(--text-primary) transition hover:scale-105 hover:border-(--accent) hover:text-(--accent)"
       aria-label="테마 변경"
       data-testid="theme-toggle"
     >

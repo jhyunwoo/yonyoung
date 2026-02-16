@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import createDB from "../db";
 import {
   activities,
@@ -243,6 +243,18 @@ export const createDbDataService = (database: D1Database): DataService => {
       return mapActivitiesWithImages(db, rows);
     },
         /**
+     * listPublicActivities의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+     * @returns 비동기 처리 결과를 Promise로 반환합니다.
+     * @remarks 공개 화면 렌더링 성능을 위해 정렬을 DB에서 수행합니다.
+     */
+    async listPublicActivities() {
+      const rows = await db
+        .select()
+        .from(activities)
+        .orderBy(desc(activities.activityDate));
+      return mapActivitiesWithImages(db, rows);
+    },
+        /**
      * createActivity 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
      * @param input 함수 로직에서 사용하는 입력값입니다.
      * @returns 처리 결과를 Promise로 반환합니다.
@@ -442,6 +454,19 @@ export const createDbDataService = (database: D1Database): DataService => {
       return db.select().from(supporters).orderBy(asc(supporters.expiresAt));
     },
         /**
+     * listPublicSupporters의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+     * @param nowMs 기준 시각(Unix epoch ms)입니다.
+     * @returns 비동기 처리 결과를 Promise로 반환합니다.
+     * @remarks 공개 화면 노출 우선순위(유효 후원사 우선)를 DB 정렬로 처리합니다.
+     */
+    async listPublicSupporters(nowMs) {
+      const activePriority = sql<number>`case when ${supporters.expiresAt} >= ${nowMs} then 1 else 0 end`;
+      return db
+        .select()
+        .from(supporters)
+        .orderBy(desc(activePriority), asc(supporters.expiresAt));
+    },
+        /**
      * createSupporter 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
      * @param input 함수 로직에서 사용하는 입력값입니다.
      * @returns 처리 결과를 Promise로 반환합니다.
@@ -534,6 +559,18 @@ export const createDbDataService = (database: D1Database): DataService => {
         .select()
         .from(exhibitions)
         .orderBy(asc(exhibitions.startDate));
+      return mapExhibitionsWithImages(db, rows);
+    },
+        /**
+     * listPublicExhibitions의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+     * @returns 비동기 처리 결과를 Promise로 반환합니다.
+     * @remarks 공개 화면 렌더링 성능을 위해 정렬을 DB에서 수행합니다.
+     */
+    async listPublicExhibitions() {
+      const rows = await db
+        .select()
+        .from(exhibitions)
+        .orderBy(desc(exhibitions.startDate));
       return mapExhibitionsWithImages(db, rows);
     },
         /**

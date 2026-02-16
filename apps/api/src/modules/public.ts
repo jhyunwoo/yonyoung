@@ -8,6 +8,7 @@ import {
 } from "../lib/openapi/schemas";
 import { dataResponse } from "../lib/openapi/responses";
 import { ok } from "../lib/http/response";
+import { respondWithPublicCache } from "../lib/http/public-cache";
 import { AppDependencies } from "../lib/services/dependencies";
 import HonoAppType from "../types/honoAppType";
 
@@ -74,56 +75,43 @@ export const registerPublicRoutes = (
   app: App,
   dependencies: AppDependencies,
 ) => {
-  app.openapi(listPublicActivitiesRoute, async (c): Promise<any> => {
-    const data = await dependencies
-      .getDataService(c)
-      .listActivities()
-      .then((rows) =>
-        [...rows].sort(
-          (a, b) => b.activityDate.getTime() - a.activityDate.getTime(),
-        ),
-      );
-    return ok(c, data);
-  });
+  app.openapi(listPublicActivitiesRoute, async (c): Promise<any> =>
+    respondWithPublicCache(c, async () => {
+      const data = await dependencies.getDataService(c).listPublicActivities();
+      return ok(c, data);
+    }),
+  );
 
-  app.openapi(listPublicExhibitionsRoute, async (c): Promise<any> => {
-    const data = await dependencies
-      .getDataService(c)
-      .listExhibitions()
-      .then((rows) =>
-        [...rows].sort((a, b) => b.startDate.getTime() - a.startDate.getTime()),
-      );
-    return ok(c, data);
-  });
+  app.openapi(listPublicExhibitionsRoute, async (c): Promise<any> =>
+    respondWithPublicCache(c, async () => {
+      const data = await dependencies.getDataService(c).listPublicExhibitions();
+      return ok(c, data);
+    }),
+  );
 
-  app.openapi(listPublicSupportersRoute, async (c): Promise<any> => {
-    const now = Date.now();
-    const data = await dependencies
-      .getDataService(c)
-      .listSupporters()
-      .then((rows) =>
-        [...rows].sort((a, b) => {
-          const aActive = a.expiresAt.getTime() >= now;
-          const bActive = b.expiresAt.getTime() >= now;
-          if (aActive !== bActive) {
-            return aActive ? -1 : 1;
-          }
-          return a.expiresAt.getTime() - b.expiresAt.getTime();
-        }),
-      );
-    return ok(c, data);
-  });
+  app.openapi(listPublicSupportersRoute, async (c): Promise<any> =>
+    respondWithPublicCache(c, async () => {
+      const data = await dependencies
+        .getDataService(c)
+        .listPublicSupporters(Date.now());
+      return ok(c, data);
+    }),
+  );
 
-  app.openapi(listPublicLinktreeRoute, async (c): Promise<any> => {
-    const data = await dependencies.getDataService(c).listLinktrees();
-    return ok(c, data);
-  });
+  app.openapi(listPublicLinktreeRoute, async (c): Promise<any> =>
+    respondWithPublicCache(c, async () => {
+      const data = await dependencies.getDataService(c).listLinktrees();
+      return ok(c, data);
+    }),
+  );
 
-  app.openapi(listPublicGenerationsRoute, async (c): Promise<any> => {
-    const data = await dependencies
-      .getDataService(c)
-      .listGenerations()
-      .then((rows) => [...rows].sort((a, b) => a.sortOrder - b.sortOrder));
-    return ok(c, data);
-  });
+  app.openapi(listPublicGenerationsRoute, async (c): Promise<any> =>
+    respondWithPublicCache(c, async () => {
+      const data = await dependencies
+        .getDataService(c)
+        .listGenerations()
+        .then((rows) => [...rows].sort((a, b) => a.sortOrder - b.sortOrder));
+      return ok(c, data);
+    }),
+  );
 };

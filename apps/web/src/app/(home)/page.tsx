@@ -52,14 +52,14 @@ export default async function HomePage() {
       >
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="home-activities-grid">
           {recentActivities.length === 0 ? (
-            <div className="rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-elevated)] p-6 text-sm text-[var(--text-secondary)]">
+            <div className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-6 text-sm text-(--text-secondary)">
               아직 공개된 활동이 없습니다. 관리자에서 활동을 추가하면 여기에 반영됩니다.
             </div>
           ) : (
             recentActivities.map((activity, index) => (
               <MotionReveal key={activity.id} delay={index * 0.04}>
                 <article
-                  className="group overflow-hidden rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-elevated)] shadow-[0_22px_50px_-36px_var(--shadow-strong)]"
+                  className="group overflow-hidden rounded-2xl border border-(--surface-border) bg-(--surface-elevated) shadow-[0_22px_50px_-36px_var(--shadow-strong)]"
                   data-testid={`home-activity-card-${activity.id}`}
                 >
                   <div className="relative aspect-[5/4] overflow-hidden">
@@ -70,13 +70,13 @@ export default async function HomePage() {
                     />
                   </div>
                   <div className="space-y-2 p-4">
-                    <p className="text-xs uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                    <p className="text-xs uppercase tracking-[0.14em] text-(--text-muted)">
                       {formatDate(activity.activityDate)}
                     </p>
-                    <h3 className="font-display text-2xl text-[var(--text-primary)]">
+                    <h3 className="font-display text-2xl text-(--text-primary)">
                       {activity.title}
                     </h3>
-                    <p className="line-clamp-2 text-sm leading-relaxed text-[var(--text-secondary)]">
+                    <p className="line-clamp-2 text-sm leading-relaxed text-(--text-secondary)">
                       {activity.description}
                     </p>
                   </div>
@@ -92,11 +92,11 @@ export default async function HomePage() {
         eyebrow="Supporters"
         title="연영회를 함께 만드는 후원사"
         description="연영회의 활동과 전시를 함께 만들어주시는 파트너입니다."
-        className="bg-[color:var(--surface-elevated)]/60"
+        className="bg-(--surface-elevated)/60"
       >
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-testid="home-supporters-grid">
           {highlightedSupporters.length === 0 ? (
-            <div className="rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-elevated)] p-6 text-sm text-[var(--text-secondary)]">
+            <div className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-6 text-sm text-(--text-secondary)">
               현재 공개된 후원사 정보가 없습니다.
             </div>
           ) : (
@@ -107,9 +107,9 @@ export default async function HomePage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   data-testid={`home-supporter-card-${supporter.id}`}
-                  className="group flex h-full flex-col justify-between rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-elevated)] p-4 transition hover:-translate-y-1 hover:border-[var(--accent)]"
+                  className="group flex h-full flex-col justify-between rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-4 transition hover:-translate-y-1 hover:border-(--accent)"
                 >
-                  <div className="mb-4 flex h-12 items-center justify-center overflow-hidden rounded-xl bg-[var(--surface-muted)] px-3">
+                  <div className="mb-4 flex h-12 items-center justify-center overflow-hidden rounded-xl bg-(--surface-muted) px-3">
                     <img
                       src={supporter.logoUrl}
                       alt={supporter.name}
@@ -117,11 +117,8 @@ export default async function HomePage() {
                     />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-[var(--text-primary)]">
+                    <p className="text-sm font-medium text-(--text-primary)">
                       {supporter.name}
-                    </p>
-                    <p className="mt-1 text-xs text-[var(--text-muted)]">
-                      만료일 {formatDate(supporter.expiresAt)}
                     </p>
                   </div>
                 </a>
@@ -139,7 +136,7 @@ export default async function HomePage() {
       >
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-testid="home-quicklinks-grid">
           {quickLinks.length === 0 ? (
-            <div className="rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-elevated)] p-6 text-sm text-[var(--text-secondary)]">
+            <div className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-6 text-sm text-(--text-secondary)">
               공개 링크트리 항목이 없습니다.
             </div>
           ) : (
@@ -150,15 +147,15 @@ export default async function HomePage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   data-testid={`home-quicklink-card-${item.id}`}
-                  className="group block rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-elevated)] p-4 transition hover:border-[var(--accent)] hover:bg-[var(--surface-muted)]"
+                  className="group block rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-4 transition hover:border-(--accent) hover:bg-(--surface-muted)"
                 >
-                  <p className="text-xs uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                  <p className="text-xs uppercase tracking-[0.14em] text-(--text-muted)">
                     {item.groupName}
                   </p>
-                  <p className="mt-2 text-base font-semibold text-[var(--text-primary)]">
+                  <p className="mt-2 text-base font-semibold text-(--text-primary)">
                     {item.name}
                   </p>
-                  <p className="mt-1 truncate text-xs text-[var(--text-secondary)]">
+                  <p className="mt-1 truncate text-xs text-(--text-secondary)">
                     {item.link}
                   </p>
                 </a>
@@ -168,14 +165,14 @@ export default async function HomePage() {
         </div>
 
         <MotionReveal className="mt-8">
-          <div className="rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-elevated)] p-6 text-center">
-            <p className="text-sm text-[var(--text-secondary)]">
+          <div className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-6 text-center">
+            <p className="text-sm text-(--text-secondary)">
               연영회의 더 많은 전시와 활동을 아카이브에서 확인해보세요.
             </p>
             <Link
               href="/archive"
               data-testid="home-cta-archive-bottom"
-              className="mt-4 inline-flex rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-medium text-[var(--accent-foreground)] transition hover:opacity-90"
+              className="mt-4 inline-flex rounded-full bg-(--accent) px-5 py-2.5 text-sm font-medium text-(--accent-foreground) transition hover:opacity-90"
             >
               아카이브 보러가기
             </Link>
