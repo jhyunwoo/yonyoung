@@ -633,16 +633,13 @@ export const ApiPresignResponseSchema = z
       description: "업로드 후 DB에 저장할 공개 접근 URL",
       example: "https://cdn.yonyoung.example/activities/cover/cover-image.jpg",
     }),
-    requiredHeaders: z
-      .object({
-        "Content-Type": z.string().openapi({
-          description: "PUT 업로드 요청에 반드시 포함해야 하는 헤더",
-          example: "image/jpeg",
-        }),
-      })
-      .openapi({
-        description: "presigned URL 업로드 시 필수 헤더",
-      }),
+    requiredHeaders: z.record(z.string()).openapi({
+      description:
+        "presigned URL 업로드 시 클라이언트가 그대로 전달해야 하는 헤더 목록",
+      example: {
+        "Content-Type": "image/jpeg",
+      },
+    }),
   })
   .openapi("ApiPresignResponse");
 

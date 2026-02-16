@@ -2,7 +2,7 @@
 
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
-import { PRESIGN_PATHS, resolveImageValue } from "../../../../lib/admin-api/upload";
+import { PRESIGN_PATHS, uploadWithPresign } from "../../../../lib/admin-api/upload";
 import type { ApiSupporter } from "../../../../lib/admin-api/types";
 import {
   formatTimestamp,
@@ -10,7 +10,11 @@ import {
   toDateInputValue,
   toTimestampMs,
 } from "../components/admin-form-utils";
-import ImageInput, { type ImageInputMode } from "../components/image-input";
+import AdminActionButton from "../components/admin-action-button";
+import AdminConfirmModal from "../components/admin-confirm-modal";
+import AdminInfoBox from "../components/admin-info-box";
+import AdminPageHeader from "../components/admin-page-header";
+import ImageInput from "../components/image-input";
 
 type SupporterFormState = {
   name: string;
@@ -46,13 +50,17 @@ export default function SupportersAdminPage({
   const [createForm, setCreateForm] = useState<SupporterFormState>(emptyForm);
   const [editForm, setEditForm] = useState<SupporterFormState>(emptyForm);
 
-  const [createMode, setCreateMode] = useState<ImageInputMode>("url");
-  const [editMode, setEditMode] = useState<ImageInputMode>("url");
   const [createFile, setCreateFile] = useState<File | null>(null);
   const [editFile, setEditFile] = useState<File | null>(null);
+  const [createLogoUploadProgress, setCreateLogoUploadProgress] = useState<number | null>(null);
+  const [editLogoUploadProgress, setEditLogoUploadProgress] = useState<number | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeSubmitAction, setActiveSubmitAction] = useState<
+    "create" | "delete" | null
+  >(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -138,7 +146,6 @@ export default function SupportersAdminPage({
   const handleSelect = (item: ApiSupporter) => {
     setSelectedId(item.id);
     syncEditForm(item);
-    setEditMode("url");
     setEditFile(null);
   };
 
@@ -151,16 +158,20 @@ export default function SupportersAdminPage({
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
+    setActiveSubmitAction("create");
     setErrorMessage(null);
     setSuccessMessage(null);
 
     try {
-      const logoUrl = await resolveImageValue({
-        mode: createMode,
-        urlValue: createForm.logoUrl,
-        file: createFile,
+      if (!createFile) {
+        throw new Error("후원사 로고 파일을 선택해 주세요.");
+      }
+
+      setCreateLogoUploadProgress(0);
+      const logoUrl = await uploadWithPresign({
         presignPath: PRESIGN_PATHS.supporterLogo,
-        fieldLabel: "로고",
+        file: createFile,
+        onProgress: setCreateLogoUploadProgress,
       });
 
       await adminResourceApi.createSupporter({
@@ -171,14 +182,16 @@ export default function SupportersAdminPage({
       });
 
       setCreateForm(emptyForm);
-      setCreateMode("url");
       setCreateFile(null);
+      setCreateLogoUploadProgress(null);
       setSuccessMessage("후원사를 생성했습니다.");
       await loadData();
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
       setIsSubmitting(false);
+      setActiveSubmitAction(null);
+      setCreateLogoUploadProgress(null);
     }
   };
 
@@ -199,13 +212,16 @@ export default function SupportersAdminPage({
     setSuccessMessage(null);
 
     try {
-      const logoUrl = await resolveImageValue({
-        mode: editMode,
-        urlValue: editForm.logoUrl,
-        file: editFile,
-        presignPath: PRESIGN_PATHS.supporterLogo,
-        fieldLabel: "로고",
-      });
+      const logoUrl = editFile
+        ? await (async () => {
+            setEditLogoUploadProgress(0);
+            return uploadWithPresign({
+              presignPath: PRESIGN_PATHS.supporterLogo,
+              file: editFile,
+              onProgress: setEditLogoUploadProgress,
+            });
+          })()
+        : editForm.logoUrl;
 
       await adminResourceApi.updateSupporter(selected.id, {
         name: editForm.name.trim(),
@@ -215,13 +231,15 @@ export default function SupportersAdminPage({
       });
 
       setSuccessMessage("후원사를 수정했습니다.");
-      setEditMode("url");
       setEditFile(null);
+      setEditLogoUploadProgress(null);
       await loadData();
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
       setIsSubmitting(false);
+      setActiveSubmitAction(null);
+      setEditLogoUploadProgress(null);
     }
   };
 
@@ -235,36 +253,48 @@ export default function SupportersAdminPage({
       return;
     }
 
-    if (!window.confirm("선택한 후원사를 삭제하시겠습니까?")) {
-      return;
-    }
-
     setIsSubmitting(true);
+    setActiveSubmitAction("delete");
     setErrorMessage(null);
     setSuccessMessage(null);
 
     try {
       await adminResourceApi.deleteSupporter(selected.id);
       setSuccessMessage("후원사를 삭제했습니다.");
+      setDeleteModalOpen(false);
       await loadData();
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
       setIsSubmitting(false);
+      setActiveSubmitAction(null);
     }
+  };
+
+  const openDeleteModal = () => {
+    if (!selected || isSubmitting) {
+      return;
+    }
+    setDeleteModalOpen(true);
   };
 
   return (
     <div className="space-y-6" data-testid="supporters-page">
-      <header className="rounded-lg border border-gray-200 bg-white p-4">
-        <h1 className="text-xl font-semibold">Supporters</h1>
-        <p className="mt-1 text-sm text-gray-600">후원사 CRUD를 관리합니다.</p>
+      <AdminPageHeader
+        title="후원사 관리"
+        description="홈페이지에 노출할 후원사 정보를 등록하고 수정하는 화면입니다."
+        guidance="후원사 이름, 링크, 노출 종료일을 입력하면 자동으로 목록에 반영됩니다."
+      >
         {generationSortOrder !== null ? (
           <p className="mt-1 text-xs text-gray-500" data-testid="supporters-global-note">
-            Global resource: 선택한 {generationSortOrder}기와 관계없이 공통으로 적용됩니다.
+            공통 설정: 선택한 {generationSortOrder}기와 관계없이 전체에 적용됩니다.
           </p>
         ) : null}
-      </header>
+      </AdminPageHeader>
+
+      <AdminInfoBox title="작업 안내">
+        링크는 후원사 공식 페이지 주소를 넣어 주세요. 종료일이 지나면 자동으로 노출 대상에서 제외됩니다.
+      </AdminInfoBox>
 
       {errorMessage ? (
         <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700" data-testid="supporters-error">
@@ -281,7 +311,7 @@ export default function SupportersAdminPage({
       <section className="grid gap-6 lg:grid-cols-2">
         <article className="rounded-lg border border-gray-200 bg-white p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">목록</h2>
+            <h2 className="text-lg font-semibold">등록된 후원사 목록</h2>
             <button
               type="button"
               onClick={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => void loadData()}
@@ -295,7 +325,7 @@ export default function SupportersAdminPage({
           {isLoading ? (
             <p className="text-sm text-gray-500">불러오는 중...</p>
           ) : items.length === 0 ? (
-            <p className="text-sm text-gray-500">데이터가 없습니다.</p>
+            <p className="text-sm text-gray-500">아직 등록된 후원사가 없습니다. 오른쪽에서 먼저 추가해 주세요.</p>
           ) : (
             <ul className="space-y-2" data-testid="supporters-list">
               {items.map(/** items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => (
@@ -303,8 +333,8 @@ export default function SupportersAdminPage({
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-medium">{item.name}</p>
-                      <p className="truncate text-xs text-gray-500">{item.link}</p>
-                      <p className="text-xs text-gray-500">expiresAt: {formatTimestamp(item.expiresAt)}</p>
+                      <p className="truncate text-xs text-gray-500">링크: {item.link}</p>
+                      <p className="text-xs text-gray-500">노출 종료일: {formatTimestamp(item.expiresAt)}</p>
                     </div>
                     <button
                       type="button"
@@ -327,10 +357,10 @@ export default function SupportersAdminPage({
 
         <article className="space-y-6">
           <form onSubmit={handleCreate} className="rounded-lg border border-gray-200 bg-white p-4" data-testid="supporter-create-form">
-            <h2 className="mb-3 text-lg font-semibold">생성</h2>
+            <h2 className="mb-3 text-lg font-semibold">후원사 추가</h2>
             <div className="space-y-3">
               <label className="block text-sm">
-                <span className="mb-1 block">name</span>
+                <span className="mb-1 block">후원사 이름</span>
                 <input
                   type="text"
                   value={createForm.name}
@@ -344,7 +374,7 @@ export default function SupportersAdminPage({
               </label>
 
               <label className="block text-sm">
-                <span className="mb-1 block">link</span>
+                <span className="mb-1 block">연결 링크</span>
                 <input
                   type="url"
                   value={createForm.link}
@@ -358,7 +388,7 @@ export default function SupportersAdminPage({
               </label>
 
               <label className="block text-sm">
-                <span className="mb-1 block">expiresAt</span>
+                <span className="mb-1 block">노출 종료일</span>
                 <input
                   type="date"
                   value={createForm.expiresAt}
@@ -372,37 +402,35 @@ export default function SupportersAdminPage({
               </label>
 
               <ImageInput
-                label="logoUrl"
-                mode={createMode}
-                onModeChange={setCreateMode}
-                urlValue={createForm.logoUrl}
-                onUrlChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param value 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (value) =>
-                  setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, logoUrl: value }))
-                }
+                label="후원사 로고"
                 file={createFile}
                 onFileChange={setCreateFile}
+                uploadProgress={createLogoUploadProgress}
+                isUploading={createLogoUploadProgress !== null}
                 testIdPrefix="supporter-create-logo"
                 disabled={isSubmitting}
               />
             </div>
 
-            <button
+            <AdminActionButton
               type="submit"
-              disabled={isSubmitting}
-              className="mt-4 rounded-md bg-black px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-              data-testid="supporter-create-submit"
+              loading={activeSubmitAction === "create"}
+              disabled={isSubmitting && activeSubmitAction !== "create"}
+              loadingText="후원사 추가 중..."
+              className="mt-4"
+              testId="supporter-create-submit"
             >
-              생성
-            </button>
+              후원사 추가
+            </AdminActionButton>
           </form>
 
           <form onSubmit={handleUpdate} className="rounded-lg border border-gray-200 bg-white p-4" data-testid="supporter-edit-form">
-            <h2 className="mb-3 text-lg font-semibold">수정/삭제</h2>
+            <h2 className="mb-3 text-lg font-semibold">선택한 후원사 수정/삭제</h2>
             {selected ? (
               <>
                 <div className="space-y-3">
                   <label className="block text-sm">
-                    <span className="mb-1 block">name</span>
+                    <span className="mb-1 block">후원사 이름</span>
                     <input
                       type="text"
                       value={editForm.name}
@@ -416,7 +444,7 @@ export default function SupportersAdminPage({
                   </label>
 
                   <label className="block text-sm">
-                    <span className="mb-1 block">link</span>
+                    <span className="mb-1 block">연결 링크</span>
                     <input
                       type="url"
                       value={editForm.link}
@@ -430,7 +458,7 @@ export default function SupportersAdminPage({
                   </label>
 
                   <label className="block text-sm">
-                    <span className="mb-1 block">expiresAt</span>
+                    <span className="mb-1 block">노출 종료일</span>
                     <input
                       type="date"
                       value={editForm.expiresAt}
@@ -444,38 +472,34 @@ export default function SupportersAdminPage({
                   </label>
 
                   <ImageInput
-                    label="logoUrl"
-                    mode={editMode}
-                    onModeChange={setEditMode}
-                    urlValue={editForm.logoUrl}
-                    onUrlChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param value 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (value) =>
-                      setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, logoUrl: value }))
-                    }
+                    label="후원사 로고"
                     file={editFile}
                     onFileChange={setEditFile}
+                    uploadProgress={editLogoUploadProgress}
+                    isUploading={editLogoUploadProgress !== null}
                     testIdPrefix="supporter-edit-logo"
                     disabled={isSubmitting}
                   />
                 </div>
 
                 <div className="mt-4 flex gap-2">
-                  <button
+                  <AdminActionButton
                     type="submit"
                     disabled={isSubmitting}
-                    className="rounded-md bg-black px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-                    data-testid="supporter-edit-submit"
+                    testId="supporter-edit-submit"
                   >
-                    수정
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    disabled={isSubmitting}
-                    className="rounded-md border border-red-300 px-3 py-2 text-sm font-medium text-red-600 disabled:opacity-50"
-                    data-testid="supporter-delete-button"
+                    수정 저장
+                  </AdminActionButton>
+                  <AdminActionButton
+                    variant="danger"
+                    onClick={openDeleteModal}
+                    loading={activeSubmitAction === "delete"}
+                    disabled={isSubmitting && activeSubmitAction !== "delete"}
+                    loadingText="후원사 삭제 중..."
+                    testId="supporter-delete-button"
                   >
-                    삭제
-                  </button>
+                    후원사 삭제
+                  </AdminActionButton>
                 </div>
               </>
             ) : (
@@ -484,6 +508,26 @@ export default function SupportersAdminPage({
           </form>
         </article>
       </section>
+
+      <AdminConfirmModal
+        open={deleteModalOpen}
+        title="후원사를 삭제할까요?"
+        description={
+          selected
+            ? `"${selected.name}" 정보를 삭제하면 페이지 노출에서 즉시 사라집니다.`
+            : "선택한 후원사 정보를 삭제합니다."
+        }
+        confirmText="삭제하기"
+        confirmLoadingText="삭제 중..."
+        isLoading={activeSubmitAction === "delete"}
+        onConfirm={/** onConfirm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => void handleDelete()}
+        onClose={/** onClose 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
+          if (isSubmitting) {
+            return;
+          }
+          setDeleteModalOpen(false);
+        }}
+      />
     </div>
   );
 }

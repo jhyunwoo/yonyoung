@@ -12,6 +12,7 @@ const REQUEST_TIMEOUT_MS = 12_000;
 export type AdminRequestMethod = "GET" | "POST" | "PATCH" | "DELETE";
 
 type JsonLike = Record<string, unknown>;
+type RequestBody = unknown;
 
 /**
  * normalizeBaseUrl의 핵심 비즈니스 로직을 수행합니다.
@@ -117,7 +118,7 @@ const parseBody = async (response: Response): Promise<unknown> => {
 export const adminRequest = async <T>(
   path: string,
   method: AdminRequestMethod,
-  body?: unknown,
+  body?: RequestBody,
 ): Promise<T> => {
   const controller = new AbortController();
   const timeoutId = setTimeout(/** setTimeout 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -127,19 +128,19 @@ export const adminRequest = async <T>(
     const response = await fetch(
       `${resolveAdminApiBaseUrl()}${ADMIN_API_BASE_PATH}${normalizePath(path)}`,
       {
-      method,
-      credentials: "include",
-      cache: "no-store",
-      signal: controller.signal,
-      headers: hasBody
-        ? {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          }
-        : {
-          Accept: "application/json",
-        },
-      body: hasBody ? JSON.stringify(body) : undefined,
+        method,
+        credentials: "include",
+        cache: "no-store",
+        signal: controller.signal,
+        headers: hasBody
+          ? {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            }
+          : {
+              Accept: "application/json",
+            },
+        body: hasBody ? JSON.stringify(body) : undefined,
       },
     );
 

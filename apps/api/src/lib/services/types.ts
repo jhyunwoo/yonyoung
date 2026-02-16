@@ -243,8 +243,6 @@ export type PresignService = {
     uploadUrl: string;
     objectKey: string;
     publicUrl: string;
-    requiredHeaders: {
-      "Content-Type": string;
-    };
+    requiredHeaders: Record<string, string>;
   }>;
 };

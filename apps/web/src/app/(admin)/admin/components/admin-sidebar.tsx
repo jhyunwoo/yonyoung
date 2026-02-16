@@ -17,11 +17,36 @@ type AdminSidebarProps = {
 };
 
 const RESOURCE_MENU_ITEMS = [
-  { resourcePath: "activities", label: "Activities", shortLabel: "ACT" },
-  { resourcePath: "supporters", label: "Supporters", shortLabel: "SUP" },
-  { resourcePath: "exhibitions", label: "Exhibitions", shortLabel: "EXH" },
-  { resourcePath: "linktree", label: "Linktree", shortLabel: "LNK" },
-  { resourcePath: "users", label: "Users", shortLabel: "USR" },
+  {
+    resourcePath: "activities",
+    label: "활동 관리",
+    shortLabel: "ACT",
+    collapsedLabel: "활동",
+  },
+  {
+    resourcePath: "supporters",
+    label: "후원사 관리",
+    shortLabel: "SUP",
+    collapsedLabel: "후원",
+  },
+  {
+    resourcePath: "exhibitions",
+    label: "전시 관리",
+    shortLabel: "EXH",
+    collapsedLabel: "전시",
+  },
+  {
+    resourcePath: "linktree",
+    label: "링크 모음 관리",
+    shortLabel: "LNK",
+    collapsedLabel: "링크",
+  },
+  {
+    resourcePath: "users",
+    label: "사용자 관리",
+    shortLabel: "USR",
+    collapsedLabel: "사용",
+  },
 ] as const;
 
 /**
@@ -195,10 +220,10 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
 
       <div className="border-b border-gray-200 px-3 py-3">
         {collapsed ? (
-          <p className="text-center text-xs font-medium text-gray-600">GEN</p>
+          <p className="text-center text-xs font-medium text-gray-600">기수</p>
         ) : (
           <label className="block text-xs font-medium text-gray-600">
-            Generation
+            현재 작업 기수
             <select
               className="mt-1 w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm text-gray-700"
               value={selectedSortOrder ?? ""}
@@ -233,7 +258,7 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
                     : "border-gray-200 text-gray-700 hover:bg-gray-100"
                 } ${collapsed ? "justify-center" : "justify-start"}`}
               >
-                {collapsed ? "GEN" : "Generation Settings"}
+                {collapsed ? "기수" : "기수 설정"}
               </Link>
             </li>
           ) : null}
@@ -260,7 +285,7 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
                       : "border-gray-200 text-gray-700 hover:bg-gray-100"
                   } ${collapsed ? "justify-center" : "justify-start"}`}
                 >
-                  {collapsed ? item.shortLabel : item.label}
+                  {collapsed ? item.collapsedLabel : item.label}
                 </Link>
               </li>
             );

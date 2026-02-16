@@ -37,6 +37,7 @@ const desktopSmokeTestMatches = [
   "**/public-pages-content.spec.ts",
   "**/auth-flow.spec.ts",
   "**/admin-shell.spec.ts",
+  "**/image-upload-presigned.spec.ts",
   "**/generations-crud.spec.ts",
   "**/linktree-crud.spec.ts",
 ];

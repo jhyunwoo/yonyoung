@@ -137,19 +137,46 @@ const parseFileUploadFlow = (): FileUploadFlow => {
 
 let uploadFlowAvailabilityPromise: Promise<boolean> | null = null;
 
+const resolveRequiredUploadHeaders = (
+  requiredHeaders: Record<string, string> | undefined,
+  fallbackContentType: string,
+): Record<string, string> => {
+  const headers: Record<string, string> = {};
+  let hasContentType = false;
+
+  if (requiredHeaders) {
+    for (const [key, value] of Object.entries(requiredHeaders)) {
+      if (!value) {
+        continue;
+      }
+      headers[key] = value;
+      if (key.toLowerCase() === "content-type") {
+        hasContentType = true;
+      }
+    }
+  }
+
+  if (!hasContentType) {
+    headers["Content-Type"] = fallbackContentType;
+  }
+
+  return headers;
+};
+
 const probeUploadWithBrowserFetch = async (
   page: Page,
-  input: { uploadUrl: string; contentType: string },
+  input: { uploadUrl: string; headers: Record<string, string> },
 ): Promise<boolean> =>
   page.evaluate(
-    async ({ uploadUrl, contentType }) => {
+    async ({ uploadUrl, headers }) => {
       try {
         const response = await fetch(uploadUrl, {
           method: "PUT",
-          headers: {
-            "Content-Type": contentType,
-          },
-          body: new Blob(["e2e-upload-probe"], { type: contentType }),
+          headers,
+          body: new Blob(
+            ["e2e-upload-probe"],
+            { type: headers["Content-Type"] ?? "application/octet-stream" },
+          ),
         });
         return response.ok;
       } catch {
@@ -158,7 +185,7 @@ const probeUploadWithBrowserFetch = async (
     },
     {
       uploadUrl: input.uploadUrl,
-      contentType: input.contentType,
+      headers: input.headers,
     },
   );
 
@@ -190,9 +217,7 @@ export const shouldRunFileUploadFlow = async (
         const payload = await readJsonSafe(response);
         const presign = unwrapData<{
           uploadUrl?: string;
-          requiredHeaders?: {
-            "Content-Type"?: string;
-          };
+          requiredHeaders?: Record<string, string>;
         } | null>(payload);
 
         if (!presign?.uploadUrl) {
@@ -200,21 +225,21 @@ export const shouldRunFileUploadFlow = async (
         }
 
         try {
-          const contentType =
-            presign.requiredHeaders?.["Content-Type"] ?? "image/png";
+          const headers = resolveRequiredUploadHeaders(
+            presign.requiredHeaders,
+            "image/png",
+          );
 
           if (page) {
             return await probeUploadWithBrowserFetch(page, {
               uploadUrl: presign.uploadUrl,
-              contentType,
+              headers,
             });
           }
 
           const uploadProbe = await request.fetch(presign.uploadUrl, {
             method: "PUT",
-            headers: {
-              "Content-Type": contentType,
-            },
+            headers,
             data: "e2e-upload-probe",
           });
           return uploadProbe.ok();

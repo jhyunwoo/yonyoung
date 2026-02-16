@@ -4,6 +4,10 @@ import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
 import type { ApiLinktree, ApiLinktreeItem } from "../../../../lib/admin-api/types";
 import { readErrorMessage } from "../components/admin-form-utils";
+import AdminActionButton from "../components/admin-action-button";
+import AdminConfirmModal from "../components/admin-confirm-modal";
+import AdminInfoBox from "../components/admin-info-box";
+import AdminPageHeader from "../components/admin-page-header";
 
 type LinktreeFormState = {
   name: string;
@@ -49,6 +53,10 @@ export default function LinktreeAdminPage({
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeSubmitAction, setActiveSubmitAction] = useState<
+    "createLinktree" | "deleteLinktree" | "createItem" | "deleteItem" | null
+  >(null);
+  const [deleteTarget, setDeleteTarget] = useState<"linktree" | "item" | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -202,6 +210,7 @@ export default function LinktreeAdminPage({
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
+    setActiveSubmitAction("createLinktree");
     setErrorMessage(null);
     setSuccessMessage(null);
 
@@ -217,6 +226,7 @@ export default function LinktreeAdminPage({
       setErrorMessage(readErrorMessage(error));
     } finally {
       setIsSubmitting(false);
+      setActiveSubmitAction(null);
     }
   };
 
@@ -247,6 +257,7 @@ export default function LinktreeAdminPage({
       setErrorMessage(readErrorMessage(error));
     } finally {
       setIsSubmitting(false);
+      setActiveSubmitAction(null);
     }
   };
 
@@ -260,22 +271,21 @@ export default function LinktreeAdminPage({
       return;
     }
 
-    if (!window.confirm("선택한 링크트리를 삭제하시겠습니까?")) {
-      return;
-    }
-
     setIsSubmitting(true);
+    setActiveSubmitAction("deleteLinktree");
     setErrorMessage(null);
     setSuccessMessage(null);
 
     try {
       await adminResourceApi.deleteLinktree(selected.id);
       setSuccessMessage("링크트리를 삭제했습니다.");
+      setDeleteTarget(null);
       await loadData();
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
       setIsSubmitting(false);
+      setActiveSubmitAction(null);
     }
   };
 
@@ -292,6 +302,7 @@ export default function LinktreeAdminPage({
     }
 
     setIsSubmitting(true);
+    setActiveSubmitAction("createItem");
     setErrorMessage(null);
     setSuccessMessage(null);
 
@@ -308,6 +319,7 @@ export default function LinktreeAdminPage({
       setErrorMessage(readErrorMessage(error));
     } finally {
       setIsSubmitting(false);
+      setActiveSubmitAction(null);
     }
   };
 
@@ -339,6 +351,7 @@ export default function LinktreeAdminPage({
       setErrorMessage(readErrorMessage(error));
     } finally {
       setIsSubmitting(false);
+      setActiveSubmitAction(null);
     }
   };
 
@@ -352,36 +365,55 @@ export default function LinktreeAdminPage({
       return;
     }
 
-    if (!window.confirm("선택한 링크 아이템을 삭제하시겠습니까?")) {
-      return;
-    }
-
     setIsSubmitting(true);
+    setActiveSubmitAction("deleteItem");
     setErrorMessage(null);
     setSuccessMessage(null);
 
     try {
       await adminResourceApi.deleteLinktreeItem(selected.id, selectedItem.id);
       setSuccessMessage("링크 아이템을 삭제했습니다.");
+      setDeleteTarget(null);
       await loadData();
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
       setIsSubmitting(false);
+      setActiveSubmitAction(null);
     }
+  };
+
+  const openDeleteLinktreeModal = () => {
+    if (!selected || isSubmitting) {
+      return;
+    }
+    setDeleteTarget("linktree");
+  };
+
+  const openDeleteItemModal = () => {
+    if (!selected || !selectedItem || isSubmitting) {
+      return;
+    }
+    setDeleteTarget("item");
   };
 
   return (
     <div className="space-y-6" data-testid="linktree-page">
-      <header className="rounded-lg border border-gray-200 bg-white p-4">
-        <h1 className="text-xl font-semibold">Linktree</h1>
-        <p className="mt-1 text-sm text-gray-600">링크트리 및 하위 아이템 CRUD를 관리합니다.</p>
+      <AdminPageHeader
+        title="링크 모음 관리"
+        description="대외 링크 묶음을 만들고, 각 묶음에 개별 링크를 추가하는 화면입니다."
+        guidance="먼저 링크 모음을 만든 뒤, 아래에서 세부 링크 아이템을 추가해 주세요."
+      >
         {generationSortOrder !== null ? (
           <p className="mt-1 text-xs text-gray-500" data-testid="linktree-global-note">
-            Global resource: 선택한 {generationSortOrder}기와 관계없이 공통으로 적용됩니다.
+            공통 설정: 선택한 {generationSortOrder}기와 관계없이 전체에 적용됩니다.
           </p>
         ) : null}
-      </header>
+      </AdminPageHeader>
+
+      <AdminInfoBox title="작업 안내">
+        링크 모음은 메뉴 단위, 링크 아이템은 실제 이동 주소입니다. 이름은 사용자가 바로 이해할 수 있게 작성해 주세요.
+      </AdminInfoBox>
 
       {errorMessage ? (
         <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700" data-testid="linktree-error">
@@ -398,7 +430,7 @@ export default function LinktreeAdminPage({
       <section className="grid gap-6 lg:grid-cols-2">
         <article className="rounded-lg border border-gray-200 bg-white p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">목록</h2>
+            <h2 className="text-lg font-semibold">링크 모음 목록</h2>
             <button
               type="button"
               onClick={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => void loadData()}
@@ -412,7 +444,7 @@ export default function LinktreeAdminPage({
           {isLoading ? (
             <p className="text-sm text-gray-500">불러오는 중...</p>
           ) : items.length === 0 ? (
-            <p className="text-sm text-gray-500">데이터가 없습니다.</p>
+            <p className="text-sm text-gray-500">아직 등록된 링크 모음이 없습니다. 오른쪽에서 먼저 만들어 주세요.</p>
           ) : (
             <ul className="space-y-2" data-testid="linktree-list">
               {items.map(/** items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => (
@@ -420,7 +452,7 @@ export default function LinktreeAdminPage({
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-medium">{item.name}</p>
-                      <p className="text-xs text-gray-500">items: {item.items.length}</p>
+                      <p className="text-xs text-gray-500">포함 링크 수: {item.items.length}</p>
                     </div>
                     <button
                       type="button"
@@ -443,9 +475,9 @@ export default function LinktreeAdminPage({
 
         <article className="space-y-6">
           <form onSubmit={handleCreate} className="rounded-lg border border-gray-200 bg-white p-4" data-testid="linktree-create-form">
-            <h2 className="mb-3 text-lg font-semibold">링크트리 생성</h2>
+            <h2 className="mb-3 text-lg font-semibold">링크 모음 만들기</h2>
             <label className="block text-sm">
-              <span className="mb-1 block">name</span>
+              <span className="mb-1 block">링크 모음 이름</span>
               <input
                 type="text"
                 value={createForm.name}
@@ -457,22 +489,24 @@ export default function LinktreeAdminPage({
                 data-testid="linktree-create-name"
               />
             </label>
-            <button
+            <AdminActionButton
               type="submit"
-              disabled={isSubmitting}
-              className="mt-4 rounded-md bg-black px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-              data-testid="linktree-create-submit"
+              loading={activeSubmitAction === "createLinktree"}
+              disabled={isSubmitting && activeSubmitAction !== "createLinktree"}
+              loadingText="링크 모음 생성 중..."
+              className="mt-4"
+              testId="linktree-create-submit"
             >
-              생성
-            </button>
+              링크 모음 생성
+            </AdminActionButton>
           </form>
 
           <form onSubmit={handleUpdate} className="rounded-lg border border-gray-200 bg-white p-4" data-testid="linktree-edit-form">
-            <h2 className="mb-3 text-lg font-semibold">링크트리 수정/삭제</h2>
+            <h2 className="mb-3 text-lg font-semibold">선택한 링크 모음 수정/삭제</h2>
             {selected ? (
               <>
                 <label className="block text-sm">
-                  <span className="mb-1 block">name</span>
+                  <span className="mb-1 block">링크 모음 이름</span>
                   <input
                     type="text"
                     value={editForm.name}
@@ -485,23 +519,21 @@ export default function LinktreeAdminPage({
                   />
                 </label>
                 <div className="mt-4 flex gap-2">
-                  <button
+                  <AdminActionButton
                     type="submit"
                     disabled={isSubmitting}
-                    className="rounded-md bg-black px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-                    data-testid="linktree-edit-submit"
+                    testId="linktree-edit-submit"
                   >
-                    수정
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDelete}
+                    수정 저장
+                  </AdminActionButton>
+                  <AdminActionButton
+                    variant="danger"
+                    onClick={openDeleteLinktreeModal}
                     disabled={isSubmitting}
-                    className="rounded-md border border-red-300 px-3 py-2 text-sm font-medium text-red-600 disabled:opacity-50"
-                    data-testid="linktree-delete-button"
+                    testId="linktree-delete-button"
                   >
-                    삭제
-                  </button>
+                    링크 모음 삭제
+                  </AdminActionButton>
                 </div>
               </>
             ) : (
@@ -518,7 +550,7 @@ export default function LinktreeAdminPage({
             <div className="space-y-3">
               <p className="text-xs text-gray-500">선택된 링크트리: {selected.name}</p>
               <label className="block text-sm">
-                <span className="mb-1 block">name</span>
+                <span className="mb-1 block">링크 이름</span>
                 <input
                   type="text"
                   value={itemCreateForm.name}
@@ -531,7 +563,7 @@ export default function LinktreeAdminPage({
                 />
               </label>
               <label className="block text-sm">
-                <span className="mb-1 block">link</span>
+                <span className="mb-1 block">이동 주소(URL)</span>
                 <input
                   type="url"
                   value={itemCreateForm.link}
@@ -543,14 +575,15 @@ export default function LinktreeAdminPage({
                   data-testid="linktree-item-create-link"
                 />
               </label>
-              <button
+              <AdminActionButton
                 type="submit"
-                disabled={isSubmitting}
-                className="rounded-md bg-black px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-                data-testid="linktree-item-create-submit"
+                loading={activeSubmitAction === "createItem"}
+                disabled={isSubmitting && activeSubmitAction !== "createItem"}
+                loadingText="링크 추가 중..."
+                testId="linktree-item-create-submit"
               >
-                추가
-              </button>
+                링크 추가
+              </AdminActionButton>
             </div>
           ) : (
             <p className="text-sm text-gray-500">링크트리를 먼저 선택해 주세요.</p>
@@ -558,11 +591,11 @@ export default function LinktreeAdminPage({
         </form>
 
         <article className="rounded-lg border border-gray-200 bg-white p-4" data-testid="linktree-item-edit-card">
-          <h2 className="mb-3 text-lg font-semibold">링크 아이템 수정/삭제</h2>
+          <h2 className="mb-3 text-lg font-semibold">선택 링크 아이템 수정/삭제</h2>
           {selected ? (
             <>
               {selected.items.length === 0 ? (
-                <p className="text-sm text-gray-500">아이템이 없습니다.</p>
+                <p className="text-sm text-gray-500">등록된 링크 아이템이 없습니다.</p>
               ) : (
                 <ul className="mb-4 space-y-2" data-testid="linktree-item-list">
                   {selected.items.map(/** selected.items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => (
@@ -594,7 +627,7 @@ export default function LinktreeAdminPage({
                 {selectedItem ? (
                   <>
                     <label className="block text-sm">
-                      <span className="mb-1 block">name</span>
+                      <span className="mb-1 block">링크 이름</span>
                       <input
                         type="text"
                         value={itemEditForm.name}
@@ -608,7 +641,7 @@ export default function LinktreeAdminPage({
                     </label>
 
                     <label className="block text-sm">
-                      <span className="mb-1 block">link</span>
+                      <span className="mb-1 block">이동 주소(URL)</span>
                       <input
                         type="url"
                         value={itemEditForm.link}
@@ -622,23 +655,21 @@ export default function LinktreeAdminPage({
                     </label>
 
                     <div className="flex gap-2">
-                      <button
+                      <AdminActionButton
                         type="submit"
                         disabled={isSubmitting}
-                        className="rounded-md bg-black px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-                        data-testid="linktree-item-edit-submit"
+                        testId="linktree-item-edit-submit"
                       >
-                        수정
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleDeleteItem}
+                        수정 저장
+                      </AdminActionButton>
+                      <AdminActionButton
+                        variant="danger"
+                        onClick={openDeleteItemModal}
                         disabled={isSubmitting}
-                        className="rounded-md border border-red-300 px-3 py-2 text-sm font-medium text-red-600 disabled:opacity-50"
-                        data-testid="linktree-item-delete-button"
+                        testId="linktree-item-delete-button"
                       >
-                        삭제
-                      </button>
+                        링크 삭제
+                      </AdminActionButton>
                     </div>
                   </>
                 ) : (
@@ -651,6 +682,39 @@ export default function LinktreeAdminPage({
           )}
         </article>
       </section>
+
+      <AdminConfirmModal
+        open={deleteTarget !== null}
+        title={deleteTarget === "item" ? "링크를 삭제할까요?" : "링크 모음을 삭제할까요?"}
+        description={
+          deleteTarget === "item"
+            ? selectedItem
+              ? `"${selectedItem.name}" 링크가 목록에서 제거됩니다.`
+              : "선택한 링크를 삭제합니다."
+            : selected
+              ? `"${selected.name}" 링크 모음과 포함된 링크가 함께 삭제됩니다.`
+              : "선택한 링크 모음을 삭제합니다."
+        }
+        confirmText="삭제하기"
+        confirmLoadingText="삭제 중..."
+        isLoading={
+          activeSubmitAction === "deleteLinktree" ||
+          activeSubmitAction === "deleteItem"
+        }
+        onConfirm={/** onConfirm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
+          if (deleteTarget === "item") {
+            void handleDeleteItem();
+            return;
+          }
+          void handleDelete();
+        }}
+        onClose={/** onClose 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
+          if (isSubmitting) {
+            return;
+          }
+          setDeleteTarget(null);
+        }}
+      />
     </div>
   );
 }

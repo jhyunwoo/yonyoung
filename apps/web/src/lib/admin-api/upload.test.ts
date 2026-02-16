@@ -46,7 +46,9 @@ describe("upload helpers", /** describe 실행 과정에서 필요한 연산을 
     const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(options.method).toBe("PUT");
     expect((options.body as File).name).toBe("photo.png");
-    expect((options.headers as Headers).get("Content-Type")).toBe("image/png");
+    expect((options.headers as Record<string, string>)["Content-Type"]).toBe(
+      "image/png",
+    );
   });
 
   it("file.type이 비어 있으면 확장자로 MIME 타입을 추론한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
@@ -71,7 +73,9 @@ describe("upload helpers", /** describe 실행 과정에서 필요한 연산을 
     });
 
     const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect((options.headers as Headers).get("Content-Type")).toBe("image/gif");
+    expect((options.headers as Record<string, string>)["Content-Type"]).toBe(
+      "image/gif",
+    );
   });
 
   it("알 수 없는 확장자(file.type 없음)는 image/jpeg로 처리한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
@@ -110,6 +114,52 @@ describe("upload helpers", /** describe 실행 과정에서 필요한 연산을 
     ).rejects.toMatchObject({
       name: "AdminApiError",
       status: 403,
+      code: "UPLOAD_FAILED",
+      message: "파일 업로드에 실패했습니다.",
+    });
+  });
+
+  it("presign에서 전달된 필수 헤더를 업로드 요청에 그대로 포함한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const fetchMock = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    mockAdminRequest.mockResolvedValueOnce({
+      uploadUrl: "https://upload.example.com/signed",
+      objectKey: "uploads/object-key",
+      publicUrl: "https://cdn.example.com/public-url",
+      requiredHeaders: {
+        "Content-Type": "image/png",
+        "x-amz-meta-source": "admin",
+      },
+    } as never);
+
+    const file = new File(["hello"], "photo.png", { type: "image/png" });
+    await uploadWithPresign({
+      presignPath: PRESIGN_PATHS.activityCover,
+      file,
+    });
+
+    const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(options.headers).toEqual({
+      "Content-Type": "image/png",
+      "x-amz-meta-source": "admin",
+    });
+  });
+
+  it("브라우저 CORS/네트워크 오류(TypeError)는 UPLOAD_FAILED 오류로 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const fetchMock = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+      throw new TypeError("Failed to fetch");
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const file = new File(["hello"], "photo.png", { type: "image/png" });
+
+    await expect(
+      uploadWithPresign({
+        presignPath: PRESIGN_PATHS.activityCover,
+        file,
+      }),
+    ).rejects.toMatchObject({
+      name: "AdminApiError",
+      status: 0,
       code: "UPLOAD_FAILED",
       message: "파일 업로드에 실패했습니다.",
     });

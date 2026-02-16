@@ -74,14 +74,14 @@ test.describe("linktree crud", () => {
     await expect(updatedItemRow).toBeVisible();
     await updatedItemRow.getByRole("button", { name: /선택|선택됨/ }).click();
 
-    page.once("dialog", (dialog) => dialog.accept());
     await page.getByTestId("linktree-item-delete-button").click();
+    await page.getByTestId("confirm-modal-confirm").click();
 
     await expect(updatedItemRow).toHaveCount(0);
 
     await updatedRow.getByRole("button", { name: /선택|선택됨/ }).click();
-    page.once("dialog", (dialog) => dialog.accept());
     await page.getByTestId("linktree-delete-button").click();
+    await page.getByTestId("confirm-modal-confirm").click();
 
     await expect(page.getByTestId("linktree-success")).toContainText("삭제");
 

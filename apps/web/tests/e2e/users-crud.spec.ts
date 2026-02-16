@@ -16,7 +16,7 @@ test.describe("users crud", () => {
     }
   });
 
-  test("list/get/update/delete user with upload/url flows", async ({
+  test("list/get/update/delete user with file upload flow", async ({
     page,
     request,
     e2ePrefix,
@@ -27,6 +27,7 @@ test.describe("users crud", () => {
 
     const generation = await ensureGeneration(request, e2ePrefix);
     const runFileUploadFlow = await shouldRunFileUploadFlow(request, page);
+    test.skip(!runFileUploadFlow, "파일 업로드 가능한 환경에서만 실행합니다.");
     const tempUser = await signUpTemporaryUser(e2ePrefix);
 
     await page.goto("/admin/users");
@@ -46,27 +47,14 @@ test.describe("users crud", () => {
     await page.getByTestId("user-edit-nickname").fill(`${e2ePrefix}-nick`);
     await page.getByTestId("user-edit-role").selectOption("regular_member");
     await page.getByTestId("user-edit-generation-id").selectOption(generation.id);
-
-    await page.getByTestId("user-edit-image-mode-url").check();
-    await page
-      .getByTestId("user-edit-image-url")
-      .fill(`https://example.com/${e2ePrefix}/user-profile-url.png`);
+    await page.getByTestId("user-edit-image-file").setInputFiles(sampleImagePath);
     await page.getByTestId("user-edit-submit").click();
 
     await expect(page.getByTestId("users-success")).toContainText("수정");
 
     await userRow.getByRole("button", { name: /선택|선택됨/ }).click();
-    if (runFileUploadFlow) {
-      await page.getByTestId("user-edit-image-mode-file").check();
-      await page.getByTestId("user-edit-image-file").setInputFiles(sampleImagePath);
-      await page.getByTestId("user-edit-submit").click();
-
-      await expect(page.getByTestId("users-success")).toContainText("수정");
-    }
-
-    await userRow.getByRole("button", { name: /선택|선택됨/ }).click();
-    page.once("dialog", (dialog) => dialog.accept());
     await page.getByTestId("user-delete-button").click();
+    await page.getByTestId("confirm-modal-confirm").click();
 
     await expect(page.getByTestId("users-success")).toContainText("삭제");
     await page.getByTestId("users-reload-button").click();

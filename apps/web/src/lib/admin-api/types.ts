@@ -225,7 +225,5 @@ export type ApiPresignResponse = {
   uploadUrl: string;
   objectKey: string;
   publicUrl: string;
-  requiredHeaders?: {
-    "Content-Type"?: string;
-  };
+  requiredHeaders?: Record<string, string>;
 };

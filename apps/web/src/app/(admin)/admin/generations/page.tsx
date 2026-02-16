@@ -10,6 +10,10 @@ import {
   toPositiveInteger,
   toTimestampMs,
 } from "../components/admin-form-utils";
+import AdminActionButton from "../components/admin-action-button";
+import AdminConfirmModal from "../components/admin-confirm-modal";
+import AdminInfoBox from "../components/admin-info-box";
+import AdminPageHeader from "../components/admin-page-header";
 
 type GenerationFormState = {
   name: string;
@@ -38,6 +42,10 @@ export default function GenerationsAdminPage() {
   const [editForm, setEditForm] = useState<GenerationFormState>(emptyForm);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeSubmitAction, setActiveSubmitAction] = useState<
+    "create" | "delete" | null
+  >(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -142,6 +150,7 @@ export default function GenerationsAdminPage() {
   const handleCreate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
+    setActiveSubmitAction("create");
     setErrorMessage(null);
     setSuccessMessage(null);
 
@@ -159,6 +168,7 @@ export default function GenerationsAdminPage() {
       setErrorMessage(readErrorMessage(error));
     } finally {
       setIsSubmitting(false);
+      setActiveSubmitAction(null);
     }
   };
 
@@ -191,6 +201,7 @@ export default function GenerationsAdminPage() {
       setErrorMessage(readErrorMessage(error));
     } finally {
       setIsSubmitting(false);
+      setActiveSubmitAction(null);
     }
   };
 
@@ -204,24 +215,29 @@ export default function GenerationsAdminPage() {
       return;
     }
 
-    const confirmed = window.confirm("선택한 기수를 삭제하시겠습니까?");
-    if (!confirmed) {
-      return;
-    }
-
     setIsSubmitting(true);
+    setActiveSubmitAction("delete");
     setErrorMessage(null);
     setSuccessMessage(null);
 
     try {
       await adminResourceApi.deleteGeneration(selected.id);
       setSuccessMessage("기수를 삭제했습니다.");
+      setDeleteModalOpen(false);
       await loadItems();
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
       setIsSubmitting(false);
+      setActiveSubmitAction(null);
     }
+  };
+
+  const openDeleteModal = () => {
+    if (!selected || isSubmitting) {
+      return;
+    }
+    setDeleteModalOpen(true);
   };
 
     /**
@@ -289,10 +305,15 @@ export default function GenerationsAdminPage() {
 
   return (
     <div className="space-y-6" data-testid="generations-page">
-      <header className="rounded-lg border border-gray-200 bg-white p-4">
-        <h1 className="text-xl font-semibold">Generations</h1>
-        <p className="mt-1 text-sm text-gray-600">기수 목록을 조회하고 생성/수정/삭제합니다.</p>
-      </header>
+      <AdminPageHeader
+        title="기수 관리"
+        description="운영 기간별 기수를 만들고 수정해, 멤버 분류 기준을 정리하는 화면입니다."
+        guidance="먼저 기수를 만들고, 아래에서 멤버를 배정하면 각 기수 페이지에 자동으로 반영됩니다."
+      />
+
+      <AdminInfoBox title="작업 안내">
+        기수 이름은 누구나 알아볼 수 있게 작성하고, 표시 순서는 숫자가 작을수록 먼저 보입니다.
+      </AdminInfoBox>
 
       {errorMessage ? (
         <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700" data-testid="generations-error">
@@ -309,7 +330,7 @@ export default function GenerationsAdminPage() {
       <section className="grid gap-6 lg:grid-cols-2">
         <article className="rounded-lg border border-gray-200 bg-white p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">목록</h2>
+            <h2 className="text-lg font-semibold">현재 기수 목록</h2>
             <button
               type="button"
               onClick={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => void loadItems()}
@@ -323,7 +344,7 @@ export default function GenerationsAdminPage() {
           {isLoading ? (
             <p className="text-sm text-gray-500" data-testid="generations-loading">불러오는 중...</p>
           ) : items.length === 0 ? (
-            <p className="text-sm text-gray-500">데이터가 없습니다.</p>
+            <p className="text-sm text-gray-500">아직 등록된 기수가 없습니다. 오른쪽에서 먼저 만들어 주세요.</p>
           ) : (
             <ul className="space-y-2" data-testid="generations-list">
               {items.map(/** items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => (
@@ -331,9 +352,9 @@ export default function GenerationsAdminPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-medium text-gray-900">{item.name}</p>
-                      <p className="text-xs text-gray-500">sortOrder: {item.sortOrder}</p>
-                      <p className="text-xs text-gray-500">start: {formatTimestamp(item.startDate)}</p>
-                      <p className="text-xs text-gray-500">end: {formatTimestamp(item.endDate)}</p>
+                      <p className="text-xs text-gray-500">표시 순서: {item.sortOrder}</p>
+                      <p className="text-xs text-gray-500">시작일: {formatTimestamp(item.startDate)}</p>
+                      <p className="text-xs text-gray-500">종료일: {formatTimestamp(item.endDate)}</p>
                     </div>
                     <button
                       type="button"
@@ -356,10 +377,10 @@ export default function GenerationsAdminPage() {
 
         <article className="space-y-6">
           <form onSubmit={handleCreate} className="rounded-lg border border-gray-200 bg-white p-4" data-testid="generation-create-form">
-            <h2 className="mb-3 text-lg font-semibold">생성</h2>
+            <h2 className="mb-3 text-lg font-semibold">기수 만들기</h2>
             <div className="space-y-3">
               <label className="block text-sm">
-                <span className="mb-1 block text-gray-700">name</span>
+                <span className="mb-1 block text-gray-700">기수 이름</span>
                 <input
                   type="text"
                   value={createForm.name}
@@ -373,7 +394,7 @@ export default function GenerationsAdminPage() {
               </label>
 
               <label className="block text-sm">
-                <span className="mb-1 block text-gray-700">sortOrder</span>
+                <span className="mb-1 block text-gray-700">표시 순서 (작을수록 먼저 보여요)</span>
                 <input
                   type="number"
                   min={0}
@@ -388,7 +409,7 @@ export default function GenerationsAdminPage() {
               </label>
 
               <label className="block text-sm">
-                <span className="mb-1 block text-gray-700">startDate</span>
+                <span className="mb-1 block text-gray-700">시작일</span>
                 <input
                   type="date"
                   value={createForm.startDate}
@@ -402,7 +423,7 @@ export default function GenerationsAdminPage() {
               </label>
 
               <label className="block text-sm">
-                <span className="mb-1 block text-gray-700">endDate</span>
+                <span className="mb-1 block text-gray-700">종료일</span>
                 <input
                   type="date"
                   value={createForm.endDate}
@@ -416,23 +437,25 @@ export default function GenerationsAdminPage() {
               </label>
             </div>
 
-            <button
+            <AdminActionButton
               type="submit"
-              disabled={isSubmitting}
-              className="mt-4 rounded-md bg-black px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-              data-testid="generation-create-submit"
+              loading={activeSubmitAction === "create"}
+              disabled={isSubmitting && activeSubmitAction !== "create"}
+              loadingText="기수 생성 중..."
+              className="mt-4"
+              testId="generation-create-submit"
             >
-              생성
-            </button>
+              기수 생성
+            </AdminActionButton>
           </form>
 
           <form onSubmit={handleUpdate} className="rounded-lg border border-gray-200 bg-white p-4" data-testid="generation-edit-form">
-            <h2 className="mb-3 text-lg font-semibold">수정/삭제</h2>
+            <h2 className="mb-3 text-lg font-semibold">선택한 기수 수정/삭제</h2>
             {selected ? (
               <>
                 <div className="space-y-3">
                   <label className="block text-sm">
-                    <span className="mb-1 block text-gray-700">name</span>
+                    <span className="mb-1 block text-gray-700">기수 이름</span>
                     <input
                       type="text"
                       value={editForm.name}
@@ -446,7 +469,7 @@ export default function GenerationsAdminPage() {
                   </label>
 
                   <label className="block text-sm">
-                    <span className="mb-1 block text-gray-700">sortOrder</span>
+                    <span className="mb-1 block text-gray-700">표시 순서 (작을수록 먼저 보여요)</span>
                     <input
                       type="number"
                       min={0}
@@ -461,7 +484,7 @@ export default function GenerationsAdminPage() {
                   </label>
 
                   <label className="block text-sm">
-                    <span className="mb-1 block text-gray-700">startDate</span>
+                    <span className="mb-1 block text-gray-700">시작일</span>
                     <input
                       type="date"
                       value={editForm.startDate}
@@ -475,7 +498,7 @@ export default function GenerationsAdminPage() {
                   </label>
 
                   <label className="block text-sm">
-                    <span className="mb-1 block text-gray-700">endDate</span>
+                    <span className="mb-1 block text-gray-700">종료일</span>
                     <input
                       type="date"
                       value={editForm.endDate}
@@ -490,23 +513,23 @@ export default function GenerationsAdminPage() {
                 </div>
 
                 <div className="mt-4 flex gap-2">
-                  <button
+                  <AdminActionButton
                     type="submit"
                     disabled={isSubmitting}
-                    className="rounded-md bg-black px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-                    data-testid="generation-edit-submit"
+                    testId="generation-edit-submit"
                   >
-                    수정
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    disabled={isSubmitting}
-                    className="rounded-md border border-red-300 px-3 py-2 text-sm font-medium text-red-600 disabled:opacity-50"
-                    data-testid="generation-delete-button"
+                    수정 저장
+                  </AdminActionButton>
+                  <AdminActionButton
+                    variant="danger"
+                    onClick={openDeleteModal}
+                    loading={activeSubmitAction === "delete"}
+                    disabled={isSubmitting && activeSubmitAction !== "delete"}
+                    loadingText="기수 삭제 중..."
+                    testId="generation-delete-button"
                   >
-                    삭제
-                  </button>
+                    기수 삭제
+                  </AdminActionButton>
                 </div>
               </>
             ) : (
@@ -574,7 +597,7 @@ export default function GenerationsAdminPage() {
                   <div>
                     <p className="text-sm font-medium text-gray-900">{member.name}</p>
                     <p className="text-xs text-gray-500">
-                      {member.email} / role: {member.role ?? "null"}
+                      {member.email} / 권한: {member.role ?? "미지정"}
                     </p>
                   </div>
                   <button
@@ -592,6 +615,26 @@ export default function GenerationsAdminPage() {
           )}
         </article>
       </section>
+
+      <AdminConfirmModal
+        open={deleteModalOpen}
+        title="기수를 삭제할까요?"
+        description={
+          selected
+            ? `"${selected.name}" 기수를 삭제하면 연결된 설정을 다시 확인해야 합니다.`
+            : "선택한 기수를 삭제합니다."
+        }
+        confirmText="삭제하기"
+        confirmLoadingText="삭제 중..."
+        isLoading={activeSubmitAction === "delete"}
+        onConfirm={/** onConfirm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => void handleDelete()}
+        onClose={/** onClose 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
+          if (isSubmitting) {
+            return;
+          }
+          setDeleteModalOpen(false);
+        }}
+      />
     </div>
   );
 }

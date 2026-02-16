@@ -32,6 +32,7 @@
     "PASSKEY_RP_ID": "moveto.workers.dev",
     "PASSKEY_RP_NAME": "Yonyoung",
     "PASSKEY_ORIGIN": "https://api.moveto.workers.dev",
+    "R2_PUBLIC_BASE_URL": "https://storage.yonyoung.moveto.kr",
   },
   "r2_buckets": [
     {

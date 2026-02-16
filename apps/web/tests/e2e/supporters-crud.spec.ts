@@ -14,7 +14,7 @@ test.describe("supporters crud", () => {
     }
   });
 
-  test("create, update, delete supporter with upload/url flows", async ({
+  test("create, update, delete supporter with file upload flow", async ({
     page,
     request,
     e2ePrefix,
@@ -24,6 +24,7 @@ test.describe("supporters crud", () => {
     await ensureAdminSession(page);
 
     const runFileUploadFlow = await shouldRunFileUploadFlow(request, page);
+    test.skip(!runFileUploadFlow, "파일 업로드 가능한 환경에서만 실행합니다.");
     const name = uniqueText(e2ePrefix, "supporter");
     const updatedName = `${name}-updated`;
 
@@ -34,9 +35,7 @@ test.describe("supporters crud", () => {
       .getByTestId("supporter-create-link")
       .fill(`https://example.com/${e2ePrefix}/supporter`);
     await page.getByTestId("supporter-create-expires-at").fill("2032-01-01");
-    await page
-      .getByTestId("supporter-create-logo-url")
-      .fill(`https://example.com/${e2ePrefix}/supporter-logo-url.png`);
+    await page.getByTestId("supporter-create-logo-file").setInputFiles(sampleImagePath);
     await page.getByTestId("supporter-create-submit").click();
 
     await expect(page.getByTestId("supporters-success")).toContainText("생성");
@@ -52,15 +51,7 @@ test.describe("supporters crud", () => {
       .getByTestId("supporter-edit-link")
       .fill(`https://example.com/${e2ePrefix}/supporter-updated`);
     await page.getByTestId("supporter-edit-expires-at").fill("2032-12-31");
-    if (runFileUploadFlow) {
-      await page.getByTestId("supporter-edit-logo-mode-file").check();
-      await page.getByTestId("supporter-edit-logo-file").setInputFiles(sampleImagePath);
-    } else {
-      await page.getByTestId("supporter-edit-logo-mode-url").check();
-      await page
-        .getByTestId("supporter-edit-logo-url")
-        .fill(`https://example.com/${e2ePrefix}/supporter-logo-updated-url.png`);
-    }
+    await page.getByTestId("supporter-edit-logo-file").setInputFiles(sampleImagePath);
     await page.getByTestId("supporter-edit-submit").click();
 
     try {
@@ -84,8 +75,8 @@ test.describe("supporters crud", () => {
     await expect(updatedRow).toBeVisible();
 
     await updatedRow.getByRole("button", { name: /선택|선택됨/ }).click();
-    page.once("dialog", (dialog) => dialog.accept());
     await page.getByTestId("supporter-delete-button").click();
+    await page.getByTestId("confirm-modal-confirm").click();
 
     await expect(page.getByTestId("supporters-success")).toContainText("삭제");
 

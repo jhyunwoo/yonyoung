@@ -100,8 +100,8 @@ test.describe("generations crud", () => {
     await expect(page.getByTestId(`generation-member-row-${tempUser.id}`)).toHaveCount(0);
 
     await updatedRow.getByRole("button", { name: /선택|선택됨/ }).click();
-    page.once("dialog", (dialog) => dialog.accept());
     await page.getByTestId("generation-delete-button").click();
+    await page.getByTestId("confirm-modal-confirm").click();
 
     await expect(page.getByTestId("generations-success")).toContainText("삭제");
     await expect(updatedRow).toHaveCount(0);

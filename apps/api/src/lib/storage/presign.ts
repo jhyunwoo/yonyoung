@@ -8,10 +8,10 @@ type StorageEnv = {
   accessKeyId: string;
   secretAccessKey: string;
   bucket: string;
-  publicBaseUrl: string;
+  publicBaseUrl?: string;
 };
 
-const FALLBACK_SIGNED_URL_EXPIRES_IN = 300;
+const PRESIGNED_URL_EXPIRES_IN_SECONDS = 3600;
 
 const storageEnvKeyMap = {
   endpoint: "R2_S3_ENDPOINT",
@@ -97,6 +97,27 @@ const encodeKeyForPublicUrl = (key: string) => {
 };
 
 /**
+ * buildPublicUrl의 핵심 비즈니스 로직을 수행합니다.
+ * @param input 함수 로직에서 사용하는 입력값입니다.
+ * @returns 함수 실행 결과를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
+const buildPublicUrl = (input: {
+  objectKey: string;
+  uploadUrl: string;
+  configuredPublicBaseUrl?: string;
+}): string => {
+  const encodedKey = encodeKeyForPublicUrl(input.objectKey);
+
+  if (input.configuredPublicBaseUrl) {
+    return `${input.configuredPublicBaseUrl}/${encodedKey}`;
+  }
+
+  const parsedUploadUrl = new URL(input.uploadUrl);
+  return `${parsedUploadUrl.origin}${parsedUploadUrl.pathname}`;
+};
+
+/**
  * resolveStorageEnv 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
  * @param env 함수 로직에서 사용하는 입력값입니다.
  * @returns 조회/계산된 결과 값을 반환합니다.
@@ -122,9 +143,6 @@ const resolveStorageEnv = (env: AppBindings): StorageEnv => {
   if (!bucket) {
     missingKeys.push(storageEnvKeyMap.bucket);
   }
-  if (!publicBaseUrl) {
-    missingKeys.push(storageEnvKeyMap.publicBaseUrl);
-  }
 
   if (missingKeys.length > 0) {
     throw new MissingStorageConfigError(missingKeys);
@@ -135,7 +153,7 @@ const resolveStorageEnv = (env: AppBindings): StorageEnv => {
     accessKeyId,
     secretAccessKey,
     bucket,
-    publicBaseUrl: publicBaseUrl.replace(/\/+$/, ""),
+    publicBaseUrl: publicBaseUrl?.replace(/\/+$/, ""),
   };
 };
 
@@ -174,10 +192,14 @@ export const createR2PresignService = (env: AppBindings): PresignService => {
       });
 
       const uploadUrl = await getSignedUrl(client, command, {
-        expiresIn: FALLBACK_SIGNED_URL_EXPIRES_IN,
+        expiresIn: PRESIGNED_URL_EXPIRES_IN_SECONDS,
       });
 
-      const publicUrl = `${storageEnv.publicBaseUrl}/${encodeKeyForPublicUrl(objectKey)}`;
+      const publicUrl = buildPublicUrl({
+        objectKey,
+        uploadUrl,
+        configuredPublicBaseUrl: storageEnv.publicBaseUrl,
+      });
 
       return {
         uploadUrl,

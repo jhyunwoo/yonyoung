@@ -15,7 +15,7 @@ test.describe("exhibitions crud", () => {
     }
   });
 
-  test("create, update, delete exhibition with detail image and upload/url flows", async ({
+  test("create, update, delete exhibition with detail image and file upload flow", async ({
     page,
     request,
     e2ePrefix,
@@ -26,6 +26,7 @@ test.describe("exhibitions crud", () => {
 
     const generation = await ensureGeneration(request, e2ePrefix);
     const runFileUploadFlow = await shouldRunFileUploadFlow(request, page);
+    test.skip(!runFileUploadFlow, "파일 업로드 가능한 환경에서만 실행합니다.");
     const title = uniqueText(e2ePrefix, "exhibition");
     const updatedTitle = `${title}-updated`;
 
@@ -39,9 +40,7 @@ test.describe("exhibitions crud", () => {
     await page
       .getByTestId("exhibition-create-description")
       .fill(`${e2ePrefix} exhibition description`);
-    await page
-      .getByTestId("exhibition-create-cover-url")
-      .fill(`https://example.com/${e2ePrefix}/exhibition-cover-url.jpg`);
+    await page.getByTestId("exhibition-create-cover-file").setInputFiles(sampleImagePath);
     await page.getByTestId("exhibition-create-submit").click();
 
     await expect(page.getByTestId("exhibitions-success")).toContainText("생성");
@@ -61,15 +60,7 @@ test.describe("exhibitions crud", () => {
     await page
       .getByTestId("exhibition-edit-description")
       .fill(`${e2ePrefix} exhibition updated description`);
-    if (runFileUploadFlow) {
-      await page.getByTestId("exhibition-edit-cover-mode-file").check();
-      await page.getByTestId("exhibition-edit-cover-file").setInputFiles(sampleImagePath);
-    } else {
-      await page.getByTestId("exhibition-edit-cover-mode-url").check();
-      await page
-        .getByTestId("exhibition-edit-cover-url")
-        .fill(`https://example.com/${e2ePrefix}/exhibition-cover-updated-url.jpg`);
-    }
+    await page.getByTestId("exhibition-edit-cover-file").setInputFiles(sampleImagePath);
     await page.getByTestId("exhibition-edit-submit").click();
 
     await expect(page.getByTestId("exhibitions-success")).toContainText("수정");
@@ -81,10 +72,7 @@ test.describe("exhibitions crud", () => {
     await updatedRow.getByRole("button", { name: /선택|선택됨/ }).click();
     await expect(updatedRow.getByRole("button", { name: "선택됨" })).toBeVisible();
 
-    await page.getByTestId("exhibition-detail-create-image-mode-url").check();
-    await page
-      .getByTestId("exhibition-detail-create-image-url")
-      .fill(`https://example.com/${e2ePrefix}/exhibition-detail-url.jpg`);
+    await page.getByTestId("exhibition-detail-create-image-file").setInputFiles(sampleImagePath);
     await page.getByTestId("exhibition-detail-create-sort-order").fill("0");
     await page.getByTestId("exhibition-detail-create-submit").click();
 
@@ -95,28 +83,20 @@ test.describe("exhibitions crud", () => {
     await detailRow.getByRole("button", { name: /선택|선택됨/ }).click();
     await expect(detailRow.getByRole("button", { name: "선택됨" })).toBeVisible();
 
-    if (runFileUploadFlow) {
-      await page.getByTestId("exhibition-detail-edit-image-mode-file").check();
-      await page.getByTestId("exhibition-detail-edit-image-file").setInputFiles(sampleImagePath);
-    } else {
-      await page.getByTestId("exhibition-detail-edit-image-mode-url").check();
-      await page
-        .getByTestId("exhibition-detail-edit-image-url")
-        .fill(`https://example.com/${e2ePrefix}/exhibition-detail-updated-url.jpg`);
-    }
+    await page.getByTestId("exhibition-detail-edit-image-file").setInputFiles(sampleImagePath);
     await page.getByTestId("exhibition-detail-edit-sort-order").fill("1");
     await page.getByTestId("exhibition-detail-edit-submit").click();
 
     await expect(page.getByTestId("exhibitions-success")).toContainText("수정");
 
-    page.once("dialog", (dialog) => dialog.accept());
     await page.getByTestId("exhibition-detail-delete-button").click();
+    await page.getByTestId("confirm-modal-confirm").click();
 
     await expect(page.locator('[data-testid^="exhibition-detail-row-"]')).toHaveCount(0);
 
     await updatedRow.getByRole("button", { name: /선택|선택됨/ }).click();
-    page.once("dialog", (dialog) => dialog.accept());
     await page.getByTestId("exhibition-delete-button").click();
+    await page.getByTestId("confirm-modal-confirm").click();
 
     await expect(page.getByTestId("exhibitions-success")).toContainText("삭제");
 
