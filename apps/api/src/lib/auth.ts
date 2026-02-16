@@ -28,6 +28,35 @@ const AUTH_DEV_DEFAULTS = {
   googleClientSecret: "replace-with-google-client-secret",
 } as const;
 
+const LOCAL_HOSTNAME = "localhost";
+
+const isIpHostname = (hostname: string): boolean => {
+  return (
+    /^[0-9.]+$/.test(hostname) ||
+    hostname.includes(":")
+  );
+};
+
+export const resolveCrossSubDomainCookieDomain = (
+  baseURL: string,
+): string | undefined => {
+  try {
+    const hostname = new URL(baseURL).hostname.toLowerCase();
+    if (hostname === LOCAL_HOSTNAME || isIpHostname(hostname)) {
+      return undefined;
+    }
+
+    const labels = hostname.split(".").filter(Boolean);
+    if (labels.length < 3) {
+      return undefined;
+    }
+
+    return labels.slice(1).join(".");
+  } catch {
+    return undefined;
+  }
+};
+
 /**
  * parseCsv 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
  * @param value 함수 로직에서 사용하는 입력값입니다.
@@ -141,6 +170,9 @@ const resolveAuthEnv = (allowDevDefaults = false): AuthEnv => {
  */
 const createAuthWithEnv = (database: D1Database, env: AuthEnv) => {
   const db = createDB(database);
+  const crossSubDomainCookieDomain = resolveCrossSubDomainCookieDomain(
+    env.baseURL,
+  );
 
   return betterAuth({
     baseURL: env.baseURL,
@@ -191,7 +223,10 @@ const createAuthWithEnv = (database: D1Database, env: AuthEnv) => {
     ],
     advanced: {
       crossSubDomainCookies: {
-        enabled: true,
+        enabled: !!crossSubDomainCookieDomain,
+        ...(crossSubDomainCookieDomain
+          ? { domain: crossSubDomainCookieDomain }
+          : {}),
       },
       useSecureCookies: env.baseURL.startsWith("https://"),
     },

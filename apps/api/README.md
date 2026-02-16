@@ -163,3 +163,5 @@ wrangler secret put GOOGLE_CLIENT_SECRET
 ```
 
 Non-sensitive auth config is defined in `wrangler.jsonc` under `vars`.
+
+For deployment, set `BETTER_AUTH_URL` to the public API origin (for example `https://api.example.com`) so Better Auth `baseURL` is explicitly resolved from runtime environment variables.

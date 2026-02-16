@@ -3,61 +3,59 @@
  * https://developers.cloudflare.com/workers/wrangler/configuration/
  */
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "api",
-	"main": "src/index.ts",
-	"compatibility_date": "2025-09-27",
-	"assets": {
-		"binding": "ASSETS",
-		"directory": "./public"
-	},
-	"observability": {
-		"enabled": true
-	},
-	"placement": {
-		"mode": "smart"
-	},
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
-	"d1_databases": [
-		{
-			"binding": "db",
-			"database_name": "yonyoung-db",
-			"database_id": "2b8373ca-0dd5-486f-aa2f-4847e5e2b79a",
-			"remote": true
-		}
-	],
-	"vars": {
-		"BETTER_AUTH_URL": "http://localhost:8787",
-		"BETTER_AUTH_TRUSTED_ORIGINS": "http://localhost:3000",
-		"PASSKEY_RP_ID": "localhost",
-		"PASSKEY_RP_NAME": "Yonyoung",
-		"PASSKEY_ORIGIN": "http://localhost:8787"
-	},
-	"r2_buckets": [
-		{
-			"bucket_name": "yonyoung-storage",
-			"binding": "r2",
-			"remote": true
-		}
-	]
-	/**
-	 * Bindings
-	 * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
-	 * databases, object storage, AI inference, real-time communication and more.
-	 * https://developers.cloudflare.com/workers/runtime-apis/bindings/
-	 */
-	/**
-	 * Environment Variables
-	 * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
-	 * Note: Use secrets to store sensitive data.
-	 * https://developers.cloudflare.com/workers/configuration/secrets/
-	 */
-	// "vars": {  "MY_VARIABLE": "production_value" }
-	/**
-	 * Service Bindings (communicate between multiple Workers)
-	 * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
-	 */
-	// "services": [  {   "binding": "MY_SERVICE",   "service": "my-service"  } ]
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "api",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-09-27",
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./public",
+  },
+  "observability": {
+    "enabled": true,
+  },
+  "placement": {
+    "mode": "smart",
+  },
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "db",
+      "database_name": "yonyoung-db",
+      "database_id": "2b8373ca-0dd5-486f-aa2f-4847e5e2b79a",
+      "remote": true,
+    },
+  ],
+  "vars": {
+    "BETTER_AUTH_URL": "https://api.moveto.workers.dev",
+    "BETTER_AUTH_TRUSTED_ORIGINS": "https://web.moveto.workers.dev",
+    "PASSKEY_RP_ID": "moveto.workers.dev",
+    "PASSKEY_RP_NAME": "Yonyoung",
+    "PASSKEY_ORIGIN": "https://api.moveto.workers.dev",
+  },
+  "r2_buckets": [
+    {
+      "bucket_name": "yonyoung-storage",
+      "binding": "r2",
+      "remote": true,
+    },
+  ],
+  /**
+   * Bindings
+   * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
+   * databases, object storage, AI inference, real-time communication and more.
+   * https://developers.cloudflare.com/workers/runtime-apis/bindings/
+   */
+  /**
+   * Environment Variables
+   * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
+   * Note: Use secrets to store sensitive data.
+   * https://developers.cloudflare.com/workers/configuration/secrets/
+   */
+  // "vars": {  "MY_VARIABLE": "production_value" }
+  /**
+   * Service Bindings (communicate between multiple Workers)
+   * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
+   */
+  // "services": [  {   "binding": "MY_SERVICE",   "service": "my-service"  } ]
 }

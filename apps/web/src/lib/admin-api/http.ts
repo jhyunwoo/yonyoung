@@ -5,6 +5,7 @@ import {
 } from "./types";
 
 const DEFAULT_AUTH_API_URL = "http://localhost:8787";
+const DEFAULT_PRODUCTION_AUTH_API_URL = "https://api.moveto.workers.dev";
 const ADMIN_API_BASE_PATH = "/api";
 const REQUEST_TIMEOUT_MS = 12_000;
 
@@ -27,7 +28,15 @@ const normalizeBaseUrl = (value: string): string => value.replace(/\/+$/, "");
  */
 const resolveAdminApiBaseUrl = (): string => {
   const fromPublic = process.env.NEXT_PUBLIC_AUTH_API_URL;
-  return normalizeBaseUrl(fromPublic ?? DEFAULT_AUTH_API_URL);
+  if (fromPublic) {
+    return normalizeBaseUrl(fromPublic);
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    return DEFAULT_AUTH_API_URL;
+  }
+
+  return DEFAULT_PRODUCTION_AUTH_API_URL;
 };
 
 /**

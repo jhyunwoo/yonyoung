@@ -2,6 +2,7 @@ import { passkeyClient } from "@better-auth/passkey/client";
 import { createAuthClient } from "better-auth/react";
 
 const DEFAULT_AUTH_API_URL = "http://localhost:8787";
+const DEFAULT_PRODUCTION_AUTH_API_URL = "https://api.moveto.workers.dev";
 
 /**
  * normalizeBaseUrl의 핵심 비즈니스 로직을 수행합니다.
@@ -11,9 +12,20 @@ const DEFAULT_AUTH_API_URL = "http://localhost:8787";
  */
 const normalizeBaseUrl = (value: string): string => value.replace(/\/+$/, "");
 
-const authBaseUrl = normalizeBaseUrl(
-  process.env.NEXT_PUBLIC_AUTH_API_URL ?? DEFAULT_AUTH_API_URL,
-);
+const resolveAuthBaseUrl = (): string => {
+  const configuredAuthApiUrl = process.env.NEXT_PUBLIC_AUTH_API_URL?.trim();
+  if (configuredAuthApiUrl) {
+    return normalizeBaseUrl(configuredAuthApiUrl);
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    return DEFAULT_AUTH_API_URL;
+  }
+
+  return DEFAULT_PRODUCTION_AUTH_API_URL;
+};
+
+const authBaseUrl = resolveAuthBaseUrl();
 
 export const authClient = createAuthClient({
   baseURL: authBaseUrl,

@@ -28,6 +28,14 @@ AUTH_API_URL=http://localhost:8787
 NEXT_PUBLIC_AUTH_API_URL=http://localhost:8787
 ```
 
+Better Auth client/server URL resolution:
+
+- Better Auth client (`createAuthClient`) uses `NEXT_PUBLIC_AUTH_API_URL`.
+- Server-side auth/public API calls use `AUTH_API_URL` first, then `NEXT_PUBLIC_AUTH_API_URL`.
+- In production, `NEXT_PUBLIC_AUTH_API_URL` must be configured explicitly.
+
+For Cloudflare deployment, register both values in `apps/web/wrangler.jsonc` under `vars` (or in the Cloudflare dashboard environment variables) instead of passing inline terminal values during deploy.
+
 Passkey login requirement:
 
 - API `PASSKEY_ORIGIN` must match the actual web origin where sign-in runs.
