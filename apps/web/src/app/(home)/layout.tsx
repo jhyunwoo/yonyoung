@@ -1,11 +1,25 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ReactNode } from "react";
+import SiteHeader from "./components/site-header";
+import SiteFooter from "./components/site-footer";
 
 export const metadata: Metadata = {
-  title: "연영회",
-  description: "연세대학교 중앙동아리 연영횐",
+  title: "연영회 | 연세대학교 중앙사진동아리",
+  description: "연세대학교 중앙사진동아리 연영회의 활동과 전시를 소개합니다.",
 };
+
+const themeInitScript = `
+(() => {
+  try {
+    const stored = localStorage.getItem("theme");
+    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const theme = stored === "light" || stored === "dark" ? stored : (systemDark ? "dark" : "light");
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    document.documentElement.dataset.theme = theme;
+  } catch (_) {}
+})();
+`;
 
 /**
  * RootLayout 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
@@ -21,11 +35,16 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    <html lang="ko" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml"></link>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body>{children}</body>
+      <body className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] antialiased">
+        <SiteHeader />
+        <main>{children}</main>
+        <SiteFooter />
+      </body>
     </html>
   );
 }

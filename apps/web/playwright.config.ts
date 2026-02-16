@@ -25,8 +25,16 @@ const webPort = resolvePort(baseURL, 3000);
 const apiPort = resolvePort(apiURL, 8787);
 const suiteMode = readE2eSuiteMode();
 
-const smokeTestMatches = [
+const publicTestMatches = [
   "**/public-home.spec.ts",
+  "**/public-navigation-theme.spec.ts",
+  "**/public-pages-content.spec.ts",
+];
+
+const desktopSmokeTestMatches = [
+  "**/public-home.spec.ts",
+  "**/public-navigation-theme.spec.ts",
+  "**/public-pages-content.spec.ts",
   "**/auth-flow.spec.ts",
   "**/admin-shell.spec.ts",
   "**/generations-crud.spec.ts",
@@ -70,14 +78,32 @@ export default defineConfig({
     suiteMode === "full"
       ? [
           {
-            name: "full",
+            name: "desktop-full",
             testMatch: "**/*.spec.ts",
+          },
+          {
+            name: "mobile-full",
+            testMatch: publicTestMatches,
+            use: {
+              viewport: { width: 390, height: 844 },
+              isMobile: true,
+              hasTouch: true,
+            },
           },
         ]
       : [
           {
-            name: "smoke",
-            testMatch: smokeTestMatches,
+            name: "desktop-smoke",
+            testMatch: desktopSmokeTestMatches,
+          },
+          {
+            name: "mobile-smoke",
+            testMatch: publicTestMatches,
+            use: {
+              viewport: { width: 390, height: 844 },
+              isMobile: true,
+              hasTouch: true,
+            },
           },
         ],
 });

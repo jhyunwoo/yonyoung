@@ -407,6 +407,171 @@ export const ensureGeneration = async (
   throw lastError;
 };
 
+export const seedPublicGeneration = async (
+  request: APIRequestContext,
+  input: {
+    prefix: string;
+    name?: string;
+    sortOrder?: number;
+    startDate?: number;
+    endDate?: number;
+  },
+): Promise<{ id: string; name: string; sortOrder: number }> => {
+  const sortOrder =
+    input.sortOrder ??
+    (Date.now() % 1_000_000) * 1_000 + Math.floor(Math.random() * 1_000);
+
+  return adminApiRequest<{
+    id: string;
+    name: string;
+    sortOrder: number;
+  }>(request, {
+    method: "POST",
+    path: "/generations",
+    data: {
+      name: input.name ?? uniqueText(input.prefix, "public-generation"),
+      sortOrder,
+      startDate: input.startDate ?? Date.parse("2030-01-01T00:00:00.000Z"),
+      endDate: input.endDate ?? Date.parse("2030-12-31T00:00:00.000Z"),
+    },
+  });
+};
+
+export const seedPublicActivity = async (
+  request: APIRequestContext,
+  input: {
+    prefix: string;
+    generationId: string;
+    title?: string;
+    description?: string;
+    activityDate?: number;
+    coverImageUrl?: string;
+  },
+): Promise<{ id: string; title: string }> => {
+  return adminApiRequest<{ id: string; title: string }>(request, {
+    method: "POST",
+    path: "/activities",
+    data: {
+      title: input.title ?? uniqueText(input.prefix, "public-activity"),
+      description: input.description ?? `${input.prefix} public activity description`,
+      activityDate: input.activityDate ?? Date.parse("2099-03-01T00:00:00.000Z"),
+      coverImageUrl:
+        input.coverImageUrl ??
+        `https://example.com/${input.prefix}/public-activity-cover.jpg`,
+      generationId: input.generationId,
+    },
+  });
+};
+
+export const seedPublicExhibition = async (
+  request: APIRequestContext,
+  input: {
+    prefix: string;
+    generationId: string;
+    title?: string;
+    place?: string;
+    description?: string;
+    startDate?: number;
+    endDate?: number;
+    coverImageUrl?: string;
+  },
+): Promise<{ id: string; title: string }> => {
+  return adminApiRequest<{ id: string; title: string }>(request, {
+    method: "POST",
+    path: "/exhibitions",
+    data: {
+      title: input.title ?? uniqueText(input.prefix, "public-exhibition"),
+      startDate: input.startDate ?? Date.parse("2099-02-01T00:00:00.000Z"),
+      endDate: input.endDate ?? Date.parse("2099-02-15T00:00:00.000Z"),
+      generationId: input.generationId,
+      place: input.place ?? `${input.prefix} public hall`,
+      coverImageUrl:
+        input.coverImageUrl ??
+        `https://example.com/${input.prefix}/public-exhibition-cover.jpg`,
+      description:
+        input.description ?? `${input.prefix} public exhibition description`,
+    },
+  });
+};
+
+export const seedPublicSupporter = async (
+  request: APIRequestContext,
+  input: {
+    prefix: string;
+    name?: string;
+    link?: string;
+    logoUrl?: string;
+    expiresAt?: number;
+  },
+): Promise<{ id: string; name: string }> => {
+  return adminApiRequest<{ id: string; name: string }>(request, {
+    method: "POST",
+    path: "/supporters",
+    data: {
+      name: input.name ?? uniqueText(input.prefix, "public-supporter"),
+      link: input.link ?? `https://example.com/${input.prefix}/public-supporter`,
+      logoUrl:
+        input.logoUrl ?? `https://example.com/${input.prefix}/public-supporter-logo.png`,
+      expiresAt: input.expiresAt ?? Date.parse("2099-12-31T00:00:00.000Z"),
+    },
+  });
+};
+
+export const seedPublicLinktreeWithItems = async (
+  request: APIRequestContext,
+  input: {
+    prefix: string;
+    groupName?: string;
+    items?: Array<{
+      name: string;
+      link: string;
+    }>;
+  },
+): Promise<{
+  id: string;
+  name: string;
+  items: Array<{
+    id: string;
+    name: string;
+    link: string;
+  }>;
+}> => {
+  const group = await adminApiRequest<{ id: string; name: string }>(request, {
+    method: "POST",
+    path: "/linktree",
+    data: {
+      name: input.groupName ?? uniqueText(input.prefix, "public-linktree-group"),
+    },
+  });
+
+  const items =
+    input.items ??
+    [
+      {
+        name: uniqueText(input.prefix, "public-link-item"),
+        link: `https://example.com/${input.prefix}/public-link-item`,
+      },
+    ];
+
+  const createdItems: Array<{ id: string; name: string; link: string }> = [];
+  for (const item of items) {
+    const created = await adminApiRequest<{ id: string; name: string; link: string }>(
+      request,
+      {
+        method: "POST",
+        path: `/linktree/${group.id}/items`,
+        data: item,
+      },
+    );
+    createdItems.push(created);
+  }
+
+  return {
+    ...group,
+    items: createdItems,
+  };
+};
+
 export const cleanupByPrefix = async (
   request: APIRequestContext,
   prefix: string,
