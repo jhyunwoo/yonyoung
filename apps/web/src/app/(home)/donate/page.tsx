@@ -36,8 +36,24 @@ export default async function DonatePage() {
       </section>
 
       <SectionShell
-        eyebrow="How To Support"
+        eyebrow="Donate Guide"
         title="후원 안내"
+        description="연영회의 전시, 기록, 교육 활동은 후원과 제휴를 통해 확장됩니다."
+      >
+        <MotionReveal>
+          <article className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-5 md:p-6">
+            <p className="text-sm leading-relaxed text-(--text-secondary) md:text-base">
+              후원금과 협력 자원은 정기전 운영, 촬영/인화 장비 운영, 워크숍 준비와
+              같은 실제 활동에 사용됩니다. 동아리 운영진과 함께 지속 가능한 사진
+              프로젝트를 만들어갈 파트너를 기다리고 있습니다.
+            </p>
+          </article>
+        </MotionReveal>
+      </SectionShell>
+
+      <SectionShell
+        eyebrow="How To Support"
+        title="후원 방법"
         description="아래 채널을 통해 제휴 및 후원 문의를 남겨주세요."
       >
         <div className="grid gap-4 md:grid-cols-3">
@@ -67,6 +83,58 @@ export default async function DonatePage() {
             </MotionReveal>
           ))}
         </div>
+      </SectionShell>
+
+      <SectionShell
+        eyebrow="Usage"
+        title="후원금 사용 내역"
+        description="후원 자원은 아래와 같은 활동 영역에 우선 투입됩니다."
+        className="bg-(--surface-elevated)/60"
+      >
+        <div className="grid gap-4 md:grid-cols-3">
+          {[
+            {
+              title: "전시회 개최",
+              body: "갤러리 대관, 설치물 제작, 현장 운영 인프라에 사용됩니다.",
+            },
+            {
+              title: "장비/인화 지원",
+              body: "촬영 장비 유지와 인화·프린트 결과물 제작 비용에 반영됩니다.",
+            },
+            {
+              title: "워크숍 운영",
+              body: "신입/재학생 대상 교육 세션과 실습 프로그램 운영에 사용됩니다.",
+            },
+          ].map((item, index) => (
+            <MotionReveal key={item.title} delay={index * 0.05}>
+              <article className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-5">
+                <h2 className="font-display text-3xl text-(--text-primary)">
+                  {item.title}
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-(--text-secondary)">
+                  {item.body}
+                </p>
+              </article>
+            </MotionReveal>
+          ))}
+        </div>
+      </SectionShell>
+
+      <SectionShell
+        eyebrow="Contact"
+        title="문의"
+        description="후원/제휴 관련 상세 협의가 필요하면 아래 채널로 연락해주세요."
+      >
+        <MotionReveal>
+          <article className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-5">
+            <p className="text-sm text-(--text-secondary)">
+              Email: kimse0604@naver.com
+            </p>
+            <p className="mt-1 text-sm text-(--text-secondary)">
+              Open Kakao 링크는 Linktree 페이지에서 확인할 수 있습니다.
+            </p>
+          </article>
+        </MotionReveal>
       </SectionShell>
 
       <SectionShell

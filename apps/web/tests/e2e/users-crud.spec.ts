@@ -22,6 +22,15 @@ test.describe("users crud", () => {
     e2ePrefix,
     sampleImagePath,
   }) => {
+    const readDrawerQuery = async () =>
+      page.evaluate(() => {
+        const params = new URL(window.location.href).searchParams;
+        return {
+          panel: params.get("panel"),
+          id: params.get("id"),
+        };
+      });
+
     test.info().annotations.push({ type: "e2e-prefix", description: e2ePrefix });
     await ensureAdminSession(page);
 
@@ -37,8 +46,26 @@ test.describe("users crud", () => {
       hasText: tempUser.email,
     });
     await expect(userRow).toBeVisible();
+    const userRowTestId = await userRow.getAttribute("data-testid");
+    if (!userRowTestId) {
+      throw new Error("target user row test id is missing");
+    }
+    const targetUserId = userRowTestId.replace("user-row-", "");
 
     await userRow.getByRole("button", { name: /선택|선택됨/ }).click();
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBe("edit");
+    await expect.poll(async () => (await readDrawerQuery()).id).toBe(targetUserId);
+    await expect(page.getByTestId("user-drawer")).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByTestId("user-drawer")).toBeVisible();
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBe("edit");
+    await expect.poll(async () => (await readDrawerQuery()).id).toBe(targetUserId);
+    await expect(page.getByTestId("user-detail-card")).toContainText(tempUser.email);
+
+    await page.goto(`/admin/users?panel=edit&id=${targetUserId}`);
+    await expect(page.getByTestId("user-drawer")).toBeVisible();
+    await expect(page.getByTestId("user-detail-card")).toContainText(tempUser.email);
 
     await expect(page.getByTestId("user-detail-card")).toContainText(tempUser.email);
 
@@ -52,7 +79,6 @@ test.describe("users crud", () => {
 
     await expect(page.getByTestId("users-success")).toContainText("수정");
 
-    await userRow.getByRole("button", { name: /선택|선택됨/ }).click();
     await page.getByTestId("user-delete-button").click();
     await page.getByTestId("confirm-modal-confirm").click();
 
@@ -63,6 +89,8 @@ test.describe("users crud", () => {
         hasText: tempUser.email,
       }),
     ).toHaveCount(0);
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBeNull();
+    await expect.poll(async () => (await readDrawerQuery()).id).toBeNull();
 
     await cleanupByPrefix(request, e2ePrefix);
   });

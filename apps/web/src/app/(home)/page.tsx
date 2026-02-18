@@ -10,6 +10,7 @@ import {
   listPublicSupporters,
   safeList,
 } from "../../lib/public-api";
+import { pickFeaturedPublicExhibition } from "../../lib/public-exhibition";
 
 const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
   year: "numeric",
@@ -32,7 +33,7 @@ export default async function HomePage() {
     safeList(listPublicLinktrees, []),
   ]);
 
-  const featuredExhibition = exhibitions[0] ?? null;
+  const featuredExhibition = pickFeaturedPublicExhibition(exhibitions);
   const recentActivities = activities.slice(0, 6);
   const highlightedSupporters = supporters.slice(0, 8);
   const quickLinks = flattenLinktreeItems(linktrees).slice(0, 6);

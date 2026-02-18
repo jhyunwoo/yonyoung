@@ -16,6 +16,16 @@ type AdminSidebarProps = {
   session: AuthSession;
 };
 
+type AdminTheme = "light" | "dark";
+
+const THEME_STORAGE_KEY = "theme";
+
+const applyTheme = (theme: AdminTheme) => {
+  document.documentElement.classList.toggle("dark", theme === "dark");
+  document.documentElement.dataset.theme = theme;
+  window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+};
+
 const RESOURCE_MENU_ITEMS = [
   {
     resourcePath: "activities",
@@ -81,6 +91,7 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
   const router = useRouter();
   const [generationList, setGenerationList] = useState<ApiGeneration[]>([]);
   const [isGenerationLoading, setIsGenerationLoading] = useState(true);
+  const [theme, setTheme] = useState<AdminTheme>("light");
   const canManageGenerationsFlag = canManageGenerations(session);
 
   useEffect(/** useEffect 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
@@ -115,6 +126,24 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
     return /** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
       isMounted = false;
     };
+  }, []);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+      if (stored === "light" || stored === "dark") {
+        setTheme(stored);
+        applyTheme(stored);
+        return;
+      }
+    } catch {
+      // localStorage 접근 실패 시 DOM 상태를 기준으로 동기화한다.
+    }
+
+    const currentTheme = document.documentElement.classList.contains("dark")
+      ? "dark"
+      : "light";
+    setTheme(currentTheme);
   }, []);
 
   const routeContext = useMemo(
@@ -191,6 +220,14 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
 
   const isGenerationSettingsActive =
     pathname === "/admin/generations" || pathname.startsWith("/admin/generations/");
+
+  const handleThemeToggle = () => {
+    setTheme((previous) => {
+      const next = previous === "dark" ? "light" : "dark";
+      applyTheme(next);
+      return next;
+    });
+  };
 
   return (
     <aside
@@ -293,7 +330,23 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
         </ul>
       </nav>
 
-      <div className="border-t border-gray-200 p-3">
+      <div className="space-y-2 border-t border-gray-200 p-3">
+        <button
+          type="button"
+          onClick={handleThemeToggle}
+          className={`inline-flex items-center justify-center gap-2 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 ${
+            collapsed ? "w-12" : "w-full"
+          }`}
+          data-testid="admin-theme-toggle"
+          aria-label={theme === "dark" ? "라이트 모드로 전환" : "다크 모드로 전환"}
+        >
+          <span aria-hidden="true" className="text-base leading-none">
+            {theme === "dark" ? "☀" : "☾"}
+          </span>
+          {collapsed ? null : (
+            <span>{theme === "dark" ? "라이트 모드" : "다크 모드"}</span>
+          )}
+        </button>
         <LogoutButton compact={collapsed} />
       </div>
     </aside>

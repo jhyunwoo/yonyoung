@@ -12,8 +12,10 @@ import {
 } from "../components/admin-form-utils";
 import AdminActionButton from "../components/admin-action-button";
 import AdminConfirmModal from "../components/admin-confirm-modal";
+import AdminDrawer from "../components/admin-drawer";
 import AdminInfoBox from "../components/admin-info-box";
 import AdminPageHeader from "../components/admin-page-header";
+import { useAdminDrawerQuerySync } from "../components/use-admin-drawer-query-sync";
 
 type GenerationFormState = {
   name: string;
@@ -29,54 +31,58 @@ const emptyForm: GenerationFormState = {
   endDate: "",
 };
 
-/**
- * GenerationsAdminPage 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
- * @returns 렌더링할 JSX 트리를 반환합니다.
- * @remarks 리렌더링 타이밍에 따라 훅 의존성 배열을 신중히 관리해야 합니다.
- */
 export default function GenerationsAdminPage() {
   const [items, setItems] = useState<ApiGeneration[]>([]);
   const [users, setUsers] = useState<ApiUser[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [panelMode, setPanelMode] = useState<"create" | "edit" | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [createForm, setCreateForm] = useState<GenerationFormState>(emptyForm);
   const [editForm, setEditForm] = useState<GenerationFormState>(emptyForm);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeSubmitAction, setActiveSubmitAction] = useState<
-    "create" | "delete" | null
-  >(null);
+  const [activeSubmitAction, setActiveSubmitAction] = useState<"create" | "delete" | null>(
+    null,
+  );
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const { queryState, setDrawerQuery, normalizeDrawerQuery } = useAdminDrawerQuerySync();
 
   const selected = useMemo(
-        /**
-     * useMemo 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
-     * @returns 함수 실행 결과를 반환합니다.
-     * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
-     */
-    () => items.find(/** items.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === selectedId) ?? null,
+    () => items.find((item) => item.id === selectedId) ?? null,
     [items, selectedId],
   );
-  const selectedMembers = useMemo(/** useMemo 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
+
+  const selectedMembers = useMemo(() => {
     if (!selected) {
       return [];
     }
-    return users.filter(/** users.filter 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param user 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (user) => user.generationId === selected.id);
-  }, [selected, users]);
-  const assignableUsers = useMemo(/** useMemo 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
-    if (!selected) {
-      return [];
-    }
-    return users.filter(/** users.filter 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param user 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (user) => user.generationId !== selected.id);
+    return users.filter((user) => user.generationId === selected.id);
   }, [selected, users]);
 
-    /**
-   * syncEditForm의 핵심 비즈니스 로직을 수행합니다.
-   * @param item 반복 처리 중인 현재 항목입니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+  const assignableUsers = useMemo(() => {
+    if (!selected) {
+      return [];
+    }
+    return users.filter((user) => user.generationId !== selected.id);
+  }, [selected, users]);
+
+  const filteredItems = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const sorted = [...items].sort((a, b) => a.sortOrder - b.sortOrder);
+    if (!query) {
+      return sorted;
+    }
+    return sorted.filter((item) => {
+      return (
+        item.name.toLowerCase().includes(query) ||
+        String(item.sortOrder).includes(query)
+      );
+    });
+  }, [items, searchQuery]);
+
   const syncEditForm = (item: ApiGeneration | null) => {
     if (!item) {
       setEditForm(emptyForm);
@@ -91,12 +97,7 @@ export default function GenerationsAdminPage() {
     });
   };
 
-    /**
-   * loadItems 외부 또는 내부 소스에서 데이터를 읽어오는 로직을 수행합니다.
-   * @returns 외부 소스에서 읽어 온 결과를 Promise로 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
-  const loadItems = async () => {
+  const loadItems = async (preferredSelectedId?: string | null) => {
     setIsLoading(true);
     setErrorMessage(null);
 
@@ -112,23 +113,24 @@ export default function GenerationsAdminPage() {
       if (generationData.length === 0) {
         setSelectedId(null);
         syncEditForm(null);
-      } else {
-        const fallbackId = generationData[0]?.id;
-        if (!fallbackId) {
-          setSelectedId(null);
-          syncEditForm(null);
-          return;
+        if (panelMode === "edit") {
+          setPanelMode(null);
         }
-
-        const keepSelection =
-          selectedId && generationData.some(/** generationData.some 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === selectedId)
-            ? selectedId
-            : fallbackId;
-        setSelectedId(keepSelection);
-        const selectedItem =
-          generationData.find(/** generationData.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === keepSelection) ?? null;
-        syncEditForm(selectedItem);
+        return;
       }
+
+      const fallbackId = generationData[0]?.id ?? null;
+      const nextSelectedId =
+        preferredSelectedId ??
+        (selectedId && generationData.some((item) => item.id === selectedId)
+          ? selectedId
+          : null) ??
+        fallbackId;
+
+      setSelectedId(nextSelectedId);
+      const selectedItem =
+        generationData.find((item) => item.id === nextSelectedId) ?? null;
+      syncEditForm(selectedItem);
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -136,17 +138,55 @@ export default function GenerationsAdminPage() {
     }
   };
 
-  useEffect(/** useEffect 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
+  useEffect(() => {
     void loadItems();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-    /**
-   * handleCreate의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
-   * @param event 함수 로직에서 사용하는 입력값입니다.
-   * @returns 비동기 처리 결과를 Promise로 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+  useEffect(() => {
+    normalizeDrawerQuery();
+  }, [normalizeDrawerQuery]);
+
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
+    if (queryState.panel === "create") {
+      if (panelMode !== "create") {
+        setCreateForm(emptyForm);
+        setPanelMode("create");
+        setErrorMessage(null);
+        setSuccessMessage(null);
+      }
+      return;
+    }
+
+    if (queryState.panel === "edit") {
+      const target = items.find((item) => item.id === queryState.id) ?? null;
+      if (!target) {
+        setDrawerQuery(null);
+        return;
+      }
+
+      if (selectedId !== target.id) {
+        setSelectedId(target.id);
+        syncEditForm(target);
+      }
+
+      if (panelMode !== "edit") {
+        setPanelMode("edit");
+        setErrorMessage(null);
+        setSuccessMessage(null);
+      }
+      return;
+    }
+
+    if (panelMode !== null) {
+      setPanelMode(null);
+    }
+  }, [isLoading, items, panelMode, queryState, selectedId, setDrawerQuery]);
+
   const handleCreate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
@@ -155,15 +195,18 @@ export default function GenerationsAdminPage() {
     setSuccessMessage(null);
 
     try {
-      await adminResourceApi.createGeneration({
+      const created = await adminResourceApi.createGeneration({
         name: createForm.name.trim(),
         sortOrder: toPositiveInteger(createForm.sortOrder, "sortOrder"),
         startDate: toTimestampMs(createForm.startDate),
         endDate: toTimestampMs(createForm.endDate),
       });
+
       setCreateForm(emptyForm);
       setSuccessMessage("기수를 생성했습니다.");
-      await loadItems();
+      setPanelMode("edit");
+      setDrawerQuery("edit", created.id);
+      await loadItems(created.id);
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -172,12 +215,6 @@ export default function GenerationsAdminPage() {
     }
   };
 
-    /**
-   * handleUpdate의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
-   * @param event 함수 로직에서 사용하는 입력값입니다.
-   * @returns 비동기 처리 결과를 Promise로 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
   const handleUpdate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selected) {
@@ -196,7 +233,7 @@ export default function GenerationsAdminPage() {
         endDate: toTimestampMs(editForm.endDate),
       });
       setSuccessMessage("기수를 수정했습니다.");
-      await loadItems();
+      await loadItems(selected.id);
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -205,11 +242,6 @@ export default function GenerationsAdminPage() {
     }
   };
 
-    /**
-   * handleDelete의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
-   * @returns 비동기 처리 결과를 Promise로 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
   const handleDelete = async () => {
     if (!selected) {
       return;
@@ -224,6 +256,8 @@ export default function GenerationsAdminPage() {
       await adminResourceApi.deleteGeneration(selected.id);
       setSuccessMessage("기수를 삭제했습니다.");
       setDeleteModalOpen(false);
+      setPanelMode(null);
+      setDrawerQuery(null);
       await loadItems();
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
@@ -233,30 +267,15 @@ export default function GenerationsAdminPage() {
     }
   };
 
-  const openDeleteModal = () => {
-    if (!selected || isSubmitting) {
-      return;
-    }
-    setDeleteModalOpen(true);
-  };
-
-    /**
-   * handleSelect의 핵심 비즈니스 로직을 수행합니다.
-   * @param item 반복 처리 중인 현재 항목입니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
   const handleSelect = (item: ApiGeneration) => {
     setSelectedId(item.id);
     syncEditForm(item);
+    setPanelMode("edit");
+    setDrawerQuery("edit", item.id);
+    setErrorMessage(null);
+    setSuccessMessage(null);
   };
 
-    /**
-   * handleAssignMember의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
-   * @param userId 대상을 식별하기 위한 ID 값입니다.
-   * @returns 비동기 처리 결과를 Promise로 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
   const handleAssignMember = async (userId: string) => {
     if (!selected) {
       return;
@@ -271,7 +290,7 @@ export default function GenerationsAdminPage() {
         generationId: selected.id,
       });
       setSuccessMessage("기수 멤버를 구성했습니다.");
-      await loadItems();
+      await loadItems(selected.id);
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -279,12 +298,6 @@ export default function GenerationsAdminPage() {
     }
   };
 
-    /**
-   * handleUnassignMember의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
-   * @param userId 대상을 식별하기 위한 ID 값입니다.
-   * @returns 비동기 처리 결과를 Promise로 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
   const handleUnassignMember = async (userId: string) => {
     setIsSubmitting(true);
     setErrorMessage(null);
@@ -295,7 +308,7 @@ export default function GenerationsAdminPage() {
         generationId: null,
       });
       setSuccessMessage("기수에서 멤버를 해제했습니다.");
-      await loadItems();
+      await loadItems(selected?.id ?? null);
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -308,103 +321,228 @@ export default function GenerationsAdminPage() {
       <AdminPageHeader
         title="기수 관리"
         description="운영 기간별 기수를 만들고 수정해, 멤버 분류 기준을 정리하는 화면입니다."
-        guidance="먼저 기수를 만들고, 아래에서 멤버를 배정하면 각 기수 페이지에 자동으로 반영됩니다."
-      />
+        guidance="목록에서 항목을 선택해 수정 패널을 열거나, 신규 버튼으로 새 기수를 등록하세요."
+      >
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <AdminActionButton
+            onClick={() => {
+              setCreateForm(emptyForm);
+              setPanelMode("create");
+              setDrawerQuery("create");
+              setErrorMessage(null);
+              setSuccessMessage(null);
+            }}
+            testId="generation-open-create"
+          >
+            + 신규 기수
+          </AdminActionButton>
+          <button
+            type="button"
+            onClick={() => void loadItems()}
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+            data-testid="generations-reload-button"
+          >
+            새로고침
+          </button>
+        </div>
+      </AdminPageHeader>
 
       <AdminInfoBox title="작업 안내">
-        기수 이름은 누구나 알아볼 수 있게 작성하고, 표시 순서는 숫자가 작을수록 먼저 보입니다.
+        기수 생성/수정은 오른쪽 패널에서 처리하고, 멤버 배정은 선택된 기수 기준으로 같은 패널에서 바로 관리할 수 있습니다.
       </AdminInfoBox>
 
       {errorMessage ? (
-        <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700" data-testid="generations-error">
+        <p
+          className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700"
+          data-testid="generations-error"
+        >
           {errorMessage}
         </p>
       ) : null}
 
       {successMessage ? (
-        <p className="rounded-md border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-700" data-testid="generations-success">
+        <p
+          className="rounded-md border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-700"
+          data-testid="generations-success"
+        >
           {successMessage}
         </p>
       ) : null}
 
-      <section className="grid gap-6 lg:grid-cols-2">
-        <article className="rounded-lg border border-gray-200 bg-white p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">현재 기수 목록</h2>
-            <button
-              type="button"
-              onClick={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => void loadItems()}
-              className="rounded-md border border-gray-300 px-2 py-1 text-xs"
-              data-testid="generations-reload-button"
-            >
-              새로고침
-            </button>
-          </div>
+      <section className="rounded-lg border border-gray-200 bg-white p-4">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold">현재 기수 목록</h2>
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="기수명/표시 순서 검색"
+            className="w-full max-w-xs rounded-md border border-gray-300 px-3 py-2 text-sm"
+            data-testid="generation-search-input"
+          />
+        </div>
 
-          {isLoading ? (
-            <p className="text-sm text-gray-500" data-testid="generations-loading">불러오는 중...</p>
-          ) : items.length === 0 ? (
-            <p className="text-sm text-gray-500">아직 등록된 기수가 없습니다. 오른쪽에서 먼저 만들어 주세요.</p>
-          ) : (
-            <ul className="space-y-2" data-testid="generations-list">
-              {items.map(/** items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => (
-                <li key={item.id} className="rounded-md border border-gray-200 p-3" data-testid={`generation-row-${item.id}`}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-medium text-gray-900">{item.name}</p>
-                      <p className="text-xs text-gray-500">표시 순서: {item.sortOrder}</p>
-                      <p className="text-xs text-gray-500">시작일: {formatTimestamp(item.startDate)}</p>
-                      <p className="text-xs text-gray-500">종료일: {formatTimestamp(item.endDate)}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={/** items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => handleSelect(item)}
-                      className={`rounded-md px-2 py-1 text-xs font-medium ${
-                        selectedId === item.id
-                          ? "bg-black text-white"
-                          : "border border-gray-300 text-gray-700"
-                      }`}
-                      data-testid={`generation-select-${item.id}`}
-                    >
-                      {selectedId === item.id ? "선택됨" : "선택"}
-                    </button>
+        {isLoading ? (
+          <p className="text-sm text-gray-500" data-testid="generations-loading">
+            불러오는 중...
+          </p>
+        ) : filteredItems.length === 0 ? (
+          <p className="text-sm text-gray-500">
+            {items.length === 0
+              ? "아직 등록된 기수가 없습니다."
+              : "검색 조건에 맞는 기수가 없습니다."}
+          </p>
+        ) : (
+          <ul className="space-y-2" data-testid="generations-list">
+            {filteredItems.map((item) => (
+              <li
+                key={item.id}
+                className="rounded-md border border-gray-200 p-3"
+                data-testid={`generation-row-${item.id}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-gray-900">{item.name}</p>
+                    <p className="text-xs text-gray-500">표시 순서: {item.sortOrder}</p>
+                    <p className="text-xs text-gray-500">시작일: {formatTimestamp(item.startDate)}</p>
+                    <p className="text-xs text-gray-500">종료일: {formatTimestamp(item.endDate)}</p>
                   </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </article>
+                  <button
+                    type="button"
+                    onClick={() => handleSelect(item)}
+                    className={`rounded-md px-2 py-1 text-xs font-medium ${
+                      selectedId === item.id
+                        ? "bg-black text-white"
+                        : "border border-gray-300 text-gray-700"
+                    }`}
+                    data-testid={`generation-select-${item.id}`}
+                  >
+                    {selectedId === item.id ? "선택됨" : "선택"}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
-        <article className="space-y-6">
-          <form onSubmit={handleCreate} className="rounded-lg border border-gray-200 bg-white p-4" data-testid="generation-create-form">
-            <h2 className="mb-3 text-lg font-semibold">기수 만들기</h2>
-            <div className="space-y-3">
+      <AdminDrawer
+        open={panelMode !== null}
+        title={panelMode === "create" ? "기수 만들기" : "기수 수정"}
+        description={
+          panelMode === "create"
+            ? "기수 기본 정보를 입력해 생성합니다."
+            : selected
+              ? `"${selected.name}" 기수를 수정합니다.`
+              : "수정할 기수를 선택해 주세요."
+        }
+        onClose={() => {
+          if (!isSubmitting) {
+            setPanelMode(null);
+            setDrawerQuery(null);
+          }
+        }}
+        testId="generation-drawer"
+      >
+        {panelMode === "create" ? (
+          <form onSubmit={handleCreate} className="space-y-3" data-testid="generation-create-form">
+            <label className="block text-sm">
+              <span className="mb-1 block text-gray-700">기수 이름</span>
+              <input
+                type="text"
+                value={createForm.name}
+                onChange={(event) =>
+                  setCreateForm((previous) => ({ ...previous, name: event.target.value }))
+                }
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                required
+                data-testid="generation-create-name"
+              />
+            </label>
+
+            <label className="block text-sm">
+              <span className="mb-1 block text-gray-700">표시 순서 (작을수록 먼저 보여요)</span>
+              <input
+                type="number"
+                min={0}
+                value={createForm.sortOrder}
+                onChange={(event) =>
+                  setCreateForm((previous) => ({ ...previous, sortOrder: event.target.value }))
+                }
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                required
+                data-testid="generation-create-sort-order"
+              />
+            </label>
+
+            <label className="block text-sm">
+              <span className="mb-1 block text-gray-700">시작일</span>
+              <input
+                type="date"
+                value={createForm.startDate}
+                onChange={(event) =>
+                  setCreateForm((previous) => ({ ...previous, startDate: event.target.value }))
+                }
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                required
+                data-testid="generation-create-start-date"
+              />
+            </label>
+
+            <label className="block text-sm">
+              <span className="mb-1 block text-gray-700">종료일</span>
+              <input
+                type="date"
+                value={createForm.endDate}
+                onChange={(event) =>
+                  setCreateForm((previous) => ({ ...previous, endDate: event.target.value }))
+                }
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                required
+                data-testid="generation-create-end-date"
+              />
+            </label>
+
+            <AdminActionButton
+              type="submit"
+              loading={activeSubmitAction === "create"}
+              disabled={isSubmitting && activeSubmitAction !== "create"}
+              loadingText="기수 생성 중..."
+              className="mt-2"
+              testId="generation-create-submit"
+            >
+              기수 생성
+            </AdminActionButton>
+          </form>
+        ) : selected ? (
+          <div className="space-y-5">
+            <form onSubmit={handleUpdate} className="space-y-3" data-testid="generation-edit-form">
               <label className="block text-sm">
                 <span className="mb-1 block text-gray-700">기수 이름</span>
                 <input
                   type="text"
-                  value={createForm.name}
-                  onChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
-                    setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, name: event.target.value }))
+                  value={editForm.name}
+                  onChange={(event) =>
+                    setEditForm((previous) => ({ ...previous, name: event.target.value }))
                   }
                   className="w-full rounded-md border border-gray-300 px-3 py-2"
                   required
-                  data-testid="generation-create-name"
+                  data-testid="generation-edit-name"
                 />
               </label>
 
               <label className="block text-sm">
-                <span className="mb-1 block text-gray-700">표시 순서 (작을수록 먼저 보여요)</span>
+                <span className="mb-1 block text-gray-700">표시 순서</span>
                 <input
                   type="number"
                   min={0}
-                  value={createForm.sortOrder}
-                  onChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
-                    setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, sortOrder: event.target.value }))
+                  value={editForm.sortOrder}
+                  onChange={(event) =>
+                    setEditForm((previous) => ({ ...previous, sortOrder: event.target.value }))
                   }
                   className="w-full rounded-md border border-gray-300 px-3 py-2"
                   required
-                  data-testid="generation-create-sort-order"
+                  data-testid="generation-edit-sort-order"
                 />
               </label>
 
@@ -412,13 +550,13 @@ export default function GenerationsAdminPage() {
                 <span className="mb-1 block text-gray-700">시작일</span>
                 <input
                   type="date"
-                  value={createForm.startDate}
-                  onChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
-                    setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, startDate: event.target.value }))
+                  value={editForm.startDate}
+                  onChange={(event) =>
+                    setEditForm((previous) => ({ ...previous, startDate: event.target.value }))
                   }
                   className="w-full rounded-md border border-gray-300 px-3 py-2"
                   required
-                  data-testid="generation-create-start-date"
+                  data-testid="generation-edit-start-date"
                 />
               </label>
 
@@ -426,195 +564,111 @@ export default function GenerationsAdminPage() {
                 <span className="mb-1 block text-gray-700">종료일</span>
                 <input
                   type="date"
-                  value={createForm.endDate}
-                  onChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
-                    setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, endDate: event.target.value }))
+                  value={editForm.endDate}
+                  onChange={(event) =>
+                    setEditForm((previous) => ({ ...previous, endDate: event.target.value }))
                   }
                   className="w-full rounded-md border border-gray-300 px-3 py-2"
                   required
-                  data-testid="generation-create-end-date"
+                  data-testid="generation-edit-end-date"
                 />
               </label>
-            </div>
 
-            <AdminActionButton
-              type="submit"
-              loading={activeSubmitAction === "create"}
-              disabled={isSubmitting && activeSubmitAction !== "create"}
-              loadingText="기수 생성 중..."
-              className="mt-4"
-              testId="generation-create-submit"
-            >
-              기수 생성
-            </AdminActionButton>
-          </form>
-
-          <form onSubmit={handleUpdate} className="rounded-lg border border-gray-200 bg-white p-4" data-testid="generation-edit-form">
-            <h2 className="mb-3 text-lg font-semibold">선택한 기수 수정/삭제</h2>
-            {selected ? (
-              <>
-                <div className="space-y-3">
-                  <label className="block text-sm">
-                    <span className="mb-1 block text-gray-700">기수 이름</span>
-                    <input
-                      type="text"
-                      value={editForm.name}
-                      onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
-                        setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, name: event.target.value }))
-                      }
-                      className="w-full rounded-md border border-gray-300 px-3 py-2"
-                      required
-                      data-testid="generation-edit-name"
-                    />
-                  </label>
-
-                  <label className="block text-sm">
-                    <span className="mb-1 block text-gray-700">표시 순서 (작을수록 먼저 보여요)</span>
-                    <input
-                      type="number"
-                      min={0}
-                      value={editForm.sortOrder}
-                      onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
-                        setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, sortOrder: event.target.value }))
-                      }
-                      className="w-full rounded-md border border-gray-300 px-3 py-2"
-                      required
-                      data-testid="generation-edit-sort-order"
-                    />
-                  </label>
-
-                  <label className="block text-sm">
-                    <span className="mb-1 block text-gray-700">시작일</span>
-                    <input
-                      type="date"
-                      value={editForm.startDate}
-                      onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
-                        setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, startDate: event.target.value }))
-                      }
-                      className="w-full rounded-md border border-gray-300 px-3 py-2"
-                      required
-                      data-testid="generation-edit-start-date"
-                    />
-                  </label>
-
-                  <label className="block text-sm">
-                    <span className="mb-1 block text-gray-700">종료일</span>
-                    <input
-                      type="date"
-                      value={editForm.endDate}
-                      onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
-                        setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, endDate: event.target.value }))
-                      }
-                      className="w-full rounded-md border border-gray-300 px-3 py-2"
-                      required
-                      data-testid="generation-edit-end-date"
-                    />
-                  </label>
-                </div>
-
-                <div className="mt-4 flex gap-2">
-                  <AdminActionButton
-                    type="submit"
-                    disabled={isSubmitting}
-                    testId="generation-edit-submit"
-                  >
-                    수정 저장
-                  </AdminActionButton>
-                  <AdminActionButton
-                    variant="danger"
-                    onClick={openDeleteModal}
-                    loading={activeSubmitAction === "delete"}
-                    disabled={isSubmitting && activeSubmitAction !== "delete"}
-                    loadingText="기수 삭제 중..."
-                    testId="generation-delete-button"
-                  >
-                    기수 삭제
-                  </AdminActionButton>
-                </div>
-              </>
-            ) : (
-              <p className="text-sm text-gray-500">수정할 항목을 먼저 선택해 주세요.</p>
-            )}
-          </form>
-        </article>
-      </section>
-
-      <section
-        className="grid gap-6 lg:grid-cols-2"
-        data-testid="generation-members-panel"
-      >
-        <article className="rounded-lg border border-gray-200 bg-white p-4">
-          <h2 className="mb-3 text-lg font-semibold">현재 기수 멤버</h2>
-          {!selected ? (
-            <p className="text-sm text-gray-500">기수를 먼저 선택해 주세요.</p>
-          ) : selectedMembers.length === 0 ? (
-            <p className="text-sm text-gray-500" data-testid="generation-members-empty">
-              배정된 멤버가 없습니다.
-            </p>
-          ) : (
-            <ul className="space-y-2" data-testid="generation-members-list">
-              {selectedMembers.map(/** selectedMembers.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param member 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (member) => (
-                <li
-                  key={member.id}
-                  className="flex items-center justify-between rounded-md border border-gray-200 p-2"
-                  data-testid={`generation-member-row-${member.id}`}
+              <div className="mt-2 flex gap-2">
+                <AdminActionButton type="submit" disabled={isSubmitting} testId="generation-edit-submit">
+                  수정 저장
+                </AdminActionButton>
+                <AdminActionButton
+                  variant="danger"
+                  onClick={() => {
+                    if (!isSubmitting) {
+                      setDeleteModalOpen(true);
+                    }
+                  }}
+                  loading={activeSubmitAction === "delete"}
+                  disabled={isSubmitting && activeSubmitAction !== "delete"}
+                  loadingText="기수 삭제 중..."
+                  testId="generation-delete-button"
                 >
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{member.name}</p>
-                    <p className="text-xs text-gray-500">{member.email}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={/** selectedMembers.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => void handleUnassignMember(member.id)}
-                    disabled={isSubmitting}
-                    className="rounded-md border border-red-300 px-2 py-1 text-xs font-medium text-red-600 disabled:opacity-50"
-                    data-testid={`generation-member-unassign-${member.id}`}
-                  >
-                    해제
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </article>
+                  기수 삭제
+                </AdminActionButton>
+              </div>
+            </form>
 
-        <article className="rounded-lg border border-gray-200 bg-white p-4">
-          <h2 className="mb-3 text-lg font-semibold">멤버 배정</h2>
-          {!selected ? (
-            <p className="text-sm text-gray-500">기수를 먼저 선택해 주세요.</p>
-          ) : assignableUsers.length === 0 ? (
-            <p className="text-sm text-gray-500" data-testid="generation-assignable-empty">
-              배정 가능한 멤버가 없습니다.
-            </p>
-          ) : (
-            <ul className="space-y-2" data-testid="generation-assignable-list">
-              {assignableUsers.map(/** assignableUsers.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param member 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (member) => (
-                <li
-                  key={member.id}
-                  className="flex items-center justify-between rounded-md border border-gray-200 p-2"
-                  data-testid={`generation-assignable-row-${member.id}`}
-                >
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{member.name}</p>
-                    <p className="text-xs text-gray-500">
-                      {member.email} / 권한: {member.role ?? "미지정"}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={/** assignableUsers.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => void handleAssignMember(member.id)}
-                    disabled={isSubmitting}
-                    className="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 disabled:opacity-50"
-                    data-testid={`generation-member-assign-${member.id}`}
-                  >
-                    배정
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </article>
-      </section>
+            <section className="space-y-4" data-testid="generation-members-panel">
+              <article className="rounded-lg border border-gray-200 p-3">
+                <h3 className="mb-2 text-sm font-semibold">현재 기수 멤버</h3>
+                {selectedMembers.length === 0 ? (
+                  <p className="text-sm text-gray-500" data-testid="generation-members-empty">
+                    배정된 멤버가 없습니다.
+                  </p>
+                ) : (
+                  <ul className="space-y-2" data-testid="generation-members-list">
+                    {selectedMembers.map((member) => (
+                      <li
+                        key={member.id}
+                        className="flex items-center justify-between rounded-md border border-gray-200 p-2"
+                        data-testid={`generation-member-row-${member.id}`}
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{member.name}</p>
+                          <p className="text-xs text-gray-500">{member.email}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => void handleUnassignMember(member.id)}
+                          disabled={isSubmitting}
+                          className="rounded-md border border-red-300 px-2 py-1 text-xs font-medium text-red-600 disabled:opacity-50"
+                          data-testid={`generation-member-unassign-${member.id}`}
+                        >
+                          해제
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </article>
+
+              <article className="rounded-lg border border-gray-200 p-3">
+                <h3 className="mb-2 text-sm font-semibold">멤버 배정</h3>
+                {assignableUsers.length === 0 ? (
+                  <p className="text-sm text-gray-500" data-testid="generation-assignable-empty">
+                    배정 가능한 멤버가 없습니다.
+                  </p>
+                ) : (
+                  <ul className="space-y-2" data-testid="generation-assignable-list">
+                    {assignableUsers.map((member) => (
+                      <li
+                        key={member.id}
+                        className="flex items-center justify-between rounded-md border border-gray-200 p-2"
+                        data-testid={`generation-assignable-row-${member.id}`}
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{member.name}</p>
+                          <p className="text-xs text-gray-500">
+                            {member.email} / 권한: {member.role ?? "미지정"}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => void handleAssignMember(member.id)}
+                          disabled={isSubmitting}
+                          className="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 disabled:opacity-50"
+                          data-testid={`generation-member-assign-${member.id}`}
+                        >
+                          배정
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </article>
+            </section>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">수정할 항목을 먼저 선택해 주세요.</p>
+        )}
+      </AdminDrawer>
 
       <AdminConfirmModal
         open={deleteModalOpen}
@@ -627,12 +681,11 @@ export default function GenerationsAdminPage() {
         confirmText="삭제하기"
         confirmLoadingText="삭제 중..."
         isLoading={activeSubmitAction === "delete"}
-        onConfirm={/** onConfirm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => void handleDelete()}
-        onClose={/** onClose 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
-          if (isSubmitting) {
-            return;
+        onConfirm={() => void handleDelete()}
+        onClose={() => {
+          if (!isSubmitting) {
+            setDeleteModalOpen(false);
           }
-          setDeleteModalOpen(false);
         }}
       />
     </div>

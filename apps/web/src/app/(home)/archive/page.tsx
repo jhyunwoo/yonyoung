@@ -3,6 +3,7 @@ import SectionShell from "../components/section-shell";
 import {
   listPublicActivities,
   listPublicExhibitions,
+  listPublicSupporters,
   safeList,
 } from "../../../lib/public-api";
 
@@ -20,8 +21,9 @@ const formatDate = (value: number): string => dateFormatter.format(value);
  * @remarks UI 상태와 권한 조건이 변경될 때 렌더링 분기가 달라질 수 있습니다.
  */
 export default async function ArchivePage() {
-  const [activities, exhibitions] = await Promise.all([
+  const [activities, supporters, exhibitions] = await Promise.all([
     safeList(listPublicActivities, []),
+    safeList(listPublicSupporters, []),
     safeList(listPublicExhibitions, []),
   ]);
 
@@ -45,9 +47,9 @@ export default async function ArchivePage() {
       </section>
 
       <SectionShell
-        eyebrow="Activities"
+        eyebrow="Records"
         title="활동 기록"
-        description="최근 활동 중심으로 정리된 기록입니다."
+        description="프리뷰의 records 구성을 현재 아카이브 디자인에 맞춰 반영했습니다."
       >
         <div
           className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
@@ -90,10 +92,53 @@ export default async function ArchivePage() {
       </SectionShell>
 
       <SectionShell
+        eyebrow="Supporters"
+        title="서포터즈"
+        description="연영회의 활동을 함께 만들어가는 파트너입니다."
+        className="bg-(--surface-elevated)/60"
+      >
+        <div
+          className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+          data-testid="archive-supporters"
+        >
+          {supporters.length === 0 ? (
+            <div className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-6 text-sm text-(--text-secondary)">
+              공개된 서포터즈 정보가 없습니다.
+            </div>
+          ) : (
+            supporters.map((supporter, index) => (
+              <MotionReveal key={supporter.id} delay={index * 0.03}>
+                <a
+                  href={supporter.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group block rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-4 transition hover:border-(--accent)"
+                  data-testid={`archive-supporter-card-${supporter.id}`}
+                >
+                  <div className="mb-4 flex h-12 items-center justify-center rounded-xl bg-(--surface-muted) px-3">
+                    <img
+                      src={supporter.logoUrl}
+                      alt={supporter.name}
+                      className="max-h-8 w-auto object-contain"
+                    />
+                  </div>
+                  <p className="text-sm font-medium text-(--text-primary)">
+                    {supporter.name}
+                  </p>
+                  <p className="mt-1 text-xs text-(--text-muted)">
+                    만료일 {formatDate(supporter.expiresAt)}
+                  </p>
+                </a>
+              </MotionReveal>
+            ))
+          )}
+        </div>
+      </SectionShell>
+
+      <SectionShell
         eyebrow="Exhibitions"
         title="전시 아카이브"
-        description="기수별 전시와 상세 정보를 확인할 수 있습니다."
-        className="bg-(--surface-elevated)/60"
+        description="프리뷰의 exhibitions 구성을 현재 전시 카드 레이아웃에 맞춰 제공합니다."
       >
         <div className="grid gap-4 md:grid-cols-2" data-testid="archive-exhibitions">
           {exhibitions.length === 0 ? (

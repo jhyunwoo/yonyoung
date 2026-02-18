@@ -15,6 +15,15 @@ test.describe("generations crud", () => {
   });
 
   test("create, update, member-assign, delete generation", async ({ page, request, e2ePrefix }) => {
+    const readDrawerQuery = async () =>
+      page.evaluate(() => {
+        const params = new URL(window.location.href).searchParams;
+        return {
+          panel: params.get("panel"),
+          id: params.get("id"),
+        };
+      });
+
     test.info().annotations.push({ type: "e2e-prefix", description: e2ePrefix });
     await ensureAdminSession(page);
 
@@ -31,6 +40,8 @@ test.describe("generations crud", () => {
       await page.goto("/admin/generations");
     }
     await expect(page.getByTestId("generations-page")).toBeVisible();
+    await page.getByTestId("generation-open-create").click();
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBe("create");
 
     await page.getByTestId("generation-create-name").fill(generationName);
     await page.getByTestId("generation-create-sort-order").fill(baseSortOrder);
@@ -39,7 +50,6 @@ test.describe("generations crud", () => {
     await page.getByTestId("generation-create-submit").click();
 
     await expect(page.getByTestId("generations-success")).toContainText("생성");
-    await expect(page.getByTestId("generation-create-submit")).toBeEnabled();
 
     const createdRow = page.locator('[data-testid^="generation-row-"]', {
       hasText: generationName,
@@ -50,9 +60,17 @@ test.describe("generations crud", () => {
       throw new Error("created generation row test id is missing");
     }
     const createdGenerationId = createdRowTestId.replace("generation-row-", "");
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBe("edit");
+    await expect.poll(async () => (await readDrawerQuery()).id).toBe(createdGenerationId);
 
-    await createdRow.getByRole("button", { name: /선택|선택됨/ }).click();
-    await expect(createdRow.getByRole("button", { name: "선택됨" })).toBeVisible();
+    await page.reload();
+    await expect(page.getByTestId("generation-drawer")).toBeVisible();
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBe("edit");
+    await expect.poll(async () => (await readDrawerQuery()).id).toBe(createdGenerationId);
+    await expect(page.getByTestId("generation-edit-name")).toHaveValue(generationName);
+
+    await page.goto(`/admin/generations?panel=edit&id=${createdGenerationId}`);
+    await expect(page.getByTestId("generation-drawer")).toBeVisible();
     await expect(page.getByTestId("generation-edit-name")).toHaveValue(generationName);
 
     await page.getByTestId("generation-edit-name").fill(updatedGenerationName);
@@ -65,28 +83,10 @@ test.describe("generations crud", () => {
 
     await expect(page.getByTestId("generations-success")).toContainText("수정");
     await expect(page.getByTestId("generation-edit-submit")).toBeEnabled();
-
-    await expect
-      .poll(
-        async () => {
-          await page.getByTestId("generations-reload-button").click();
-          return (
-            (await page
-              .getByTestId(`generation-row-${createdGenerationId}`)
-              .textContent()) ?? ""
-          );
-        },
-        {
-          timeout: 20_000,
-        },
-      )
-      .toContain(updatedGenerationName);
+    await expect(page.getByTestId("generation-edit-name")).toHaveValue(updatedGenerationName);
 
     const updatedRow = page.getByTestId(`generation-row-${createdGenerationId}`);
     await expect(updatedRow).toBeVisible();
-
-    await updatedRow.getByRole("button", { name: /선택|선택됨/ }).click();
-    await page.getByTestId("generations-reload-button").click();
 
     const assignButton = page.getByTestId(`generation-member-assign-${tempUser.id}`);
     await expect(assignButton).toBeVisible();
@@ -99,12 +99,13 @@ test.describe("generations crud", () => {
     await expect(page.getByTestId("generations-success")).toContainText("해제");
     await expect(page.getByTestId(`generation-member-row-${tempUser.id}`)).toHaveCount(0);
 
-    await updatedRow.getByRole("button", { name: /선택|선택됨/ }).click();
     await page.getByTestId("generation-delete-button").click();
     await page.getByTestId("confirm-modal-confirm").click();
 
     await expect(page.getByTestId("generations-success")).toContainText("삭제");
     await expect(updatedRow).toHaveCount(0);
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBeNull();
+    await expect.poll(async () => (await readDrawerQuery()).id).toBeNull();
 
     await cleanupByPrefix(request, e2ePrefix);
   });

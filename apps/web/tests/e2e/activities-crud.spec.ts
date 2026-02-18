@@ -21,6 +21,15 @@ test.describe("activities crud", () => {
     e2ePrefix,
     sampleImagePath,
   }) => {
+    const readDrawerQuery = async () =>
+      page.evaluate(() => {
+        const params = new URL(window.location.href).searchParams;
+        return {
+          panel: params.get("panel"),
+          id: params.get("id"),
+        };
+      });
+
     test.info().annotations.push({ type: "e2e-prefix", description: e2ePrefix });
     await ensureAdminSession(page);
 
@@ -31,6 +40,8 @@ test.describe("activities crud", () => {
     const updatedTitle = `${title}-updated`;
 
     await page.goto("/admin/activities");
+    await page.getByTestId("activity-open-create").click();
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBe("create");
 
     await page.getByTestId("activity-create-title").fill(title);
     await page
@@ -47,8 +58,23 @@ test.describe("activities crud", () => {
       hasText: title,
     });
     await expect(createdRow).toBeVisible();
-    await createdRow.getByRole("button", { name: /선택|선택됨/ }).click();
-    await expect(createdRow.getByRole("button", { name: "선택됨" })).toBeVisible();
+    const createdRowTestId = await createdRow.getAttribute("data-testid");
+    if (!createdRowTestId) {
+      throw new Error("created activity row test id is missing");
+    }
+    const createdActivityId = createdRowTestId.replace("activity-row-", "");
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBe("edit");
+    await expect.poll(async () => (await readDrawerQuery()).id).toBe(createdActivityId);
+
+    await page.reload();
+    await expect(page.getByTestId("activity-drawer")).toBeVisible();
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBe("edit");
+    await expect.poll(async () => (await readDrawerQuery()).id).toBe(createdActivityId);
+    await expect(page.getByTestId("activity-edit-title")).toHaveValue(title);
+
+    await page.goto(`/admin/activities?panel=edit&id=${createdActivityId}`);
+    await expect(page.getByTestId("activity-drawer")).toBeVisible();
+    await expect(page.getByTestId("activity-edit-title")).toHaveValue(title);
 
     await page.getByTestId("activity-edit-title").fill(updatedTitle);
     await page.getByTestId("activity-edit-description").fill(`${e2ePrefix} activity edited`);
@@ -63,8 +89,6 @@ test.describe("activities crud", () => {
       hasText: updatedTitle,
     });
     await expect(updatedRow).toBeVisible();
-    await updatedRow.getByRole("button", { name: /선택|선택됨/ }).click();
-    await expect(updatedRow.getByRole("button", { name: "선택됨" })).toBeVisible();
 
     await page.getByTestId("activity-detail-create-image-file").setInputFiles(sampleImagePath);
     await page.getByTestId("activity-detail-create-sort-order").fill("0");
@@ -88,11 +112,12 @@ test.describe("activities crud", () => {
 
     await expect(page.getByTestId("activities-success")).toContainText("삭제");
 
-    await updatedRow.getByRole("button", { name: /선택|선택됨/ }).click();
     await page.getByTestId("activity-delete-button").click();
     await page.getByTestId("confirm-modal-confirm").click();
 
     await expect(page.getByTestId("activities-success")).toContainText("삭제");
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBeNull();
+    await expect.poll(async () => (await readDrawerQuery()).id).toBeNull();
 
     await cleanupByPrefix(request, e2ePrefix);
   });

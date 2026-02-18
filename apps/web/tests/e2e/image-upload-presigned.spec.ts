@@ -132,6 +132,7 @@ test.describe("presigned image upload flow", () => {
     });
 
     await page.goto("/admin/activities");
+    await page.getByTestId("activity-open-create").click();
 
     await page.getByTestId("activity-create-title").fill(title);
     await page.getByTestId("activity-create-description").fill(`${e2ePrefix} upload test`);

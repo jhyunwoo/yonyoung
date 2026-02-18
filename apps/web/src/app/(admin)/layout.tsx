@@ -7,6 +7,18 @@ export const metadata: Metadata = {
   description: "연세대학교 중앙동아리 연영횐",
 };
 
+const themeInitScript = `
+(() => {
+  try {
+    const stored = localStorage.getItem("theme");
+    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const theme = stored === "light" || stored === "dark" ? stored : (systemDark ? "dark" : "light");
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    document.documentElement.dataset.theme = theme;
+  } catch (_) {}
+})();
+`;
+
 /**
  * RootLayout 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
  * @param {
@@ -21,9 +33,10 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    <html lang="ko" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml"></link>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>{children}</body>
     </html>

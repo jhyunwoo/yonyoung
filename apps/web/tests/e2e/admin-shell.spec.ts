@@ -30,6 +30,32 @@ test.describe("admin shell", () => {
     const selectedSortOrder = await generationSelect.inputValue();
     expect(selectedSortOrder).not.toBe("");
 
+    const wasDark = await page.evaluate(() =>
+      document.documentElement.classList.contains("dark"),
+    );
+    const shellBackgroundBefore = await page
+      .getByTestId("admin-shell")
+      .evaluate((element) => window.getComputedStyle(element).backgroundColor);
+    await page.getByTestId("admin-theme-toggle").click();
+    await expect
+      .poll(() =>
+        page.evaluate(() => document.documentElement.classList.contains("dark")),
+      )
+      .toBe(!wasDark);
+    const shellBackgroundAfter = await page
+      .getByTestId("admin-shell")
+      .evaluate((element) => window.getComputedStyle(element).backgroundColor);
+    expect(shellBackgroundAfter).not.toBe(shellBackgroundBefore);
+    const storedTheme = await page.evaluate(() => window.localStorage.getItem("theme"));
+    await expect(storedTheme).toBe(!wasDark ? "dark" : "light");
+
+    await page.reload();
+    await expect
+      .poll(() =>
+        page.evaluate(() => document.documentElement.classList.contains("dark")),
+      )
+      .toBe(!wasDark);
+
     await page.getByTestId("admin-nav-generation-settings").click();
     await expect(page).toHaveURL(/\/admin\/generations$/);
     await expect(page.getByTestId("generations-page")).toBeVisible();

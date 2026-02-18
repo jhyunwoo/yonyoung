@@ -21,6 +21,15 @@ test.describe("exhibitions crud", () => {
     e2ePrefix,
     sampleImagePath,
   }) => {
+    const readDrawerQuery = async () =>
+      page.evaluate(() => {
+        const params = new URL(window.location.href).searchParams;
+        return {
+          panel: params.get("panel"),
+          id: params.get("id"),
+        };
+      });
+
     test.info().annotations.push({ type: "e2e-prefix", description: e2ePrefix });
     await ensureAdminSession(page);
 
@@ -31,6 +40,8 @@ test.describe("exhibitions crud", () => {
     const updatedTitle = `${title}-updated`;
 
     await page.goto("/admin/exhibitions");
+    await page.getByTestId("exhibition-open-create").click();
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBe("create");
 
     await page.getByTestId("exhibition-create-title").fill(title);
     await page.getByTestId("exhibition-create-start-date").fill("2031-01-10");
@@ -49,8 +60,23 @@ test.describe("exhibitions crud", () => {
       hasText: title,
     });
     await expect(createdRow).toBeVisible();
-    await createdRow.getByRole("button", { name: /선택|선택됨/ }).click();
-    await expect(createdRow.getByRole("button", { name: "선택됨" })).toBeVisible();
+    const createdRowTestId = await createdRow.getAttribute("data-testid");
+    if (!createdRowTestId) {
+      throw new Error("created exhibition row test id is missing");
+    }
+    const createdExhibitionId = createdRowTestId.replace("exhibition-row-", "");
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBe("edit");
+    await expect.poll(async () => (await readDrawerQuery()).id).toBe(createdExhibitionId);
+
+    await page.reload();
+    await expect(page.getByTestId("exhibition-drawer")).toBeVisible();
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBe("edit");
+    await expect.poll(async () => (await readDrawerQuery()).id).toBe(createdExhibitionId);
+    await expect(page.getByTestId("exhibition-edit-title")).toHaveValue(title);
+
+    await page.goto(`/admin/exhibitions?panel=edit&id=${createdExhibitionId}`);
+    await expect(page.getByTestId("exhibition-drawer")).toBeVisible();
+    await expect(page.getByTestId("exhibition-edit-title")).toHaveValue(title);
 
     await page.getByTestId("exhibition-edit-title").fill(updatedTitle);
     await page.getByTestId("exhibition-edit-start-date").fill("2031-02-01");
@@ -69,8 +95,6 @@ test.describe("exhibitions crud", () => {
       hasText: updatedTitle,
     });
     await expect(updatedRow).toBeVisible();
-    await updatedRow.getByRole("button", { name: /선택|선택됨/ }).click();
-    await expect(updatedRow.getByRole("button", { name: "선택됨" })).toBeVisible();
 
     await page.getByTestId("exhibition-detail-create-image-file").setInputFiles(sampleImagePath);
     await page.getByTestId("exhibition-detail-create-sort-order").fill("0");
@@ -94,11 +118,12 @@ test.describe("exhibitions crud", () => {
 
     await expect(page.locator('[data-testid^="exhibition-detail-row-"]')).toHaveCount(0);
 
-    await updatedRow.getByRole("button", { name: /선택|선택됨/ }).click();
     await page.getByTestId("exhibition-delete-button").click();
     await page.getByTestId("confirm-modal-confirm").click();
 
     await expect(page.getByTestId("exhibitions-success")).toContainText("삭제");
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBeNull();
+    await expect.poll(async () => (await readDrawerQuery()).id).toBeNull();
 
     await cleanupByPrefix(request, e2ePrefix);
   });

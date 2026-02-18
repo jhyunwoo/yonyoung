@@ -14,6 +14,15 @@ test.describe("linktree crud", () => {
   });
 
   test("create, update, delete linktree and item", async ({ page, request, e2ePrefix }) => {
+    const readDrawerQuery = async () =>
+      page.evaluate(() => {
+        const params = new URL(window.location.href).searchParams;
+        return {
+          panel: params.get("panel"),
+          id: params.get("id"),
+        };
+      });
+
     test.info().annotations.push({ type: "e2e-prefix", description: e2ePrefix });
     await ensureAdminSession(page);
 
@@ -23,6 +32,8 @@ test.describe("linktree crud", () => {
     const updatedItemName = `${itemName}-updated`;
 
     await page.goto("/admin/linktree");
+    await page.getByTestId("linktree-open-create").click();
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBe("create");
 
     await page.getByTestId("linktree-create-name").fill(name);
     await page.getByTestId("linktree-create-submit").click();
@@ -33,7 +44,23 @@ test.describe("linktree crud", () => {
       hasText: name,
     });
     await expect(createdRow).toBeVisible();
-    await createdRow.getByRole("button", { name: /선택|선택됨/ }).click();
+    const createdRowTestId = await createdRow.getAttribute("data-testid");
+    if (!createdRowTestId) {
+      throw new Error("created linktree row test id is missing");
+    }
+    const createdLinktreeId = createdRowTestId.replace("linktree-row-", "");
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBe("edit");
+    await expect.poll(async () => (await readDrawerQuery()).id).toBe(createdLinktreeId);
+
+    await page.reload();
+    await expect(page.getByTestId("linktree-drawer")).toBeVisible();
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBe("edit");
+    await expect.poll(async () => (await readDrawerQuery()).id).toBe(createdLinktreeId);
+    await expect(page.getByTestId("linktree-edit-name")).toHaveValue(name);
+
+    await page.goto(`/admin/linktree?panel=edit&id=${createdLinktreeId}`);
+    await expect(page.getByTestId("linktree-drawer")).toBeVisible();
+    await expect(page.getByTestId("linktree-edit-name")).toHaveValue(name);
 
     await page.getByTestId("linktree-edit-name").fill(updatedName);
     await page.getByTestId("linktree-edit-submit").click();
@@ -44,7 +71,6 @@ test.describe("linktree crud", () => {
       hasText: e2ePrefix,
     });
     await expect(updatedRow).toBeVisible();
-    await updatedRow.getByRole("button", { name: /선택|선택됨/ }).click();
 
     await page.getByTestId("linktree-item-create-name").fill(itemName);
     await page
@@ -79,11 +105,12 @@ test.describe("linktree crud", () => {
 
     await expect(updatedItemRow).toHaveCount(0);
 
-    await updatedRow.getByRole("button", { name: /선택|선택됨/ }).click();
     await page.getByTestId("linktree-delete-button").click();
     await page.getByTestId("confirm-modal-confirm").click();
 
     await expect(page.getByTestId("linktree-success")).toContainText("삭제");
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBeNull();
+    await expect.poll(async () => (await readDrawerQuery()).id).toBeNull();
 
     await cleanupByPrefix(request, e2ePrefix);
   });

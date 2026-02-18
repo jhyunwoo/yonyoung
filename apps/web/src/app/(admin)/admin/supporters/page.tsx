@@ -2,7 +2,7 @@
 
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
-import { PRESIGN_PATHS, uploadWithPresign } from "../../../../lib/admin-api/upload";
+import { PRESIGN_PATHS } from "../../../../lib/admin-api/upload";
 import type { ApiSupporter } from "../../../../lib/admin-api/types";
 import {
   formatTimestamp,
@@ -12,21 +12,22 @@ import {
 } from "../components/admin-form-utils";
 import AdminActionButton from "../components/admin-action-button";
 import AdminConfirmModal from "../components/admin-confirm-modal";
+import AdminDrawer from "../components/admin-drawer";
 import AdminInfoBox from "../components/admin-info-box";
 import AdminPageHeader from "../components/admin-page-header";
 import ImageInput from "../components/image-input";
+import { useAdminDrawerQuerySync } from "../components/use-admin-drawer-query-sync";
+import { useImmediateImageUpload } from "../components/use-immediate-image-upload";
 
 type SupporterFormState = {
   name: string;
   link: string;
-  logoUrl: string;
   expiresAt: string;
 };
 
 const emptyForm: SupporterFormState = {
   name: "",
   link: "",
-  logoUrl: "",
   expiresAt: "",
 };
 
@@ -34,72 +35,66 @@ type SupportersAdminPageProps = {
   generationSortOrder?: number | null;
 };
 
-/**
- * SupportersAdminPage 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
- * @param {
-  generationSortOrder = null,
-} 함수 로직에서 사용하는 입력값입니다.
- * @returns 렌더링할 JSX 트리를 반환합니다.
- * @remarks 리렌더링 타이밍에 따라 훅 의존성 배열을 신중히 관리해야 합니다.
- */
 export default function SupportersAdminPage({
   generationSortOrder = null,
 }: SupportersAdminPageProps = {}) {
   const [items, setItems] = useState<ApiSupporter[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [panelMode, setPanelMode] = useState<"create" | "edit" | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [createForm, setCreateForm] = useState<SupporterFormState>(emptyForm);
   const [editForm, setEditForm] = useState<SupporterFormState>(emptyForm);
 
-  const [createFile, setCreateFile] = useState<File | null>(null);
-  const [editFile, setEditFile] = useState<File | null>(null);
-  const [createLogoUploadProgress, setCreateLogoUploadProgress] = useState<number | null>(null);
-  const [editLogoUploadProgress, setEditLogoUploadProgress] = useState<number | null>(null);
+  const createUpload = useImmediateImageUpload({
+    presignPath: PRESIGN_PATHS.supporterLogo,
+  });
+  const editUpload = useImmediateImageUpload({
+    presignPath: PRESIGN_PATHS.supporterLogo,
+  });
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeSubmitAction, setActiveSubmitAction] = useState<
-    "create" | "delete" | null
-  >(null);
+  const [activeSubmitAction, setActiveSubmitAction] = useState<"create" | "delete" | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const { queryState, setDrawerQuery, normalizeDrawerQuery } = useAdminDrawerQuerySync();
 
   const selected = useMemo(
-        /**
-     * useMemo 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
-     * @returns 함수 실행 결과를 반환합니다.
-     * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
-     */
-    () => items.find(/** items.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === selectedId) ?? null,
+    () => items.find((item) => item.id === selectedId) ?? null,
     [items, selectedId],
   );
 
-    /**
-   * syncEditForm의 핵심 비즈니스 로직을 수행합니다.
-   * @param item 반복 처리 중인 현재 항목입니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+  const filteredItems = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const sorted = [...items].sort((a, b) => b.updatedAt - a.updatedAt);
+    if (!query) {
+      return sorted;
+    }
+    return sorted.filter((item) => {
+      return (
+        item.name.toLowerCase().includes(query) ||
+        item.link.toLowerCase().includes(query)
+      );
+    });
+  }, [items, searchQuery]);
+
   const syncEditForm = (item: ApiSupporter | null) => {
     if (!item) {
       setEditForm(emptyForm);
+      editUpload.reset(null);
       return;
     }
 
     setEditForm({
       name: item.name,
       link: item.link,
-      logoUrl: item.logoUrl,
       expiresAt: toDateInputValue(item.expiresAt),
     });
+    editUpload.reset(item.logoUrl);
   };
 
-    /**
-   * loadData 외부 또는 내부 소스에서 데이터를 읽어오는 로직을 수행합니다.
-   * @returns 외부 소스에서 읽어 온 결과를 Promise로 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
-  const loadData = async () => {
+  const loadData = async (preferredSelectedId?: string | null) => {
     setIsLoading(true);
     setErrorMessage(null);
 
@@ -110,21 +105,22 @@ export default function SupportersAdminPage({
       if (data.length === 0) {
         setSelectedId(null);
         syncEditForm(null);
-      } else {
-        const fallbackId = data[0]?.id;
-        if (!fallbackId) {
-          setSelectedId(null);
-          syncEditForm(null);
-          return;
+        if (panelMode === "edit") {
+          setPanelMode(null);
         }
-
-        const nextSelectedId =
-          selectedId && data.some(/** data.some 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === selectedId)
-            ? selectedId
-            : fallbackId;
-        setSelectedId(nextSelectedId);
-        syncEditForm(data.find(/** data.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === nextSelectedId) ?? null);
+        return;
       }
+
+      const fallbackId = data[0]?.id ?? null;
+      const candidateSelectedId =
+        preferredSelectedId ??
+        (selectedId && data.some((item) => item.id === selectedId) ? selectedId : null) ??
+        fallbackId;
+
+      setSelectedId(candidateSelectedId);
+      const selectedItem =
+        data.find((item) => item.id === candidateSelectedId) ?? null;
+      syncEditForm(selectedItem);
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -132,78 +128,123 @@ export default function SupportersAdminPage({
     }
   };
 
-  useEffect(/** useEffect 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
+  useEffect(() => {
     void loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-    /**
-   * handleSelect의 핵심 비즈니스 로직을 수행합니다.
-   * @param item 반복 처리 중인 현재 항목입니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+  useEffect(() => {
+    normalizeDrawerQuery();
+  }, [normalizeDrawerQuery]);
+
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
+    if (queryState.panel === "create") {
+      if (panelMode !== "create") {
+        setCreateForm(emptyForm);
+        createUpload.reset(null);
+        setPanelMode("create");
+        setErrorMessage(null);
+        setSuccessMessage(null);
+      }
+      return;
+    }
+
+    if (queryState.panel === "edit") {
+      const target = items.find((item) => item.id === queryState.id) ?? null;
+      if (!target) {
+        setDrawerQuery(null);
+        return;
+      }
+
+      if (selectedId !== target.id) {
+        setSelectedId(target.id);
+        syncEditForm(target);
+      }
+
+      if (panelMode !== "edit") {
+        setPanelMode("edit");
+        setErrorMessage(null);
+        setSuccessMessage(null);
+      }
+      return;
+    }
+
+    if (panelMode !== null) {
+      setPanelMode(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryState, isLoading, panelMode, items, selectedId]);
+
   const handleSelect = (item: ApiSupporter) => {
     setSelectedId(item.id);
     syncEditForm(item);
-    setEditFile(null);
+    setPanelMode("edit");
+    setDrawerQuery("edit", item.id);
+    setErrorMessage(null);
+    setSuccessMessage(null);
   };
 
-    /**
-   * handleCreate의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
-   * @param event 함수 로직에서 사용하는 입력값입니다.
-   * @returns 비동기 처리 결과를 Promise로 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+  const openCreatePanel = () => {
+    setCreateForm(emptyForm);
+    createUpload.reset(null);
+    setPanelMode("create");
+    setDrawerQuery("create");
+    setErrorMessage(null);
+    setSuccessMessage(null);
+  };
+
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (createUpload.isUploading) {
+      return;
+    }
+    if (!createUpload.currentUrl) {
+      setErrorMessage("후원사 로고 업로드를 완료해 주세요.");
+      return;
+    }
+
     setIsSubmitting(true);
     setActiveSubmitAction("create");
     setErrorMessage(null);
     setSuccessMessage(null);
 
     try {
-      if (!createFile) {
-        throw new Error("후원사 로고 파일을 선택해 주세요.");
-      }
-
-      setCreateLogoUploadProgress(0);
-      const logoUrl = await uploadWithPresign({
-        presignPath: PRESIGN_PATHS.supporterLogo,
-        file: createFile,
-        onProgress: setCreateLogoUploadProgress,
-      });
-
-      await adminResourceApi.createSupporter({
+      const created = await adminResourceApi.createSupporter({
         name: createForm.name.trim(),
         link: createForm.link.trim(),
-        logoUrl,
+        logoUrl: createUpload.currentUrl,
         expiresAt: toTimestampMs(createForm.expiresAt),
       });
 
       setCreateForm(emptyForm);
-      setCreateFile(null);
-      setCreateLogoUploadProgress(null);
+      createUpload.reset(null);
+      setSelectedId(created.id);
+      setPanelMode("edit");
+      setDrawerQuery("edit", created.id);
       setSuccessMessage("후원사를 생성했습니다.");
-      await loadData();
+      await loadData(created.id);
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
       setIsSubmitting(false);
       setActiveSubmitAction(null);
-      setCreateLogoUploadProgress(null);
     }
   };
 
-    /**
-   * handleUpdate의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
-   * @param event 함수 로직에서 사용하는 입력값입니다.
-   * @returns 비동기 처리 결과를 Promise로 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
   const handleUpdate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selected) {
+      return;
+    }
+    if (editUpload.isUploading) {
+      return;
+    }
+    if (!editUpload.currentUrl) {
+      setErrorMessage("후원사 로고 업로드를 완료해 주세요.");
       return;
     }
 
@@ -212,42 +253,22 @@ export default function SupportersAdminPage({
     setSuccessMessage(null);
 
     try {
-      const logoUrl = editFile
-        ? await (async () => {
-            setEditLogoUploadProgress(0);
-            return uploadWithPresign({
-              presignPath: PRESIGN_PATHS.supporterLogo,
-              file: editFile,
-              onProgress: setEditLogoUploadProgress,
-            });
-          })()
-        : editForm.logoUrl;
-
       await adminResourceApi.updateSupporter(selected.id, {
         name: editForm.name.trim(),
         link: editForm.link.trim(),
-        logoUrl,
+        logoUrl: editUpload.currentUrl,
         expiresAt: toTimestampMs(editForm.expiresAt),
       });
 
       setSuccessMessage("후원사를 수정했습니다.");
-      setEditFile(null);
-      setEditLogoUploadProgress(null);
-      await loadData();
+      await loadData(selected.id);
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
       setIsSubmitting(false);
-      setActiveSubmitAction(null);
-      setEditLogoUploadProgress(null);
     }
   };
 
-    /**
-   * handleDelete의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
-   * @returns 비동기 처리 결과를 Promise로 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
   const handleDelete = async () => {
     if (!selected) {
       return;
@@ -262,6 +283,8 @@ export default function SupportersAdminPage({
       await adminResourceApi.deleteSupporter(selected.id);
       setSuccessMessage("후원사를 삭제했습니다.");
       setDeleteModalOpen(false);
+      setPanelMode(null);
+      setDrawerQuery(null);
       await loadData();
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
@@ -271,243 +294,311 @@ export default function SupportersAdminPage({
     }
   };
 
-  const openDeleteModal = () => {
-    if (!selected || isSubmitting) {
-      return;
-    }
-    setDeleteModalOpen(true);
-  };
+  const canSubmitCreate =
+    !isSubmitting &&
+    !createUpload.isUploading &&
+    !createUpload.hasUploadError &&
+    Boolean(createUpload.currentUrl);
+
+  const canSubmitEdit =
+    !isSubmitting &&
+    !editUpload.isUploading &&
+    !editUpload.hasUploadError &&
+    Boolean(editUpload.currentUrl);
 
   return (
     <div className="space-y-6" data-testid="supporters-page">
       <AdminPageHeader
         title="후원사 관리"
         description="홈페이지에 노출할 후원사 정보를 등록하고 수정하는 화면입니다."
-        guidance="후원사 이름, 링크, 노출 종료일을 입력하면 자동으로 목록에 반영됩니다."
+        guidance="목록에서 항목을 선택해 오른쪽 패널에서 수정하거나, 신규 버튼으로 새 항목을 만드세요."
       >
-        {generationSortOrder !== null ? (
-          <p className="mt-1 text-xs text-gray-500" data-testid="supporters-global-note">
-            공통 설정: 선택한 {generationSortOrder}기와 관계없이 전체에 적용됩니다.
-          </p>
-        ) : null}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <AdminActionButton onClick={openCreatePanel} testId="supporter-open-create">
+            + 신규 후원사
+          </AdminActionButton>
+          <button
+            type="button"
+            onClick={() => void loadData()}
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+            data-testid="supporters-reload-button"
+          >
+            새로고침
+          </button>
+          {generationSortOrder !== null ? (
+            <p className="text-xs text-gray-500" data-testid="supporters-global-note">
+              공통 설정: 선택한 {generationSortOrder}기와 관계없이 전체에 적용됩니다.
+            </p>
+          ) : null}
+        </div>
       </AdminPageHeader>
 
       <AdminInfoBox title="작업 안내">
-        링크는 후원사 공식 페이지 주소를 넣어 주세요. 종료일이 지나면 자동으로 노출 대상에서 제외됩니다.
+        로고는 파일 선택 즉시 업로드됩니다. 저장 버튼은 업로드 완료 이후에만 활성화됩니다.
       </AdminInfoBox>
 
       {errorMessage ? (
-        <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700" data-testid="supporters-error">
+        <p
+          className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700"
+          data-testid="supporters-error"
+        >
           {errorMessage}
         </p>
       ) : null}
 
       {successMessage ? (
-        <p className="rounded-md border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-700" data-testid="supporters-success">
+        <p
+          className="rounded-md border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-700"
+          data-testid="supporters-success"
+        >
           {successMessage}
         </p>
       ) : null}
 
-      <section className="grid gap-6 lg:grid-cols-2">
-        <article className="rounded-lg border border-gray-200 bg-white p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">등록된 후원사 목록</h2>
-            <button
-              type="button"
-              onClick={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => void loadData()}
-              className="rounded-md border border-gray-300 px-2 py-1 text-xs"
-              data-testid="supporters-reload-button"
-            >
-              새로고침
-            </button>
-          </div>
+      <section className="rounded-lg border border-gray-200 bg-white p-4">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold">등록된 후원사 목록</h2>
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="이름/링크 검색"
+            className="w-full max-w-xs rounded-md border border-gray-300 px-3 py-2 text-sm"
+            data-testid="supporter-search-input"
+          />
+        </div>
 
-          {isLoading ? (
-            <p className="text-sm text-gray-500">불러오는 중...</p>
-          ) : items.length === 0 ? (
-            <p className="text-sm text-gray-500">아직 등록된 후원사가 없습니다. 오른쪽에서 먼저 추가해 주세요.</p>
-          ) : (
-            <ul className="space-y-2" data-testid="supporters-list">
-              {items.map(/** items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => (
-                <li key={item.id} className="rounded-md border border-gray-200 p-3" data-testid={`supporter-row-${item.id}`}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-medium">{item.name}</p>
-                      <p className="truncate text-xs text-gray-500">링크: {item.link}</p>
-                      <p className="text-xs text-gray-500">노출 종료일: {formatTimestamp(item.expiresAt)}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={/** items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => handleSelect(item)}
-                      className={`rounded-md px-2 py-1 text-xs font-medium ${
-                        selectedId === item.id
-                          ? "bg-black text-white"
-                          : "border border-gray-300 text-gray-700"
-                      }`}
-                      data-testid={`supporter-select-${item.id}`}
-                    >
-                      {selectedId === item.id ? "선택됨" : "선택"}
-                    </button>
+        {isLoading ? (
+          <p className="text-sm text-gray-500">불러오는 중...</p>
+        ) : filteredItems.length === 0 ? (
+          <p className="text-sm text-gray-500">
+            {items.length === 0
+              ? "아직 등록된 후원사가 없습니다."
+              : "검색 조건에 맞는 후원사가 없습니다."}
+          </p>
+        ) : (
+          <ul className="space-y-2" data-testid="supporters-list">
+            {filteredItems.map((item) => (
+              <li
+                key={item.id}
+                className="rounded-md border border-gray-200 p-3"
+                data-testid={`supporter-row-${item.id}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium">{item.name}</p>
+                    <p className="truncate text-xs text-gray-500">링크: {item.link}</p>
+                    <p className="text-xs text-gray-500">
+                      노출 종료일: {formatTimestamp(item.expiresAt)}
+                    </p>
                   </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </article>
+                  <button
+                    type="button"
+                    onClick={() => handleSelect(item)}
+                    className={`rounded-md px-2 py-1 text-xs font-medium ${
+                      selectedId === item.id
+                        ? "bg-black text-white"
+                        : "border border-gray-300 text-gray-700"
+                    }`}
+                    data-testid={`supporter-select-${item.id}`}
+                  >
+                    {selectedId === item.id ? "선택됨" : "선택"}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
-        <article className="space-y-6">
-          <form onSubmit={handleCreate} className="rounded-lg border border-gray-200 bg-white p-4" data-testid="supporter-create-form">
-            <h2 className="mb-3 text-lg font-semibold">후원사 추가</h2>
-            <div className="space-y-3">
-              <label className="block text-sm">
-                <span className="mb-1 block">후원사 이름</span>
-                <input
-                  type="text"
-                  value={createForm.name}
-                  onChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
-                    setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, name: event.target.value }))
-                  }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
-                  required
-                  data-testid="supporter-create-name"
-                />
-              </label>
-
-              <label className="block text-sm">
-                <span className="mb-1 block">연결 링크</span>
-                <input
-                  type="url"
-                  value={createForm.link}
-                  onChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
-                    setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, link: event.target.value }))
-                  }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
-                  required
-                  data-testid="supporter-create-link"
-                />
-              </label>
-
-              <label className="block text-sm">
-                <span className="mb-1 block">노출 종료일</span>
-                <input
-                  type="date"
-                  value={createForm.expiresAt}
-                  onChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
-                    setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, expiresAt: event.target.value }))
-                  }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
-                  required
-                  data-testid="supporter-create-expires-at"
-                />
-              </label>
-
-              <ImageInput
-                label="후원사 로고"
-                file={createFile}
-                onFileChange={setCreateFile}
-                uploadProgress={createLogoUploadProgress}
-                isUploading={createLogoUploadProgress !== null}
-                testIdPrefix="supporter-create-logo"
-                disabled={isSubmitting}
+      <AdminDrawer
+        open={panelMode !== null}
+        title={panelMode === "create" ? "후원사 추가" : "후원사 수정"}
+        description={
+          panelMode === "create"
+            ? "필수 정보를 입력하고 저장하세요."
+            : selected
+              ? `"${selected.name}" 정보를 수정합니다.`
+              : "수정할 후원사를 선택해 주세요."
+        }
+        onClose={() => {
+          if (isSubmitting) {
+            return;
+          }
+          setPanelMode(null);
+          setDrawerQuery(null);
+        }}
+        testId="supporter-drawer"
+      >
+        {panelMode === "create" ? (
+          <form
+            onSubmit={handleCreate}
+            className="space-y-3"
+            data-testid="supporter-create-form"
+          >
+            <label className="block text-sm">
+              <span className="mb-1 block">후원사 이름</span>
+              <input
+                type="text"
+                value={createForm.name}
+                onChange={(event) =>
+                  setCreateForm((previous) => ({ ...previous, name: event.target.value }))
+                }
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                required
+                data-testid="supporter-create-name"
               />
-            </div>
+            </label>
+
+            <label className="block text-sm">
+              <span className="mb-1 block">연결 링크</span>
+              <input
+                type="url"
+                value={createForm.link}
+                onChange={(event) =>
+                  setCreateForm((previous) => ({ ...previous, link: event.target.value }))
+                }
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                required
+                data-testid="supporter-create-link"
+              />
+            </label>
+
+            <label className="block text-sm">
+              <span className="mb-1 block">노출 종료일</span>
+              <input
+                type="date"
+                value={createForm.expiresAt}
+                onChange={(event) =>
+                  setCreateForm((previous) => ({
+                    ...previous,
+                    expiresAt: event.target.value,
+                  }))
+                }
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                required
+                data-testid="supporter-create-expires-at"
+              />
+            </label>
+
+            <ImageInput
+              label="후원사 로고"
+              file={createUpload.file}
+              onFileChange={createUpload.selectFile}
+              currentUrl={createUpload.currentUrl}
+              status={createUpload.status}
+              errorMessage={createUpload.errorMessage}
+              onRetry={createUpload.retry}
+              uploadProgress={createUpload.progress}
+              isUploading={createUpload.isUploading}
+              testIdPrefix="supporter-create-logo"
+              disabled={isSubmitting}
+            />
 
             <AdminActionButton
               type="submit"
               loading={activeSubmitAction === "create"}
-              disabled={isSubmitting && activeSubmitAction !== "create"}
+              disabled={!canSubmitCreate}
               loadingText="후원사 추가 중..."
-              className="mt-4"
+              className="mt-2"
               testId="supporter-create-submit"
             >
               후원사 추가
             </AdminActionButton>
           </form>
+        ) : selected ? (
+          <form
+            onSubmit={handleUpdate}
+            className="space-y-3"
+            data-testid="supporter-edit-form"
+          >
+            <label className="block text-sm">
+              <span className="mb-1 block">후원사 이름</span>
+              <input
+                type="text"
+                value={editForm.name}
+                onChange={(event) =>
+                  setEditForm((previous) => ({ ...previous, name: event.target.value }))
+                }
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                required
+                data-testid="supporter-edit-name"
+              />
+            </label>
 
-          <form onSubmit={handleUpdate} className="rounded-lg border border-gray-200 bg-white p-4" data-testid="supporter-edit-form">
-            <h2 className="mb-3 text-lg font-semibold">선택한 후원사 수정/삭제</h2>
-            {selected ? (
-              <>
-                <div className="space-y-3">
-                  <label className="block text-sm">
-                    <span className="mb-1 block">후원사 이름</span>
-                    <input
-                      type="text"
-                      value={editForm.name}
-                      onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
-                        setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, name: event.target.value }))
-                      }
-                      className="w-full rounded-md border border-gray-300 px-3 py-2"
-                      required
-                      data-testid="supporter-edit-name"
-                    />
-                  </label>
+            <label className="block text-sm">
+              <span className="mb-1 block">연결 링크</span>
+              <input
+                type="url"
+                value={editForm.link}
+                onChange={(event) =>
+                  setEditForm((previous) => ({ ...previous, link: event.target.value }))
+                }
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                required
+                data-testid="supporter-edit-link"
+              />
+            </label>
 
-                  <label className="block text-sm">
-                    <span className="mb-1 block">연결 링크</span>
-                    <input
-                      type="url"
-                      value={editForm.link}
-                      onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
-                        setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, link: event.target.value }))
-                      }
-                      className="w-full rounded-md border border-gray-300 px-3 py-2"
-                      required
-                      data-testid="supporter-edit-link"
-                    />
-                  </label>
+            <label className="block text-sm">
+              <span className="mb-1 block">노출 종료일</span>
+              <input
+                type="date"
+                value={editForm.expiresAt}
+                onChange={(event) =>
+                  setEditForm((previous) => ({
+                    ...previous,
+                    expiresAt: event.target.value,
+                  }))
+                }
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                required
+                data-testid="supporter-edit-expires-at"
+              />
+            </label>
 
-                  <label className="block text-sm">
-                    <span className="mb-1 block">노출 종료일</span>
-                    <input
-                      type="date"
-                      value={editForm.expiresAt}
-                      onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
-                        setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, expiresAt: event.target.value }))
-                      }
-                      className="w-full rounded-md border border-gray-300 px-3 py-2"
-                      required
-                      data-testid="supporter-edit-expires-at"
-                    />
-                  </label>
+            <ImageInput
+              label="후원사 로고"
+              file={editUpload.file}
+              onFileChange={editUpload.selectFile}
+              currentUrl={editUpload.currentUrl}
+              status={editUpload.status}
+              errorMessage={editUpload.errorMessage}
+              onRetry={editUpload.retry}
+              uploadProgress={editUpload.progress}
+              isUploading={editUpload.isUploading}
+              testIdPrefix="supporter-edit-logo"
+              disabled={isSubmitting}
+            />
 
-                  <ImageInput
-                    label="후원사 로고"
-                    file={editFile}
-                    onFileChange={setEditFile}
-                    uploadProgress={editLogoUploadProgress}
-                    isUploading={editLogoUploadProgress !== null}
-                    testIdPrefix="supporter-edit-logo"
-                    disabled={isSubmitting}
-                  />
-                </div>
-
-                <div className="mt-4 flex gap-2">
-                  <AdminActionButton
-                    type="submit"
-                    disabled={isSubmitting}
-                    testId="supporter-edit-submit"
-                  >
-                    수정 저장
-                  </AdminActionButton>
-                  <AdminActionButton
-                    variant="danger"
-                    onClick={openDeleteModal}
-                    loading={activeSubmitAction === "delete"}
-                    disabled={isSubmitting && activeSubmitAction !== "delete"}
-                    loadingText="후원사 삭제 중..."
-                    testId="supporter-delete-button"
-                  >
-                    후원사 삭제
-                  </AdminActionButton>
-                </div>
-              </>
-            ) : (
-              <p className="text-sm text-gray-500">수정할 후원사를 선택해 주세요.</p>
-            )}
+            <div className="mt-2 flex gap-2">
+              <AdminActionButton
+                type="submit"
+                disabled={!canSubmitEdit}
+                testId="supporter-edit-submit"
+              >
+                수정 저장
+              </AdminActionButton>
+              <AdminActionButton
+                variant="danger"
+                onClick={() => {
+                  if (!isSubmitting) {
+                    setDeleteModalOpen(true);
+                  }
+                }}
+                loading={activeSubmitAction === "delete"}
+                disabled={isSubmitting && activeSubmitAction !== "delete"}
+                loadingText="후원사 삭제 중..."
+                testId="supporter-delete-button"
+              >
+                후원사 삭제
+              </AdminActionButton>
+            </div>
           </form>
-        </article>
-      </section>
+        ) : (
+          <p className="text-sm text-gray-500">수정할 후원사를 선택해 주세요.</p>
+        )}
+      </AdminDrawer>
 
       <AdminConfirmModal
         open={deleteModalOpen}
@@ -520,12 +611,11 @@ export default function SupportersAdminPage({
         confirmText="삭제하기"
         confirmLoadingText="삭제 중..."
         isLoading={activeSubmitAction === "delete"}
-        onConfirm={/** onConfirm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => void handleDelete()}
-        onClose={/** onClose 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
-          if (isSubmitting) {
-            return;
+        onConfirm={() => void handleDelete()}
+        onClose={() => {
+          if (!isSubmitting) {
+            setDeleteModalOpen(false);
           }
-          setDeleteModalOpen(false);
         }}
       />
     </div>

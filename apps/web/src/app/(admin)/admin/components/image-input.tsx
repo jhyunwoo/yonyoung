@@ -2,11 +2,16 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import type { ImmediateUploadStatus } from "./use-immediate-image-upload";
 
 type ImageInputProps = {
   label: string;
   file: File | null;
   onFileChange: (file: File | null) => void;
+  currentUrl?: string | null;
+  status?: ImmediateUploadStatus;
+  errorMessage?: string | null;
+  onRetry?: () => void;
   disabled?: boolean;
   uploadProgress?: number | null;
   isUploading?: boolean;
@@ -29,6 +34,10 @@ export default function ImageInput({
   label,
   file,
   onFileChange,
+  currentUrl = null,
+  status = "idle",
+  errorMessage = null,
+  onRetry,
   disabled = false,
   uploadProgress = null,
   isUploading = false,
@@ -54,6 +63,7 @@ export default function ImageInput({
     typeof uploadProgress === "number"
       ? Math.max(0, Math.min(100, uploadProgress))
       : null;
+  const previewImageUrl = previewUrl ?? currentUrl;
 
   return (
     <div className="space-y-2">
@@ -72,12 +82,14 @@ export default function ImageInput({
         </p>
       </div>
 
-      {previewUrl ? (
+      {previewImageUrl ? (
         <div className="space-y-1" data-testid={`${testIdPrefix}-preview`}>
-          <p className="text-xs text-gray-500">선택한 이미지 미리보기</p>
+          <p className="text-xs text-gray-500">
+            {previewUrl ? "선택한 이미지 미리보기" : "현재 이미지"}
+          </p>
           <div className="overflow-hidden rounded-md border border-gray-200 bg-gray-50">
             <Image
-              src={previewUrl}
+              src={previewImageUrl}
               alt={`${label} 미리보기`}
               width={960}
               height={540}
@@ -99,6 +111,27 @@ export default function ImageInput({
           <p className="text-xs text-gray-500">
             업로드 진행률: {progressValue ?? 0}%
           </p>
+        </div>
+      ) : null}
+
+      {status === "uploaded" && !isUploading ? (
+        <p className="text-xs text-green-700" data-testid={`${testIdPrefix}-upload-success`}>
+          이미지 업로드 완료
+        </p>
+      ) : null}
+
+      {status === "failed" ? (
+        <div className="space-y-1" data-testid={`${testIdPrefix}-upload-error`}>
+          <p className="text-xs text-red-700">{errorMessage ?? "이미지 업로드에 실패했습니다."}</p>
+          {onRetry ? (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="rounded-md border border-red-300 px-2 py-1 text-xs text-red-700 hover:bg-red-50"
+            >
+              업로드 재시도
+            </button>
+          ) : null}
         </div>
       ) : null}
     </div>

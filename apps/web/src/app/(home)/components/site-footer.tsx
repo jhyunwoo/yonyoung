@@ -18,14 +18,16 @@ export default function SiteFooter() {
             연세대학교 중앙사진동아리
           </p>
           <p className="mt-3 text-sm text-(--text-secondary)">
-            One Step Closer to Your Light
+            One Step Closer
           </p>
         </div>
         <div className="space-y-2 text-sm text-(--text-secondary)">
           <p>Email: kimse0604@naver.com</p>
           <p>Instagram: @yonyoungpage</p>
           <p>Open Kakao: open.kakao.com/o/snVWZ4th</p>
-          <p className="text-(--text-muted)">© {currentYear} YeonYoungHoe</p>
+          <p className="text-(--text-muted)">
+            © {currentYear} Yonyoung Photography Club
+          </p>
         </div>
       </div>
     </footer>

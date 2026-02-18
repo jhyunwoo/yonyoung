@@ -1,10 +1,6 @@
 import MotionReveal from "../components/motion-reveal";
 import SectionShell from "../components/section-shell";
-import {
-  flattenLinktreeItems,
-  listPublicLinktrees,
-  safeList,
-} from "../../../lib/public-api";
+import { listPublicLinktrees, safeList } from "../../../lib/public-api";
 
 /**
  * LinktreePage 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
@@ -13,11 +9,6 @@ import {
  */
 export default async function LinktreePage() {
   const linktrees = await safeList(listPublicLinktrees, []);
-  const groupedItems = linktrees.map((group) => ({
-    id: group.id,
-    name: group.name,
-    items: flattenLinktreeItems([group]),
-  }));
 
   return (
     <div className="pb-16 md:pb-20">
@@ -38,49 +29,50 @@ export default async function LinktreePage() {
       </section>
 
       <SectionShell
-        eyebrow="Official Links"
-        title="카테고리별 바로가기"
-        description="각 그룹에서 필요한 링크를 빠르게 열어보세요."
+        eyebrow="Official Channels"
+        title="카테고리별 링크"
+        description="프리뷰의 컬럼형 Linktree 구성을 현재 디자인 시스템으로 적용했습니다."
       >
-        <div className="space-y-6" data-testid="linktree-groups">
-          {groupedItems.length === 0 ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" data-testid="linktree-groups">
+          {linktrees.length === 0 ? (
             <MotionReveal>
-              <div className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-6 text-sm text-(--text-secondary)">
+              <div className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-6 text-sm text-(--text-secondary) md:col-span-2 xl:col-span-3">
                 공개된 링크 그룹이 없습니다.
               </div>
             </MotionReveal>
           ) : (
-            groupedItems.map((group, groupIndex) => (
+            linktrees.map((group, groupIndex) => (
               <MotionReveal key={group.id} delay={groupIndex * 0.06}>
                 <section
-                  className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-5"
+                  className="h-full rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-5"
                   data-testid={`linktree-group-card-${group.id}`}
                 >
-                  <h2 className="font-display text-3xl text-(--text-primary)">
-                    {group.name}
-                  </h2>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {group.items.map((item, itemIndex) => (
-                      <MotionReveal
-                        key={item.id}
-                        delay={Math.min(itemIndex * 0.03, 0.2)}
-                      >
-                        <a
-                          href={item.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          data-testid={`linktree-item-card-${item.id}`}
-                          className="block rounded-xl border border-(--surface-border) bg-(--surface-muted) px-4 py-3 transition hover:-translate-y-0.5 hover:border-(--accent)"
-                        >
-                          <p className="text-sm font-medium text-(--text-primary)">
-                            {item.name}
-                          </p>
-                          <p className="mt-1 truncate text-xs text-(--text-secondary)">
-                            {item.link}
-                          </p>
-                        </a>
-                      </MotionReveal>
-                    ))}
+                  <h2 className="font-display text-3xl text-(--text-primary)">{group.name}</h2>
+                  <div className="mt-4 space-y-3">
+                    {group.items.length === 0 ? (
+                      <div className="rounded-xl border border-dashed border-(--surface-border) bg-(--surface-muted) px-4 py-6 text-center text-sm text-(--text-secondary)">
+                        준비 중입니다.
+                      </div>
+                    ) : (
+                      group.items.map((item, itemIndex) => (
+                        <MotionReveal key={item.id} delay={Math.min(itemIndex * 0.03, 0.2)}>
+                          <a
+                            href={item.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            data-testid={`linktree-item-card-${item.id}`}
+                            className="block rounded-xl border border-(--surface-border) bg-(--surface-muted) px-4 py-3 transition hover:-translate-y-0.5 hover:border-(--accent)"
+                          >
+                            <p className="text-sm font-medium text-(--text-primary)">
+                              {item.name}
+                            </p>
+                            <p className="mt-1 truncate text-xs text-(--text-secondary)">
+                              {item.link}
+                            </p>
+                          </a>
+                        </MotionReveal>
+                      ))
+                    )}
                   </div>
                 </section>
               </MotionReveal>

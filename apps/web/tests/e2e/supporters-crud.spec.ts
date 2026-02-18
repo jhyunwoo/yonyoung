@@ -20,6 +20,15 @@ test.describe("supporters crud", () => {
     e2ePrefix,
     sampleImagePath,
   }) => {
+    const readDrawerQuery = async () =>
+      page.evaluate(() => {
+        const params = new URL(window.location.href).searchParams;
+        return {
+          panel: params.get("panel"),
+          id: params.get("id"),
+        };
+      });
+
     test.info().annotations.push({ type: "e2e-prefix", description: e2ePrefix });
     await ensureAdminSession(page);
 
@@ -29,6 +38,8 @@ test.describe("supporters crud", () => {
     const updatedName = `${name}-updated`;
 
     await page.goto("/admin/supporters");
+    await page.getByTestId("supporter-open-create").click();
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBe("create");
 
     await page.getByTestId("supporter-create-name").fill(name);
     await page
@@ -44,7 +55,23 @@ test.describe("supporters crud", () => {
       hasText: name,
     });
     await expect(createdRow).toBeVisible();
-    await createdRow.getByRole("button", { name: /선택|선택됨/ }).click();
+    const createdRowTestId = await createdRow.getAttribute("data-testid");
+    if (!createdRowTestId) {
+      throw new Error("created supporter row test id is missing");
+    }
+    const createdSupporterId = createdRowTestId.replace("supporter-row-", "");
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBe("edit");
+    await expect.poll(async () => (await readDrawerQuery()).id).toBe(createdSupporterId);
+
+    await page.reload();
+    await expect(page.getByTestId("supporter-drawer")).toBeVisible();
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBe("edit");
+    await expect.poll(async () => (await readDrawerQuery()).id).toBe(createdSupporterId);
+    await expect(page.getByTestId("supporter-edit-name")).toHaveValue(name);
+
+    await page.goto(`/admin/supporters?panel=edit&id=${createdSupporterId}`);
+    await expect(page.getByTestId("supporter-drawer")).toBeVisible();
+    await expect(page.getByTestId("supporter-edit-name")).toHaveValue(name);
 
     await page.getByTestId("supporter-edit-name").fill(updatedName);
     await page
@@ -74,11 +101,12 @@ test.describe("supporters crud", () => {
     });
     await expect(updatedRow).toBeVisible();
 
-    await updatedRow.getByRole("button", { name: /선택|선택됨/ }).click();
     await page.getByTestId("supporter-delete-button").click();
     await page.getByTestId("confirm-modal-confirm").click();
 
     await expect(page.getByTestId("supporters-success")).toContainText("삭제");
+    await expect.poll(async () => (await readDrawerQuery()).panel).toBeNull();
+    await expect.poll(async () => (await readDrawerQuery()).id).toBeNull();
 
     await cleanupByPrefix(request, e2ePrefix);
   });

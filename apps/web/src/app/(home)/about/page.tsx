@@ -4,6 +4,15 @@ import { listPublicGenerations, safeList } from "../../../lib/public-api";
 
 const yearFormatter = new Intl.DateTimeFormat("ko-KR", { year: "numeric" });
 
+const annualActivities = [
+  { month: "March", title: "리크루팅" },
+  { month: "May", title: "연세대학교 대동제 보도 사진전" },
+  { month: "June", title: "MT" },
+  { month: "August", title: "정기 사진전" },
+  { month: "October", title: "정기연고전 보도 사진전" },
+  { month: "February", title: "신인 사진전" },
+];
+
 const formatYearRange = (startDate: number, endDate: number): string => {
   return `${yearFormatter.format(startDate)} - ${yearFormatter.format(endDate)}`;
 };
@@ -15,6 +24,11 @@ const formatYearRange = (startDate: number, endDate: number): string => {
  */
 export default async function AboutPage() {
   const generations = await safeList(listPublicGenerations, []);
+  const splitIndex = Math.ceil(annualActivities.length / 2);
+  const activityColumns = [
+    annualActivities.slice(0, splitIndex),
+    annualActivities.slice(splitIndex),
+  ];
 
   return (
     <div className="pb-16 md:pb-20">
@@ -37,9 +51,66 @@ export default async function AboutPage() {
       </section>
 
       <SectionShell
+        eyebrow="Introduction"
+        title="연영회 소개"
+        description="사진을 통해 세상을 기록하고 표현하며 함께 성장하는 중앙사진동아리입니다."
+      >
+        <MotionReveal>
+          <article className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-5 md:p-6">
+            <p className="text-sm leading-relaxed text-(--text-secondary) md:text-base">
+              연영회는 서로의 시선과 결과물을 공유하며 사진의 깊이를 넓혀가는
+              공동체입니다. 학기 중에는 촬영 실습, 출사, 워크숍, 전시 준비를
+              이어가고, 정기전과 프로젝트를 통해 학교와 사회의 장면을 기록합니다.
+            </p>
+          </article>
+        </MotionReveal>
+      </SectionShell>
+
+      <SectionShell
+        eyebrow="Annual Activities"
+        title="연간 활동"
+        description="프리뷰 사이트의 활동 구조를 현재 디자인에 맞춰 반영했습니다."
+      >
+        <div
+          className="grid gap-4 md:grid-cols-2"
+          data-testid="about-annual-activities"
+        >
+          {activityColumns.map((column, columnIndex) => (
+            <MotionReveal key={`about-activity-column-${columnIndex}`} delay={columnIndex * 0.05}>
+              <article className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-5">
+                <div className="space-y-4">
+                  {column.map((activity, activityIndex) => (
+                    <div
+                      key={`${activity.month}-${activity.title}`}
+                      className={[
+                        "flex items-start gap-3",
+                        activityIndex === column.length - 1
+                          ? ""
+                          : "border-b border-(--surface-border) pb-4",
+                      ].join(" ")}
+                    >
+                      <span className="mt-2 h-2.5 w-2.5 rounded-full bg-(--accent)" />
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.14em] text-(--text-muted)">
+                          {activity.month}
+                        </p>
+                        <p className="mt-1 text-sm font-medium text-(--text-primary)">
+                          {activity.title}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            </MotionReveal>
+          ))}
+        </div>
+      </SectionShell>
+
+      <SectionShell
         eyebrow="History"
         title="연영회의 발자취"
-        description="기수 데이터와 함께 연영회의 흐름을 확인할 수 있습니다."
+        description="창단 연혁과 기수 데이터를 함께 확인할 수 있습니다."
       >
         <div
           className="relative border-l border-(--surface-border) pl-5 md:pl-8"

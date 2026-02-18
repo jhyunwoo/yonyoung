@@ -6,8 +6,10 @@ import type { ApiLinktree, ApiLinktreeItem } from "../../../../lib/admin-api/typ
 import { readErrorMessage } from "../components/admin-form-utils";
 import AdminActionButton from "../components/admin-action-button";
 import AdminConfirmModal from "../components/admin-confirm-modal";
+import AdminDrawer from "../components/admin-drawer";
 import AdminInfoBox from "../components/admin-info-box";
 import AdminPageHeader from "../components/admin-page-header";
+import { useAdminDrawerQuerySync } from "../components/use-admin-drawer-query-sync";
 
 type LinktreeFormState = {
   name: string;
@@ -31,20 +33,14 @@ type LinktreeAdminPageProps = {
   generationSortOrder?: number | null;
 };
 
-/**
- * LinktreeAdminPage 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
- * @param {
-  generationSortOrder = null,
-} 함수 로직에서 사용하는 입력값입니다.
- * @returns 렌더링할 JSX 트리를 반환합니다.
- * @remarks 리렌더링 타이밍에 따라 훅 의존성 배열을 신중히 관리해야 합니다.
- */
 export default function LinktreeAdminPage({
   generationSortOrder = null,
 }: LinktreeAdminPageProps = {}) {
   const [items, setItems] = useState<ApiLinktree[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [panelMode, setPanelMode] = useState<"create" | "edit" | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [createForm, setCreateForm] = useState<LinktreeFormState>(emptyLinktreeForm);
   const [editForm, setEditForm] = useState<LinktreeFormState>(emptyLinktreeForm);
@@ -59,68 +55,51 @@ export default function LinktreeAdminPage({
   const [deleteTarget, setDeleteTarget] = useState<"linktree" | "item" | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const { queryState, setDrawerQuery, normalizeDrawerQuery } = useAdminDrawerQuerySync();
 
   const selected = useMemo(
-        /**
-     * useMemo 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
-     * @returns 함수 실행 결과를 반환합니다.
-     * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
-     */
-    () => items.find(/** items.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === selectedId) ?? null,
+    () => items.find((item) => item.id === selectedId) ?? null,
     [items, selectedId],
   );
 
   const selectedItem = useMemo(
-        /**
-     * useMemo 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
-     * @returns 함수 실행 결과를 반환합니다.
-     * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
-     */
-    () => selected?.items.find(/** selected?.items.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === selectedItemId) ?? null,
+    () => selected?.items.find((item) => item.id === selectedItemId) ?? null,
     [selected, selectedItemId],
   );
 
-    /**
-   * syncEditForm의 핵심 비즈니스 로직을 수행합니다.
-   * @param item 반복 처리 중인 현재 항목입니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+  const filteredItems = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const sorted = [...items].sort((a, b) => a.name.localeCompare(b.name));
+    if (!query) {
+      return sorted;
+    }
+    return sorted.filter((item) => {
+      return item.name.toLowerCase().includes(query);
+    });
+  }, [items, searchQuery]);
+
   const syncEditForm = (item: ApiLinktree | null) => {
     if (!item) {
       setEditForm(emptyLinktreeForm);
-      return;
-    }
-
-    setEditForm({
-      name: item.name,
-    });
-  };
-
-    /**
-   * syncItemEditForm의 핵심 비즈니스 로직을 수행합니다.
-   * @param item 반복 처리 중인 현재 항목입니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
-  const syncItemEditForm = (item: ApiLinktreeItem | null) => {
-    if (!item) {
+      setSelectedItemId(null);
       setItemEditForm(emptyItemForm);
       return;
     }
 
-    setItemEditForm({
-      name: item.name,
-      link: item.link,
-    });
+    setEditForm({ name: item.name });
+    const firstItem = item.items[0] ?? null;
+    setSelectedItemId(firstItem?.id ?? null);
+    setItemEditForm(
+      firstItem
+        ? {
+            name: firstItem.name,
+            link: firstItem.link,
+          }
+        : emptyItemForm,
+    );
   };
 
-    /**
-   * loadData 외부 또는 내부 소스에서 데이터를 읽어오는 로직을 수행합니다.
-   * @returns 외부 소스에서 읽어 온 결과를 Promise로 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
-  const loadData = async () => {
+  const loadData = async (preferredSelectedId?: string | null) => {
     setIsLoading(true);
     setErrorMessage(null);
 
@@ -130,40 +109,21 @@ export default function LinktreeAdminPage({
 
       if (data.length === 0) {
         setSelectedId(null);
-        setSelectedItemId(null);
         syncEditForm(null);
-        syncItemEditForm(null);
+        if (panelMode === "edit") {
+          setPanelMode(null);
+        }
         return;
       }
 
-      const fallbackId = data[0]?.id;
-      if (!fallbackId) {
-        setSelectedId(null);
-        setSelectedItemId(null);
-        syncEditForm(null);
-        syncItemEditForm(null);
-        return;
-      }
-
+      const fallbackId = data[0]?.id ?? null;
       const nextSelectedId =
-        selectedId && data.some(/** data.some 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === selectedId)
-          ? selectedId
-          : fallbackId;
+        preferredSelectedId ??
+        (selectedId && data.some((item) => item.id === selectedId) ? selectedId : null) ??
+        fallbackId;
+
       setSelectedId(nextSelectedId);
-
-      const selectedLinktree = data.find(/** data.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === nextSelectedId) ?? null;
-      syncEditForm(selectedLinktree);
-
-      const nextItemId =
-        selectedItemId && selectedLinktree?.items.some(/** selectedLinktree?.items.some 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === selectedItemId)
-          ? selectedItemId
-          : selectedLinktree?.items[0]?.id ?? null;
-      setSelectedItemId(nextItemId);
-      syncItemEditForm(
-        nextItemId
-          ? selectedLinktree?.items.find(/** selectedLinktree?.items.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id === nextItemId) ?? null
-          : null,
-      );
+      syncEditForm(data.find((item) => item.id === nextSelectedId) ?? null);
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -171,42 +131,66 @@ export default function LinktreeAdminPage({
     }
   };
 
-  useEffect(/** useEffect 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
+  useEffect(() => {
     void loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-    /**
-   * handleSelectLinktree의 핵심 비즈니스 로직을 수행합니다.
-   * @param item 반복 처리 중인 현재 항목입니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+  useEffect(() => {
+    normalizeDrawerQuery();
+  }, [normalizeDrawerQuery]);
+
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
+    if (queryState.panel === "create") {
+      if (panelMode !== "create") {
+        setCreateForm(emptyLinktreeForm);
+        setPanelMode("create");
+        setErrorMessage(null);
+        setSuccessMessage(null);
+      }
+      return;
+    }
+
+    if (queryState.panel === "edit") {
+      const target = items.find((item) => item.id === queryState.id) ?? null;
+      if (!target) {
+        setDrawerQuery(null);
+        return;
+      }
+
+      if (selectedId !== target.id || panelMode !== "edit") {
+        handleSelectLinktree(target);
+      }
+      return;
+    }
+
+    if (panelMode !== null) {
+      setPanelMode(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryState, isLoading, panelMode, items, selectedId]);
+
   const handleSelectLinktree = (item: ApiLinktree) => {
     setSelectedId(item.id);
     syncEditForm(item);
-    const firstItem = item.items[0] ?? null;
-    setSelectedItemId(firstItem?.id ?? null);
-    syncItemEditForm(firstItem);
+    setPanelMode("edit");
+    setDrawerQuery("edit", item.id);
+    setErrorMessage(null);
+    setSuccessMessage(null);
   };
 
-    /**
-   * handleSelectItem의 핵심 비즈니스 로직을 수행합니다.
-   * @param item 반복 처리 중인 현재 항목입니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
   const handleSelectItem = (item: ApiLinktreeItem) => {
     setSelectedItemId(item.id);
-    syncItemEditForm(item);
+    setItemEditForm({
+      name: item.name,
+      link: item.link,
+    });
   };
 
-    /**
-   * handleCreate의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
-   * @param event 함수 로직에서 사용하는 입력값입니다.
-   * @returns 비동기 처리 결과를 Promise로 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
@@ -215,13 +199,15 @@ export default function LinktreeAdminPage({
     setSuccessMessage(null);
 
     try {
-      await adminResourceApi.createLinktree({
+      const created = await adminResourceApi.createLinktree({
         name: createForm.name.trim(),
       });
 
       setCreateForm(emptyLinktreeForm);
       setSuccessMessage("링크트리를 생성했습니다.");
-      await loadData();
+      setPanelMode("edit");
+      setDrawerQuery("edit", created.id);
+      await loadData(created.id);
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -230,12 +216,6 @@ export default function LinktreeAdminPage({
     }
   };
 
-    /**
-   * handleUpdate의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
-   * @param event 함수 로직에서 사용하는 입력값입니다.
-   * @returns 비동기 처리 결과를 Promise로 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
   const handleUpdate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selected) {
@@ -252,7 +232,7 @@ export default function LinktreeAdminPage({
       });
 
       setSuccessMessage("링크트리를 수정했습니다.");
-      await loadData();
+      await loadData(selected.id);
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -261,11 +241,6 @@ export default function LinktreeAdminPage({
     }
   };
 
-    /**
-   * handleDelete의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
-   * @returns 비동기 처리 결과를 Promise로 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
   const handleDelete = async () => {
     if (!selected) {
       return;
@@ -280,6 +255,8 @@ export default function LinktreeAdminPage({
       await adminResourceApi.deleteLinktree(selected.id);
       setSuccessMessage("링크트리를 삭제했습니다.");
       setDeleteTarget(null);
+      setPanelMode(null);
+      setDrawerQuery(null);
       await loadData();
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
@@ -289,12 +266,6 @@ export default function LinktreeAdminPage({
     }
   };
 
-    /**
-   * handleCreateItem의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
-   * @param event 함수 로직에서 사용하는 입력값입니다.
-   * @returns 비동기 처리 결과를 Promise로 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
   const handleCreateItem = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selected) {
@@ -314,7 +285,7 @@ export default function LinktreeAdminPage({
 
       setItemCreateForm(emptyItemForm);
       setSuccessMessage("링크 아이템을 추가했습니다.");
-      await loadData();
+      await loadData(selected.id);
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -323,12 +294,6 @@ export default function LinktreeAdminPage({
     }
   };
 
-    /**
-   * handleUpdateItem의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
-   * @param event 함수 로직에서 사용하는 입력값입니다.
-   * @returns 비동기 처리 결과를 Promise로 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
   const handleUpdateItem = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selected || !selectedItem) {
@@ -346,7 +311,7 @@ export default function LinktreeAdminPage({
       });
 
       setSuccessMessage("링크 아이템을 수정했습니다.");
-      await loadData();
+      await loadData(selected.id);
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -355,11 +320,6 @@ export default function LinktreeAdminPage({
     }
   };
 
-    /**
-   * handleDeleteItem의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
-   * @returns 비동기 처리 결과를 Promise로 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
   const handleDeleteItem = async () => {
     if (!selected || !selectedItem) {
       return;
@@ -374,7 +334,7 @@ export default function LinktreeAdminPage({
       await adminResourceApi.deleteLinktreeItem(selected.id, selectedItem.id);
       setSuccessMessage("링크 아이템을 삭제했습니다.");
       setDeleteTarget(null);
-      await loadData();
+      await loadData(selected.id);
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -383,106 +343,144 @@ export default function LinktreeAdminPage({
     }
   };
 
-  const openDeleteLinktreeModal = () => {
-    if (!selected || isSubmitting) {
-      return;
-    }
-    setDeleteTarget("linktree");
-  };
-
-  const openDeleteItemModal = () => {
-    if (!selected || !selectedItem || isSubmitting) {
-      return;
-    }
-    setDeleteTarget("item");
-  };
-
   return (
     <div className="space-y-6" data-testid="linktree-page">
       <AdminPageHeader
         title="링크 모음 관리"
         description="대외 링크 묶음을 만들고, 각 묶음에 개별 링크를 추가하는 화면입니다."
-        guidance="먼저 링크 모음을 만든 뒤, 아래에서 세부 링크 아이템을 추가해 주세요."
+        guidance="목록에서 링크 모음을 선택하면 오른쪽 패널에서 링크 모음과 아이템을 함께 편집할 수 있습니다."
       >
-        {generationSortOrder !== null ? (
-          <p className="mt-1 text-xs text-gray-500" data-testid="linktree-global-note">
-            공통 설정: 선택한 {generationSortOrder}기와 관계없이 전체에 적용됩니다.
-          </p>
-        ) : null}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <AdminActionButton
+            onClick={() => {
+              setCreateForm(emptyLinktreeForm);
+              setPanelMode("create");
+              setDrawerQuery("create");
+              setErrorMessage(null);
+              setSuccessMessage(null);
+            }}
+            testId="linktree-open-create"
+          >
+            + 신규 링크 모음
+          </AdminActionButton>
+          <button
+            type="button"
+            onClick={() => void loadData()}
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+            data-testid="linktree-reload-button"
+          >
+            새로고침
+          </button>
+          {generationSortOrder !== null ? (
+            <p className="text-xs text-gray-500" data-testid="linktree-global-note">
+              공통 설정: 선택한 {generationSortOrder}기와 관계없이 전체에 적용됩니다.
+            </p>
+          ) : null}
+        </div>
       </AdminPageHeader>
 
       <AdminInfoBox title="작업 안내">
-        링크 모음은 메뉴 단위, 링크 아이템은 실제 이동 주소입니다. 이름은 사용자가 바로 이해할 수 있게 작성해 주세요.
+        링크 모음을 먼저 만든 뒤, 하위 링크 아이템을 추가하세요. 수정/삭제는 드로어에서 한 번에 처리할 수 있습니다.
       </AdminInfoBox>
 
       {errorMessage ? (
-        <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700" data-testid="linktree-error">
+        <p
+          className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700"
+          data-testid="linktree-error"
+        >
           {errorMessage}
         </p>
       ) : null}
 
       {successMessage ? (
-        <p className="rounded-md border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-700" data-testid="linktree-success">
+        <p
+          className="rounded-md border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-700"
+          data-testid="linktree-success"
+        >
           {successMessage}
         </p>
       ) : null}
 
-      <section className="grid gap-6 lg:grid-cols-2">
-        <article className="rounded-lg border border-gray-200 bg-white p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">링크 모음 목록</h2>
-            <button
-              type="button"
-              onClick={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => void loadData()}
-              className="rounded-md border border-gray-300 px-2 py-1 text-xs"
-              data-testid="linktree-reload-button"
-            >
-              새로고침
-            </button>
-          </div>
+      <section className="rounded-lg border border-gray-200 bg-white p-4">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold">링크 모음 목록</h2>
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="링크 모음 검색"
+            className="w-full max-w-xs rounded-md border border-gray-300 px-3 py-2 text-sm"
+            data-testid="linktree-search-input"
+          />
+        </div>
 
-          {isLoading ? (
-            <p className="text-sm text-gray-500">불러오는 중...</p>
-          ) : items.length === 0 ? (
-            <p className="text-sm text-gray-500">아직 등록된 링크 모음이 없습니다. 오른쪽에서 먼저 만들어 주세요.</p>
-          ) : (
-            <ul className="space-y-2" data-testid="linktree-list">
-              {items.map(/** items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => (
-                <li key={item.id} className="rounded-md border border-gray-200 p-3" data-testid={`linktree-row-${item.id}`}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-medium">{item.name}</p>
-                      <p className="text-xs text-gray-500">포함 링크 수: {item.items.length}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={/** items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => handleSelectLinktree(item)}
-                      className={`rounded-md px-2 py-1 text-xs font-medium ${
-                        selectedId === item.id
-                          ? "bg-black text-white"
-                          : "border border-gray-300 text-gray-700"
-                      }`}
-                      data-testid={`linktree-select-${item.id}`}
-                    >
-                      {selectedId === item.id ? "선택됨" : "선택"}
-                    </button>
+        {isLoading ? (
+          <p className="text-sm text-gray-500">불러오는 중...</p>
+        ) : filteredItems.length === 0 ? (
+          <p className="text-sm text-gray-500">
+            {items.length === 0
+              ? "아직 등록된 링크 모음이 없습니다."
+              : "검색 조건에 맞는 링크 모음이 없습니다."}
+          </p>
+        ) : (
+          <ul className="space-y-2" data-testid="linktree-list">
+            {filteredItems.map((item) => (
+              <li
+                key={item.id}
+                className="rounded-md border border-gray-200 p-3"
+                data-testid={`linktree-row-${item.id}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium">{item.name}</p>
+                    <p className="text-xs text-gray-500">포함 링크 수: {item.items.length}</p>
                   </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </article>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectLinktree(item)}
+                    className={`rounded-md px-2 py-1 text-xs font-medium ${
+                      selectedId === item.id
+                        ? "bg-black text-white"
+                        : "border border-gray-300 text-gray-700"
+                    }`}
+                    data-testid={`linktree-select-${item.id}`}
+                  >
+                    {selectedId === item.id ? "선택됨" : "선택"}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
-        <article className="space-y-6">
-          <form onSubmit={handleCreate} className="rounded-lg border border-gray-200 bg-white p-4" data-testid="linktree-create-form">
-            <h2 className="mb-3 text-lg font-semibold">링크 모음 만들기</h2>
+      <AdminDrawer
+        open={panelMode !== null}
+        title={panelMode === "create" ? "링크 모음 만들기" : "링크 모음 수정"}
+        description={
+          panelMode === "create"
+            ? "링크 모음 이름을 입력해 새 그룹을 만듭니다."
+            : selected
+              ? `"${selected.name}" 링크 모음을 편집합니다.`
+              : "수정할 링크 모음을 선택해 주세요."
+        }
+        onClose={() => {
+          if (!isSubmitting) {
+            setPanelMode(null);
+            setDrawerQuery(null);
+          }
+        }}
+        testId="linktree-drawer"
+      >
+        {panelMode === "create" ? (
+          <form onSubmit={handleCreate} className="space-y-3" data-testid="linktree-create-form">
             <label className="block text-sm">
               <span className="mb-1 block">링크 모음 이름</span>
               <input
                 type="text"
                 value={createForm.name}
-                onChange={/** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
-                  setCreateForm(/** setCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, name: event.target.value }))
+                onChange={(event) =>
+                  setCreateForm((previous) => ({ ...previous, name: event.target.value }))
                 }
                 className="w-full rounded-md border border-gray-300 px-3 py-2"
                 required
@@ -494,194 +492,195 @@ export default function LinktreeAdminPage({
               loading={activeSubmitAction === "createLinktree"}
               disabled={isSubmitting && activeSubmitAction !== "createLinktree"}
               loadingText="링크 모음 생성 중..."
-              className="mt-4"
+              className="mt-2"
               testId="linktree-create-submit"
             >
               링크 모음 생성
             </AdminActionButton>
           </form>
-
-          <form onSubmit={handleUpdate} className="rounded-lg border border-gray-200 bg-white p-4" data-testid="linktree-edit-form">
-            <h2 className="mb-3 text-lg font-semibold">선택한 링크 모음 수정/삭제</h2>
-            {selected ? (
-              <>
-                <label className="block text-sm">
-                  <span className="mb-1 block">링크 모음 이름</span>
-                  <input
-                    type="text"
-                    value={editForm.name}
-                    onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
-                      setEditForm(/** setEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, name: event.target.value }))
-                    }
-                    className="w-full rounded-md border border-gray-300 px-3 py-2"
-                    required
-                    data-testid="linktree-edit-name"
-                  />
-                </label>
-                <div className="mt-4 flex gap-2">
-                  <AdminActionButton
-                    type="submit"
-                    disabled={isSubmitting}
-                    testId="linktree-edit-submit"
-                  >
-                    수정 저장
-                  </AdminActionButton>
-                  <AdminActionButton
-                    variant="danger"
-                    onClick={openDeleteLinktreeModal}
-                    disabled={isSubmitting}
-                    testId="linktree-delete-button"
-                  >
-                    링크 모음 삭제
-                  </AdminActionButton>
-                </div>
-              </>
-            ) : (
-              <p className="text-sm text-gray-500">수정할 링크트리를 선택해 주세요.</p>
-            )}
-          </form>
-        </article>
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-2">
-        <form onSubmit={handleCreateItem} className="rounded-lg border border-gray-200 bg-white p-4" data-testid="linktree-item-create-form">
-          <h2 className="mb-3 text-lg font-semibold">링크 아이템 추가</h2>
-          {selected ? (
-            <div className="space-y-3">
-              <p className="text-xs text-gray-500">선택된 링크트리: {selected.name}</p>
+        ) : selected ? (
+          <div className="space-y-5">
+            <form onSubmit={handleUpdate} className="space-y-3" data-testid="linktree-edit-form">
               <label className="block text-sm">
-                <span className="mb-1 block">링크 이름</span>
+                <span className="mb-1 block">링크 모음 이름</span>
                 <input
                   type="text"
-                  value={itemCreateForm.name}
-                  onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
-                    setItemCreateForm(/** setItemCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, name: event.target.value }))
+                  value={editForm.name}
+                  onChange={(event) =>
+                    setEditForm((previous) => ({ ...previous, name: event.target.value }))
                   }
                   className="w-full rounded-md border border-gray-300 px-3 py-2"
                   required
-                  data-testid="linktree-item-create-name"
+                  data-testid="linktree-edit-name"
                 />
               </label>
-              <label className="block text-sm">
-                <span className="mb-1 block">이동 주소(URL)</span>
-                <input
-                  type="url"
-                  value={itemCreateForm.link}
-                  onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
-                    setItemCreateForm(/** setItemCreateForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, link: event.target.value }))
-                  }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
-                  required
-                  data-testid="linktree-item-create-link"
-                />
-              </label>
-              <AdminActionButton
-                type="submit"
-                loading={activeSubmitAction === "createItem"}
-                disabled={isSubmitting && activeSubmitAction !== "createItem"}
-                loadingText="링크 추가 중..."
-                testId="linktree-item-create-submit"
+              <div className="mt-2 flex gap-2">
+                <AdminActionButton type="submit" disabled={isSubmitting} testId="linktree-edit-submit">
+                  수정 저장
+                </AdminActionButton>
+                <AdminActionButton
+                  variant="danger"
+                  onClick={() => {
+                    if (!isSubmitting) {
+                      setDeleteTarget("linktree");
+                    }
+                  }}
+                  disabled={isSubmitting}
+                  testId="linktree-delete-button"
+                >
+                  링크 모음 삭제
+                </AdminActionButton>
+              </div>
+            </form>
+
+            <section className="space-y-4">
+              <form
+                onSubmit={handleCreateItem}
+                className="rounded-lg border border-gray-200 p-3"
+                data-testid="linktree-item-create-form"
               >
-                링크 추가
-              </AdminActionButton>
-            </div>
-          ) : (
-            <p className="text-sm text-gray-500">링크트리를 먼저 선택해 주세요.</p>
-          )}
-        </form>
-
-        <article className="rounded-lg border border-gray-200 bg-white p-4" data-testid="linktree-item-edit-card">
-          <h2 className="mb-3 text-lg font-semibold">선택 링크 아이템 수정/삭제</h2>
-          {selected ? (
-            <>
-              {selected.items.length === 0 ? (
-                <p className="text-sm text-gray-500">등록된 링크 아이템이 없습니다.</p>
-              ) : (
-                <ul className="mb-4 space-y-2" data-testid="linktree-item-list">
-                  {selected.items.map(/** selected.items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => (
-                    <li key={item.id} className="rounded-md border border-gray-200 p-2" data-testid={`linktree-item-row-${item.id}`}>
-                      <div className="flex items-center justify-between gap-2">
-                        <div>
-                          <p className="text-sm font-medium">{item.name}</p>
-                          <p className="truncate text-xs text-gray-500">{item.link}</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={/** selected.items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => handleSelectItem(item)}
-                          className={`rounded-md px-2 py-1 text-xs font-medium ${
-                            selectedItemId === item.id
-                              ? "bg-black text-white"
-                              : "border border-gray-300 text-gray-700"
-                          }`}
-                          data-testid={`linktree-item-select-${item.id}`}
-                        >
-                          {selectedItemId === item.id ? "선택됨" : "선택"}
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              <form onSubmit={handleUpdateItem} className="space-y-3" data-testid="linktree-item-edit-form">
-                {selectedItem ? (
-                  <>
-                    <label className="block text-sm">
-                      <span className="mb-1 block">링크 이름</span>
-                      <input
-                        type="text"
-                        value={itemEditForm.name}
-                        onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
-                          setItemEditForm(/** setItemEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, name: event.target.value }))
-                        }
-                        className="w-full rounded-md border border-gray-300 px-3 py-2"
-                        required
-                        data-testid="linktree-item-edit-name"
-                      />
-                    </label>
-
-                    <label className="block text-sm">
-                      <span className="mb-1 block">이동 주소(URL)</span>
-                      <input
-                        type="url"
-                        value={itemEditForm.link}
-                        onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) =>
-                          setItemEditForm(/** setItemEditForm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param previous 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (previous) => ({ ...previous, link: event.target.value }))
-                        }
-                        className="w-full rounded-md border border-gray-300 px-3 py-2"
-                        required
-                        data-testid="linktree-item-edit-link"
-                      />
-                    </label>
-
-                    <div className="flex gap-2">
-                      <AdminActionButton
-                        type="submit"
-                        disabled={isSubmitting}
-                        testId="linktree-item-edit-submit"
-                      >
-                        수정 저장
-                      </AdminActionButton>
-                      <AdminActionButton
-                        variant="danger"
-                        onClick={openDeleteItemModal}
-                        disabled={isSubmitting}
-                        testId="linktree-item-delete-button"
-                      >
-                        링크 삭제
-                      </AdminActionButton>
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-sm text-gray-500">수정할 링크 아이템을 선택해 주세요.</p>
-                )}
+                <h3 className="mb-2 text-sm font-semibold">링크 아이템 추가</h3>
+                <div className="space-y-2">
+                  <label className="block text-sm">
+                    <span className="mb-1 block">링크 이름</span>
+                    <input
+                      type="text"
+                      value={itemCreateForm.name}
+                      onChange={(event) =>
+                        setItemCreateForm((previous) => ({ ...previous, name: event.target.value }))
+                      }
+                      className="w-full rounded-md border border-gray-300 px-3 py-2"
+                      required
+                      data-testid="linktree-item-create-name"
+                    />
+                  </label>
+                  <label className="block text-sm">
+                    <span className="mb-1 block">이동 주소(URL)</span>
+                    <input
+                      type="url"
+                      value={itemCreateForm.link}
+                      onChange={(event) =>
+                        setItemCreateForm((previous) => ({ ...previous, link: event.target.value }))
+                      }
+                      className="w-full rounded-md border border-gray-300 px-3 py-2"
+                      required
+                      data-testid="linktree-item-create-link"
+                    />
+                  </label>
+                  <AdminActionButton
+                    type="submit"
+                    loading={activeSubmitAction === "createItem"}
+                    disabled={isSubmitting && activeSubmitAction !== "createItem"}
+                    loadingText="링크 추가 중..."
+                    testId="linktree-item-create-submit"
+                  >
+                    링크 추가
+                  </AdminActionButton>
+                </div>
               </form>
-            </>
-          ) : (
-            <p className="text-sm text-gray-500">링크트리를 먼저 선택해 주세요.</p>
-          )}
-        </article>
-      </section>
+
+              <article
+                className="rounded-lg border border-gray-200 p-3"
+                data-testid="linktree-item-edit-card"
+              >
+                <h3 className="mb-2 text-sm font-semibold">선택 링크 아이템 수정/삭제</h3>
+                {selected.items.length === 0 ? (
+                  <p className="text-sm text-gray-500">등록된 링크 아이템이 없습니다.</p>
+                ) : (
+                  <ul className="mb-3 space-y-2" data-testid="linktree-item-list">
+                    {selected.items.map((item) => (
+                      <li
+                        key={item.id}
+                        className="rounded-md border border-gray-200 p-2"
+                        data-testid={`linktree-item-row-${item.id}`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-medium">{item.name}</p>
+                            <p className="truncate text-xs text-gray-500">{item.link}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleSelectItem(item)}
+                            className={`rounded-md px-2 py-1 text-xs font-medium ${
+                              selectedItemId === item.id
+                                ? "bg-black text-white"
+                                : "border border-gray-300 text-gray-700"
+                            }`}
+                            data-testid={`linktree-item-select-${item.id}`}
+                          >
+                            {selectedItemId === item.id ? "선택됨" : "선택"}
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <form onSubmit={handleUpdateItem} className="space-y-2" data-testid="linktree-item-edit-form">
+                  {selectedItem ? (
+                    <>
+                      <label className="block text-sm">
+                        <span className="mb-1 block">링크 이름</span>
+                        <input
+                          type="text"
+                          value={itemEditForm.name}
+                          onChange={(event) =>
+                            setItemEditForm((previous) => ({ ...previous, name: event.target.value }))
+                          }
+                          className="w-full rounded-md border border-gray-300 px-3 py-2"
+                          required
+                          data-testid="linktree-item-edit-name"
+                        />
+                      </label>
+
+                      <label className="block text-sm">
+                        <span className="mb-1 block">이동 주소(URL)</span>
+                        <input
+                          type="url"
+                          value={itemEditForm.link}
+                          onChange={(event) =>
+                            setItemEditForm((previous) => ({ ...previous, link: event.target.value }))
+                          }
+                          className="w-full rounded-md border border-gray-300 px-3 py-2"
+                          required
+                          data-testid="linktree-item-edit-link"
+                        />
+                      </label>
+
+                      <div className="flex gap-2">
+                        <AdminActionButton
+                          type="submit"
+                          disabled={isSubmitting}
+                          testId="linktree-item-edit-submit"
+                        >
+                          수정 저장
+                        </AdminActionButton>
+                        <AdminActionButton
+                          variant="danger"
+                          onClick={() => {
+                            if (!isSubmitting) {
+                              setDeleteTarget("item");
+                            }
+                          }}
+                          disabled={isSubmitting}
+                          testId="linktree-item-delete-button"
+                        >
+                          링크 삭제
+                        </AdminActionButton>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-sm text-gray-500">수정할 링크 아이템을 선택해 주세요.</p>
+                  )}
+                </form>
+              </article>
+            </section>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">수정할 링크 모음을 선택해 주세요.</p>
+        )}
+      </AdminDrawer>
 
       <AdminConfirmModal
         open={deleteTarget !== null}
@@ -698,21 +697,19 @@ export default function LinktreeAdminPage({
         confirmText="삭제하기"
         confirmLoadingText="삭제 중..."
         isLoading={
-          activeSubmitAction === "deleteLinktree" ||
-          activeSubmitAction === "deleteItem"
+          activeSubmitAction === "deleteLinktree" || activeSubmitAction === "deleteItem"
         }
-        onConfirm={/** onConfirm 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
+        onConfirm={() => {
           if (deleteTarget === "item") {
             void handleDeleteItem();
             return;
           }
           void handleDelete();
         }}
-        onClose={/** onClose 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
-          if (isSubmitting) {
-            return;
+        onClose={() => {
+          if (!isSubmitting) {
+            setDeleteTarget(null);
           }
-          setDeleteTarget(null);
         }}
       />
     </div>
