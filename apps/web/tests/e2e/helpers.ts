@@ -1,6 +1,6 @@
 import { request as playwrightRequest } from "@playwright/test";
 import type { APIRequestContext, APIResponse, Page } from "@playwright/test";
-import { readE2eRoleMatrixMode } from "./env";
+import { readE2eRoleMatrixMode, readE2eUploadMode } from "./env";
 
 const API_BASE_URL = process.env.E2E_API_URL ?? "http://localhost:8787";
 const ADMIN_API_BASE_PATH = "/api";
@@ -135,6 +135,73 @@ const parseFileUploadFlow = (): FileUploadFlow => {
   return "auto";
 };
 
+type UploadMockResource = "activities" | "exhibitions" | "supporters" | "users";
+type UploadMockSlot = "cover" | "detail" | "logo" | "profile";
+type PresignPayload = Record<string, unknown> | null;
+
+type UploadMockRouteInput = {
+  key: string;
+  presignPath: string;
+  resource: UploadMockResource;
+  slot: UploadMockSlot;
+  contentType?: string;
+  requiredHeaders?: Record<string, string>;
+  uploadDelayMs?: number;
+  failPresignAttempts?: number;
+  failUploadAttempts?: number;
+};
+
+type UploadMockRouteState = UploadMockRouteInput & {
+  presignAttemptCount: number;
+  uploadAttemptCount: number;
+};
+
+type UploadRequestSnapshot = {
+  url: string;
+  method: string;
+  headers: Record<string, string>;
+};
+
+type UploadMockLogs = {
+  presignPayloads: Map<string, PresignPayload[]>;
+  uploadRequests: Map<string, UploadRequestSnapshot[]>;
+};
+
+const MOCK_UPLOAD_BASE_URL = "https://upload.e2e.invalid";
+const MOCK_STORAGE_BASE_URL = "https://storage.yonyoung.moveto.kr";
+
+const parseJsonBody = (raw: string | null): PresignPayload => {
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+};
+
+const ensureLogList = <T>(
+  map: Map<string, T[]>,
+  key: string,
+): T[] => {
+  const current = map.get(key);
+  if (current) {
+    return current;
+  }
+
+  const created: T[] = [];
+  map.set(key, created);
+  return created;
+};
+
+const toHeaderList = (headers: Iterable<string>): string =>
+  Array.from(new Set(headers))
+    .map((key) => key.toLowerCase())
+    .sort()
+    .join(", ");
+
 let uploadFlowAvailabilityPromise: Promise<boolean> | null = null;
 
 const resolveRequiredUploadHeaders = (
@@ -193,6 +260,10 @@ export const shouldRunFileUploadFlow = async (
   request: APIRequestContext,
   page?: Page,
 ): Promise<boolean> => {
+  if (readE2eUploadMode() === "mock") {
+    return false;
+  }
+
   const flow = parseFileUploadFlow();
   if (flow === "file") {
     return true;
@@ -267,6 +338,183 @@ export const shouldRunFileUploadFlow = async (
   }
 
   return uploadFlowAvailabilityPromise;
+};
+
+export const shouldUseUploadMock = (): boolean =>
+  readE2eUploadMode() !== "real";
+
+export const installPresignedUploadMock = async (
+  page: Page,
+  input: {
+    routes: UploadMockRouteInput[];
+    uploadBaseUrl?: string;
+    storageBaseUrl?: string;
+  },
+): Promise<{
+  getPresignPayloads: (key: string) => PresignPayload[];
+  getUploadRequests: (key: string) => UploadRequestSnapshot[];
+  getLatestPresignPayload: (key: string) => PresignPayload;
+  getUploadCount: (key: string) => number;
+}> => {
+  const uploadBaseUrl = input.uploadBaseUrl ?? MOCK_UPLOAD_BASE_URL;
+  const storageBaseUrl = input.storageBaseUrl ?? MOCK_STORAGE_BASE_URL;
+  const webOrigin = resolveWebOrigin();
+  const allowHeaders = new Set<string>(["content-type"]);
+  const presignLogs: UploadMockLogs["presignPayloads"] = new Map();
+  const uploadLogs: UploadMockLogs["uploadRequests"] = new Map();
+  const presignedUrlMap = new Map<string, UploadMockRouteState>();
+  const routeStates = input.routes.map((route) => ({
+    ...route,
+    presignAttemptCount: 0,
+    uploadAttemptCount: 0,
+  }));
+
+  for (const routeState of routeStates) {
+    await page.route(
+      `${API_BASE_URL}${ADMIN_API_BASE_PATH}${routeState.presignPath}`,
+      async (route) => {
+        if (route.request().method() !== "POST") {
+          await route.continue();
+          return;
+        }
+
+        const payload = parseJsonBody(route.request().postData());
+        ensureLogList(presignLogs, routeState.key).push(payload);
+        routeState.presignAttemptCount += 1;
+
+        const presignShouldFail =
+          routeState.failPresignAttempts !== undefined &&
+          routeState.presignAttemptCount <= routeState.failPresignAttempts;
+        if (presignShouldFail) {
+          await route.fulfill({
+            status: 500,
+            contentType: "application/json",
+            body: JSON.stringify({
+              error: {
+                code: "UPLOAD_PRESIGN_FAILED",
+                message: "presign mock failure",
+              },
+            }),
+          });
+          return;
+        }
+
+        const resolvedContentType =
+          typeof payload?.contentType === "string"
+            ? payload.contentType
+            : routeState.contentType ?? "image/png";
+        const resolvedHeaders = resolveRequiredUploadHeaders(
+          routeState.requiredHeaders,
+          resolvedContentType,
+        );
+        Object.keys(resolvedHeaders).forEach((key) => allowHeaders.add(key));
+        const uploadToken = `${routeState.key}-${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2, 8)}`;
+        const objectKey = `${routeState.resource}/${routeState.slot}/${uploadToken}.png`;
+        const uploadUrl =
+          `${uploadBaseUrl}/${routeState.resource}/${routeState.slot}/${uploadToken}` +
+          "?X-Amz-Algorithm=AWS4-HMAC-SHA256";
+        const publicUrl = `${storageBaseUrl}/${objectKey}`;
+
+        presignedUrlMap.set(uploadUrl, routeState);
+
+        await route.fulfill({
+          status: 201,
+          contentType: "application/json",
+          body: JSON.stringify({
+            data: {
+              uploadUrl,
+              objectKey,
+              publicUrl,
+              requiredHeaders: resolvedHeaders,
+            },
+          }),
+        });
+      },
+    );
+  }
+
+  await page.route(`${uploadBaseUrl}/**`, async (route) => {
+    const method = route.request().method();
+    if (method === "OPTIONS") {
+      await route.fulfill({
+        status: 204,
+        headers: {
+          "access-control-allow-origin": webOrigin,
+          "access-control-allow-methods": "PUT, OPTIONS",
+          "access-control-allow-headers": toHeaderList(allowHeaders),
+          "access-control-max-age": "86400",
+        },
+      });
+      return;
+    }
+
+    if (method !== "PUT") {
+      await route.continue();
+      return;
+    }
+
+    const uploadUrl = route.request().url();
+    const matchedState = presignedUrlMap.get(uploadUrl);
+    if (!matchedState) {
+      await route.fulfill({
+        status: 404,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: {
+            code: "UPLOAD_NOT_FOUND",
+            message: "mock upload url is not registered",
+          },
+        }),
+      });
+      return;
+    }
+
+    matchedState.uploadAttemptCount += 1;
+    ensureLogList(uploadLogs, matchedState.key).push({
+      url: uploadUrl,
+      method,
+      headers: route.request().headers(),
+    });
+
+    const uploadShouldFail =
+      matchedState.failUploadAttempts !== undefined &&
+      matchedState.uploadAttemptCount <= matchedState.failUploadAttempts;
+    if (uploadShouldFail) {
+      await route.fulfill({
+        status: 500,
+        headers: {
+          "access-control-allow-origin": webOrigin,
+        },
+        body: "",
+      });
+      return;
+    }
+
+    if (matchedState.uploadDelayMs && matchedState.uploadDelayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, matchedState.uploadDelayMs));
+    }
+
+    await route.fulfill({
+      status: 200,
+      headers: {
+        "access-control-allow-origin": webOrigin,
+        etag: "\"mock-etag\"",
+      },
+      body: "",
+    });
+  });
+
+  return {
+    getPresignPayloads: (key) => [...(presignLogs.get(key) ?? [])],
+    getUploadRequests: (key) => [...(uploadLogs.get(key) ?? [])],
+    getLatestPresignPayload: (key) => {
+      const payloads = presignLogs.get(key) ?? [];
+      return payloads[payloads.length - 1] ?? null;
+    },
+    getUploadCount: (key) => uploadLogs.get(key)?.length ?? 0,
+  };
 };
 
 export type E2ERole =

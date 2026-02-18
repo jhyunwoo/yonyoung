@@ -128,6 +128,7 @@ export default function ImageInput({
               type="button"
               onClick={onRetry}
               className="rounded-md border border-red-300 px-2 py-1 text-xs text-red-700 hover:bg-red-50"
+              data-testid={`${testIdPrefix}-upload-retry`}
             >
               업로드 재시도
             </button>

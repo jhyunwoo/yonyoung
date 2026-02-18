@@ -107,6 +107,7 @@ export const readE2eEnv = (key: string, fallback?: string): string => {
 
 export type E2ESuiteMode = "smoke" | "full";
 export type E2ERoleMatrixMode = "core" | "all";
+export type E2EUploadMode = "mock" | "real" | "hybrid";
 
 const normalizeTextValue = (value: string | undefined): string =>
   (value ?? "").trim().toLowerCase();
@@ -119,6 +120,17 @@ export const readE2eSuiteMode = (): E2ESuiteMode => {
 export const readE2eRoleMatrixMode = (): E2ERoleMatrixMode => {
   const rawValue = normalizeTextValue(process.env.E2E_ROLE_MATRIX);
   return rawValue === "all" ? "all" : "core";
+};
+
+export const readE2eUploadMode = (): E2EUploadMode => {
+  const rawValue = normalizeTextValue(process.env.E2E_UPLOAD_MODE);
+  if (rawValue === "mock") {
+    return "mock";
+  }
+  if (rawValue === "real") {
+    return "real";
+  }
+  return "hybrid";
 };
 
 export const requireE2eEnv = (keys: string[]): Record<string, string> => {

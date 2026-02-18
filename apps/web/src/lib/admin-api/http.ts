@@ -7,7 +7,7 @@ import {
 const DEFAULT_AUTH_API_URL = "http://localhost:8787";
 const DEFAULT_PRODUCTION_AUTH_API_URL = "https://api.moveto.workers.dev";
 const ADMIN_API_BASE_PATH = "/api";
-const REQUEST_TIMEOUT_MS = 12_000;
+const REQUEST_TIMEOUT_MS = 20_000;
 
 export type AdminRequestMethod = "GET" | "POST" | "PATCH" | "DELETE";
 

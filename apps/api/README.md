@@ -38,6 +38,7 @@ Required runtime variables:
 - `PASSKEY_RP_NAME`
 - `PASSKEY_ORIGIN`
 - `BETTER_AUTH_EMAIL_AND_PASSWORD_ENABLED` (optional, default `false`; set `true` for E2E email sign-in)
+- `DOCS_AUTH_IN_PROD` (optional, default `false`; set `true` to require auth for `/api/docs` and `/api/openapi.json`)
 - `R2_S3_ENDPOINT`
 - `R2_ACCESS_KEY_ID`
 - `R2_SECRET_ACCESS_KEY`
@@ -104,8 +105,8 @@ Presigned upload endpoints:
 
 OpenAPI docs are generated with `@hono/zod-openapi` for internal APIs and merged with Better Auth OpenAPI.
 
-- `GET /api/openapi.json` (auth required)
-- `GET /api/docs` (auth required)
+- `GET /api/openapi.json` (`DOCS_AUTH_IN_PROD=true`일 때 auth required)
+- `GET /api/docs` (`DOCS_AUTH_IN_PROD=true`일 때 auth required)
 
 Better Auth schema endpoint is also protected:
 
@@ -163,5 +164,6 @@ wrangler secret put GOOGLE_CLIENT_SECRET
 ```
 
 Non-sensitive auth config is defined in `wrangler.jsonc` under `vars`.
+`DOCS_AUTH_IN_PROD`는 저장소 기본값 대신 Cloudflare 대시보드/CI 환경변수에서 배포 환경에만 `true`로 설정하는 것을 권장합니다.
 
 For deployment, set `BETTER_AUTH_URL` to the public API origin (for example `https://api.example.com`) so Better Auth `baseURL` is explicitly resolved from runtime environment variables.

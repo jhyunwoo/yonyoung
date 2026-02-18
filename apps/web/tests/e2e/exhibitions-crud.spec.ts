@@ -3,6 +3,8 @@ import {
   cleanupByPrefix,
   ensureAdminSession,
   ensureGeneration,
+  installPresignedUploadMock,
+  shouldUseUploadMock,
   shouldRunFileUploadFlow,
   uniqueText,
 } from "./helpers";
@@ -34,8 +36,38 @@ test.describe("exhibitions crud", () => {
     await ensureAdminSession(page);
 
     const generation = await ensureGeneration(request, e2ePrefix);
-    const runFileUploadFlow = await shouldRunFileUploadFlow(request, page);
-    test.skip(!runFileUploadFlow, "파일 업로드 가능한 환경에서만 실행합니다.");
+    let uploadMock: Awaited<ReturnType<typeof installPresignedUploadMock>> | null = null;
+    if (shouldUseUploadMock()) {
+      uploadMock = await installPresignedUploadMock(page, {
+        routes: [
+          {
+            key: "exhibition-cover",
+            presignPath: "/exhibitions/presign/cover",
+            resource: "exhibitions",
+            slot: "cover",
+            requiredHeaders: {
+              "Content-Type": "image/png",
+              "x-amz-meta-source": "e2e-exhibition-cover",
+            },
+            uploadDelayMs: 120,
+          },
+          {
+            key: "exhibition-detail",
+            presignPath: "/exhibitions/presign/detail",
+            resource: "exhibitions",
+            slot: "detail",
+            requiredHeaders: {
+              "Content-Type": "image/png",
+              "x-amz-meta-source": "e2e-exhibition-detail",
+            },
+            uploadDelayMs: 120,
+          },
+        ],
+      });
+    } else {
+      const runFileUploadFlow = await shouldRunFileUploadFlow(request, page);
+      test.skip(!runFileUploadFlow, "파일 업로드 가능한 환경에서만 실행합니다.");
+    }
     const title = uniqueText(e2ePrefix, "exhibition");
     const updatedTitle = `${title}-updated`;
 
@@ -124,6 +156,27 @@ test.describe("exhibitions crud", () => {
     await expect(page.getByTestId("exhibitions-success")).toContainText("삭제");
     await expect.poll(async () => (await readDrawerQuery()).panel).toBeNull();
     await expect.poll(async () => (await readDrawerQuery()).id).toBeNull();
+
+    if (uploadMock) {
+      const coverPresignPayloads = uploadMock.getPresignPayloads("exhibition-cover");
+      const detailPresignPayloads = uploadMock.getPresignPayloads("exhibition-detail");
+      expect(coverPresignPayloads[0]).toMatchObject({
+        fileName: "test-image.png",
+        contentType: "image/png",
+      });
+      expect(detailPresignPayloads[0]).toMatchObject({
+        fileName: "test-image.png",
+        contentType: "image/png",
+      });
+
+      expect(uploadMock.getUploadCount("exhibition-cover")).toBe(2);
+      expect(uploadMock.getUploadCount("exhibition-detail")).toBe(2);
+
+      const firstCoverUpload = uploadMock.getUploadRequests("exhibition-cover")[0];
+      const firstDetailUpload = uploadMock.getUploadRequests("exhibition-detail")[0];
+      expect(firstCoverUpload?.headers["x-amz-meta-source"]).toBe("e2e-exhibition-cover");
+      expect(firstDetailUpload?.headers["x-amz-meta-source"]).toBe("e2e-exhibition-detail");
+    }
 
     await cleanupByPrefix(request, e2ePrefix);
   });

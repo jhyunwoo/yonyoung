@@ -1,11 +1,13 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { Scalar } from "@scalar/hono-api-reference";
+import type { Context } from "hono";
+import { requireActor } from "../lib/http/authz";
 import { internalError } from "../lib/http/response";
 import { enrichOpenApiDocument } from "../lib/openapi/enrich";
 import { mergeOpenApiDocuments } from "../lib/openapi/merge";
 import { errorResponses } from "../lib/openapi/responses";
 import { ApiOpenApiDocumentSchema } from "../lib/openapi/schemas";
-import { AppDependencies } from "../lib/services/dependencies";
+import type { AppDependencies } from "../lib/services/dependencies";
 import HonoAppType from "../types/honoAppType";
 
 type App = OpenAPIHono<HonoAppType>;
@@ -42,6 +44,7 @@ const openApiJsonRoute = createRoute({
         },
       },
     },
+    401: errorResponses[401],
     500: errorResponses[500],
   },
 });
@@ -60,8 +63,25 @@ const docsRoute = createRoute({
         },
       },
     },
+    401: errorResponses[401],
   },
 });
+
+const ensureDocsAccess = async (
+  c: Context<HonoAppType>,
+  dependencies: AppDependencies,
+) => {
+  if (!dependencies.shouldRequireDocsAuth(c)) {
+    return null;
+  }
+
+  const actorResult = await requireActor(c, dependencies);
+  if ("response" in actorResult) {
+    return actorResult.response;
+  }
+
+  return null;
+};
 
 /**
  * registerDocsRoutes 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
@@ -75,6 +95,11 @@ export const registerDocsRoutes = (
   dependencies: AppDependencies,
 ) => {
   app.openapi(openApiJsonRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 네트워크 실패/타임아웃 상황을 고려해 예외 처리와 기본값 규약을 유지해야 합니다. */ async (c): Promise<any> => {
+    const authResponse = await ensureDocsAccess(c, dependencies);
+    if (authResponse) {
+      return authResponse;
+    }
+
     try {
       const internalDoc = app.getOpenAPI31Document({
         ...OPENAPI_BASE_DOCUMENT,
@@ -91,12 +116,19 @@ export const registerDocsRoutes = (
   });
 
   const scalarReference = Scalar<HonoAppType>({
-    url: "/api/openapi.json",
+    spec: {
+      url: "/api/openapi.json",
+    },
     pageTitle: "Yonyoung API Docs",
     theme: "saturn",
   });
 
   app.openapi(docsRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
+    const authResponse = await ensureDocsAccess(c, dependencies);
+    if (authResponse) {
+      return authResponse;
+    }
+
     return scalarReference(c, /** scalarReference 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {});
   });
 };

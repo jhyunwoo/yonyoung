@@ -3,6 +3,8 @@ import {
   cleanupByPrefix,
   ensureAdminSession,
   ensureGeneration,
+  installPresignedUploadMock,
+  shouldUseUploadMock,
   shouldRunFileUploadFlow,
   signUpTemporaryUser,
   uniqueText,
@@ -35,8 +37,27 @@ test.describe("users crud", () => {
     await ensureAdminSession(page);
 
     const generation = await ensureGeneration(request, e2ePrefix);
-    const runFileUploadFlow = await shouldRunFileUploadFlow(request, page);
-    test.skip(!runFileUploadFlow, "파일 업로드 가능한 환경에서만 실행합니다.");
+    let uploadMock: Awaited<ReturnType<typeof installPresignedUploadMock>> | null = null;
+    if (shouldUseUploadMock()) {
+      uploadMock = await installPresignedUploadMock(page, {
+        routes: [
+          {
+            key: "user-profile",
+            presignPath: "/users/presign/profile",
+            resource: "users",
+            slot: "profile",
+            requiredHeaders: {
+              "Content-Type": "image/png",
+              "x-amz-meta-source": "e2e-user-profile",
+            },
+            uploadDelayMs: 120,
+          },
+        ],
+      });
+    } else {
+      const runFileUploadFlow = await shouldRunFileUploadFlow(request, page);
+      test.skip(!runFileUploadFlow, "파일 업로드 가능한 환경에서만 실행합니다.");
+    }
     const tempUser = await signUpTemporaryUser(e2ePrefix);
 
     await page.goto("/admin/users");
@@ -91,6 +112,18 @@ test.describe("users crud", () => {
     ).toHaveCount(0);
     await expect.poll(async () => (await readDrawerQuery()).panel).toBeNull();
     await expect.poll(async () => (await readDrawerQuery()).id).toBeNull();
+
+    if (uploadMock) {
+      const profilePresignPayloads = uploadMock.getPresignPayloads("user-profile");
+      expect(profilePresignPayloads[0]).toMatchObject({
+        fileName: "test-image.png",
+        contentType: "image/png",
+      });
+      expect(uploadMock.getUploadCount("user-profile")).toBe(1);
+
+      const firstUpload = uploadMock.getUploadRequests("user-profile")[0];
+      expect(firstUpload?.headers["x-amz-meta-source"]).toBe("e2e-user-profile");
+    }
 
     await cleanupByPrefix(request, e2ePrefix);
   });

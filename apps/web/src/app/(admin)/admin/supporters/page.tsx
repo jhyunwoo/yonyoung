@@ -199,7 +199,7 @@ export default function SupportersAdminPage({
 
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (createUpload.isUploading) {
+    if (createUpload.isUploading || createUpload.hasUploadError) {
       return;
     }
     if (!createUpload.currentUrl) {
@@ -240,7 +240,7 @@ export default function SupportersAdminPage({
     if (!selected) {
       return;
     }
-    if (editUpload.isUploading) {
+    if (editUpload.isUploading || editUpload.hasUploadError) {
       return;
     }
     if (!editUpload.currentUrl) {

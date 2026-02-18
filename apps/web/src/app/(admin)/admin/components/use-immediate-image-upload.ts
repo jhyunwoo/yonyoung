@@ -42,10 +42,17 @@ export const useImmediateImageUpload = ({
       setErrorMessage(null);
 
       try {
+        const updateProgress = (value: number) => {
+          if (latestUploadTokenRef.current !== uploadToken) {
+            return;
+          }
+          setProgress(value);
+        };
+
         const uploadedUrl = await uploadWithPresign({
           presignPath,
           file: nextFile,
-          onProgress: setProgress,
+          onProgress: updateProgress,
         });
 
         if (latestUploadTokenRef.current !== uploadToken) {
@@ -60,6 +67,7 @@ export const useImmediateImageUpload = ({
           return;
         }
         setStatus("failed");
+        setProgress(null);
         setErrorMessage(readUploadErrorMessage(error));
       }
     },
@@ -108,4 +116,3 @@ export const useImmediateImageUpload = ({
     setCurrentUrl,
   };
 };
-

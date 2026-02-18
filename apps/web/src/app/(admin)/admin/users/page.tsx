@@ -252,7 +252,7 @@ export default function UsersAdminPage({
     if (!selectedDetail) {
       return;
     }
-    if (imageUpload.isUploading) {
+    if (imageUpload.isUploading || imageUpload.hasUploadError) {
       return;
     }
 

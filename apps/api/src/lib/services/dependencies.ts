@@ -1,4 +1,4 @@
-import { Context } from "hono";
+import type { Context } from "hono";
 import { getActorFromSession } from "../auth/session";
 import { createAuth } from "../auth";
 import { Actor } from "../authorization/types";
@@ -6,7 +6,7 @@ import HonoAppType from "../../types/honoAppType";
 import { createDbDataService } from "./db-service";
 import { DataService, PresignService } from "./types";
 import { createR2PresignService } from "../storage/presign";
-import { OpenAPIDocument } from "../openapi/merge";
+import type { OpenAPIDocument } from "../openapi/merge";
 
 export type ResolveActor = (
   c: Context<HonoAppType>,
@@ -20,11 +20,22 @@ export type GetAuthOpenApiSchema = (
   c: Context<HonoAppType>,
 ) => Promise<OpenAPIDocument>;
 
+export type ShouldRequireDocsAuth = (c: Context<HonoAppType>) => boolean;
+
 export type AppDependencies = {
   resolveActor: ResolveActor;
   getDataService: GetDataService;
   getPresignService: GetPresignService;
   getAuthOpenApiSchema: GetAuthOpenApiSchema;
+  shouldRequireDocsAuth: ShouldRequireDocsAuth;
+};
+
+const parseBooleanEnv = (value: string | undefined): boolean => {
+  if (!value || value.trim().length === 0) {
+    return false;
+  }
+
+  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
 };
 
 /**
@@ -34,6 +45,7 @@ export type AppDependencies = {
  */
 export const createDefaultDependencies = (): AppDependencies => ({
   resolveActor: getActorFromSession,
+  shouldRequireDocsAuth: (c) => parseBooleanEnv(c.env?.DOCS_AUTH_IN_PROD),
     /**
    * getDataService 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
    * @param c 요청/실행 컨텍스트 객체입니다.
