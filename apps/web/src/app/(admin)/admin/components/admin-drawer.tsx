@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 type AdminDrawerProps = {
   open: boolean;
@@ -42,48 +43,57 @@ export default function AdminDrawer({
     };
   }, [open, onClose]);
 
-  if (!open) {
-    return null;
-  }
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex justify-end bg-black/35"
-      onClick={onClose}
-      data-testid={`${testId}-backdrop`}
-    >
-      <section
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className="flex h-full w-full max-w-2xl flex-col border-l border-gray-200 bg-white shadow-xl"
-        onClick={(event) => event.stopPropagation()}
-        data-testid={testId}
-      >
-        <header className="flex items-start justify-between gap-3 border-b border-gray-200 px-5 py-4">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-            {description ? (
-              <p className="mt-1 text-sm text-gray-600">{description}</p>
-            ) : null}
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md border border-gray-300 px-2 py-1 text-sm text-gray-600 hover:bg-gray-50"
-            data-testid={`${testId}-close`}
+    <AnimatePresence>
+      {open ? (
+        <motion.div
+          key="drawer-backdrop"
+          className="fixed inset-0 z-50 flex justify-end bg-black/35"
+          onClick={onClose}
+          data-testid={`${testId}-backdrop`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+        >
+          <motion.section
+            key="drawer-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
+            className="flex h-full w-full max-w-3xl flex-col border-l border-gray-200 bg-white shadow-xl xl:max-w-4xl"
+            onClick={(event) => event.stopPropagation()}
+            data-testid={testId}
+            initial={{ x: 56, opacity: 0.98 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 40, opacity: 0.98 }}
+            transition={{ duration: 0.24, ease: "easeOut" }}
           >
-            닫기
-          </button>
-        </header>
+            <header className="flex items-start justify-between gap-3 border-b border-gray-200 px-5 py-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+                {description ? (
+                  <p className="mt-1 text-sm text-gray-600">{description}</p>
+                ) : null}
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-md border border-gray-300 px-2 py-1 text-sm text-gray-600 hover:bg-gray-50"
+                data-testid={`${testId}-close`}
+              >
+                닫기
+              </button>
+            </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
 
-        {footer ? (
-          <footer className="border-t border-gray-200 bg-white px-5 py-3">{footer}</footer>
-        ) : null}
-      </section>
-    </div>
+            {footer ? (
+              <footer className="border-t border-gray-200 bg-white px-5 py-3">{footer}</footer>
+            ) : null}
+          </motion.section>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
   );
 }
-

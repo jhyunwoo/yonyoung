@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
 import type { ApiGeneration, ApiUser } from "../../../../lib/admin-api/types";
 import {
+  ADMIN_USER_ROLE_OPTIONS,
   formatTimestamp,
   readErrorMessage,
   toDateInputValue,
@@ -31,18 +32,56 @@ const emptyForm: GenerationFormState = {
   endDate: "",
 };
 
+const ADMIN_ROLE_LABELS: Record<string, string> = {
+  president: "회장",
+  vice_president: "부회장",
+  manager: "운영진",
+  new_member: "신입 회원",
+  associate_member: "준회원",
+  regular_member: "정회원",
+  unverified: "미인증",
+};
+
+const readAdminRoleLabel = (role: string | null | undefined): string => {
+  if (!role) {
+    return "미지정";
+  }
+  return ADMIN_ROLE_LABELS[role] ?? role;
+};
+
+type RoleFilterKey = "unset" | (typeof ADMIN_USER_ROLE_OPTIONS)[number];
+
+const ASSIGN_MEMBER_ROLE_FILTER_OPTIONS: { value: RoleFilterKey; label: string }[] = [
+  { value: "unset", label: "미지정" },
+  ...ADMIN_USER_ROLE_OPTIONS.map((role) => ({
+    value: role,
+    label: readAdminRoleLabel(role),
+  })),
+];
+
 export default function GenerationsAdminPage() {
   const [items, setItems] = useState<ApiGeneration[]>([]);
   const [users, setUsers] = useState<ApiUser[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [panelMode, setPanelMode] = useState<"create" | "edit" | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [assignMemberSearchQuery, setAssignMemberSearchQuery] = useState("");
+  const [showRoleFilters, setShowRoleFilters] = useState(false);
+  const [assignMemberIncludeRoleFilters, setAssignMemberIncludeRoleFilters] = useState<
+    RoleFilterKey[]
+  >([]);
+  const [assignMemberExcludeRoleFilters, setAssignMemberExcludeRoleFilters] = useState<
+    RoleFilterKey[]
+  >([]);
   const [createForm, setCreateForm] = useState<GenerationFormState>(emptyForm);
   const [editForm, setEditForm] = useState<GenerationFormState>(emptyForm);
+  const [pendingMemberIds, setPendingMemberIds] = useState<string[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeSubmitAction, setActiveSubmitAction] = useState<"create" | "delete" | null>(
+  const [activeSubmitAction, setActiveSubmitAction] = useState<
+    "create" | "delete" | "apply-members" | null
+  >(
     null,
   );
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -62,12 +101,75 @@ export default function GenerationsAdminPage() {
     return users.filter((user) => user.generationId === selected.id);
   }, [selected, users]);
 
-  const assignableUsers = useMemo(() => {
+  const selectedMemberIdSet = useMemo(() => {
+    return new Set(selectedMembers.map((member) => member.id));
+  }, [selectedMembers]);
+
+  const pendingMemberIdSet = useMemo(() => {
+    return new Set(pendingMemberIds);
+  }, [pendingMemberIds]);
+
+  const stagedSelectedMembers = useMemo(() => {
     if (!selected) {
       return [];
     }
-    return users.filter((user) => user.generationId !== selected.id);
-  }, [selected, users]);
+    return users.filter((user) => pendingMemberIdSet.has(user.id));
+  }, [selected, users, pendingMemberIdSet]);
+
+  const stagedAssignableUsers = useMemo(() => {
+    if (!selected) {
+      return [];
+    }
+    return users.filter((user) => !pendingMemberIdSet.has(user.id));
+  }, [selected, users, pendingMemberIdSet]);
+
+  const hasPendingMemberChanges = useMemo(() => {
+    if (selectedMemberIdSet.size !== pendingMemberIdSet.size) {
+      return true;
+    }
+    for (const userId of selectedMemberIdSet) {
+      if (!pendingMemberIdSet.has(userId)) {
+        return true;
+      }
+    }
+    return false;
+  }, [pendingMemberIdSet, selectedMemberIdSet]);
+
+  const assignMemberIncludeRoleFilterSet = useMemo(
+    () => new Set(assignMemberIncludeRoleFilters),
+    [assignMemberIncludeRoleFilters],
+  );
+
+  const assignMemberExcludeRoleFilterSet = useMemo(
+    () => new Set(assignMemberExcludeRoleFilters),
+    [assignMemberExcludeRoleFilters],
+  );
+
+  const filteredAssignableUsers = useMemo(() => {
+    const query = assignMemberSearchQuery.trim().toLowerCase();
+    return stagedAssignableUsers.filter((user) => {
+      const matchesQuery = query ? user.name.toLowerCase().includes(query) : true;
+      if (!matchesQuery) {
+        return false;
+      }
+
+      const roleFilterKey = (user.role ?? "unset") as RoleFilterKey;
+
+      if (
+        assignMemberIncludeRoleFilterSet.size > 0 &&
+        !assignMemberIncludeRoleFilterSet.has(roleFilterKey)
+      ) {
+        return false;
+      }
+
+      return !assignMemberExcludeRoleFilterSet.has(roleFilterKey);
+    });
+  }, [
+    assignMemberExcludeRoleFilterSet,
+    assignMemberIncludeRoleFilterSet,
+    assignMemberSearchQuery,
+    stagedAssignableUsers,
+  ]);
 
   const filteredItems = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -187,6 +289,20 @@ export default function GenerationsAdminPage() {
     }
   }, [isLoading, items, panelMode, queryState, selectedId, setDrawerQuery]);
 
+  useEffect(() => {
+    if (!selected) {
+      setPendingMemberIds([]);
+      return;
+    }
+    setPendingMemberIds(selectedMembers.map((member) => member.id));
+  }, [selected, selectedMembers]);
+
+  useEffect(() => {
+    if (panelMode !== "edit") {
+      setShowRoleFilters(false);
+    }
+  }, [panelMode]);
+
   const handleCreate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
@@ -276,43 +392,90 @@ export default function GenerationsAdminPage() {
     setSuccessMessage(null);
   };
 
-  const handleAssignMember = async (userId: string) => {
-    if (!selected) {
+  const handleAssignMember = (userId: string) => {
+    setPendingMemberIds((previous) => {
+      if (previous.includes(userId)) {
+        return previous;
+      }
+      return [...previous, userId];
+    });
+    setSuccessMessage(null);
+  };
+
+  const handleUnassignMember = (userId: string) => {
+    setPendingMemberIds((previous) => previous.filter((id) => id !== userId));
+    setSuccessMessage(null);
+  };
+
+  const handleToggleRoleFilter = (
+    role: RoleFilterKey,
+    mode: "include" | "exclude",
+    checked: boolean,
+  ) => {
+    if (mode === "include") {
+      setAssignMemberIncludeRoleFilters((previous) => {
+        if (!checked) {
+          return previous.filter((value) => value !== role);
+        }
+        return previous.includes(role) ? previous : [...previous, role];
+      });
+      if (checked) {
+        setAssignMemberExcludeRoleFilters((previous) =>
+          previous.filter((value) => value !== role),
+        );
+      }
       return;
     }
 
+    setAssignMemberExcludeRoleFilters((previous) => {
+      if (!checked) {
+        return previous.filter((value) => value !== role);
+      }
+      return previous.includes(role) ? previous : [...previous, role];
+    });
+    if (checked) {
+      setAssignMemberIncludeRoleFilters((previous) =>
+        previous.filter((value) => value !== role),
+      );
+    }
+  };
+
+  const handleApplyMemberChanges = async () => {
+    if (!selected || !hasPendingMemberChanges) {
+      return;
+    }
+
+    const nextMemberIdSet = new Set(pendingMemberIds);
+    const addMemberIds = pendingMemberIds.filter((memberId) => !selectedMemberIdSet.has(memberId));
+    const removeMemberIds = selectedMembers
+      .filter((member) => !nextMemberIdSet.has(member.id))
+      .map((member) => member.id);
+
     setIsSubmitting(true);
+    setActiveSubmitAction("apply-members");
     setErrorMessage(null);
     setSuccessMessage(null);
 
     try {
-      await adminResourceApi.updateUser(userId, {
-        generationId: selected.id,
-      });
-      setSuccessMessage("기수 멤버를 구성했습니다.");
+      await Promise.all([
+        ...addMemberIds.map((memberId) =>
+          adminResourceApi.updateUser(memberId, {
+            generationId: selected.id,
+          }),
+        ),
+        ...removeMemberIds.map((memberId) =>
+          adminResourceApi.updateUser(memberId, {
+            generationId: null,
+          }),
+        ),
+      ]);
+      setSuccessMessage("기수 멤버 변경 사항을 반영했습니다.");
       await loadItems(selected.id);
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleUnassignMember = async (userId: string) => {
-    setIsSubmitting(true);
-    setErrorMessage(null);
-    setSuccessMessage(null);
-
-    try {
-      await adminResourceApi.updateUser(userId, {
-        generationId: null,
-      });
-      setSuccessMessage("기수에서 멤버를 해제했습니다.");
-      await loadItems(selected?.id ?? null);
-    } catch (error) {
-      setErrorMessage(readErrorMessage(error));
-    } finally {
-      setIsSubmitting(false);
+      setActiveSubmitAction(null);
     }
   };
 
@@ -401,23 +564,15 @@ export default function GenerationsAdminPage() {
                 data-testid={`generation-row-${item.id}`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
+                  <button
+                    type="button"
+                    onClick={() => handleSelect(item)}
+                    className="min-w-0 flex-1 text-left"
+                  >
                     <p className="font-medium text-gray-900">{item.name}</p>
                     <p className="text-xs text-gray-500">표시 순서: {item.sortOrder}</p>
                     <p className="text-xs text-gray-500">시작일: {formatTimestamp(item.startDate)}</p>
                     <p className="text-xs text-gray-500">종료일: {formatTimestamp(item.endDate)}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleSelect(item)}
-                    className={`rounded-md px-2 py-1 text-xs font-medium ${
-                      selectedId === item.id
-                        ? "bg-black text-white"
-                        : "border border-gray-300 text-gray-700"
-                    }`}
-                    data-testid={`generation-select-${item.id}`}
-                  >
-                    {selectedId === item.id ? "선택됨" : "선택"}
                   </button>
                 </div>
               </li>
@@ -516,107 +671,146 @@ export default function GenerationsAdminPage() {
           </form>
         ) : selected ? (
           <div className="space-y-5">
-            <form onSubmit={handleUpdate} className="space-y-3" data-testid="generation-edit-form">
-              <label className="block text-sm">
-                <span className="mb-1 block text-gray-700">기수 이름</span>
-                <input
-                  type="text"
-                  value={editForm.name}
-                  onChange={(event) =>
-                    setEditForm((previous) => ({ ...previous, name: event.target.value }))
-                  }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
-                  required
-                  data-testid="generation-edit-name"
-                />
-              </label>
-
-              <label className="block text-sm">
-                <span className="mb-1 block text-gray-700">표시 순서</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={editForm.sortOrder}
-                  onChange={(event) =>
-                    setEditForm((previous) => ({ ...previous, sortOrder: event.target.value }))
-                  }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
-                  required
-                  data-testid="generation-edit-sort-order"
-                />
-              </label>
-
-              <label className="block text-sm">
-                <span className="mb-1 block text-gray-700">시작일</span>
-                <input
-                  type="date"
-                  value={editForm.startDate}
-                  onChange={(event) =>
-                    setEditForm((previous) => ({ ...previous, startDate: event.target.value }))
-                  }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
-                  required
-                  data-testid="generation-edit-start-date"
-                />
-              </label>
-
-              <label className="block text-sm">
-                <span className="mb-1 block text-gray-700">종료일</span>
-                <input
-                  type="date"
-                  value={editForm.endDate}
-                  onChange={(event) =>
-                    setEditForm((previous) => ({ ...previous, endDate: event.target.value }))
-                  }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
-                  required
-                  data-testid="generation-edit-end-date"
-                />
-              </label>
-
-              <div className="mt-2 flex gap-2">
-                <AdminActionButton type="submit" disabled={isSubmitting} testId="generation-edit-submit">
-                  수정 저장
-                </AdminActionButton>
-                <AdminActionButton
-                  variant="danger"
-                  onClick={() => {
-                    if (!isSubmitting) {
-                      setDeleteModalOpen(true);
-                    }
-                  }}
-                  loading={activeSubmitAction === "delete"}
-                  disabled={isSubmitting && activeSubmitAction !== "delete"}
-                  loadingText="기수 삭제 중..."
-                  testId="generation-delete-button"
-                >
-                  기수 삭제
-                </AdminActionButton>
+            <section className="rounded-2xl border border-gray-200/80 bg-gradient-to-br from-white to-gray-50 p-4 shadow-sm">
+              <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900">기수 기본 정보</h3>
+                  <p className="mt-0.5 text-xs text-gray-600">
+                    이름, 표시 순서, 기간을 수정하고 저장할 수 있습니다.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span className="rounded-full bg-gray-900 px-2 py-1 text-xs font-medium text-white">
+                    선택: {selected.name}
+                  </span>
+                  <span className="rounded-full border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700">
+                    순서 {selected.sortOrder}
+                  </span>
+                  <span
+                    className={`rounded-full px-2 py-1 text-xs font-medium ${
+                      hasPendingMemberChanges
+                        ? "border border-amber-300 bg-amber-50 text-amber-700"
+                        : "border border-emerald-300 bg-emerald-50 text-emerald-700"
+                    }`}
+                  >
+                    {hasPendingMemberChanges ? "멤버 변경 예정" : "멤버 동기화 완료"}
+                  </span>
+                </div>
               </div>
-            </form>
+
+              <form onSubmit={handleUpdate} className="space-y-4" data-testid="generation-edit-form">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <label className="block text-sm">
+                    <span className="mb-1 block text-gray-700">기수 이름</span>
+                    <input
+                      type="text"
+                      value={editForm.name}
+                      onChange={(event) =>
+                        setEditForm((previous) => ({ ...previous, name: event.target.value }))
+                      }
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 transition focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                      required
+                      data-testid="generation-edit-name"
+                    />
+                  </label>
+
+                  <label className="block text-sm">
+                    <span className="mb-1 block text-gray-700">표시 순서</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={editForm.sortOrder}
+                      onChange={(event) =>
+                        setEditForm((previous) => ({ ...previous, sortOrder: event.target.value }))
+                      }
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 transition focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                      required
+                      data-testid="generation-edit-sort-order"
+                    />
+                  </label>
+
+                  <label className="block text-sm">
+                    <span className="mb-1 block text-gray-700">시작일</span>
+                    <input
+                      type="date"
+                      value={editForm.startDate}
+                      onChange={(event) =>
+                        setEditForm((previous) => ({ ...previous, startDate: event.target.value }))
+                      }
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 transition focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                      required
+                      data-testid="generation-edit-start-date"
+                    />
+                  </label>
+
+                  <label className="block text-sm">
+                    <span className="mb-1 block text-gray-700">종료일</span>
+                    <input
+                      type="date"
+                      value={editForm.endDate}
+                      onChange={(event) =>
+                        setEditForm((previous) => ({ ...previous, endDate: event.target.value }))
+                      }
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 transition focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                      required
+                      data-testid="generation-edit-end-date"
+                    />
+                  </label>
+                </div>
+
+                <div className="mt-1 flex flex-wrap gap-2">
+                  <AdminActionButton type="submit" disabled={isSubmitting} testId="generation-edit-submit">
+                    수정 저장
+                  </AdminActionButton>
+                  <AdminActionButton
+                    variant="danger"
+                    onClick={() => {
+                      if (!isSubmitting) {
+                        setDeleteModalOpen(true);
+                      }
+                    }}
+                    loading={activeSubmitAction === "delete"}
+                    disabled={isSubmitting && activeSubmitAction !== "delete"}
+                    loadingText="기수 삭제 중..."
+                    testId="generation-delete-button"
+                  >
+                    기수 삭제
+                  </AdminActionButton>
+                </div>
+              </form>
+            </section>
 
             <section className="space-y-4" data-testid="generation-members-panel">
-              <article className="rounded-lg border border-gray-200 p-3">
-                <h3 className="mb-2 text-sm font-semibold">현재 기수 멤버</h3>
-                {selectedMembers.length === 0 ? (
+              <article className="rounded-2xl border border-gray-200/80 bg-white p-4 shadow-sm">
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold text-gray-900">현재 기수 멤버</h3>
+                  <span className="rounded-full border border-gray-300 bg-gray-50 px-2 py-1 text-xs text-gray-600">
+                    {stagedSelectedMembers.length}명
+                  </span>
+                </div>
+                {stagedSelectedMembers.length === 0 ? (
                   <p className="text-sm text-gray-500" data-testid="generation-members-empty">
                     배정된 멤버가 없습니다.
                   </p>
                 ) : (
-                  <ul className="space-y-2" data-testid="generation-members-list">
-                    {selectedMembers.map((member) => (
+                  <ul
+                    className="grid gap-2 md:grid-cols-2 xl:grid-cols-3"
+                    data-testid="generation-members-list"
+                  >
+                    {stagedSelectedMembers.map((member) => (
                       <li
                         key={member.id}
-                        className="flex items-center justify-between rounded-md border border-gray-200 p-2"
+                        className="flex h-full items-start justify-between gap-3 rounded-xl border border-gray-200 bg-white p-3 transition hover:border-gray-300 hover:shadow-sm"
                         data-testid={`generation-member-row-${member.id}`}
                       >
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{member.name}</p>
-                          <p className="text-xs text-gray-500">{member.email}</p>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900">{member.name}</p>
+                          <p className="text-xs text-gray-500">닉네임: {member.nickname ?? "없음"}</p>
+                          <p className="text-xs text-gray-500">권한: {readAdminRoleLabel(member.role)}</p>
                         </div>
                         <button
                           type="button"
-                          onClick={() => void handleUnassignMember(member.id)}
+                          onClick={() => handleUnassignMember(member.id)}
                           disabled={isSubmitting}
                           className="rounded-md border border-red-300 px-2 py-1 text-xs font-medium text-red-600 disabled:opacity-50"
                           data-testid={`generation-member-unassign-${member.id}`}
@@ -629,29 +823,122 @@ export default function GenerationsAdminPage() {
                 )}
               </article>
 
-              <article className="rounded-lg border border-gray-200 p-3">
-                <h3 className="mb-2 text-sm font-semibold">멤버 배정</h3>
-                {assignableUsers.length === 0 ? (
+              <article className="rounded-2xl border border-gray-200/80 bg-white p-4 shadow-sm">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold text-gray-900">멤버 배정</h3>
+                  <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+                    <input
+                      type="search"
+                      value={assignMemberSearchQuery}
+                      onChange={(event) => setAssignMemberSearchQuery(event.target.value)}
+                      placeholder="이름 검색"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm transition focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200 sm:w-56"
+                      data-testid="generation-assignable-search-input"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowRoleFilters((previous) => !previous)}
+                      className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                      data-testid="generation-assignable-role-filter-toggle"
+                    >
+                      {showRoleFilters ? "권한 필터 숨기기" : "권한 필터 보기"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAssignMemberIncludeRoleFilters([]);
+                        setAssignMemberExcludeRoleFilters([]);
+                      }}
+                      className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50"
+                      data-testid="generation-assignable-role-filter-reset"
+                    >
+                      권한 필터 초기화
+                    </button>
+                  </div>
+                </div>
+
+                {showRoleFilters ? (
+                  <div className="mb-3 grid gap-2 lg:grid-cols-2">
+                    <fieldset className="rounded-xl border border-gray-200 bg-gray-50/70 p-2">
+                      <legend className="px-1 text-xs font-medium text-gray-700">포함 권한</legend>
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                        {ASSIGN_MEMBER_ROLE_FILTER_OPTIONS.map((option) => (
+                          <label
+                            key={`include-${option.value}`}
+                            className="flex items-center gap-1.5 rounded-md px-1 py-0.5 text-xs text-gray-700 hover:bg-white"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={assignMemberIncludeRoleFilterSet.has(option.value)}
+                              onChange={(event) =>
+                                handleToggleRoleFilter(option.value, "include", event.target.checked)
+                              }
+                              className="h-3.5 w-3.5 rounded border-gray-300"
+                              data-testid={`generation-assignable-role-include-${option.value}`}
+                            />
+                            <span>{option.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+
+                    <fieldset className="rounded-xl border border-gray-200 bg-gray-50/70 p-2">
+                      <legend className="px-1 text-xs font-medium text-gray-700">제외 권한</legend>
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                        {ASSIGN_MEMBER_ROLE_FILTER_OPTIONS.map((option) => (
+                          <label
+                            key={`exclude-${option.value}`}
+                            className="flex items-center gap-1.5 rounded-md px-1 py-0.5 text-xs text-gray-700 hover:bg-white"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={assignMemberExcludeRoleFilterSet.has(option.value)}
+                              onChange={(event) =>
+                                handleToggleRoleFilter(option.value, "exclude", event.target.checked)
+                              }
+                              className="h-3.5 w-3.5 rounded border-gray-300"
+                              data-testid={`generation-assignable-role-exclude-${option.value}`}
+                            />
+                            <span>{option.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                  </div>
+                ) : null}
+                {stagedAssignableUsers.length === 0 ? (
                   <p className="text-sm text-gray-500" data-testid="generation-assignable-empty">
                     배정 가능한 멤버가 없습니다.
                   </p>
+                ) : filteredAssignableUsers.length === 0 ? (
+                  <p
+                    className="text-sm text-gray-500"
+                    data-testid="generation-assignable-filter-empty"
+                  >
+                    검색 조건에 맞는 멤버가 없습니다.
+                  </p>
                 ) : (
-                  <ul className="space-y-2" data-testid="generation-assignable-list">
-                    {assignableUsers.map((member) => (
+                  <ul
+                    className="grid gap-2 md:grid-cols-2 xl:grid-cols-3"
+                    data-testid="generation-assignable-list"
+                  >
+                    {filteredAssignableUsers.map((member) => (
                       <li
                         key={member.id}
-                        className="flex items-center justify-between rounded-md border border-gray-200 p-2"
+                        className="flex h-full items-start justify-between gap-3 rounded-xl border border-gray-200 bg-white p-3 transition hover:border-gray-300 hover:shadow-sm"
                         data-testid={`generation-assignable-row-${member.id}`}
                       >
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{member.name}</p>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900">{member.name}</p>
+                          <p className="text-xs text-gray-500">닉네임: {member.nickname ?? "없음"}</p>
+                          <p className="text-xs text-gray-500">권한: {readAdminRoleLabel(member.role)}</p>
                           <p className="text-xs text-gray-500">
-                            {member.email} / 권한: {member.role ?? "미지정"}
+                            현재 소속: {member.generationId ? "기수 배정됨" : "미배정"}
                           </p>
                         </div>
                         <button
                           type="button"
-                          onClick={() => void handleAssignMember(member.id)}
+                          onClick={() => handleAssignMember(member.id)}
                           disabled={isSubmitting}
                           className="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 disabled:opacity-50"
                           data-testid={`generation-member-assign-${member.id}`}
@@ -662,6 +949,18 @@ export default function GenerationsAdminPage() {
                     ))}
                   </ul>
                 )}
+
+                <div className="mt-3 flex items-center justify-end gap-2">
+                  <AdminActionButton
+                    onClick={() => void handleApplyMemberChanges()}
+                    loading={activeSubmitAction === "apply-members"}
+                    disabled={isSubmitting || !hasPendingMemberChanges}
+                    loadingText="변경 사항 반영 중..."
+                    testId="generation-members-apply-button"
+                  >
+                    수정 사항 반영
+                  </AdminActionButton>
+                </div>
               </article>
             </section>
           </div>

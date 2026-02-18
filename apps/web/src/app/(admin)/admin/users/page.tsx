@@ -382,24 +382,16 @@ export default function UsersAdminPage({
                 data-testid={`user-row-${item.id}`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
+                  <button
+                    type="button"
+                    onClick={() => void handleSelect(item)}
+                    className="min-w-0 flex-1 text-left"
+                  >
                     <p className="font-medium">{item.name}</p>
                     <p className="text-xs text-gray-500">{item.email}</p>
                     <p className="text-xs text-gray-500">
                       권한: {readAdminRoleLabel(item.role)}
                     </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => void handleSelect(item)}
-                    className={`rounded-md px-2 py-1 text-xs font-medium ${
-                      selectedId === item.id
-                        ? "bg-black text-white"
-                        : "border border-gray-300 text-gray-700"
-                    }`}
-                    data-testid={`user-select-${item.id}`}
-                  >
-                    {selectedId === item.id ? "선택됨" : "선택"}
                   </button>
                 </div>
               </li>

@@ -615,23 +615,15 @@ export default function ActivitiesAdminPage({
                 data-testid={`activity-row-${item.id}`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectActivity(item)}
+                    className="min-w-0 flex-1 text-left"
+                  >
                     <p className="font-medium text-gray-900">{item.title}</p>
                     <p className="text-xs text-gray-500">소속 기수 ID: {item.generationId}</p>
                     <p className="text-xs text-gray-500">활동 날짜: {formatTimestamp(item.activityDate)}</p>
                     <p className="text-xs text-gray-500">세부 이미지 수: {item.detailImages.length}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleSelectActivity(item)}
-                    className={`rounded-md px-2 py-1 text-xs font-medium ${
-                      selectedId === item.id
-                        ? "bg-black text-white"
-                        : "border border-gray-300 text-gray-700"
-                    }`}
-                    data-testid={`activity-select-${item.id}`}
-                  >
-                    {selectedId === item.id ? "선택됨" : "선택"}
                   </button>
                 </div>
               </li>
@@ -952,21 +944,13 @@ export default function ActivitiesAdminPage({
                       data-testid={`activity-detail-row-${image.id}`}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <div>
-                          <p className="text-sm font-medium">정렬 순서: {image.sortOrder}</p>
-                          <p className="truncate text-xs text-gray-500">{image.imageUrl}</p>
-                        </div>
                         <button
                           type="button"
                           onClick={() => handleSelectDetailImage(image)}
-                          className={`rounded-md px-2 py-1 text-xs font-medium ${
-                            selectedImageId === image.id
-                              ? "bg-black text-white"
-                              : "border border-gray-300 text-gray-700"
-                          }`}
-                          data-testid={`activity-detail-select-${image.id}`}
+                          className="min-w-0 flex-1 text-left"
                         >
-                          {selectedImageId === image.id ? "선택됨" : "선택"}
+                          <p className="text-sm font-medium">정렬 순서: {image.sortOrder}</p>
+                          <p className="truncate text-xs text-gray-500">{image.imageUrl}</p>
                         </button>
                       </div>
                     </li>

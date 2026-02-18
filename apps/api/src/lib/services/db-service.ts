@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import createDB from "../db";
 import {
   activities,
@@ -40,7 +40,12 @@ const mapActivitiesWithImages = async (
   const imageRows = await db
     .select()
     .from(activityImages)
-    .where(inArray(activityImages.activityId, ids))
+    .where(
+      and(
+        inArray(activityImages.activityId, ids),
+        isNull(activityImages.deletedAt),
+      ),
+    )
     .orderBy(asc(activityImages.sortOrder));
 
   const imageMap = new Map<string, ActivityImageEntity[]>();
@@ -75,7 +80,12 @@ const mapExhibitionsWithImages = async (
   const imageRows = await db
     .select()
     .from(exhibitionImages)
-    .where(inArray(exhibitionImages.exhibitionId, ids))
+    .where(
+      and(
+        inArray(exhibitionImages.exhibitionId, ids),
+        isNull(exhibitionImages.deletedAt),
+      ),
+    )
     .orderBy(asc(exhibitionImages.sortOrder));
 
   const imageMap = new Map<string, ExhibitionImageEntity[]>();
@@ -110,7 +120,9 @@ const mapLinktreesWithItems = async (
   const itemRows = await db
     .select()
     .from(linktreeItems)
-    .where(inArray(linktreeItems.linktreeId, ids));
+    .where(
+      and(inArray(linktreeItems.linktreeId, ids), isNull(linktreeItems.deletedAt)),
+    );
 
   const itemMap = new Map<string, LinktreeItemEntity[]>();
   for (const item of itemRows) {
@@ -141,7 +153,11 @@ export const createDbDataService = (database: D1Database): DataService => {
      * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
      */
     async listGenerations() {
-      return db.select().from(generations).orderBy(asc(generations.sortOrder));
+      return db
+        .select()
+        .from(generations)
+        .where(isNull(generations.deletedAt))
+        .orderBy(asc(generations.sortOrder));
     },
         /**
      * createGeneration 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
@@ -159,7 +175,7 @@ export const createDbDataService = (database: D1Database): DataService => {
         endDate: new Date(input.endDate),
       });
       return (await db.query.generations.findFirst({
-        where: eq(generations.id, id),
+        where: and(eq(generations.id, id), isNull(generations.deletedAt)),
       }))!;
     },
         /**
@@ -171,7 +187,7 @@ export const createDbDataService = (database: D1Database): DataService => {
     async getGenerationById(id) {
       return (
         (await db.query.generations.findFirst({
-          where: eq(generations.id, id),
+          where: and(eq(generations.id, id), isNull(generations.deletedAt)),
         })) ?? null
       );
     },
@@ -184,7 +200,7 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async updateGeneration(id, input) {
       const exists = await db.query.generations.findFirst({
-        where: eq(generations.id, id),
+        where: and(eq(generations.id, id), isNull(generations.deletedAt)),
       });
       if (!exists) {
         return null;
@@ -205,11 +221,11 @@ export const createDbDataService = (database: D1Database): DataService => {
             : {}),
           updatedAt: new Date(),
         })
-        .where(eq(generations.id, id));
+        .where(and(eq(generations.id, id), isNull(generations.deletedAt)));
 
       return (
         (await db.query.generations.findFirst({
-          where: eq(generations.id, id),
+          where: and(eq(generations.id, id), isNull(generations.deletedAt)),
         })) ?? null
       );
     },
@@ -221,12 +237,18 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async deleteGeneration(id) {
       const exists = await db.query.generations.findFirst({
-        where: eq(generations.id, id),
+        where: and(eq(generations.id, id), isNull(generations.deletedAt)),
       });
       if (!exists) {
         return false;
       }
-      await db.delete(generations).where(eq(generations.id, id));
+      await db
+        .update(generations)
+        .set({
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(and(eq(generations.id, id), isNull(generations.deletedAt)));
       return true;
     },
 
@@ -239,6 +261,7 @@ export const createDbDataService = (database: D1Database): DataService => {
       const rows = await db
         .select()
         .from(activities)
+        .where(isNull(activities.deletedAt))
         .orderBy(asc(activities.activityDate));
       return mapActivitiesWithImages(db, rows);
     },
@@ -251,6 +274,7 @@ export const createDbDataService = (database: D1Database): DataService => {
       const rows = await db
         .select()
         .from(activities)
+        .where(isNull(activities.deletedAt))
         .orderBy(desc(activities.activityDate));
       return mapActivitiesWithImages(db, rows);
     },
@@ -280,7 +304,7 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async getActivityById(id) {
       const row = await db.query.activities.findFirst({
-        where: eq(activities.id, id),
+        where: and(eq(activities.id, id), isNull(activities.deletedAt)),
       });
       if (!row) {
         return null;
@@ -288,7 +312,12 @@ export const createDbDataService = (database: D1Database): DataService => {
       const images = await db
         .select()
         .from(activityImages)
-        .where(eq(activityImages.activityId, id))
+        .where(
+          and(
+            eq(activityImages.activityId, id),
+            isNull(activityImages.deletedAt),
+          ),
+        )
         .orderBy(asc(activityImages.sortOrder));
       return {
         ...row,
@@ -304,7 +333,7 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async updateActivity(id, input) {
       const exists = await db.query.activities.findFirst({
-        where: eq(activities.id, id),
+        where: and(eq(activities.id, id), isNull(activities.deletedAt)),
       });
       if (!exists) {
         return null;
@@ -328,7 +357,7 @@ export const createDbDataService = (database: D1Database): DataService => {
             : {}),
           updatedAt: new Date(),
         })
-        .where(eq(activities.id, id));
+        .where(and(eq(activities.id, id), isNull(activities.deletedAt)));
 
       return this.getActivityById(id);
     },
@@ -340,12 +369,30 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async deleteActivity(id) {
       const exists = await db.query.activities.findFirst({
-        where: eq(activities.id, id),
+        where: and(eq(activities.id, id), isNull(activities.deletedAt)),
       });
       if (!exists) {
         return false;
       }
-      await db.delete(activities).where(eq(activities.id, id));
+      await db
+        .update(activities)
+        .set({
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(and(eq(activities.id, id), isNull(activities.deletedAt)));
+      await db
+        .update(activityImages)
+        .set({
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(activityImages.activityId, id),
+            isNull(activityImages.deletedAt),
+          ),
+        );
       return true;
     },
         /**
@@ -357,7 +404,10 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async addActivityImage(activityId, input) {
       const parent = await db.query.activities.findFirst({
-        where: eq(activities.id, activityId),
+        where: and(
+          eq(activities.id, activityId),
+          isNull(activities.deletedAt),
+        ),
       });
       if (!parent) {
         return null;
@@ -372,7 +422,7 @@ export const createDbDataService = (database: D1Database): DataService => {
       });
       return (
         (await db.query.activityImages.findFirst({
-          where: eq(activityImages.id, id),
+          where: and(eq(activityImages.id, id), isNull(activityImages.deletedAt)),
         })) ?? null
       );
     },
@@ -389,6 +439,7 @@ export const createDbDataService = (database: D1Database): DataService => {
         where: and(
           eq(activityImages.id, imageId),
           eq(activityImages.activityId, activityId),
+          isNull(activityImages.deletedAt),
         ),
       });
       if (!exists) {
@@ -408,12 +459,16 @@ export const createDbDataService = (database: D1Database): DataService => {
           and(
             eq(activityImages.id, imageId),
             eq(activityImages.activityId, activityId),
+            isNull(activityImages.deletedAt),
           ),
         );
 
       return (
         (await db.query.activityImages.findFirst({
-          where: eq(activityImages.id, imageId),
+          where: and(
+            eq(activityImages.id, imageId),
+            isNull(activityImages.deletedAt),
+          ),
         })) ?? null
       );
     },
@@ -429,17 +484,23 @@ export const createDbDataService = (database: D1Database): DataService => {
         where: and(
           eq(activityImages.id, imageId),
           eq(activityImages.activityId, activityId),
+          isNull(activityImages.deletedAt),
         ),
       });
       if (!exists) {
         return false;
       }
       await db
-        .delete(activityImages)
+        .update(activityImages)
+        .set({
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+        })
         .where(
           and(
             eq(activityImages.id, imageId),
             eq(activityImages.activityId, activityId),
+            isNull(activityImages.deletedAt),
           ),
         );
       return true;
@@ -451,7 +512,11 @@ export const createDbDataService = (database: D1Database): DataService => {
      * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
      */
     async listSupporters() {
-      return db.select().from(supporters).orderBy(asc(supporters.expiresAt));
+      return db
+        .select()
+        .from(supporters)
+        .where(isNull(supporters.deletedAt))
+        .orderBy(asc(supporters.expiresAt));
     },
         /**
      * listPublicSupporters의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
@@ -464,6 +529,7 @@ export const createDbDataService = (database: D1Database): DataService => {
       return db
         .select()
         .from(supporters)
+        .where(isNull(supporters.deletedAt))
         .orderBy(desc(activePriority), asc(supporters.expiresAt));
     },
         /**
@@ -482,7 +548,7 @@ export const createDbDataService = (database: D1Database): DataService => {
         expiresAt: new Date(input.expiresAt),
       });
       return (await db.query.supporters.findFirst({
-        where: eq(supporters.id, id),
+        where: and(eq(supporters.id, id), isNull(supporters.deletedAt)),
       }))!;
     },
         /**
@@ -494,7 +560,7 @@ export const createDbDataService = (database: D1Database): DataService => {
     async getSupporterById(id) {
       return (
         (await db.query.supporters.findFirst({
-          where: eq(supporters.id, id),
+          where: and(eq(supporters.id, id), isNull(supporters.deletedAt)),
         })) ?? null
       );
     },
@@ -507,7 +573,7 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async updateSupporter(id, input) {
       const exists = await db.query.supporters.findFirst({
-        where: eq(supporters.id, id),
+        where: and(eq(supporters.id, id), isNull(supporters.deletedAt)),
       });
       if (!exists) {
         return null;
@@ -524,11 +590,11 @@ export const createDbDataService = (database: D1Database): DataService => {
             : {}),
           updatedAt: new Date(),
         })
-        .where(eq(supporters.id, id));
+        .where(and(eq(supporters.id, id), isNull(supporters.deletedAt)));
 
       return (
         (await db.query.supporters.findFirst({
-          where: eq(supporters.id, id),
+          where: and(eq(supporters.id, id), isNull(supporters.deletedAt)),
         })) ?? null
       );
     },
@@ -540,12 +606,18 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async deleteSupporter(id) {
       const exists = await db.query.supporters.findFirst({
-        where: eq(supporters.id, id),
+        where: and(eq(supporters.id, id), isNull(supporters.deletedAt)),
       });
       if (!exists) {
         return false;
       }
-      await db.delete(supporters).where(eq(supporters.id, id));
+      await db
+        .update(supporters)
+        .set({
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(and(eq(supporters.id, id), isNull(supporters.deletedAt)));
       return true;
     },
 
@@ -558,6 +630,7 @@ export const createDbDataService = (database: D1Database): DataService => {
       const rows = await db
         .select()
         .from(exhibitions)
+        .where(isNull(exhibitions.deletedAt))
         .orderBy(asc(exhibitions.startDate));
       return mapExhibitionsWithImages(db, rows);
     },
@@ -570,6 +643,7 @@ export const createDbDataService = (database: D1Database): DataService => {
       const rows = await db
         .select()
         .from(exhibitions)
+        .where(isNull(exhibitions.deletedAt))
         .orderBy(desc(exhibitions.startDate));
       return mapExhibitionsWithImages(db, rows);
     },
@@ -601,7 +675,7 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async getExhibitionById(id) {
       const row = await db.query.exhibitions.findFirst({
-        where: eq(exhibitions.id, id),
+        where: and(eq(exhibitions.id, id), isNull(exhibitions.deletedAt)),
       });
       if (!row) {
         return null;
@@ -609,7 +683,12 @@ export const createDbDataService = (database: D1Database): DataService => {
       const images = await db
         .select()
         .from(exhibitionImages)
-        .where(eq(exhibitionImages.exhibitionId, id))
+        .where(
+          and(
+            eq(exhibitionImages.exhibitionId, id),
+            isNull(exhibitionImages.deletedAt),
+          ),
+        )
         .orderBy(asc(exhibitionImages.sortOrder));
       return {
         ...row,
@@ -625,7 +704,7 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async updateExhibition(id, input) {
       const exists = await db.query.exhibitions.findFirst({
-        where: eq(exhibitions.id, id),
+        where: and(eq(exhibitions.id, id), isNull(exhibitions.deletedAt)),
       });
       if (!exists) {
         return null;
@@ -653,7 +732,7 @@ export const createDbDataService = (database: D1Database): DataService => {
             : {}),
           updatedAt: new Date(),
         })
-        .where(eq(exhibitions.id, id));
+        .where(and(eq(exhibitions.id, id), isNull(exhibitions.deletedAt)));
 
       return this.getExhibitionById(id);
     },
@@ -665,12 +744,30 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async deleteExhibition(id) {
       const exists = await db.query.exhibitions.findFirst({
-        where: eq(exhibitions.id, id),
+        where: and(eq(exhibitions.id, id), isNull(exhibitions.deletedAt)),
       });
       if (!exists) {
         return false;
       }
-      await db.delete(exhibitions).where(eq(exhibitions.id, id));
+      await db
+        .update(exhibitions)
+        .set({
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(and(eq(exhibitions.id, id), isNull(exhibitions.deletedAt)));
+      await db
+        .update(exhibitionImages)
+        .set({
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(exhibitionImages.exhibitionId, id),
+            isNull(exhibitionImages.deletedAt),
+          ),
+        );
       return true;
     },
         /**
@@ -682,7 +779,10 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async addExhibitionImage(exhibitionId, input) {
       const parent = await db.query.exhibitions.findFirst({
-        where: eq(exhibitions.id, exhibitionId),
+        where: and(
+          eq(exhibitions.id, exhibitionId),
+          isNull(exhibitions.deletedAt),
+        ),
       });
       if (!parent) {
         return null;
@@ -697,7 +797,10 @@ export const createDbDataService = (database: D1Database): DataService => {
       });
       return (
         (await db.query.exhibitionImages.findFirst({
-          where: eq(exhibitionImages.id, id),
+          where: and(
+            eq(exhibitionImages.id, id),
+            isNull(exhibitionImages.deletedAt),
+          ),
         })) ?? null
       );
     },
@@ -714,6 +817,7 @@ export const createDbDataService = (database: D1Database): DataService => {
         where: and(
           eq(exhibitionImages.id, imageId),
           eq(exhibitionImages.exhibitionId, exhibitionId),
+          isNull(exhibitionImages.deletedAt),
         ),
       });
       if (!exists) {
@@ -733,12 +837,16 @@ export const createDbDataService = (database: D1Database): DataService => {
           and(
             eq(exhibitionImages.id, imageId),
             eq(exhibitionImages.exhibitionId, exhibitionId),
+            isNull(exhibitionImages.deletedAt),
           ),
         );
 
       return (
         (await db.query.exhibitionImages.findFirst({
-          where: eq(exhibitionImages.id, imageId),
+          where: and(
+            eq(exhibitionImages.id, imageId),
+            isNull(exhibitionImages.deletedAt),
+          ),
         })) ?? null
       );
     },
@@ -754,17 +862,23 @@ export const createDbDataService = (database: D1Database): DataService => {
         where: and(
           eq(exhibitionImages.id, imageId),
           eq(exhibitionImages.exhibitionId, exhibitionId),
+          isNull(exhibitionImages.deletedAt),
         ),
       });
       if (!exists) {
         return false;
       }
       await db
-        .delete(exhibitionImages)
+        .update(exhibitionImages)
+        .set({
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+        })
         .where(
           and(
             eq(exhibitionImages.id, imageId),
             eq(exhibitionImages.exhibitionId, exhibitionId),
+            isNull(exhibitionImages.deletedAt),
           ),
         );
       return true;
@@ -776,7 +890,10 @@ export const createDbDataService = (database: D1Database): DataService => {
      * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
      */
     async listLinktrees() {
-      const rows = await db.select().from(linktree);
+      const rows = await db
+        .select()
+        .from(linktree)
+        .where(isNull(linktree.deletedAt));
       return mapLinktreesWithItems(db, rows);
     },
         /**
@@ -801,7 +918,7 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async getLinktreeById(id) {
       const row = await db.query.linktree.findFirst({
-        where: eq(linktree.id, id),
+        where: and(eq(linktree.id, id), isNull(linktree.deletedAt)),
       });
       if (!row) {
         return null;
@@ -809,7 +926,9 @@ export const createDbDataService = (database: D1Database): DataService => {
       const items = await db
         .select()
         .from(linktreeItems)
-        .where(eq(linktreeItems.linktreeId, id));
+        .where(
+          and(eq(linktreeItems.linktreeId, id), isNull(linktreeItems.deletedAt)),
+        );
       return {
         ...row,
         items,
@@ -824,7 +943,7 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async updateLinktree(id, input) {
       const exists = await db.query.linktree.findFirst({
-        where: eq(linktree.id, id),
+        where: and(eq(linktree.id, id), isNull(linktree.deletedAt)),
       });
       if (!exists) {
         return null;
@@ -834,7 +953,7 @@ export const createDbDataService = (database: D1Database): DataService => {
         .set({
           ...(input.name !== undefined ? { name: input.name } : {}),
         })
-        .where(eq(linktree.id, id));
+        .where(and(eq(linktree.id, id), isNull(linktree.deletedAt)));
       return this.getLinktreeById(id);
     },
         /**
@@ -845,12 +964,25 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async deleteLinktree(id) {
       const exists = await db.query.linktree.findFirst({
-        where: eq(linktree.id, id),
+        where: and(eq(linktree.id, id), isNull(linktree.deletedAt)),
       });
       if (!exists) {
         return false;
       }
-      await db.delete(linktree).where(eq(linktree.id, id));
+      await db
+        .update(linktree)
+        .set({
+          deletedAt: new Date(),
+        })
+        .where(and(eq(linktree.id, id), isNull(linktree.deletedAt)));
+      await db
+        .update(linktreeItems)
+        .set({
+          deletedAt: new Date(),
+        })
+        .where(
+          and(eq(linktreeItems.linktreeId, id), isNull(linktreeItems.deletedAt)),
+        );
       return true;
     },
         /**
@@ -862,7 +994,7 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async addLinktreeItem(linktreeId, input) {
       const parent = await db.query.linktree.findFirst({
-        where: eq(linktree.id, linktreeId),
+        where: and(eq(linktree.id, linktreeId), isNull(linktree.deletedAt)),
       });
       if (!parent) {
         return null;
@@ -876,7 +1008,7 @@ export const createDbDataService = (database: D1Database): DataService => {
       });
       return (
         (await db.query.linktreeItems.findFirst({
-          where: eq(linktreeItems.id, id),
+          where: and(eq(linktreeItems.id, id), isNull(linktreeItems.deletedAt)),
         })) ?? null
       );
     },
@@ -893,6 +1025,7 @@ export const createDbDataService = (database: D1Database): DataService => {
         where: and(
           eq(linktreeItems.id, itemId),
           eq(linktreeItems.linktreeId, linktreeId),
+          isNull(linktreeItems.deletedAt),
         ),
       });
       if (!exists) {
@@ -908,11 +1041,15 @@ export const createDbDataService = (database: D1Database): DataService => {
           and(
             eq(linktreeItems.id, itemId),
             eq(linktreeItems.linktreeId, linktreeId),
+            isNull(linktreeItems.deletedAt),
           ),
         );
       return (
         (await db.query.linktreeItems.findFirst({
-          where: eq(linktreeItems.id, itemId),
+          where: and(
+            eq(linktreeItems.id, itemId),
+            isNull(linktreeItems.deletedAt),
+          ),
         })) ?? null
       );
     },
@@ -928,17 +1065,22 @@ export const createDbDataService = (database: D1Database): DataService => {
         where: and(
           eq(linktreeItems.id, itemId),
           eq(linktreeItems.linktreeId, linktreeId),
+          isNull(linktreeItems.deletedAt),
         ),
       });
       if (!exists) {
         return false;
       }
       await db
-        .delete(linktreeItems)
+        .update(linktreeItems)
+        .set({
+          deletedAt: new Date(),
+        })
         .where(
           and(
             eq(linktreeItems.id, itemId),
             eq(linktreeItems.linktreeId, linktreeId),
+            isNull(linktreeItems.deletedAt),
           ),
         );
       return true;
@@ -950,7 +1092,11 @@ export const createDbDataService = (database: D1Database): DataService => {
      * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
      */
     async listUsers() {
-      return db.select().from(user).orderBy(asc(user.createdAt));
+      return db
+        .select()
+        .from(user)
+        .where(isNull(user.deletedAt))
+        .orderBy(asc(user.createdAt));
     },
         /**
      * getUserById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
@@ -960,7 +1106,9 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async getUserById(id) {
       return (
-        (await db.query.user.findFirst({ where: eq(user.id, id) })) ?? null
+        (await db.query.user.findFirst({
+          where: and(eq(user.id, id), isNull(user.deletedAt)),
+        })) ?? null
       );
     },
         /**
@@ -972,7 +1120,7 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async updateUser(id, input) {
       const exists = await db.query.user.findFirst({
-        where: eq(user.id, id),
+        where: and(eq(user.id, id), isNull(user.deletedAt)),
       });
       if (!exists) {
         return null;
@@ -989,10 +1137,12 @@ export const createDbDataService = (database: D1Database): DataService => {
             : {}),
           updatedAt: new Date(),
         })
-        .where(eq(user.id, id));
+        .where(and(eq(user.id, id), isNull(user.deletedAt)));
 
       return (
-        (await db.query.user.findFirst({ where: eq(user.id, id) })) ?? null
+        (await db.query.user.findFirst({
+          where: and(eq(user.id, id), isNull(user.deletedAt)),
+        })) ?? null
       );
     },
         /**
@@ -1003,12 +1153,18 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async deleteUser(id) {
       const exists = await db.query.user.findFirst({
-        where: eq(user.id, id),
+        where: and(eq(user.id, id), isNull(user.deletedAt)),
       });
       if (!exists) {
         return false;
       }
-      await db.delete(user).where(eq(user.id, id));
+      await db
+        .update(user)
+        .set({
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(and(eq(user.id, id), isNull(user.deletedAt)));
       return true;
     },
   };

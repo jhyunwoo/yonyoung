@@ -23,6 +23,7 @@
       "binding": "db",
       "database_name": "yonyoung-db",
       "database_id": "2b8373ca-0dd5-486f-aa2f-4847e5e2b79a",
+      "migrations_dir": "drizzle",
       "remote": true,
     },
   ],

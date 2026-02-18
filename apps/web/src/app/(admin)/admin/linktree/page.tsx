@@ -431,21 +431,13 @@ export default function LinktreeAdminPage({
                 data-testid={`linktree-row-${item.id}`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-medium">{item.name}</p>
-                    <p className="text-xs text-gray-500">포함 링크 수: {item.items.length}</p>
-                  </div>
                   <button
                     type="button"
                     onClick={() => handleSelectLinktree(item)}
-                    className={`rounded-md px-2 py-1 text-xs font-medium ${
-                      selectedId === item.id
-                        ? "bg-black text-white"
-                        : "border border-gray-300 text-gray-700"
-                    }`}
-                    data-testid={`linktree-select-${item.id}`}
+                    className="min-w-0 flex-1 text-left"
                   >
-                    {selectedId === item.id ? "선택됨" : "선택"}
+                    <p className="font-medium">{item.name}</p>
+                    <p className="text-xs text-gray-500">포함 링크 수: {item.items.length}</p>
                   </button>
                 </div>
               </li>
@@ -595,21 +587,13 @@ export default function LinktreeAdminPage({
                         data-testid={`linktree-item-row-${item.id}`}
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <div>
-                            <p className="text-sm font-medium">{item.name}</p>
-                            <p className="truncate text-xs text-gray-500">{item.link}</p>
-                          </div>
                           <button
                             type="button"
                             onClick={() => handleSelectItem(item)}
-                            className={`rounded-md px-2 py-1 text-xs font-medium ${
-                              selectedItemId === item.id
-                                ? "bg-black text-white"
-                                : "border border-gray-300 text-gray-700"
-                            }`}
-                            data-testid={`linktree-item-select-${item.id}`}
+                            className="min-w-0 flex-1 text-left"
                           >
-                            {selectedItemId === item.id ? "선택됨" : "선택"}
+                            <p className="text-sm font-medium">{item.name}</p>
+                            <p className="truncate text-xs text-gray-500">{item.link}</p>
                           </button>
                         </div>
                       </li>

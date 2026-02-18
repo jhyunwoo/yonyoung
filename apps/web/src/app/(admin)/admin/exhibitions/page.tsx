@@ -626,7 +626,11 @@ export default function ExhibitionsAdminPage({
                 data-testid={`exhibition-row-${item.id}`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
+                  <button
+                    type="button"
+                    onClick={() => handleSelect(item)}
+                    className="min-w-0 flex-1 text-left"
+                  >
                     <p className="font-medium">{item.title}</p>
                     <p className="text-xs text-gray-500">장소: {item.place}</p>
                     <p className="text-xs text-gray-500">소속 기수 ID: {item.generationId}</p>
@@ -634,18 +638,6 @@ export default function ExhibitionsAdminPage({
                       전시 기간: {formatTimestamp(item.startDate)} ~ {formatTimestamp(item.endDate)}
                     </p>
                     <p className="text-xs text-gray-500">세부 이미지 수: {item.detailImages.length}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleSelect(item)}
-                    className={`rounded-md px-2 py-1 text-xs font-medium ${
-                      selectedId === item.id
-                        ? "bg-black text-white"
-                        : "border border-gray-300 text-gray-700"
-                    }`}
-                    data-testid={`exhibition-select-${item.id}`}
-                  >
-                    {selectedId === item.id ? "선택됨" : "선택"}
                   </button>
                 </div>
               </li>
@@ -1034,21 +1026,13 @@ export default function ExhibitionsAdminPage({
                       data-testid={`exhibition-detail-row-${image.id}`}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <div>
-                          <p className="text-sm font-medium">정렬 순서: {image.sortOrder}</p>
-                          <p className="truncate text-xs text-gray-500">{image.imageUrl}</p>
-                        </div>
                         <button
                           type="button"
                           onClick={() => handleSelectImage(image)}
-                          className={`rounded-md px-2 py-1 text-xs font-medium ${
-                            selectedImageId === image.id
-                              ? "bg-black text-white"
-                              : "border border-gray-300 text-gray-700"
-                          }`}
-                          data-testid={`exhibition-detail-select-${image.id}`}
+                          className="min-w-0 flex-1 text-left"
                         >
-                          {selectedImageId === image.id ? "선택됨" : "선택"}
+                          <p className="text-sm font-medium">정렬 순서: {image.sortOrder}</p>
+                          <p className="truncate text-xs text-gray-500">{image.imageUrl}</p>
                         </button>
                       </div>
                     </li>

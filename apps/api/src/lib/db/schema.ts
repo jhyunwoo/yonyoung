@@ -20,6 +20,7 @@ export const generations = sqliteTable(
       .default(nowTimestamp)
       .$onUpdate 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => /* @__PURE__ */ new Date())
       .notNull(),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
   },
     /**
    * sqliteTable 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
@@ -52,6 +53,7 @@ export const user = sqliteTable("user", {
   generationId: text("generation_id").references(/** text("generation_id").references 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => generations.id, {
     onDelete: "set null",
   }),
+  deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
 });
 
 export const session = sqliteTable(
@@ -202,6 +204,7 @@ export const activities = sqliteTable(
       .default(nowTimestamp)
       .$onUpdate 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => /* @__PURE__ */ new Date())
       .notNull(),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
   },
     /**
    * sqliteTable 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
@@ -235,6 +238,7 @@ export const activityImages = sqliteTable(
       .default(nowTimestamp)
       .$onUpdate 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => /* @__PURE__ */ new Date())
       .notNull(),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
   },
     /**
    * sqliteTable 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
@@ -265,6 +269,7 @@ export const supporters = sqliteTable(
       .default(nowTimestamp)
       .$onUpdate 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => /* @__PURE__ */ new Date())
       .notNull(),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
   },
     /**
    * sqliteTable 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
@@ -299,6 +304,7 @@ export const exhibitions = sqliteTable(
       .default(nowTimestamp)
       .$onUpdate 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => /* @__PURE__ */ new Date())
       .notNull(),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
   },
     /**
    * sqliteTable 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
@@ -333,6 +339,7 @@ export const exhibitionImages = sqliteTable(
       .default(nowTimestamp)
       .$onUpdate 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => /* @__PURE__ */ new Date())
       .notNull(),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
   },
     /**
    * sqliteTable 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
@@ -349,6 +356,7 @@ export const exhibitionImages = sqliteTable(
 export const linktree = sqliteTable("linktree", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
+  deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
 });
 
 export const linktreeItems = sqliteTable(
@@ -362,6 +370,7 @@ export const linktreeItems = sqliteTable(
       .references 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => linktree.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     link: text("link").notNull(),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
   },
     /**
    * sqliteTable 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
