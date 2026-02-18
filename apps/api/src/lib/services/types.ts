@@ -81,6 +81,12 @@ export type UserEntity = {
   email: string;
   image: string | null;
   nickname: string | null;
+  familyName: string | null;
+  givenName: string | null;
+  college: string | null;
+  department: string | null;
+  studentNumber: string | null;
+  phoneNumber: string | null;
   role: string | null;
   generationId: string | null;
   createdAt: Date;
@@ -225,6 +231,12 @@ export type DataService = {
       name: string;
       nickname: string | null;
       image: string | null;
+      familyName: string | null;
+      givenName: string | null;
+      college: string | null;
+      department: string | null;
+      studentNumber: string | null;
+      phoneNumber: string | null;
       role: string;
       generationId: string | null;
     }>,

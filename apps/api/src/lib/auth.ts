@@ -198,6 +198,30 @@ const createAuthWithEnv = (database: D1Database, env: AuthEnv) => {
           type: "string",
           required: false,
         },
+        familyName: {
+          type: "string",
+          required: false,
+        },
+        givenName: {
+          type: "string",
+          required: false,
+        },
+        college: {
+          type: "string",
+          required: false,
+        },
+        department: {
+          type: "string",
+          required: false,
+        },
+        studentNumber: {
+          type: "string",
+          required: false,
+        },
+        phoneNumber: {
+          type: "string",
+          required: false,
+        },
         role: {
           type: "string",
           required: false,

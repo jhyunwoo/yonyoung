@@ -161,16 +161,38 @@ export default async function globalSetup(_config: FullConfig) {
     const sessionPayload = (await sessionResponse.json().catch(() => null)) as
       | {
           user?: {
+            id?: string;
             role?: string | null;
           };
         }
       | null;
 
+    const userId = sessionPayload?.user?.id;
     const role = sessionPayload?.user?.role;
     if (role !== "president") {
       throw new Error(
         `E2E admin account role must be 'president'. current=${role ?? "null"}`,
       );
+    }
+
+    if (userId) {
+      const profileResponse = await apiContext.patch(`/api/users/${userId}`, {
+        data: {
+          familyName: "E2E",
+          givenName: "Admin",
+          college: "공과대학",
+          department: "컴퓨터과학과",
+          studentNumber: "2026000001",
+          phoneNumber: "010-0000-0000",
+        },
+      });
+
+      if (!profileResponse.ok()) {
+        const body = await profileResponse.text();
+        throw new Error(
+          `Failed to update E2E admin profile (${profileResponse.status()}): ${body.slice(0, 300)}`,
+        );
+      }
     }
 
     await apiContext.storageState({ path: storagePath });

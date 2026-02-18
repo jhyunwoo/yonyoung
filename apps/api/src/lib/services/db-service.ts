@@ -1131,6 +1131,20 @@ export const createDbDataService = (database: D1Database): DataService => {
           ...(input.name !== undefined ? { name: input.name } : {}),
           ...(input.nickname !== undefined ? { nickname: input.nickname } : {}),
           ...(input.image !== undefined ? { image: input.image } : {}),
+          ...(input.familyName !== undefined
+            ? { familyName: input.familyName }
+            : {}),
+          ...(input.givenName !== undefined ? { givenName: input.givenName } : {}),
+          ...(input.college !== undefined ? { college: input.college } : {}),
+          ...(input.department !== undefined
+            ? { department: input.department }
+            : {}),
+          ...(input.studentNumber !== undefined
+            ? { studentNumber: input.studentNumber }
+            : {}),
+          ...(input.phoneNumber !== undefined
+            ? { phoneNumber: input.phoneNumber }
+            : {}),
           ...(input.role !== undefined ? { role: input.role } : {}),
           ...(input.generationId !== undefined
             ? { generationId: input.generationId }

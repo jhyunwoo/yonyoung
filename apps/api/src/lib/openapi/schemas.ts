@@ -38,6 +38,25 @@ const urlField = (description: string, example: string) =>
     example,
   });
 
+const studentNumberField = (description: string, example: string) =>
+  z
+    .string()
+    .regex(/^\d{10}$/, "학번은 숫자 10자리여야 합니다.")
+    .openapi({
+      description,
+      example,
+    });
+
+const phoneNumberField = (description: string, example: string) =>
+  z
+    .string()
+    .trim()
+    .min(1, "전화번호는 비워둘 수 없습니다.")
+    .openapi({
+      description,
+      example,
+    });
+
 const ApiErrorCodeSchema = z
   .enum([
     "BAD_REQUEST",
@@ -526,6 +545,30 @@ export const ApiUserSchema = z
       description: "활동 닉네임 (없으면 null)",
       example: "길동",
     }),
+    familyName: z.string().nullable().openapi({
+      description: "성 (없으면 null)",
+      example: "김",
+    }),
+    givenName: z.string().nullable().openapi({
+      description: "이름 (없으면 null)",
+      example: "민수",
+    }),
+    college: z.string().nullable().openapi({
+      description: "대학명 (예: 공과대학, 없으면 null)",
+      example: "공과대학",
+    }),
+    department: z.string().nullable().openapi({
+      description: "학과명 (없으면 null)",
+      example: "컴퓨터과학과",
+    }),
+    studentNumber: z.string().nullable().openapi({
+      description: "학번 10자리 (없으면 null)",
+      example: "2026000123",
+    }),
+    phoneNumber: z.string().nullable().openapi({
+      description: "전화번호 (없으면 null)",
+      example: "010-1234-5678",
+    }),
     role: z.string().nullable().openapi({
       description: "원본 사용자 역할 문자열 (없으면 null)",
       example: "regular_member",
@@ -553,6 +596,52 @@ export const ApiAdminUpdateUserSchema = z
       description: "프로필 이미지 URL(관리자 수정 가능)",
       example: "https://cdn.yonyoung.example/users/profile/member-new.png",
     }),
+    familyName: z
+      .string()
+      .trim()
+      .min(1, "성은 비워둘 수 없습니다.")
+      .nullable()
+      .optional()
+      .openapi({
+        description: "성(관리자 수정 가능)",
+        example: "김",
+      }),
+    givenName: z
+      .string()
+      .trim()
+      .min(1, "이름은 비워둘 수 없습니다.")
+      .nullable()
+      .optional()
+      .openapi({
+        description: "이름(관리자 수정 가능)",
+        example: "민수",
+      }),
+    college: z
+      .string()
+      .trim()
+      .min(1, "대학명은 비워둘 수 없습니다.")
+      .nullable()
+      .optional()
+      .openapi({
+        description: "대학명(관리자 수정 가능, 예: 공과대학)",
+        example: "공과대학",
+      }),
+    department: z
+      .string()
+      .trim()
+      .min(1, "학과명은 비워둘 수 없습니다.")
+      .nullable()
+      .optional()
+      .openapi({
+        description: "학과명(관리자 수정 가능)",
+        example: "컴퓨터과학과",
+      }),
+    studentNumber: studentNumberField("학번 10자리(관리자 수정 가능)", "2026000123")
+      .nullable()
+      .optional(),
+    phoneNumber: phoneNumberField("전화번호(관리자 수정 가능)", "010-1234-5678")
+      .nullable()
+      .optional(),
     role: z
       .enum([
         "president",
@@ -591,6 +680,52 @@ export const ApiMemberProfileUpdateSchema = z
       description: "본인 프로필 이미지 URL 수정",
       example: "https://cdn.yonyoung.example/users/profile/member-self.png",
     }),
+    familyName: z
+      .string()
+      .trim()
+      .min(1, "성은 비워둘 수 없습니다.")
+      .nullable()
+      .optional()
+      .openapi({
+        description: "본인 성 수정",
+        example: "김",
+      }),
+    givenName: z
+      .string()
+      .trim()
+      .min(1, "이름은 비워둘 수 없습니다.")
+      .nullable()
+      .optional()
+      .openapi({
+        description: "본인 이름 수정",
+        example: "민수",
+      }),
+    college: z
+      .string()
+      .trim()
+      .min(1, "대학명은 비워둘 수 없습니다.")
+      .nullable()
+      .optional()
+      .openapi({
+        description: "본인 대학명 수정 (예: 공과대학)",
+        example: "공과대학",
+      }),
+    department: z
+      .string()
+      .trim()
+      .min(1, "학과명은 비워둘 수 없습니다.")
+      .nullable()
+      .optional()
+      .openapi({
+        description: "본인 학과명 수정",
+        example: "컴퓨터과학과",
+      }),
+    studentNumber: studentNumberField("본인 학번 10자리 수정", "2026000123")
+      .nullable()
+      .optional(),
+    phoneNumber: phoneNumberField("본인 전화번호 수정", "010-1234-5678")
+      .nullable()
+      .optional(),
   })
   .strict()
   .openapi("ApiMemberProfileUpdateInput");

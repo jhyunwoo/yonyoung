@@ -1,11 +1,17 @@
 import { cookies } from "next/headers";
 import { forbidden, redirect } from "next/navigation";
-import { fetchSessionFromApi } from "./auth-server";
-import { canAccessAdminPage, canManageGenerations } from "./auth-shared";
+import { fetchSessionFromApi, resolveAuthApiUrl } from "./auth-server";
+import {
+  canAccessAdminPage,
+  canManageGenerations,
+  hasCompletedRequiredProfile,
+} from "./auth-shared";
 import type { AuthSession } from "./auth-shared";
 
 const SIGN_IN_PATH = "/auth/sign-in";
 const ADMIN_PATH = "/admin";
+const ADMIN_PROFILE_PATH = "/admin/profile";
+const USER_PATH_PREFIX = "/api/users";
 
 /**
  * readCookieHeader 외부 또는 내부 소스에서 데이터를 읽어오는 로직을 수행합니다.
@@ -27,6 +33,53 @@ const readCookieHeader = async (): Promise<string | null> => {
 const getSession = async (): Promise<AuthSession | null> => {
   const cookieHeader = await readCookieHeader();
   return fetchSessionFromApi(cookieHeader);
+};
+
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+
+  return value as Record<string, unknown>;
+};
+
+const unwrapDataEnvelope = (value: unknown): unknown => {
+  const record = asRecord(value);
+  if (record && "data" in record) {
+    return record.data;
+  }
+  return value;
+};
+
+const getCurrentUserProfile = async (
+  session: AuthSession,
+): Promise<Record<string, unknown> | null> => {
+  const cookieHeader = await readCookieHeader();
+  const headers = new Headers({
+    Accept: "application/json",
+  });
+  if (cookieHeader) {
+    headers.set("cookie", cookieHeader);
+  }
+
+  try {
+    const response = await fetch(
+      `${resolveAuthApiUrl()}${USER_PATH_PREFIX}/${session.user.id}`,
+      {
+        method: "GET",
+        headers,
+        cache: "no-store",
+      },
+    );
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = (await response.json().catch(/** response.json().catch 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => null)) as unknown;
+    return asRecord(unwrapDataEnvelope(payload));
+  } catch {
+    return null;
+  }
 };
 
 type AccessPredicate = (session: AuthSession) => boolean;
@@ -87,6 +140,30 @@ const requireAdminPageAccess = async (
   return session;
 };
 
+const redirectIfProfileIncomplete = async (
+  session: AuthSession,
+  redirectTo = ADMIN_PROFILE_PATH,
+): Promise<void> => {
+  const profile = await getCurrentUserProfile(session);
+  if (!profile) {
+    return;
+  }
+
+  if (!hasCompletedRequiredProfile(profile)) {
+    redirect(redirectTo);
+  }
+};
+
+const resolveAdminLandingPath = async (
+  session: AuthSession,
+): Promise<string> => {
+  const profile = await getCurrentUserProfile(session);
+  if (profile && !hasCompletedRequiredProfile(profile)) {
+    return ADMIN_PROFILE_PATH;
+  }
+  return ADMIN_PATH;
+};
+
 /**
  * requirePresidentAccess의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
  * @param redirectTo 함수 로직에서 사용하는 입력값입니다.
@@ -95,7 +172,11 @@ const requireAdminPageAccess = async (
  */
 const requirePresidentAccess = async (
   redirectTo = ADMIN_PATH,
-): Promise<AuthSession> => requireAccess(canManageGenerations, redirectTo);
+): Promise<AuthSession> => {
+  const session = await requireAccess(canManageGenerations, redirectTo);
+  await redirectIfProfileIncomplete(session);
+  return session;
+};
 
 /**
  * redirectIfAccess의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
@@ -121,8 +202,15 @@ const redirectIfAccess = async (
  * @returns 비동기 처리 결과를 Promise로 반환합니다.
  * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
  */
-const redirectIfCanAccessAdmin = async (redirectTo = ADMIN_PATH): Promise<void> =>
-  redirectIfAccess(canAccessAdminPage, redirectTo);
+const redirectIfCanAccessAdmin = async (): Promise<void> => {
+  const session = await getSession();
+  if (!session || !canAccessAdminPage(session)) {
+    return;
+  }
+
+  const redirectTo = await resolveAdminLandingPath(session);
+  redirect(redirectTo);
+};
 
 /**
  * redirectIfPresident의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
@@ -143,6 +231,9 @@ export const serverAuthTool = {
   requireAccess,
   requireAdminPageAccess,
   requirePresidentAccess,
+  getCurrentUserProfile,
+  redirectIfProfileIncomplete,
+  resolveAdminLandingPath,
   redirectIfAccess,
   redirectIfCanAccessAdmin,
   redirectIfPresident,

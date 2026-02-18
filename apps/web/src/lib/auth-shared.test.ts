@@ -3,6 +3,7 @@ import {
   canAccessAdminPage,
   canManageGenerations,
   getRoleFromSession,
+  hasCompletedRequiredProfile,
   isAdminRole,
   isAdminSession,
   isPresidentRole,
@@ -55,5 +56,31 @@ describe("auth-shared helpers", /** describe 실행 과정에서 필요한 연�
     expect(canManageGenerations({ user: { role: "president" } })).toBe(true);
     expect(canManageGenerations({ user: { role: "vice_president" } })).toBe(false);
     expect(canManageGenerations({ user: { role: "manager" } })).toBe(false);
+  });
+
+  it("hasCompletedRequiredProfile은 필수 필드가 모두 채워졌을 때 true", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
+    expect(
+      hasCompletedRequiredProfile({
+        familyName: "김",
+        givenName: "민수",
+        college: "공과대학",
+        department: "컴퓨터과학과",
+        studentNumber: "2026000123",
+        phoneNumber: "010-1234-5678",
+      }),
+    ).toBe(true);
+  });
+
+  it("hasCompletedRequiredProfile은 하나라도 비어 있으면 false", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
+    expect(
+      hasCompletedRequiredProfile({
+        familyName: "김",
+        givenName: "민수",
+        college: "공과대학",
+        department: "",
+        studentNumber: "2026000123",
+        phoneNumber: "010-1234-5678",
+      }),
+    ).toBe(false);
   });
 });

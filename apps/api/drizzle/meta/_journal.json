@@ -43,6 +43,13 @@
       "when": 1771431182777,
       "tag": "0005_long_madripoor",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1771433878480,
+      "tag": "0006_awesome_sabra",
+      "breakpoints": true
     }
   ]
 }

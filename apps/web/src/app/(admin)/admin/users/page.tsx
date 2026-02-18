@@ -21,6 +21,12 @@ import { useImmediateImageUpload } from "../components/use-immediate-image-uploa
 type UserFormState = {
   name: string;
   nickname: string;
+  familyName: string;
+  givenName: string;
+  college: string;
+  department: string;
+  studentNumber: string;
+  phoneNumber: string;
   role: string;
   generationId: string;
 };
@@ -28,6 +34,12 @@ type UserFormState = {
 const emptyForm: UserFormState = {
   name: "",
   nickname: "",
+  familyName: "",
+  givenName: "",
+  college: "",
+  department: "",
+  studentNumber: "",
+  phoneNumber: "",
   role: "unverified",
   generationId: "",
 };
@@ -95,7 +107,13 @@ export default function UsersAdminPage({
       return (
         item.name.toLowerCase().includes(query) ||
         item.email.toLowerCase().includes(query) ||
-        (item.nickname ?? "").toLowerCase().includes(query)
+        (item.nickname ?? "").toLowerCase().includes(query) ||
+        (item.familyName ?? "").toLowerCase().includes(query) ||
+        (item.givenName ?? "").toLowerCase().includes(query) ||
+        (item.college ?? "").toLowerCase().includes(query) ||
+        (item.department ?? "").toLowerCase().includes(query) ||
+        (item.studentNumber ?? "").toLowerCase().includes(query) ||
+        (item.phoneNumber ?? "").toLowerCase().includes(query)
       );
     });
   }, [items, searchQuery]);
@@ -110,6 +128,12 @@ export default function UsersAdminPage({
     setEditForm({
       name: user.name,
       nickname: user.nickname ?? "",
+      familyName: user.familyName ?? "",
+      givenName: user.givenName ?? "",
+      college: user.college ?? "",
+      department: user.department ?? "",
+      studentNumber: user.studentNumber ?? "",
+      phoneNumber: user.phoneNumber ?? "",
       role: user.role ?? "unverified",
       generationId: user.generationId ?? "",
     });
@@ -264,6 +288,12 @@ export default function UsersAdminPage({
       const payload: ApiAdminUpdateUserInput = {
         name: editForm.name.trim(),
         nickname: editForm.nickname.trim() || null,
+        familyName: editForm.familyName.trim() || null,
+        givenName: editForm.givenName.trim() || null,
+        college: editForm.college.trim() || null,
+        department: editForm.department.trim() || null,
+        studentNumber: editForm.studentNumber.trim() || null,
+        phoneNumber: editForm.phoneNumber.trim() || null,
         image: imageUpload.currentUrl.trim() || null,
         role: isAllowedAdminRole(editForm.role) ? editForm.role : "unverified",
         generationId: scopedGenerationId ?? (editForm.generationId || null),
@@ -428,6 +458,10 @@ export default function UsersAdminPage({
               <p>사용자 ID: {selectedDetail.id}</p>
               <p>이메일: {selectedDetail.email}</p>
               <p>권한: {readAdminRoleLabel(selectedDetail.role)}</p>
+              <p>성/이름: {(selectedDetail.familyName ?? "-")}/{(selectedDetail.givenName ?? "-")}</p>
+              <p>대학/학과: {(selectedDetail.college ?? "-")}/{(selectedDetail.department ?? "-")}</p>
+              <p>학번: {selectedDetail.studentNumber ?? "-"}</p>
+              <p>전화번호: {selectedDetail.phoneNumber ?? "-"}</p>
               <p>소속 기수: {selectedDetail.generationId ?? "없음"}</p>
               <p>가입일: {formatTimestamp(selectedDetail.createdAt)}</p>
               <p>최근 수정일: {formatTimestamp(selectedDetail.updatedAt)}</p>
@@ -466,6 +500,109 @@ export default function UsersAdminPage({
                   data-testid="user-edit-nickname"
                 />
               </label>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block text-sm">
+                  <span className="mb-1 block">성</span>
+                  <input
+                    type="text"
+                    value={editForm.familyName}
+                    onChange={(event) =>
+                      setEditForm((previous) => ({
+                        ...previous,
+                        familyName: event.target.value,
+                      }))
+                    }
+                    className="w-full rounded-md border border-gray-300 px-3 py-2"
+                    data-testid="user-edit-family-name"
+                  />
+                </label>
+
+                <label className="block text-sm">
+                  <span className="mb-1 block">이름</span>
+                  <input
+                    type="text"
+                    value={editForm.givenName}
+                    onChange={(event) =>
+                      setEditForm((previous) => ({
+                        ...previous,
+                        givenName: event.target.value,
+                      }))
+                    }
+                    className="w-full rounded-md border border-gray-300 px-3 py-2"
+                    data-testid="user-edit-given-name"
+                  />
+                </label>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block text-sm">
+                  <span className="mb-1 block">대학</span>
+                  <input
+                    type="text"
+                    value={editForm.college}
+                    onChange={(event) =>
+                      setEditForm((previous) => ({
+                        ...previous,
+                        college: event.target.value,
+                      }))
+                    }
+                    className="w-full rounded-md border border-gray-300 px-3 py-2"
+                    data-testid="user-edit-college"
+                  />
+                </label>
+
+                <label className="block text-sm">
+                  <span className="mb-1 block">학과</span>
+                  <input
+                    type="text"
+                    value={editForm.department}
+                    onChange={(event) =>
+                      setEditForm((previous) => ({
+                        ...previous,
+                        department: event.target.value,
+                      }))
+                    }
+                    className="w-full rounded-md border border-gray-300 px-3 py-2"
+                    data-testid="user-edit-department"
+                  />
+                </label>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block text-sm">
+                  <span className="mb-1 block">학번 (10자리)</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={editForm.studentNumber}
+                    onChange={(event) =>
+                      setEditForm((previous) => ({
+                        ...previous,
+                        studentNumber: event.target.value,
+                      }))
+                    }
+                    className="w-full rounded-md border border-gray-300 px-3 py-2"
+                    data-testid="user-edit-student-number"
+                  />
+                </label>
+
+                <label className="block text-sm">
+                  <span className="mb-1 block">전화번호</span>
+                  <input
+                    type="text"
+                    value={editForm.phoneNumber}
+                    onChange={(event) =>
+                      setEditForm((previous) => ({
+                        ...previous,
+                        phoneNumber: event.target.value,
+                      }))
+                    }
+                    className="w-full rounded-md border border-gray-300 px-3 py-2"
+                    data-testid="user-edit-phone-number"
+                  />
+                </label>
+              </div>
 
               <label className="block text-sm">
                 <span className="mb-1 block">권한</span>

@@ -589,7 +589,29 @@ export const ensureAdminSession = async (page: Page): Promise<void> => {
     return payload?.user?.role === "president";
   };
 
+  const ensureAdminProfile = async () => {
+    const session = await fetchSession(page.request);
+    const userId = session?.user?.id;
+    if (!userId) {
+      return;
+    }
+
+    await page.request.patch(`${apiUrl}/api/users/${userId}`, {
+      headers: buildAuthHeaders(),
+      data: {
+        familyName: "E2E",
+        givenName: "Admin",
+        college: "공과대학",
+        department: "컴퓨터과학과",
+        studentNumber: "2026000001",
+        phoneNumber: "010-0000-0000",
+      },
+      failOnStatusCode: false,
+    });
+  };
+
   if (await verifySession()) {
+    await ensureAdminProfile();
     return;
   }
 
@@ -618,6 +640,8 @@ export const ensureAdminSession = async (page: Page): Promise<void> => {
   if (!(await verifySession())) {
     throw new Error("Admin session verification failed after sign-in.");
   }
+
+  await ensureAdminProfile();
 };
 
 const pickFirstSelectOption = async (
@@ -1095,6 +1119,12 @@ export const provisionRoleUser = async (
     data: {
       role: assignedRole,
       generationId: input.generationId,
+      familyName: "E2E",
+      givenName: `${input.role}-user`,
+      college: "공과대학",
+      department: "컴퓨터과학과",
+      studentNumber: `${Math.floor(1000000000 + Math.random() * 8999999999)}`,
+      phoneNumber: "010-0000-0000",
     },
   });
 

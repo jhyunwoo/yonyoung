@@ -1,15 +1,12 @@
-const AUTH_ROLE_VALUES = [
-  "president",
-  "vice_president",
-  "manager",
-  "member",
-  "new_member",
-  "associate_member",
-  "regular_member",
-  "unverified",
-] as const;
-
-export type KnownAuthRole = (typeof AUTH_ROLE_VALUES)[number];
+export type KnownAuthRole =
+  | "president"
+  | "vice_president"
+  | "manager"
+  | "member"
+  | "new_member"
+  | "associate_member"
+  | "regular_member"
+  | "unverified";
 export type AuthRole = KnownAuthRole | (string & {});
 
 const ADMIN_ROLES = ["president", "vice_president", "manager"] as const;
@@ -24,6 +21,12 @@ export type AuthUser = {
   name: string;
   image?: string | null;
   nickname?: string | null;
+  familyName?: string | null;
+  givenName?: string | null;
+  college?: string | null;
+  department?: string | null;
+  studentNumber?: string | null;
+  phoneNumber?: string | null;
   role?: AuthRole | null;
   generationId?: string | null;
 };
@@ -36,6 +39,48 @@ export type AuthSession = {
     expiresAt: string | number;
   };
   user: AuthUser;
+};
+
+const REQUIRED_PROFILE_KEYS = [
+  "familyName",
+  "givenName",
+  "college",
+  "department",
+  "studentNumber",
+  "phoneNumber",
+] as const;
+
+type RequiredProfileKey = (typeof REQUIRED_PROFILE_KEYS)[number];
+
+const readProfileField = (
+  user: Record<string, unknown>,
+  key: RequiredProfileKey,
+): string | null => {
+  const value = user[key];
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+export const hasCompletedRequiredProfile = (
+  user: Record<string, unknown> | null | undefined,
+): boolean => {
+  if (!user) {
+    return false;
+  }
+
+  return REQUIRED_PROFILE_KEYS.every(
+    /**
+     * REQUIRED_PROFILE_KEYS.every 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+     * @param key 함수 로직에서 사용하는 입력값입니다.
+     * @returns 함수 실행 결과를 반환합니다.
+     * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+     */
+    (key) => readProfileField(user, key) !== null,
+  );
 };
 
 type SessionWithRole =

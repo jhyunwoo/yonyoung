@@ -220,6 +220,8 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
 
   const isGenerationSettingsActive =
     pathname === "/admin/generations" || pathname.startsWith("/admin/generations/");
+  const isProfileActive =
+    pathname === "/admin/profile" || pathname.startsWith("/admin/profile/");
 
   const handleThemeToggle = () => {
     setTheme((previous) => {
@@ -284,6 +286,20 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
 
       <nav className="flex-1 overflow-y-auto p-3" data-testid="admin-sidebar-nav">
         <ul className="space-y-2">
+          <li>
+            <Link
+              href="/admin/profile"
+              data-testid="admin-nav-profile"
+              className={`flex items-center rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                isProfileActive
+                  ? "border-black bg-black text-white"
+                  : "border-gray-200 text-gray-700 hover:bg-gray-100"
+              } ${collapsed ? "justify-center" : "justify-start"}`}
+            >
+              {collapsed ? "프로필" : "내 프로필"}
+            </Link>
+          </li>
+
           {canManageGenerationsFlag ? (
             <li>
               <Link

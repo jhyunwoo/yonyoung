@@ -2,7 +2,6 @@ import { adminRequest } from "./http";
 import type {
   ApiActivity,
   ApiActivityImage,
-  ApiAdminUpdateUserInput,
   ApiCreateActivityImageInput,
   ApiCreateActivityInput,
   ApiCreateExhibitionImageInput,
@@ -25,6 +24,7 @@ import type {
   ApiUpdateLinktreeInput,
   ApiUpdateLinktreeItemInput,
   ApiUpdateSupporterInput,
+  ApiUpdateUserInput,
   ApiUser,
 } from "./types";
 
@@ -332,7 +332,7 @@ export const adminResourceApi = {
    * @returns 처리 결과 값을 반환합니다.
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
-  updateUser: (id: string, input: ApiAdminUpdateUserInput) =>
+  updateUser: (id: string, input: ApiUpdateUserInput) =>
     adminRequest<ApiUser>(`/users/${id}`, "PATCH", input),
     /**
    * deleteUser 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.

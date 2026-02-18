@@ -27,6 +27,7 @@ export default async function GenerationScopedLayout({
 }: GenerationLayoutProps) {
   const { generation } = await params;
   const session = await serverAuthTool.requireAdminPageAccess();
+  await serverAuthTool.redirectIfProfileIncomplete(session);
   const cookieHeader = await readServerCookieHeader();
   const generations = await fetchGenerationsFromServer(cookieHeader);
   const accessible = getAccessibleGenerations(session, generations);

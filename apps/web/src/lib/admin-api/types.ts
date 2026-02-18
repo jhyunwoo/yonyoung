@@ -187,6 +187,12 @@ export type ApiUser = {
   email: string;
   image: string | null;
   nickname: string | null;
+  familyName: string | null;
+  givenName: string | null;
+  college: string | null;
+  department: string | null;
+  studentNumber: string | null;
+  phoneNumber: string | null;
   role: AuthRole | null;
   generationId: string | null;
   createdAt: number;
@@ -197,6 +203,12 @@ export type ApiAdminUpdateUserInput = {
   name?: string;
   nickname?: string | null;
   image?: string | null;
+  familyName?: string | null;
+  givenName?: string | null;
+  college?: string | null;
+  department?: string | null;
+  studentNumber?: string | null;
+  phoneNumber?: string | null;
   role?:
     | "president"
     | "vice_president"
@@ -212,6 +224,12 @@ export type ApiMemberProfileUpdateInput = {
   name?: string;
   nickname?: string | null;
   image?: string | null;
+  familyName?: string | null;
+  givenName?: string | null;
+  college?: string | null;
+  department?: string | null;
+  studentNumber?: string | null;
+  phoneNumber?: string | null;
 };
 
 export type ApiUpdateUserInput = ApiAdminUpdateUserInput | ApiMemberProfileUpdateInput;
