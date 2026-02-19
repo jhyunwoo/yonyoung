@@ -48,7 +48,7 @@ export default function AdminDrawer({
       {open ? (
         <motion.div
           key="drawer-backdrop"
-          className="fixed inset-0 z-50 flex justify-end bg-black/45 backdrop-blur-[1px]"
+          className="fixed inset-0 z-50 flex justify-end bg-black/45 backdrop-blur-sm"
           onClick={onClose}
           data-testid={`${testId}-backdrop`}
           initial={{ opacity: 0 }}
@@ -61,7 +61,7 @@ export default function AdminDrawer({
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            className="flex h-full w-full max-w-3xl flex-col border-l border-gray-200 bg-white shadow-2xl xl:max-w-4xl"
+            className="flex h-full w-full max-w-3xl flex-col border-l border-gray-200 bg-white/95 shadow-2xl xl:max-w-4xl"
             onClick={(event) => event.stopPropagation()}
             data-testid={testId}
             initial={{ x: 56, opacity: 0.98 }}
@@ -79,17 +79,17 @@ export default function AdminDrawer({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-lg border border-gray-300 px-2 py-1 text-sm text-gray-600 hover:bg-gray-50"
+                className="rounded-xl border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-600 hover:bg-gray-100"
                 data-testid={`${testId}-close`}
               >
                 닫기
               </button>
             </header>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 md:px-6">{children}</div>
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-6">{children}</div>
 
             {footer ? (
-              <footer className="border-t border-gray-200 bg-white px-5 py-3 md:px-6">
+              <footer className="border-t border-gray-200 bg-white/90 px-5 py-3 md:px-6">
                 {footer}
               </footer>
             ) : null}

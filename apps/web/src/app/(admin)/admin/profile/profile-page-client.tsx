@@ -196,29 +196,29 @@ export default function ProfilePageClient({
       }
     >
       <div className="space-y-6" data-testid="admin-profile-page">
-        <section className="relative overflow-hidden rounded-3xl border border-(--admin-border) bg-(--admin-surface) p-6 shadow-[0_24px_50px_-40px_rgba(15,23,42,0.7)] md:p-8">
-          <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-(--admin-surface-subtle) opacity-80 blur-3xl" />
-          <div className="pointer-events-none absolute -left-12 bottom-0 h-36 w-36 rounded-full bg-(--admin-surface-muted) opacity-70 blur-2xl" />
+        <section className="relative overflow-hidden rounded-3xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-6 shadow-[0_24px_50px_-40px_rgba(15,23,42,0.7)] md:p-8">
+          <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-[var(--admin-surface-subtle)] opacity-80 blur-3xl" />
+          <div className="pointer-events-none absolute -left-12 bottom-0 h-36 w-36 rounded-full bg-[var(--admin-surface-muted)] opacity-70 blur-2xl" />
 
           <div className="relative space-y-4">
-            <span className="inline-flex items-center rounded-full border border-(--admin-border) bg-(--admin-surface-muted) px-3 py-1 text-xs font-semibold tracking-[0.08em] text-(--admin-text-muted)">
+            <span className="inline-flex items-center rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] px-3 py-1 text-xs font-semibold tracking-[0.08em] text-[var(--admin-text-muted)]">
               PROFILE SETUP
             </span>
 
             <div className="space-y-2">
-              <h1 className="text-2xl font-semibold text-(--admin-text-primary) md:text-3xl">
+              <h1 className="text-2xl font-semibold text-[var(--admin-text-primary)] md:text-3xl">
                 {pageTitle}
               </h1>
-              <p className="max-w-3xl text-sm leading-6 text-(--admin-text-secondary)">
+              <p className="max-w-3xl text-sm leading-6 text-[var(--admin-text-secondary)]">
                 {pageDescription}
               </p>
-              <p className="text-xs leading-5 text-(--admin-text-muted)">
+              <p className="text-xs leading-5 text-[var(--admin-text-muted)]">
                 {pageGuidance}
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className="rounded-full border border-(--admin-border) bg-(--admin-surface-muted) px-2.5 py-1 font-medium text-(--admin-text-secondary)">
+              <span className="rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] px-2.5 py-1 font-medium text-[var(--admin-text-secondary)]">
                 필수 항목 6개
               </span>
               <span
@@ -255,19 +255,19 @@ export default function ProfilePageClient({
             ) : null}
 
             {isLoading ? (
-              <section className="rounded-3xl border border-(--admin-border) bg-[vbg-(--admin-surface)shadow-[0_18px_40px_-35px_rgba(15,23,42,0.65)]">
-                <p className="text-sm text-(--admin-text-muted)">
+              <section className="rounded-3xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-6 shadow-[0_18px_40px_-35px_rgba(15,23,42,0.65)]">
+                <p className="text-sm text-[var(--admin-text-muted)]">
                   프로필 정보를 불러오는 중...
                 </p>
               </section>
             ) : profile ? (
               <form
-                className="space-y-6 rounded-3xl border border-(--admin-border) bg-(--admin-surface) p-5 shadow-[0_20px_48px_-36px_rgba(15,23,42,0.65)] md:p-7"
+                className="space-y-6 rounded-3xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-5 shadow-[0_20px_48px_-36px_rgba(15,23,42,0.65)] md:p-7"
                 data-testid="admin-profile-form"
                 onSubmit={handleSubmit}
               >
                 <section className="space-y-4">
-                  <h2 className="text-base font-semibold text-(--admin-text-primary)">
+                  <h2 className="text-base font-semibold text-[var(--admin-text-primary)]">
                     표시 정보
                   </h2>
                   <div className="grid gap-4 md:grid-cols-2">
@@ -309,7 +309,7 @@ export default function ProfilePageClient({
                 </section>
 
                 <section className="space-y-4">
-                  <h2 className="text-base font-semibold text-(--admin-text-primary)">
+                  <h2 className="text-base font-semibold text-[var(--admin-text-primary)]">
                     기본 학적 정보
                   </h2>
                   <div className="grid gap-4 md:grid-cols-2">
@@ -435,8 +435,8 @@ export default function ProfilePageClient({
                   </p>
                 ) : null}
 
-                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-(--admin-border) pt-4">
-                  <p className="text-xs text-(--admin-text-muted)">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--admin-border)] pt-4">
+                  <p className="text-xs text-[var(--admin-text-muted)]">
                     저장 후 자동으로 다음 화면으로 이동합니다.
                   </p>
                   <AdminActionButton
@@ -444,7 +444,7 @@ export default function ProfilePageClient({
                     disabled={isSubmitting}
                     loading={isSubmitting}
                     loadingText="저장 중..."
-                    className="min-w-[182px] rounded-xl border-(--admin-accent) bg-(--admin-accent) px-4 py-2.5 font-semibold text-(--admin-bg-primary) shadow-sm transition hover:brightness-110 disabled:border-(--admin-border-strong) disabled:bg-(--admin-border-strong) disabled:text-(--admin-bg-primary)"
+                    className="min-w-[182px] rounded-xl border-[var(--admin-accent)] bg-[var(--admin-accent)] px-4 py-2.5 font-semibold text-[var(--admin-bg-primary)] shadow-sm transition hover:brightness-110 disabled:border-[var(--admin-border-strong)] disabled:bg-[var(--admin-border-strong)] disabled:text-[var(--admin-bg-primary)]"
                     testId="admin-profile-submit"
                   >
                     저장하고 계속하기
@@ -452,8 +452,8 @@ export default function ProfilePageClient({
                 </div>
               </form>
             ) : (
-              <section className="rounded-3xl border border-(--admin-border) bg-(--admin-surface) p-6 shadow-[0_18px_40px_-35px_rgba(15,23,42,0.65)]">
-                <p className="text-sm text-(--admin-text-muted)">
+              <section className="rounded-3xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-6 shadow-[0_18px_40px_-35px_rgba(15,23,42,0.65)]">
+                <p className="text-sm text-[var(--admin-text-muted)]">
                   프로필 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
                 </p>
               </section>
@@ -461,31 +461,31 @@ export default function ProfilePageClient({
           </div>
 
           <aside className="h-fit space-y-4">
-            <section className="rounded-2xl border border-(--admin-border) bg-(--admin-surface) p-5 shadow-[0_18px_36px_-32px_rgba(15,23,42,0.6)]">
-              <h2 className="text-sm font-semibold text-(--admin-text-primary)">
+            <section className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-5 shadow-[0_18px_36px_-32px_rgba(15,23,42,0.6)]">
+              <h2 className="text-sm font-semibold text-[var(--admin-text-primary)]">
                 입력 가이드
               </h2>
-              <p className="mt-2 text-xs leading-5 text-(--admin-text-secondary)">
+              <p className="mt-2 text-xs leading-5 text-[var(--admin-text-secondary)]">
                 {isAuthMode
                   ? "가입 절차를 마치기 위해 필수 정보를 먼저 입력해 주세요."
                   : "관리자 화면에서 사용하는 계정 정보를 최신으로 유지해 주세요."}
               </p>
 
-              <ul className="mt-3 space-y-2 text-xs text-(--admin-text-muted)">
+              <ul className="mt-3 space-y-2 text-xs text-[var(--admin-text-muted)]">
                 {requiredFieldItems.map((item) => (
                   <li key={item} className="flex items-start gap-2">
-                    <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-(--admin-accent)" />
+                    <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[var(--admin-accent)]" />
                     <span>{item}</span>
                   </li>
                 ))}
               </ul>
             </section>
 
-            <section className="rounded-2xl border border-(--admin-border) bg-(--admin-surface-muted) p-4">
-              <h3 className="text-xs font-semibold tracking-[0.08em] text-(--admin-text-secondary)">
+            <section className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] p-4">
+              <h3 className="text-xs font-semibold tracking-[0.08em] text-[var(--admin-text-secondary)]">
                 FORMAT TIP
               </h3>
-              <p className="mt-2 text-xs leading-5 text-(--admin-text-muted)">
+              <p className="mt-2 text-xs leading-5 text-[var(--admin-text-muted)]">
                 학번은 숫자 10자리 형식만 저장됩니다. 하이픈이나 공백 없이
                 입력해 주세요.
               </p>

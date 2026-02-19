@@ -17,6 +17,14 @@ type AdminSidebarProps = {
 };
 
 type AdminTheme = "light" | "dark";
+type SidebarIconName =
+  | "profile"
+  | "generations"
+  | "activities"
+  | "supporters"
+  | "exhibitions"
+  | "linktree"
+  | "users";
 
 const THEME_STORAGE_KEY = "theme";
 
@@ -31,39 +39,116 @@ const RESOURCE_MENU_ITEMS = [
     resourcePath: "activities",
     label: "활동 관리",
     shortLabel: "ACT",
-    collapsedLabel: "활동",
+    icon: "activities",
   },
   {
     resourcePath: "supporters",
     label: "후원사 관리",
     shortLabel: "SUP",
-    collapsedLabel: "후원",
+    icon: "supporters",
   },
   {
     resourcePath: "exhibitions",
     label: "전시 관리",
     shortLabel: "EXH",
-    collapsedLabel: "전시",
+    icon: "exhibitions",
   },
   {
     resourcePath: "linktree",
     label: "링크 모음 관리",
     shortLabel: "LNK",
-    collapsedLabel: "링크",
+    icon: "linktree",
   },
   {
     resourcePath: "users",
     label: "사용자 관리",
     shortLabel: "USR",
-    collapsedLabel: "사용",
+    icon: "users",
   },
 ] as const;
 
 const NAV_ITEM_BASE_CLASS =
-  "flex items-center rounded-md border px-3 py-2 text-sm font-medium transition-colors";
+  "group relative flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all duration-200";
+
+const NAV_ICON_CLASS = "h-4 w-4 shrink-0";
 
 const NAV_ITEM_SCOPE_BADGE_CLASS =
   "inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.04em]";
+
+const SidebarIcon = ({
+  name,
+  className = NAV_ICON_CLASS,
+}: {
+  name: SidebarIconName;
+  className?: string;
+}) => {
+  const iconProps = {
+    className,
+    fill: "none",
+    viewBox: "0 0 24 24",
+    stroke: "currentColor",
+    strokeWidth: 1.9,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+  };
+
+  switch (name) {
+    case "profile":
+      return (
+        <svg {...iconProps}>
+          <path d="M18 20a6 6 0 0 0-12 0" />
+          <circle cx="12" cy="8" r="4" />
+        </svg>
+      );
+    case "generations":
+      return (
+        <svg {...iconProps}>
+          <path d="M4 7h16" />
+          <path d="M4 12h16" />
+          <path d="M4 17h16" />
+        </svg>
+      );
+    case "activities":
+      return (
+        <svg {...iconProps}>
+          <path d="m5 12 4 4L19 6" />
+        </svg>
+      );
+    case "supporters":
+      return (
+        <svg {...iconProps}>
+          <path d="M12 21s-7-4.35-7-10a4 4 0 0 1 7-2.62A4 4 0 0 1 19 11c0 5.65-7 10-7 10Z" />
+        </svg>
+      );
+    case "exhibitions":
+      return (
+        <svg {...iconProps}>
+          <rect x="4" y="5" width="16" height="14" rx="2" />
+          <path d="m8 14 2.8-3.2a1 1 0 0 1 1.5-.05L16 15" />
+          <circle cx="9" cy="9" r="1.1" />
+        </svg>
+      );
+    case "linktree":
+      return (
+        <svg {...iconProps}>
+          <path d="M10 7h5a3 3 0 1 1 0 6h-5" />
+          <path d="M14 17H9a3 3 0 1 1 0-6h5" />
+        </svg>
+      );
+    case "users":
+      return (
+        <svg {...iconProps}>
+          <circle cx="9" cy="8" r="3" />
+          <path d="M3 19a6 6 0 0 1 12 0" />
+          <path d="M17 11a3 3 0 1 0 0-6" />
+          <path d="M21 19a4.7 4.7 0 0 0-3.5-4.5" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+};
 
 const ROLE_LABEL_MAP = {
   president: "회장",
@@ -272,37 +357,52 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
   return (
     <aside
       data-testid="admin-sidebar"
-      className={`flex h-screen shrink-0 flex-col border-r border-gray-200 bg-white transition-[width] duration-200 ${
-        collapsed ? "w-20" : "w-72"
+      className={`admin-sidebar-glass flex h-screen shrink-0 flex-col border-r border-gray-200 transition-[width] duration-300 ${
+        collapsed ? "w-[5.5rem]" : "w-80"
       }`}
     >
       <div className="flex items-center justify-between border-b border-gray-200 px-3 py-3">
-        <span
-          className={`overflow-hidden whitespace-nowrap text-sm font-semibold text-gray-700 transition-opacity ${
-            collapsed ? "opacity-0" : "opacity-100"
+        <div
+          className={`min-w-0 transition-all duration-200 ${
+            collapsed ? "w-0 overflow-hidden opacity-0" : "opacity-100"
           }`}
         >
-          Admin Console
-        </span>
+          <p className="truncate text-[11px] font-semibold tracking-[0.16em] text-gray-500">
+            YONYOUNG
+          </p>
+          <p className="truncate text-sm font-semibold text-gray-800">Admin Console</p>
+        </div>
         <button
           type="button"
           onClick={onToggle}
-          className="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-300 bg-white/70 text-gray-700 shadow-sm hover:bg-gray-100"
           data-testid="admin-sidebar-toggle"
           aria-label={collapsed ? "사이드바 펼치기" : "사이드바 접기"}
         >
-          {collapsed ? ">" : "<"}
+          <span
+            aria-hidden="true"
+            className={`text-sm transition-transform duration-200 ${collapsed ? "rotate-180" : ""}`}
+          >
+            ❮
+          </span>
         </button>
       </div>
 
       <div className="border-b border-gray-200 px-3 py-3">
         {collapsed ? (
-          <p className="text-center text-xs font-medium text-gray-600">기수</p>
+          <div className="flex justify-center">
+            <span
+              className="inline-flex h-8 min-w-8 items-center justify-center rounded-full border border-gray-300 bg-gray-100 px-2 text-xs font-semibold text-gray-700"
+              title={selectedSortOrder === null ? "기수 미선택" : `${selectedSortOrder}기 선택`}
+            >
+              {selectedSortOrder === null ? "?" : selectedSortOrder}
+            </span>
+          </div>
         ) : (
           <label className="block text-xs font-medium text-gray-600">
             현재 작업 기수
             <select
-              className="mt-1 w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm text-gray-700"
+              className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white/70 px-3 py-2 text-sm text-gray-700 shadow-sm"
               value={selectedSortOrder ?? ""}
               onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) => handleGenerationChange(event.target.value)}
               disabled={generationOptions.length === 0 || isGenerationLoading}
@@ -325,14 +425,10 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
       <nav className="flex-1 overflow-y-auto p-3" data-testid="admin-sidebar-nav">
         <div className="space-y-3">
           <section
-            className="rounded-xl border border-blue-200 bg-blue-50/70 p-2"
+            className="rounded-2xl border border-blue-200 bg-blue-50/70 p-2"
             data-testid="admin-nav-global-group"
           >
-            {collapsed ? (
-              <p className="pb-1 text-center text-[10px] font-semibold tracking-[0.08em] text-blue-900/80">
-                전체
-              </p>
-            ) : (
+            {collapsed ? null : (
               <p className="px-2 pb-2 text-[11px] font-semibold tracking-[0.08em] text-blue-900/80">
                 전체 기수 공통 관리
               </p>
@@ -345,12 +441,14 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
                   data-testid="admin-nav-profile"
                   className={`${NAV_ITEM_BASE_CLASS} ${
                     isProfileActive
-                      ? "border-black bg-black text-white"
-                      : "border-blue-200 text-blue-900 hover:opacity-90"
+                      ? "border-black bg-black text-white shadow-md shadow-black/20"
+                      : "border-blue-200 text-blue-900 hover:bg-blue-100/70"
                   } ${collapsed ? "justify-center" : "justify-start"}`}
+                  title="내 프로필"
                 >
+                  <SidebarIcon name="profile" />
                   {collapsed ? (
-                    "프로필"
+                    <span className="sr-only">내 프로필</span>
                   ) : (
                     <>
                       <span className={`${NAV_ITEM_SCOPE_BADGE_CLASS} border-blue-200 bg-blue-50/70 text-blue-900`}>
@@ -369,12 +467,14 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
                     data-testid="admin-nav-generation-settings"
                     className={`${NAV_ITEM_BASE_CLASS} ${
                       isGenerationSettingsActive
-                        ? "border-black bg-black text-white"
-                        : "border-blue-200 text-blue-900 hover:opacity-90"
+                        ? "border-black bg-black text-white shadow-md shadow-black/20"
+                        : "border-blue-200 text-blue-900 hover:bg-blue-100/70"
                     } ${collapsed ? "justify-center" : "justify-start"}`}
+                    title="기수 설정"
                   >
+                    <SidebarIcon name="generations" />
                     {collapsed ? (
-                      "기수"
+                      <span className="sr-only">기수 설정</span>
                     ) : (
                       <>
                         <span className={`${NAV_ITEM_SCOPE_BADGE_CLASS} border-blue-200 bg-blue-50/70 text-blue-900`}>
@@ -390,14 +490,10 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
           </section>
 
           <section
-            className="rounded-xl border border-gray-200 bg-white p-2"
+            className="rounded-2xl border border-gray-200 bg-white p-2"
             data-testid="admin-nav-generation-group"
           >
-            {collapsed ? (
-              <p className="pb-1 text-center text-[10px] font-semibold tracking-[0.08em] text-gray-500">
-                기수별
-              </p>
-            ) : (
+            {collapsed ? null : (
               <p className="px-2 pb-2 text-[11px] font-semibold tracking-[0.08em] text-gray-500">
                 선택 기수별 관리
               </p>
@@ -423,12 +519,14 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
                         data-testid={`admin-nav-${item.shortLabel.toLowerCase()}`}
                         className={`${NAV_ITEM_BASE_CLASS} ${
                           active
-                            ? "border-black bg-black text-white"
+                            ? "border-black bg-black text-white shadow-md shadow-black/20"
                             : "border-gray-200 text-gray-700 hover:bg-gray-100"
                         } ${collapsed ? "justify-center" : "justify-start"}`}
+                        title={item.label}
                       >
+                        <SidebarIcon name={item.icon} />
                         {collapsed ? (
-                          item.collapsedLabel
+                          <span className="sr-only">{item.label}</span>
                         ) : (
                           <>
                             <span className={`${NAV_ITEM_SCOPE_BADGE_CLASS} border-gray-300 bg-gray-100 text-gray-600`}>
@@ -452,7 +550,7 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
         {collapsed ? (
           <div className="flex justify-center" data-testid="admin-user-summary-collapsed">
             <div
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 bg-gray-100 text-sm font-semibold text-gray-700"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-300 bg-gray-100 text-sm font-semibold text-gray-700 shadow-sm"
               title={`${userDisplayName} (${session.user.email})`}
               aria-label={`${userDisplayName} 프로필`}
             >
@@ -461,11 +559,11 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
           </div>
         ) : (
           <section
-            className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2"
+            className="rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2.5"
             data-testid="admin-user-summary"
           >
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white text-sm font-semibold text-gray-700">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white text-sm font-semibold text-gray-700">
                 {userInitial}
               </div>
               <div className="min-w-0 flex-1">
@@ -482,8 +580,8 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
         <button
           type="button"
           onClick={handleThemeToggle}
-          className={`inline-flex items-center justify-center gap-2 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 ${
-            collapsed ? "w-12" : "w-full"
+          className={`inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white/70 px-3 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-100 ${
+            collapsed ? "w-11" : "w-full"
           }`}
           data-testid="admin-theme-toggle"
           aria-label={theme === "dark" ? "라이트 모드로 전환" : "다크 모드로 전환"}

@@ -47,11 +47,23 @@ export default function LogoutButton({ compact = false }: LogoutButtonProps) {
         onClick={handleSignOut}
         disabled={isPending}
         data-testid="admin-logout-button"
-        className={`rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 ${
-          compact ? "w-12" : "w-full"
+        aria-label={isPending ? "로그아웃 중" : "로그아웃"}
+        className={`inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white/80 px-3 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 ${
+          compact ? "h-11 w-11" : "w-full"
         }`}
       >
-        {compact ? (isPending ? "..." : "OUT") : isPending ? "로그아웃 중..." : "로그아웃"}
+        {compact ? (
+          <span aria-hidden="true" className="text-base leading-none">
+            {isPending ? "…" : "↩"}
+          </span>
+        ) : (
+          <>
+            <span aria-hidden="true" className="text-base leading-none">
+              ↩
+            </span>
+            <span>{isPending ? "로그아웃 중..." : "로그아웃"}</span>
+          </>
+        )}
       </button>
 
       {errorMessage ? (

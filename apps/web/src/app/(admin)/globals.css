@@ -1,29 +1,33 @@
 @import "tailwindcss";
 
 :root {
-  --admin-bg-primary: #f5f7fb;
-  --admin-surface: #ffffff;
-  --admin-surface-muted: #f1f5f9;
-  --admin-surface-subtle: #e2e8f0;
-  --admin-border: #dbe3ee;
-  --admin-border-strong: #c3cedd;
-  --admin-text-primary: #111827;
-  --admin-text-secondary: #374151;
-  --admin-text-muted: #6b7280;
-  --admin-accent: #111827;
+  --admin-bg-primary: #f3f6fc;
+  --admin-bg-secondary: #e7edf8;
+  --admin-surface: #fefeff;
+  --admin-surface-muted: #edf2fb;
+  --admin-surface-subtle: #dce6f6;
+  --admin-border: #d5dfef;
+  --admin-border-strong: #b4c6df;
+  --admin-text-primary: #0f172a;
+  --admin-text-secondary: #334155;
+  --admin-text-muted: #64748b;
+  --admin-accent: #1d4ed8;
+  --admin-accent-strong: #1e40af;
 }
 
 .dark {
-  --admin-bg-primary: #0d131c;
-  --admin-surface: #121b27;
-  --admin-surface-muted: #182233;
-  --admin-surface-subtle: #223147;
-  --admin-border: #2d3b51;
-  --admin-border-strong: #3a4b66;
-  --admin-text-primary: #e5edf9;
-  --admin-text-secondary: #c9d5e7;
-  --admin-text-muted: #9dafc7;
-  --admin-accent: #d6b57a;
+  --admin-bg-primary: #0d1625;
+  --admin-bg-secondary: #141f33;
+  --admin-surface: #111d2f;
+  --admin-surface-muted: #16263d;
+  --admin-surface-subtle: #233754;
+  --admin-border: #2f425f;
+  --admin-border-strong: #436086;
+  --admin-text-primary: #e2ecfb;
+  --admin-text-secondary: #c0d0ea;
+  --admin-text-muted: #90a6c8;
+  --admin-accent: #7fb2ff;
+  --admin-accent-strong: #5f95f0;
 }
 
 html {
@@ -44,116 +48,236 @@ body {
     "Noto Sans KR",
     sans-serif;
   background:
-    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--admin-surface-subtle), transparent 72%), transparent 45%),
-    radial-gradient(circle at 100% -20%, color-mix(in srgb, var(--admin-accent), transparent 88%), transparent 48%),
-    var(--admin-bg-primary);
+    radial-gradient(circle at -10% -10%, color-mix(in srgb, var(--admin-accent), transparent 90%), transparent 40%),
+    radial-gradient(circle at 120% 0%, color-mix(in srgb, var(--admin-surface-subtle), transparent 56%), transparent 45%),
+    linear-gradient(180deg, var(--admin-bg-primary) 0%, var(--admin-bg-secondary) 100%);
   color: var(--admin-text-primary);
 }
 
-.dark .bg-white {
-  background-color: var(--admin-surface);
+.admin-root {
+  isolation: isolate;
 }
 
-.dark .bg-gray-50 {
-  background-color: var(--admin-surface-muted);
+.admin-sidebar-glass {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--admin-surface), transparent 6%) 0%,
+      color-mix(in srgb, var(--admin-surface-muted), transparent 4%) 100%
+    );
+  backdrop-filter: blur(12px);
 }
 
-.dark .bg-gray-100 {
-  background-color: var(--admin-surface-subtle);
+.admin-root .bg-white {
+  background-color: color-mix(in srgb, var(--admin-surface), transparent 2%);
 }
 
-.dark .bg-gray-200 {
-  background-color: color-mix(in srgb, var(--admin-surface-subtle), #000 8%);
+.admin-root .bg-gray-50 {
+  background-color: color-mix(in srgb, var(--admin-surface-muted), transparent 4%);
 }
 
-.dark .border-gray-200 {
+.admin-root .bg-gray-100 {
+  background-color: color-mix(in srgb, var(--admin-surface-subtle), transparent 8%);
+}
+
+.admin-root .bg-gray-200 {
+  background-color: color-mix(in srgb, var(--admin-surface-subtle), #000 6%);
+}
+
+.admin-root .border-gray-200 {
   border-color: var(--admin-border);
 }
 
-.dark .border-gray-300 {
+.admin-root .border-gray-300 {
   border-color: var(--admin-border-strong);
 }
 
-.dark .text-gray-900 {
+.admin-root .text-gray-900 {
   color: var(--admin-text-primary);
 }
 
-.dark .text-gray-700 {
+.admin-root .text-gray-700 {
   color: var(--admin-text-secondary);
 }
 
-.dark .text-gray-600,
-.dark .text-gray-500 {
+.admin-root .text-gray-600,
+.admin-root .text-gray-500 {
   color: var(--admin-text-muted);
 }
 
-.dark .bg-black {
+.admin-root .bg-black {
   background-color: var(--admin-accent);
 }
 
-.dark .border-black {
-  border-color: var(--admin-accent);
+.admin-root .border-black {
+  border-color: var(--admin-accent-strong);
 }
 
-.dark .text-white {
-  color: #0d131c;
+.admin-root .rounded-md {
+  border-radius: 0.85rem;
 }
 
-.dark .hover\:bg-gray-50:hover {
-  background-color: color-mix(in srgb, var(--admin-surface-subtle), transparent 25%);
+.admin-root .rounded-lg {
+  border-radius: 1rem;
 }
 
-.dark .hover\:bg-gray-100:hover {
-  background-color: color-mix(in srgb, var(--admin-surface-subtle), #000 12%);
+.admin-root .rounded-xl {
+  border-radius: 1.1rem;
 }
 
-.dark .bg-blue-50\/70 {
-  background-color: color-mix(in srgb, #0f2743, transparent 45%);
+.admin-root .rounded-2xl {
+  border-radius: 1.3rem;
 }
 
-.dark .border-blue-200 {
-  border-color: #22466e;
+.admin-root .rounded-3xl {
+  border-radius: 1.6rem;
 }
 
-.dark .text-blue-900,
-.dark .text-blue-900\/80 {
-  color: #d0e4ff;
-}
-
-.dark .bg-red-50 {
-  background-color: color-mix(in srgb, #5f1f2a, transparent 35%);
-}
-
-.dark .border-red-300 {
-  border-color: #a04756;
-}
-
-.dark .text-red-700,
-.dark .text-red-600 {
-  color: #ffc2cc;
-}
-
-.dark .bg-green-50 {
-  background-color: color-mix(in srgb, #18412d, transparent 30%);
-}
-
-.dark .border-green-300 {
-  border-color: #307c53;
-}
-
-.dark .text-green-700 {
-  color: #bbf4ce;
-}
-
-.dark input,
-.dark select,
-.dark textarea {
-  background-color: var(--admin-surface-muted);
+.admin-root input,
+.admin-root select,
+.admin-root textarea {
+  background-color: color-mix(in srgb, var(--admin-surface), transparent 10%);
   color: var(--admin-text-primary);
+  border-color: var(--admin-border-strong);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.admin-root input::placeholder,
+.admin-root textarea::placeholder {
+  color: var(--admin-text-muted);
+}
+
+.admin-root input:focus,
+.admin-root select:focus,
+.admin-root textarea:focus {
+  border-color: color-mix(in srgb, var(--admin-accent), #fff 20%);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--admin-accent), transparent 76%);
+  outline: none;
+}
+
+.admin-root button,
+.admin-root a {
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.admin-root button:hover,
+.admin-root a:hover {
+  box-shadow: 0 10px 20px -18px color-mix(in srgb, #0f172a, transparent 15%);
+}
+
+.admin-root section,
+.admin-root aside,
+.admin-root form {
+  box-shadow: 0 16px 40px -36px color-mix(in srgb, #0f172a, transparent 18%);
+}
+
+.dark .admin-root .bg-white {
+  background-color: color-mix(in srgb, var(--admin-surface), #000 6%);
+}
+
+.dark .admin-root .bg-gray-50 {
+  background-color: color-mix(in srgb, var(--admin-surface-muted), #000 4%);
+}
+
+.dark .admin-root .bg-gray-100 {
+  background-color: color-mix(in srgb, var(--admin-surface-subtle), #000 8%);
+}
+
+.dark .admin-root .bg-gray-200 {
+  background-color: color-mix(in srgb, var(--admin-surface-subtle), #000 14%);
+}
+
+.dark .admin-root .border-gray-200 {
+  border-color: var(--admin-border);
+}
+
+.dark .admin-root .border-gray-300 {
   border-color: var(--admin-border-strong);
 }
 
-.dark input::placeholder,
-.dark textarea::placeholder {
+.dark .admin-root .text-gray-900 {
+  color: var(--admin-text-primary);
+}
+
+.dark .admin-root .text-gray-700 {
+  color: var(--admin-text-secondary);
+}
+
+.dark .admin-root .text-gray-600,
+.dark .admin-root .text-gray-500 {
   color: var(--admin-text-muted);
+}
+
+.dark .admin-root .bg-black {
+  background-color: var(--admin-accent);
+}
+
+.dark .admin-root .border-black {
+  border-color: var(--admin-accent);
+}
+
+.dark .admin-root .text-white {
+  color: #08101b;
+}
+
+.dark .admin-root .hover\:bg-gray-50:hover {
+  background-color: color-mix(in srgb, var(--admin-surface-subtle), transparent 25%);
+}
+
+.dark .admin-root .hover\:bg-gray-100:hover {
+  background-color: color-mix(in srgb, var(--admin-surface-subtle), #000 12%);
+}
+
+.dark .admin-root .bg-blue-50\/70 {
+  background-color: color-mix(in srgb, #112841, transparent 44%);
+}
+
+.dark .admin-root .border-blue-200 {
+  border-color: #2b5079;
+}
+
+.dark .admin-root .text-blue-900,
+.dark .admin-root .text-blue-900\/80 {
+  color: #d6e9ff;
+}
+
+.dark .admin-root .bg-red-50 {
+  background-color: color-mix(in srgb, #63212d, transparent 34%);
+}
+
+.dark .admin-root .border-red-300 {
+  border-color: #a94a58;
+}
+
+.dark .admin-root .text-red-700,
+.dark .admin-root .text-red-600 {
+  color: #ffd0d7;
+}
+
+.dark .admin-root .bg-green-50 {
+  background-color: color-mix(in srgb, #18412d, transparent 30%);
+}
+
+.dark .admin-root .border-green-300 {
+  border-color: #307c53;
+}
+
+.dark .admin-root .text-green-700 {
+  color: #bbf4ce;
+}
+
+.dark .admin-root input,
+.dark .admin-root select,
+.dark .admin-root textarea {
+  background-color: color-mix(in srgb, var(--admin-surface-muted), #000 8%);
+  color: var(--admin-text-primary);
+  border-color: var(--admin-border-strong);
 }

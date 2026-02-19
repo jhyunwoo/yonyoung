@@ -9,6 +9,7 @@
     },
     "lint": {
       "dependsOn": ["^lint"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "env": [
         "AUTH_API_URL",
         "E2E_API_URL",
@@ -20,7 +21,9 @@
       ]
     },
     "check-types": {
-      "dependsOn": ["^check-types"]
+      "dependsOn": ["^check-types"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "cache": true
     },
     "dev": {
       "cache": false,
@@ -47,14 +50,86 @@
       "cache": false
     },
     "test": {
-      "cache": false
+      "cache": true,
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [],
+      "env": [
+        "AUTH_API_URL",
+        "E2E_API_URL",
+        "NEXT_PUBLIC_AUTH_API_URL",
+        "NEXT_PUBLIC_SITE_URL",
+        "NODE_ENV",
+        "REVALIDATE_SECRET"
+      ]
     },
     "test:watch": {
       "cache": false,
       "persistent": true
     },
     "test:coverage": {
-      "cache": false
+      "cache": true,
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": ["coverage/**"],
+      "env": [
+        "AUTH_API_URL",
+        "E2E_API_URL",
+        "NEXT_PUBLIC_AUTH_API_URL",
+        "NEXT_PUBLIC_SITE_URL",
+        "NODE_ENV",
+        "REVALIDATE_SECRET"
+      ]
+    },
+    "test:unit": {
+      "cache": true,
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [],
+      "env": [
+        "AUTH_API_URL",
+        "NEXT_PUBLIC_AUTH_API_URL",
+        "NEXT_PUBLIC_SITE_URL",
+        "NODE_ENV",
+        "REVALIDATE_SECRET"
+      ]
+    },
+    "test:unit:coverage": {
+      "cache": true,
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": ["coverage/**"],
+      "env": [
+        "AUTH_API_URL",
+        "NEXT_PUBLIC_AUTH_API_URL",
+        "NEXT_PUBLIC_SITE_URL",
+        "NODE_ENV",
+        "REVALIDATE_SECRET"
+      ]
+    },
+    "test:e2e:smoke": {
+      "cache": true,
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [],
+      "env": [
+        "AUTH_API_URL",
+        "E2E_*",
+        "NEXT_PUBLIC_AUTH_API_URL",
+        "NEXT_PUBLIC_SITE_URL",
+        "NODE_ENV",
+        "PLAYWRIGHT_*",
+        "REVALIDATE_SECRET"
+      ]
+    },
+    "test:e2e:full": {
+      "cache": true,
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [],
+      "env": [
+        "AUTH_API_URL",
+        "E2E_*",
+        "NEXT_PUBLIC_AUTH_API_URL",
+        "NEXT_PUBLIC_SITE_URL",
+        "NODE_ENV",
+        "PLAYWRIGHT_*",
+        "REVALIDATE_SECRET"
+      ]
     },
     "db:generation": {
       "cache": false

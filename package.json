@@ -25,6 +25,10 @@
     "web:upload": "turbo run upload --filter=web",
     "web:preview": "turbo run preview --filter=web",
     "web:cf-typegen": "turbo run cf-typegen --filter=web",
+    "web:test:unit": "turbo run test:unit --filter=web",
+    "web:test:unit:coverage": "turbo run test:unit:coverage --filter=web",
+    "web:test:e2e:smoke": "turbo run test:e2e:smoke --filter=web",
+    "web:test:e2e:full": "turbo run test:e2e:full --filter=web",
     "api:dev": "turbo run dev --filter=api",
     "api:deploy": "turbo run deploy --filter=api",
     "api:cf-typegen": "turbo run cf-typegen --filter=api",
@@ -37,7 +41,7 @@
     "api:db:studio": "turbo run db:studio --filter=api",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
-    "test:all": "pnpm lint && pnpm check-types && pnpm api:test:coverage && pnpm --filter web test:unit:coverage && pnpm --filter web test:e2e:smoke && pnpm --filter web test:e2e:full"
+    "test:all": "pnpm lint && pnpm check-types && pnpm api:test:coverage && pnpm web:test:unit:coverage && pnpm web:test:e2e:smoke && pnpm web:test:e2e:full"
   },
   "devDependencies": {
     "prettier": "^3.8.1",
