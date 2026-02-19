@@ -10,20 +10,12 @@ import {
   useTransform,
 } from "framer-motion";
 import type { ApiActivity, ApiExhibition } from "../../../lib/admin-api/types";
+import { formatKoreanDateRange } from "../../../lib/date-formatters";
 import { shouldUseUnoptimizedImage } from "../../../lib/image-utils";
 
 type HeroShowcaseProps = {
   featuredExhibition: ApiExhibition | null;
   recentActivities: ApiActivity[];
-};
-
-const formatDateRange = (startDate: number, endDate: number): string => {
-  const formatter = new Intl.DateTimeFormat("ko-KR", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-  return `${formatter.format(startDate)} - ${formatter.format(endDate)}`;
 };
 
 /**
@@ -127,7 +119,7 @@ export default function HeroShowcase({
               </h2>
               {featuredExhibition ? (
                 <p className="text-sm text-(--text-muted)">
-                  {formatDateRange(
+                  {formatKoreanDateRange(
                     featuredExhibition.startDate,
                     featuredExhibition.endDate,
                   )}{" "}

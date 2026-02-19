@@ -191,37 +191,6 @@ export const verification = sqliteTable(
   (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
 
-export const passkey = sqliteTable(
-  "passkey",
-  {
-    id: text("id").primaryKey(),
-    name: text("name"),
-    publicKey: text("public_key").notNull(),
-    userId: text("user_id")
-      .notNull()
-      .references(/** text("user_id")
-      .notNull()
-      .references 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => user.id, { onDelete: "cascade" }),
-    credentialID: text("credential_id").notNull(),
-    counter: integer("counter").notNull(),
-    deviceType: text("device_type").notNull(),
-    backedUp: integer("backed_up", { mode: "boolean" }).notNull(),
-    transports: text("transports"),
-    createdAt: integer("created_at", { mode: "timestamp_ms" }),
-    aaguid: text("aaguid"),
-  },
-    /**
-   * sqliteTable 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
-   * @param table 함수 로직에서 사용하는 입력값입니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
-   */
-  (table) => [
-    index("passkey_userId_idx").on(table.userId),
-    index("passkey_credentialID_idx").on(table.credentialID),
-  ],
-);
-
 export const activities = sqliteTable(
   "activities",
   {
@@ -436,7 +405,6 @@ export const userRelations = relations(user, /** relations 실행 과정에서 �
   generationLinks: many(userGenerations),
   sessions: many(session),
   accounts: many(account),
-  passkeys: many(passkey),
 }));
 
 export const userGenerationsRelations = relations(
@@ -469,13 +437,6 @@ export const sessionRelations = relations(session, /** relations 실행 과정�
 export const accountRelations = relations(account, /** relations 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param { one } 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ ({ one }) => ({
   user: one(user, {
     fields: [account.userId],
-    references: [user.id],
-  }),
-}));
-
-export const passkeyRelations = relations(passkey, /** relations 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param { one } 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ ({ one }) => ({
-  user: one(user, {
-    fields: [passkey.userId],
     references: [user.id],
   }),
 }));

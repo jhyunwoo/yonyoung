@@ -3,18 +3,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublicActivityById } from "../../../../../lib/public-api";
+import { formatKoreanDateCompact } from "../../../../../lib/date-formatters";
 import { shouldUseUnoptimizedImage } from "../../../../../lib/image-utils";
 import { createPageMetadata } from "../../../../../lib/seo";
 import styles from "./record-detail.module.css";
-
-const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-});
-
-const formatDate = (value: number): string =>
-  dateFormatter.format(value).replaceAll(" ", "").replace(/\.$/, "");
 
 export const metadata: Metadata = createPageMetadata({
   title: "활동 기록 상세 | 연영회",
@@ -52,7 +44,7 @@ export default async function RecordDetailPage({ params }: RecordDetailPageProps
             활동 기록으로 돌아가기
           </Link>
           <h1>{activity.title}</h1>
-          <p className={styles.date}>{formatDate(activity.activityDate)}</p>
+          <p className={styles.date}>{formatKoreanDateCompact(activity.activityDate)}</p>
           <p className={styles.description}>{activity.description}</p>
         </header>
 

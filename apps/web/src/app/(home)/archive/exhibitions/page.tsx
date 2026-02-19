@@ -2,18 +2,10 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { listPublicExhibitions, safeList } from "../../../../lib/public-api";
+import { formatKoreanDateCompact } from "../../../../lib/date-formatters";
 import { shouldUseUnoptimizedImage } from "../../../../lib/image-utils";
 import { createPageMetadata } from "../../../../lib/seo";
 import styles from "./exhibitions.module.css";
-
-const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-});
-
-const formatDate = (value: number): string =>
-  dateFormatter.format(value).replaceAll(" ", "").replace(/\.$/, "");
 
 export const metadata: Metadata = createPageMetadata({
   title: "전시회 | 연영회",
@@ -62,7 +54,8 @@ export default async function ArchiveExhibitionsPage() {
                   <div className={styles.exhibitionInfo}>
                     <h2>{exhibition.title}</h2>
                     <p className={styles.exhibitionDate}>
-                      {formatDate(exhibition.startDate)} ~ {formatDate(exhibition.endDate)}
+                      {formatKoreanDateCompact(exhibition.startDate)} ~{" "}
+                      {formatKoreanDateCompact(exhibition.endDate)}
                     </p>
                     <p className={styles.exhibitionLocation}>{exhibition.place}</p>
                   </div>

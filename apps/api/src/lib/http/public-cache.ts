@@ -1,8 +1,8 @@
 import { Context } from "hono";
 import HonoAppType from "../../types/honoAppType";
 
-export const PUBLIC_CACHE_TTL_SECONDS = 60;
-export const PUBLIC_CACHE_STALE_REVALIDATE_SECONDS = 120;
+const PUBLIC_CACHE_TTL_SECONDS = 60;
+const PUBLIC_CACHE_STALE_REVALIDATE_SECONDS = 120;
 export const PUBLIC_CACHE_CONTROL = `public, s-maxage=${PUBLIC_CACHE_TTL_SECONDS}, stale-while-revalidate=${PUBLIC_CACHE_STALE_REVALIDATE_SECONDS}`;
 
 const getDefaultCache = (): Cache | null => {

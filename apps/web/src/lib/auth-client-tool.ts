@@ -5,7 +5,7 @@ import { authClient } from "./auth-client";
 const DEFAULT_AUTH_ERROR_MESSAGE =
   "인증 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.";
 
-export type AuthActionResult<T = undefined> =
+type AuthActionResult<T = undefined> =
   | {
       ok: true;
       data?: T;
@@ -95,33 +95,6 @@ export const signInWithGoogle = async ({
     return {
       ok: false,
       errorMessage: getAuthErrorMessage(error, "Google 로그인에 실패했습니다."),
-    };
-  }
-};
-
-/**
- * signInWithPasskey의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
- * @returns 비동기 처리 결과를 Promise로 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
-export const signInWithPasskey = async (): Promise<AuthActionResult> => {
-  try {
-    const response = await authClient.signIn.passkey();
-
-    if (response.error) {
-      return {
-        ok: false,
-        errorMessage: getAuthErrorMessage(response.error, "Passkey 로그인에 실패했습니다."),
-      };
-    }
-
-    return {
-      ok: true,
-    };
-  } catch (error) {
-    return {
-      ok: false,
-      errorMessage: getAuthErrorMessage(error, "Passkey 로그인에 실패했습니다."),
     };
   }
 };

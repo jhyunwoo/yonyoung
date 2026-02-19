@@ -299,7 +299,7 @@ export const ApiCreateActivityImageBatchSchema = z
   .min(1, "세부 이미지를 하나 이상 전달해야 합니다.")
   .openapi("ApiCreateActivityImageBatchInput");
 
-export const ApiUpdateActivityImageBatchItemSchema = z
+const ApiUpdateActivityImageBatchItemSchema = z
   .object({
     imageId: z.string().uuid().openapi({
       description: "수정할 세부 이미지 UUID",
@@ -506,7 +506,7 @@ export const ApiCreateExhibitionImageBatchSchema = z
   .min(1, "세부 이미지를 하나 이상 전달해야 합니다.")
   .openapi("ApiCreateExhibitionImageBatchInput");
 
-export const ApiUpdateExhibitionImageBatchItemSchema = z
+const ApiUpdateExhibitionImageBatchItemSchema = z
   .object({
     imageId: z.string().uuid().openapi({
       description: "수정할 세부 이미지 UUID",
@@ -664,7 +664,7 @@ export const ApiUserSchema = z
   })
   .openapi("ApiUser");
 
-export const ApiPublicGenerationMemberSchema = z
+const ApiPublicGenerationMemberSchema = z
   .object({
     id: z.string().openapi({
       description: "사용자 식별자 (better-auth user.id)",

@@ -35,7 +35,7 @@ type PublicGetOptions = {
   tags?: string[];
 };
 
-export type PublicLinkItem = ApiLinktreeItem & {
+type PublicLinkItem = ApiLinktreeItem & {
   groupName: string;
 };
 

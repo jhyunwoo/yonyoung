@@ -39,11 +39,16 @@
     "api:db:migrate": "turbo run db:migrate --filter=api",
     "api:db:push": "turbo run db:push --filter=api",
     "api:db:studio": "turbo run db:studio --filter=api",
+    "quality:deadcode": "knip --reporter compact",
+    "quality:deps": "depcruise --config .dependency-cruiser.cjs apps/api/src apps/web/src packages --output-type err",
+    "quality:ci": "pnpm lint && pnpm check-types && pnpm api:test && pnpm web:test:unit && pnpm web:build && pnpm quality:deadcode && pnpm quality:deps",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
     "test:all": "pnpm lint && pnpm check-types && pnpm api:test:coverage && pnpm web:test:unit:coverage && pnpm web:test:e2e:smoke && pnpm web:test:e2e:full"
   },
   "devDependencies": {
+    "dependency-cruiser": "^16.10.4",
+    "knip": "^5.62.0",
     "prettier": "^3.8.1",
     "turbo": "^2.8.10",
     "typescript": "5.9.2"

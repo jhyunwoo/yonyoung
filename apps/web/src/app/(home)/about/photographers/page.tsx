@@ -2,10 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { listPublicPhotographers, safeList } from "../../../../lib/public-api";
+import { formatKoreanYearRange } from "../../../../lib/date-formatters";
 import { createPageMetadata } from "../../../../lib/seo";
 import { formatKoreanName } from "../../../../lib/user-name";
-
-const yearFormatter = new Intl.DateTimeFormat("ko-KR", { year: "numeric" });
 
 const readDisplayName = (member: {
   familyName: string | null;
@@ -31,9 +30,6 @@ const readFallbackInitial = (name: string): string => {
   }
   return Array.from(trimmed)[0] ?? "?";
 };
-
-const formatYearRange = (startDate: number, endDate: number): string =>
-  `${yearFormatter.format(startDate)} - ${yearFormatter.format(endDate)}`;
 
 export const metadata: Metadata = createPageMetadata({
   title: "PHOTOGRAPHERS | 연영회",
@@ -89,7 +85,7 @@ export default async function PhotographersPage() {
                     {generation.sortOrder}기
                   </h2>
                   <p className="text-sm text-(--text-muted)">
-                    {generation.name} · {formatYearRange(generation.startDate, generation.endDate)}
+                    {generation.name} · {formatKoreanYearRange(generation.startDate, generation.endDate)}
                   </p>
                 </div>
 

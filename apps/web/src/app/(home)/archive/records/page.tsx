@@ -2,18 +2,10 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { listPublicActivities, safeList } from "../../../../lib/public-api";
+import { formatKoreanDateCompact } from "../../../../lib/date-formatters";
 import { shouldUseUnoptimizedImage } from "../../../../lib/image-utils";
 import { createPageMetadata } from "../../../../lib/seo";
 import styles from "./records.module.css";
-
-const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-});
-
-const formatDate = (value: number): string =>
-  dateFormatter.format(value).replaceAll(" ", "").replace(/\.$/, "");
 
 export const metadata: Metadata = createPageMetadata({
   title: "활동 기록 | 연영회",
@@ -61,7 +53,9 @@ export default async function ArchiveRecordsPage() {
                 <div className={styles.imageOverlay}>
                   <div className={styles.titleContainer}>
                     <h3>{activity.title}</h3>
-                    <span className={styles.imageDate}>{formatDate(activity.activityDate)}</span>
+                    <span className={styles.imageDate}>
+                      {formatKoreanDateCompact(activity.activityDate)}
+                    </span>
                   </div>
                 </div>
               </Link>

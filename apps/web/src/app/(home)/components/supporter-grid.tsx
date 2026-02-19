@@ -1,6 +1,7 @@
 import Image from "next/image";
 import MotionReveal from "./motion-reveal";
 import type { ApiSupporter } from "../../../lib/admin-api/types";
+import { formatKoreanDate } from "../../../lib/date-formatters";
 import { shouldUseUnoptimizedImage } from "../../../lib/image-utils";
 
 type SupporterGridProps = {
@@ -10,12 +11,6 @@ type SupporterGridProps = {
   cardTestIdPrefix: string;
   showExpiresAt?: boolean;
 };
-
-const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
-  year: "numeric",
-  month: "short",
-  day: "numeric",
-});
 
 export default function SupporterGrid({
   supporters,
@@ -53,7 +48,7 @@ export default function SupporterGrid({
               <p className="text-sm font-medium text-(--text-primary)">{supporter.name}</p>
               {showExpiresAt ? (
                 <p className="mt-1 text-xs text-(--text-muted)">
-                  만료일 {dateFormatter.format(supporter.expiresAt)}
+                  만료일 {formatKoreanDate(supporter.expiresAt)}
                 </p>
               ) : null}
             </a>

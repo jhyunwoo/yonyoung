@@ -143,6 +143,12 @@
     "db:studio": {
       "cache": false,
       "persistent": true
+    },
+    "quality:deadcode": {
+      "cache": false
+    },
+    "quality:deps": {
+      "cache": false
     }
   }
 }

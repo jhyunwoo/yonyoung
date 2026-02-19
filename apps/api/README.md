@@ -8,7 +8,6 @@ This API uses:
 - Drizzle ORM with Cloudflare D1
 - Better Auth (`/api/auth/*`)
 - Google OAuth
-- Passkey (WebAuthn)
 
 ## Auth Endpoints
 
@@ -20,8 +19,6 @@ Common flows include:
 
 - `/api/auth/sign-in/social`
 - `/api/auth/callback/google`
-- `/api/auth/sign-in/passkey`
-- `/api/auth/passkey/add-passkey`
 
 ## Environment Variables
 
@@ -34,9 +31,6 @@ Required runtime variables:
 - `BETTER_AUTH_SECRET`
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
-- `PASSKEY_RP_ID`
-- `PASSKEY_RP_NAME`
-- `PASSKEY_ORIGIN`
 - `BETTER_AUTH_EMAIL_AND_PASSWORD_ENABLED` (optional, default `false`; set `true` for E2E email sign-in)
 - `DOCS_AUTH_IN_PROD` (optional, default `false`; set `true` to require auth for `/api/docs` and `/api/openapi.json`)
 - `R2_S3_ENDPOINT`
@@ -64,12 +58,6 @@ Local example:
 ```txt
 http://localhost:8787/api/auth/callback/google
 ```
-
-## Passkey Setup Rules
-
-- `PASSKEY_RP_ID` should be the effective top-level domain (for example `example.com`).
-- `PASSKEY_ORIGIN` should be the API origin without a trailing slash (for example `https://api.example.com`).
-- For local development, `localhost` is valid.
 
 ## R2 Presigned Upload Setup
 

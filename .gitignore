@@ -36,3 +36,7 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+tmp-*.png
+tmp-*.md
+apps/web/tmp-*.png
+apps/web/tmp-*.md

@@ -12,7 +12,7 @@ export const PRESIGN_PATHS = {
 } as const;
 
 export type PresignPath = (typeof PRESIGN_PATHS)[keyof typeof PRESIGN_PATHS];
-export type ImageValueMode = "url" | "file";
+type ImageValueMode = "url" | "file";
 
 type UploadHeaders = Record<string, string>;
 

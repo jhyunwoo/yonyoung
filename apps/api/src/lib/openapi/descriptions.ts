@@ -942,28 +942,6 @@ const authSpecMap: AuthSpecMap = {
       permission: ["비로그인 사용자가 로그인 시작을 위해 호출할 수 있습니다."],
     }),
   },
-  "/api/auth/sign-in/passkey": {
-    post: mkSpec({
-      summary: "패스키 로그인 시작/완료",
-      overview:
-        "WebAuthn 기반 패스키 로그인 챌린지 발급 및 검증 흐름을 처리합니다.",
-      parameters: ["브라우저에서 생성한 WebAuthn 결과값을 사용합니다."],
-      requestBody: [
-        "챌린지 요청 단계와 응답 검증 단계의 스키마를 Better Auth 규격으로 처리합니다.",
-      ],
-      internalFlow: [
-        "서버가 챌린지를 발급하고 클라이언트 응답을 검증합니다.",
-        "검증 성공 시 세션 쿠키를 생성합니다.",
-      ],
-      responseGuide: ["`200`: 로그인 완료 또는 다음 단계 정보 반환"],
-      errorGuide: [
-        "`400`: WebAuthn 페이로드 불일치",
-        "`401`: 인증 검증 실패",
-        "`500`: 패스키 설정/검증 내부 오류",
-      ],
-      permission: ["비로그인 사용자가 로그인 용도로 호출합니다."],
-    }),
-  },
   "/api/auth/sign-out": {
     post: mkSpec({
       summary: "로그아웃",
@@ -1001,26 +979,6 @@ const authSpecMap: AuthSpecMap = {
       permission: ["OAuth 공급자에서 반환된 브라우저 요청이 호출합니다."],
     }),
   },
-  "/api/auth/passkey/add-passkey": {
-    post: mkSpec({
-      summary: "패스키 등록",
-      overview:
-        "로그인된 사용자 계정에 새 패스키(WebAuthn credential)를 등록합니다.",
-      parameters: ["등록 대상은 현재 세션 사용자입니다."],
-      requestBody: ["WebAuthn 등록 요청/응답 페이로드를 사용합니다."],
-      internalFlow: [
-        "세션 사용자 식별",
-        "챌린지 발급 및 클라이언트 응답 검증",
-        "credential 저장",
-      ],
-      responseGuide: ["`200`: 등록 성공 정보 반환"],
-      errorGuide: [
-        "`401`: 로그인 세션 없음",
-        "`400`: 검증 실패 또는 중복 credential",
-      ],
-      permission: ["로그인된 사용자만 호출할 수 있습니다."],
-    }),
-  },
   "/api/auth/open-api/generate-schema": {
     get: mkSpec({
       summary: "Better Auth OpenAPI 스키마 생성",
@@ -1055,7 +1013,7 @@ const buildUnknownAuthSpec = (
       "Better Auth에서 자동 제공하는 인증 엔드포인트입니다. 세부 동작은 인증 플러그인 구성 및 요청 종류에 따라 달라집니다.",
     parameters: ["요청 파라미터/쿼리/쿠키 구조는 Better Auth 스키마를 따릅니다."],
     requestBody: [
-      "요청 본문은 엔드포인트 목적(로그인/세션/패스키/토큰)에 따라 달라집니다.",
+      "요청 본문은 엔드포인트 목적(로그인/세션/토큰)에 따라 달라집니다.",
       "정확한 필드는 OpenAPI requestBody 스키마를 확인하세요.",
     ],
     internalFlow: [
@@ -1205,28 +1163,6 @@ export const getAuthOperationDocSpec = (
         "`500`: 공급자 통신 오류",
       ],
       permission: ["OAuth/인증 공급자가 리다이렉트하는 요청입니다."],
-    });
-  }
-
-  if (path.includes("/passkey/")) {
-    return mkSpec({
-      summary: "패스키 관리",
-      overview:
-        "WebAuthn 패스키 생성/갱신/삭제 등 패스키 관련 작업을 처리합니다.",
-      parameters: ["세션 사용자 또는 인증 컨텍스트 기반 파라미터를 사용합니다."],
-      requestBody: ["패스키 등록/인증용 WebAuthn 페이로드를 사용합니다."],
-      internalFlow: [
-        "챌린지 생성",
-        "클라이언트 응답 검증",
-        "credential 저장 또는 조회/삭제",
-      ],
-      responseGuide: ["작업 성공 시 상태 또는 credential 관련 결과를 반환합니다."],
-      errorGuide: [
-        "`400`: WebAuthn 입력 오류",
-        "`401`: 인증 필요",
-        "`500`: 패스키 내부 처리 오류",
-      ],
-      permission: ["작업 유형에 따라 로그인 세션이 필요할 수 있습니다."],
     });
   }
 

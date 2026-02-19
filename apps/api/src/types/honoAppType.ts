@@ -7,9 +7,6 @@ export type AppBindings = CloudflareBindings & {
   BETTER_AUTH_SECRET?: string;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
-  PASSKEY_RP_ID?: string;
-  PASSKEY_RP_NAME?: string;
-  PASSKEY_ORIGIN?: string;
   R2_S3_ENDPOINT?: string;
   R2_ACCESS_KEY_ID?: string;
   R2_SECRET_ACCESS_KEY?: string;

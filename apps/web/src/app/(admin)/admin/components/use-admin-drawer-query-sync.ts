@@ -3,9 +3,9 @@
 import { useCallback, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-export type AdminDrawerPanel = "create" | "edit";
+type AdminDrawerPanel = "create" | "edit";
 
-export type AdminDrawerQueryState = {
+type AdminDrawerQueryState = {
   panel: AdminDrawerPanel | null;
   id: string | null;
   isValid: boolean;

@@ -3,9 +3,9 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { uploadWithPresign, type PresignPath } from "../../../../lib/admin-api/upload";
 
-export type BatchImageUploadStatus = "uploading" | "uploaded" | "failed";
+type BatchImageUploadStatus = "uploading" | "uploaded" | "failed";
 
-export type BatchImageUploadItem = {
+type BatchImageUploadItem = {
   id: string;
   file: File;
   fileName: string;

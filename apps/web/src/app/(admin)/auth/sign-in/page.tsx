@@ -1,11 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
-import {
-  signInWithGoogle,
-  signInWithPasskey,
-} from "../../../../lib/auth-client-tool";
+import { signInWithGoogle } from "../../../../lib/auth-client-tool";
 
 /**
  * SignInPage 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
@@ -13,14 +9,11 @@ import {
  * @remarks UI 상태와 권한 조건이 변경될 때 렌더링 분기가 달라질 수 있습니다.
  */
 export default function SignInPage() {
-  const router = useRouter();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isGooglePending, setIsGooglePending] = useState(false);
-  const [isPasskeyPending, setIsPasskeyPending] = useState(false);
+  const isPending = isGooglePending;
 
-  const isPending = isGooglePending || isPasskeyPending;
-
-    /**
+  /**
    * handleGoogleSignIn의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
    * @returns 비동기 처리 결과를 Promise로 반환합니다.
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
@@ -51,27 +44,6 @@ export default function SignInPage() {
     window.location.href = redirectUrl;
   };
 
-    /**
-   * handlePasskeySignIn의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
-   * @returns 비동기 처리 결과를 Promise로 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
-  const handlePasskeySignIn = async () => {
-    setErrorMessage(null);
-    setIsPasskeyPending(true);
-
-    const result = await signInWithPasskey();
-
-    if (!result.ok) {
-      setErrorMessage(result.errorMessage);
-      setIsPasskeyPending(false);
-      return;
-    }
-
-    router.replace("/auth/profile");
-    router.refresh();
-  };
-
   return (
     <main className="admin-root flex min-h-screen w-full items-center justify-center bg-[var(--admin-bg-primary)] px-4 text-[var(--admin-text-primary)]">
       <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-xl">
@@ -88,15 +60,6 @@ export default function SignInPage() {
             className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isGooglePending ? "Google 로그인 중..." : "Google로 로그인"}
-          </button>
-
-          <button
-            type="button"
-            onClick={handlePasskeySignIn}
-            disabled={isPending}
-            className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isPasskeyPending ? "Passkey 로그인 중..." : "Passkey로 로그인"}
           </button>
         </div>
 

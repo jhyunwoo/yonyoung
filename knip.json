@@ -1,0 +1,29 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "entry": [
+    "apps/api/src/index.ts",
+    "apps/web/src/app/**/{page,layout,loading,route,error,not-found}.tsx",
+    "apps/web/src/app/**/{page,layout,loading,route,error,not-found}.ts"
+  ],
+  "project": [
+    "apps/*/src/**/*.{ts,tsx}",
+    "packages/*/**/*.{ts,tsx}"
+  ],
+  "ignore": [
+    "apps/**/.open-next/**",
+    "apps/**/.next/**",
+    "apps/api/drizzle/**",
+    "apps/web/cloudflare-env.d.ts",
+    "apps/api/worker-configuration.d.ts",
+    "apps/web/tests/e2e/**",
+    "apps/web/open-next.config.ts",
+    "apps/api/src/lib/auth.ts"
+  ],
+  "ignoreUnresolved": [
+    "next"
+  ],
+  "ignoreDependencies": [
+    "@repo/eslint-config",
+    "@repo/typescript-config"
+  ]
+}

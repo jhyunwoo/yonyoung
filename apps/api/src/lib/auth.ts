@@ -1,4 +1,3 @@
-import { passkey } from "@better-auth/passkey";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { openAPI } from "better-auth/plugins";
 import { betterAuth } from "better-auth";
@@ -11,9 +10,6 @@ type AuthEnv = {
   trustedOrigins: string[];
   googleClientId: string;
   googleClientSecret: string;
-  passkeyRpId: string;
-  passkeyRpName: string;
-  passkeyOrigin: string;
   emailAndPasswordEnabled: boolean;
 };
 
@@ -21,9 +17,6 @@ const AUTH_DEV_DEFAULTS = {
   baseURL: "http://localhost:8787",
   secret: "replace-with-a-long-development-secret-at-least-32-characters",
   trustedOrigins: "http://localhost:3000",
-  passkeyRpId: "localhost",
-  passkeyRpName: "Yonyoung",
-  passkeyOrigin: "http://localhost:8787",
   googleClientId: "replace-with-google-client-id",
   googleClientSecret: "replace-with-google-client-secret",
 } as const;
@@ -141,18 +134,6 @@ const resolveAuthEnv = (allowDevDefaults = false): AuthEnv => {
       "GOOGLE_CLIENT_SECRET",
       allowDevDefaults ? AUTH_DEV_DEFAULTS.googleClientSecret : undefined,
     ),
-    passkeyRpId: getEnv(
-      "PASSKEY_RP_ID",
-      allowDevDefaults ? AUTH_DEV_DEFAULTS.passkeyRpId : undefined,
-    ),
-    passkeyRpName: getEnv(
-      "PASSKEY_RP_NAME",
-      allowDevDefaults ? AUTH_DEV_DEFAULTS.passkeyRpName : undefined,
-    ),
-    passkeyOrigin: getEnv(
-      "PASSKEY_ORIGIN",
-      allowDevDefaults ? AUTH_DEV_DEFAULTS.passkeyOrigin : undefined,
-    ),
     // E2E/CI에서만 email+password 로그인을 열기 위한 토글.
     emailAndPasswordEnabled: parseBooleanEnv(
       process.env.BETTER_AUTH_EMAIL_AND_PASSWORD_ENABLED,
@@ -237,11 +218,6 @@ const createAuthWithEnv = (database: D1Database, env: AuthEnv) => {
       },
     },
     plugins: [
-      passkey({
-        rpID: env.passkeyRpId,
-        rpName: env.passkeyRpName,
-        origin: env.passkeyOrigin,
-      }),
       openAPI({
         disableDefaultReference: true,
       }),

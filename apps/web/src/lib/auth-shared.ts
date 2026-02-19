@@ -7,10 +7,10 @@ import {
 } from "@repo/shared-auth/roles";
 import { hasCompletedRequiredProfileFields } from "@repo/shared-auth/profile";
 
-export type KnownAuthRole =
+type KnownAuthRole =
   | CoreRole
   | "member";
-export type AuthRole = KnownAuthRole | (string & {});
+type AuthRole = KnownAuthRole | (string & {});
 type AdminRole = (typeof ADMIN_ROLE_VALUES)[number];
 
 export type AuthUser = {

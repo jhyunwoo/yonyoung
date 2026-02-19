@@ -36,11 +36,6 @@ Better Auth client/server URL resolution:
 
 For Cloudflare deployment, register both values in `apps/web/wrangler.jsonc` under `vars` (or in the Cloudflare dashboard environment variables) instead of passing inline terminal values during deploy.
 
-Passkey login requirement:
-
-- API `PASSKEY_ORIGIN` must match the actual web origin where sign-in runs.
-- For local development, `http://localhost:3000` is recommended as the web origin.
-
 ## E2E Environment Variables (Playwright)
 
 E2E tests auto-load environment variables with this priority:

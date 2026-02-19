@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { listPublicGenerations, safeList } from "../../../lib/public-api";
+import { formatKoreanYearRange } from "../../../lib/date-formatters";
 import { createPageMetadata } from "../../../lib/seo";
-
-const yearFormatter = new Intl.DateTimeFormat("ko-KR", { year: "numeric" });
 
 const annualActivities = [
   { month: "March", title: "리크루팅" },
@@ -12,9 +11,6 @@ const annualActivities = [
   { month: "October", title: "정기연고전 보도 사진전" },
   { month: "February", title: "신인 사진전" },
 ];
-
-const formatYearRange = (startDate: number, endDate: number): string =>
-  `${yearFormatter.format(startDate)} - ${yearFormatter.format(endDate)}`;
 
 export const metadata: Metadata = createPageMetadata({
   title: "연영회 소개 | 연세대학교 중앙사진동아리",
@@ -91,7 +87,7 @@ export default async function AboutPage() {
               >
                 <p className="text-sm font-semibold text-(--text-primary)">{generation.name}</p>
                 <p className="text-sm text-(--text-muted)">
-                  {formatYearRange(generation.startDate, generation.endDate)}
+                  {formatKoreanYearRange(generation.startDate, generation.endDate)}
                 </p>
               </article>
             ))}
