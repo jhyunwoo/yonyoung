@@ -128,7 +128,7 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
 
     if (actorResult.actor.role === "manager") {
       const data = await dependencies.getDataService(c).listUsers();
-      const actorGenerationIdSet = new Set(actorResult.actor.generationIds);
+      const actorGenerationIdSet = new Set(actorResult.actor.generationIds ?? []);
       if (actorResult.actor.generationId) {
         actorGenerationIdSet.add(actorResult.actor.generationId);
       }
@@ -147,8 +147,8 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
            */
           (candidate) => {
             const candidateGenerationIds =
-              candidate.generationIds.length > 0
-                ? candidate.generationIds
+              (candidate.generationIds?.length ?? 0) > 0
+                ? candidate.generationIds ?? []
                 : candidate.generationId
                   ? [candidate.generationId]
                   : [];
@@ -198,7 +198,7 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
       actorResult.actor.role === "manager" &&
       !isSelf &&
       (() => {
-        const actorGenerationIdSet = new Set(actorResult.actor.generationIds);
+        const actorGenerationIdSet = new Set(actorResult.actor.generationIds ?? []);
         if (actorResult.actor.generationId) {
           actorGenerationIdSet.add(actorResult.actor.generationId);
         }
@@ -206,8 +206,8 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
           return true;
         }
         const targetGenerationIds =
-          data.generationIds.length > 0
-            ? data.generationIds
+          (data.generationIds?.length ?? 0) > 0
+            ? data.generationIds ?? []
             : data.generationId
               ? [data.generationId]
               : [];

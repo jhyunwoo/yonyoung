@@ -154,7 +154,14 @@ export const registerPublicRoutes = (
 
       const data = generations.map((generation) => {
         const members = users
-          .filter((user) => user.generationId === generation.id)
+          .filter((user) =>
+            ((user.generationIds?.length ?? 0) > 0
+              ? user.generationIds ?? []
+              : user.generationId
+                ? [user.generationId]
+                : []
+            ).includes(generation.id),
+          )
           .map((user) => ({
             id: user.id,
             name: user.name,

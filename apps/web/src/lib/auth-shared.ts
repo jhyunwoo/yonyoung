@@ -26,6 +26,7 @@ export type AuthUser = {
   phoneNumber?: string | null;
   role?: AuthRole | null;
   generationId?: string | null;
+  generationIds?: string[];
   latestGenerationSortOrder?: number | null;
 };
 

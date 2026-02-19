@@ -88,7 +88,7 @@ export type UserEntity = {
   phoneNumber: string | null;
   role: string | null;
   generationId: string | null;
-  generationIds: string[];
+  generationIds?: string[];
   createdAt: Date;
   updatedAt: Date;
 };

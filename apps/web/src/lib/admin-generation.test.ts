@@ -40,6 +40,20 @@ describe("admin-generation utilities", /** describe 실행 과정에서 필요�
     expect(result.map(/** result.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => item.id)).toEqual(["g2"]);
   });
 
+  it("일반 사용자는 generationIds에 포함된 여러 기수에 접근한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
+    const result = getAccessibleGenerations(
+      {
+        user: {
+          role: "regular_member",
+          generationIds: ["g1b", "g2"],
+        },
+      },
+      generations,
+    );
+
+    expect(result.map((item) => item.id)).toEqual(["g1b", "g2"]);
+  });
+
   it("세션이 없거나 generationId가 없으면 빈 배열을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
     expect(getAccessibleGenerations(null, generations)).toEqual([]);
     expect(

@@ -60,6 +60,21 @@ const ASSIGN_MEMBER_ROLE_FILTER_OPTIONS: { value: RoleFilterKey; label: string }
   })),
 ];
 
+const readUserGenerationIds = (target: ApiUser): string[] => {
+  const generationIds = Array.isArray(target.generationIds)
+    ? target.generationIds.filter(
+        (generationId): generationId is string =>
+          typeof generationId === "string" && generationId.length > 0,
+      )
+    : [];
+
+  if (generationIds.length > 0) {
+    return generationIds;
+  }
+
+  return target.generationId ? [target.generationId] : [];
+};
+
 export default function GenerationsAdminPage() {
   const [items, setItems] = useState<ApiGeneration[]>([]);
   const [users, setUsers] = useState<ApiUser[]>([]);
@@ -99,8 +114,12 @@ export default function GenerationsAdminPage() {
     if (!selected) {
       return [];
     }
-    return users.filter((user) => user.generationId === selected.id);
+    return users.filter((user) => readUserGenerationIds(user).includes(selected.id));
   }, [selected, users]);
+
+  const userById = useMemo(() => {
+    return new Map(users.map((member) => [member.id, member]));
+  }, [users]);
 
   const selectedMemberIdSet = useMemo(() => {
     return new Set(selectedMembers.map((member) => member.id));
@@ -469,16 +488,22 @@ export default function GenerationsAdminPage() {
 
     try {
       await Promise.all([
-        ...addMemberIds.map((memberId) =>
-          adminResourceApi.updateUser(memberId, {
-            generationId: selected.id,
-          }),
-        ),
-        ...removeMemberIds.map((memberId) =>
-          adminResourceApi.updateUser(memberId, {
-            generationId: null,
-          }),
-        ),
+        ...addMemberIds.map((memberId) => {
+          const member = userById.get(memberId);
+          const currentGenerationIds = member ? readUserGenerationIds(member) : [];
+          return adminResourceApi.updateUser(memberId, {
+            generationIds: Array.from(new Set([...currentGenerationIds, selected.id])),
+          });
+        }),
+        ...removeMemberIds.map((memberId) => {
+          const member = userById.get(memberId);
+          const currentGenerationIds = member ? readUserGenerationIds(member) : [];
+          return adminResourceApi.updateUser(memberId, {
+            generationIds: currentGenerationIds.filter(
+              (generationId) => generationId !== selected.id,
+            ),
+          });
+        }),
       ]);
       setSuccessMessage("기수 멤버 변경 사항을 반영했습니다.");
       await loadItems(selected.id);
@@ -944,7 +969,7 @@ export default function GenerationsAdminPage() {
                           <p className="text-xs text-gray-500">이메일: {member.email}</p>
                           <p className="text-xs text-gray-500">권한: {readAdminRoleLabel(member.role)}</p>
                           <p className="text-xs text-gray-500">
-                            현재 소속: {member.generationId ? "기수 배정됨" : "미배정"}
+                            현재 소속: {readUserGenerationIds(member).length > 0 ? `${readUserGenerationIds(member).length}개 기수 소속` : "미배정"}
                           </p>
                         </div>
                         <button

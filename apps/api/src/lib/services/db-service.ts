@@ -23,6 +23,14 @@ import {
   UserEntity,
 } from "./types";
 
+const isMissingUserGenerationsTableError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  return error.message.includes("no such table: user_generations");
+};
+
 /**
  * mapActivitiesWithImages의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
  * @param db 함수 로직에서 사용하는 입력값입니다.
@@ -137,6 +145,150 @@ const mapLinktreesWithItems = async (
     ...row,
     items: itemMap.get(row.id) ?? [],
   }));
+};
+
+const dedupeGenerationIds = (generationIds: string[]): string[] => {
+  return Array.from(
+    new Set(
+      generationIds.filter((generationId) => generationId.trim().length > 0),
+    ),
+  );
+};
+
+const mapUsersWithGenerations = async (
+  db: ReturnType<typeof createDB>,
+  rows: (typeof user.$inferSelect)[],
+): Promise<UserEntity[]> => {
+  if (rows.length === 0) {
+    return [];
+  }
+
+  const userIds = rows.map((row) => row.id);
+  const linkRows = await (async () => {
+    try {
+      return await db
+        .select({
+          userId: userGenerations.userId,
+          generationId: userGenerations.generationId,
+        })
+        .from(userGenerations)
+        .innerJoin(generations, eq(userGenerations.generationId, generations.id))
+        .where(
+          and(
+            inArray(userGenerations.userId, userIds),
+            isNull(generations.deletedAt),
+          ),
+        )
+        .orderBy(asc(userGenerations.userId), desc(generations.sortOrder));
+    } catch (error) {
+      if (isMissingUserGenerationsTableError(error)) {
+        return [] as Array<{ userId: string; generationId: string }>;
+      }
+      throw error;
+    }
+  })();
+
+  const generationIdsByUserId = new Map<string, string[]>();
+  for (const row of linkRows) {
+    const current = generationIdsByUserId.get(row.userId) ?? [];
+    current.push(row.generationId);
+    generationIdsByUserId.set(row.userId, current);
+  }
+
+  return rows.map((row) => {
+    const generationIds = dedupeGenerationIds(
+      generationIdsByUserId.get(row.id) ??
+        (row.generationId ? [row.generationId] : []),
+    );
+    const primaryGenerationId =
+      generationIds[0] ??
+      (typeof row.generationId === "string" ? row.generationId : null);
+
+    return {
+      ...row,
+      generationId: primaryGenerationId,
+      generationIds,
+    };
+  });
+};
+
+const selectActiveGenerationIds = async (
+  db: ReturnType<typeof createDB>,
+  generationIds: string[],
+): Promise<{ generationIds: string[]; latestSortOrder: number | null }> => {
+  const normalizedGenerationIds = dedupeGenerationIds(generationIds);
+  if (normalizedGenerationIds.length === 0) {
+    return { generationIds: [], latestSortOrder: null };
+  }
+
+  const rows = await db
+    .select({
+      id: generations.id,
+      sortOrder: generations.sortOrder,
+    })
+    .from(generations)
+    .where(
+      and(
+        inArray(generations.id, normalizedGenerationIds),
+        isNull(generations.deletedAt),
+      ),
+    )
+    .orderBy(desc(generations.sortOrder), asc(generations.id));
+
+  return {
+    generationIds: rows.map((row) => row.id),
+    latestSortOrder: rows[0]?.sortOrder ?? null,
+  };
+};
+
+const replaceUserGenerations = async (
+  db: ReturnType<typeof createDB>,
+  userId: string,
+  generationIds: string[],
+): Promise<{ generationIds: string[]; primaryGenerationId: string | null }> => {
+  const { generationIds: activeGenerationIds, latestSortOrder } =
+    await selectActiveGenerationIds(db, generationIds);
+
+  let canUseUserGenerationsTable = true;
+  try {
+    await db
+      .delete(userGenerations)
+      .where(eq(userGenerations.userId, userId));
+
+    if (activeGenerationIds.length > 0) {
+      await db.insert(userGenerations).values(
+        activeGenerationIds.map((generationId) => ({
+          userId,
+          generationId,
+        })),
+      );
+    }
+  } catch (error) {
+    if (isMissingUserGenerationsTableError(error)) {
+      canUseUserGenerationsTable = false;
+    } else {
+      throw error;
+    }
+  }
+
+  const primaryGenerationId = activeGenerationIds[0] ?? null;
+  await db
+    .update(user)
+    .set({
+      generationId: primaryGenerationId,
+      latestGenerationSortOrder: latestSortOrder,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(user.id, userId), isNull(user.deletedAt)));
+
+  return {
+    generationIds: canUseUserGenerationsTable
+      ? activeGenerationIds
+      : primaryGenerationId
+        ? [primaryGenerationId]
+        : [],
+    primaryGenerationId,
+  };
 };
 
 /**
@@ -1094,11 +1246,12 @@ export const createDbDataService = (database: D1Database): DataService => {
      * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
      */
     async listUsers() {
-      return db
+      const rows = await db
         .select()
         .from(user)
         .where(isNull(user.deletedAt))
         .orderBy(desc(user.createdAt));
+      return mapUsersWithGenerations(db, rows);
     },
         /**
      * getUserById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
@@ -1107,11 +1260,13 @@ export const createDbDataService = (database: D1Database): DataService => {
      * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
      */
     async getUserById(id) {
-      return (
-        (await db.query.user.findFirst({
-          where: and(eq(user.id, id), isNull(user.deletedAt)),
-        })) ?? null
-      );
+      const row = await db.query.user.findFirst({
+        where: and(eq(user.id, id), isNull(user.deletedAt)),
+      });
+      if (!row) {
+        return null;
+      }
+      return (await mapUsersWithGenerations(db, [row]))[0] ?? null;
     },
         /**
      * updateUser 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
@@ -1127,6 +1282,16 @@ export const createDbDataService = (database: D1Database): DataService => {
       if (!exists) {
         return null;
       }
+
+      const nextGenerationIds =
+        input.generationIds !== undefined
+          ? input.generationIds
+          : input.generationId !== undefined
+            ? input.generationId
+              ? [input.generationId]
+              : []
+            : undefined;
+
       await db
         .update(user)
         .set({
@@ -1147,18 +1312,15 @@ export const createDbDataService = (database: D1Database): DataService => {
             ? { phoneNumber: input.phoneNumber }
             : {}),
           ...(input.role !== undefined ? { role: input.role } : {}),
-          ...(input.generationId !== undefined
-            ? { generationId: input.generationId }
-            : {}),
           updatedAt: new Date(),
         })
         .where(and(eq(user.id, id), isNull(user.deletedAt)));
 
-      return (
-        (await db.query.user.findFirst({
-          where: and(eq(user.id, id), isNull(user.deletedAt)),
-        })) ?? null
-      );
+      if (nextGenerationIds !== undefined) {
+        await replaceUserGenerations(db, id, nextGenerationIds);
+      }
+
+      return this.getUserById(id);
     },
         /**
      * deleteUser 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.

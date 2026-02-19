@@ -182,7 +182,7 @@ export type ApiUser = {
   phoneNumber: string | null;
   role: ApiRole | null;
   generationId: string | null;
-  generationIds: string[];
+  generationIds?: string[];
   createdAt: number;
   updatedAt: number;
 };

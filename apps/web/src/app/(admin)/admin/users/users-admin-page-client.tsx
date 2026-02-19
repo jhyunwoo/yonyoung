@@ -28,7 +28,7 @@ type UserFormState = {
   studentNumber: string;
   phoneNumber: string;
   role: string;
-  generationId: string;
+  generationIds: string[];
 };
 
 const emptyForm: UserFormState = {
@@ -40,7 +40,7 @@ const emptyForm: UserFormState = {
   studentNumber: "",
   phoneNumber: "",
   role: "unverified",
-  generationId: "",
+  generationIds: [],
 };
 
 const isAllowedAdminRole = (
@@ -93,6 +93,19 @@ type ResolvedUsersData = {
   visibleUsers: ApiUser[];
 };
 
+const readUserGenerationIds = (target: ApiUser): string[] => {
+  const generationIds = Array.isArray(target.generationIds)
+    ? target.generationIds.filter(
+        (generationId): generationId is string =>
+          typeof generationId === "string" && generationId.length > 0,
+      )
+    : [];
+  if (generationIds.length > 0) {
+    return generationIds;
+  }
+  return target.generationId ? [target.generationId] : [];
+};
+
 const resolveUsersData = (
   users: ApiUser[],
   generationList: ApiGeneration[],
@@ -111,7 +124,7 @@ const resolveUsersData = (
 
   const visibleUsers =
     generationScoped && scopedGeneration
-      ? users.filter((user) => user.generationId === scopedGeneration.id)
+      ? users.filter((user) => readUserGenerationIds(user).includes(scopedGeneration.id))
       : generationScoped
         ? []
         : users;
@@ -176,6 +189,24 @@ export default function UsersAdminPageClient({
     () => items.filter((item) => selectedIdSet.has(item.id)),
     [items, selectedIdSet],
   );
+  const generationLabelById = useMemo(() => {
+    return new Map(
+      generations.map((generation) => [
+        generation.id,
+        `${generation.sortOrder}기 (${generation.name})`,
+      ]),
+    );
+  }, [generations]);
+
+  const readGenerationSummary = (target: ApiUser): string => {
+    const generationIds = readUserGenerationIds(target);
+    if (generationIds.length === 0) {
+      return "없음";
+    }
+    return generationIds
+      .map((generationId) => generationLabelById.get(generationId) ?? generationId)
+      .join(", ");
+  };
 
   const filteredItems = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -195,12 +226,13 @@ export default function UsersAdminPageClient({
       const targetGenerationFilter =
         scopedGenerationId ??
         (generationFilter === "all" ? null : generationFilter === "unassigned" ? "unassigned" : generationFilter);
+      const itemGenerationIds = readUserGenerationIds(item);
       if (targetGenerationFilter) {
         if (targetGenerationFilter === "unassigned") {
-          if (item.generationId !== null) {
+          if (itemGenerationIds.length > 0) {
             return false;
           }
-        } else if (item.generationId !== targetGenerationFilter) {
+        } else if (!itemGenerationIds.includes(targetGenerationFilter)) {
           return false;
         }
       }
@@ -243,7 +275,7 @@ export default function UsersAdminPageClient({
       studentNumber: user.studentNumber ?? "",
       phoneNumber: user.phoneNumber ?? "",
       role: user.role ?? "unverified",
-      generationId: user.generationId ?? "",
+      generationIds: readUserGenerationIds(user),
     });
     imageUpload.reset(user.image ?? "");
   };
@@ -454,6 +486,24 @@ export default function UsersAdminPageClient({
     });
   };
 
+  const handleToggleGenerationSelection = (
+    generationId: string,
+    checked: boolean,
+  ) => {
+    setEditForm((previous) => {
+      const next = new Set(previous.generationIds);
+      if (checked) {
+        next.add(generationId);
+      } else {
+        next.delete(generationId);
+      }
+      return {
+        ...previous,
+        generationIds: Array.from(next),
+      };
+    });
+  };
+
   const handleSelect = async (user: ApiUser) => {
     setSelectedId(user.id);
     if (inlineDetailMode) {
@@ -508,6 +558,10 @@ export default function UsersAdminPageClient({
     setSuccessMessage(null);
 
     try {
+      const generationIdsForPayload = scopedGenerationId
+        ? Array.from(new Set([...readUserGenerationIds(selectedDetail), scopedGenerationId]))
+        : editForm.generationIds;
+
       const payload: ApiAdminUpdateUserInput = {
         name: editForm.name.trim(),
         familyName: editForm.familyName.trim() || null,
@@ -518,7 +572,7 @@ export default function UsersAdminPageClient({
         phoneNumber: editForm.phoneNumber.trim() || null,
         image: imageUpload.currentUrl.trim() || null,
         role: isAllowedAdminRole(editForm.role) ? editForm.role : "unverified",
-        generationId: scopedGenerationId ?? (editForm.generationId || null),
+        generationIds: generationIdsForPayload,
       };
 
       await adminResourceApi.updateUser(selectedDetail.id, payload);
@@ -660,7 +714,7 @@ export default function UsersAdminPageClient({
             <p>대학/학과: {(selectedDetail.college ?? "-")}/{(selectedDetail.department ?? "-")}</p>
             <p>학번: {selectedDetail.studentNumber ?? "-"}</p>
             <p>전화번호: {selectedDetail.phoneNumber ?? "-"}</p>
-            <p>소속 기수: {selectedDetail.generationId ?? "없음"}</p>
+            <p>소속 기수: {readGenerationSummary(selectedDetail)}</p>
             <p>가입일: {formatTimestamp(selectedDetail.createdAt)}</p>
             <p>최근 수정일: {formatTimestamp(selectedDetail.updatedAt)}</p>
           </div>
@@ -813,30 +867,41 @@ export default function UsersAdminPageClient({
                 className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
                 data-testid="user-scoped-generation-field"
               >
-                소속 기수는 현재 선택한 기수로 고정됩니다.
+                현재 선택한 기수는 자동 포함됩니다. 다른 소속 기수는 유지됩니다.
               </div>
             ) : (
-              <label className="block text-sm">
-                <span className="mb-1 block">소속 기수 (선택)</span>
-                <select
-                  value={editForm.generationId}
-                  onChange={(event) =>
-                    setEditForm((previous) => ({
-                      ...previous,
-                      generationId: event.target.value,
-                    }))
-                  }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+              <div className="block text-sm">
+                <span className="mb-1 block">소속 기수 (복수 선택)</span>
+                <div
+                  className="max-h-52 space-y-2 overflow-y-auto rounded-md border border-gray-300 px-3 py-2"
                   data-testid="user-edit-generation-id"
                 >
-                  <option value="">없음</option>
+                  {generations.length === 0 ? (
+                    <p className="text-xs text-gray-500">등록된 기수가 없습니다.</p>
+                  ) : null}
                   {generations.map((generation) => (
-                    <option key={generation.id} value={generation.id}>
-                      {generation.name} ({generation.sortOrder})
-                    </option>
+                    <label
+                      key={generation.id}
+                      className="flex cursor-pointer items-center justify-between gap-2 rounded-md border border-gray-200 px-2 py-1.5"
+                    >
+                      <span className="text-sm text-gray-700">
+                        {generation.sortOrder}기 ({generation.name})
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={editForm.generationIds.includes(generation.id)}
+                        onChange={(event) =>
+                          handleToggleGenerationSelection(
+                            generation.id,
+                            event.target.checked,
+                          )
+                        }
+                        data-testid={`user-edit-generation-checkbox-${generation.id}`}
+                      />
+                    </label>
                   ))}
-                </select>
-              </label>
+                </div>
+              </div>
             )}
 
             <ImageInput

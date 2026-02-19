@@ -3,11 +3,36 @@ import { NextRequest, NextResponse } from "next/server";
 import { canAccessAdminPage } from "../../../../lib/auth-shared";
 import { serverAuthTool } from "../../../../lib/auth-server-tool";
 import { ADMIN_CACHE_TAG_VALUES, type AdminCacheTag } from "../../../../lib/admin-cache";
+import { PUBLIC_CACHE_TAGS } from "../../../../lib/public-api";
 
 const ALLOWED_TAGS: ReadonlySet<AdminCacheTag> = new Set(ADMIN_CACHE_TAG_VALUES);
+type PublicCacheTag = (typeof PUBLIC_CACHE_TAGS)[keyof typeof PUBLIC_CACHE_TAGS];
+type RevalidateTag = AdminCacheTag | PublicCacheTag;
 
 const isAllowedTag = (tag: string): tag is AdminCacheTag =>
   ALLOWED_TAGS.has(tag as AdminCacheTag);
+
+const PUBLIC_TAGS_BY_ADMIN_TAG: Record<AdminCacheTag, PublicCacheTag[]> = {
+  "admin:activities": [PUBLIC_CACHE_TAGS.activities],
+  "admin:exhibitions": [PUBLIC_CACHE_TAGS.exhibitions],
+  "admin:generations": [PUBLIC_CACHE_TAGS.generations, PUBLIC_CACHE_TAGS.photographers],
+  "admin:linktree": [PUBLIC_CACHE_TAGS.linktree],
+  "admin:supporters": [PUBLIC_CACHE_TAGS.supporters],
+  "admin:users": [PUBLIC_CACHE_TAGS.photographers],
+};
+
+const expandWithPublicTags = (
+  adminTags: readonly AdminCacheTag[],
+): RevalidateTag[] => {
+  const expanded = new Set<RevalidateTag>(adminTags);
+  for (const adminTag of adminTags) {
+    const relatedPublicTags = PUBLIC_TAGS_BY_ADMIN_TAG[adminTag] ?? [];
+    for (const publicTag of relatedPublicTags) {
+      expanded.add(publicTag);
+    }
+  }
+  return Array.from(expanded);
+};
 
 const parsePayload = async (request: NextRequest): Promise<{
   tags: string[];
@@ -40,8 +65,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const { tags, path } = await parsePayload(request);
   const validTags = tags.filter(isAllowedTag);
 
-  const revalidatedTags =
+  const targetAdminTags =
     validTags.length > 0 ? validTags : Array.from(ALLOWED_TAGS.values());
+  const revalidatedTags = expandWithPublicTags(targetAdminTags);
 
   for (const tag of revalidatedTags) {
     revalidateTag(tag, "max");
@@ -57,4 +83,3 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     revalidatedPath: path,
   });
 }
-

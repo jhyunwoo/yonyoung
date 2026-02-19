@@ -7,6 +7,14 @@ import { generations, user, userGenerations } from "../db/schema";
 import { createAuth } from "../auth";
 import HonoAppType from "../../types/honoAppType";
 
+const isMissingUserGenerationsTableError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  return error.message.includes("no such table: user_generations");
+};
+
 /**
  * Better Auth 세션 기반으로 현재 사용자 정보를 로드한다.
  * 권한 판정 정확도를 위해 role/generation 정보는 DB에서 다시 읽는다.
@@ -39,19 +47,28 @@ export const getActorFromSession = async (
     return null;
   }
 
-  const generationRows = await db
-    .select({
-      generationId: userGenerations.generationId,
-    })
-    .from(userGenerations)
-    .innerJoin(generations, eq(userGenerations.generationId, generations.id))
-    .where(
-      and(
-        eq(userGenerations.userId, dbUser.id),
-        isNull(generations.deletedAt),
-      ),
-    )
-    .orderBy(desc(generations.sortOrder));
+  const generationRows = await (async () => {
+    try {
+      return await db
+        .select({
+          generationId: userGenerations.generationId,
+        })
+        .from(userGenerations)
+        .innerJoin(generations, eq(userGenerations.generationId, generations.id))
+        .where(
+          and(
+            eq(userGenerations.userId, dbUser.id),
+            isNull(generations.deletedAt),
+          ),
+        )
+        .orderBy(desc(generations.sortOrder));
+    } catch (error) {
+      if (isMissingUserGenerationsTableError(error)) {
+        return [] as Array<{ generationId: string }>;
+      }
+      throw error;
+    }
+  })();
 
   const generationIds = generationRows.map((row) => row.generationId);
   const legacyGenerationId =

@@ -1,4 +1,4 @@
-import { forbidden, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { getAccessibleGenerations, buildGenerationPath } from "../../../lib/admin-generation";
 import {
   fetchGenerationsFromServer,
@@ -29,7 +29,10 @@ export default async function AdminPage() {
   const accessible = getAccessibleGenerations(session, generations);
 
   if (accessible.length === 0) {
-    forbidden();
+    if (canManageGenerations(session)) {
+      redirect("/admin/generations");
+    }
+    redirect("/admin/unassigned");
   }
 
   const latestGeneration = accessible.reduce((latest, current) =>
