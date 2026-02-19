@@ -1,4 +1,4 @@
-import UsersAdminPage from "../../users/page";
+import UsersAdminPageClient from "../../users/users-admin-page-client";
 
 type GenerationUsersPageProps = {
   params: Promise<{ generation: string }>;
@@ -19,10 +19,9 @@ export default async function GenerationUsersPage({
   const generationSortOrder = Number.parseInt(generation, 10);
 
   return (
-    <UsersAdminPage
+    <UsersAdminPageClient
       generationSortOrder={Number.isFinite(generationSortOrder) ? generationSortOrder : null}
       generationScoped
     />
   );
 }
-

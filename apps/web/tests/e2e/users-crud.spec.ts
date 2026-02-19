@@ -24,15 +24,6 @@ test.describe("users crud", () => {
     e2ePrefix,
     sampleImagePath,
   }) => {
-    const readDrawerQuery = async () =>
-      page.evaluate(() => {
-        const params = new URL(window.location.href).searchParams;
-        return {
-          panel: params.get("panel"),
-          id: params.get("id"),
-        };
-      });
-
     test.info().annotations.push({ type: "e2e-prefix", description: e2ePrefix });
     await ensureAdminSession(page);
 
@@ -73,26 +64,16 @@ test.describe("users crud", () => {
     }
     const targetUserId = userRowTestId.replace("user-row-", "");
 
-    await userRow.getByRole("button").click();
-    await expect.poll(async () => (await readDrawerQuery()).panel).toBe("edit");
-    await expect.poll(async () => (await readDrawerQuery()).id).toBe(targetUserId);
-    await expect(page.getByTestId("user-drawer")).toBeVisible();
+    await page.getByTestId(`user-inline-toggle-${targetUserId}`).click();
+    await expect(page.getByTestId("user-detail-card")).toContainText(tempUser.email);
+    await expect(page.getByTestId("user-edit-form")).toBeVisible();
 
     await page.reload();
-    await expect(page.getByTestId("user-drawer")).toBeVisible();
-    await expect.poll(async () => (await readDrawerQuery()).panel).toBe("edit");
-    await expect.poll(async () => (await readDrawerQuery()).id).toBe(targetUserId);
-    await expect(page.getByTestId("user-detail-card")).toContainText(tempUser.email);
-
-    await page.goto(`/admin/users?panel=edit&id=${targetUserId}`);
-    await expect(page.getByTestId("user-drawer")).toBeVisible();
-    await expect(page.getByTestId("user-detail-card")).toContainText(tempUser.email);
-
+    await page.getByTestId(`user-inline-toggle-${targetUserId}`).click();
     await expect(page.getByTestId("user-detail-card")).toContainText(tempUser.email);
 
     const updatedName = uniqueText(e2ePrefix, "user-updated");
     await page.getByTestId("user-edit-name").fill(updatedName);
-    await page.getByTestId("user-edit-nickname").fill(`${e2ePrefix}-nick`);
     await page.getByTestId("user-edit-role").selectOption("regular_member");
     await page.getByTestId("user-edit-generation-id").selectOption(generation.id);
     await page.getByTestId("user-edit-image-file").setInputFiles(sampleImagePath);
@@ -110,8 +91,6 @@ test.describe("users crud", () => {
         hasText: tempUser.email,
       }),
     ).toHaveCount(0);
-    await expect.poll(async () => (await readDrawerQuery()).panel).toBeNull();
-    await expect.poll(async () => (await readDrawerQuery()).id).toBeNull();
 
     if (uploadMock) {
       const profilePresignPayloads = uploadMock.getPresignPayloads("user-profile");

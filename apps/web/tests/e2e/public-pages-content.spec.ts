@@ -6,21 +6,49 @@ test.describe("public pages content", () => {
   }) => {
     await page.goto("/about");
     await expect(page.getByRole("heading", { name: "카메라를 넘어 시선을 나누는 동아리" })).toBeVisible();
+    await expect(page.getByTestId("about-subnav")).toBeVisible();
+    await expect(page.getByTestId("about-subnav-about")).toBeVisible();
     await expect(page.getByTestId("about-history")).toBeVisible();
+    await expect(page.getByTestId("about-link-photographers")).toBeVisible();
+    await expect(page.getByTestId("about-link-recruiting")).toBeVisible();
+
+    await page.goto("/about/photographers");
+    await expect(page.getByRole("heading", { name: "PHOTOGRAPHERS" })).toBeVisible();
+    await expect(page.getByTestId("about-subnav-photographers")).toBeVisible();
+    await expect(page.getByTestId("about-photographers-page")).toBeVisible();
+
+    await page.goto("/about/recruiting");
+    await expect(page.getByRole("heading", { name: "RECRUITING" })).toBeVisible();
+    await expect(page.getByTestId("about-subnav-recruiting")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "지원 방법" })).toBeVisible();
+    await expect(page.getByTestId("about-recruiting-steps")).toBeVisible();
+
+    await page.goto("/about/recruting");
+    await expect(page).toHaveURL(/\/about\/recruiting$/);
 
     await page.goto("/archive");
-    await expect(page.getByRole("heading", { name: "연영회의 활동과 전시 기록" })).toBeVisible();
-    await expect(page.getByTestId("archive-activities")).toBeVisible();
-    await expect(page.getByTestId("archive-exhibitions")).toBeVisible();
+    await expect(page).toHaveURL(/\/archive\/records$/);
+    await expect(page.getByRole("heading", { name: "활동 기록" })).toBeVisible();
+    await expect(page.getByTestId("archive-records-grid")).toBeVisible();
+
+    await page.goto("/archive/supporters");
+    await expect(page.getByRole("heading", { name: "서포터즈" })).toBeVisible();
+    await expect(page.getByTestId("archive-supporters-grid")).toBeVisible();
+
+    await page.goto("/archive/exhibitions");
+    await expect(page.getByRole("heading", { name: "전시 아카이브" })).toBeVisible();
+    await expect(page.getByTestId("archive-exhibitions-grid")).toBeVisible();
 
     await page.goto("/linktree");
     await expect(page.getByRole("heading", { name: "연영회 공식 링크 모음" })).toBeVisible();
     await expect(page.getByTestId("linktree-groups")).toBeVisible();
 
     await page.goto("/donate");
-    await expect(page.getByRole("heading", { name: "연영회의 전시와 기록을 함께 만들어주세요" })).toBeVisible();
-    await expect(page.getByText("기업 제휴")).toBeVisible();
-    await expect(page.getByText("전시 스폰서십")).toBeVisible();
-    await expect(page.getByText("문의 채널")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "DONATE US" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "후원 방법" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "계좌 이체" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "온라인 후원" })).toBeVisible();
+    await expect(page.getByText("후원하기")).toBeVisible();
+    await expect(page.getByText("이메일: donate@yeonyeonghoe.com")).toBeVisible();
   });
 });

@@ -543,10 +543,6 @@ export const ApiUserSchema = z
       description: "프로필 이미지 URL (없으면 null)",
       example: "https://cdn.yonyoung.example/users/profile/member.png",
     }),
-    nickname: z.string().nullable().openapi({
-      description: "활동 닉네임 (없으면 null)",
-      example: "길동",
-    }),
     familyName: z.string().nullable().openapi({
       description: "성 (없으면 null)",
       example: "김",
@@ -584,15 +580,66 @@ export const ApiUserSchema = z
   })
   .openapi("ApiUser");
 
+export const ApiPublicGenerationMemberSchema = z
+  .object({
+    id: z.string().openapi({
+      description: "사용자 식별자 (better-auth user.id)",
+      example: EXAMPLE_USER_ID,
+    }),
+    name: z.string().openapi({
+      description: "레거시 표시 이름",
+      example: "홍길동",
+    }),
+    image: z.string().url().nullable().openapi({
+      description: "프로필 이미지 URL (없으면 null)",
+      example: "https://cdn.yonyoung.example/users/profile/member.png",
+    }),
+    familyName: z.string().nullable().openapi({
+      description: "성 (없으면 null)",
+      example: "김",
+    }),
+    givenName: z.string().nullable().openapi({
+      description: "이름 (없으면 null)",
+      example: "민수",
+    }),
+    role: z.string().nullable().openapi({
+      description: "역할 문자열 (없으면 null)",
+      example: "regular_member",
+    }),
+    generationId: z.string().uuid().openapi({
+      description: "소속 기수 UUID",
+      example: EXAMPLE_GENERATION_ID,
+    }),
+  })
+  .openapi("ApiPublicGenerationMember");
+
+export const ApiPublicGenerationWithMembersSchema = z
+  .object({
+    id: z.string().uuid().openapi({
+      description: "기수 UUID",
+      example: EXAMPLE_GENERATION_ID,
+    }),
+    name: z.string().openapi({
+      description: "기수 이름",
+      example: "60기",
+    }),
+    sortOrder: z.number().int().openapi({
+      description: "기수 정렬 순서",
+      example: 60,
+    }),
+    startDate: timestampField("기수 시작일시", EXAMPLE_TIMESTAMP_MS),
+    endDate: timestampField("기수 종료일시", EXAMPLE_TIMESTAMP_MS_END),
+    members: z.array(ApiPublicGenerationMemberSchema).openapi({
+      description: "해당 기수 소속 공개 멤버 목록",
+    }),
+  })
+  .openapi("ApiPublicGenerationWithMembers");
+
 export const ApiAdminUpdateUserSchema = z
   .object({
     name: z.string().min(1).optional().openapi({
       description: "사용자 이름(관리자 수정 가능)",
       example: "홍길동",
-    }),
-    nickname: z.string().nullable().optional().openapi({
-      description: "사용자 닉네임(관리자 수정 가능)",
-      example: "길동",
     }),
     image: z.string().url().nullable().optional().openapi({
       description: "프로필 이미지 URL(관리자 수정 가능)",
@@ -670,14 +717,6 @@ export const ApiAdminUpdateUserSchema = z
 
 export const ApiMemberProfileUpdateSchema = z
   .object({
-    name: z.string().min(1).optional().openapi({
-      description: "본인 이름 수정",
-      example: "홍길동",
-    }),
-    nickname: z.string().nullable().optional().openapi({
-      description: "본인 닉네임 수정",
-      example: "길동",
-    }),
     image: z.string().url().nullable().optional().openapi({
       description: "본인 프로필 이미지 URL 수정",
       example: "https://cdn.yonyoung.example/users/profile/member-self.png",

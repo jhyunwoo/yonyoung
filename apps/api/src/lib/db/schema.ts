@@ -48,7 +48,6 @@ export const user = sqliteTable("user", {
     .default(nowTimestamp)
     .$onUpdate 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => /* @__PURE__ */ new Date())
     .notNull(),
-  nickname: text("nickname"),
   familyName: text("family_name"),
   givenName: text("given_name"),
   college: text("college"),
@@ -59,6 +58,7 @@ export const user = sqliteTable("user", {
   generationId: text("generation_id").references(/** text("generation_id").references 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => generations.id, {
     onDelete: "set null",
   }),
+  latestGenerationSortOrder: integer("latest_generation_sort_order"),
   deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
 });
 

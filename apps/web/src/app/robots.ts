@@ -8,7 +8,18 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/about", "/archive", "/donate", "/linktree"],
+        allow: [
+          "/",
+          "/about",
+          "/about/photographers",
+          "/about/recruiting",
+          "/archive",
+          "/archive/records",
+          "/archive/supporters",
+          "/archive/exhibitions",
+          "/donate",
+          "/linktree",
+        ],
         disallow: ["/admin", "/auth", "/api/internal"],
       },
     ],

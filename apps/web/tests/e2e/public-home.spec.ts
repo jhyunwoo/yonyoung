@@ -19,10 +19,8 @@ test.describe("public home", () => {
     await expect(page.getByTestId("home-quicklinks-grid")).toBeVisible();
 
     await page.getByTestId("home-cta-archive").click();
-    await expect(page).toHaveURL(/\/archive$/);
-    await expect(
-      page.getByRole("heading", { name: "연영회의 활동과 전시 기록" }),
-    ).toBeVisible();
+    await expect(page).toHaveURL(/\/archive\/records$/);
+    await expect(page.getByRole("heading", { name: "활동 기록" })).toBeVisible();
 
     await page.goto("/");
     await page.getByTestId("home-cta-about").click();
@@ -33,6 +31,6 @@ test.describe("public home", () => {
 
     await page.goto("/");
     await page.getByTestId("home-cta-archive-bottom").click();
-    await expect(page).toHaveURL(/\/archive$/);
+    await expect(page).toHaveURL(/\/archive\/records$/);
   });
 });

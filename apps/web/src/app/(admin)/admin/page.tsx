@@ -4,6 +4,7 @@ import {
   fetchGenerationsFromServer,
   readServerCookieHeader,
 } from "../../../lib/admin-generation-server";
+import { canManageGenerations } from "../../../lib/auth-shared";
 import { serverAuthTool } from "../../../lib/auth-server-tool";
 
 /**
@@ -14,6 +15,17 @@ import { serverAuthTool } from "../../../lib/auth-server-tool";
 export default async function AdminPage() {
   const session = await serverAuthTool.requireAdminPageAccess();
   await serverAuthTool.redirectIfProfileIncomplete(session);
+
+  const latestSortOrderInSession =
+    typeof session.user.latestGenerationSortOrder === "number" &&
+    Number.isFinite(session.user.latestGenerationSortOrder)
+      ? session.user.latestGenerationSortOrder
+      : null;
+
+  if (canManageGenerations(session) && latestSortOrderInSession !== null) {
+    redirect(buildGenerationPath(latestSortOrderInSession));
+  }
+
   const cookieHeader = await readServerCookieHeader();
   const generations = await fetchGenerationsFromServer(cookieHeader);
   const accessible = getAccessibleGenerations(session, generations);
@@ -22,10 +34,8 @@ export default async function AdminPage() {
     forbidden();
   }
 
-  const defaultGeneration = accessible[0];
-  if (!defaultGeneration) {
-    forbidden();
-  }
-
-  redirect(buildGenerationPath(defaultGeneration.sortOrder));
+  const latestGeneration = accessible.reduce((latest, current) =>
+    current.sortOrder > latest.sortOrder ? current : latest,
+  );
+  redirect(buildGenerationPath(latestGeneration.sortOrder));
 }

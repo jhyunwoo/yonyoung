@@ -18,7 +18,6 @@ export type AuthUser = {
   email: string;
   name: string;
   image?: string | null;
-  nickname?: string | null;
   familyName?: string | null;
   givenName?: string | null;
   college?: string | null;
@@ -27,6 +26,7 @@ export type AuthUser = {
   phoneNumber?: string | null;
   role?: AuthRole | null;
   generationId?: string | null;
+  latestGenerationSortOrder?: number | null;
 };
 
 export type AuthSession = {
@@ -130,4 +130,19 @@ export const canManageGenerations = (session: SessionWithRole): boolean => {
   }
 
   return isPresidentRole(getRoleFromSession(session));
+};
+
+/**
+ * canManageGlobalUsers 조건을 평가해 사용 가능 여부를 판별합니다.
+ * @param session 인증/인가 상태를 포함한 세션 정보입니다.
+ * @returns 조건 판별 결과(boolean)를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
+export const canManageGlobalUsers = (session: SessionWithRole): boolean => {
+  if (!session) {
+    return false;
+  }
+
+  const role = getRoleFromSession(session);
+  return role === "president" || role === "vice_president";
 };

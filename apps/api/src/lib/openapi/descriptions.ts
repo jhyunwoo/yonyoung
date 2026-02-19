@@ -680,7 +680,8 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
       "`404`: 본인 사용자 정보가 존재하지 않음",
     ],
     permission: [
-      "관리 역할은 전체 조회 가능",
+      "회장/부회장은 전체 사용자 조회 가능",
+      "운영진(manager)은 본인 소속 기수 사용자만 조회 가능",
       "member 계열 role은 self-only 정책으로 본인 데이터만 조회 가능",
     ],
   }),
@@ -703,7 +704,8 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
       "`404`: 사용자 없음",
     ],
     permission: [
-      "관리 권한 보유자는 모든 사용자 조회 가능",
+      "회장/부회장은 모든 사용자 조회 가능",
+      "운영진(manager)은 본인 소속 기수 사용자 + 본인 ID만 조회 가능",
       "member 계열 role은 본인 ID만 허용",
     ],
   }),
@@ -714,7 +716,7 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     parameters: ["`id` (path, UUID): 수정 대상 사용자 식별자"],
     requestBody: [
       "관리자 요청: `ApiAdminUpdateUserSchema` 기준",
-      "member 계열 role/unverified 본인 요청: `ApiMemberProfileUpdateSchema` 기준(name/nickname/image/familyName/givenName/college/department/studentNumber/phoneNumber)",
+      "member 계열 role/unverified 본인 요청: `ApiMemberProfileUpdateSchema` 기준(image/familyName/givenName/college/department/studentNumber/phoneNumber)",
       "빈 PATCH 본문은 `400` 반환",
     ],
     internalFlow: [

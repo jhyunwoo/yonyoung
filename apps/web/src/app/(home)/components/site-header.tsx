@@ -9,10 +9,18 @@ import ThemeToggle from "./theme-toggle";
 const navItems = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
-  { href: "/archive", label: "Archive" },
+  { href: "/archive/records", label: "Archive" },
   { href: "/linktree", label: "Linktree" },
   { href: "/donate", label: "Donate" },
 ];
+
+const isNavActive = (pathname: string, href: string): boolean => {
+  if (href === "/archive/records") {
+    return pathname.startsWith("/archive");
+  }
+
+  return pathname === href;
+};
 
 /**
  * SiteHeader 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
@@ -72,7 +80,7 @@ export default function SiteHeader() {
           data-testid="public-nav-desktop"
         >
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = isNavActive(pathname, item.href);
             return (
               <Link
                 key={item.href}
@@ -119,7 +127,7 @@ export default function SiteHeader() {
           >
             <ul className="space-y-2">
               {navItems.map((item) => {
-                const isActive = pathname === item.href;
+                const isActive = isNavActive(pathname, item.href);
                 return (
                   <li key={item.href}>
                     <Link

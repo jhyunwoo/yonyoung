@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   canAccessAdminPage,
   canManageGenerations,
+  canManageGlobalUsers,
   getRoleFromSession,
   hasCompletedRequiredProfile,
   isAdminRole,
@@ -56,6 +57,13 @@ describe("auth-shared helpers", /** describe 실행 과정에서 필요한 연�
     expect(canManageGenerations({ user: { role: "president" } })).toBe(true);
     expect(canManageGenerations({ user: { role: "vice_president" } })).toBe(false);
     expect(canManageGenerations({ user: { role: "manager" } })).toBe(false);
+  });
+
+  it("canManageGlobalUsers는 president/vice_president에서 true", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
+    expect(canManageGlobalUsers({ user: { role: "president" } })).toBe(true);
+    expect(canManageGlobalUsers({ user: { role: "vice_president" } })).toBe(true);
+    expect(canManageGlobalUsers({ user: { role: "manager" } })).toBe(false);
+    expect(canManageGlobalUsers({ user: { role: "regular_member" } })).toBe(false);
   });
 
   it("hasCompletedRequiredProfile은 필수 필드가 모두 채워졌을 때 true", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {

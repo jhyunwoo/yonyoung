@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { STUDENT_NUMBER_REGEX } from "@repo/shared-auth/profile";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
+import { PRESIGN_PATHS } from "../../../../lib/admin-api/upload";
 import type {
   ApiMemberProfileUpdateInput,
   ApiUser,
@@ -11,6 +12,8 @@ import type {
 import { hasCompletedRequiredProfile } from "../../../../lib/auth-shared";
 import { readErrorMessage } from "../components/admin-form-utils";
 import AdminActionButton from "../components/admin-action-button";
+import ImageInput from "../components/image-input";
+import { useImmediateImageUpload } from "../components/use-immediate-image-upload";
 
 type ProfilePageClientProps = {
   userId: string;
@@ -19,8 +22,6 @@ type ProfilePageClientProps = {
 };
 
 type ProfileFormState = {
-  name: string;
-  nickname: string;
   familyName: string;
   givenName: string;
   college: string;
@@ -30,8 +31,6 @@ type ProfileFormState = {
 };
 
 const emptyForm: ProfileFormState = {
-  name: "",
-  nickname: "",
   familyName: "",
   givenName: "",
   college: "",
@@ -74,6 +73,8 @@ export default function ProfilePageClient({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const imageUpload = useImmediateImageUpload({ presignPath: PRESIGN_PATHS.userProfile });
+  const resetImageUpload = imageUpload.reset;
 
   const isProfileComplete = useMemo(() => {
     return hasCompletedRequiredProfile({
@@ -85,19 +86,6 @@ export default function ProfilePageClient({
       phoneNumber: toTrimmed(form.phoneNumber),
     });
   }, [form]);
-
-  const syncForm = (user: ApiUser) => {
-    setForm({
-      name: user.name,
-      nickname: user.nickname ?? "",
-      familyName: user.familyName ?? "",
-      givenName: user.givenName ?? "",
-      college: user.college ?? "",
-      department: user.department ?? "",
-      studentNumber: user.studentNumber ?? "",
-      phoneNumber: user.phoneNumber ?? "",
-    });
-  };
 
   useEffect(
     /** useEffect 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
@@ -118,7 +106,15 @@ export default function ProfilePageClient({
             return;
           }
           setProfile(user);
-          syncForm(user);
+          setForm({
+            familyName: user.familyName ?? "",
+            givenName: user.givenName ?? "",
+            college: user.college ?? "",
+            department: user.department ?? "",
+            studentNumber: user.studentNumber ?? "",
+            phoneNumber: user.phoneNumber ?? "",
+          });
+          resetImageUpload(user.image);
         } catch (error) {
           if (!isMounted) {
             return;
@@ -136,7 +132,7 @@ export default function ProfilePageClient({
         isMounted = false;
       };
     },
-    [userId],
+    [resetImageUpload, userId],
   );
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -151,6 +147,10 @@ export default function ProfilePageClient({
       setErrorMessage("학번은 숫자 10자리로 입력해 주세요.");
       return;
     }
+    if (imageUpload.isUploading || imageUpload.hasUploadError) {
+      setErrorMessage("프로필 이미지 업로드를 완료한 뒤 저장해 주세요.");
+      return;
+    }
 
     setIsSubmitting(true);
     setErrorMessage(null);
@@ -158,14 +158,13 @@ export default function ProfilePageClient({
 
     try {
       const payload: ApiMemberProfileUpdateInput = {
-        name: toTrimmed(form.name),
-        nickname: toTrimmed(form.nickname) || null,
         familyName: toTrimmed(form.familyName),
         givenName: toTrimmed(form.givenName),
         college: toTrimmed(form.college),
         department: toTrimmed(form.department),
         studentNumber,
         phoneNumber: toTrimmed(form.phoneNumber),
+        image: imageUpload.currentUrl.trim() || null,
       };
 
       await adminResourceApi.updateUser(profile.id, payload);
@@ -266,48 +265,6 @@ export default function ProfilePageClient({
                 data-testid="admin-profile-form"
                 onSubmit={handleSubmit}
               >
-                <section className="space-y-4">
-                  <h2 className="text-base font-semibold text-[var(--admin-text-primary)]">
-                    표시 정보
-                  </h2>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <label className="block">
-                      <span className={fieldLabelClassName}>표시 이름</span>
-                      <input
-                        type="text"
-                        value={form.name}
-                        onChange={(event) =>
-                          setForm((previous) => ({
-                            ...previous,
-                            name: event.target.value,
-                          }))
-                        }
-                        placeholder="예: 김연영"
-                        className={fieldInputClassName}
-                        required
-                        data-testid="admin-profile-name"
-                      />
-                    </label>
-
-                    <label className="block">
-                      <span className={fieldLabelClassName}>별칭 (선택)</span>
-                      <input
-                        type="text"
-                        value={form.nickname}
-                        onChange={(event) =>
-                          setForm((previous) => ({
-                            ...previous,
-                            nickname: event.target.value,
-                          }))
-                        }
-                        placeholder="예: 연영이"
-                        className={fieldInputClassName}
-                        data-testid="admin-profile-nickname"
-                      />
-                    </label>
-                  </div>
-                </section>
-
                 <section className="space-y-4">
                   <h2 className="text-base font-semibold text-[var(--admin-text-primary)]">
                     기본 학적 정보
@@ -426,6 +383,25 @@ export default function ProfilePageClient({
                   </div>
                 </section>
 
+                <section className="space-y-4">
+                  <h2 className="text-base font-semibold text-[var(--admin-text-primary)]">
+                    프로필 이미지
+                  </h2>
+                  <ImageInput
+                    label="프로필 이미지"
+                    file={imageUpload.file}
+                    onFileChange={imageUpload.selectFile}
+                    currentUrl={imageUpload.currentUrl}
+                    status={imageUpload.status}
+                    errorMessage={imageUpload.errorMessage}
+                    onRetry={imageUpload.retry}
+                    uploadProgress={imageUpload.progress}
+                    isUploading={imageUpload.isUploading}
+                    disabled={isSubmitting}
+                    testIdPrefix="admin-profile-image"
+                  />
+                </section>
+
                 {!isProfileComplete ? (
                   <p
                     className="rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2.5 text-sm text-amber-700"
@@ -441,7 +417,7 @@ export default function ProfilePageClient({
                   </p>
                   <AdminActionButton
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || imageUpload.isUploading || imageUpload.hasUploadError}
                     loading={isSubmitting}
                     loadingText="저장 중..."
                     className="min-w-[182px] rounded-xl border-[var(--admin-accent)] bg-[var(--admin-accent)] px-4 py-2.5 font-semibold text-[var(--admin-bg-primary)] shadow-sm transition hover:brightness-110 disabled:border-[var(--admin-border-strong)] disabled:bg-[var(--admin-border-strong)] disabled:text-[var(--admin-bg-primary)]"

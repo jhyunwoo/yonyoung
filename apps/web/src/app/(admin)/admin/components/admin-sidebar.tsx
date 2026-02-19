@@ -6,7 +6,8 @@ import { usePathname, useRouter } from "next/navigation";
 import LogoutButton from "../logout-button";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
 import { buildGenerationPath, extractGenerationRouteContext, getAccessibleGenerations } from "../../../../lib/admin-generation";
-import { canManageGenerations } from "../../../../lib/auth-shared";
+import { canManageGenerations, canManageGlobalUsers } from "../../../../lib/auth-shared";
+import { formatKoreanName } from "../../../../lib/user-name";
 import type { ApiGeneration } from "../../../../lib/admin-api/types";
 import type { AuthSession } from "../../../../lib/auth-shared";
 
@@ -61,7 +62,7 @@ const RESOURCE_MENU_ITEMS = [
   },
   {
     resourcePath: "users",
-    label: "사용자 관리",
+    label: "기수 사용자 관리",
     shortLabel: "USR",
     icon: "users",
   },
@@ -207,6 +208,7 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
   const [isGenerationLoading, setIsGenerationLoading] = useState(true);
   const [theme, setTheme] = useState<AdminTheme>("light");
   const canManageGenerationsFlag = canManageGenerations(session);
+  const canManageGlobalUsersFlag = canManageGlobalUsers(session);
 
   useEffect(/** useEffect 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
     let isMounted = true;
@@ -334,15 +336,17 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
 
   const isGenerationSettingsActive =
     pathname === "/admin/generations" || pathname.startsWith("/admin/generations/");
+  const isGlobalUsersActive =
+    pathname === "/admin/users" || pathname.startsWith("/admin/users/");
   const isProfileActive =
     pathname === "/admin/profile" || pathname.startsWith("/admin/profile/");
   const generationScopeLabel =
     selectedSortOrder === null ? "기수" : `${selectedSortOrder}기`;
-  const userDisplayName =
-    session.user.nickname?.trim() ||
-    session.user.name?.trim() ||
-    session.user.email.split("@")[0] ||
-    "USER";
+  const userDisplayName = formatKoreanName({
+    familyName: session.user.familyName,
+    givenName: session.user.givenName,
+    email: session.user.email,
+  });
   const userInitial = userDisplayName.slice(0, 1).toUpperCase();
   const userRoleLabel = getRoleLabelInKorean(session.user.role);
 
@@ -481,6 +485,32 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
                           전체
                         </span>
                         <span className="ml-2">기수 설정</span>
+                      </>
+                    )}
+                  </Link>
+                </li>
+              ) : null}
+              {canManageGlobalUsersFlag ? (
+                <li>
+                  <Link
+                    href="/admin/users"
+                    data-testid="admin-nav-global-users"
+                    className={`${NAV_ITEM_BASE_CLASS} ${
+                      isGlobalUsersActive
+                        ? "border-black bg-black text-white shadow-md shadow-black/20"
+                        : "border-blue-200 text-blue-900 hover:bg-blue-100/70"
+                    } ${collapsed ? "justify-center" : "justify-start"}`}
+                    title="사용자 관리"
+                  >
+                    <SidebarIcon name="users" />
+                    {collapsed ? (
+                      <span className="sr-only">사용자 관리</span>
+                    ) : (
+                      <>
+                        <span className={`${NAV_ITEM_SCOPE_BADGE_CLASS} border-blue-200 bg-blue-50/70 text-blue-900`}>
+                          전체
+                        </span>
+                        <span className="ml-2">사용자 관리</span>
                       </>
                     )}
                   </Link>

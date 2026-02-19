@@ -1069,13 +1069,11 @@ export const cleanupByPrefix = async (
     id: string;
     name: string;
     email: string;
-    nickname: string | null;
   }>("/users");
   for (const user of users) {
     const isOwnedByPrefix =
       user.name.includes(prefix) ||
-      user.email.includes(prefix) ||
-      (user.nickname ? user.nickname.includes(prefix) : false);
+      user.email.includes(prefix);
 
     if (isOwnedByPrefix) {
       await adminApiRequest<void>(request, {

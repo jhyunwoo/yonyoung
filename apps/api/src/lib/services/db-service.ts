@@ -1096,7 +1096,7 @@ export const createDbDataService = (database: D1Database): DataService => {
         .select()
         .from(user)
         .where(isNull(user.deletedAt))
-        .orderBy(asc(user.createdAt));
+        .orderBy(desc(user.createdAt));
     },
         /**
      * getUserById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
@@ -1129,7 +1129,6 @@ export const createDbDataService = (database: D1Database): DataService => {
         .update(user)
         .set({
           ...(input.name !== undefined ? { name: input.name } : {}),
-          ...(input.nickname !== undefined ? { nickname: input.nickname } : {}),
           ...(input.image !== undefined ? { image: input.image } : {}),
           ...(input.familyName !== undefined
             ? { familyName: input.familyName }

@@ -4,6 +4,7 @@ import { fetchSessionFromApi, resolveAuthApiUrl } from "./auth-server";
 import {
   canAccessAdminPage,
   canManageGenerations,
+  canManageGlobalUsers,
   hasCompletedRequiredProfile,
 } from "./auth-shared";
 import type { AuthSession } from "./auth-shared";
@@ -178,12 +179,24 @@ const requirePresidentAccess = async (
   return session;
 };
 
+const requireGlobalUserManagementAccess = async (): Promise<AuthSession> => {
+  const session = await requireSession(SIGN_IN_PATH);
+
+  if (!canManageGlobalUsers(session)) {
+    forbidden();
+  }
+
+  await redirectIfProfileIncomplete(session);
+  return session;
+};
+
 export const serverAuthTool = {
   getSession,
   requireSession,
   requireAccess,
   requireAdminPageAccess,
   requirePresidentAccess,
+  requireGlobalUserManagementAccess,
   getCurrentUserProfile,
   redirectIfProfileIncomplete,
   resolveAdminLandingPath,

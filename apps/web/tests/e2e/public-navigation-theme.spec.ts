@@ -17,12 +17,12 @@ test.describe("public navigation and theme", () => {
 
     await expect(desktopHomeLink).toHaveAttribute("href", "/");
     await expect(desktopAboutLink).toHaveAttribute("href", "/about");
-    await expect(desktopArchiveLink).toHaveAttribute("href", "/archive");
+    await expect(desktopArchiveLink).toHaveAttribute("href", "/archive/records");
     await expect(desktopLinktreeLink).toHaveAttribute("href", "/linktree");
     await expect(desktopDonateLink).toHaveAttribute("href", "/donate");
 
     await desktopArchiveLink.click();
-    await expect(page).toHaveURL(/\/archive$/);
+    await expect(page).toHaveURL(/\/archive\/records$/);
 
     await page.getByTestId("public-logo-link").click();
     await expect(page).toHaveURL(/\/$/);

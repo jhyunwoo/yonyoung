@@ -174,7 +174,6 @@ export type ApiUser = {
   name: string;
   email: string;
   image: string | null;
-  nickname: string | null;
   familyName: string | null;
   givenName: string | null;
   college: string | null;
@@ -187,9 +186,27 @@ export type ApiUser = {
   updatedAt: number;
 };
 
+export type ApiPublicGenerationMember = {
+  id: string;
+  name: string;
+  image: string | null;
+  familyName: string | null;
+  givenName: string | null;
+  role: ApiRole | null;
+  generationId: string;
+};
+
+export type ApiPublicGenerationWithMembers = {
+  id: string;
+  name: string;
+  sortOrder: number;
+  startDate: number;
+  endDate: number;
+  members: ApiPublicGenerationMember[];
+};
+
 export type ApiAdminUpdateUserInput = {
   name?: string;
-  nickname?: string | null;
   image?: string | null;
   familyName?: string | null;
   givenName?: string | null;
@@ -202,8 +219,6 @@ export type ApiAdminUpdateUserInput = {
 };
 
 export type ApiMemberProfileUpdateInput = {
-  name?: string;
-  nickname?: string | null;
   image?: string | null;
   familyName?: string | null;
   givenName?: string | null;

@@ -8,6 +8,7 @@ import {
   createLinktree,
   createSupporter,
   createTestApp,
+  createUser,
   fn,
   readJson,
 } from "./test-helpers";
@@ -154,6 +155,82 @@ describe("public routes", () => {
       IDs.generation,
       IDs.generationAlt,
     ]);
+  });
+
+  it("공개 사진가 목록은 기수/멤버를 정렬해 반환하며 민감 정보를 노출하지 않는다", async () => {
+    const listGenerations = fn(async () => [
+      createGeneration({
+        id: IDs.generationAlt,
+        name: "20기",
+        sortOrder: 20,
+      }),
+      createGeneration({
+        id: IDs.generation,
+        name: "10기",
+        sortOrder: 10,
+      }),
+    ]);
+    const listUsers = fn(async () => [
+      createUser({
+        id: IDs.otherUser,
+        name: "zeta",
+        familyName: "최",
+        givenName: "연",
+        generationId: IDs.generation,
+        email: "private-1@example.com",
+      }),
+      createUser({
+        id: IDs.member,
+        name: "alpha",
+        familyName: "김",
+        givenName: "민수",
+        generationId: IDs.generation,
+        email: "private-2@example.com",
+      }),
+      createUser({
+        id: IDs.manager,
+        name: "beta",
+        familyName: null,
+        givenName: null,
+        generationId: IDs.generationAlt,
+        email: "private-3@example.com",
+      }),
+      createUser({
+        id: IDs.vicePresident,
+        name: "orphan",
+        generationId: null,
+      }),
+    ]);
+
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({ listGenerations, listUsers }),
+    });
+
+    const response = await app.request("/api/public/photographers");
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toContain("s-maxage=60");
+
+    const body = await readJson<{
+      data: Array<{
+        id: string;
+        members: Array<Record<string, unknown>>;
+      }>;
+    }>(response);
+
+    expect(body.data.map((item) => item.id)).toEqual([
+      IDs.generation,
+      IDs.generationAlt,
+    ]);
+    expect(
+      body.data[0]?.members.map((member) => member.id),
+    ).toEqual([IDs.member, IDs.otherUser]);
+    expect(body.data[1]?.members.map((member) => member.id)).toEqual([IDs.manager]);
+    expect(body.data[0]?.members[0]).not.toHaveProperty("email");
+    expect(body.data[0]?.members[0]).not.toHaveProperty("phoneNumber");
+    expect(body.data[0]?.members[0]).not.toHaveProperty("studentNumber");
+    expect(listGenerations).toHaveBeenCalledTimes(1);
+    expect(listUsers).toHaveBeenCalledTimes(1);
   });
 
   it("공개 활동 목록은 cache hit 시 데이터 서비스를 재호출하지 않는다", async () => {

@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import MotionReveal from "../components/motion-reveal";
 import SectionShell from "../components/section-shell";
 import { listPublicGenerations, safeList } from "../../../lib/public-api";
 import { createPageMetadata } from "../../../lib/seo";
+import AboutSubNav from "./components/about-subnav";
 
 const yearFormatter = new Intl.DateTimeFormat("ko-KR", { year: "numeric" });
 
@@ -60,6 +62,8 @@ export default async function AboutPage() {
         </div>
       </section>
 
+      <AboutSubNav active="about" />
+
       <SectionShell
         eyebrow="Introduction"
         title="연영회 소개"
@@ -74,6 +78,56 @@ export default async function AboutPage() {
             </p>
           </article>
         </MotionReveal>
+      </SectionShell>
+
+      <SectionShell
+        eyebrow="Explore More"
+        title="세부 페이지"
+        description="연영회 멤버 목록과 리크루팅 안내를 별도 페이지에서 확인할 수 있습니다."
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <MotionReveal>
+            <article className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-5">
+              <p className="text-xs uppercase tracking-[0.16em] text-(--text-muted)">
+                About Members
+              </p>
+              <h3 className="mt-2 font-display text-3xl text-(--text-primary)">
+                PHOTOGRAPHERS
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-(--text-secondary)">
+                기수별 멤버 목록을 확인해보세요.
+              </p>
+              <Link
+                href="/about/photographers"
+                className="mt-4 inline-flex rounded-full bg-(--accent) px-4 py-2 text-sm font-medium text-(--accent-foreground) transition hover:opacity-90"
+                data-testid="about-link-photographers"
+              >
+                페이지 이동
+              </Link>
+            </article>
+          </MotionReveal>
+
+          <MotionReveal delay={0.05}>
+            <article className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-5">
+              <p className="text-xs uppercase tracking-[0.16em] text-(--text-muted)">
+                Membership
+              </p>
+              <h3 className="mt-2 font-display text-3xl text-(--text-primary)">
+                RECRUITING
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-(--text-secondary)">
+                지원 자격과 지원 절차를 확인해보세요.
+              </p>
+              <Link
+                href="/about/recruiting"
+                className="mt-4 inline-flex rounded-full bg-(--accent) px-4 py-2 text-sm font-medium text-(--accent-foreground) transition hover:opacity-90"
+                data-testid="about-link-recruiting"
+              >
+                페이지 이동
+              </Link>
+            </article>
+          </MotionReveal>
+        </div>
       </SectionShell>
 
       <SectionShell

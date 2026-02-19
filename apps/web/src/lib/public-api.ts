@@ -4,6 +4,7 @@ import type {
   ApiGeneration,
   ApiLinktree,
   ApiLinktreeItem,
+  ApiPublicGenerationWithMembers,
   ApiSupporter,
   DataEnvelope,
 } from "@repo/shared-api-contracts";
@@ -25,6 +26,7 @@ export const PUBLIC_CACHE_TAGS = {
   supporters: "public:supporters",
   linktree: "public:linktree",
   generations: "public:generations",
+  photographers: "public:photographers",
 } as const;
 
 type PublicGetOptions = {
@@ -136,6 +138,14 @@ export const listPublicGenerations = async (): Promise<ApiGeneration[]> =>
   publicGet<ApiGeneration[]>("/api/public/generations", {
     revalidateSeconds: 300,
     tags: [PUBLIC_CACHE_TAGS.generations],
+  });
+
+export const listPublicPhotographers = async (): Promise<
+  ApiPublicGenerationWithMembers[]
+> =>
+  publicGet<ApiPublicGenerationWithMembers[]>("/api/public/photographers", {
+    revalidateSeconds: 300,
+    tags: [PUBLIC_CACHE_TAGS.photographers],
   });
 
 export const flattenLinktreeItems = (

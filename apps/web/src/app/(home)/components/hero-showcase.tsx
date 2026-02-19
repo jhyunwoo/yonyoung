@@ -3,7 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "framer-motion";
 import type { ApiActivity, ApiExhibition } from "../../../lib/admin-api/types";
 import { shouldUseUnoptimizedImage } from "../../../lib/image-utils";
 
@@ -48,23 +53,23 @@ export default function HeroShowcase({
       data-testid="home-hero"
     >
       <div className="hero-glow -left-16 top-10" />
-      <div className="hero-glow bottom-8 right-[-6rem]" />
+      <div className="hero-glow bottom-8 -right-24" />
 
       <div className="mx-auto grid w-full max-w-6xl gap-8 md:grid-cols-[1.1fr_0.9fr] md:items-end">
         <motion.div style={shouldReduceMotion ? undefined : { y: textOffset }}>
           <p className="mb-3 text-xs uppercase tracking-[0.2em] text-(--text-muted)">
-            Yonsei University Central Photography Club
+            Yonsei University Photography Club
           </p>
           <h1 className="font-display text-5xl leading-[0.94] text-(--text-primary) md:text-7xl">
             연영회
           </h1>
           <p className="mt-4 max-w-xl text-base leading-relaxed text-(--text-secondary) md:text-lg">
-            1966년부터 이어온 연세대학교 중앙사진동아리. 기록과 전시, 그리고 서로의
-            시선이 만나는 장소를 만듭니다.
+            1966년부터 이어온 연세대학교 중앙사진동아리. 기록과 전시, 그리고
+            서로의 시선이 만나는 장소를 만듭니다.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Link
-              href="/archive"
+              href="/archive/records"
               data-testid="home-cta-archive"
               className="rounded-full bg-(--accent) px-5 py-2.5 text-sm font-medium text-(--accent-foreground) transition hover:opacity-90"
             >
@@ -95,12 +100,14 @@ export default function HeroShowcase({
                   src={featuredExhibition.coverImageUrl}
                   alt={featuredExhibition.title}
                   fill
-                  unoptimized={shouldUseUnoptimizedImage(featuredExhibition.coverImageUrl)}
+                  unoptimized={shouldUseUnoptimizedImage(
+                    featuredExhibition.coverImageUrl,
+                  )}
                   sizes="(min-width: 768px) 40vw, 100vw"
                   className="h-full w-full object-cover"
                   data-testid="home-hero-exhibition-image"
                   fetchPriority="high"
-                  priority
+                  preload
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-(--surface-muted) text-sm text-(--text-muted)">
@@ -108,7 +115,10 @@ export default function HeroShowcase({
                 </div>
               )}
             </div>
-            <div className="space-y-2 p-4" data-testid="home-hero-exhibition-meta">
+            <div
+              className="space-y-2 p-4"
+              data-testid="home-hero-exhibition-meta"
+            >
               <p className="text-xs uppercase tracking-[0.16em] text-(--text-muted)">
                 Latest Exhibition
               </p>
@@ -117,8 +127,11 @@ export default function HeroShowcase({
               </h2>
               {featuredExhibition ? (
                 <p className="text-sm text-(--text-secondary)">
-                  {formatDateRange(featuredExhibition.startDate, featuredExhibition.endDate)} ·{" "}
-                  {featuredExhibition.place}
+                  {formatDateRange(
+                    featuredExhibition.startDate,
+                    featuredExhibition.endDate,
+                  )}{" "}
+                  · {featuredExhibition.place}
                 </p>
               ) : null}
             </div>
@@ -143,7 +156,9 @@ export default function HeroShowcase({
               <p className="text-xs uppercase tracking-[0.14em] text-(--text-muted)">
                 Since
               </p>
-              <p className="mt-2 font-display text-3xl text-(--text-primary)">1966</p>
+              <p className="mt-2 font-display text-3xl text-(--text-primary)">
+                1966
+              </p>
             </motion.div>
           </div>
         </motion.div>

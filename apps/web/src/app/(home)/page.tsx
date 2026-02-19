@@ -179,7 +179,7 @@ export default async function HomePage() {
               연영회의 더 많은 전시와 활동을 아카이브에서 확인해보세요.
             </p>
             <Link
-              href="/archive"
+              href="/archive/records"
               data-testid="home-cta-archive-bottom"
               className="mt-4 inline-flex rounded-full bg-(--accent) px-5 py-2.5 text-sm font-medium text-(--accent-foreground) transition hover:opacity-90"
             >

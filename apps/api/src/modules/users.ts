@@ -35,6 +35,9 @@ const updateUserRequestSchema = z
   .union([ApiAdminUpdateUserSchema, ApiMemberProfileUpdateSchema])
   .openapi("ApiUpdateUserRequest");
 
+const canReadAllUsers = (role: string): boolean =>
+  role === "president" || role === "vice_president";
+
 const listUsersRoute = createRoute({
   method: "get",
   path: "/api/users",
@@ -118,10 +121,28 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
       return actorResult.response;
     }
 
-    // member 계열 role의 사용자 조회는 본인만 허용한다.
-    if (can(actorResult.actor.role, "user", "read")) {
+    if (canReadAllUsers(actorResult.actor.role)) {
       const data = await dependencies.getDataService(c).listUsers();
       return ok(c, data);
+    }
+
+    if (actorResult.actor.role === "manager") {
+      const data = await dependencies.getDataService(c).listUsers();
+      if (!actorResult.actor.generationId) {
+        return ok(c, []);
+      }
+      return ok(
+        c,
+        data.filter(
+          /**
+           * data.filter 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+           * @param candidate 대상을 식별하기 위한 ID 값입니다.
+           * @returns 함수 실행 결과를 반환합니다.
+           * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+           */
+          (candidate) => candidate.generationId === actorResult.actor.generationId,
+        ),
+      );
     }
 
     if (isMemberLikeRole(actorResult.actor.role)) {
@@ -147,7 +168,11 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
     }
 
     const isSelf = actorResult.actor.id === params.data.id;
-    if (!can(actorResult.actor.role, "user", "read") && !isSelf) {
+    if (
+      !canReadAllUsers(actorResult.actor.role) &&
+      actorResult.actor.role !== "manager" &&
+      !isSelf
+    ) {
       return forbidden(c);
     }
 
@@ -155,6 +180,16 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
     if (!data) {
       return notFound(c);
     }
+
+    if (
+      actorResult.actor.role === "manager" &&
+      !isSelf &&
+      (!actorResult.actor.generationId ||
+        data.generationId !== actorResult.actor.generationId)
+    ) {
+      return forbidden(c);
+    }
+
     return ok(c, data);
   });
 

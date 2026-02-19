@@ -287,7 +287,12 @@ test.describe("presigned image upload flow", () => {
       hasText: tempUser.email,
     });
     await expect(userRow).toBeVisible();
-    await userRow.getByRole("button").first().click();
+    const userRowTestId = await userRow.getAttribute("data-testid");
+    if (!userRowTestId) {
+      throw new Error("target user row test id is missing");
+    }
+    const targetUserId = userRowTestId.replace("user-row-", "");
+    await page.getByTestId(`user-inline-toggle-${targetUserId}`).click();
     await expect(page.getByTestId("user-detail-card")).toContainText(tempUser.email);
     await expect(page.getByTestId("user-edit-name")).toHaveValue(tempUser.name);
 
@@ -312,6 +317,63 @@ test.describe("presigned image upload flow", () => {
       "e2e-contract-user",
     );
     expect(updatePayload?.generationId).toBe(generation.id);
+    expect(updatePayload?.image).toContain("https://storage.yonyoung.moveto.kr/users/");
+  });
+
+  test("내 프로필 수정 시 프로필 업로드 계약을 만족한다", async ({
+    page,
+    e2ePrefix,
+    sampleImagePath,
+  }) => {
+    test.setTimeout(180_000);
+    await ensureAdminSession(page);
+
+    const uploadMock = await installPresignedUploadMock(page, {
+      routes: [
+        {
+          key: "profile-self",
+          presignPath: "/users/presign/profile",
+          resource: "users",
+          slot: "profile",
+          requiredHeaders: {
+            "Content-Type": "image/png",
+            "x-amz-meta-source": "e2e-contract-profile-self",
+          },
+          uploadDelayMs: 180,
+        },
+      ],
+    });
+
+    let updatePayload: Record<string, unknown> | null = null;
+    await page.route(`${API_BASE_URL}/api/users/**`, async (route) => {
+      if (route.request().method() !== "PATCH") {
+        await route.fallback();
+        return;
+      }
+
+      updatePayload = parseJsonBody(route.request().postData());
+      await route.fallback();
+    });
+
+    await page.goto("/admin/profile");
+
+    await page.getByTestId("admin-profile-image-file").setInputFiles(sampleImagePath);
+    await expect(page.getByTestId("admin-profile-image-upload-progress")).toBeVisible();
+    await expect.poll(() => uploadMock.getUploadCount("profile-self")).toBe(1);
+    await expect(page.getByTestId("admin-profile-submit")).toBeEnabled();
+
+    await page.getByTestId("admin-profile-given-name").fill(uniqueText(e2ePrefix, "self"));
+    await page.getByTestId("admin-profile-submit").click();
+    await expect(page).toHaveURL(/\/admin$/);
+
+    expect(uploadMock.getLatestPresignPayload("profile-self")).toMatchObject({
+      fileName: "test-image.png",
+      contentType: "image/png",
+    });
+    expect(uploadMock.getUploadCount("profile-self")).toBe(1);
+    expect(uploadMock.getUploadRequests("profile-self")[0]?.headers["x-amz-meta-source"]).toBe(
+      "e2e-contract-profile-self",
+    );
     expect(updatePayload?.image).toContain("https://storage.yonyoung.moveto.kr/users/");
   });
 

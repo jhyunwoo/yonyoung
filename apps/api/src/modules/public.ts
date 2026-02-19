@@ -4,6 +4,7 @@ import {
   ApiExhibitionSchema,
   ApiGenerationSchema,
   ApiLinktreeSchema,
+  ApiPublicGenerationWithMembersSchema,
   ApiSupporterSchema,
 } from "../lib/openapi/schemas";
 import { dataResponse } from "../lib/openapi/responses";
@@ -64,6 +65,19 @@ const listPublicGenerationsRoute = createRoute({
   },
 });
 
+const listPublicPhotographersRoute = createRoute({
+  method: "get",
+  path: "/api/public/photographers",
+  tags: ["Public"],
+  operationId: "listPublicPhotographers",
+  responses: {
+    200: dataResponse(
+      ApiPublicGenerationWithMembersSchema.array(),
+      "공개 기수별 사진가 목록 조회 성공",
+    ),
+  },
+});
+
 /**
  * registerPublicRoutes 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
  * @param app 함수 로직에서 사용하는 입력값입니다.
@@ -111,6 +125,59 @@ export const registerPublicRoutes = (
         .getDataService(c)
         .listGenerations()
         .then((rows) => [...rows].sort((a, b) => a.sortOrder - b.sortOrder));
+      return ok(c, data);
+    }),
+  );
+
+  app.openapi(listPublicPhotographersRoute, async (c): Promise<any> =>
+    respondWithPublicCache(c, async () => {
+      const dataService = dependencies.getDataService(c);
+      const [generations, users] = await Promise.all([
+        dataService
+          .listGenerations()
+          .then((rows) => [...rows].sort((a, b) => a.sortOrder - b.sortOrder)),
+        dataService.listUsers(),
+      ]);
+
+      const readMemberSortName = (member: {
+        familyName: string | null;
+        givenName: string | null;
+        name: string;
+      }): string => {
+        const familyName = member.familyName?.trim() ?? "";
+        const givenName = member.givenName?.trim() ?? "";
+        if (familyName || givenName) {
+          return `${familyName}${givenName}`;
+        }
+        return member.name.trim();
+      };
+
+      const data = generations.map((generation) => {
+        const members = users
+          .filter((user) => user.generationId === generation.id)
+          .map((user) => ({
+            id: user.id,
+            name: user.name,
+            image: user.image,
+            familyName: user.familyName,
+            givenName: user.givenName,
+            role: user.role,
+            generationId: generation.id,
+          }))
+          .sort((a, b) =>
+            readMemberSortName(a).localeCompare(readMemberSortName(b), "ko"),
+          );
+
+        return {
+          id: generation.id,
+          name: generation.name,
+          sortOrder: generation.sortOrder,
+          startDate: generation.startDate,
+          endDate: generation.endDate,
+          members,
+        };
+      });
+
       return ok(c, data);
     }),
   );

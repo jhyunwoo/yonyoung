@@ -214,7 +214,6 @@ export const createUser = (
   name: "tester",
   email: "tester@example.com",
   image: null,
-  nickname: null,
   familyName: null,
   givenName: null,
   college: null,

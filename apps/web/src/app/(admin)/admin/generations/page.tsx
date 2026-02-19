@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
 import type { ApiGeneration, ApiUser } from "../../../../lib/admin-api/types";
+import { formatKoreanName } from "../../../../lib/user-name";
 import {
   ADMIN_USER_ROLE_OPTIONS,
   formatTimestamp,
@@ -148,7 +149,17 @@ export default function GenerationsAdminPage() {
   const filteredAssignableUsers = useMemo(() => {
     const query = assignMemberSearchQuery.trim().toLowerCase();
     return stagedAssignableUsers.filter((user) => {
-      const matchesQuery = query ? user.name.toLowerCase().includes(query) : true;
+      const matchesQuery = query
+        ? [
+            formatKoreanName(user),
+            user.email,
+            user.familyName ?? "",
+            user.givenName ?? "",
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(query)
+        : true;
       if (!matchesQuery) {
         return false;
       }
@@ -804,8 +815,8 @@ export default function GenerationsAdminPage() {
                         data-testid={`generation-member-row-${member.id}`}
                       >
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-gray-900">{member.name}</p>
-                          <p className="text-xs text-gray-500">닉네임: {member.nickname ?? "없음"}</p>
+                          <p className="text-sm font-semibold text-gray-900">{formatKoreanName(member)}</p>
+                          <p className="text-xs text-gray-500">이메일: {member.email}</p>
                           <p className="text-xs text-gray-500">권한: {readAdminRoleLabel(member.role)}</p>
                         </div>
                         <button
@@ -929,8 +940,8 @@ export default function GenerationsAdminPage() {
                         data-testid={`generation-assignable-row-${member.id}`}
                       >
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-gray-900">{member.name}</p>
-                          <p className="text-xs text-gray-500">닉네임: {member.nickname ?? "없음"}</p>
+                          <p className="text-sm font-semibold text-gray-900">{formatKoreanName(member)}</p>
+                          <p className="text-xs text-gray-500">이메일: {member.email}</p>
                           <p className="text-xs text-gray-500">권한: {readAdminRoleLabel(member.role)}</p>
                           <p className="text-xs text-gray-500">
                             현재 소속: {member.generationId ? "기수 배정됨" : "미배정"}

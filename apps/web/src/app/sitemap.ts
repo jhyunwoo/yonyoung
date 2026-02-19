@@ -19,10 +19,34 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
-      url: `${siteUrl}/archive`,
+      url: `${siteUrl}/about/photographers`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+    {
+      url: `${siteUrl}/about/recruiting`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${siteUrl}/archive/records`,
       lastModified: now,
       changeFrequency: "daily",
       priority: 0.9,
+    },
+    {
+      url: `${siteUrl}/archive/supporters`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: `${siteUrl}/archive/exhibitions`,
+      lastModified: now,
+      changeFrequency: "daily",
+      priority: 0.85,
     },
     {
       url: `${siteUrl}/linktree`,

@@ -80,7 +80,6 @@ export type UserEntity = {
   name: string;
   email: string;
   image: string | null;
-  nickname: string | null;
   familyName: string | null;
   givenName: string | null;
   college: string | null;
@@ -229,7 +228,6 @@ export type DataService = {
     id: string,
     input: Partial<{
       name: string;
-      nickname: string | null;
       image: string | null;
       familyName: string | null;
       givenName: string | null;

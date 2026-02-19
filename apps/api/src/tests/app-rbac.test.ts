@@ -9,6 +9,7 @@ import type {
 
 const IDs = {
   generation: "10000000-0000-4000-8000-000000000001",
+  otherGeneration: "10000000-0000-4000-8000-000000000002",
   exhibition: "20000000-0000-4000-8000-000000000001",
   member: "30000000-0000-4000-8000-000000000001",
   otherUser: "30000000-0000-4000-8000-000000000002",
@@ -23,13 +24,17 @@ const IDs = {
  * @returns 처리 결과 값을 반환합니다.
  * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
  */
-const createActor = (role: Role, id: string): Actor => ({
+const createActor = (
+  role: Role,
+  id: string,
+  generationId: string | null = null,
+): Actor => ({
   id,
   role,
   rawRole: role,
   name: `${role}-name`,
   email: `${role}@example.com`,
-  generationId: null,
+  generationId,
 });
 
 /**
@@ -42,14 +47,20 @@ const createActor = (role: Role, id: string): Actor => ({
 const createUser = (
   id: string,
   role: UserEntity["role"] = "regular_member",
+  generationId: string | null = null,
 ): UserEntity => ({
   id,
   name: "tester",
   email: "tester@example.com",
   image: null,
-  nickname: null,
+  familyName: null,
+  givenName: null,
+  college: null,
+  department: null,
+  studentNumber: null,
+  phoneNumber: null,
   role,
-  generationId: null,
+  generationId,
   createdAt: new Date(0),
   updatedAt: new Date(0),
 });
@@ -222,6 +233,28 @@ describe("RBAC routes", /** describe 실행 과정에서 필요한 연산을 수
     expect(getUserById).toHaveBeenCalledWith(IDs.member);
   });
 
+  it("운영진은 본인 소속 기수 사용자 목록만 조회할 수 있다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const listUsers = vi.fn(async () => [
+      createUser(IDs.member, "regular_member", IDs.generation),
+      createUser(IDs.otherUser, "regular_member", IDs.otherGeneration),
+      createUser(IDs.manager, "manager", IDs.generation),
+    ]);
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager, IDs.generation),
+      dataService: createDataServiceMock({
+        listUsers,
+      }),
+    });
+
+    const response = await app.request("/api/users");
+    expect(response.status).toBe(200);
+
+    const body = (await response.json()) as { data: UserEntity[] };
+    expect(body.data).toHaveLength(2);
+    expect(body.data.map((user) => user.id)).toEqual([IDs.member, IDs.manager]);
+    expect(listUsers).toHaveBeenCalledTimes(1);
+  });
+
   it("부원은 다른 사용자 상세 조회가 불가하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({
       actor: createActor("regular_member", IDs.member),
@@ -243,7 +276,35 @@ describe("RBAC routes", /** describe 실행 과정에서 필요한 연산을 수
     expect(response.status).toBe(200);
   });
 
-  it("부원은 본인 프로필(name/nickname/image)만 수정 가능하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+  it("운영진은 본인 기수 외 사용자 상세 조회가 불가하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager, IDs.generation),
+      dataService: createDataServiceMock({
+        getUserById: vi.fn(async () =>
+          createUser(IDs.otherUser, "regular_member", IDs.otherGeneration),
+        ),
+      }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.otherUser}`);
+    expect(response.status).toBe(403);
+  });
+
+  it("운영진은 본인 기수 사용자 상세 조회가 가능하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager, IDs.generation),
+      dataService: createDataServiceMock({
+        getUserById: vi.fn(async () =>
+          createUser(IDs.member, "regular_member", IDs.generation),
+        ),
+      }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.member}`);
+    expect(response.status).toBe(200);
+  });
+
+  it("부원은 본인 프로필(image)만 수정 가능하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const updateUser = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createUser(IDs.member));
     const app = createTestApp({
       actor: createActor("regular_member", IDs.member),
@@ -258,13 +319,13 @@ describe("RBAC routes", /** describe 실행 과정에서 필요한 연산을 수
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        name: "updated-name",
+        image: "https://cdn.example.com/users/profile-member.png",
       }),
     });
 
     expect(response.status).toBe(200);
     expect(updateUser).toHaveBeenCalledWith(IDs.member, {
-      name: "updated-name",
+      image: "https://cdn.example.com/users/profile-member.png",
     });
   });
 

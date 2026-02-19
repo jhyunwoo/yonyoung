@@ -194,10 +194,6 @@ const createAuthWithEnv = (database: D1Database, env: AuthEnv) => {
     },
     user: {
       additionalFields: {
-        nickname: {
-          type: "string",
-          required: false,
-        },
         familyName: {
           type: "string",
           required: false,
@@ -230,6 +226,11 @@ const createAuthWithEnv = (database: D1Database, env: AuthEnv) => {
         },
         generationId: {
           type: "string",
+          required: false,
+          input: false,
+        },
+        latestGenerationSortOrder: {
+          type: "number",
           required: false,
           input: false,
         },
