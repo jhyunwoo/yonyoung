@@ -1,0 +1,174 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]: Admin Console
+        - button "사이드바 접기" [ref=e6]: <
+      - generic [ref=e8]:
+        - text: 현재 작업 기수
+        - combobox "현재 작업 기수" [ref=e9]:
+          - option "196055311기 (e2e-1771157196055-0-feotyy-generation-52pvqo)" [selected]
+          - option "447714850기 (e2e-1771157447713-0-6nf086-generation-pe1b6l)"
+          - option "761546289기 (e2e-1771468757040-0-muk4a6-generation-q310u9)"
+          - option "765118314기 (e2e-1771471760322-0-0ef3m4-generation-spj37a)"
+          - option "884629402기 (e2e-1771157884629-0-ob3525-generation-u1xdq0)"
+      - navigation [ref=e10]:
+        - generic [ref=e11]:
+          - generic [ref=e12]:
+            - paragraph [ref=e13]: 전체 기수 공통 관리
+            - list [ref=e14]:
+              - listitem [ref=e15]:
+                - link "전체 내 프로필" [ref=e16] [cursor=pointer]:
+                  - /url: /admin/profile
+                  - generic [ref=e17]: 전체
+                  - generic [ref=e18]: 내 프로필
+              - listitem [ref=e19]:
+                - link "전체 기수 설정" [ref=e20] [cursor=pointer]:
+                  - /url: /admin/generations
+                  - generic [ref=e21]: 전체
+                  - generic [ref=e22]: 기수 설정
+          - generic [ref=e23]:
+            - paragraph [ref=e24]: 선택 기수별 관리
+            - list [ref=e25]:
+              - listitem [ref=e26]:
+                - link "196055311기 활동 관리" [ref=e27] [cursor=pointer]:
+                  - /url: /admin/196055311/activities
+                  - generic [ref=e28]: 196055311기
+                  - generic [ref=e29]: 활동 관리
+              - listitem [ref=e30]:
+                - link "196055311기 후원사 관리" [ref=e31] [cursor=pointer]:
+                  - /url: /admin/196055311/supporters
+                  - generic [ref=e32]: 196055311기
+                  - generic [ref=e33]: 후원사 관리
+              - listitem [ref=e34]:
+                - link "196055311기 전시 관리" [ref=e35] [cursor=pointer]:
+                  - /url: /admin/196055311/exhibitions
+                  - generic [ref=e36]: 196055311기
+                  - generic [ref=e37]: 전시 관리
+              - listitem [ref=e38]:
+                - link "196055311기 링크 모음 관리" [ref=e39] [cursor=pointer]:
+                  - /url: /admin/196055311/linktree
+                  - generic [ref=e40]: 196055311기
+                  - generic [ref=e41]: 링크 모음 관리
+              - listitem [ref=e42]:
+                - link "196055311기 사용자 관리" [ref=e43] [cursor=pointer]:
+                  - /url: /admin/196055311/users
+                  - generic [ref=e44]: 196055311기
+                  - generic [ref=e45]: 사용자 관리
+      - generic [ref=e46]:
+        - generic [ref=e47]:
+          - generic [ref=e48]:
+            - generic [ref=e49]: E
+            - generic [ref=e50]:
+              - paragraph [ref=e51]: E2E Admin
+              - paragraph [ref=e52]: e2e-admin@example.com
+          - paragraph [ref=e53]: "권한: 회장"
+        - button "다크 모드로 전환" [ref=e54]:
+          - generic [ref=e55]: ☾
+          - generic [ref=e56]: 다크 모드
+        - button "로그아웃" [ref=e58]
+    - main [ref=e59]:
+      - generic [ref=e61]:
+        - generic [ref=e62]:
+          - heading "사용자 관리" [level=1] [ref=e63]
+          - paragraph [ref=e64]: 가입한 사용자 정보를 조회하고 권한/소속을 관리하는 화면입니다.
+          - paragraph [ref=e65]: 목록에서 사용자 선택 시 오른쪽 패널에서 상세 정보 및 수정 작업을 할 수 있습니다.
+          - button "새로고침" [ref=e68]
+        - generic [ref=e69]:
+          - paragraph [ref=e70]: 작업 안내
+          - generic [ref=e71]: 프로필 이미지는 파일 선택 즉시 업로드됩니다. 업로드가 끝난 뒤 저장하면 사용자 정보에 반영됩니다.
+        - paragraph [ref=e72]: 사용자 정보를 수정했습니다.
+        - generic [ref=e73]:
+          - generic [ref=e74]:
+            - heading "사용자 목록" [level=2] [ref=e75]
+            - searchbox "이름/이메일 검색" [ref=e76]: e2e-1771471760322-0-0ef3m4-user-fqg0s1@example.com
+          - list [ref=e77]:
+            - listitem [ref=e78]:
+              - 'button "e2e-1771471760322-0-0ef3m4-name-xiuvgm e2e-1771471760322-0-0ef3m4-user-fqg0s1@example.com 권한: 미인증" [ref=e80]':
+                - paragraph [ref=e81]: e2e-1771471760322-0-0ef3m4-name-xiuvgm
+                - paragraph [ref=e82]: e2e-1771471760322-0-0ef3m4-user-fqg0s1@example.com
+                - paragraph [ref=e83]: "권한: 미인증"
+        - dialog "사용자 수정" [ref=e85]:
+          - generic [ref=e86]:
+            - generic [ref=e87]:
+              - heading "사용자 수정" [level=2] [ref=e88]
+              - paragraph [ref=e89]: e2e-1771471760322-0-0ef3m4-user-fqg0s1@example.com 계정을 편집합니다.
+            - button "닫기" [ref=e90]
+          - generic [ref=e91]:
+            - generic [ref=e92]:
+              - heading "선택 사용자 상세 정보" [level=3] [ref=e93]
+              - generic [ref=e94]:
+                - paragraph [ref=e95]: "사용자 ID: Kb8wyxw6lOL9IW4CazxyZPBgQb2DuXvg"
+                - paragraph [ref=e96]: "이메일: e2e-1771471760322-0-0ef3m4-user-fqg0s1@example.com"
+                - paragraph [ref=e97]: "권한: 미인증"
+                - paragraph [ref=e98]: "성/이름: -/-"
+                - paragraph [ref=e99]: "대학/학과: -/-"
+                - paragraph [ref=e100]: "학번: -"
+                - paragraph [ref=e101]: "전화번호: -"
+                - paragraph [ref=e102]: "소속 기수: 없음"
+                - paragraph [ref=e103]: "가입일: 2026. 2. 19. 오후 12:29:27"
+                - paragraph [ref=e104]: "최근 수정일: 2026. 2. 19. 오후 12:29:38"
+            - generic [ref=e105]:
+              - generic [ref=e106]:
+                - generic [ref=e107]: 이름
+                - textbox "이름" [ref=e108]: e2e-1771471760322-0-0ef3m4-name-xiuvgm
+              - generic [ref=e109]:
+                - generic [ref=e110]: 별칭 (선택)
+                - textbox "별칭 (선택)" [ref=e111]
+              - generic [ref=e112]:
+                - generic [ref=e113]:
+                  - generic [ref=e114]: 성
+                  - textbox "성" [ref=e115]
+                - generic [ref=e116]:
+                  - generic [ref=e117]: 이름
+                  - textbox "이름" [ref=e118]
+              - generic [ref=e119]:
+                - generic [ref=e120]:
+                  - generic [ref=e121]: 대학
+                  - textbox "대학" [ref=e122]
+                - generic [ref=e123]:
+                  - generic [ref=e124]: 학과
+                  - textbox "학과" [ref=e125]
+              - generic [ref=e126]:
+                - generic [ref=e127]:
+                  - generic [ref=e128]: 학번 (10자리)
+                  - textbox "학번 (10자리)" [ref=e129]
+                - generic [ref=e130]:
+                  - generic [ref=e131]: 전화번호
+                  - textbox "전화번호" [ref=e132]
+              - generic [ref=e133]:
+                - generic [ref=e134]: 권한
+                - combobox "권한" [ref=e135]:
+                  - option "회장"
+                  - option "부회장"
+                  - option "운영진"
+                  - option "신입 회원"
+                  - option "준회원"
+                  - option "정회원"
+                  - option "미인증" [selected]
+              - generic [ref=e136]:
+                - generic [ref=e137]: 소속 기수 (선택)
+                - combobox "소속 기수 (선택)" [ref=e138]:
+                  - option "없음" [selected]
+                  - option "e2e-1771157196055-0-feotyy-generation-52pvqo (196055311)"
+                  - option "e2e-1771157447713-0-6nf086-generation-pe1b6l (447714850)"
+                  - option "e2e-1771468757040-0-muk4a6-generation-q310u9 (761546289)"
+                  - option "e2e-1771471760322-0-0ef3m4-generation-spj37a (765118314)"
+                  - option "e2e-1771157884629-0-ob3525-generation-u1xdq0 (884629402)"
+              - generic [ref=e139]:
+                - text: 프로필 이미지
+                - generic [ref=e140]:
+                  - button "Choose File" [ref=e141]
+                  - paragraph [ref=e142]: 선택된 파일 없음
+              - generic [ref=e143]:
+                - button "수정 저장" [ref=e144]:
+                  - generic [ref=e145]: 수정 저장
+                - button "사용자 삭제" [ref=e146]:
+                  - generic [ref=e147]: 사용자 삭제
+  - button "Open Next.js Dev Tools" [ref=e153] [cursor=pointer]:
+    - img [ref=e154]
+  - alert [ref=e157]
+```

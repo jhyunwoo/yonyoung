@@ -65,7 +65,7 @@ const NAV_ITEM_BASE_CLASS =
 const NAV_ITEM_SCOPE_BADGE_CLASS =
   "inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.04em]";
 
-const ROLE_LABEL_MAP: Record<string, string> = {
+const ROLE_LABEL_MAP = {
   president: "회장",
   vice_president: "부회장",
   manager: "운영진",
@@ -74,14 +74,18 @@ const ROLE_LABEL_MAP: Record<string, string> = {
   new_member: "신입회원",
   unverified: "미인증",
   member: "회원",
-};
+} as const;
 
 const getRoleLabelInKorean = (role: string | null | undefined): string => {
   if (!role) {
     return ROLE_LABEL_MAP.member;
   }
 
-  return ROLE_LABEL_MAP[role] ?? role;
+  if (role in ROLE_LABEL_MAP) {
+    return ROLE_LABEL_MAP[role as keyof typeof ROLE_LABEL_MAP];
+  }
+
+  return role;
 };
 
 /**
@@ -252,7 +256,8 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
   const userDisplayName =
     session.user.nickname?.trim() ||
     session.user.name?.trim() ||
-    session.user.email.split("@")[0];
+    session.user.email.split("@")[0] ||
+    "USER";
   const userInitial = userDisplayName.slice(0, 1).toUpperCase();
   const userRoleLabel = getRoleLabelInKorean(session.user.role);
 
