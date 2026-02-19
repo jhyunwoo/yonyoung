@@ -101,7 +101,7 @@ export default async function HomePage() {
                     <p className="text-xs font-semibold uppercase tracking-[0.1em] text-(--text-muted)">
                       {formatKoreanDate(activity.activityDate)}
                     </p>
-                    <h3 className="font-display text-[1.3rem] leading-tight text-(--text-primary)">
+                    <h3 className="text-[1.3rem] leading-tight tracking-[-0.02em] text-(--text-primary)">
                       {activity.title}
                     </h3>
                     <p className="line-clamp-2 text-sm leading-relaxed text-(--text-muted)">

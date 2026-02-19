@@ -33,7 +33,7 @@ export default function SectionShell({
               {eyebrow}
             </p>
           ) : null}
-          <h2 className="font-display text-[2.2rem] leading-tight text-(--text-primary) md:text-[2.5rem]">
+          <h2 className="text-[2.2rem] leading-tight tracking-[-0.02em] text-(--text-primary) md:text-[2.5rem]">
             {title}
           </h2>
           {description ? (

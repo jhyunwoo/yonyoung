@@ -44,15 +44,12 @@ export default function HeroShowcase({
       className="relative border-b border-(--surface-border) bg-(--surface-elevated) px-4 pb-16 pt-32 md:px-8 md:pb-20 md:pt-36"
       data-testid="home-hero"
     >
-      <div className="hero-glow -left-16 top-10" />
-      <div className="hero-glow bottom-8 -right-24" />
-
       <div className="mx-auto grid w-full max-w-[1200px] gap-10 md:grid-cols-[1.1fr_0.9fr] md:items-end">
         <motion.div style={shouldReduceMotion ? undefined : { y: textOffset }}>
           <p className="mb-3 text-sm font-medium uppercase tracking-[0.1em] text-(--text-muted)">
             Yonsei University Photography Club
           </p>
-          <h1 className="font-display text-6xl leading-[0.96] text-(--text-primary) md:text-8xl">
+          <h1 className="text-6xl leading-[0.96] tracking-[-0.02em] text-(--text-primary) md:text-8xl">
             연영회
           </h1>
           <p className="mt-4 max-w-xl text-base leading-relaxed text-(--text-muted) md:text-lg">
@@ -114,7 +111,7 @@ export default function HeroShowcase({
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-(--text-muted)">
                 Latest Exhibition
               </p>
-              <h2 className="font-display text-[1.7rem] text-(--text-primary)">
+              <h2 className="text-[1.7rem] tracking-[-0.02em] text-(--text-primary)">
                 {featuredExhibition?.title ?? "준비 중"}
               </h2>
               {featuredExhibition ? (

@@ -6,7 +6,6 @@ import { getPublicActivityById } from "../../../../../lib/public-api";
 import { formatKoreanDateCompact } from "../../../../../lib/date-formatters";
 import { shouldUseUnoptimizedImage } from "../../../../../lib/image-utils";
 import { createPageMetadata } from "../../../../../lib/seo";
-import styles from "./record-detail.module.css";
 
 export const metadata: Metadata = createPageMetadata({
   title: "활동 기록 상세 | 연영회",
@@ -37,26 +36,39 @@ export default async function RecordDetailPage({ params }: RecordDetailPageProps
       : [activity.coverImageUrl];
 
   return (
-    <div className={styles.page}>
-      <div className={styles.container}>
-        <header className={styles.header}>
-          <Link href="/archive/records" className={styles.backLink}>
+    <div className="min-h-screen bg-white pb-9 pt-[84px] md:pb-12 md:pt-[96px]">
+      <div className="mx-auto max-w-[1200px] px-4 md:px-8">
+        <header className="mb-8">
+          <Link
+            href="/archive/records"
+            className="mb-4 inline-flex text-[0.9rem] text-[#2c3357] no-underline hover:underline"
+          >
             활동 기록으로 돌아가기
           </Link>
-          <h1>{activity.title}</h1>
-          <p className={styles.date}>{formatKoreanDateCompact(activity.activityDate)}</p>
-          <p className={styles.description}>{activity.description}</p>
+          <h1 className="m-0 text-[1.7rem] font-bold text-[#2c3357] md:text-[2rem]">
+            {activity.title}
+          </h1>
+          <p className="mb-0 mt-3 text-[0.95rem] text-[#666666]">
+            {formatKoreanDateCompact(activity.activityDate)}
+          </p>
+          <p className="mb-0 mt-3 leading-[1.6] text-[#4a4a4a]">{activity.description}</p>
         </header>
 
-        <section className={styles.gallery} data-testid="record-detail-gallery">
+        <section
+          className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
+          data-testid="record-detail-gallery"
+        >
           {imageUrls.map((imageUrl, index) => (
-            <div key={`${activity.id}-${imageUrl}-${index}`} className={styles.imageFrame}>
+            <div
+              key={`${activity.id}-${imageUrl}-${index}`}
+              className="relative aspect-[4/3] w-full overflow-hidden border border-[#d4d4d4] bg-[#f1f1f1]"
+            >
               <Image
                 src={imageUrl}
                 alt={`${activity.title} 상세 이미지 ${index + 1}`}
                 fill
                 unoptimized={shouldUseUnoptimizedImage(imageUrl)}
-                className={styles.image}
+                className="object-cover"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
             </div>

@@ -5,7 +5,6 @@ import { listPublicActivities, safeList } from "../../../../lib/public-api";
 import { formatKoreanDateCompact } from "../../../../lib/date-formatters";
 import { shouldUseUnoptimizedImage } from "../../../../lib/image-utils";
 import { createPageMetadata } from "../../../../lib/seo";
-import styles from "./records.module.css";
 
 export const metadata: Metadata = createPageMetadata({
   title: "활동 기록 | 연영회",
@@ -18,42 +17,49 @@ export default async function ArchiveRecordsPage() {
   const activities = await safeList(listPublicActivities, []);
 
   return (
-    <div className={styles.archivePage}>
-      <div className={styles.archiveHeader}>
-        <div className={styles.container}>
-          <h1>활동 기록</h1>
+    <div className="min-h-screen bg-white pt-[72px] md:pt-[80px]">
+      <div className="mb-8 border-b border-[#bfbfbf] px-4 py-8 text-center md:px-8 md:py-16">
+        <div className="relative mx-auto max-w-[1400px]">
+          <h1 className="mb-4 text-[2rem] leading-[1.2] font-bold text-[#2c3357] md:text-[3rem]">
+            활동 기록
+          </h1>
         </div>
       </div>
 
-      <div className={styles.galleryContainer}>
+      <div className="pb-16">
         {activities.length === 0 ? (
-          <div className={styles.emptyGallery}>
-            <p>준비 중입니다.</p>
+          <div className="mx-auto max-w-[1400px] px-4 md:px-8">
+            <p className="text-center text-base text-[#999999]">준비 중입니다.</p>
           </div>
         ) : (
-          <div className={styles.imageGrid} data-testid="archive-records-grid">
+          <div
+            className="mx-auto grid max-w-[1400px] [grid-template-columns:repeat(4,minmax(0,1fr))] gap-6 px-4 md:px-8 max-[1024px]:[grid-template-columns:repeat(auto-fit,minmax(180px,1fr))] max-[768px]:[grid-template-columns:repeat(auto-fit,minmax(140px,1fr))] max-[768px]:gap-3"
+            data-testid="archive-records-grid"
+          >
             {activities.map((activity) => (
               <Link
                 key={activity.id}
                 href={`/archive/records/${activity.id}`}
-                className={styles.gridItem}
+                className="group relative block aspect-[4/3] cursor-pointer overflow-hidden bg-[#bfbfbf] transition-transform duration-300 hover:scale-[1.02]"
                 data-testid={`archive-record-card-${activity.id}`}
                 aria-label={`${activity.title} 상세 보기`}
               >
-                <div className={styles.imageWrapper}>
+                <div className="relative h-full w-full">
                   <Image
                     src={activity.coverImageUrl}
                     alt={activity.title}
                     fill
                     unoptimized={shouldUseUnoptimizedImage(activity.coverImageUrl)}
                     sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    className={styles.image}
+                    className="object-cover"
                   />
                 </div>
-                <div className={styles.imageOverlay}>
-                  <div className={styles.titleContainer}>
-                    <h3>{activity.title}</h3>
-                    <span className={styles.imageDate}>
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgba(0,0,0,0.7)] to-transparent p-4 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 max-[768px]:opacity-100 md:p-6">
+                  <div className="flex flex-col gap-1">
+                    <h3 className="m-0 text-[0.9rem] leading-[1.4] font-semibold text-white md:text-[1.1rem]">
+                      {activity.title}
+                    </h3>
+                    <span className="text-[0.85rem] opacity-80">
                       {formatKoreanDateCompact(activity.activityDate)}
                     </span>
                   </div>

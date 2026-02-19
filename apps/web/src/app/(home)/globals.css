@@ -67,12 +67,3 @@ body {
     text-decoration: none;
   }
 }
-
-.font-display {
-  font-family: inherit;
-  letter-spacing: -0.02em;
-}
-
-.hero-glow {
-  display: none;
-}
