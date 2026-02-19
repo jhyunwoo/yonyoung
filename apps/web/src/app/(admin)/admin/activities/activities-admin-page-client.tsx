@@ -1,6 +1,6 @@
 "use client";
 
-import { type ChangeEvent, type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
 import { PRESIGN_PATHS } from "../../../../lib/admin-api/upload";
 import type {
@@ -16,6 +16,7 @@ import {
   toTimestampMs,
 } from "../components/admin-form-utils";
 import AdminActionButton from "../components/admin-action-button";
+import BatchImageDropzone from "../components/batch-image-dropzone";
 import AdminConfirmModal from "../components/admin-confirm-modal";
 import AdminDrawer from "../components/admin-drawer";
 import AdminInfoBox from "../components/admin-info-box";
@@ -28,14 +29,16 @@ import { useImmediateImageUpload } from "../components/use-immediate-image-uploa
 type ActivityFormState = {
   title: string;
   description: string;
-  activityDate: string;
+  startDate: string;
+  endDate: string;
   generationId: string;
 };
 
 const emptyActivityForm: ActivityFormState = {
   title: "",
   description: "",
-  activityDate: "",
+  startDate: "",
+  endDate: "",
   generationId: "",
 };
 
@@ -123,6 +126,9 @@ export default function ActivitiesAdminPage({
   const [detailUploadTargetImageId, setDetailUploadTargetImageId] = useState<string | null>(
     null,
   );
+  const [createQueuedDragId, setCreateQueuedDragId] = useState<string | null>(null);
+  const [editQueuedDragId, setEditQueuedDragId] = useState<string | null>(null);
+  const [detailImageDragId, setDetailImageDragId] = useState<string | null>(null);
 
   const createCoverUpload = useImmediateImageUpload({
     presignPath: PRESIGN_PATHS.activityCover,
@@ -168,9 +174,25 @@ export default function ActivitiesAdminPage({
     return detailDrafts[selectedImage.id] ?? null;
   }, [detailDrafts, selectedImage]);
 
+  const sortedSelectedDetailImages = useMemo(() => {
+    if (!selected) {
+      return [];
+    }
+
+    return [...selected.detailImages].sort((a, b) => {
+      const aRaw = detailDrafts[a.id]?.sortOrder ?? String(a.sortOrder);
+      const bRaw = detailDrafts[b.id]?.sortOrder ?? String(b.sortOrder);
+      const aSortOrder = Number.parseInt(aRaw, 10);
+      const bSortOrder = Number.parseInt(bRaw, 10);
+      const resolvedA = Number.isFinite(aSortOrder) ? aSortOrder : a.sortOrder;
+      const resolvedB = Number.isFinite(bSortOrder) ? bSortOrder : b.sortOrder;
+      return resolvedA - resolvedB;
+    });
+  }, [detailDrafts, selected]);
+
   const filteredItems = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    const sorted = [...items].sort((a, b) => b.activityDate - a.activityDate);
+    const sorted = [...items].sort((a, b) => b.startDate - a.startDate);
     if (!query) {
       return sorted;
     }
@@ -192,7 +214,8 @@ export default function ActivitiesAdminPage({
     setEditForm({
       title: item.title,
       description: item.description,
-      activityDate: toDateInputValue(item.activityDate),
+      startDate: toDateInputValue(item.startDate),
+      endDate: toDateInputValue(item.endDate),
       generationId: item.generationId,
     });
     editCoverUpload.reset(item.coverImageUrl);
@@ -405,7 +428,8 @@ export default function ActivitiesAdminPage({
       const created = await adminResourceApi.createActivity({
         title: createForm.title.trim(),
         description: createForm.description.trim(),
-        activityDate: toTimestampMs(createForm.activityDate),
+        startDate: toTimestampMs(createForm.startDate),
+        endDate: toTimestampMs(createForm.endDate),
         coverImageUrl: createCoverUpload.currentUrl,
         generationId: scopedGenerationId ?? createForm.generationId,
       });
@@ -459,7 +483,8 @@ export default function ActivitiesAdminPage({
       await adminResourceApi.updateActivity(selected.id, {
         title: editForm.title.trim(),
         description: editForm.description.trim(),
-        activityDate: toTimestampMs(editForm.activityDate),
+        startDate: toTimestampMs(editForm.startDate),
+        endDate: toTimestampMs(editForm.endDate),
         coverImageUrl: editCoverUpload.currentUrl,
         generationId: scopedGenerationId ?? editForm.generationId,
       });
@@ -499,8 +524,7 @@ export default function ActivitiesAdminPage({
     }
   };
 
-  const handleCreateDetailFilesChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files ?? []);
+  const queueCreateDetailFiles = (files: File[]) => {
     if (files.length === 0) {
       return;
     }
@@ -510,14 +534,12 @@ export default function ActivitiesAdminPage({
         -1,
       ) + 1;
     createDetailBatchUpload.addFiles(files, nextSortOrder);
-    event.target.value = "";
   };
 
-  const handleEditDetailFilesChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const queueEditDetailFiles = (files: File[]) => {
     if (!selected) {
       return;
     }
-    const files = Array.from(event.target.files ?? []);
     if (files.length === 0) {
       return;
     }
@@ -531,7 +553,6 @@ export default function ActivitiesAdminPage({
     );
     const nextSortOrder = Math.max(existingMaxSortOrder, queuedMaxSortOrder) + 1;
     detailBatchUpload.addFiles(files, nextSortOrder);
-    event.target.value = "";
   };
 
   const handleCreateDetailImages = async () => {
@@ -583,6 +604,39 @@ export default function ActivitiesAdminPage({
         imageUrl: previous[imageId]?.imageUrl ?? "",
       },
     }));
+  };
+
+  const handleReorderDetailImages = (draggedImageId: string, targetImageId: string) => {
+    if (!selected || draggedImageId === targetImageId) {
+      return;
+    }
+
+    const orderedIds = sortedSelectedDetailImages.map((image) => image.id);
+    const sourceIndex = orderedIds.indexOf(draggedImageId);
+    const targetIndex = orderedIds.indexOf(targetImageId);
+    if (sourceIndex < 0 || targetIndex < 0) {
+      return;
+    }
+
+    const nextOrderedIds = [...orderedIds];
+    const [draggedId] = nextOrderedIds.splice(sourceIndex, 1);
+    if (!draggedId) {
+      return;
+    }
+    nextOrderedIds.splice(targetIndex, 0, draggedId);
+
+    setDetailDrafts((previous) => {
+      const nextDrafts = { ...previous };
+      for (const [index, imageId] of nextOrderedIds.entries()) {
+        const baseImage =
+          selected.detailImages.find((detailImage) => detailImage.id === imageId) ?? null;
+        nextDrafts[imageId] = {
+          sortOrder: String(index),
+          imageUrl: previous[imageId]?.imageUrl ?? baseImage?.imageUrl ?? "",
+        };
+      }
+      return nextDrafts;
+    });
   };
 
   const handleDetailImageFileChange = (file: File | null) => {
@@ -749,7 +803,7 @@ export default function ActivitiesAdminPage({
       </AdminPageHeader>
 
       <AdminInfoBox title="작업 안내">
-        커버/세부 이미지는 파일 선택 즉시 업로드됩니다. 세부 이미지는 여러 장을 한 번에 추가할 수 있고, 수정은 모두 저장으로 일괄 반영됩니다.
+        커버/세부 이미지는 파일 선택 즉시 업로드됩니다. 세부 이미지는 여러 장을 드래그 앤 드롭으로 추가하고, 업로드 후 목록에서 드래그해 순서를 변경할 수 있습니다.
       </AdminInfoBox>
 
       {errorMessage ? (
@@ -807,7 +861,9 @@ export default function ActivitiesAdminPage({
                   >
                     <p className="font-medium text-gray-900">{item.title}</p>
                     <p className="text-xs text-gray-500">소속 기수 ID: {item.generationId}</p>
-                    <p className="text-xs text-gray-500">활동 날짜: {formatTimestamp(item.activityDate)}</p>
+                    <p className="text-xs text-gray-500">
+                      활동 기간: {formatTimestamp(item.startDate)} ~ {formatTimestamp(item.endDate)}
+                    </p>
                     <p className="text-xs text-gray-500">세부 이미지 수: {item.detailImages.length}</p>
                   </button>
                 </div>
@@ -865,22 +921,40 @@ export default function ActivitiesAdminPage({
               />
             </label>
 
-            <label className="block text-sm">
-              <span className="mb-1 block">활동 날짜</span>
-              <input
-                type="date"
-                value={createForm.activityDate}
-                onChange={(event) =>
-                  setCreateForm((previous) => ({
-                    ...previous,
-                    activityDate: event.target.value,
-                  }))
-                }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
-                required
-                data-testid="activity-create-date"
-              />
-            </label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block text-sm">
+                <span className="mb-1 block">활동 시작일</span>
+                <input
+                  type="date"
+                  value={createForm.startDate}
+                  onChange={(event) =>
+                    setCreateForm((previous) => ({
+                      ...previous,
+                      startDate: event.target.value,
+                    }))
+                  }
+                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  required
+                  data-testid="activity-create-start-date"
+                />
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block">활동 종료일</span>
+                <input
+                  type="date"
+                  value={createForm.endDate}
+                  onChange={(event) =>
+                    setCreateForm((previous) => ({
+                      ...previous,
+                      endDate: event.target.value,
+                    }))
+                  }
+                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  required
+                  data-testid="activity-create-end-date"
+                />
+              </label>
+            </div>
 
             {scopedGenerationId ? (
               <div
@@ -926,6 +1000,7 @@ export default function ActivitiesAdminPage({
               onRetry={createCoverUpload.retry}
               uploadProgress={createCoverUpload.progress}
               isUploading={createCoverUpload.isUploading}
+              previewAspectRatio="4/3"
               testIdPrefix="activity-create-cover"
               disabled={isSubmitting}
             />
@@ -940,22 +1015,34 @@ export default function ActivitiesAdminPage({
                   여러 장을 한 번에 업로드한 뒤 활동 생성과 함께 저장됩니다.
                 </p>
               </div>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleCreateDetailFilesChange}
-                className="block w-full text-sm"
-                data-testid="activity-create-detail-files"
+              <BatchImageDropzone
+                title="세부 이미지 추가"
+                description="이미지를 끌어다 놓거나 클릭해 여러 장을 한 번에 업로드하세요."
+                testId="activity-create-detail-files"
                 disabled={isSubmitting}
+                onFilesSelected={queueCreateDetailFiles}
               />
               {createDetailBatchUpload.items.length > 0 ? (
                 <ul className="space-y-2">
                   {createDetailBatchUpload.items.map((item) => (
                     <li
                       key={item.id}
-                      className="rounded-md border border-gray-200 p-2"
+                      className={`rounded-md border border-gray-200 p-2 ${
+                        createQueuedDragId === item.id ? "opacity-60" : ""
+                      }`}
                       data-testid={`activity-create-detail-upload-${item.id}`}
+                      draggable
+                      onDragStart={() => setCreateQueuedDragId(item.id)}
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        if (!createQueuedDragId || createQueuedDragId === item.id) {
+                          return;
+                        }
+                        createDetailBatchUpload.moveItem(createQueuedDragId, item.id);
+                        setCreateQueuedDragId(null);
+                      }}
+                      onDragEnd={() => setCreateQueuedDragId(null)}
                     >
                       <p className="truncate text-xs text-gray-600">{item.fileName}</p>
                       <div className="mt-2 flex items-center gap-2">
@@ -1049,22 +1136,40 @@ export default function ActivitiesAdminPage({
                 />
               </label>
 
-              <label className="block text-sm">
-                <span className="mb-1 block">활동 날짜</span>
-                <input
-                  type="date"
-                  value={editForm.activityDate}
-                  onChange={(event) =>
-                    setEditForm((previous) => ({
-                      ...previous,
-                      activityDate: event.target.value,
-                    }))
-                  }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
-                  required
-                  data-testid="activity-edit-date"
-                />
-              </label>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block text-sm">
+                  <span className="mb-1 block">활동 시작일</span>
+                  <input
+                    type="date"
+                    value={editForm.startDate}
+                    onChange={(event) =>
+                      setEditForm((previous) => ({
+                        ...previous,
+                        startDate: event.target.value,
+                      }))
+                    }
+                    className="w-full rounded-md border border-gray-300 px-3 py-2"
+                    required
+                    data-testid="activity-edit-start-date"
+                  />
+                </label>
+                <label className="block text-sm">
+                  <span className="mb-1 block">활동 종료일</span>
+                  <input
+                    type="date"
+                    value={editForm.endDate}
+                    onChange={(event) =>
+                      setEditForm((previous) => ({
+                        ...previous,
+                        endDate: event.target.value,
+                      }))
+                    }
+                    className="w-full rounded-md border border-gray-300 px-3 py-2"
+                    required
+                    data-testid="activity-edit-end-date"
+                  />
+                </label>
+              </div>
 
               {scopedGenerationId ? (
                 <div
@@ -1110,6 +1215,7 @@ export default function ActivitiesAdminPage({
                 onRetry={editCoverUpload.retry}
                 uploadProgress={editCoverUpload.progress}
                 isUploading={editCoverUpload.isUploading}
+                previewAspectRatio="4/3"
                 testIdPrefix="activity-edit-cover"
                 disabled={isSubmitting}
               />
@@ -1146,20 +1252,35 @@ export default function ActivitiesAdminPage({
               <h3 className="text-sm font-semibold">세부 이미지 일괄 추가</h3>
               <p className="text-xs text-gray-500">선택된 활동: {selected.title}</p>
 
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleEditDetailFilesChange}
-                className="block w-full text-sm"
-                data-testid="activity-detail-create-files"
+              <BatchImageDropzone
+                title="세부 이미지 추가"
+                description="이미지를 끌어다 놓거나 클릭해 업로드할 수 있습니다."
+                testId="activity-detail-create-files"
                 disabled={isSubmitting}
+                onFilesSelected={queueEditDetailFiles}
               />
 
               {detailBatchUpload.items.length > 0 ? (
                 <ul className="space-y-2">
                   {detailBatchUpload.items.map((item) => (
-                    <li key={item.id} className="rounded-md border border-gray-200 p-2">
+                    <li
+                      key={item.id}
+                      className={`rounded-md border border-gray-200 p-2 ${
+                        editQueuedDragId === item.id ? "opacity-60" : ""
+                      }`}
+                      draggable
+                      onDragStart={() => setEditQueuedDragId(item.id)}
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        if (!editQueuedDragId || editQueuedDragId === item.id) {
+                          return;
+                        }
+                        detailBatchUpload.moveItem(editQueuedDragId, item.id);
+                        setEditQueuedDragId(null);
+                      }}
+                      onDragEnd={() => setEditQueuedDragId(null)}
+                    >
                       <p className="truncate text-xs text-gray-600">{item.fileName}</p>
                       <div className="mt-2 flex items-center gap-2">
                         <label className="flex items-center gap-2 text-xs text-gray-600">
@@ -1234,11 +1355,25 @@ export default function ActivitiesAdminPage({
                 <p className="text-sm text-gray-500">등록된 세부 이미지가 없습니다.</p>
               ) : (
                 <ul className="mb-3 space-y-2" data-testid="activity-detail-list">
-                  {selected.detailImages.map((image) => (
+                  {sortedSelectedDetailImages.map((image) => (
                     <li
                       key={image.id}
-                      className="rounded-md border border-gray-200 p-2"
+                      className={`rounded-md border border-gray-200 p-2 ${
+                        detailImageDragId === image.id ? "opacity-60" : ""
+                      }`}
                       data-testid={`activity-detail-row-${image.id}`}
+                      draggable
+                      onDragStart={() => setDetailImageDragId(image.id)}
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        if (!detailImageDragId || detailImageDragId === image.id) {
+                          return;
+                        }
+                        handleReorderDetailImages(detailImageDragId, image.id);
+                        setDetailImageDragId(null);
+                      }}
+                      onDragEnd={() => setDetailImageDragId(null)}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <button
@@ -1246,7 +1381,9 @@ export default function ActivitiesAdminPage({
                           onClick={() => handleSelectDetailImage(image)}
                           className="min-w-0 flex-1 text-left"
                         >
-                          <p className="text-sm font-medium">정렬 순서: {image.sortOrder}</p>
+                          <p className="text-sm font-medium">
+                            정렬 순서: {detailDrafts[image.id]?.sortOrder ?? image.sortOrder}
+                          </p>
                           <p className="truncate text-xs text-gray-500">{image.imageUrl}</p>
                         </button>
                       </div>
@@ -1268,6 +1405,7 @@ export default function ActivitiesAdminPage({
                       onRetry={detailEditUpload.retry}
                       uploadProgress={detailEditUpload.progress}
                       isUploading={detailEditUpload.isUploading}
+                      previewAspectRatio="4/3"
                       testIdPrefix="activity-detail-edit-image"
                       disabled={isSubmitting}
                     />

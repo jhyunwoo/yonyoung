@@ -3,6 +3,8 @@ import { ADMIN_CACHE_TAGS, type AdminCacheTag } from "../admin-cache";
 import type {
   ApiActivity,
   ApiActivityImage,
+  ApiAdminDashboardStats,
+  ApiBulkUpdateUserRoleInput,
   ApiCreateActivityImageInput,
   ApiCreateActivityInput,
   ApiCreateExhibitionImageInput,
@@ -505,6 +507,31 @@ export const adminResourceApi = {
       () => adminRequest<ApiUser>(`/users/${id}`, "PATCH", input),
       [ADMIN_CACHE_TAGS.users, ADMIN_CACHE_TAGS.generations],
     ),
+    /**
+   * bulkUpdateUsersRole의 핵심 비즈니스 로직을 수행합니다.
+   * @param input 함수 로직에서 사용하는 입력값입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
+  bulkUpdateUsersRole: (input: ApiBulkUpdateUserRoleInput) =>
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiUser[]>("/users/bulk-role", "PATCH", input),
+      [ADMIN_CACHE_TAGS.users, ADMIN_CACHE_TAGS.generations],
+    ),
+    /**
+   * getAdminDashboardStats 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+   * @param generationSortOrder 함수 로직에서 사용하는 입력값입니다.
+   * @returns 조회/계산된 결과 값을 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
+  getAdminDashboardStats: (generationSortOrder: number | null = null) => {
+    const search = new URLSearchParams();
+    if (typeof generationSortOrder === "number" && Number.isFinite(generationSortOrder)) {
+      search.set("generationSortOrder", String(generationSortOrder));
+    }
+    const suffix = search.size > 0 ? `?${search.toString()}` : "";
+    return adminRequest<ApiAdminDashboardStats>(`/admin/dashboard${suffix}`, "GET");
+  },
     /**
    * deleteUser 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.

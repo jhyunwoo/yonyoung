@@ -626,23 +626,13 @@ export default function UsersAdminPageClient({
 
     try {
       const targetIds = [...selectedIds];
-      const results = await Promise.allSettled(
-        targetIds.map((id) =>
-          adminResourceApi.updateUser(id, {
-            role: bulkRole,
-          }),
-        ),
+      const updatedUsers = await adminResourceApi.bulkUpdateUsersRole({
+        userIds: targetIds,
+        role: bulkRole,
+      });
+      setSuccessMessage(
+        `${updatedUsers.length}명의 권한을 ${readAdminRoleLabel(bulkRole)}로 변경했습니다.`,
       );
-      const successCount = results.filter((result) => result.status === "fulfilled").length;
-      const failureCount = results.length - successCount;
-
-      if (successCount > 0) {
-        setSuccessMessage(`${successCount}명의 권한을 ${readAdminRoleLabel(bulkRole)}로 변경했습니다.`);
-      }
-      if (failureCount > 0) {
-        setErrorMessage(`${failureCount}명의 권한 변경에 실패했습니다.`);
-      }
-
       await loadData(selectedDetail?.id ?? null);
     } catch (error) {
       setErrorMessage(readErrorMessage(error));

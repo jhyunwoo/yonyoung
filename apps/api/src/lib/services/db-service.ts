@@ -31,6 +31,107 @@ const isMissingUserGenerationsTableError = (error: unknown): boolean => {
   return error.message.includes("no such table: user_generations");
 };
 
+const isMissingActivityDateRangeColumnsError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  return (
+    error.message.includes("no such column: activities.start_date") ||
+    error.message.includes("no such column: activities.end_date") ||
+    error.message.includes("no such column: start_date") ||
+    error.message.includes("no such column: end_date")
+  );
+};
+
+const toTimestampDate = (value: unknown): Date => {
+  if (value instanceof Date) {
+    return value;
+  }
+
+  if (typeof value === "number") {
+    return new Date(value);
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed.length === 0) {
+      return new Date(0);
+    }
+
+    const numericValue = Number(trimmed);
+    if (Number.isFinite(numericValue)) {
+      return new Date(trimmed.length <= 10 ? numericValue * 1000 : numericValue);
+    }
+
+    const parsed = Date.parse(trimmed);
+    if (Number.isFinite(parsed)) {
+      return new Date(parsed);
+    }
+  }
+
+  return new Date(0);
+};
+
+type LegacyActivityRow = {
+  id: string;
+  title: string;
+  description: string;
+  activity_date: unknown;
+  cover_image_url: string;
+  generation_id: string;
+  created_at: unknown;
+  updated_at: unknown;
+  deleted_at: unknown;
+};
+
+const mapLegacyActivityRow = (
+  row: LegacyActivityRow,
+): typeof activities.$inferSelect => {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    startDate: toTimestampDate(row.activity_date),
+    endDate: toTimestampDate(row.activity_date),
+    coverImageUrl: row.cover_image_url,
+    generationId: row.generation_id,
+    createdAt: toTimestampDate(row.created_at),
+    updatedAt: toTimestampDate(row.updated_at),
+    deletedAt:
+      row.deleted_at === null || row.deleted_at === undefined
+        ? null
+        : toTimestampDate(row.deleted_at),
+  };
+};
+
+const listLegacyActivities = async (
+  database: D1Database,
+  orderByDirection: "ASC" | "DESC",
+): Promise<(typeof activities.$inferSelect)[]> => {
+  const { results } = await database
+    .prepare(
+      `
+        select
+          "id",
+          "title",
+          "description",
+          "activity_date",
+          "cover_image_url",
+          "generation_id",
+          "created_at",
+          "updated_at",
+          "deleted_at"
+        from "activities"
+        where "activities"."deleted_at" is null
+        order by "activities"."activity_date" ${orderByDirection}
+      `,
+    )
+    .all<LegacyActivityRow>();
+
+  return (results ?? []).map(mapLegacyActivityRow);
+};
+
 /**
  * mapActivitiesWithImages의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
  * @param db 함수 로직에서 사용하는 입력값입니다.
@@ -412,11 +513,20 @@ export const createDbDataService = (database: D1Database): DataService => {
      * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
      */
     async listActivities() {
-      const rows = await db
-        .select()
-        .from(activities)
-        .where(isNull(activities.deletedAt))
-        .orderBy(asc(activities.activityDate));
+      const rows = await (async () => {
+        try {
+          return await db
+            .select()
+            .from(activities)
+            .where(isNull(activities.deletedAt))
+            .orderBy(asc(activities.startDate));
+        } catch (error) {
+          if (!isMissingActivityDateRangeColumnsError(error)) {
+            throw error;
+          }
+          return listLegacyActivities(database, "ASC");
+        }
+      })();
       return mapActivitiesWithImages(db, rows);
     },
         /**
@@ -425,11 +535,20 @@ export const createDbDataService = (database: D1Database): DataService => {
      * @remarks 공개 화면 렌더링 성능을 위해 정렬을 DB에서 수행합니다.
      */
     async listPublicActivities() {
-      const rows = await db
-        .select()
-        .from(activities)
-        .where(isNull(activities.deletedAt))
-        .orderBy(desc(activities.activityDate));
+      const rows = await (async () => {
+        try {
+          return await db
+            .select()
+            .from(activities)
+            .where(isNull(activities.deletedAt))
+            .orderBy(desc(activities.startDate));
+        } catch (error) {
+          if (!isMissingActivityDateRangeColumnsError(error)) {
+            throw error;
+          }
+          return listLegacyActivities(database, "DESC");
+        }
+      })();
       return mapActivitiesWithImages(db, rows);
     },
         /**
@@ -444,7 +563,8 @@ export const createDbDataService = (database: D1Database): DataService => {
         id,
         title: input.title,
         description: input.description,
-        activityDate: new Date(input.activityDate),
+        startDate: new Date(input.startDate),
+        endDate: new Date(input.endDate),
         coverImageUrl: input.coverImageUrl,
         generationId: input.generationId,
       });
@@ -500,8 +620,11 @@ export const createDbDataService = (database: D1Database): DataService => {
           ...(input.description !== undefined
             ? { description: input.description }
             : {}),
-          ...(input.activityDate !== undefined
-            ? { activityDate: new Date(input.activityDate) }
+          ...(input.startDate !== undefined
+            ? { startDate: new Date(input.startDate) }
+            : {}),
+          ...(input.endDate !== undefined
+            ? { endDate: new Date(input.endDate) }
             : {}),
           ...(input.coverImageUrl !== undefined
             ? { coverImageUrl: input.coverImageUrl }
@@ -1543,6 +1666,165 @@ export const createDbDataService = (database: D1Database): DataService => {
       }
 
       return this.getUserById(id);
+    },
+        /**
+     * bulkUpdateUsersRole의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 비동기 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
+    async bulkUpdateUsersRole(input) {
+      const targetUserIds = Array.from(
+        new Set(input.userIds.filter((userId) => userId.trim().length > 0)),
+      );
+      if (targetUserIds.length === 0) {
+        return [];
+      }
+
+      await db.transaction(async (transaction) => {
+        for (const targetUserId of targetUserIds) {
+          await transaction
+            .update(user)
+            .set({
+              role: input.role,
+              updatedAt: new Date(),
+            })
+            .where(and(eq(user.id, targetUserId), isNull(user.deletedAt)));
+        }
+      });
+
+      const rows = await db
+        .select()
+        .from(user)
+        .where(and(inArray(user.id, targetUserIds), isNull(user.deletedAt)));
+
+      return mapUsersWithGenerations(db, rows);
+    },
+        /**
+     * getAdminDashboardStats 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
+     * @param generationSortOrder 함수 로직에서 사용하는 입력값입니다.
+     * @returns 조회/계산된 결과 값을 Promise로 반환합니다.
+     * @remarks 대시보드 KPI 집계를 위해 단순 count 쿼리를 결합해 사용합니다.
+     */
+    async getAdminDashboardStats(generationSortOrder) {
+      const now = Date.now();
+
+      const [
+        usersCountRows,
+        unverifiedUsersCountRows,
+        generationsCountRows,
+        supportersCountRows,
+        linktreeLinksCountRows,
+      ] = await Promise.all([
+        db
+          .select({ value: sql<number>`count(*)` })
+          .from(user)
+          .where(isNull(user.deletedAt)),
+        db
+          .select({ value: sql<number>`count(*)` })
+          .from(user)
+          .where(and(isNull(user.deletedAt), eq(user.role, "unverified"))),
+        db
+          .select({ value: sql<number>`count(*)` })
+          .from(generations)
+          .where(isNull(generations.deletedAt)),
+        db
+          .select({ value: sql<number>`count(*)` })
+          .from(supporters)
+          .where(and(isNull(supporters.deletedAt), sql`${supporters.expiresAt} >= ${now}`)),
+        db
+          .select({ value: sql<number>`count(*)` })
+          .from(linktreeItems)
+          .innerJoin(linktree, eq(linktreeItems.linktreeId, linktree.id))
+          .where(and(isNull(linktreeItems.deletedAt), isNull(linktree.deletedAt))),
+      ]);
+
+      let selectedGenerationId: string | null = null;
+      if (typeof generationSortOrder === "number" && Number.isFinite(generationSortOrder)) {
+        const generationRow = await db.query.generations.findFirst({
+          where: and(
+            eq(generations.sortOrder, generationSortOrder),
+            isNull(generations.deletedAt),
+          ),
+          columns: {
+            id: true,
+          },
+        });
+        selectedGenerationId = generationRow?.id ?? null;
+      }
+
+      let selectedGenerationMembersTotal = 0;
+      let selectedGenerationActivitiesTotal = 0;
+      let selectedGenerationExhibitionsTotal = 0;
+
+      if (selectedGenerationId) {
+        const [activitiesCountRows, exhibitionsCountRows] = await Promise.all([
+          db
+            .select({ value: sql<number>`count(*)` })
+            .from(activities)
+            .where(
+              and(
+                eq(activities.generationId, selectedGenerationId),
+                isNull(activities.deletedAt),
+              ),
+            ),
+          db
+            .select({ value: sql<number>`count(*)` })
+            .from(exhibitions)
+            .where(
+              and(
+                eq(exhibitions.generationId, selectedGenerationId),
+                isNull(exhibitions.deletedAt),
+              ),
+            ),
+        ]);
+
+        selectedGenerationActivitiesTotal = activitiesCountRows[0]?.value ?? 0;
+        selectedGenerationExhibitionsTotal = exhibitionsCountRows[0]?.value ?? 0;
+
+        try {
+          const memberRows = await db
+            .select({
+              userId: userGenerations.userId,
+            })
+            .from(userGenerations)
+            .innerJoin(user, eq(userGenerations.userId, user.id))
+            .where(
+              and(
+                eq(userGenerations.generationId, selectedGenerationId),
+                isNull(user.deletedAt),
+              ),
+            );
+          selectedGenerationMembersTotal = new Set(
+            memberRows.map((row) => row.userId),
+          ).size;
+        } catch (error) {
+          if (!isMissingUserGenerationsTableError(error)) {
+            throw error;
+          }
+          const fallbackRows = await db
+            .select({ value: sql<number>`count(*)` })
+            .from(user)
+            .where(
+              and(
+                eq(user.generationId, selectedGenerationId),
+                isNull(user.deletedAt),
+              ),
+            );
+          selectedGenerationMembersTotal = fallbackRows[0]?.value ?? 0;
+        }
+      }
+
+      return {
+        usersTotal: usersCountRows[0]?.value ?? 0,
+        unverifiedUsersTotal: unverifiedUsersCountRows[0]?.value ?? 0,
+        generationsTotal: generationsCountRows[0]?.value ?? 0,
+        selectedGenerationMembersTotal,
+        selectedGenerationActivitiesTotal,
+        selectedGenerationExhibitionsTotal,
+        activeSupportersTotal: supportersCountRows[0]?.value ?? 0,
+        linktreeLinksTotal: linktreeLinksCountRows[0]?.value ?? 0,
+      };
     },
         /**
      * deleteUser 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.

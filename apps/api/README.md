@@ -133,6 +133,8 @@ Apply migrations:
 pnpm run db:migrate
 ```
 
+`db:migrate`와 `db:push`는 이 프로젝트에서 기본적으로 원격 D1(`--remote`)에만 적용됩니다.
+
 ## Type Generation
 
 Generate Worker binding types after changing `wrangler.jsonc`:

@@ -500,6 +500,7 @@ export default function SupportersAdminPage({
               onRetry={createUpload.retry}
               uploadProgress={createUpload.progress}
               isUploading={createUpload.isUploading}
+              previewAspectRatio="3/2"
               testIdPrefix="supporter-create-logo"
               disabled={isSubmitting}
             />
@@ -576,6 +577,7 @@ export default function SupportersAdminPage({
               onRetry={editUpload.retry}
               uploadProgress={editUpload.progress}
               isUploading={editUpload.isUploading}
+              previewAspectRatio="3/2"
               testIdPrefix="supporter-edit-logo"
               disabled={isSubmitting}
             />

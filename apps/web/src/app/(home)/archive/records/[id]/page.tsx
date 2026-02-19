@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublicActivityById } from "../../../../../lib/public-api";
-import { formatKoreanDateCompact } from "../../../../../lib/date-formatters";
+import { formatKoreanDateRange } from "../../../../../lib/date-formatters";
 import { shouldUseUnoptimizedImage } from "../../../../../lib/image-utils";
 import { createPageMetadata } from "../../../../../lib/seo";
 
@@ -49,7 +49,7 @@ export default async function RecordDetailPage({ params }: RecordDetailPageProps
             {activity.title}
           </h1>
           <p className="mb-0 mt-3 text-[0.95rem] text-[#666666]">
-            {formatKoreanDateCompact(activity.activityDate)}
+            {formatKoreanDateRange(activity.startDate, activity.endDate)}
           </p>
           <p className="mb-0 mt-3 leading-[1.6] text-[#4a4a4a]">{activity.description}</p>
         </header>

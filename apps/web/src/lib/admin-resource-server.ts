@@ -1,5 +1,6 @@
 import type {
   ApiActivity,
+  ApiAdminDashboardStats,
   ApiExhibition,
   ApiGeneration,
   ApiLinktree,
@@ -95,3 +96,56 @@ export const fetchAdminGenerationsFromServer = async (
   cookieHeader: string | null,
 ): Promise<ApiGeneration[]> =>
   fetchAdminCollection<ApiGeneration>("/generations", cookieHeader, ADMIN_CACHE_TAGS.generations);
+
+export const fetchAdminDashboardStatsFromServer = async (
+  cookieHeader: string | null,
+  generationSortOrder: number | null,
+): Promise<ApiAdminDashboardStats | null> => {
+  const headers = new Headers({
+    Accept: "application/json",
+  });
+
+  if (cookieHeader) {
+    headers.set("cookie", cookieHeader);
+  }
+
+  const search = new URLSearchParams();
+  if (typeof generationSortOrder === "number" && Number.isFinite(generationSortOrder)) {
+    search.set("generationSortOrder", String(generationSortOrder));
+  }
+  const suffix = search.size > 0 ? `?${search.toString()}` : "";
+
+  try {
+    const response = await fetch(
+      `${resolveAuthApiUrl()}${ADMIN_API_BASE_PATH}/admin/dashboard${suffix}`,
+      {
+        method: "GET",
+        headers,
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = (await response.json().catch(() => null)) as unknown;
+    if (
+      typeof payload === "object" &&
+      payload !== null &&
+      "data" in payload &&
+      typeof (payload as DataEnvelopeCandidate<unknown>).data === "object" &&
+      (payload as DataEnvelopeCandidate<unknown>).data !== null
+    ) {
+      return (payload as DataEnvelopeCandidate<ApiAdminDashboardStats>).data ?? null;
+    }
+
+    if (typeof payload === "object" && payload !== null) {
+      return payload as ApiAdminDashboardStats;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+};

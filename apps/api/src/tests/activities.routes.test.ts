@@ -22,12 +22,13 @@ describe("activity routes", /** describe 실행 과정에서 필요한 연산을
     const response = await app.request("/api/activities");
     expect(response.status).toBe(200);
 
-    const body = await readJson<{ data: Array<{ id: string; activityDate: number }> }>(
+    const body = await readJson<{ data: Array<{ id: string; startDate: number; endDate: number }> }>(
       response,
     );
     expect(body.data).toHaveLength(1);
     expect(body.data[0]?.id).toBe(IDs.activity);
-    expect(typeof body.data[0]?.activityDate).toBe("number");
+    expect(typeof body.data[0]?.startDate).toBe("number");
+    expect(typeof body.data[0]?.endDate).toBe("number");
   });
 
   it("member 계열 사용자는 활동 생성이 불가하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
@@ -43,7 +44,8 @@ describe("activity routes", /** describe 실행 과정에서 필요한 연산을
       body: JSON.stringify({
         title: "활동",
         description: "설명",
-        activityDate: Date.parse("2030-03-01T00:00:00.000Z"),
+        startDate: Date.parse("2030-03-01T00:00:00.000Z"),
+        endDate: Date.parse("2030-03-03T00:00:00.000Z"),
         coverImageUrl: "https://example.com/cover.jpg",
         generationId: IDs.generation,
       }),
@@ -79,7 +81,8 @@ describe("activity routes", /** describe 실행 과정에서 필요한 연산을
     const payload = {
       title: "신규 활동",
       description: "설명",
-      activityDate: Date.parse("2030-03-01T00:00:00.000Z"),
+      startDate: Date.parse("2030-03-01T00:00:00.000Z"),
+      endDate: Date.parse("2030-03-03T00:00:00.000Z"),
       coverImageUrl: "https://example.com/cover.jpg",
       generationId: IDs.generation,
     };
@@ -536,7 +539,8 @@ describe("activity routes", /** describe 실행 과정에서 필요한 연산을
         body: {
           title: "활동",
           description: "설명",
-          activityDate: Date.parse("2030-03-01T00:00:00.000Z"),
+          startDate: Date.parse("2030-03-01T00:00:00.000Z"),
+          endDate: Date.parse("2030-03-03T00:00:00.000Z"),
           coverImageUrl: "https://example.com/cover.jpg",
           generationId: IDs.generation,
         },
@@ -716,7 +720,7 @@ describe("activity routes", /** describe 실행 과정에서 필요한 연산을
     const updateResponse = await app.request(`/api/activities/${IDs.activity}`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ activityDate: "invalid" }),
+      body: JSON.stringify({ startDate: "invalid" }),
     });
     expect(updateResponse.status).toBe(400);
     await expectErrorCode(updateResponse, "BAD_REQUEST");

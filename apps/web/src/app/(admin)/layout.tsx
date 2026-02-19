@@ -27,9 +27,14 @@ const themeInitScript = `
     const mode = stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
     const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const resolvedTheme = mode === "system" ? (systemDark ? "dark" : "light") : mode;
+    const storedStyle = localStorage.getItem("admin.theme.style");
+    const style = storedStyle === "ocean" || storedStyle === "graphite" || storedStyle === "forest"
+      ? storedStyle
+      : "ocean";
     document.documentElement.classList.toggle("dark", resolvedTheme === "dark");
     document.documentElement.dataset.theme = resolvedTheme;
     document.documentElement.dataset.themeMode = mode;
+    document.documentElement.dataset.adminThemeStyle = style;
   } catch (_) {}
 })();
 `;

@@ -24,9 +24,10 @@ import {
 } from "../lib/openapi/responses";
 import {
   ApiAdminUpdateUserSchema,
+  ApiBulkUpdateUserRoleSchema,
   ApiUserIdParamSchema,
-  ApiMemberProfileUpdateSchema,
   ApiUserSchema,
+  ApiMemberProfileUpdateSchema,
 } from "../lib/openapi/schemas";
 
 type App = OpenAPIHono<HonoAppType>;
@@ -100,6 +101,24 @@ const deleteUserRoute = createRoute({
   },
   responses: {
     204: noContentResponse,
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
+});
+
+const bulkUpdateUserRoleRoute = createRoute({
+  method: "patch",
+  path: "/api/users/bulk-role",
+  tags: ["Users"],
+  operationId: "bulkUpdateUserRole",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: jsonBody(ApiBulkUpdateUserRoleSchema, "사용자 권한 일괄 변경 요청"),
+  },
+  responses: {
+    200: dataResponse(ApiUserSchema.array(), "사용자 권한 일괄 변경 성공"),
     400: errorResponses[400],
     401: errorResponses[401],
     403: errorResponses[403],
@@ -218,6 +237,66 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
     }
 
     return ok(c, data);
+  });
+
+  app.openapi(bulkUpdateUserRoleRoute, async (c): Promise<any> => {
+    const actorResult = await requireActor(c, dependencies);
+    if ("response" in actorResult) {
+      return actorResult.response;
+    }
+
+    if (!can(actorResult.actor.role, "user", "update")) {
+      return forbidden(c);
+    }
+
+    const body = await parseBody(c, ApiBulkUpdateUserRoleSchema);
+    if (!body.success) {
+      return badRequest(c, body.message);
+    }
+
+    if (!canAssignRole(actorResult.actor.role, body.data.role)) {
+      return forbidden(c, "본인보다 높은 등급으로 권한을 변경할 수 없습니다.");
+    }
+
+    const dataService = dependencies.getDataService(c);
+    const users = await dataService.listUsers();
+    const userById = new Map(users.map((user) => [user.id, user]));
+    const targetUsers = body.data.userIds.map((userId) => userById.get(userId) ?? null);
+    if (targetUsers.some((user) => user === null)) {
+      return badRequest(c, "일부 대상 사용자를 찾을 수 없습니다.");
+    }
+
+    const normalizedNextRole = normalizeRole(body.data.role);
+    const actorIsPresident = normalizeRole(actorResult.actor.role) === "president";
+    const demotedOtherPresidentExists = targetUsers.some(
+      (candidate) =>
+        candidate !== null &&
+        candidate.id !== actorResult.actor.id &&
+        normalizeRole(candidate.role) === "president" &&
+        normalizedNextRole !== "president",
+    );
+    if (actorIsPresident && demotedOtherPresidentExists) {
+      return forbidden(c, "다른 회장의 권한은 변경할 수 없습니다.");
+    }
+
+    const presidentCount = users.filter(
+      (candidate) => normalizeRole(candidate.role) === "president",
+    ).length;
+    const demotedPresidentCount = targetUsers.filter(
+      (candidate) =>
+        candidate !== null &&
+        normalizeRole(candidate.role) === "president" &&
+        normalizedNextRole !== "president",
+    ).length;
+    if (presidentCount - demotedPresidentCount <= 0) {
+      return badRequest(c, "회장 권한은 최소 1명 이상 유지되어야 합니다.");
+    }
+
+    const updatedUsers = await dataService.bulkUpdateUsersRole({
+      userIds: body.data.userIds,
+      role: normalizedNextRole,
+    });
+    return ok(c, updatedUsers);
   });
 
   app.openapi(updateUserRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 권한/인증 분기에서 잘못된 흐름이 발생하지 않도록 호출 순서를 유지해야 합니다. */ async (c): Promise<any> => {

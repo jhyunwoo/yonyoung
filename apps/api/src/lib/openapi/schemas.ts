@@ -220,7 +220,8 @@ export const ApiActivitySchema = z
       description: "활동 상세 설명",
       example: "동아리 구성원 대상 촬영/편집 워크숍을 진행했습니다.",
     }),
-    activityDate: timestampField("활동 일자/시각", EXAMPLE_TIMESTAMP_MS),
+    startDate: timestampField("활동 시작 시각", EXAMPLE_TIMESTAMP_MS),
+    endDate: timestampField("활동 종료 시각", EXAMPLE_TIMESTAMP_MS_END),
     coverImageUrl: urlField(
       "활동 대표 이미지 공개 URL (presigned 업로드 완료 후 저장)",
       "https://cdn.yonyoung.example/activities/cover/cover-1.jpg",
@@ -247,10 +248,13 @@ export const ApiCreateActivitySchema = z
       description: "활동 설명",
       example: "정기전 작품 선정 및 역할 분담을 진행했습니다.",
     }),
-    activityDate: z.number().int().positive().openapi({
-      description:
-        "활동 일시 (Unix timestamp(ms), 화면에서는 연-월-일 포맷으로 변환해 사용)",
+    startDate: z.number().int().positive().openapi({
+      description: "활동 시작 시각 (Unix timestamp(ms))",
       example: EXAMPLE_TIMESTAMP_MS,
+    }),
+    endDate: z.number().int().positive().openapi({
+      description: "활동 종료 시각 (Unix timestamp(ms))",
+      example: EXAMPLE_TIMESTAMP_MS_END,
     }),
     coverImageUrl: urlField(
       "활동 대표 이미지 공개 URL",
@@ -261,11 +265,51 @@ export const ApiCreateActivitySchema = z
       example: EXAMPLE_GENERATION_ID,
     }),
   })
+  .refine((value) => value.startDate <= value.endDate, {
+    message: "활동 종료 시각은 시작 시각보다 빠를 수 없습니다.",
+    path: ["endDate"],
+  })
   .openapi("ApiCreateActivityInput");
 
-export const ApiUpdateActivitySchema = ApiCreateActivitySchema.partial().openapi(
-  "ApiUpdateActivityInput",
-);
+export const ApiUpdateActivitySchema = z
+  .object({
+    title: z.string().min(1).optional().openapi({
+      description: "활동 제목",
+      example: "봄 정기전 준비 모임",
+    }),
+    description: z.string().min(1).optional().openapi({
+      description: "활동 설명",
+      example: "정기전 작품 선정 및 역할 분담을 진행했습니다.",
+    }),
+    startDate: z.number().int().positive().optional().openapi({
+      description: "활동 시작 시각 (Unix timestamp(ms))",
+      example: EXAMPLE_TIMESTAMP_MS,
+    }),
+    endDate: z.number().int().positive().optional().openapi({
+      description: "활동 종료 시각 (Unix timestamp(ms))",
+      example: EXAMPLE_TIMESTAMP_MS_END,
+    }),
+    coverImageUrl: urlField(
+      "활동 대표 이미지 공개 URL",
+      "https://cdn.yonyoung.example/activities/cover/new-cover.jpg",
+    ).optional(),
+    generationId: z.string().uuid("generationId 형식이 올바르지 않습니다.").optional().openapi({
+      description: "연결할 기수 UUID",
+      example: EXAMPLE_GENERATION_ID,
+    }),
+  })
+  .strict()
+  .refine(
+    (value) =>
+      value.startDate === undefined ||
+      value.endDate === undefined ||
+      value.startDate <= value.endDate,
+    {
+      message: "활동 종료 시각은 시작 시각보다 빠를 수 없습니다.",
+      path: ["endDate"],
+    },
+  )
+  .openapi("ApiUpdateActivityInput");
 
 export const ApiCreateActivityImageSchema = z
   .object({
@@ -862,6 +906,94 @@ export const ApiMemberProfileUpdateSchema = z
   })
   .strict()
   .openapi("ApiMemberProfileUpdateInput");
+
+const ApiAdminAssignableRoleSchema = z.enum([
+  "president",
+  "vice_president",
+  "manager",
+  "new_member",
+  "associate_member",
+  "regular_member",
+  "unverified",
+]);
+
+export const ApiBulkUpdateUserRoleSchema = z
+  .object({
+    userIds: z
+      .array(
+        z
+          .string()
+          .min(1)
+          .regex(
+            /^[A-Za-z0-9_-]+$/,
+            "사용자 식별자는 영문/숫자/하이픈/언더스코어만 사용할 수 있습니다.",
+          ),
+      )
+      .min(1, "사용자 ID를 하나 이상 전달해야 합니다.")
+      .max(200, "한 번에 변경 가능한 사용자 수는 최대 200명입니다.")
+      .openapi({
+        description: "일괄 권한 변경 대상 사용자 ID 목록",
+        example: [EXAMPLE_USER_ID],
+      }),
+    role: ApiAdminAssignableRoleSchema.openapi({
+      description: "변경할 역할",
+      example: "regular_member",
+    }),
+  })
+  .strict()
+  .openapi("ApiBulkUpdateUserRoleInput");
+
+export const ApiAdminDashboardStatsQuerySchema = z
+  .object({
+    generationSortOrder: z
+      .coerce
+      .number()
+      .int()
+      .nonnegative()
+      .optional()
+      .openapi({
+        description: "선택 기수 sortOrder",
+        example: 60,
+      }),
+  })
+  .openapi("ApiAdminDashboardStatsQuery");
+
+export const ApiAdminDashboardStatsSchema = z
+  .object({
+    usersTotal: z.number().int().nonnegative().openapi({
+      description: "전체 사용자 수",
+      example: 120,
+    }),
+    unverifiedUsersTotal: z.number().int().nonnegative().openapi({
+      description: "미승인 사용자 수(unverified)",
+      example: 8,
+    }),
+    generationsTotal: z.number().int().nonnegative().openapi({
+      description: "전체 기수 수",
+      example: 12,
+    }),
+    selectedGenerationMembersTotal: z.number().int().nonnegative().openapi({
+      description: "선택 기수 멤버 수",
+      example: 34,
+    }),
+    selectedGenerationActivitiesTotal: z.number().int().nonnegative().openapi({
+      description: "선택 기수 활동 수",
+      example: 15,
+    }),
+    selectedGenerationExhibitionsTotal: z.number().int().nonnegative().openapi({
+      description: "선택 기수 전시 수",
+      example: 2,
+    }),
+    activeSupportersTotal: z.number().int().nonnegative().openapi({
+      description: "활성 서포터즈 수",
+      example: 6,
+    }),
+    linktreeLinksTotal: z.number().int().nonnegative().openapi({
+      description: "링크트리 전체 링크 수",
+      example: 19,
+    }),
+  })
+  .openapi("ApiAdminDashboardStats");
 
 export const ApiPresignRequestSchema = z
   .object({

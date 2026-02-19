@@ -81,15 +81,13 @@ test.describe("admin shell", () => {
     const activeSortOrder =
       page.url().match(/\/admin\/(\d+)/)?.[1] ?? selectedSortOrder;
 
-    const routes = [
+    const generationScopedRoutes = [
       { testId: "admin-nav-act", path: "activities", pageTestId: "activities-page" },
-      { testId: "admin-nav-sup", path: "supporters", pageTestId: "supporters-page" },
       { testId: "admin-nav-exh", path: "exhibitions", pageTestId: "exhibitions-page" },
-      { testId: "admin-nav-lnk", path: "linktree", pageTestId: "linktree-page" },
       { testId: "admin-nav-usr", path: "users", pageTestId: "users-page" },
     ] as const;
 
-    for (const route of routes) {
+    for (const route of generationScopedRoutes) {
       const navLink = page.getByTestId(route.testId);
       await expect(navLink).toHaveAttribute(
         "href",
@@ -99,6 +97,19 @@ test.describe("admin shell", () => {
       await expect(
         page,
       ).toHaveURL(new RegExp(`/admin/${activeSortOrder}/${route.path}$`));
+      await expect(page.getByTestId(route.pageTestId)).toBeVisible();
+    }
+
+    const globalRoutes = [
+      { testId: "admin-nav-sup", path: "/admin/supporters", pageTestId: "supporters-page" },
+      { testId: "admin-nav-lnk", path: "/admin/linktree", pageTestId: "linktree-page" },
+    ] as const;
+
+    for (const route of globalRoutes) {
+      const navLink = page.getByTestId(route.testId);
+      await expect(navLink).toHaveAttribute("href", route.path);
+      await navLink.click();
+      await expect(page).toHaveURL(new RegExp(`${route.path}$`));
       await expect(page.getByTestId(route.pageTestId)).toBeVisible();
     }
 

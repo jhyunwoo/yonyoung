@@ -197,7 +197,8 @@ export const activities = sqliteTable(
     id: text("id").primaryKey(),
     title: text("title").notNull(),
     description: text("description").notNull(),
-    activityDate: integer("activity_date", { mode: "timestamp_ms" }).notNull(),
+    startDate: integer("start_date", { mode: "timestamp_ms" }).notNull(),
+    endDate: integer("end_date", { mode: "timestamp_ms" }).notNull(),
     coverImageUrl: text("cover_image_url").notNull(),
     generationId: text("generation_id")
       .notNull()
@@ -223,7 +224,8 @@ export const activities = sqliteTable(
    */
   (table) => [
     index("activities_generation_id_idx").on(table.generationId),
-    index("activities_activity_date_idx").on(table.activityDate),
+    index("activities_start_date_idx").on(table.startDate),
+    index("activities_end_date_idx").on(table.endDate),
   ],
 );
 

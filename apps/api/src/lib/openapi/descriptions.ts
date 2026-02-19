@@ -180,7 +180,7 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
       "정상 조회 시 `{ data: ApiActivity[] }`를 반환합니다.",
     ],
     responseGuide: [
-      "`200`: 활동 배열 반환. 각 활동의 `activityDate`는 Unix timestamp(ms)입니다.",
+      "`200`: 활동 배열 반환. 각 활동의 `startDate`/`endDate`는 Unix timestamp(ms)입니다.",
     ],
     errorGuide: [...readOnlyErrorGuide],
     permission: [
@@ -191,11 +191,11 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
   createActivity: mkSpec({
     summary: "활동 생성",
     overview:
-      "새 활동을 생성합니다. 대표 이미지 URL, 기수 ID, 활동 일시(timestamp)를 함께 저장합니다.",
+      "새 활동을 생성합니다. 대표 이미지 URL, 기수 ID, 활동 기간(start/end timestamp)을 함께 저장합니다.",
     parameters: ["경로 파라미터를 사용하지 않습니다."],
     requestBody: [
       "`title`, `description`: 활동 제목/설명",
-      "`activityDate`: Unix timestamp(ms), 클라이언트에서 연-월-일 표시로 변환",
+      "`startDate`, `endDate`: Unix timestamp(ms), 종료 시각은 시작 시각보다 빠를 수 없음",
       "`coverImageUrl`: presigned 업로드 완료 후 저장할 공개 URL",
       "`generationId`: 연결할 기수 UUID",
     ],
@@ -751,6 +751,39 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
       "관리 권한자는 정책 범위 내 사용자 삭제 가능",
       "member 계열 role은 self-only 탈퇴만 허용",
     ],
+  }),
+  bulkUpdateUserRole: mkSpec({
+    summary: "사용자 권한 일괄 변경",
+    overview:
+      "여러 사용자 권한을 한 번에 변경합니다. 본인보다 높은 등급으로 승격할 수 없고 회장 권한은 최소 1명 이상 유지됩니다.",
+    parameters: ["경로 파라미터를 사용하지 않습니다."],
+    requestBody: [
+      "`userIds`: 권한 변경 대상 사용자 ID 배열",
+      "`role`: 변경할 대상 역할",
+    ],
+    internalFlow: [
+      "세션 및 `user:update` 권한을 확인합니다.",
+      "입력 사용자/역할 검증 후 회장 최소 1인 유지 정책을 검사합니다.",
+      "검증을 통과하면 일괄 업데이트 후 갱신된 사용자 배열을 반환합니다.",
+    ],
+    responseGuide: ["`200`: 권한이 반영된 `ApiUser[]` 반환"],
+    errorGuide: [...commonErrorGuide],
+    permission: ["관리 권한(`user:update`) 필요"],
+  }),
+  getAdminDashboardStats: mkSpec({
+    summary: "관리자 대시보드 집계 조회",
+    overview:
+      "관리자 홈(`/admin`) 현황판에 필요한 KPI 집계를 조회합니다. 선택 기수 sortOrder를 쿼리로 전달할 수 있습니다.",
+    parameters: ["`generationSortOrder` (query, optional): 선택 기수 sortOrder"],
+    requestBody: ["요청 본문은 사용하지 않습니다."],
+    internalFlow: [
+      "세션을 확인하고 관리자 페이지 접근 가능한 역할인지 검사합니다.",
+      "전체/선택기수 집계를 계산해 단일 응답으로 반환합니다.",
+      "선택 기수가 없거나 유효하지 않으면 선택 기수 관련 지표는 0으로 반환됩니다.",
+    ],
+    responseGuide: ["`200`: `ApiAdminDashboardStats` 반환"],
+    errorGuide: [...readOnlyErrorGuide],
+    permission: ["관리자 페이지 접근 역할 필요"],
   }),
   issueActivityCoverPresign: mkSpec({
     summary: "활동 대표 이미지 업로드 URL 발급",

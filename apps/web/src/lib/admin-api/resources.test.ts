@@ -107,7 +107,8 @@ describe("adminResourceApi", /** describe 실행 과정에서 필요한 연산�
         adminResourceApi.createActivity({
           title: "activity",
           description: "desc",
-          activityDate: 1,
+          startDate: 1,
+          endDate: 2,
           coverImageUrl: "https://example.com/a.jpg",
           generationId: "gen",
         }),
@@ -116,7 +117,8 @@ describe("adminResourceApi", /** describe 실행 과정에서 필요한 연산�
       expectedBody: {
         title: "activity",
         description: "desc",
-        activityDate: 1,
+        startDate: 1,
+        endDate: 2,
         coverImageUrl: "https://example.com/a.jpg",
         generationId: "gen",
       },

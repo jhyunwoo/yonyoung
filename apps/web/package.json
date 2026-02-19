@@ -25,8 +25,10 @@
     "@repo/shared-api-contracts": "workspace:*",
     "@repo/shared-auth": "workspace:*",
     "@repo/shared-http": "workspace:*",
+    "@uppy/core": "^5.2.0",
     "better-auth": "^1.4.18",
     "framer-motion": "^12.34.2",
+    "lucide-react": "^0.575.0",
     "next": "^16.1.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"

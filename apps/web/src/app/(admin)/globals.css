@@ -1,23 +1,27 @@
 @import "tailwindcss";
 
 :root {
-  --admin-bg-primary: #f3f6fc;
-  --admin-bg-secondary: #e7edf8;
+  --admin-bg-primary: #eef4ff;
+  --admin-bg-secondary: #e2ebfb;
   --admin-surface: #fefeff;
-  --admin-surface-muted: #edf2fb;
-  --admin-surface-subtle: #dce6f6;
-  --admin-border: #d5dfef;
-  --admin-border-strong: #b4c6df;
+  --admin-surface-muted: #ecf2fd;
+  --admin-surface-subtle: #d8e5fa;
+  --admin-border: #d0ddf2;
+  --admin-border-strong: #afc4e5;
   --admin-text-primary: #0f172a;
-  --admin-text-secondary: #334155;
-  --admin-text-muted: #64748b;
+  --admin-text-secondary: #30445f;
+  --admin-text-muted: #5d7594;
   --admin-accent: #1d4ed8;
   --admin-accent-strong: #1e40af;
+  --admin-global-surface: #e8f1ff;
+  --admin-global-hover: #deebff;
+  --admin-global-border: #b7cced;
+  --admin-global-text: #1e3f75;
 }
 
 .dark {
-  --admin-bg-primary: #0d1625;
-  --admin-bg-secondary: #141f33;
+  --admin-bg-primary: #0d1728;
+  --admin-bg-secondary: #132136;
   --admin-surface: #111d2f;
   --admin-surface-muted: #16263d;
   --admin-surface-subtle: #233754;
@@ -28,6 +32,86 @@
   --admin-text-muted: #90a6c8;
   --admin-accent: #7fb2ff;
   --admin-accent-strong: #5f95f0;
+  --admin-global-surface: #153255;
+  --admin-global-hover: #1a3e68;
+  --admin-global-border: #3d6698;
+  --admin-global-text: #d9eaff;
+}
+
+:root[data-admin-theme-style="graphite"] {
+  --admin-bg-primary: #f4f6f8;
+  --admin-bg-secondary: #e9edf2;
+  --admin-surface: #ffffff;
+  --admin-surface-muted: #eef2f5;
+  --admin-surface-subtle: #dde3eb;
+  --admin-border: #ccd5e0;
+  --admin-border-strong: #a8b5c5;
+  --admin-text-primary: #111827;
+  --admin-text-secondary: #243145;
+  --admin-text-muted: #5d6d82;
+  --admin-accent: #475569;
+  --admin-accent-strong: #334155;
+  --admin-global-surface: #edf1f7;
+  --admin-global-hover: #e5ebf4;
+  --admin-global-border: #c6d0de;
+  --admin-global-text: #334155;
+}
+
+.dark[data-admin-theme-style="graphite"] {
+  --admin-bg-primary: #101318;
+  --admin-bg-secondary: #171c24;
+  --admin-surface: #161b23;
+  --admin-surface-muted: #1d2430;
+  --admin-surface-subtle: #252f3e;
+  --admin-border: #334154;
+  --admin-border-strong: #42536a;
+  --admin-text-primary: #e5ebf3;
+  --admin-text-secondary: #c8d3e3;
+  --admin-text-muted: #95a3b6;
+  --admin-accent: #94a3b8;
+  --admin-accent-strong: #64748b;
+  --admin-global-surface: #1f2937;
+  --admin-global-hover: #273447;
+  --admin-global-border: #3c4d64;
+  --admin-global-text: #d5e1f3;
+}
+
+:root[data-admin-theme-style="forest"] {
+  --admin-bg-primary: #eff9f3;
+  --admin-bg-secondary: #e3f2e8;
+  --admin-surface: #fdfefe;
+  --admin-surface-muted: #edf8f0;
+  --admin-surface-subtle: #daeddc;
+  --admin-border: #cde2d0;
+  --admin-border-strong: #a9c8ae;
+  --admin-text-primary: #0f2916;
+  --admin-text-secondary: #244933;
+  --admin-text-muted: #52745f;
+  --admin-accent: #15803d;
+  --admin-accent-strong: #166534;
+  --admin-global-surface: #e8f8ed;
+  --admin-global-hover: #dff4e6;
+  --admin-global-border: #abd3ba;
+  --admin-global-text: #19553a;
+}
+
+.dark[data-admin-theme-style="forest"] {
+  --admin-bg-primary: #0f1b14;
+  --admin-bg-secondary: #15241b;
+  --admin-surface: #142117;
+  --admin-surface-muted: #182a1d;
+  --admin-surface-subtle: #223528;
+  --admin-border: #2f4a39;
+  --admin-border-strong: #42634f;
+  --admin-text-primary: #e0f2e5;
+  --admin-text-secondary: #bddcc5;
+  --admin-text-muted: #8cb49b;
+  --admin-accent: #4ade80;
+  --admin-accent-strong: #22c55e;
+  --admin-global-surface: #173325;
+  --admin-global-hover: #1d3f2f;
+  --admin-global-border: #2f6b4d;
+  --admin-global-text: #d4f6df;
 }
 
 html {
@@ -66,6 +150,64 @@ body {
       color-mix(in srgb, var(--admin-surface-muted), transparent 4%) 100%
     );
   backdrop-filter: blur(12px);
+}
+
+.admin-sidebar-modern {
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-sidebar-modern::before {
+  content: "";
+  position: absolute;
+  inset: -18% -30% auto;
+  height: 14rem;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at center,
+      color-mix(in srgb, var(--admin-accent), transparent 84%) 0%,
+      transparent 72%
+    );
+  opacity: 0.9;
+}
+
+.admin-sidebar-modern::after {
+  content: "";
+  position: absolute;
+  inset: auto -24% -18%;
+  height: 12rem;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at center,
+      color-mix(in srgb, var(--admin-surface-subtle), transparent 62%) 0%,
+      transparent 72%
+    );
+}
+
+.admin-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--admin-border-strong), transparent 10%) transparent;
+}
+
+.admin-sidebar-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.admin-sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-sidebar-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  background-color: color-mix(in srgb, var(--admin-border-strong), transparent 10%);
+}
+
+.admin-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--admin-text-muted), transparent 12%);
 }
 
 .admin-root .bg-white {

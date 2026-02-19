@@ -6,9 +6,7 @@ type GenerationEntryPageProps = {
 
 const RESOURCE_LINKS = [
   { href: "activities", label: "Activities" },
-  { href: "supporters", label: "Supporters (Global)" },
   { href: "exhibitions", label: "Exhibitions" },
-  { href: "linktree", label: "Linktree (Global)" },
   { href: "users", label: "Users" },
 ] as const;
 
@@ -46,6 +44,36 @@ export default async function GenerationEntryPage({
             {item.label}
           </Link>
         ))}
+      </section>
+
+      <section className="rounded-lg border border-gray-200 bg-white p-4">
+        <h2 className="text-base font-semibold text-gray-900">전역 관리 바로가기</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <Link
+            href="/admin/supporters"
+            prefetch
+            className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-800 transition-colors hover:bg-gray-50"
+            data-testid="generation-entry-link-global-supporters"
+          >
+            Supporters
+          </Link>
+          <Link
+            href="/admin/linktree"
+            prefetch
+            className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-800 transition-colors hover:bg-gray-50"
+            data-testid="generation-entry-link-global-linktree"
+          >
+            Linktree
+          </Link>
+          <Link
+            href="/admin/users"
+            prefetch
+            className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-800 transition-colors hover:bg-gray-50"
+            data-testid="generation-entry-link-global-users"
+          >
+            User Permissions
+          </Link>
+        </div>
       </section>
     </main>
   );

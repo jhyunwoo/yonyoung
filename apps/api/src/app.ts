@@ -10,6 +10,7 @@ import { registerUserRoutes } from "./modules/users";
 import { registerUploadRoutes } from "./modules/uploads";
 import { registerDocsRoutes } from "./modules/docs";
 import { registerPublicRoutes } from "./modules/public";
+import { registerDashboardRoutes } from "./modules/dashboard";
 import HonoAppType from "./types/honoAppType";
 import { getAuthCorsOrigins } from "./lib/auth";
 import { badRequest } from "./lib/http/response";
@@ -124,6 +125,7 @@ export const createApp = (
   registerLinktreeRoutes(app, dependencies);
   registerPublicRoutes(app, dependencies);
   registerUserRoutes(app, dependencies);
+  registerDashboardRoutes(app, dependencies);
   registerUploadRoutes(app, dependencies);
   registerDocsRoutes(app, dependencies);
 

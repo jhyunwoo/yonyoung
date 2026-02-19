@@ -2,15 +2,16 @@
   "name": "api",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy --minify",
+    "dev": "pnpm run db:migrate && wrangler dev",
+    "deploy": "pnpm run db:migrate:remote && wrangler deploy --minify",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "db:generation": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit generate && drizzle-kit migrate",
+    "db:migrate": "wrangler d1 migrations apply yonyoung-db --remote",
+    "db:migrate:remote": "pnpm run db:migrate",
+    "db:push": "drizzle-kit generate && wrangler d1 migrations apply yonyoung-db --remote",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {

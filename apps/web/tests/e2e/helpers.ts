@@ -820,7 +820,8 @@ export const seedPublicActivity = async (
     generationId: string;
     title?: string;
     description?: string;
-    activityDate?: number;
+    startDate?: number;
+    endDate?: number;
     coverImageUrl?: string;
   },
 ): Promise<{ id: string; title: string }> => {
@@ -830,7 +831,8 @@ export const seedPublicActivity = async (
     data: {
       title: input.title ?? uniqueText(input.prefix, "public-activity"),
       description: input.description ?? `${input.prefix} public activity description`,
-      activityDate: input.activityDate ?? Date.parse("2099-03-01T00:00:00.000Z"),
+      startDate: input.startDate ?? Date.parse("2099-03-01T00:00:00.000Z"),
+      endDate: input.endDate ?? Date.parse("2099-03-03T00:00:00.000Z"),
       coverImageUrl:
         input.coverImageUrl ??
         `https://example.com/${input.prefix}/public-activity-cover.jpg`,

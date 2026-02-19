@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { type DragEvent, useEffect, useState } from "react";
 import type { ImmediateUploadStatus } from "./use-immediate-image-upload";
 
 type ImageInputProps = {
@@ -16,8 +16,22 @@ type ImageInputProps = {
   uploadProgress?: number | null;
   isUploading?: boolean;
   previewShape?: "default" | "avatar";
+  previewAspectRatio?: "4/3" | "3/2" | "2/3";
   testIdPrefix: string;
 };
+
+const PREVIEW_CONTAINER_CLASS_BY_RATIO: Record<"4/3" | "3/2" | "2/3", string> = {
+  "4/3": "h-40 aspect-[4/3]",
+  "3/2": "h-40 aspect-[3/2]",
+  "2/3": "h-40 aspect-[2/3]",
+};
+
+const PREVIEW_DIMENSIONS_BY_RATIO: Record<"4/3" | "3/2" | "2/3", { width: number; height: number }> =
+  {
+    "4/3": { width: 960, height: 720 },
+    "3/2": { width: 900, height: 600 },
+    "2/3": { width: 600, height: 900 },
+  };
 
 /**
  * ImageInput 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
@@ -43,9 +57,11 @@ export default function ImageInput({
   uploadProgress = null,
   isUploading = false,
   previewShape = "default",
+  previewAspectRatio = "4/3",
   testIdPrefix,
 }: ImageInputProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputId = `${testIdPrefix}-file-input`;
 
   useEffect(() => {
@@ -68,6 +84,17 @@ export default function ImageInput({
       : null;
   const previewImageUrl = previewUrl ?? currentUrl;
   const isAvatarPreview = previewShape === "avatar";
+  const previewDimensions = PREVIEW_DIMENSIONS_BY_RATIO[previewAspectRatio];
+
+  const handleDrop = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragOver(false);
+    if (disabled) {
+      return;
+    }
+    const droppedFile = event.dataTransfer.files?.[0] ?? null;
+    onFileChange(droppedFile);
+  };
 
   return (
     <div className="space-y-2">
@@ -78,8 +105,21 @@ export default function ImageInput({
           className={`relative block rounded-xl border-2 border-dashed p-4 transition ${
             disabled
               ? "cursor-not-allowed border-gray-200 bg-gray-100"
-              : "cursor-pointer border-gray-300 bg-white hover:border-gray-400 hover:bg-gray-50"
+              : isDragOver
+                ? "cursor-pointer border-black bg-gray-100"
+                : "cursor-pointer border-gray-300 bg-white hover:border-gray-400 hover:bg-gray-50"
           }`}
+          onDragOver={(event) => {
+            event.preventDefault();
+            if (!disabled) {
+              setIsDragOver(true);
+            }
+          }}
+          onDragLeave={(event) => {
+            event.preventDefault();
+            setIsDragOver(false);
+          }}
+          onDrop={handleDrop}
         >
           <input
             id={fileInputId}
@@ -95,7 +135,7 @@ export default function ImageInput({
             <div className="min-w-0">
               <p className="text-sm font-semibold text-gray-900">이미지 파일 선택</p>
               <p className="mt-0.5 text-xs text-gray-500">
-                클릭해서 업로드할 이미지를 선택하세요. (JPG, PNG, WEBP)
+                클릭 또는 드래그해서 업로드할 이미지를 선택하세요. (JPG, PNG, WEBP)
               </p>
             </div>
             <span className="shrink-0 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700">
@@ -116,15 +156,17 @@ export default function ImageInput({
           </p>
           <div
             className={`overflow-hidden border border-gray-200 bg-gray-50 ${
-              isAvatarPreview ? "h-40 w-40 rounded-full" : "rounded-md"
+              isAvatarPreview
+                ? "h-40 w-40 rounded-full"
+                : `rounded-md ${PREVIEW_CONTAINER_CLASS_BY_RATIO[previewAspectRatio]}`
             }`}
           >
             <Image
               src={previewImageUrl}
               alt={`${label} 미리보기`}
-              width={isAvatarPreview ? 320 : 960}
-              height={isAvatarPreview ? 320 : 540}
-              className={isAvatarPreview ? "h-full w-full object-cover" : "h-40 w-full object-cover"}
+              width={isAvatarPreview ? 320 : previewDimensions.width}
+              height={isAvatarPreview ? 320 : previewDimensions.height}
+              className="h-full w-full object-cover"
               unoptimized
             />
           </div>

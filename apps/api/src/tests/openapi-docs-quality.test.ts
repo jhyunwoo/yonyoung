@@ -134,7 +134,10 @@ describe("OpenAPI docs quality", /** describe 실행 과정에서 필요한 연�
       | undefined;
 
     expect(apiActivity?.properties?.title?.description).toContain("활동 제목");
-    expect(apiActivity?.properties?.activityDate?.description).toContain(
+    expect(apiActivity?.properties?.startDate?.description).toContain(
+      "Unix timestamp(ms)",
+    );
+    expect(apiActivity?.properties?.endDate?.description).toContain(
       "Unix timestamp(ms)",
     );
     expect(apiExhibition?.properties?.title?.description).toContain("전시 제목");

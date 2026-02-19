@@ -479,7 +479,8 @@ describe("RBAC routes", /** describe 실행 과정에서 필요한 연산을 수
       body: JSON.stringify({
         title: "t",
         description: "d",
-        activityDate: Date.now(),
+        startDate: Date.now(),
+        endDate: Date.now(),
         coverImageUrl: "https://example.com/a.jpg",
         generationId: IDs.generation,
       }),

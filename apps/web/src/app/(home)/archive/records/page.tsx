@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { listPublicActivities, safeList } from "../../../../lib/public-api";
-import { formatKoreanDateCompact } from "../../../../lib/date-formatters";
+import { formatKoreanDateRange } from "../../../../lib/date-formatters";
 import { shouldUseUnoptimizedImage } from "../../../../lib/image-utils";
 import { createPageMetadata } from "../../../../lib/seo";
 
@@ -60,7 +60,7 @@ export default async function ArchiveRecordsPage() {
                       {activity.title}
                     </h3>
                     <span className="text-[0.85rem] opacity-80">
-                      {formatKoreanDateCompact(activity.activityDate)}
+                      {formatKoreanDateRange(activity.startDate, activity.endDate)}
                     </span>
                   </div>
                 </div>

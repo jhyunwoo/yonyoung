@@ -15,7 +15,7 @@ import {
 import { shouldUseUnoptimizedImage } from "../../lib/image-utils";
 import { pickFeaturedPublicExhibition } from "../../lib/public-exhibition";
 import { resolveSiteUrl } from "../../lib/seo";
-import { formatKoreanDate } from "../../lib/date-formatters";
+import { formatKoreanDateRange } from "../../lib/date-formatters";
 
 /**
  * HomePage 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
@@ -99,7 +99,7 @@ export default async function HomePage() {
                   </div>
                   <div className="space-y-2 p-5">
                     <p className="text-xs font-semibold uppercase tracking-[0.1em] text-(--text-muted)">
-                      {formatKoreanDate(activity.activityDate)}
+                      {formatKoreanDateRange(activity.startDate, activity.endDate)}
                     </p>
                     <h3 className="text-[1.3rem] leading-tight tracking-[-0.02em] text-(--text-primary)">
                       {activity.title}

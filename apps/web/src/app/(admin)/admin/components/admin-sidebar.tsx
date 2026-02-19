@@ -2,7 +2,24 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  CalendarRange,
+  GalleryHorizontalEnd,
+  Handshake,
+  Layers3,
+  Link2,
+  Monitor,
+  Moon,
+  PanelLeft,
+  PanelRight,
+  Palette,
+  Sun,
+  UserRound,
+  UsersRound,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import LogoutButton from "../logout-button";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
 import { buildGenerationPath, extractGenerationRouteContext, getAccessibleGenerations } from "../../../../lib/admin-generation";
@@ -15,9 +32,11 @@ type AdminSidebarProps = {
   collapsed: boolean;
   onToggle: () => void;
   session: AuthSession;
+  variant?: "desktop" | "mobile";
 };
 
 type AdminThemeMode = "light" | "dark" | "system";
+type AdminColorStyle = "ocean" | "graphite" | "forest";
 type SidebarIconName =
   | "profile"
   | "generations"
@@ -28,9 +47,13 @@ type SidebarIconName =
   | "users";
 
 const THEME_STORAGE_KEY = "theme";
+const COLOR_STYLE_STORAGE_KEY = "admin.theme.style";
 
 const isAdminThemeMode = (value: string | null): value is AdminThemeMode =>
   value === "light" || value === "dark" || value === "system";
+
+const isAdminColorStyle = (value: string | null): value is AdminColorStyle =>
+  value === "ocean" || value === "graphite" || value === "forest";
 
 const resolveTheme = (mode: AdminThemeMode): "light" | "dark" => {
   if (mode === "light" || mode === "dark") {
@@ -50,6 +73,13 @@ const applyThemeMode = (mode: AdminThemeMode, persist = true) => {
   }
 };
 
+const applyColorStyle = (style: AdminColorStyle, persist = true) => {
+  document.documentElement.dataset.adminThemeStyle = style;
+  if (persist) {
+    window.localStorage.setItem(COLOR_STYLE_STORAGE_KEY, style);
+  }
+};
+
 const RESOURCE_MENU_ITEMS = [
   {
     resourcePath: "activities",
@@ -58,22 +88,10 @@ const RESOURCE_MENU_ITEMS = [
     icon: "activities",
   },
   {
-    resourcePath: "supporters",
-    label: "후원사 관리",
-    shortLabel: "SUP",
-    icon: "supporters",
-  },
-  {
     resourcePath: "exhibitions",
     label: "전시 관리",
     shortLabel: "EXH",
     icon: "exhibitions",
-  },
-  {
-    resourcePath: "linktree",
-    label: "링크 모음 관리",
-    shortLabel: "LNK",
-    icon: "linktree",
   },
   {
     resourcePath: "users",
@@ -83,13 +101,76 @@ const RESOURCE_MENU_ITEMS = [
   },
 ] as const;
 
-const NAV_ITEM_BASE_CLASS =
-  "group relative flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all duration-200";
+const GLOBAL_RESOURCE_MENU_ITEMS = [
+  {
+    href: "/admin/supporters",
+    label: "서포터즈 관리",
+    shortLabel: "SUP",
+    icon: "supporters",
+    testId: "admin-nav-sup",
+  },
+  {
+    href: "/admin/linktree",
+    label: "Linktree 관리",
+    shortLabel: "LNK",
+    icon: "linktree",
+    testId: "admin-nav-lnk",
+  },
+] as const;
 
-const NAV_ICON_CLASS = "h-4 w-4 shrink-0";
+const NAV_ITEM_BASE_CLASS =
+  "group relative flex items-center gap-3 rounded-2xl border px-3 py-2.5 text-sm font-medium transition-all duration-200 ease-out";
+
+const NAV_ICON_CLASS = "h-[1.05rem] w-[1.05rem] shrink-0";
+const NAV_ICON_WRAPPER_CLASS =
+  "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border transition-colors duration-200";
 
 const NAV_ITEM_SCOPE_BADGE_CLASS =
-  "inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.04em]";
+  "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em]";
+
+type NavItemTone = "global" | "generation";
+
+const getNavItemClassName = ({
+  active,
+  collapsed,
+  tone,
+}: {
+  active: boolean;
+  collapsed: boolean;
+  tone: NavItemTone;
+}): string => {
+  const inactiveClassName =
+    tone === "global"
+      ? "border-[var(--admin-global-border)] bg-[var(--admin-global-surface)] text-[var(--admin-global-text)] hover:-translate-y-px hover:bg-[var(--admin-global-hover)]"
+      : "border-gray-200 bg-white/90 text-gray-700 hover:-translate-y-px hover:bg-white";
+
+  const activeClassName =
+    "border-[var(--admin-accent-strong)] bg-[var(--admin-accent)] text-white shadow-lg shadow-black/25 hover:translate-y-0";
+
+  return [
+    NAV_ITEM_BASE_CLASS,
+    active ? activeClassName : inactiveClassName,
+    collapsed ? "justify-center px-2.5" : "justify-start",
+  ].join(" ");
+};
+
+const getNavIconWrapperClassName = ({
+  active,
+  tone,
+}: {
+  active: boolean;
+  tone: NavItemTone;
+}): string => {
+  if (active) {
+    return `${NAV_ICON_WRAPPER_CLASS} border-[var(--admin-accent-strong)] bg-[var(--admin-accent)] text-white`;
+  }
+
+  if (tone === "global") {
+    return `${NAV_ICON_WRAPPER_CLASS} border-[var(--admin-global-border)] bg-white/80 text-[var(--admin-global-text)]`;
+  }
+
+  return `${NAV_ICON_WRAPPER_CLASS} border-gray-200 bg-gray-50 text-gray-600`;
+};
 
 const SidebarIcon = ({
   name,
@@ -98,72 +179,18 @@ const SidebarIcon = ({
   name: SidebarIconName;
   className?: string;
 }) => {
-  const iconProps = {
-    className,
-    fill: "none",
-    viewBox: "0 0 24 24",
-    stroke: "currentColor",
-    strokeWidth: 1.9,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    "aria-hidden": true,
+  const iconMap: Record<SidebarIconName, LucideIcon> = {
+    profile: UserRound,
+    generations: Layers3,
+    activities: CalendarRange,
+    supporters: Handshake,
+    exhibitions: GalleryHorizontalEnd,
+    linktree: Link2,
+    users: UsersRound,
   };
 
-  switch (name) {
-    case "profile":
-      return (
-        <svg {...iconProps}>
-          <path d="M18 20a6 6 0 0 0-12 0" />
-          <circle cx="12" cy="8" r="4" />
-        </svg>
-      );
-    case "generations":
-      return (
-        <svg {...iconProps}>
-          <path d="M4 7h16" />
-          <path d="M4 12h16" />
-          <path d="M4 17h16" />
-        </svg>
-      );
-    case "activities":
-      return (
-        <svg {...iconProps}>
-          <path d="m5 12 4 4L19 6" />
-        </svg>
-      );
-    case "supporters":
-      return (
-        <svg {...iconProps}>
-          <path d="M12 21s-7-4.35-7-10a4 4 0 0 1 7-2.62A4 4 0 0 1 19 11c0 5.65-7 10-7 10Z" />
-        </svg>
-      );
-    case "exhibitions":
-      return (
-        <svg {...iconProps}>
-          <rect x="4" y="5" width="16" height="14" rx="2" />
-          <path d="m8 14 2.8-3.2a1 1 0 0 1 1.5-.05L16 15" />
-          <circle cx="9" cy="9" r="1.1" />
-        </svg>
-      );
-    case "linktree":
-      return (
-        <svg {...iconProps}>
-          <path d="M10 7h5a3 3 0 1 1 0 6h-5" />
-          <path d="M14 17H9a3 3 0 1 1 0-6h5" />
-        </svg>
-      );
-    case "users":
-      return (
-        <svg {...iconProps}>
-          <circle cx="9" cy="8" r="3" />
-          <path d="M3 19a6 6 0 0 1 12 0" />
-          <path d="M17 11a3 3 0 1 0 0-6" />
-          <path d="M21 19a4.7 4.7 0 0 0-3.5-4.5" />
-        </svg>
-      );
-    default:
-      return null;
-  }
+  const IconComponent = iconMap[name];
+  return <IconComponent className={className} strokeWidth={1.9} aria-hidden="true" />;
 };
 
 const ROLE_LABEL_MAP = {
@@ -216,12 +243,20 @@ const isActiveResourcePath = (
  * @returns 렌더링할 JSX 트리를 반환합니다.
  * @remarks 리렌더링 타이밍에 따라 훅 의존성 배열을 신중히 관리해야 합니다.
  */
-export default function AdminSidebar({ collapsed, onToggle, session }: AdminSidebarProps) {
+export default function AdminSidebar({
+  collapsed,
+  onToggle,
+  session,
+  variant = "desktop",
+}: AdminSidebarProps) {
+  const isMobileVariant = variant === "mobile";
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [generationList, setGenerationList] = useState<ApiGeneration[]>([]);
   const [isGenerationLoading, setIsGenerationLoading] = useState(true);
   const [themeMode, setThemeMode] = useState<AdminThemeMode>("system");
+  const [colorStyle, setColorStyle] = useState<AdminColorStyle>("ocean");
   const canManageGenerationsFlag = canManageGenerations(session);
   const canManageGlobalUsersFlag = canManageGlobalUsers(session);
 
@@ -299,6 +334,27 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
     };
   }, [themeMode]);
 
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(COLOR_STYLE_STORAGE_KEY);
+      const fromDataset = document.documentElement.dataset.adminThemeStyle ?? null;
+      const initialStyle: AdminColorStyle = isAdminColorStyle(stored)
+        ? stored
+        : isAdminColorStyle(fromDataset)
+        ? fromDataset
+        : "ocean";
+
+      setColorStyle(initialStyle);
+      applyColorStyle(initialStyle, false);
+      return;
+    } catch {
+      // localStorage 접근 실패 시에도 기본 스타일을 보장한다.
+    }
+
+    setColorStyle("ocean");
+    applyColorStyle("ocean", false);
+  }, []);
+
   const routeContext = useMemo(
         /**
      * useMemo 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
@@ -308,6 +364,20 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
     () => extractGenerationRouteContext(pathname),
     [pathname],
   );
+
+  const queryGenerationSortOrder = useMemo(() => {
+    if (pathname !== "/admin") {
+      return null;
+    }
+
+    const raw = searchParams.get("generation");
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = Number.parseInt(raw, 10);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, [pathname, searchParams]);
 
   const accessibleGenerations = useMemo(
         /**
@@ -319,26 +389,22 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
     [session, generationList],
   );
 
+  const resolvedSortOrderFromRoute = routeContext.sortOrder ?? queryGenerationSortOrder;
+
   const currentGeneration =
-    routeContext.sortOrder === null
+    resolvedSortOrderFromRoute === null
       ? null
       : accessibleGenerations.find(
-                    /**
-           * accessibleGenerations.find 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
-           * @param generation 함수 로직에서 사용하는 입력값입니다.
-           * @returns 함수 실행 결과를 반환합니다.
-           * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
-           */
-          (generation) => generation.sortOrder === routeContext.sortOrder,
+          (generation) => generation.sortOrder === resolvedSortOrderFromRoute,
         ) ?? null;
   const fallbackRouteGeneration =
-    routeContext.sortOrder === null
+    resolvedSortOrderFromRoute === null
       ? []
       : [
           {
-            id: `route-${routeContext.sortOrder}`,
-            name: `Generation ${routeContext.sortOrder}`,
-            sortOrder: routeContext.sortOrder,
+            id: `route-${resolvedSortOrderFromRoute}`,
+            name: `Generation ${resolvedSortOrderFromRoute}`,
+            sortOrder: resolvedSortOrderFromRoute,
           },
         ];
   const generationOptions =
@@ -347,10 +413,7 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
       : fallbackRouteGeneration;
 
   const selectedSortOrder =
-    routeContext.sortOrder ??
-    currentGeneration?.sortOrder ??
-    generationOptions[0]?.sortOrder ??
-    null;
+    resolvedSortOrderFromRoute ?? currentGeneration?.sortOrder ?? generationOptions[0]?.sortOrder ?? null;
 
     /**
    * handleGenerationChange의 핵심 비즈니스 로직을 수행합니다.
@@ -364,15 +427,21 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
       return;
     }
 
-    const nextPath = buildGenerationPath(
-      nextSortOrder,
-      routeContext.sortOrder === null ? null : routeContext.resourcePath,
-    );
+    const nextPath =
+      pathname === "/admin"
+        ? `/admin?generation=${nextSortOrder}`
+        : buildGenerationPath(
+            nextSortOrder,
+            routeContext.sortOrder === null ? null : routeContext.resourcePath,
+          );
     router.push(nextPath);
   };
 
   useEffect(() => {
     const targets = new Set<string>(["/admin/profile"]);
+    if (selectedSortOrder !== null) {
+      targets.add(`/admin?generation=${selectedSortOrder}`);
+    }
 
     if (selectedSortOrder !== null) {
       targets.add(buildGenerationPath(selectedSortOrder));
@@ -386,6 +455,9 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
     }
     if (canManageGlobalUsersFlag) {
       targets.add("/admin/users");
+    }
+    for (const item of GLOBAL_RESOURCE_MENU_ITEMS) {
+      targets.add(item.href);
     }
 
     for (const path of targets) {
@@ -401,6 +473,10 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
     pathname === "/admin/generations" || pathname.startsWith("/admin/generations/");
   const isGlobalUsersActive =
     pathname === "/admin/users" || pathname.startsWith("/admin/users/");
+  const isGlobalSupportersActive =
+    pathname === "/admin/supporters" || pathname.startsWith("/admin/supporters/");
+  const isGlobalLinktreeActive =
+    pathname === "/admin/linktree" || pathname.startsWith("/admin/linktree/");
   const isProfileActive =
     pathname === "/admin/profile" || pathname.startsWith("/admin/profile/");
   const generationScopeLabel =
@@ -421,183 +497,325 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
     applyThemeMode(nextModeRaw);
   };
 
+  const handleColorStyleChange = (nextStyleRaw: string) => {
+    if (!isAdminColorStyle(nextStyleRaw)) {
+      return;
+    }
+    setColorStyle(nextStyleRaw);
+    applyColorStyle(nextStyleRaw);
+  };
+
+  const sidebarWidthClass = isMobileVariant
+    ? "w-[min(21rem,92vw)]"
+    : collapsed
+    ? "w-[4.875rem] md:w-[5.5rem]"
+    : "w-[min(21rem,100vw)] md:w-[21.5rem]";
+
+  const toggleLabel = isMobileVariant
+    ? "사이드바 닫기"
+    : collapsed
+    ? "사이드바 펼치기"
+    : "사이드바 접기";
+
   return (
     <aside
       data-testid="admin-sidebar"
-      className={`admin-sidebar-glass flex h-screen shrink-0 flex-col border-r border-gray-200 transition-[width] duration-300 ${
-        collapsed ? "w-[5.5rem]" : "w-80"
+      className={`admin-sidebar-modern admin-sidebar-glass flex h-screen shrink-0 flex-col border-r border-gray-200/80 transition-[width] duration-300 ${
+        sidebarWidthClass
       }`}
     >
-      <div className="flex items-center justify-between border-b border-gray-200 px-3 py-3">
-        <div
-          className={`min-w-0 transition-all duration-200 ${
-            collapsed ? "w-0 overflow-hidden opacity-0" : "opacity-100"
-          }`}
-        >
-          <p className="truncate text-[11px] font-semibold tracking-[0.16em] text-gray-500">
-            YONYOUNG
-          </p>
-          <p className="truncate text-sm font-semibold text-gray-700">Admin Console</p>
-        </div>
-        <button
-          type="button"
-          onClick={onToggle}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] shadow-sm hover:bg-[var(--admin-surface-subtle)]"
-          data-testid="admin-sidebar-toggle"
-          aria-label={collapsed ? "사이드바 펼치기" : "사이드바 접기"}
-        >
-          <span
-            aria-hidden="true"
-            className={`text-sm transition-transform duration-200 ${collapsed ? "rotate-180" : ""}`}
-          >
-            ❮
-          </span>
-        </button>
-      </div>
-
-      <div className="border-b border-gray-200 px-3 py-3">
-        {collapsed ? (
-          <div className="flex justify-center">
-            <span
-              className="inline-flex h-8 min-w-8 items-center justify-center rounded-full border border-gray-300 bg-gray-100 px-2 text-xs font-semibold text-gray-700"
-              title={selectedSortOrder === null ? "기수 미선택" : `${selectedSortOrder}기 선택`}
+      <div className="relative z-10 flex h-full flex-col">
+        <header className="border-b border-gray-200/80 px-3 py-3">
+          <div className="flex items-center justify-between gap-2">
+            <div
+              className={`flex min-w-0 items-center gap-2.5 transition-all duration-200 ${
+                collapsed ? "w-0 overflow-hidden opacity-0" : "opacity-100"
+              }`}
             >
-              {selectedSortOrder === null ? "?" : selectedSortOrder}
-            </span>
-          </div>
-        ) : (
-          <label className="block text-xs font-medium text-gray-600">
-            현재 작업 기수
-            <select
-              className="mt-1.5 w-full rounded-xl border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] px-3 py-2 text-sm text-[var(--admin-text-secondary)] shadow-sm"
-              value={selectedSortOrder ?? ""}
-              onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) => handleGenerationChange(event.target.value)}
-              disabled={generationOptions.length === 0 || isGenerationLoading}
-              data-testid="admin-generation-select"
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-gray-200 bg-white/90 text-base font-bold text-gray-700 shadow-sm">
+                Y
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-[10px] font-semibold tracking-[0.2em] text-gray-500">
+                  YONYOUNG
+                </p>
+                <p className="truncate text-sm font-semibold text-gray-700">
+                  Admin Workspace
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onToggle}
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] shadow-sm hover:-translate-y-px hover:bg-[var(--admin-surface-subtle)]"
+              data-testid="admin-sidebar-toggle"
+              aria-label={toggleLabel}
             >
-              {generationOptions.length === 0 ? (
-                <option value="">선택 가능한 기수 없음</option>
+              {isMobileVariant ? (
+                <X className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+              ) : collapsed ? (
+                <PanelRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
               ) : (
-                generationOptions.map(/** generationOptions.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param generation 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (generation) => (
-                  <option key={generation.id} value={generation.sortOrder}>
-                    {generation.sortOrder}기 ({generation.name})
-                  </option>
-                ))
+                <PanelLeft className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
               )}
-            </select>
-          </label>
-        )}
-      </div>
+            </button>
+          </div>
+        </header>
 
-      <nav className="flex-1 overflow-y-auto p-3" data-testid="admin-sidebar-nav">
-        <div className="space-y-3">
-          <section
-            className="rounded-2xl border border-blue-200 bg-blue-50/70 p-2"
-            data-testid="admin-nav-global-group"
-          >
-            {collapsed ? null : (
-              <p className="px-2 pb-2 text-[11px] font-semibold tracking-[0.08em] text-blue-900/80">
-                전체 기수 공통 관리
-              </p>
-            )}
-
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  href="/admin/profile"
-                  prefetch
-                  data-testid="admin-nav-profile"
-                  className={`${NAV_ITEM_BASE_CLASS} ${
-                    isProfileActive
-                      ? "border-black bg-black text-white shadow-md shadow-black/20"
-                      : "border-blue-200 text-blue-900 hover:bg-blue-100/70"
-                  } ${collapsed ? "justify-center" : "justify-start"}`}
-                  title="내 프로필"
+        <div className="border-b border-gray-200/80 px-3 py-3">
+          {collapsed ? (
+            <div className="flex justify-center">
+              <span
+                className="inline-flex h-9 min-w-9 items-center justify-center rounded-xl border border-gray-300 bg-gray-100 px-2 text-xs font-semibold text-gray-700 shadow-sm"
+                title={
+                  selectedSortOrder === null
+                    ? "작업 기수 미선택"
+                    : `${selectedSortOrder}기 선택`
+                }
+              >
+                {selectedSortOrder === null ? "?" : selectedSortOrder}
+              </span>
+            </div>
+          ) : (
+            <section className="rounded-2xl border border-gray-200 bg-white/90 p-3">
+              <label className="block text-xs font-semibold tracking-[0.08em] text-gray-500">
+                현재 작업 기수
+                <select
+                  className="mt-2 w-full rounded-xl border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] px-3 py-2 text-sm text-[var(--admin-text-secondary)] shadow-sm"
+                  value={selectedSortOrder ?? ""}
+                  onChange={(event) => handleGenerationChange(event.target.value)}
+                  disabled={generationOptions.length === 0 || isGenerationLoading}
+                  data-testid="admin-generation-select"
                 >
-                  <SidebarIcon name="profile" />
-                  {collapsed ? (
-                    <span className="sr-only">내 프로필</span>
+                  {generationOptions.length === 0 ? (
+                    <option value="">선택 가능한 기수 없음</option>
                   ) : (
-                    <>
-                      <span className={`${NAV_ITEM_SCOPE_BADGE_CLASS} border-blue-200 bg-blue-50/70 text-blue-900`}>
-                        전체
-                      </span>
-                      <span className="ml-2">내 프로필</span>
-                    </>
+                    generationOptions.map((generation) => (
+                      <option key={generation.id} value={generation.sortOrder}>
+                        {generation.sortOrder}기 ({generation.name})
+                      </option>
+                    ))
                   )}
-                </Link>
-              </li>
-
-              {canManageGenerationsFlag ? (
-                <li>
-                  <Link
-                    href="/admin/generations"
-                    prefetch
-                    data-testid="admin-nav-generation-settings"
-                    className={`${NAV_ITEM_BASE_CLASS} ${
-                      isGenerationSettingsActive
-                        ? "border-black bg-black text-white shadow-md shadow-black/20"
-                        : "border-blue-200 text-blue-900 hover:bg-blue-100/70"
-                    } ${collapsed ? "justify-center" : "justify-start"}`}
-                    title="기수 설정"
-                  >
-                    <SidebarIcon name="generations" />
-                    {collapsed ? (
-                      <span className="sr-only">기수 설정</span>
-                    ) : (
-                      <>
-                        <span className={`${NAV_ITEM_SCOPE_BADGE_CLASS} border-blue-200 bg-blue-50/70 text-blue-900`}>
-                          전체
-                        </span>
-                        <span className="ml-2">기수 설정</span>
-                      </>
-                    )}
-                  </Link>
-                </li>
-              ) : null}
-              {canManageGlobalUsersFlag ? (
-                <li>
-                  <Link
-                    href="/admin/users"
-                    prefetch
-                    data-testid="admin-nav-global-users"
-                    className={`${NAV_ITEM_BASE_CLASS} ${
-                      isGlobalUsersActive
-                        ? "border-black bg-black text-white shadow-md shadow-black/20"
-                        : "border-blue-200 text-blue-900 hover:bg-blue-100/70"
-                    } ${collapsed ? "justify-center" : "justify-start"}`}
-                    title="사용자 관리"
-                  >
-                    <SidebarIcon name="users" />
-                    {collapsed ? (
-                      <span className="sr-only">사용자 관리</span>
-                    ) : (
-                      <>
-                        <span className={`${NAV_ITEM_SCOPE_BADGE_CLASS} border-blue-200 bg-blue-50/70 text-blue-900`}>
-                          전체
-                        </span>
-                        <span className="ml-2">사용자 관리</span>
-                      </>
-                    )}
-                  </Link>
-                </li>
-              ) : null}
-            </ul>
-          </section>
-
-          <section
-            className="rounded-2xl border border-gray-200 bg-white p-2"
-            data-testid="admin-nav-generation-group"
-          >
-            {collapsed ? null : (
-              <p className="px-2 pb-2 text-[11px] font-semibold tracking-[0.08em] text-gray-500">
-                선택 기수별 관리
+                </select>
+              </label>
+              <p className="mt-2 text-[11px] text-gray-500">
+                접근 가능 기수 {generationOptions.length}개
               </p>
-            )}
+            </section>
+          )}
+        </div>
 
-            <ul className="space-y-2">
-              {RESOURCE_MENU_ITEMS.map(
-                /** RESOURCE_MENU_ITEMS.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => {
+        <nav
+          className="admin-sidebar-scroll flex-1 overflow-y-auto px-3 py-4"
+          data-testid="admin-sidebar-nav"
+        >
+          <div className="space-y-4">
+            <section
+              className="rounded-3xl border border-[var(--admin-global-border)] bg-[var(--admin-global-surface)] p-2.5"
+              data-testid="admin-nav-global-group"
+            >
+              {collapsed ? null : (
+                <div className="flex items-center justify-between px-2 pb-2">
+                  <p className="text-[11px] font-semibold tracking-[0.12em] text-[var(--admin-global-text)]">
+                    전역 관리
+                  </p>
+                  <span className="rounded-full border border-[var(--admin-global-border)] bg-white/70 px-2 py-0.5 text-[10px] font-semibold text-[var(--admin-global-text)]">
+                    ALL
+                  </span>
+                </div>
+              )}
+
+              <ul className="space-y-2">
+                <li>
+                  <Link
+                    href="/admin/profile"
+                    prefetch
+                    data-testid="admin-nav-profile"
+                    className={getNavItemClassName({
+                      active: isProfileActive,
+                      collapsed,
+                      tone: "global",
+                    })}
+                    title="내 프로필"
+                  >
+                    <span
+                      className={getNavIconWrapperClassName({
+                        active: isProfileActive,
+                        tone: "global",
+                      })}
+                    >
+                      <SidebarIcon name="profile" />
+                    </span>
+                    {collapsed ? (
+                      <span className="sr-only">내 프로필</span>
+                    ) : (
+                      <>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-semibold">내 프로필</p>
+                          <p className="truncate text-[11px] opacity-75">계정 정보 및 접근 권한</p>
+                        </div>
+                        <span
+                          className={`${NAV_ITEM_SCOPE_BADGE_CLASS} border-[var(--admin-global-border)] bg-white/70 text-[var(--admin-global-text)]`}
+                        >
+                          전체
+                        </span>
+                      </>
+                    )}
+                  </Link>
+                </li>
+
+                {canManageGenerationsFlag ? (
+                  <li>
+                    <Link
+                      href="/admin/generations"
+                      prefetch
+                      data-testid="admin-nav-generation-settings"
+                      className={getNavItemClassName({
+                        active: isGenerationSettingsActive,
+                        collapsed,
+                        tone: "global",
+                      })}
+                      title="기수 설정"
+                    >
+                      <span
+                        className={getNavIconWrapperClassName({
+                          active: isGenerationSettingsActive,
+                          tone: "global",
+                        })}
+                      >
+                        <SidebarIcon name="generations" />
+                      </span>
+                      {collapsed ? (
+                        <span className="sr-only">기수 설정</span>
+                      ) : (
+                        <>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-semibold">기수 설정</p>
+                            <p className="truncate text-[11px] opacity-75">기수 생성/수정 및 정렬</p>
+                          </div>
+                          <span
+                            className={`${NAV_ITEM_SCOPE_BADGE_CLASS} border-[var(--admin-global-border)] bg-white/70 text-[var(--admin-global-text)]`}
+                          >
+                            전체
+                          </span>
+                        </>
+                      )}
+                    </Link>
+                  </li>
+                ) : null}
+
+                {GLOBAL_RESOURCE_MENU_ITEMS.map((item) => {
+                  const active =
+                    item.href === "/admin/supporters"
+                      ? isGlobalSupportersActive
+                      : isGlobalLinktreeActive;
+                  const description =
+                    item.href === "/admin/supporters"
+                      ? "스폰서 노출 상태 관리"
+                      : "카테고리 및 링크 구조 관리";
+
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        prefetch
+                        data-testid={item.testId}
+                        className={getNavItemClassName({
+                          active,
+                          collapsed,
+                          tone: "global",
+                        })}
+                        title={item.label}
+                      >
+                        <span
+                          className={getNavIconWrapperClassName({
+                            active,
+                            tone: "global",
+                          })}
+                        >
+                          <SidebarIcon name={item.icon} />
+                        </span>
+                        {collapsed ? (
+                          <span className="sr-only">{item.label}</span>
+                        ) : (
+                          <>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate font-semibold">{item.label}</p>
+                              <p className="truncate text-[11px] opacity-75">{description}</p>
+                            </div>
+                            <span
+                              className={`${NAV_ITEM_SCOPE_BADGE_CLASS} border-[var(--admin-global-border)] bg-white/70 text-[var(--admin-global-text)]`}
+                            >
+                              전체
+                            </span>
+                          </>
+                        )}
+                      </Link>
+                    </li>
+                  );
+                })}
+
+                {canManageGlobalUsersFlag ? (
+                  <li>
+                    <Link
+                      href="/admin/users"
+                      prefetch
+                      data-testid="admin-nav-global-users"
+                      className={getNavItemClassName({
+                        active: isGlobalUsersActive,
+                        collapsed,
+                        tone: "global",
+                      })}
+                      title="사용자 권한"
+                    >
+                      <span
+                        className={getNavIconWrapperClassName({
+                          active: isGlobalUsersActive,
+                          tone: "global",
+                        })}
+                      >
+                        <SidebarIcon name="users" />
+                      </span>
+                      {collapsed ? (
+                        <span className="sr-only">사용자 권한</span>
+                      ) : (
+                        <>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-semibold">사용자 권한</p>
+                            <p className="truncate text-[11px] opacity-75">
+                              다중 선택 권한 일괄 변경
+                            </p>
+                          </div>
+                          <span
+                            className={`${NAV_ITEM_SCOPE_BADGE_CLASS} border-[var(--admin-global-border)] bg-white/70 text-[var(--admin-global-text)]`}
+                          >
+                            전체
+                          </span>
+                        </>
+                      )}
+                    </Link>
+                  </li>
+                ) : null}
+              </ul>
+            </section>
+
+            <section
+              className="rounded-3xl border border-gray-200 bg-white/90 p-2.5"
+              data-testid="admin-nav-generation-group"
+            >
+              {collapsed ? null : (
+                <div className="flex items-center justify-between px-2 pb-2">
+                  <p className="text-[11px] font-semibold tracking-[0.12em] text-gray-500">
+                    기수별 관리
+                  </p>
+                  <span className="rounded-full border border-gray-200 bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600">
+                    {generationScopeLabel}
+                  </span>
+                </div>
+              )}
+
+              <ul className="space-y-2">
+                {RESOURCE_MENU_ITEMS.map((item) => {
                   const href =
                     selectedSortOrder === null
                       ? "/admin"
@@ -607,6 +825,12 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
                     selectedSortOrder,
                     item.resourcePath,
                   );
+                  const description =
+                    item.resourcePath === "activities"
+                      ? "활동 일정 및 이미지 기록"
+                      : item.resourcePath === "exhibitions"
+                      ? "전시 정보 및 사진 관리"
+                      : "기수별 멤버와 역할 관리";
 
                   return (
                     <li key={item.resourcePath}>
@@ -614,87 +838,145 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
                         href={href}
                         prefetch
                         data-testid={`admin-nav-${item.shortLabel.toLowerCase()}`}
-                        className={`${NAV_ITEM_BASE_CLASS} ${
-                          active
-                            ? "border-black bg-black text-white shadow-md shadow-black/20"
-                            : "border-gray-200 text-gray-700 hover:bg-gray-100"
-                        } ${collapsed ? "justify-center" : "justify-start"}`}
+                        className={getNavItemClassName({
+                          active,
+                          collapsed,
+                          tone: "generation",
+                        })}
                         title={item.label}
                       >
-                        <SidebarIcon name={item.icon} />
+                        <span
+                          className={getNavIconWrapperClassName({
+                            active,
+                            tone: "generation",
+                          })}
+                        >
+                          <SidebarIcon name={item.icon} />
+                        </span>
                         {collapsed ? (
                           <span className="sr-only">{item.label}</span>
                         ) : (
                           <>
-                            <span className={`${NAV_ITEM_SCOPE_BADGE_CLASS} border-gray-300 bg-gray-100 text-gray-600`}>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate font-semibold">{item.label}</p>
+                              <p className="truncate text-[11px] text-gray-500">{description}</p>
+                            </div>
+                            <span
+                              className={`${NAV_ITEM_SCOPE_BADGE_CLASS} border-gray-300 bg-gray-100 text-gray-600`}
+                            >
                               {generationScopeLabel}
                             </span>
-                            <span className="ml-2">{item.label}</span>
                           </>
                         )}
                       </Link>
                     </li>
                   );
-                },
-              )}
-            </ul>
-          </section>
-        </div>
-
-      </nav>
-
-      <div className="space-y-2 border-t border-gray-200 p-3">
-        {collapsed ? (
-          <div className="flex justify-center" data-testid="admin-user-summary-collapsed">
-            <div
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-300 bg-gray-100 text-sm font-semibold text-gray-700 shadow-sm"
-              title={`${userDisplayName} (${session.user.email})`}
-              aria-label={`${userDisplayName} 프로필`}
-            >
-              {userInitial}
-            </div>
+                })}
+              </ul>
+            </section>
           </div>
-        ) : (
-          <section
-            className="rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2.5"
-            data-testid="admin-user-summary"
-          >
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white text-sm font-semibold text-gray-700">
+        </nav>
+
+        <div className="space-y-2.5 border-t border-gray-200/80 p-3">
+          {collapsed ? (
+            <div className="flex justify-center" data-testid="admin-user-summary-collapsed">
+              <div
+                className="flex h-11 w-11 items-center justify-center rounded-2xl border border-gray-300 bg-gray-100 text-sm font-semibold text-gray-700 shadow-sm"
+                title={`${userDisplayName} (${session.user.email})`}
+                aria-label={`${userDisplayName} 프로필`}
+              >
                 {userInitial}
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-gray-700">{userDisplayName}</p>
-                <p className="truncate text-xs text-gray-500">{session.user.email}</p>
-              </div>
             </div>
-            <p className="mt-2 text-[11px] text-gray-500">
-              권한: <span className="font-semibold text-gray-700">{userRoleLabel}</span>
-            </p>
-          </section>
-        )}
+          ) : (
+            <section
+              className="rounded-2xl border border-gray-200 bg-white/90 px-3 py-2.5"
+              data-testid="admin-user-summary"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-gray-300 bg-gray-100 text-sm font-semibold text-gray-700">
+                  {userInitial}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-gray-700">{userDisplayName}</p>
+                  <p className="truncate text-xs text-gray-500">{session.user.email}</p>
+                </div>
+              </div>
+              <p className="mt-2 text-[11px] text-gray-500">
+                권한: <span className="font-semibold text-gray-700">{userRoleLabel}</span>
+              </p>
+            </section>
+          )}
 
-        <label
-          className={`inline-flex items-center rounded-xl border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] shadow-sm ${
-            collapsed ? "w-11 justify-center px-1" : "w-full justify-between px-3"
-          }`}
-        >
-          <span className={collapsed ? "sr-only" : "text-sm font-medium"}>테마</span>
-          <select
-            value={themeMode}
-            onChange={(event) => handleThemeModeChange(event.target.value)}
-            className={`h-10 rounded-xl bg-transparent text-sm outline-none ${
-              collapsed ? "w-9 text-center text-[11px]" : "w-[8.5rem] text-right"
+          <label
+            className={`inline-flex items-center rounded-2xl border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] shadow-sm ${
+              collapsed ? "w-11 justify-center px-1" : "w-full justify-between px-3"
             }`}
-            data-testid="admin-theme-toggle"
-            aria-label="관리자 테마 선택"
           >
-            <option value="light">{collapsed ? "L" : "라이트"}</option>
-            <option value="dark">{collapsed ? "D" : "다크"}</option>
-            <option value="system">{collapsed ? "S" : "기기"}</option>
-          </select>
-        </label>
-        <LogoutButton compact={collapsed} />
+            {collapsed ? (
+              <Palette className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
+            ) : (
+              <span className="inline-flex items-center gap-2 text-sm font-medium">
+                <Palette className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
+                스타일
+              </span>
+            )}
+            <select
+              value={colorStyle}
+              onChange={(event) => handleColorStyleChange(event.target.value)}
+              className={`h-10 rounded-2xl bg-transparent text-sm outline-none ${
+                collapsed ? "pointer-events-none w-0 opacity-0" : "w-[8.5rem] text-right"
+              }`}
+              data-testid="admin-color-style-toggle"
+              aria-label="관리자 색상 스타일 선택"
+            >
+              <option value="ocean">Ocean</option>
+              <option value="graphite">Graphite</option>
+              <option value="forest">Forest</option>
+            </select>
+          </label>
+
+          <label
+            className={`inline-flex items-center rounded-2xl border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] shadow-sm ${
+              collapsed ? "w-11 justify-center px-1" : "w-full justify-between px-3"
+            }`}
+          >
+            {collapsed ? (
+              themeMode === "light" ? (
+                <Sun className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
+              ) : themeMode === "dark" ? (
+                <Moon className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
+              ) : (
+                <Monitor className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
+              )
+            ) : (
+              <span className="inline-flex items-center gap-2 text-sm font-medium">
+                {themeMode === "light" ? (
+                  <Sun className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
+                ) : themeMode === "dark" ? (
+                  <Moon className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
+                ) : (
+                  <Monitor className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
+                )}
+                테마
+              </span>
+            )}
+            <select
+              value={themeMode}
+              onChange={(event) => handleThemeModeChange(event.target.value)}
+              className={`h-10 rounded-2xl bg-transparent text-sm outline-none ${
+                collapsed ? "w-9 text-center text-[11px]" : "w-[8.5rem] text-right"
+              }`}
+              data-testid="admin-theme-toggle"
+              aria-label="관리자 테마 선택"
+            >
+              <option value="light">{collapsed ? "L" : "라이트"}</option>
+              <option value="dark">{collapsed ? "D" : "다크"}</option>
+              <option value="system">{collapsed ? "S" : "기기"}</option>
+            </select>
+          </label>
+          <LogoutButton compact={collapsed} />
+        </div>
       </div>
     </aside>
   );

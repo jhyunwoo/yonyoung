@@ -1,7 +1,9 @@
 export {
   type ApiActivity,
   type ApiActivityImage,
+  type ApiAdminDashboardStats,
   type ApiAdminUpdateUserInput,
+  type ApiBulkUpdateUserRoleInput,
   type ApiCreateActivityImageInput,
   type ApiCreateActivityInput,
   type ApiCreateExhibitionImageInput,

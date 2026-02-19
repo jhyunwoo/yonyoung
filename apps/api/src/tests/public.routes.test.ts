@@ -18,11 +18,13 @@ describe("public routes", () => {
     const listPublicActivities = fn(async () => [
       createActivity({
         id: "20000000-0000-4000-8000-000000000012",
-        activityDate: new Date("2026-01-01T00:00:00.000Z"),
+        startDate: new Date("2026-01-01T00:00:00.000Z"),
+        endDate: new Date("2026-01-05T00:00:00.000Z"),
       }),
       createActivity({
         id: "20000000-0000-4000-8000-000000000011",
-        activityDate: new Date("2025-01-01T00:00:00.000Z"),
+        startDate: new Date("2025-01-01T00:00:00.000Z"),
+        endDate: new Date("2025-01-05T00:00:00.000Z"),
       }),
     ]);
     const app = createTestApp({

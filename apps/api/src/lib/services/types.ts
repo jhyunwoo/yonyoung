@@ -21,7 +21,8 @@ export type ActivityEntity = {
   id: string;
   title: string;
   description: string;
-  activityDate: Date;
+  startDate: Date;
+  endDate: Date;
   coverImageUrl: string;
   generationId: string;
   createdAt: Date;
@@ -93,6 +94,17 @@ export type UserEntity = {
   updatedAt: Date;
 };
 
+export type AdminDashboardStatsEntity = {
+  usersTotal: number;
+  unverifiedUsersTotal: number;
+  generationsTotal: number;
+  selectedGenerationMembersTotal: number;
+  selectedGenerationActivitiesTotal: number;
+  selectedGenerationExhibitionsTotal: number;
+  activeSupportersTotal: number;
+  linktreeLinksTotal: number;
+};
+
 export type DataService = {
   listGenerations: () => Promise<GenerationEntity[]>;
   createGeneration: (input: {
@@ -118,7 +130,8 @@ export type DataService = {
   createActivity: (input: {
     title: string;
     description: string;
-    activityDate: number;
+    startDate: number;
+    endDate: number;
     coverImageUrl: string;
     generationId: string;
   }) => Promise<ActivityEntity>;
@@ -128,7 +141,8 @@ export type DataService = {
     input: Partial<{
       title: string;
       description: string;
-      activityDate: number;
+      startDate: number;
+      endDate: number;
       coverImageUrl: string;
       generationId: string;
     }>,
@@ -265,6 +279,11 @@ export type DataService = {
       generationId: string | null;
     }>,
   ) => Promise<UserEntity | null>;
+  bulkUpdateUsersRole: (input: {
+    userIds: string[];
+    role: string;
+  }) => Promise<UserEntity[]>;
+  getAdminDashboardStats: (generationSortOrder: number | null) => Promise<AdminDashboardStatsEntity>;
   deleteUser: (id: string) => Promise<boolean>;
 };
 

@@ -57,7 +57,8 @@ export type ApiActivity = {
   id: string;
   title: string;
   description: string;
-  activityDate: number;
+  startDate: number;
+  endDate: number;
   coverImageUrl: string;
   generationId: string;
   createdAt: number;
@@ -68,7 +69,8 @@ export type ApiActivity = {
 export type ApiCreateActivityInput = {
   title: string;
   description: string;
-  activityDate: number;
+  startDate: number;
+  endDate: number;
   coverImageUrl: string;
   generationId: string;
 };
@@ -243,6 +245,22 @@ export type ApiMemberProfileUpdateInput = {
 };
 
 export type ApiUpdateUserInput = ApiAdminUpdateUserInput | ApiMemberProfileUpdateInput;
+
+export type ApiBulkUpdateUserRoleInput = {
+  userIds: string[];
+  role: CoreRole;
+};
+
+export type ApiAdminDashboardStats = {
+  usersTotal: number;
+  unverifiedUsersTotal: number;
+  generationsTotal: number;
+  selectedGenerationMembersTotal: number;
+  selectedGenerationActivitiesTotal: number;
+  selectedGenerationExhibitionsTotal: number;
+  activeSupportersTotal: number;
+  linktreeLinksTotal: number;
+};
 
 export type ApiPresignRequest = {
   fileName: string;
