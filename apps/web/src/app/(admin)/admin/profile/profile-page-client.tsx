@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { STUDENT_NUMBER_REGEX } from "@repo/shared-auth/profile";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
 import type {
   ApiMemberProfileUpdateInput,
@@ -15,6 +16,8 @@ import AdminPageHeader from "../components/admin-page-header";
 
 type ProfilePageClientProps = {
   userId: string;
+  mode?: "admin" | "auth";
+  successRedirectPath?: string;
 };
 
 type ProfileFormState = {
@@ -39,8 +42,6 @@ const emptyForm: ProfileFormState = {
   phoneNumber: "",
 };
 
-const STUDENT_NUMBER_PATTERN = /^\d{10}$/;
-
 const toTrimmed = (value: string): string => value.trim();
 
 /**
@@ -49,8 +50,13 @@ const toTrimmed = (value: string): string => value.trim();
  * @returns 렌더링할 JSX 트리를 반환합니다.
  * @remarks UI 상태와 권한 조건이 변경될 때 렌더링 분기가 달라질 수 있습니다.
  */
-export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
+export default function ProfilePageClient({
+  userId,
+  mode = "admin",
+  successRedirectPath = "/admin",
+}: ProfilePageClientProps) {
   const router = useRouter();
+  const isAuthMode = mode === "auth";
   const [profile, setProfile] = useState<ApiUser | null>(null);
   const [form, setForm] = useState<ProfileFormState>(emptyForm);
   const [isLoading, setIsLoading] = useState(true);
@@ -127,7 +133,7 @@ export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
     }
 
     const studentNumber = toTrimmed(form.studentNumber);
-    if (!STUDENT_NUMBER_PATTERN.test(studentNumber)) {
+    if (!STUDENT_NUMBER_REGEX.test(studentNumber)) {
       setErrorMessage("학번은 숫자 10자리로 입력해 주세요.");
       return;
     }
@@ -149,8 +155,8 @@ export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
       };
 
       await adminResourceApi.updateUser(profile.id, payload);
-      setSuccessMessage("프로필 정보를 저장했습니다. 관리자 메인으로 이동합니다.");
-      router.replace("/admin");
+      setSuccessMessage("기본 정보를 저장했습니다. 계속 진행합니다.");
+      router.replace(successRedirectPath);
       router.refresh();
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
@@ -162,13 +168,19 @@ export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
   return (
     <div className="space-y-6" data-testid="admin-profile-page">
       <AdminPageHeader
-        title="내 프로필"
-        description="관리자 계정의 기본 학적 정보를 입력/수정합니다."
+        title={isAuthMode ? "기본 정보 입력" : "내 프로필"}
+        description={
+          isAuthMode
+            ? "회원가입 후 필요한 기본 정보를 입력해 주세요."
+            : "관리자 계정의 기본 학적 정보를 입력/수정합니다."
+        }
         guidance="성, 이름, 대학, 학과, 학번(10자리), 전화번호는 모두 필수입니다."
       />
 
       <AdminInfoBox title="필수 입력 안내">
-        로그인 후 필수 프로필 정보가 비어 있으면 이 화면으로 자동 이동합니다.
+        {isAuthMode
+          ? "미인증 상태에서도 기본 정보를 입력하고 저장할 수 있습니다."
+          : "로그인 후 필수 프로필 정보가 비어 있으면 이 화면으로 자동 이동합니다."}
       </AdminInfoBox>
 
       {errorMessage ? (
@@ -190,105 +202,111 @@ export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
       ) : null}
 
       {isLoading ? (
-        <section className="rounded-lg border border-gray-200 bg-white p-4">
+        <section className="rounded-2xl border border-gray-200/80 bg-white p-5 shadow-sm">
           <p className="text-sm text-gray-500">프로필 정보를 불러오는 중...</p>
         </section>
       ) : profile ? (
         <form
-          className="space-y-4 rounded-lg border border-gray-200 bg-white p-4"
+          className="space-y-5 rounded-2xl border border-gray-200/80 bg-white p-5 shadow-sm md:p-6"
           data-testid="admin-profile-form"
           onSubmit={handleSubmit}
         >
           <label className="block text-sm">
-            <span className="mb-1 block">표시 이름</span>
+            <span className="mb-1 block text-gray-700">표시 이름</span>
             <input
               type="text"
               value={form.name}
               onChange={(event) =>
                 setForm((previous) => ({ ...previous, name: event.target.value }))
               }
-              className="w-full rounded-md border border-gray-300 px-3 py-2"
+              placeholder="예: 김연영"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 transition focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
               required
               data-testid="admin-profile-name"
             />
           </label>
 
           <label className="block text-sm">
-            <span className="mb-1 block">별칭 (선택)</span>
+            <span className="mb-1 block text-gray-700">별칭 (선택)</span>
             <input
               type="text"
               value={form.nickname}
               onChange={(event) =>
                 setForm((previous) => ({ ...previous, nickname: event.target.value }))
               }
-              className="w-full rounded-md border border-gray-300 px-3 py-2"
+              placeholder="예: 연영이"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 transition focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
               data-testid="admin-profile-nickname"
             />
           </label>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2">
             <label className="block text-sm">
-              <span className="mb-1 block">성</span>
+              <span className="mb-1 block text-gray-700">성</span>
               <input
                 type="text"
                 value={form.familyName}
                 onChange={(event) =>
                   setForm((previous) => ({ ...previous, familyName: event.target.value }))
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                placeholder="예: 김"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 transition focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 required
                 data-testid="admin-profile-family-name"
               />
             </label>
 
             <label className="block text-sm">
-              <span className="mb-1 block">이름</span>
+              <span className="mb-1 block text-gray-700">이름</span>
               <input
                 type="text"
                 value={form.givenName}
                 onChange={(event) =>
                   setForm((previous) => ({ ...previous, givenName: event.target.value }))
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                placeholder="예: 연영"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 transition focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 required
                 data-testid="admin-profile-given-name"
               />
             </label>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2">
             <label className="block text-sm">
-              <span className="mb-1 block">대학</span>
+              <span className="mb-1 block text-gray-700">대학</span>
               <input
                 type="text"
                 value={form.college}
                 onChange={(event) =>
                   setForm((previous) => ({ ...previous, college: event.target.value }))
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                placeholder="예: 문과대학"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 transition focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 required
                 data-testid="admin-profile-college"
               />
             </label>
 
             <label className="block text-sm">
-              <span className="mb-1 block">학과</span>
+              <span className="mb-1 block text-gray-700">학과</span>
               <input
                 type="text"
                 value={form.department}
                 onChange={(event) =>
                   setForm((previous) => ({ ...previous, department: event.target.value }))
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                placeholder="예: 국어국문학과"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 transition focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 required
                 data-testid="admin-profile-department"
               />
             </label>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2">
             <label className="block text-sm">
-              <span className="mb-1 block">학번 (10자리)</span>
+              <span className="mb-1 block text-gray-700">학번 (10자리)</span>
               <input
                 type="text"
                 inputMode="numeric"
@@ -300,21 +318,23 @@ export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
                     studentNumber: event.target.value,
                   }))
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                placeholder="예: 2026000123"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 transition focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 required
                 data-testid="admin-profile-student-number"
               />
             </label>
 
             <label className="block text-sm">
-              <span className="mb-1 block">전화번호</span>
+              <span className="mb-1 block text-gray-700">전화번호</span>
               <input
                 type="text"
                 value={form.phoneNumber}
                 onChange={(event) =>
                   setForm((previous) => ({ ...previous, phoneNumber: event.target.value }))
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                placeholder="예: 010-1234-5678"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 transition focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 required
                 data-testid="admin-profile-phone-number"
               />
@@ -322,7 +342,10 @@ export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
           </div>
 
           {!isProfileComplete ? (
-            <p className="text-sm text-amber-700" data-testid="admin-profile-incomplete-hint">
+            <p
+              className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-700"
+              data-testid="admin-profile-incomplete-hint"
+            >
               필수 항목이 비어 있습니다. 모두 입력 후 저장해 주세요.
             </p>
           ) : null}
@@ -340,7 +363,7 @@ export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
           </div>
         </form>
       ) : (
-        <section className="rounded-lg border border-gray-200 bg-white p-4">
+        <section className="rounded-2xl border border-gray-200/80 bg-white p-5 shadow-sm">
           <p className="text-sm text-gray-500">
             프로필 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
           </p>

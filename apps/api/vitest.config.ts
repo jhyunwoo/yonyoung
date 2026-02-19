@@ -7,6 +7,21 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
+      exclude: [
+        "src/lib/auth.ts",
+        "src/lib/auth/session.ts",
+        "src/lib/db/schema.ts",
+        "src/lib/openapi/descriptions.ts",
+        "src/lib/openapi/enrich.ts",
+        "src/lib/openapi/merge.ts",
+        "src/lib/services/db-service.ts",
+      ],
+      thresholds: {
+        lines: 90,
+        functions: 90,
+        statements: 90,
+        branches: 85,
+      },
     },
   },
 });

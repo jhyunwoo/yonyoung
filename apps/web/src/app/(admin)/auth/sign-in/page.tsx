@@ -29,7 +29,7 @@ export default function SignInPage() {
     setErrorMessage(null);
     setIsGooglePending(true);
 
-    const callbackURL = `${window.location.origin}/admin`;
+    const callbackURL = `${window.location.origin}/auth/profile`;
     const result = await signInWithGoogle({
       callbackURL,
       disableRedirect: true,
@@ -68,7 +68,7 @@ export default function SignInPage() {
       return;
     }
 
-    router.replace("/admin");
+    router.replace("/auth/profile");
     router.refresh();
   };
 

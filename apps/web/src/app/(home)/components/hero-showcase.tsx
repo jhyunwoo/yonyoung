@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
@@ -89,11 +90,15 @@ export default function HeroShowcase({
           >
             <div className="relative aspect-[4/3]">
               {featuredExhibition ? (
-                <img
+                <Image
                   src={featuredExhibition.coverImageUrl}
                   alt={featuredExhibition.title}
+                  fill
+                  sizes="(min-width: 768px) 40vw, 100vw"
                   className="h-full w-full object-cover"
                   data-testid="home-hero-exhibition-image"
+                  fetchPriority="high"
+                  priority
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-(--surface-muted) text-sm text-(--text-muted)">

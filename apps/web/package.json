@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint src",
+    "lint": "eslint src --max-warnings 0",
     "test": "pnpm run test:unit && pnpm run test:e2e",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
@@ -23,28 +23,32 @@
   "dependencies": {
     "@better-auth/passkey": "^1.4.18",
     "@opennextjs/cloudflare": "^1.16.5",
+    "@repo/shared-api-contracts": "workspace:*",
+    "@repo/shared-auth": "workspace:*",
+    "@repo/shared-http": "workspace:*",
     "better-auth": "^1.4.18",
-    "framer-motion": "^12.34.0",
+    "framer-motion": "^12.34.2",
     "next": "^16.1.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
-    "@playwright/test": "^1.56.1",
+    "@playwright/test": "^1.58.2",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@tailwindcss/postcss": "^4.1.18",
+    "@tailwindcss/postcss": "^4.2.0",
     "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.0",
+    "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20.19.33",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^9.39.2",
-    "jsdom": "^27.2.0",
-    "tailwindcss": "^4.1.18",
+    "jsdom": "^27.4.0",
+    "tailwindcss": "^4.2.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18",
-    "wrangler": "^4.65.0"
+    "wrangler": "^4.66.0"
   }
 }

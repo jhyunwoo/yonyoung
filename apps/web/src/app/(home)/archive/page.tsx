@@ -1,11 +1,15 @@
+import type { Metadata } from "next";
+import Image from "next/image";
 import MotionReveal from "../components/motion-reveal";
 import SectionShell from "../components/section-shell";
+import SupporterGrid from "../components/supporter-grid";
 import {
   listPublicActivities,
   listPublicExhibitions,
   listPublicSupporters,
   safeList,
 } from "../../../lib/public-api";
+import { createPageMetadata } from "../../../lib/seo";
 
 const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
   year: "numeric",
@@ -14,6 +18,14 @@ const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
 });
 
 const formatDate = (value: number): string => dateFormatter.format(value);
+
+export const metadata: Metadata = createPageMetadata({
+  title: "활동 아카이브 | 연영회",
+  description:
+    "연영회의 활동 기록, 전시 아카이브, 후원사 정보를 한 곳에서 확인할 수 있습니다.",
+  path: "/archive",
+  keywords: ["연영회 아카이브", "연영회 전시", "연영회 활동", "사진 전시 기록"],
+});
 
 /**
  * ArchivePage 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
@@ -67,9 +79,12 @@ export default async function ArchivePage() {
                   data-testid={`archive-activity-card-${activity.id}`}
                 >
                   <div className="aspect-[4/3]">
-                    <img
+                    <Image
                       src={activity.coverImageUrl}
                       alt={activity.title}
+                      width={640}
+                      height={480}
+                      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                       className="h-full w-full object-cover"
                     />
                   </div>
@@ -97,42 +112,13 @@ export default async function ArchivePage() {
         description="연영회의 활동을 함께 만들어가는 파트너입니다."
         className="bg-(--surface-elevated)/60"
       >
-        <div
-          className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
-          data-testid="archive-supporters"
-        >
-          {supporters.length === 0 ? (
-            <div className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-6 text-sm text-(--text-secondary)">
-              공개된 서포터즈 정보가 없습니다.
-            </div>
-          ) : (
-            supporters.map((supporter, index) => (
-              <MotionReveal key={supporter.id} delay={index * 0.03}>
-                <a
-                  href={supporter.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group block rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-4 transition hover:border-(--accent)"
-                  data-testid={`archive-supporter-card-${supporter.id}`}
-                >
-                  <div className="mb-4 flex h-12 items-center justify-center rounded-xl bg-(--surface-muted) px-3">
-                    <img
-                      src={supporter.logoUrl}
-                      alt={supporter.name}
-                      className="max-h-8 w-auto object-contain"
-                    />
-                  </div>
-                  <p className="text-sm font-medium text-(--text-primary)">
-                    {supporter.name}
-                  </p>
-                  <p className="mt-1 text-xs text-(--text-muted)">
-                    만료일 {formatDate(supporter.expiresAt)}
-                  </p>
-                </a>
-              </MotionReveal>
-            ))
-          )}
-        </div>
+        <SupporterGrid
+          supporters={supporters}
+          emptyMessage="공개된 서포터즈 정보가 없습니다."
+          containerTestId="archive-supporters"
+          cardTestIdPrefix="archive-supporter-card"
+          showExpiresAt
+        />
       </SectionShell>
 
       <SectionShell
@@ -153,9 +139,12 @@ export default async function ArchivePage() {
                   data-testid={`archive-exhibition-card-${exhibition.id}`}
                 >
                   <div className="aspect-[4/3] md:aspect-auto">
-                    <img
+                    <Image
                       src={exhibition.coverImageUrl}
                       alt={exhibition.title}
+                      width={720}
+                      height={540}
+                      sizes="(min-width: 768px) 46vw, 100vw"
                       className="h-full w-full object-cover"
                     />
                   </div>

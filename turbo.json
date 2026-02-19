@@ -9,7 +9,15 @@
     },
     "lint": {
       "dependsOn": ["^lint"],
-      "env": ["AUTH_API_URL", "NEXT_PUBLIC_AUTH_API_URL"]
+      "env": [
+        "AUTH_API_URL",
+        "E2E_API_URL",
+        "NEXT_PUBLIC_AUTH_API_URL",
+        "NEXT_PUBLIC_SITE_URL",
+        "NODE_ENV",
+        "REVALIDATE_SECRET",
+        "E2E_SUITE_MODE"
+      ]
     },
     "check-types": {
       "dependsOn": ["^check-types"]

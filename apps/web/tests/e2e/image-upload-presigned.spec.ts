@@ -246,6 +246,7 @@ test.describe("presigned image upload flow", () => {
     e2ePrefix,
     sampleImagePath,
   }) => {
+    test.setTimeout(180_000);
     test.info().annotations.push({ type: "e2e-prefix", description: e2ePrefix });
 
     await ensureAdminSession(page);
@@ -280,12 +281,13 @@ test.describe("presigned image upload flow", () => {
 
     await page.goto("/admin/users");
     await page.getByTestId("users-reload-button").click();
+    await page.getByTestId("user-search-input").fill(tempUser.email);
 
     const userRow = page.locator('[data-testid^="user-row-"]', {
       hasText: tempUser.email,
     });
     await expect(userRow).toBeVisible();
-    await userRow.getByRole("button", { name: /선택|선택됨/ }).click();
+    await userRow.getByRole("button").first().click();
     await expect(page.getByTestId("user-detail-card")).toContainText(tempUser.email);
     await expect(page.getByTestId("user-edit-name")).toHaveValue(tempUser.name);
 

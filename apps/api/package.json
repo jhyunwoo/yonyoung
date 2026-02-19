@@ -14,15 +14,17 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.990.0",
-    "@aws-sdk/s3-request-presigner": "^3.990.0",
+    "@aws-sdk/client-s3": "^3.992.0",
+    "@aws-sdk/s3-request-presigner": "^3.992.0",
     "@better-auth/passkey": "^1.4.18",
-    "@hono/zod-openapi": "^1.2.1",
+    "@hono/zod-openapi": "^1.2.2",
+    "@repo/shared-api-contracts": "workspace:*",
+    "@repo/shared-auth": "workspace:*",
     "@scalar/hono-api-reference": "^0.9.41",
     "better-auth": "^1.4.18",
     "dotenv": "^17.3.1",
     "drizzle-orm": "^0.45.1",
-    "hono": "^4.11.9",
+    "hono": "^4.11.10",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -30,6 +32,6 @@
     "@vitest/coverage-v8": "^4.0.18",
     "drizzle-kit": "^0.31.9",
     "vitest": "^4.0.18",
-    "wrangler": "^4.65.0"
+    "wrangler": "^4.66.0"
   }
 }

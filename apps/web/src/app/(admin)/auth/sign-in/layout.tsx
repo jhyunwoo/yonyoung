@@ -1,5 +1,7 @@
 import { ReactNode } from "react";
+import { redirect } from "next/navigation";
 import { serverAuthTool } from "../../../../lib/auth-server-tool";
+import { canAccessAdminPage } from "../../../../lib/auth-shared";
 
 /**
  * SignInRedirectLayout 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
@@ -14,7 +16,17 @@ export default async function SignInRedirectLayout({
 }: Readonly<{
   children: ReactNode;
 }>) {
-  await serverAuthTool.redirectIfCanAccessAdmin();
+  const session = await serverAuthTool.getSession();
+  if (!session) {
+    return children;
+  }
 
-  return children;
+  if (canAccessAdminPage(session)) {
+    const landingPath = await serverAuthTool.resolveAdminLandingPath(session);
+    redirect(landingPath);
+  }
+
+  redirect("/auth/profile");
+
+  return null;
 }

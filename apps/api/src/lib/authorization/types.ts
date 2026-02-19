@@ -1,14 +1,8 @@
-export const ROLE_VALUES = [
-  "president",
-  "vice_president",
-  "manager",
-  "new_member",
-  "associate_member",
-  "regular_member",
-  "unverified",
-] as const;
+import { CORE_ROLE_VALUES, type CoreRole } from "@repo/shared-auth/roles";
 
-export type Role = (typeof ROLE_VALUES)[number];
+export const ROLE_VALUES = CORE_ROLE_VALUES;
+
+export type Role = CoreRole;
 
 export type Resource =
   | "generation"

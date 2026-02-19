@@ -1,0 +1,16 @@
+{
+  "name": "@repo/shared-auth",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./roles": "./src/roles.ts",
+    "./profile": "./src/profile.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "5.9.2"
+  }
+}

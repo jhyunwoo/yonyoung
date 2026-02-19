@@ -268,6 +268,33 @@ describe("RBAC routes", /** describe 실행 과정에서 필요한 연산을 수
     });
   });
 
+  it("미인증 사용자는 본인 기본 정보를 수정할 수 있다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const updateUser = vi.fn(/** vi.fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createUser(IDs.member, "unverified"));
+    const app = createTestApp({
+      actor: createActor("unverified", IDs.member),
+      dataService: createDataServiceMock({
+        updateUser,
+      }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.member}`, {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        familyName: "김",
+        givenName: "연영",
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(updateUser).toHaveBeenCalledWith(IDs.member, {
+      familyName: "김",
+      givenName: "연영",
+    });
+  });
+
   it("부원은 role/generationId를 수정할 수 없다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({
       actor: createActor("regular_member", IDs.member),

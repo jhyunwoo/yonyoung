@@ -1,7 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import MotionReveal from "./components/motion-reveal";
 import SectionShell from "./components/section-shell";
 import HeroShowcase from "./components/hero-showcase";
+import SupporterGrid from "./components/supporter-grid";
 import {
   flattenLinktreeItems,
   listPublicActivities,
@@ -11,6 +13,7 @@ import {
   safeList,
 } from "../../lib/public-api";
 import { pickFeaturedPublicExhibition } from "../../lib/public-exhibition";
+import { resolveSiteUrl } from "../../lib/seo";
 
 const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
   year: "numeric",
@@ -37,9 +40,36 @@ export default async function HomePage() {
   const recentActivities = activities.slice(0, 6);
   const highlightedSupporters = supporters.slice(0, 8);
   const quickLinks = flattenLinktreeItems(linktrees).slice(0, 6);
+  const siteUrl = resolveSiteUrl();
+  const organizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "연영회",
+    alternateName: "YonYoungHoe",
+    url: siteUrl,
+    sameAs: quickLinks.map((item) => item.link),
+  };
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "연영회",
+    url: siteUrl,
+  };
 
   return (
     <div className="pb-14 md:pb-20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(organizationJsonLd),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(websiteJsonLd),
+        }}
+      />
       <HeroShowcase
         featuredExhibition={featuredExhibition}
         recentActivities={recentActivities}
@@ -64,9 +94,11 @@ export default async function HomePage() {
                   data-testid={`home-activity-card-${activity.id}`}
                 >
                   <div className="relative aspect-[5/4] overflow-hidden">
-                    <img
+                    <Image
                       src={activity.coverImageUrl}
                       alt={activity.title}
+                      fill
+                      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                       className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                     />
                   </div>
@@ -95,38 +127,12 @@ export default async function HomePage() {
         description="연영회의 활동과 전시를 함께 만들어주시는 파트너입니다."
         className="bg-(--surface-elevated)/60"
       >
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-testid="home-supporters-grid">
-          {highlightedSupporters.length === 0 ? (
-            <div className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-6 text-sm text-(--text-secondary)">
-              현재 공개된 후원사 정보가 없습니다.
-            </div>
-          ) : (
-            highlightedSupporters.map((supporter, index) => (
-              <MotionReveal key={supporter.id} delay={index * 0.03}>
-                <a
-                  href={supporter.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-testid={`home-supporter-card-${supporter.id}`}
-                  className="group flex h-full flex-col justify-between rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-4 transition hover:-translate-y-1 hover:border-(--accent)"
-                >
-                  <div className="mb-4 flex h-12 items-center justify-center overflow-hidden rounded-xl bg-(--surface-muted) px-3">
-                    <img
-                      src={supporter.logoUrl}
-                      alt={supporter.name}
-                      className="max-h-8 w-auto object-contain"
-                    />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-(--text-primary)">
-                      {supporter.name}
-                    </p>
-                  </div>
-                </a>
-              </MotionReveal>
-            ))
-          )}
-        </div>
+        <SupporterGrid
+          supporters={highlightedSupporters}
+          emptyMessage="현재 공개된 후원사 정보가 없습니다."
+          containerTestId="home-supporters-grid"
+          cardTestIdPrefix="home-supporter-card"
+        />
       </SectionShell>
 
       <SectionShell

@@ -91,12 +91,15 @@ test.describe("generations crud", () => {
     const assignButton = page.getByTestId(`generation-member-assign-${tempUser.id}`);
     await expect(assignButton).toBeVisible();
     await assignButton.click();
-    await expect(page.getByTestId("generations-success")).toContainText("구성");
+    await expect(page.getByTestId("generation-members-apply-button")).toBeEnabled();
+    await page.getByTestId("generation-members-apply-button").click();
     await expect(page.getByTestId(`generation-member-row-${tempUser.id}`)).toBeVisible();
 
     const unassignButton = page.getByTestId(`generation-member-unassign-${tempUser.id}`);
+    await expect(unassignButton).toBeVisible();
     await unassignButton.click();
-    await expect(page.getByTestId("generations-success")).toContainText("해제");
+    await expect(page.getByTestId("generation-members-apply-button")).toBeEnabled();
+    await page.getByTestId("generation-members-apply-button").click();
     await expect(page.getByTestId(`generation-member-row-${tempUser.id}`)).toHaveCount(0);
 
     await page.getByTestId("generation-delete-button").click();

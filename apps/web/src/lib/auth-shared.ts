@@ -1,19 +1,17 @@
+import {
+  ADMIN_ROLE_VALUES,
+  PRESIDENT_ROLE,
+  isAdminRoleValue,
+  isUnverifiedRoleValue,
+  type CoreRole,
+} from "@repo/shared-auth/roles";
+import { hasCompletedRequiredProfileFields } from "@repo/shared-auth/profile";
+
 export type KnownAuthRole =
-  | "president"
-  | "vice_president"
-  | "manager"
-  | "member"
-  | "new_member"
-  | "associate_member"
-  | "regular_member"
-  | "unverified";
+  | CoreRole
+  | "member";
 export type AuthRole = KnownAuthRole | (string & {});
-
-const ADMIN_ROLES = ["president", "vice_president", "manager"] as const;
-const PRESIDENT_ROLE = "president";
-const UNVERIFIED_ROLE = "unverified";
-
-type AdminRole = (typeof ADMIN_ROLES)[number];
+type AdminRole = (typeof ADMIN_ROLE_VALUES)[number];
 
 export type AuthUser = {
   id: string;
@@ -41,47 +39,9 @@ export type AuthSession = {
   user: AuthUser;
 };
 
-const REQUIRED_PROFILE_KEYS = [
-  "familyName",
-  "givenName",
-  "college",
-  "department",
-  "studentNumber",
-  "phoneNumber",
-] as const;
-
-type RequiredProfileKey = (typeof REQUIRED_PROFILE_KEYS)[number];
-
-const readProfileField = (
-  user: Record<string, unknown>,
-  key: RequiredProfileKey,
-): string | null => {
-  const value = user[key];
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
-
 export const hasCompletedRequiredProfile = (
   user: Record<string, unknown> | null | undefined,
-): boolean => {
-  if (!user) {
-    return false;
-  }
-
-  return REQUIRED_PROFILE_KEYS.every(
-    /**
-     * REQUIRED_PROFILE_KEYS.every 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
-     * @param key 함수 로직에서 사용하는 입력값입니다.
-     * @returns 함수 실행 결과를 반환합니다.
-     * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
-     */
-    (key) => readProfileField(user, key) !== null,
-  );
-};
+): boolean => hasCompletedRequiredProfileFields(user);
 
 type SessionWithRole =
   | {
@@ -115,7 +75,7 @@ export const getRoleFromSession = (session: SessionWithRole): AuthRole | null =>
  * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
  */
 export const isAdminRole = (role: unknown): role is AdminRole =>
-  typeof role === "string" && (ADMIN_ROLES as readonly string[]).includes(role);
+  isAdminRoleValue(role);
 
 /**
  * isAdminSession 조건을 평가해 사용 가능 여부를 판별합니다.
@@ -133,7 +93,7 @@ export const isAdminSession = (session: SessionWithRole): boolean =>
  * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
  */
 export const isUnverifiedRole = (role: unknown): boolean =>
-  typeof role === "string" && role.toLowerCase() === UNVERIFIED_ROLE;
+  isUnverifiedRoleValue(role);
 
 /**
  * isPresidentRole 조건을 평가해 사용 가능 여부를 판별합니다.

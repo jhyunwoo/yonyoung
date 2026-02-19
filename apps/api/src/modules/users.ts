@@ -230,8 +230,12 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
       return ok(c, data);
     }
 
-    // member 계열 role은 본인 프로필 필드만 수정 가능하다.
-    if (isMemberLikeRole(actorResult.actor.role) && isSelf) {
+    // member 계열 role 및 unverified는 본인 프로필 필드만 수정 가능하다.
+    if (
+      (isMemberLikeRole(actorResult.actor.role) ||
+        actorResult.actor.role === "unverified") &&
+      isSelf
+    ) {
       const body = await parseBody(c, ApiMemberProfileUpdateSchema);
       if (!body.success) {
         return badRequest(c, body.message);

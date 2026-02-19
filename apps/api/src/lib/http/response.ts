@@ -1,15 +1,5 @@
 import { Context } from "hono";
-
-/**
- * API 에러 코드 타입
- */
-type ApiErrorCode =
-  | "BAD_REQUEST"
-  | "UNAUTHORIZED"
-  | "FORBIDDEN"
-  | "NOT_FOUND"
-  | "CONFLICT"
-  | "INTERNAL_ERROR";
+import type { ApiErrorCode } from "@repo/shared-api-contracts";
 
 /**
  * Date 객체를 timestamp(ms) 숫자로 직렬화한다.

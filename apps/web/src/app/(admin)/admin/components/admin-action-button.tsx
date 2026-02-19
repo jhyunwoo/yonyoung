@@ -15,7 +15,8 @@ type AdminActionButtonProps = {
 };
 
 const VARIANT_CLASS_MAP: Record<AdminActionButtonVariant, string> = {
-  primary: "bg-black text-white hover:bg-gray-800 disabled:bg-gray-400",
+  primary:
+    "border border-black bg-black text-white hover:opacity-90 disabled:border-gray-300 disabled:bg-gray-300",
   danger:
     "border border-red-300 bg-white text-red-600 hover:bg-red-50 disabled:bg-red-50 disabled:text-red-300",
   ghost:
@@ -41,7 +42,7 @@ export default function AdminActionButton({
       type={type}
       onClick={onClick}
       disabled={resolvedDisabled}
-      className={`inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed ${VARIANT_CLASS_MAP[variant]} ${className ?? ""}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed ${VARIANT_CLASS_MAP[variant]} ${className ?? ""}`}
       data-testid={testId}
     >
       {loading ? (

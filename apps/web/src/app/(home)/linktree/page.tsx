@@ -1,6 +1,15 @@
+import type { Metadata } from "next";
 import MotionReveal from "../components/motion-reveal";
 import SectionShell from "../components/section-shell";
 import { listPublicLinktrees, safeList } from "../../../lib/public-api";
+import { createPageMetadata } from "../../../lib/seo";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "공식 링크 모음 | 연영회",
+  description: "연영회 공식 SNS, 문의 채널, 활동 관련 외부 링크를 한 곳에서 확인하세요.",
+  path: "/linktree",
+  keywords: ["연영회 링크", "연영회 SNS", "연영회 문의", "Linktree"],
+});
 
 /**
  * LinktreePage 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.

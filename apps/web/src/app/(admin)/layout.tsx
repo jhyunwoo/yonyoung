@@ -1,10 +1,23 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ReactNode } from "react";
+import { resolveSiteUrl } from "../../lib/seo";
 
 export const metadata: Metadata = {
   title: "연영회 관리자 페이지",
-  description: "연세대학교 중앙동아리 연영횐",
+  description: "연세대학교 중앙동아리 연영회 관리자 페이지",
+  metadataBase: new URL(resolveSiteUrl()),
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+      nosnippet: true,
+    },
+  },
 };
 
 const themeInitScript = `

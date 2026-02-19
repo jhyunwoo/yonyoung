@@ -10,7 +10,7 @@ import type { AuthSession } from "./auth-shared";
 
 const SIGN_IN_PATH = "/auth/sign-in";
 const ADMIN_PATH = "/admin";
-const ADMIN_PROFILE_PATH = "/admin/profile";
+const AUTH_PROFILE_PATH = "/auth/profile";
 const USER_PATH_PREFIX = "/api/users";
 
 /**
@@ -142,7 +142,7 @@ const requireAdminPageAccess = async (
 
 const redirectIfProfileIncomplete = async (
   session: AuthSession,
-  redirectTo = ADMIN_PROFILE_PATH,
+  redirectTo = AUTH_PROFILE_PATH,
 ): Promise<void> => {
   const profile = await getCurrentUserProfile(session);
   if (!profile) {
@@ -159,7 +159,7 @@ const resolveAdminLandingPath = async (
 ): Promise<string> => {
   const profile = await getCurrentUserProfile(session);
   if (profile && !hasCompletedRequiredProfile(profile)) {
-    return ADMIN_PROFILE_PATH;
+    return AUTH_PROFILE_PATH;
   }
   return ADMIN_PATH;
 };
@@ -178,53 +178,6 @@ const requirePresidentAccess = async (
   return session;
 };
 
-/**
- * redirectIfAccess의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
- * @param predicate 함수 로직에서 사용하는 입력값입니다.
- * @param redirectTo 함수 로직에서 사용하는 입력값입니다.
- * @returns 비동기 처리 결과를 Promise로 반환합니다.
- * @remarks 권한/인증 분기에서 잘못된 흐름이 발생하지 않도록 호출 순서를 유지해야 합니다.
- */
-const redirectIfAccess = async (
-  predicate: AccessPredicate,
-  redirectTo = ADMIN_PATH,
-): Promise<void> => {
-  const session = await getSession();
-
-  if (session && predicate(session)) {
-    redirect(redirectTo);
-  }
-};
-
-/**
- * redirectIfCanAccessAdmin의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
- * @param redirectTo 함수 로직에서 사용하는 입력값입니다.
- * @returns 비동기 처리 결과를 Promise로 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
-const redirectIfCanAccessAdmin = async (): Promise<void> => {
-  const session = await getSession();
-  if (!session || !canAccessAdminPage(session)) {
-    return;
-  }
-
-  const redirectTo = await resolveAdminLandingPath(session);
-  redirect(redirectTo);
-};
-
-/**
- * redirectIfPresident의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
- * @param redirectTo 함수 로직에서 사용하는 입력값입니다.
- * @returns 비동기 처리 결과를 Promise로 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
-const redirectIfPresident = async (redirectTo = ADMIN_PATH): Promise<void> =>
-  redirectIfAccess(canManageGenerations, redirectTo);
-
-// Backward-compatible aliases
-const requireAdminSession = requireAdminPageAccess;
-const redirectIfAdmin = redirectIfCanAccessAdmin;
-
 export const serverAuthTool = {
   getSession,
   requireSession,
@@ -234,9 +187,4 @@ export const serverAuthTool = {
   getCurrentUserProfile,
   redirectIfProfileIncomplete,
   resolveAdminLandingPath,
-  redirectIfAccess,
-  redirectIfCanAccessAdmin,
-  redirectIfPresident,
-  requireAdminSession,
-  redirectIfAdmin,
 } as const;

@@ -52,10 +52,13 @@ export default function AdminShell({ children, session }: AdminShellProps) {
   };
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-gray-50" data-testid="admin-shell">
+    <div
+      className="flex h-screen w-full overflow-hidden bg-[var(--admin-bg-primary)]"
+      data-testid="admin-shell"
+    >
       <AdminSidebar collapsed={collapsed} onToggle={handleToggle} session={session} />
       <main className="min-w-0 flex-1 overflow-auto">
-        <div className="mx-auto w-full max-w-7xl p-6" data-testid="admin-shell-content">
+        <div className="mx-auto w-full max-w-7xl p-4 md:p-6" data-testid="admin-shell-content">
           {!isHydrated ? <div className="hidden" data-testid="admin-shell-hydrating" /> : null}
           {children}
         </div>

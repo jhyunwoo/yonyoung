@@ -4,6 +4,9 @@ import { readE2eRoleMatrixMode, readE2eUploadMode } from "./env";
 
 const API_BASE_URL = process.env.E2E_API_URL ?? "http://localhost:8787";
 const ADMIN_API_BASE_PATH = "/api";
+const E2E_API_REQUEST_TIMEOUT_MS = 15_000;
+const E2E_API_RETRY_COUNT = 6;
+const E2E_API_RETRY_DELAY_MS = 400;
 
 const resolveWebOrigin = (): string => {
   const fallback = "http://localhost:3000";
@@ -74,6 +77,19 @@ const readErrorMessage = (
   return fallback;
 };
 
+const delay = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+const isTransientAdminApiFailure = (
+  status: number,
+): boolean => {
+  if (status >= 500 && status <= 599) {
+    return true;
+  }
+
+  return false;
+};
+
 const adminApiRequest = async <T>(
   request: APIRequestContext,
   input: {
@@ -84,36 +100,62 @@ const adminApiRequest = async <T>(
   },
 ): Promise<T> => {
   const targetUrl = `${API_BASE_URL}${ADMIN_API_BASE_PATH}${input.path}`;
+  let lastMessage = "Admin API failed";
+  let lastStatus = 0;
+  let lastStatusText = "";
 
-  const response =
-    input.method === "GET"
-      ? await request.get(targetUrl)
-      : input.method === "POST"
-        ? await request.post(targetUrl, { data: input.data })
-        : input.method === "PATCH"
-          ? await request.patch(targetUrl, { data: input.data })
-          : await request.delete(targetUrl);
+  for (let attempt = 1; attempt <= E2E_API_RETRY_COUNT; attempt += 1) {
+    const response =
+      input.method === "GET"
+        ? await request.get(targetUrl, { timeout: E2E_API_REQUEST_TIMEOUT_MS })
+        : input.method === "POST"
+          ? await request.post(targetUrl, {
+              data: input.data,
+              timeout: E2E_API_REQUEST_TIMEOUT_MS,
+            })
+          : input.method === "PATCH"
+            ? await request.patch(targetUrl, {
+                data: input.data,
+                timeout: E2E_API_REQUEST_TIMEOUT_MS,
+              })
+            : await request.delete(targetUrl, { timeout: E2E_API_REQUEST_TIMEOUT_MS });
 
-  if (response.status() === 204) {
-    return undefined as T;
-  }
+    if (response.status() === 204) {
+      return undefined as T;
+    }
 
-  const payload = await readJsonSafe(response);
+    const payload = await readJsonSafe(response);
 
-  if (!response.ok()) {
+    if (response.ok()) {
+      return unwrapData<T>(payload);
+    }
+
     if (input.failSilently) {
       return undefined as T;
     }
 
-    const message = readErrorMessage(
+    lastStatus = response.status();
+    lastStatusText = response.statusText();
+    lastMessage = readErrorMessage(
       payload,
       `Admin API failed: ${response.status()} ${response.statusText()}`,
     );
+    const shouldRetry =
+      attempt < E2E_API_RETRY_COUNT &&
+      isTransientAdminApiFailure(response.status());
 
-    throw new Error(message);
+    if (!shouldRetry) {
+      throw new Error(
+        `${input.method} ${input.path} failed (${lastStatus} ${lastStatusText}): ${lastMessage}`,
+      );
+    }
+
+    await delay(E2E_API_RETRY_DELAY_MS * attempt);
   }
 
-  return unwrapData<T>(payload);
+  throw new Error(
+    `${input.method} ${input.path} failed (${lastStatus} ${lastStatusText}): ${lastMessage}`,
+  );
 };
 
 type FileUploadFlow = "auto" | "file" | "url";
@@ -867,6 +909,62 @@ export const seedPublicLinktreeWithItems = async (
     ...group,
     items: createdItems,
   };
+};
+
+const readPublicList = async <T>(
+  request: APIRequestContext,
+  path: string,
+): Promise<T[]> => {
+  const response = await request.get(`${API_BASE_URL}${path}`, {
+    timeout: E2E_API_REQUEST_TIMEOUT_MS,
+  });
+  if (!response.ok()) {
+    return [];
+  }
+
+  const payload = await readJsonSafe(response);
+  if (!payload || typeof payload !== "object" || !("data" in payload)) {
+    return [];
+  }
+
+  const data = (payload as { data?: unknown }).data;
+  return Array.isArray(data) ? (data as T[]) : [];
+};
+
+export const waitForPublicData = async (
+  request: APIRequestContext,
+  checks: Array<{
+    path: string;
+    label: string;
+    match: (rows: unknown[]) => boolean;
+  }>,
+  options?: {
+    timeoutMs?: number;
+    intervalMs?: number;
+  },
+): Promise<void> => {
+  const timeoutMs = options?.timeoutMs ?? 30_000;
+  const intervalMs = options?.intervalMs ?? 1_000;
+  const startedAt = Date.now();
+  let pendingLabels = checks.map((check) => check.label);
+
+  while (Date.now() - startedAt < timeoutMs) {
+    pendingLabels = [];
+    for (const check of checks) {
+      const rows = await readPublicList<unknown>(request, check.path);
+      if (!check.match(rows)) {
+        pendingLabels.push(check.label);
+      }
+    }
+
+    if (pendingLabels.length === 0) {
+      return;
+    }
+
+    await delay(intervalMs);
+  }
+
+  throw new Error(`Public API sync timeout: ${pendingLabels.join(", ")}`);
 };
 
 export const cleanupByPrefix = async (

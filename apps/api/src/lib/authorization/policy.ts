@@ -1,3 +1,7 @@
+import {
+  isMemberLikeRoleValue,
+  normalizeLegacyRole,
+} from "@repo/shared-auth/roles";
 import { Action, Resource, Role } from "./types";
 
 type PermissionMatrix = Record<Role, Record<Resource, Record<Action, boolean>>>;
@@ -38,21 +42,7 @@ const roleLevel: Record<Role, number> = {
  * 알 수 없는 값은 보수적으로 "unverified"로 처리한다.
  */
 export const normalizeRole = (rawRole: string | null | undefined): Role => {
-  switch (rawRole) {
-    case "president":
-    case "vice_president":
-    case "manager":
-    case "new_member":
-    case "associate_member":
-    case "regular_member":
-    case "unverified":
-      return rawRole;
-    // legacy 호환: 기존 member 값은 regular_member로 승격 취급
-    case "member":
-      return "regular_member";
-    default:
-      return "unverified";
-  }
+  return normalizeLegacyRole(rawRole);
 };
 
 /**
@@ -77,11 +67,7 @@ export const canAssignRole = (
  * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
  */
 export const isMemberLikeRole = (role: Role): boolean => {
-  return (
-    role === "new_member" ||
-    role === "associate_member" ||
-    role === "regular_member"
-  );
+  return isMemberLikeRoleValue(role);
 };
 
 const permissionMatrix: PermissionMatrix = {

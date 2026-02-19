@@ -1,11 +1,16 @@
+import type { Metadata } from "next";
 import MotionReveal from "../components/motion-reveal";
 import SectionShell from "../components/section-shell";
+import SupporterGrid from "../components/supporter-grid";
 import { listPublicSupporters, safeList } from "../../../lib/public-api";
+import { createPageMetadata } from "../../../lib/seo";
 
-const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
-  year: "numeric",
-  month: "short",
-  day: "numeric",
+export const metadata: Metadata = createPageMetadata({
+  title: "후원 및 제휴 안내 | 연영회",
+  description:
+    "연영회의 전시·기록·교육 활동을 위한 후원 및 제휴 안내와 현재 파트너 정보를 확인하세요.",
+  path: "/donate",
+  keywords: ["연영회 후원", "연영회 제휴", "대학생 사진동아리 후원", "전시 스폰서십"],
 });
 
 /**
@@ -143,44 +148,13 @@ export default async function DonatePage() {
         description="현재 연영회와 함께하고 있는 파트너입니다."
         className="bg-(--surface-elevated)/60"
       >
-        <div
-          className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
-          data-testid="donate-supporters"
-        >
-          {supporters.length === 0 ? (
-            <MotionReveal>
-              <div className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-6 text-sm text-(--text-secondary)">
-                공개된 후원사 정보가 없습니다.
-              </div>
-            </MotionReveal>
-          ) : (
-            supporters.map((supporter, index) => (
-              <MotionReveal key={supporter.id} delay={index * 0.03}>
-                <a
-                  href={supporter.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-testid={`donate-supporter-card-${supporter.id}`}
-                  className="group block rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-4 transition hover:border-(--accent)"
-                >
-                  <div className="mb-4 flex h-12 items-center justify-center rounded-xl bg-(--surface-muted) px-3">
-                    <img
-                      src={supporter.logoUrl}
-                      alt={supporter.name}
-                      className="max-h-8 w-auto object-contain"
-                    />
-                  </div>
-                  <p className="text-sm font-medium text-(--text-primary)">
-                    {supporter.name}
-                  </p>
-                  <p className="mt-1 text-xs text-(--text-muted)">
-                    만료일 {dateFormatter.format(supporter.expiresAt)}
-                  </p>
-                </a>
-              </MotionReveal>
-            ))
-          )}
-        </div>
+        <SupporterGrid
+          supporters={supporters}
+          emptyMessage="공개된 후원사 정보가 없습니다."
+          containerTestId="donate-supporters"
+          cardTestIdPrefix="donate-supporter-card"
+          showExpiresAt
+        />
       </SectionShell>
     </div>
   );

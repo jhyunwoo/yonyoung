@@ -1,4 +1,6 @@
 import { z } from "@hono/zod-openapi";
+import { STUDENT_NUMBER_REGEX } from "@repo/shared-auth/profile";
+import { API_ERROR_CODES } from "@repo/shared-api-contracts";
 
 const EXAMPLE_ID = "11111111-1111-4111-8111-111111111111";
 const EXAMPLE_PARENT_ID = "22222222-2222-4222-8222-222222222222";
@@ -41,7 +43,7 @@ const urlField = (description: string, example: string) =>
 const studentNumberField = (description: string, example: string) =>
   z
     .string()
-    .regex(/^\d{10}$/, "학번은 숫자 10자리여야 합니다.")
+    .regex(STUDENT_NUMBER_REGEX, "학번은 숫자 10자리여야 합니다.")
     .openapi({
       description,
       example,
@@ -58,14 +60,7 @@ const phoneNumberField = (description: string, example: string) =>
     });
 
 const ApiErrorCodeSchema = z
-  .enum([
-    "BAD_REQUEST",
-    "UNAUTHORIZED",
-    "FORBIDDEN",
-    "NOT_FOUND",
-    "CONFLICT",
-    "INTERNAL_ERROR",
-  ])
+  .enum(API_ERROR_CODES)
   .openapi("ApiErrorCode");
 
 const ApiErrorSchema = z

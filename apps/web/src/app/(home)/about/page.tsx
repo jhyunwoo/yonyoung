@@ -1,6 +1,8 @@
+import type { Metadata } from "next";
 import MotionReveal from "../components/motion-reveal";
 import SectionShell from "../components/section-shell";
 import { listPublicGenerations, safeList } from "../../../lib/public-api";
+import { createPageMetadata } from "../../../lib/seo";
 
 const yearFormatter = new Intl.DateTimeFormat("ko-KR", { year: "numeric" });
 
@@ -16,6 +18,14 @@ const annualActivities = [
 const formatYearRange = (startDate: number, endDate: number): string => {
   return `${yearFormatter.format(startDate)} - ${yearFormatter.format(endDate)}`;
 };
+
+export const metadata: Metadata = createPageMetadata({
+  title: "연영회 소개 | 연세대학교 중앙사진동아리",
+  description:
+    "1966년부터 이어진 연세대학교 중앙사진동아리 연영회의 역사, 연간 활동, 기수 정보를 소개합니다.",
+  path: "/about",
+  keywords: ["연영회 소개", "연영회 역사", "연세대학교 동아리", "사진 동아리 활동"],
+});
 
 /**
  * AboutPage 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.

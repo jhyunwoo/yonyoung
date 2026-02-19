@@ -3,11 +3,21 @@ import "./globals.css";
 import { ReactNode } from "react";
 import SiteHeader from "./components/site-header";
 import SiteFooter from "./components/site-footer";
+import { createPageMetadata } from "../../lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "연영회 | 연세대학교 중앙사진동아리",
   description: "연세대학교 중앙사진동아리 연영회의 활동과 전시를 소개합니다.",
-};
+  path: "/",
+  keywords: [
+    "연영회",
+    "연세대학교",
+    "중앙사진동아리",
+    "사진동아리",
+    "정기전",
+    "아카이브",
+  ],
+});
 
 const themeInitScript = `
 (() => {
