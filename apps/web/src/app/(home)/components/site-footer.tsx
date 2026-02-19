@@ -2,6 +2,7 @@ import Image from "next/image";
 
 const infoLabelClass = "text-[0.85rem] font-bold uppercase text-[#999999]";
 const infoContentClass = "break-all text-[0.9rem] leading-[1.6] text-[#cccccc]";
+const infoLinkClass = `${infoContentClass} inline-flex min-h-11 w-full items-center`;
 
 export default function SiteFooter() {
   return (
@@ -34,7 +35,7 @@ export default function SiteFooter() {
                 href="https://open.kakao.com/o/snVWZ4th"
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`${infoContentClass} transition-colors duration-300 hover:text-white`}
+                className={`${infoLinkClass} transition-colors duration-300 hover:text-white`}
               >
                 https://open.kakao.com/o/snVWZ4th
               </a>
@@ -49,7 +50,7 @@ export default function SiteFooter() {
               <span className={infoLabelClass}>E-mail</span>
               <a
                 href="mailto:kimse0604@naver.com"
-                className={`${infoContentClass} transition-colors duration-300 hover:text-white`}
+                className={`${infoLinkClass} transition-colors duration-300 hover:text-white`}
               >
                 kimse0604@naver.com
               </a>

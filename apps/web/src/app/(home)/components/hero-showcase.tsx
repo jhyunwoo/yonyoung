@@ -41,7 +41,7 @@ export default function HeroShowcase({
   return (
     <section
       ref={rootRef}
-      className="relative border-b border-(--surface-border) bg-(--surface-elevated) px-4 pb-16 pt-32 md:px-8 md:pb-20 md:pt-36"
+      className="relative border-b border-(--surface-border) bg-(--surface-elevated) px-4 pb-44 pt-32 md:px-8 md:pb-20 md:pt-36"
       data-testid="home-hero"
     >
       <div className="mx-auto grid w-full max-w-[1200px] gap-10 md:grid-cols-[1.1fr_0.9fr] md:items-end">

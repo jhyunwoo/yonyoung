@@ -143,13 +143,13 @@ export default async function HomePage() {
             </div>
           ) : (
             quickLinks.map((item, index) => (
-              <MotionReveal key={item.id} delay={index * 0.04}>
+              <MotionReveal key={item.id} delay={index * 0.04} className="min-w-0">
                 <a
                   href={item.link}
                   target="_blank"
                   rel="noopener noreferrer"
                   data-testid={`home-quicklink-card-${item.id}`}
-                  className="group block border border-(--surface-border) bg-(--surface-elevated) p-4 transition hover:border-(--surface-strong-border) hover:bg-(--surface-muted)"
+                  className="group block min-w-0 border border-(--surface-border) bg-(--surface-elevated) p-4 transition hover:border-(--surface-strong-border) hover:bg-(--surface-muted)"
                 >
                   <p className="text-xs font-semibold uppercase tracking-[0.1em] text-(--text-muted)">
                     {item.groupName}

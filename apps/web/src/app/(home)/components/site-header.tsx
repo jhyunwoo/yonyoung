@@ -90,7 +90,7 @@ export default function SiteHeader() {
         <div className="flex items-center gap-6">
           <Link
             href="/"
-            className="flex items-center gap-[0.6rem]"
+            className="flex min-h-11 items-center gap-[0.6rem] py-1"
             data-testid="public-logo-link"
           >
             <div className="flex h-[1.92rem] items-center justify-center">
@@ -149,7 +149,7 @@ export default function SiteHeader() {
 
         <button
           type="button"
-          className="flex flex-col gap-[5px] rounded p-2 md:hidden"
+          className="flex h-11 w-11 flex-col items-center justify-center gap-[5px] rounded p-0 md:hidden"
           onClick={() => setIsMobileMenuOpen((prev) => !prev)}
           aria-label="모바일 메뉴 토글"
           aria-expanded={isMobileMenuOpen}
