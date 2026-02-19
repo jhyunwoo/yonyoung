@@ -73,7 +73,7 @@ test.describe("users crud", () => {
     }
     const targetUserId = userRowTestId.replace("user-row-", "");
 
-    await userRow.getByRole("button", { name: /선택|선택됨/ }).click();
+    await userRow.getByRole("button").click();
     await expect.poll(async () => (await readDrawerQuery()).panel).toBe("edit");
     await expect.poll(async () => (await readDrawerQuery()).id).toBe(targetUserId);
     await expect(page.getByTestId("user-drawer")).toBeVisible();

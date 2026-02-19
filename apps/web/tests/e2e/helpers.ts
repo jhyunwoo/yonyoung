@@ -606,7 +606,7 @@ export const uniqueText = (prefix: string, label: string): string =>
   `${prefix}-${label}-${Math.random().toString(36).slice(2, 8)}`;
 
 export const ensureAdminSession = async (page: Page): Promise<void> => {
-  const apiUrl = process.env.E2E_API_URL ?? "http://localhost:8787";
+  const apiUrl = API_BASE_URL;
   const adminEmail = process.env.E2E_ADMIN_EMAIL;
   const adminPassword = process.env.E2E_ADMIN_PASSWORD;
 
@@ -615,20 +615,33 @@ export const ensureAdminSession = async (page: Page): Promise<void> => {
   }
 
   const verifySession = async () => {
-    const response = await page.request.get(`${apiUrl}/api/auth/get-session`);
-    if (!response.ok()) {
-      return false;
+    for (let attempt = 1; attempt <= E2E_API_RETRY_COUNT; attempt += 1) {
+      try {
+        const response = await page.request.get(`${apiUrl}/api/auth/get-session`, {
+          timeout: E2E_API_REQUEST_TIMEOUT_MS,
+        });
+        if (!response.ok()) {
+          return false;
+        }
+
+        const payload = (await response.json().catch(() => null)) as
+          | {
+              user?: {
+                role?: string | null;
+              };
+            }
+          | null;
+
+        return payload?.user?.role === "president";
+      } catch {
+        if (attempt === E2E_API_RETRY_COUNT) {
+          return false;
+        }
+        await delay(E2E_API_RETRY_DELAY_MS * attempt);
+      }
     }
 
-    const payload = (await response.json().catch(() => null)) as
-      | {
-          user?: {
-            role?: string | null;
-          };
-        }
-      | null;
-
-    return payload?.user?.role === "president";
+    return false;
   };
 
   const ensureAdminProfile = async () => {
@@ -657,17 +670,41 @@ export const ensureAdminSession = async (page: Page): Promise<void> => {
     return;
   }
 
-  const signInResponse = await page.request.post(
-    `${apiUrl}/api/auth/sign-in/email`,
-    {
-      headers: buildAuthHeaders(),
-      data: {
-        email: adminEmail,
-        password: adminPassword,
-        rememberMe: true,
-      },
-    },
-  );
+  let signInResponse: APIResponse | null = null;
+  for (let attempt = 1; attempt <= E2E_API_RETRY_COUNT; attempt += 1) {
+    try {
+      signInResponse = await page.request.post(`${apiUrl}/api/auth/sign-in/email`, {
+        headers: buildAuthHeaders(),
+        data: {
+          email: adminEmail,
+          password: adminPassword,
+          rememberMe: true,
+        },
+        timeout: E2E_API_REQUEST_TIMEOUT_MS,
+      });
+
+      if (signInResponse.ok()) {
+        break;
+      }
+
+      const shouldRetry =
+        attempt < E2E_API_RETRY_COUNT &&
+        isTransientAdminApiFailure(signInResponse.status());
+      if (!shouldRetry) {
+        break;
+      }
+    } catch {
+      if (attempt === E2E_API_RETRY_COUNT) {
+        throw new Error("Failed to sign in admin session: API is unreachable.");
+      }
+    }
+
+    await delay(E2E_API_RETRY_DELAY_MS * attempt);
+  }
+
+  if (!signInResponse) {
+    throw new Error("Failed to sign in admin session: empty API response.");
+  }
 
   if (!signInResponse.ok()) {
     const payload = await readJsonSafe(signInResponse);
@@ -1062,7 +1099,7 @@ export const cleanupByPrefix = async (
 };
 
 export const signUpTemporaryUser = async (prefix: string) => {
-  const apiUrl = process.env.E2E_API_URL ?? "http://localhost:8787";
+  const apiUrl = API_BASE_URL;
   const email = `${uniqueText(prefix, "user")}@example.com`;
   const password = `Test!${Date.now()}aA`;
   const name = uniqueText(prefix, "name");

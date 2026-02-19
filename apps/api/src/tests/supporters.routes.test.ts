@@ -156,6 +156,19 @@ describe("supporter routes", /** describe 실행 과정에서 필요한 연산�
     expect(getSupporterById).toHaveBeenCalledWith(IDs.supporter);
   });
 
+  it("후원사 상세 조회 성공 시 200을 반환한다", async () => {
+    const getSupporterById = fn(async () => createSupporter({ id: IDs.supporter }));
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ getSupporterById }),
+    });
+
+    const response = await app.request(`/api/supporters/${IDs.supporter}`);
+    expect(response.status).toBe(200);
+    const body = await readJson<{ data: { id: string } }>(response);
+    expect(body.data.id).toBe(IDs.supporter);
+  });
+
   it("후원사 수정 본문이 비어 있으면 400을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({ actor: createActor("manager", IDs.manager) });
 
@@ -248,5 +261,119 @@ describe("supporter routes", /** describe 실행 과정에서 필요한 연산�
 
     expect(response.status).toBe(204);
     expect(deleteSupporter).toHaveBeenCalledWith(IDs.supporter);
+  });
+
+  it("인증되지 않은 요청은 후원사 관련 엔드포인트에서 401을 반환한다", async () => {
+    const app = createTestApp({ actor: null });
+    const requests: Array<{
+      path: string;
+      method?: "POST" | "PATCH" | "DELETE";
+      body?: unknown;
+    }> = [
+      { path: "/api/supporters" },
+      {
+        path: "/api/supporters",
+        method: "POST",
+        body: {
+          name: "sponsor",
+          link: "https://example.com/sponsor",
+          logoUrl: "https://example.com/logo.png",
+          expiresAt: Date.parse("2031-01-01T00:00:00.000Z"),
+        },
+      },
+      { path: `/api/supporters/${IDs.supporter}` },
+      {
+        path: `/api/supporters/${IDs.supporter}`,
+        method: "PATCH",
+        body: { name: "updated" },
+      },
+      { path: `/api/supporters/${IDs.supporter}`, method: "DELETE" },
+    ];
+
+    for (const request of requests) {
+      const response = await app.request(request.path, {
+        method: request.method,
+        headers: request.body ? { "content-type": "application/json" } : undefined,
+        body: request.body ? JSON.stringify(request.body) : undefined,
+      });
+      expect(response.status).toBe(401);
+      await expectErrorCode(response, "UNAUTHORIZED");
+    }
+  });
+
+  it("unverified 사용자는 후원사 목록/상세 조회 권한이 없어 403을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("unverified", IDs.otherUuid) });
+
+    const listResponse = await app.request("/api/supporters");
+    expect(listResponse.status).toBe(403);
+    await expectErrorCode(listResponse, "FORBIDDEN");
+
+    const detailResponse = await app.request(`/api/supporters/${IDs.supporter}`);
+    expect(detailResponse.status).toBe(403);
+    await expectErrorCode(detailResponse, "FORBIDDEN");
+  });
+
+  it("후원사 수정 파라미터가 유효하지 않으면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("manager", IDs.manager) });
+    const response = await app.request("/api/supporters/not-a-uuid", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "updated" }),
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+
+  it("후원사 삭제 파라미터가 유효하지 않으면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("manager", IDs.manager) });
+    const response = await app.request("/api/supporters/not-a-uuid", {
+      method: "DELETE",
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+
+  it("member 계열 사용자는 후원사 수정 권한이 없어 403을 반환한다", async () => {
+    const updateSupporter = fn(async () => createSupporter());
+    const app = createTestApp({
+      actor: createActor("regular_member"),
+      dataService: createDataServiceMock({ updateSupporter }),
+    });
+
+    const response = await app.request(`/api/supporters/${IDs.supporter}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "updated" }),
+    });
+
+    expect(response.status).toBe(403);
+    await expectErrorCode(response, "FORBIDDEN");
+    expect(updateSupporter).not.toHaveBeenCalled();
+  });
+
+  it("후원사 수정 본문이 스키마와 맞지 않으면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("manager", IDs.manager) });
+    const response = await app.request(`/api/supporters/${IDs.supporter}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ link: "invalid-url" }),
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+
+  it("후원사 수정 본문이 JSON이 아니면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("manager", IDs.manager) });
+    const response = await app.request(`/api/supporters/${IDs.supporter}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: "{",
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toContain("Malformed");
   });
 });

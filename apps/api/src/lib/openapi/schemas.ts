@@ -95,10 +95,17 @@ export const ApiIdParamSchema = z
 
 export const ApiUserIdParamSchema = z
   .object({
-    id: z.string().min(1).openapi({
-      description: "사용자 식별자 (better-auth user.id)",
-      example: EXAMPLE_USER_ID,
-    }),
+    id: z
+      .string()
+      .min(1)
+      .regex(
+        /^[A-Za-z0-9_-]+$/,
+        "사용자 식별자는 영문/숫자/하이픈/언더스코어만 사용할 수 있습니다.",
+      )
+      .openapi({
+        description: "사용자 식별자 (better-auth user.id)",
+        example: EXAMPLE_USER_ID,
+      }),
   })
   .openapi("ApiUserIdParam");
 

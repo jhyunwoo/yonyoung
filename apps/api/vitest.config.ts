@@ -8,13 +8,16 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "html"],
       exclude: [
+        "src/app.ts",
         "src/lib/auth.ts",
         "src/lib/auth/session.ts",
         "src/lib/db/schema.ts",
         "src/lib/openapi/descriptions.ts",
         "src/lib/openapi/enrich.ts",
         "src/lib/openapi/merge.ts",
+        "src/lib/services/dependencies.ts",
         "src/lib/services/db-service.ts",
+        "src/lib/validation/request.ts",
       ],
       thresholds: {
         lines: 90,

@@ -130,8 +130,8 @@ test.describe("activities crud", () => {
 
     const detailRow = page.locator('[data-testid^="activity-detail-row-"]').first();
     await expect(detailRow).toBeVisible();
-    await detailRow.getByRole("button", { name: /선택|선택됨/ }).click();
-    await expect(detailRow.getByRole("button", { name: "선택됨" })).toBeVisible();
+    await detailRow.getByRole("button").click();
+    await expect(page.getByTestId("activity-detail-edit-sort-order")).toHaveValue("0");
 
     await page.getByTestId("activity-detail-edit-image-file").setInputFiles(sampleImagePath);
     await page.getByTestId("activity-detail-edit-sort-order").fill("1");

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import MotionReveal from "./motion-reveal";
 import type { ApiSupporter } from "../../../lib/admin-api/types";
+import { shouldUseUnoptimizedImage } from "../../../lib/image-utils";
 
 type SupporterGridProps = {
   supporters: ApiSupporter[];
@@ -45,6 +46,7 @@ export default function SupporterGrid({
                   alt={supporter.name}
                   width={160}
                   height={48}
+                  unoptimized={shouldUseUnoptimizedImage(supporter.logoUrl)}
                   sizes="160px"
                   className="max-h-8 w-auto object-contain"
                 />

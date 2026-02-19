@@ -358,4 +358,55 @@ describe("generation routes", /** describe 실행 과정에서 필요한 연산�
     expect(response.status).toBe(204);
     expect(deleteGeneration).toHaveBeenCalledWith(IDs.generation);
   });
+
+  it("인증되지 않은 요청은 generation 관련 엔드포인트에서 401을 반환한다", async () => {
+    const app = createTestApp({ actor: null });
+    const requests: Array<{
+      path: string;
+      method?: "POST" | "PATCH" | "DELETE";
+      body?: unknown;
+    }> = [
+      { path: "/api/generations" },
+      {
+        path: "/api/generations",
+        method: "POST",
+        body: {
+          name: "11기",
+          sortOrder: 11,
+          startDate: Date.parse("2031-01-01T00:00:00.000Z"),
+          endDate: Date.parse("2031-12-31T00:00:00.000Z"),
+        },
+      },
+      { path: `/api/generations/${IDs.generation}` },
+      {
+        path: `/api/generations/${IDs.generation}`,
+        method: "PATCH",
+        body: { name: "updated" },
+      },
+      { path: `/api/generations/${IDs.generation}`, method: "DELETE" },
+    ];
+
+    for (const request of requests) {
+      const response = await app.request(request.path, {
+        method: request.method,
+        headers: request.body ? { "content-type": "application/json" } : undefined,
+        body: request.body ? JSON.stringify(request.body) : undefined,
+      });
+
+      expect(response.status).toBe(401);
+      await expectErrorCode(response, "UNAUTHORIZED");
+    }
+  });
+
+  it("unverified 사용자는 generation 목록/상세 조회 권한이 없어 403을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("unverified", IDs.otherUuid) });
+
+    const listResponse = await app.request("/api/generations");
+    expect(listResponse.status).toBe(403);
+    await expectErrorCode(listResponse, "FORBIDDEN");
+
+    const detailResponse = await app.request(`/api/generations/${IDs.generation}`);
+    expect(detailResponse.status).toBe(403);
+    await expectErrorCode(detailResponse, "FORBIDDEN");
+  });
 });

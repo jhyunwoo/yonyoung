@@ -136,8 +136,8 @@ test.describe("exhibitions crud", () => {
 
     const detailRow = page.locator('[data-testid^="exhibition-detail-row-"]').first();
     await expect(detailRow).toBeVisible();
-    await detailRow.getByRole("button", { name: /선택|선택됨/ }).click();
-    await expect(detailRow.getByRole("button", { name: "선택됨" })).toBeVisible();
+    await detailRow.getByRole("button").click();
+    await expect(page.getByTestId("exhibition-detail-edit-sort-order")).toHaveValue("0");
 
     await page.getByTestId("exhibition-detail-edit-image-file").setInputFiles(sampleImagePath);
     await page.getByTestId("exhibition-detail-edit-sort-order").fill("1");

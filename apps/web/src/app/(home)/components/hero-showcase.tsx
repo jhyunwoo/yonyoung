@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import type { ApiActivity, ApiExhibition } from "../../../lib/admin-api/types";
+import { shouldUseUnoptimizedImage } from "../../../lib/image-utils";
 
 type HeroShowcaseProps = {
   featuredExhibition: ApiExhibition | null;
@@ -94,6 +95,7 @@ export default function HeroShowcase({
                   src={featuredExhibition.coverImageUrl}
                   alt={featuredExhibition.title}
                   fill
+                  unoptimized={shouldUseUnoptimizedImage(featuredExhibition.coverImageUrl)}
                   sizes="(min-width: 768px) 40vw, 100vw"
                   className="h-full w-full object-cover"
                   data-testid="home-hero-exhibition-image"

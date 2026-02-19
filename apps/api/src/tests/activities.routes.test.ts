@@ -117,6 +117,19 @@ describe("activity routes", /** describe 실행 과정에서 필요한 연산을
     expect(getActivityById).toHaveBeenCalledWith(IDs.activity);
   });
 
+  it("활동 상세 조회 성공 시 200을 반환한다", async () => {
+    const getActivityById = fn(async () => createActivity({ id: IDs.activity }));
+    const app = createTestApp({
+      actor: createActor("regular_member"),
+      dataService: createDataServiceMock({ getActivityById }),
+    });
+
+    const response = await app.request(`/api/activities/${IDs.activity}`);
+    expect(response.status).toBe(200);
+    const body = await readJson<{ data: { id: string } }>(response);
+    expect(body.data.id).toBe(IDs.activity);
+  });
+
   it("활동 수정 본문이 비어 있으면 400을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({ actor: createActor("manager", IDs.manager) });
 
@@ -408,5 +421,213 @@ describe("activity routes", /** describe 실행 과정에서 필요한 연산을
 
     expect(response.status).toBe(204);
     expect(deleteActivityImage).toHaveBeenCalledWith(IDs.activity, IDs.activityImage);
+  });
+
+  it("인증되지 않은 요청은 활동 관련 엔드포인트에서 401을 반환한다", async () => {
+    const app = createTestApp({ actor: null });
+    const requests: Array<{
+      path: string;
+      method?: "POST" | "PATCH" | "DELETE";
+      body?: unknown;
+    }> = [
+      { path: "/api/activities" },
+      {
+        path: "/api/activities",
+        method: "POST",
+        body: {
+          title: "활동",
+          description: "설명",
+          activityDate: Date.parse("2030-03-01T00:00:00.000Z"),
+          coverImageUrl: "https://example.com/cover.jpg",
+          generationId: IDs.generation,
+        },
+      },
+      { path: `/api/activities/${IDs.activity}` },
+      {
+        path: `/api/activities/${IDs.activity}`,
+        method: "PATCH",
+        body: { title: "수정" },
+      },
+      { path: `/api/activities/${IDs.activity}`, method: "DELETE" },
+      {
+        path: `/api/activities/${IDs.activity}/images`,
+        method: "POST",
+        body: { imageUrl: "https://example.com/detail.jpg", sortOrder: 0 },
+      },
+      {
+        path: `/api/activities/${IDs.activity}/images/${IDs.activityImage}`,
+        method: "PATCH",
+        body: { sortOrder: 1 },
+      },
+      {
+        path: `/api/activities/${IDs.activity}/images/${IDs.activityImage}`,
+        method: "DELETE",
+      },
+    ];
+
+    for (const request of requests) {
+      const response = await app.request(request.path, {
+        method: request.method,
+        headers: request.body ? { "content-type": "application/json" } : undefined,
+        body: request.body ? JSON.stringify(request.body) : undefined,
+      });
+
+      expect(response.status).toBe(401);
+      await expectErrorCode(response, "UNAUTHORIZED");
+    }
+  });
+
+  it("unverified 사용자는 활동 목록/상세 조회 권한이 없어 403을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("unverified", IDs.otherUser) });
+
+    const listResponse = await app.request("/api/activities");
+    expect(listResponse.status).toBe(403);
+    await expectErrorCode(listResponse, "FORBIDDEN");
+
+    const detailResponse = await app.request(`/api/activities/${IDs.activity}`);
+    expect(detailResponse.status).toBe(403);
+    await expectErrorCode(detailResponse, "FORBIDDEN");
+  });
+
+  it("활동 수정 파라미터가 유효하지 않으면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("manager", IDs.manager) });
+    const response = await app.request("/api/activities/not-a-uuid", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "수정" }),
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+
+  it("활동 삭제 파라미터가 유효하지 않으면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("manager", IDs.manager) });
+    const response = await app.request("/api/activities/not-a-uuid", {
+      method: "DELETE",
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+
+  it("member 계열 사용자는 활동 수정 권한이 없어 403을 반환한다", async () => {
+    const updateActivity = fn(async () => createActivity());
+    const app = createTestApp({
+      actor: createActor("regular_member"),
+      dataService: createDataServiceMock({ updateActivity }),
+    });
+
+    const response = await app.request(`/api/activities/${IDs.activity}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "수정" }),
+    });
+
+    expect(response.status).toBe(403);
+    await expectErrorCode(response, "FORBIDDEN");
+    expect(updateActivity).not.toHaveBeenCalled();
+  });
+
+  it("활동 상세 이미지 생성/수정/삭제 파라미터가 유효하지 않으면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("manager", IDs.manager) });
+
+    const createResponse = await app.request("/api/activities/not-a-uuid/images", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        imageUrl: "https://example.com/detail.jpg",
+        sortOrder: 0,
+      }),
+    });
+    expect(createResponse.status).toBe(400);
+    await expectErrorCode(createResponse, "BAD_REQUEST");
+
+    const patchResponse = await app.request(
+      `/api/activities/${IDs.activity}/images/not-a-uuid`,
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sortOrder: 1 }),
+      },
+    );
+    expect(patchResponse.status).toBe(400);
+    await expectErrorCode(patchResponse, "BAD_REQUEST");
+
+    const deleteResponse = await app.request(
+      `/api/activities/${IDs.activity}/images/not-a-uuid`,
+      {
+        method: "DELETE",
+      },
+    );
+    expect(deleteResponse.status).toBe(400);
+    await expectErrorCode(deleteResponse, "BAD_REQUEST");
+  });
+
+  it("member 계열 사용자는 활동 상세 이미지 수정 권한이 없어 403을 반환한다", async () => {
+    const updateActivityImage = fn(async () => createActivityImage());
+    const app = createTestApp({
+      actor: createActor("regular_member"),
+      dataService: createDataServiceMock({ updateActivityImage }),
+    });
+
+    const response = await app.request(
+      `/api/activities/${IDs.activity}/images/${IDs.activityImage}`,
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sortOrder: 2 }),
+      },
+    );
+
+    expect(response.status).toBe(403);
+    await expectErrorCode(response, "FORBIDDEN");
+    expect(updateActivityImage).not.toHaveBeenCalled();
+  });
+
+  it("활동/활동 이미지 수정 본문이 스키마와 맞지 않으면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("manager", IDs.manager) });
+
+    const updateResponse = await app.request(`/api/activities/${IDs.activity}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ activityDate: "invalid" }),
+    });
+    expect(updateResponse.status).toBe(400);
+    await expectErrorCode(updateResponse, "BAD_REQUEST");
+
+    const updateImageResponse = await app.request(
+      `/api/activities/${IDs.activity}/images/${IDs.activityImage}`,
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ imageUrl: "invalid-url" }),
+      },
+    );
+    expect(updateImageResponse.status).toBe(400);
+    await expectErrorCode(updateImageResponse, "BAD_REQUEST");
+  });
+
+  it("활동/활동 이미지 수정 본문이 JSON이 아니면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("manager", IDs.manager) });
+
+    const updateResponse = await app.request(`/api/activities/${IDs.activity}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: "{",
+    });
+    expect(updateResponse.status).toBe(400);
+    expect(await updateResponse.text()).toContain("Malformed");
+
+    const updateImageResponse = await app.request(
+      `/api/activities/${IDs.activity}/images/${IDs.activityImage}`,
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: "{",
+      },
+    );
+    expect(updateImageResponse.status).toBe(400);
+    expect(await updateImageResponse.text()).toContain("Malformed");
   });
 });

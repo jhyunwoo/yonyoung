@@ -9,6 +9,7 @@ import {
   listPublicSupporters,
   safeList,
 } from "../../../lib/public-api";
+import { shouldUseUnoptimizedImage } from "../../../lib/image-utils";
 import { createPageMetadata } from "../../../lib/seo";
 
 const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
@@ -84,6 +85,7 @@ export default async function ArchivePage() {
                       alt={activity.title}
                       width={640}
                       height={480}
+                      unoptimized={shouldUseUnoptimizedImage(activity.coverImageUrl)}
                       sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                       className="h-full w-full object-cover"
                     />
@@ -144,6 +146,7 @@ export default async function ArchivePage() {
                       alt={exhibition.title}
                       width={720}
                       height={540}
+                      unoptimized={shouldUseUnoptimizedImage(exhibition.coverImageUrl)}
                       sizes="(min-width: 768px) 46vw, 100vw"
                       className="h-full w-full object-cover"
                     />

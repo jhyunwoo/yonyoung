@@ -122,6 +122,21 @@ describe("exhibition routes", /** describe 실행 과정에서 필요한 연산�
     expect(getExhibitionById).toHaveBeenCalledWith(IDs.exhibition);
   });
 
+  it("전시 상세 조회 성공 시 200을 반환한다", async () => {
+    const getExhibitionById = fn(async () =>
+      createExhibition({ id: IDs.exhibition }),
+    );
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ getExhibitionById }),
+    });
+
+    const response = await app.request(`/api/exhibitions/${IDs.exhibition}`);
+    expect(response.status).toBe(200);
+    const body = await readJson<{ data: { id: string } }>(response);
+    expect(body.data.id).toBe(IDs.exhibition);
+  });
+
   it("전시 수정 본문이 비어 있으면 400을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({ actor: createActor("manager", IDs.manager) });
 
@@ -367,5 +382,212 @@ describe("exhibition routes", /** describe 실행 과정에서 필요한 연산�
       IDs.exhibition,
       IDs.exhibitionImage,
     );
+  });
+
+  it("인증되지 않은 요청은 전시 관련 엔드포인트에서 401을 반환한다", async () => {
+    const app = createTestApp({ actor: null });
+    const requests: Array<{
+      path: string;
+      method?: "POST" | "PATCH" | "DELETE";
+      body?: unknown;
+    }> = [
+      { path: "/api/exhibitions" },
+      {
+        path: "/api/exhibitions",
+        method: "POST",
+        body: {
+          title: "신규 전시",
+          startDate: Date.parse("2031-01-01T00:00:00.000Z"),
+          endDate: Date.parse("2031-01-10T00:00:00.000Z"),
+          generationId: IDs.generation,
+          place: "갤러리",
+          coverImageUrl: "https://example.com/exhibition-cover.jpg",
+          description: "설명",
+        },
+      },
+      { path: `/api/exhibitions/${IDs.exhibition}` },
+      {
+        path: `/api/exhibitions/${IDs.exhibition}`,
+        method: "PATCH",
+        body: { title: "updated" },
+      },
+      { path: `/api/exhibitions/${IDs.exhibition}`, method: "DELETE" },
+      {
+        path: `/api/exhibitions/${IDs.exhibition}/images`,
+        method: "POST",
+        body: { imageUrl: "https://example.com/exhibition-detail.jpg", sortOrder: 0 },
+      },
+      {
+        path: `/api/exhibitions/${IDs.exhibition}/images/${IDs.exhibitionImage}`,
+        method: "PATCH",
+        body: { sortOrder: 2 },
+      },
+      {
+        path: `/api/exhibitions/${IDs.exhibition}/images/${IDs.exhibitionImage}`,
+        method: "DELETE",
+      },
+    ];
+
+    for (const request of requests) {
+      const response = await app.request(request.path, {
+        method: request.method,
+        headers: request.body ? { "content-type": "application/json" } : undefined,
+        body: request.body ? JSON.stringify(request.body) : undefined,
+      });
+      expect(response.status).toBe(401);
+      await expectErrorCode(response, "UNAUTHORIZED");
+    }
+  });
+
+  it("unverified 사용자는 전시 목록/상세 조회 권한이 없어 403을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("unverified", IDs.otherUuid) });
+
+    const listResponse = await app.request("/api/exhibitions");
+    expect(listResponse.status).toBe(403);
+    await expectErrorCode(listResponse, "FORBIDDEN");
+
+    const detailResponse = await app.request(`/api/exhibitions/${IDs.exhibition}`);
+    expect(detailResponse.status).toBe(403);
+    await expectErrorCode(detailResponse, "FORBIDDEN");
+  });
+
+  it("전시 수정 파라미터가 유효하지 않으면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("manager", IDs.manager) });
+    const response = await app.request("/api/exhibitions/not-a-uuid", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "updated" }),
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+
+  it("전시 삭제 파라미터가 유효하지 않으면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("vice_president", IDs.vicePresident) });
+    const response = await app.request("/api/exhibitions/not-a-uuid", {
+      method: "DELETE",
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+
+  it("member 계열 사용자는 전시 수정 권한이 없어 403을 반환한다", async () => {
+    const updateExhibition = fn(async () => createExhibition());
+    const app = createTestApp({
+      actor: createActor("regular_member"),
+      dataService: createDataServiceMock({ updateExhibition }),
+    });
+
+    const response = await app.request(`/api/exhibitions/${IDs.exhibition}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "updated" }),
+    });
+
+    expect(response.status).toBe(403);
+    await expectErrorCode(response, "FORBIDDEN");
+    expect(updateExhibition).not.toHaveBeenCalled();
+  });
+
+  it("전시 상세 이미지 생성/수정/삭제 파라미터가 유효하지 않으면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("manager", IDs.manager) });
+
+    const createResponse = await app.request("/api/exhibitions/not-a-uuid/images", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        imageUrl: "https://example.com/exhibition-detail.jpg",
+        sortOrder: 0,
+      }),
+    });
+    expect(createResponse.status).toBe(400);
+    await expectErrorCode(createResponse, "BAD_REQUEST");
+
+    const patchResponse = await app.request(
+      `/api/exhibitions/${IDs.exhibition}/images/not-a-uuid`,
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sortOrder: 1 }),
+      },
+    );
+    expect(patchResponse.status).toBe(400);
+    await expectErrorCode(patchResponse, "BAD_REQUEST");
+
+    const deleteResponse = await app.request(
+      `/api/exhibitions/${IDs.exhibition}/images/not-a-uuid`,
+      { method: "DELETE" },
+    );
+    expect(deleteResponse.status).toBe(400);
+    await expectErrorCode(deleteResponse, "BAD_REQUEST");
+  });
+
+  it("member 계열 사용자는 전시 상세 이미지 수정 권한이 없어 403을 반환한다", async () => {
+    const updateExhibitionImage = fn(async () => createExhibitionImage());
+    const app = createTestApp({
+      actor: createActor("regular_member"),
+      dataService: createDataServiceMock({ updateExhibitionImage }),
+    });
+
+    const response = await app.request(
+      `/api/exhibitions/${IDs.exhibition}/images/${IDs.exhibitionImage}`,
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sortOrder: 2 }),
+      },
+    );
+
+    expect(response.status).toBe(403);
+    await expectErrorCode(response, "FORBIDDEN");
+    expect(updateExhibitionImage).not.toHaveBeenCalled();
+  });
+
+  it("전시/전시 이미지 수정 본문이 스키마와 맞지 않으면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("manager", IDs.manager) });
+
+    const updateResponse = await app.request(`/api/exhibitions/${IDs.exhibition}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ startDate: "invalid" }),
+    });
+    expect(updateResponse.status).toBe(400);
+    await expectErrorCode(updateResponse, "BAD_REQUEST");
+
+    const updateImageResponse = await app.request(
+      `/api/exhibitions/${IDs.exhibition}/images/${IDs.exhibitionImage}`,
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ imageUrl: "invalid-url" }),
+      },
+    );
+    expect(updateImageResponse.status).toBe(400);
+    await expectErrorCode(updateImageResponse, "BAD_REQUEST");
+  });
+
+  it("전시/전시 이미지 수정 본문이 JSON이 아니면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("manager", IDs.manager) });
+
+    const updateResponse = await app.request(`/api/exhibitions/${IDs.exhibition}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: "{",
+    });
+    expect(updateResponse.status).toBe(400);
+    expect(await updateResponse.text()).toContain("Malformed");
+
+    const updateImageResponse = await app.request(
+      `/api/exhibitions/${IDs.exhibition}/images/${IDs.exhibitionImage}`,
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: "{",
+      },
+    );
+    expect(updateImageResponse.status).toBe(400);
+    expect(await updateImageResponse.text()).toContain("Malformed");
   });
 });

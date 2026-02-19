@@ -164,4 +164,129 @@ describe("user routes additional coverage", /** describe 실행 과정에서 필
     await expectErrorCode(response, "BAD_REQUEST");
     expect(updateUser).not.toHaveBeenCalled();
   });
+
+  it("인증되지 않은 요청은 users 엔드포인트에서 401을 반환한다", async () => {
+    const app = createTestApp({ actor: null });
+    const requests: Array<{
+      path: string;
+      method?: "PATCH" | "DELETE";
+      body?: unknown;
+    }> = [
+      { path: "/api/users" },
+      { path: `/api/users/${IDs.otherUser}` },
+      {
+        path: `/api/users/${IDs.otherUser}`,
+        method: "PATCH",
+        body: { name: "updated" },
+      },
+      { path: `/api/users/${IDs.otherUser}`, method: "DELETE" },
+    ];
+
+    for (const request of requests) {
+      const response = await app.request(request.path, {
+        method: request.method,
+        headers: request.body ? { "content-type": "application/json" } : undefined,
+        body: request.body ? JSON.stringify(request.body) : undefined,
+      });
+
+      expect(response.status).toBe(401);
+      await expectErrorCode(response, "UNAUTHORIZED");
+    }
+  });
+
+  it("unverified 사용자는 users 목록/상세 조회 권한이 없어 403을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("unverified", IDs.member) });
+
+    const listResponse = await app.request("/api/users");
+    expect(listResponse.status).toBe(403);
+    await expectErrorCode(listResponse, "FORBIDDEN");
+
+    const detailResponse = await app.request(`/api/users/${IDs.otherUser}`);
+    expect(detailResponse.status).toBe(403);
+    await expectErrorCode(detailResponse, "FORBIDDEN");
+  });
+
+  it("users 경로 파라미터에 허용되지 않은 문자가 포함되면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("vice_president", IDs.vicePresident) });
+    const invalidPath = "/api/users/invalid%20id";
+
+    const detailResponse = await app.request(invalidPath);
+    expect(detailResponse.status).toBe(400);
+    await expectErrorCode(detailResponse, "BAD_REQUEST");
+
+    const patchResponse = await app.request(invalidPath, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "updated" }),
+    });
+    expect(patchResponse.status).toBe(400);
+    await expectErrorCode(patchResponse, "BAD_REQUEST");
+
+    const deleteResponse = await app.request(invalidPath, {
+      method: "DELETE",
+    });
+    expect(deleteResponse.status).toBe(400);
+    await expectErrorCode(deleteResponse, "BAD_REQUEST");
+  });
+
+  it("member 계열 사용자의 본인 수정 본문이 비어 있으면 400", async () => {
+    const updateUser = fn(async () => createUser({ id: IDs.member }));
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({ updateUser }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.member}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({}),
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+    expect(updateUser).not.toHaveBeenCalled();
+  });
+
+  it("회장 1인 상태에서 회장 권한 하향은 400을 반환한다", async () => {
+    const updateUser = fn(async () => createUser({ id: IDs.president, role: "regular_member" }));
+    const app = createTestApp({
+      actor: createActor("president", IDs.president),
+      dataService: createDataServiceMock({
+        getUserById: fn(async () => createUser({ id: IDs.president, role: "president" })),
+        listUsers: fn(async () => [createUser({ id: IDs.president, role: "president" })]),
+        updateUser,
+      }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.president}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ role: "regular_member" }),
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+    expect(updateUser).not.toHaveBeenCalled();
+  });
+
+  it("admin 수정에서 update 대상이 사라지면 404를 반환한다", async () => {
+    const updateUser = fn(async () => null);
+    const app = createTestApp({
+      actor: createActor("vice_president", IDs.vicePresident),
+      dataService: createDataServiceMock({
+        getUserById: fn(async () => createUser({ id: IDs.otherUser, role: "regular_member" })),
+        updateUser,
+      }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.otherUser}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "updated" }),
+    });
+
+    expect(response.status).toBe(404);
+    await expectErrorCode(response, "NOT_FOUND");
+    expect(updateUser).toHaveBeenCalled();
+  });
 });

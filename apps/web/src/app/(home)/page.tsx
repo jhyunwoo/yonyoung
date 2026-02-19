@@ -12,6 +12,7 @@ import {
   listPublicSupporters,
   safeList,
 } from "../../lib/public-api";
+import { shouldUseUnoptimizedImage } from "../../lib/image-utils";
 import { pickFeaturedPublicExhibition } from "../../lib/public-exhibition";
 import { resolveSiteUrl } from "../../lib/seo";
 
@@ -98,6 +99,7 @@ export default async function HomePage() {
                       src={activity.coverImageUrl}
                       alt={activity.title}
                       fill
+                      unoptimized={shouldUseUnoptimizedImage(activity.coverImageUrl)}
                       sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                       className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                     />

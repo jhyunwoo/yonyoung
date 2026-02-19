@@ -88,6 +88,18 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
       await expectErrorCode(response, "BAD_REQUEST");
     });
 
+    it(`${route.path}는 JSON 본문이 깨졌으면 400을 반환한다`, async () => {
+      const app = createTestApp({ actor: createActor(route.role, IDs.manager) });
+      const response = await app.request(route.path, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: "{",
+      });
+
+      expect(response.status).toBe(400);
+      expect(await response.text()).toContain("Malformed");
+    });
+
     it(`${route.path}는 presign 생성 성공 시 201과 URL을 반환한다`, /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
       const issuePresignedPutUrl = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => ({
         uploadUrl: "https://upload.example.com/signed",
@@ -192,6 +204,18 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     expect(issuePresignedPutUrl).not.toHaveBeenCalled();
   });
 
+  it("/api/users/presign/profile는 인증되지 않은 요청에 401을 반환한다", async () => {
+    const app = createTestApp({ actor: null });
+    const response = await app.request("/api/users/presign/profile", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png" }),
+    });
+
+    expect(response.status).toBe(401);
+    await expectErrorCode(response, "UNAUTHORIZED");
+  });
+
   it("/api/users/presign/profile는 member 계열 사용자에게 허용된다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const issuePresignedPutUrl = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => ({
       uploadUrl: "https://upload.example.com/signed",
@@ -261,6 +285,18 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     await expectErrorCode(response, "BAD_REQUEST");
   });
 
+  it("/api/users/presign/profile는 JSON 본문이 깨졌으면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("associate_member", IDs.member) });
+    const response = await app.request("/api/users/presign/profile", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{",
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toContain("Malformed");
+  });
+
   it("/api/users/presign/profile는 presign 서비스 예외 시 500을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const issuePresignedPutUrl = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
       throw new Error("r2 unavailable");
@@ -278,5 +314,25 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
 
     expect(response.status).toBe(500);
     await expectErrorCode(response, "INTERNAL_ERROR");
+  });
+
+  it("/api/users/presign/profile는 스토리지 설정 누락 시 안내 메시지와 함께 500을 반환한다", async () => {
+    const issuePresignedPutUrl = fn(async () => {
+      throw new MissingStorageConfigError(["R2_BUCKET_NAME"]);
+    });
+    const app = createTestApp({
+      actor: createActor("associate_member", IDs.member),
+      presignService: createPresignServiceMock({ issuePresignedPutUrl }),
+    });
+
+    const response = await app.request("/api/users/presign/profile", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png" }),
+    });
+
+    expect(response.status).toBe(500);
+    const body = await readJson<{ error: { message: string } }>(response);
+    expect(body.error.message).toContain("R2_*");
   });
 });

@@ -150,12 +150,6 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
     if (!can(actorResult.actor.role, "user", "read") && !isSelf) {
       return forbidden(c);
     }
-    if (isMemberLikeRole(actorResult.actor.role) && !isSelf) {
-      return forbidden(
-        c,
-        "부원 계열 역할은 본인 정보만 조회할 수 있습니다.",
-      );
-    }
 
     const data = await dependencies.getDataService(c).getUserById(params.data.id);
     if (!data) {

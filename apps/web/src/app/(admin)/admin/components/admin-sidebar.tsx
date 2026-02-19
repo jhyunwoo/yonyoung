@@ -59,6 +59,31 @@ const RESOURCE_MENU_ITEMS = [
   },
 ] as const;
 
+const NAV_ITEM_BASE_CLASS =
+  "flex items-center rounded-md border px-3 py-2 text-sm font-medium transition-colors";
+
+const NAV_ITEM_SCOPE_BADGE_CLASS =
+  "inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.04em]";
+
+const ROLE_LABEL_MAP: Record<string, string> = {
+  president: "회장",
+  vice_president: "부회장",
+  manager: "운영진",
+  regular_member: "정회원",
+  associate_member: "준회원",
+  new_member: "신입회원",
+  unverified: "미인증",
+  member: "회원",
+};
+
+const getRoleLabelInKorean = (role: string | null | undefined): string => {
+  if (!role) {
+    return ROLE_LABEL_MAP.member;
+  }
+
+  return ROLE_LABEL_MAP[role] ?? role;
+};
+
 /**
  * isActiveResourcePath 조건을 평가해 사용 가능 여부를 판별합니다.
  * @param pathname 리소스 경로 또는 라우팅 경로 문자열입니다.
@@ -222,6 +247,14 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
     pathname === "/admin/generations" || pathname.startsWith("/admin/generations/");
   const isProfileActive =
     pathname === "/admin/profile" || pathname.startsWith("/admin/profile/");
+  const generationScopeLabel =
+    selectedSortOrder === null ? "기수" : `${selectedSortOrder}기`;
+  const userDisplayName =
+    session.user.nickname?.trim() ||
+    session.user.name?.trim() ||
+    session.user.email.split("@")[0];
+  const userInitial = userDisplayName.slice(0, 1).toUpperCase();
+  const userRoleLabel = getRoleLabelInKorean(session.user.role);
 
   const handleThemeToggle = () => {
     setTheme((previous) => {
@@ -285,68 +318,162 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
       </div>
 
       <nav className="flex-1 overflow-y-auto p-3" data-testid="admin-sidebar-nav">
-        <ul className="space-y-2">
-          <li>
-            <Link
-              href="/admin/profile"
-              data-testid="admin-nav-profile"
-              className={`flex items-center rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
-                isProfileActive
-                  ? "border-black bg-black text-white"
-                  : "border-gray-200 text-gray-700 hover:bg-gray-100"
-              } ${collapsed ? "justify-center" : "justify-start"}`}
-            >
-              {collapsed ? "프로필" : "내 프로필"}
-            </Link>
-          </li>
+        <div className="space-y-3">
+          <section
+            className="rounded-xl border border-blue-200 bg-blue-50/70 p-2"
+            data-testid="admin-nav-global-group"
+          >
+            {collapsed ? (
+              <p className="pb-1 text-center text-[10px] font-semibold tracking-[0.08em] text-blue-900/80">
+                전체
+              </p>
+            ) : (
+              <p className="px-2 pb-2 text-[11px] font-semibold tracking-[0.08em] text-blue-900/80">
+                전체 기수 공통 관리
+              </p>
+            )}
 
-          {canManageGenerationsFlag ? (
-            <li>
-              <Link
-                href="/admin/generations"
-                data-testid="admin-nav-generation-settings"
-                className={`flex items-center rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
-                  isGenerationSettingsActive
-                    ? "border-black bg-black text-white"
-                    : "border-gray-200 text-gray-700 hover:bg-gray-100"
-                } ${collapsed ? "justify-center" : "justify-start"}`}
-              >
-                {collapsed ? "기수" : "기수 설정"}
-              </Link>
-            </li>
-          ) : null}
-
-          {RESOURCE_MENU_ITEMS.map(/** RESOURCE_MENU_ITEMS.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => {
-            const href =
-              selectedSortOrder === null
-                ? "/admin"
-                : buildGenerationPath(selectedSortOrder, item.resourcePath);
-            const active = isActiveResourcePath(
-              pathname,
-              selectedSortOrder,
-              item.resourcePath,
-            );
-
-            return (
-              <li key={item.resourcePath}>
+            <ul className="space-y-2">
+              <li>
                 <Link
-                  href={href}
-                  data-testid={`admin-nav-${item.shortLabel.toLowerCase()}`}
-                  className={`flex items-center rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
-                    active
+                  href="/admin/profile"
+                  data-testid="admin-nav-profile"
+                  className={`${NAV_ITEM_BASE_CLASS} ${
+                    isProfileActive
                       ? "border-black bg-black text-white"
-                      : "border-gray-200 text-gray-700 hover:bg-gray-100"
+                      : "border-blue-200 text-blue-900 hover:opacity-90"
                   } ${collapsed ? "justify-center" : "justify-start"}`}
                 >
-                  {collapsed ? item.collapsedLabel : item.label}
+                  {collapsed ? (
+                    "프로필"
+                  ) : (
+                    <>
+                      <span className={`${NAV_ITEM_SCOPE_BADGE_CLASS} border-blue-200 bg-blue-50/70 text-blue-900`}>
+                        전체
+                      </span>
+                      <span className="ml-2">내 프로필</span>
+                    </>
+                  )}
                 </Link>
               </li>
-            );
-          })}
-        </ul>
+
+              {canManageGenerationsFlag ? (
+                <li>
+                  <Link
+                    href="/admin/generations"
+                    data-testid="admin-nav-generation-settings"
+                    className={`${NAV_ITEM_BASE_CLASS} ${
+                      isGenerationSettingsActive
+                        ? "border-black bg-black text-white"
+                        : "border-blue-200 text-blue-900 hover:opacity-90"
+                    } ${collapsed ? "justify-center" : "justify-start"}`}
+                  >
+                    {collapsed ? (
+                      "기수"
+                    ) : (
+                      <>
+                        <span className={`${NAV_ITEM_SCOPE_BADGE_CLASS} border-blue-200 bg-blue-50/70 text-blue-900`}>
+                          전체
+                        </span>
+                        <span className="ml-2">기수 설정</span>
+                      </>
+                    )}
+                  </Link>
+                </li>
+              ) : null}
+            </ul>
+          </section>
+
+          <section
+            className="rounded-xl border border-gray-200 bg-white p-2"
+            data-testid="admin-nav-generation-group"
+          >
+            {collapsed ? (
+              <p className="pb-1 text-center text-[10px] font-semibold tracking-[0.08em] text-gray-500">
+                기수별
+              </p>
+            ) : (
+              <p className="px-2 pb-2 text-[11px] font-semibold tracking-[0.08em] text-gray-500">
+                선택 기수별 관리
+              </p>
+            )}
+
+            <ul className="space-y-2">
+              {RESOURCE_MENU_ITEMS.map(
+                /** RESOURCE_MENU_ITEMS.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => {
+                  const href =
+                    selectedSortOrder === null
+                      ? "/admin"
+                      : buildGenerationPath(selectedSortOrder, item.resourcePath);
+                  const active = isActiveResourcePath(
+                    pathname,
+                    selectedSortOrder,
+                    item.resourcePath,
+                  );
+
+                  return (
+                    <li key={item.resourcePath}>
+                      <Link
+                        href={href}
+                        data-testid={`admin-nav-${item.shortLabel.toLowerCase()}`}
+                        className={`${NAV_ITEM_BASE_CLASS} ${
+                          active
+                            ? "border-black bg-black text-white"
+                            : "border-gray-200 text-gray-700 hover:bg-gray-100"
+                        } ${collapsed ? "justify-center" : "justify-start"}`}
+                      >
+                        {collapsed ? (
+                          item.collapsedLabel
+                        ) : (
+                          <>
+                            <span className={`${NAV_ITEM_SCOPE_BADGE_CLASS} border-gray-300 bg-gray-100 text-gray-600`}>
+                              {generationScopeLabel}
+                            </span>
+                            <span className="ml-2">{item.label}</span>
+                          </>
+                        )}
+                      </Link>
+                    </li>
+                  );
+                },
+              )}
+            </ul>
+          </section>
+        </div>
+
       </nav>
 
       <div className="space-y-2 border-t border-gray-200 p-3">
+        {collapsed ? (
+          <div className="flex justify-center" data-testid="admin-user-summary-collapsed">
+            <div
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 bg-gray-100 text-sm font-semibold text-gray-700"
+              title={`${userDisplayName} (${session.user.email})`}
+              aria-label={`${userDisplayName} 프로필`}
+            >
+              {userInitial}
+            </div>
+          </div>
+        ) : (
+          <section
+            className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2"
+            data-testid="admin-user-summary"
+          >
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white text-sm font-semibold text-gray-700">
+                {userInitial}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-gray-700">{userDisplayName}</p>
+                <p className="truncate text-xs text-gray-500">{session.user.email}</p>
+              </div>
+            </div>
+            <p className="mt-2 text-[11px] text-gray-500">
+              권한: <span className="font-semibold text-gray-700">{userRoleLabel}</span>
+            </p>
+          </section>
+        )}
+
         <button
           type="button"
           onClick={handleThemeToggle}
