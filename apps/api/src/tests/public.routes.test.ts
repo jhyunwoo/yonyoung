@@ -42,6 +42,36 @@ describe("public routes", () => {
     expect(listPublicActivities).toHaveBeenCalledTimes(1);
   });
 
+  it("비로그인 접근 시 공개 활동 상세를 조회한다", async () => {
+    const getActivityById = fn(async () =>
+      createActivity({ id: IDs.activity, title: "활동 상세" }),
+    );
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({ getActivityById }),
+    });
+
+    const response = await app.request(`/api/public/activities/${IDs.activity}`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toContain("s-maxage=60");
+
+    const body = await readJson<{ data: { id: string; title: string } }>(response);
+    expect(body.data.id).toBe(IDs.activity);
+    expect(body.data.title).toBe("활동 상세");
+    expect(getActivityById).toHaveBeenCalledWith(IDs.activity);
+  });
+
+  it("공개 활동 상세가 없으면 404를 반환한다", async () => {
+    const getActivityById = fn(async () => null);
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({ getActivityById }),
+    });
+
+    const response = await app.request(`/api/public/activities/${IDs.activity}`);
+    expect(response.status).toBe(404);
+  });
+
   it("비로그인 접근 시 공개 전시 목록을 조회한다", async () => {
     const listPublicExhibitions = fn(async () => [
       createExhibition({
@@ -68,6 +98,36 @@ describe("public routes", () => {
       "40000000-0000-4000-8000-000000000011",
     ]);
     expect(listPublicExhibitions).toHaveBeenCalledTimes(1);
+  });
+
+  it("비로그인 접근 시 공개 전시 상세를 조회한다", async () => {
+    const getExhibitionById = fn(async () =>
+      createExhibition({ id: IDs.exhibition, title: "전시 상세" }),
+    );
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({ getExhibitionById }),
+    });
+
+    const response = await app.request(`/api/public/exhibitions/${IDs.exhibition}`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toContain("s-maxage=60");
+
+    const body = await readJson<{ data: { id: string; title: string } }>(response);
+    expect(body.data.id).toBe(IDs.exhibition);
+    expect(body.data.title).toBe("전시 상세");
+    expect(getExhibitionById).toHaveBeenCalledWith(IDs.exhibition);
+  });
+
+  it("공개 전시 상세가 없으면 404를 반환한다", async () => {
+    const getExhibitionById = fn(async () => null);
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({ getExhibitionById }),
+    });
+
+    const response = await app.request(`/api/public/exhibitions/${IDs.exhibition}`);
+    expect(response.status).toBe(404);
   });
 
   it("공개 후원사 목록은 서비스에서 계산한 우선순위를 그대로 반환한다", async () => {

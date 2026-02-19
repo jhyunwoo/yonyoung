@@ -82,6 +82,12 @@ export type ApiCreateActivityImageInput = {
 
 export type ApiUpdateActivityImageInput = Partial<ApiCreateActivityImageInput>;
 
+export type ApiUpdateActivityImageBatchItemInput = {
+  imageId: string;
+  imageUrl?: string;
+  sortOrder?: number;
+};
+
 export type ApiSupporter = {
   id: string;
   name: string;
@@ -142,6 +148,12 @@ export type ApiCreateExhibitionImageInput = {
 };
 
 export type ApiUpdateExhibitionImageInput = Partial<ApiCreateExhibitionImageInput>;
+
+export type ApiUpdateExhibitionImageBatchItemInput = {
+  imageId: string;
+  imageUrl?: string;
+  sortOrder?: number;
+};
 
 export type ApiLinktreeItem = {
   id: string;

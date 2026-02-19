@@ -59,6 +59,13 @@ export default function SiteHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
+    const onScroll = () => setIsScrolled(window.scrollY > 50);
+    window.addEventListener("scroll", onScroll);
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
@@ -79,6 +86,7 @@ export default function SiteHeader() {
                 width={40}
                 height={40}
                 priority
+                unoptimized
               />
             </div>
             <div className={styles.logoText}>

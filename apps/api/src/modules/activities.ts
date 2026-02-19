@@ -14,10 +14,12 @@ import {
 import {
   ApiActivityImageSchema,
   ApiActivitySchema,
+  ApiCreateActivityImageBatchSchema,
   ApiCreateActivityImageSchema,
   ApiCreateActivitySchema,
   ApiIdParamSchema,
   ApiImageIdParamSchema,
+  ApiUpdateActivityImageBatchSchema,
   ApiUpdateActivityImageSchema,
   ApiUpdateActivitySchema,
 } from "../lib/openapi/schemas";
@@ -136,6 +138,44 @@ const updateActivityImageRoute = createRoute({
   },
   responses: {
     200: dataResponse(ApiActivityImageSchema, "활동 이미지 수정 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
+});
+
+const addActivityImagesBatchRoute = createRoute({
+  method: "post",
+  path: "/api/activities/{id}/images/batch",
+  tags: ["Activities"],
+  operationId: "addActivityImagesBatch",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiIdParamSchema,
+    body: jsonBody(ApiCreateActivityImageBatchSchema, "활동 이미지 일괄 추가 요청"),
+  },
+  responses: {
+    201: createdResponse(ApiActivityImageSchema.array(), "활동 이미지 일괄 생성 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
+});
+
+const updateActivityImagesBatchRoute = createRoute({
+  method: "patch",
+  path: "/api/activities/{id}/images/batch",
+  tags: ["Activities"],
+  operationId: "updateActivityImagesBatch",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiIdParamSchema,
+    body: jsonBody(ApiUpdateActivityImageBatchSchema, "활동 이미지 일괄 수정 요청"),
+  },
+  responses: {
+    200: dataResponse(ApiActivityImageSchema.array(), "활동 이미지 일괄 수정 성공"),
     400: errorResponses[400],
     401: errorResponses[401],
     403: errorResponses[403],
@@ -308,6 +348,62 @@ export const registerActivityRoutes = (
       return notFound(c, "활동을 찾을 수 없습니다.");
     }
     return ok(c, data, 201);
+  });
+
+  app.openapi(addActivityImagesBatchRoute, async (c): Promise<any> => {
+    const actorResult = await requireActor(c, dependencies);
+    if ("response" in actorResult) {
+      return actorResult.response;
+    }
+    const denied = requirePermission(c, actorResult.actor, "activity", "update");
+    if (denied) {
+      return denied;
+    }
+
+    const params = parseParams(c, ApiIdParamSchema);
+    if (!params.success) {
+      return badRequest(c, params.message);
+    }
+    const body = await parseBody(c, ApiCreateActivityImageBatchSchema);
+    if (!body.success) {
+      return badRequest(c, body.message);
+    }
+
+    const data = await dependencies
+      .getDataService(c)
+      .addActivityImages(params.data.id, body.data);
+    if (!data) {
+      return notFound(c, "활동을 찾을 수 없습니다.");
+    }
+    return ok(c, data, 201);
+  });
+
+  app.openapi(updateActivityImagesBatchRoute, async (c): Promise<any> => {
+    const actorResult = await requireActor(c, dependencies);
+    if ("response" in actorResult) {
+      return actorResult.response;
+    }
+    const denied = requirePermission(c, actorResult.actor, "activity", "update");
+    if (denied) {
+      return denied;
+    }
+
+    const params = parseParams(c, ApiIdParamSchema);
+    if (!params.success) {
+      return badRequest(c, params.message);
+    }
+    const body = await parseBody(c, ApiUpdateActivityImageBatchSchema);
+    if (!body.success) {
+      return badRequest(c, body.message);
+    }
+
+    const data = await dependencies
+      .getDataService(c)
+      .updateActivityImages(params.data.id, body.data);
+    if (!data) {
+      return notFound(c, "세부 이미지를 찾을 수 없습니다.");
+    }
+    return ok(c, data);
   });
 
   app.openapi(updateActivityImageRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {

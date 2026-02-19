@@ -138,11 +138,23 @@ export type DataService = {
     activityId: string,
     input: { imageUrl: string; sortOrder: number },
   ) => Promise<ActivityImageEntity | null>;
+  addActivityImages: (
+    activityId: string,
+    input: Array<{ imageUrl: string; sortOrder: number }>,
+  ) => Promise<ActivityImageEntity[] | null>;
   updateActivityImage: (
     activityId: string,
     imageId: string,
     input: Partial<{ imageUrl: string; sortOrder: number }>,
   ) => Promise<ActivityImageEntity | null>;
+  updateActivityImages: (
+    activityId: string,
+    input: Array<{
+      imageId: string;
+      imageUrl?: string;
+      sortOrder?: number;
+    }>,
+  ) => Promise<ActivityImageEntity[] | null>;
   deleteActivityImage: (activityId: string, imageId: string) => Promise<boolean>;
 
   listSupporters: () => Promise<SupporterEntity[]>;
@@ -194,11 +206,23 @@ export type DataService = {
     exhibitionId: string,
     input: { imageUrl: string; sortOrder: number },
   ) => Promise<ExhibitionImageEntity | null>;
+  addExhibitionImages: (
+    exhibitionId: string,
+    input: Array<{ imageUrl: string; sortOrder: number }>,
+  ) => Promise<ExhibitionImageEntity[] | null>;
   updateExhibitionImage: (
     exhibitionId: string,
     imageId: string,
     input: Partial<{ imageUrl: string; sortOrder: number }>,
   ) => Promise<ExhibitionImageEntity | null>;
+  updateExhibitionImages: (
+    exhibitionId: string,
+    input: Array<{
+      imageId: string;
+      imageUrl?: string;
+      sortOrder?: number;
+    }>,
+  ) => Promise<ExhibitionImageEntity[] | null>;
   deleteExhibitionImage: (
     exhibitionId: string,
     imageId: string,

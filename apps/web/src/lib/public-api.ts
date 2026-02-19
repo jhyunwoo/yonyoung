@@ -116,8 +116,20 @@ export const listPublicActivities = async (): Promise<ApiActivity[]> =>
     tags: [PUBLIC_CACHE_TAGS.activities],
   });
 
+export const getPublicActivityById = async (id: string): Promise<ApiActivity> =>
+  publicGet<ApiActivity>(`/api/public/activities/${id}`, {
+    revalidateSeconds: 60,
+    tags: [PUBLIC_CACHE_TAGS.activities],
+  });
+
 export const listPublicExhibitions = async (): Promise<ApiExhibition[]> =>
   publicGet<ApiExhibition[]>("/api/public/exhibitions", {
+    revalidateSeconds: 60,
+    tags: [PUBLIC_CACHE_TAGS.exhibitions],
+  });
+
+export const getPublicExhibitionById = async (id: string): Promise<ApiExhibition> =>
+  publicGet<ApiExhibition>(`/api/public/exhibitions/${id}`, {
     revalidateSeconds: 60,
     tags: [PUBLIC_CACHE_TAGS.exhibitions],
   });

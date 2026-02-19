@@ -13,6 +13,7 @@ export default function SiteFooter() {
                 alt="연영회 로고"
                 width={40}
                 height={40}
+                unoptimized
                 style={{ objectFit: "contain" }}
               />
             </div>

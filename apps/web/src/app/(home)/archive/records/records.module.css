@@ -26,28 +26,6 @@
   line-height: 1.2;
 }
 
-.uploadTriggerBtn {
-  background: none;
-  border: none;
-  font-size: 1rem;
-  color: #666666;
-  cursor: pointer;
-  padding: 0.2rem;
-  line-height: 1;
-  transition:
-    color 0.3s ease,
-    transform 0.2s ease;
-  display: block;
-  margin: 0.5rem 0 -1rem auto;
-  position: relative;
-  z-index: 1;
-}
-
-.uploadTriggerBtn:hover {
-  color: #2c3357;
-  transform: scale(1.1);
-}
-
 .galleryContainer {
   padding-bottom: 4rem;
 }
@@ -74,6 +52,7 @@
 }
 
 .gridItem {
+  display: block;
   position: relative;
   cursor: pointer;
   overflow: hidden;

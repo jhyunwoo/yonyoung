@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { listPublicExhibitions, safeList } from "../../../../lib/public-api";
 import { shouldUseUnoptimizedImage } from "../../../../lib/image-utils";
 import { createPageMetadata } from "../../../../lib/seo";
@@ -41,10 +42,12 @@ export default async function ArchiveExhibitionsPage() {
           ) : (
             <section className={styles.exhibitionsGrid} data-testid="archive-exhibitions-grid">
               {exhibitions.map((exhibition) => (
-                <article
+                <Link
                   key={exhibition.id}
+                  href={`/archive/exhibitions/${exhibition.id}`}
                   className={styles.exhibitionCard}
                   data-testid={`archive-exhibition-card-${exhibition.id}`}
+                  aria-label={`${exhibition.title} 상세 보기`}
                 >
                   <div className={styles.exhibitionImage}>
                     <Image
@@ -63,7 +66,7 @@ export default async function ArchiveExhibitionsPage() {
                     </p>
                     <p className={styles.exhibitionLocation}>{exhibition.place}</p>
                   </div>
-                </article>
+                </Link>
               ))}
             </section>
           )}

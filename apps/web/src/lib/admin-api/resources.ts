@@ -18,8 +18,10 @@ import type {
   ApiLinktreeItem,
   ApiSupporter,
   ApiUpdateActivityImageInput,
+  ApiUpdateActivityImageBatchItemInput,
   ApiUpdateActivityInput,
   ApiUpdateExhibitionImageInput,
+  ApiUpdateExhibitionImageBatchItemInput,
   ApiUpdateExhibitionInput,
   ApiUpdateGenerationInput,
   ApiUpdateLinktreeInput,
@@ -171,6 +173,18 @@ export const adminResourceApi = {
       [ADMIN_CACHE_TAGS.activities],
     ),
     /**
+   * addActivityImages의 핵심 비즈니스 로직을 수행합니다.
+   * @param id 대상을 식별하기 위한 ID 값입니다.
+   * @param inputs 함수 로직에서 사용하는 입력값입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
+  addActivityImages: (id: string, inputs: ApiCreateActivityImageInput[]) =>
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiActivityImage[]>(`/activities/${id}/images/batch`, "POST", inputs),
+      [ADMIN_CACHE_TAGS.activities],
+    ),
+    /**
    * updateActivityImage 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
    * @param imageId 대상을 식별하기 위한 ID 값입니다.
@@ -185,6 +199,21 @@ export const adminResourceApi = {
   ) =>
     withAdminCacheRevalidation(
       () => adminRequest<ApiActivityImage>(`/activities/${id}/images/${imageId}`, "PATCH", input),
+      [ADMIN_CACHE_TAGS.activities],
+    ),
+    /**
+   * updateActivityImages 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
+   * @param id 대상을 식별하기 위한 ID 값입니다.
+   * @param inputs 함수 로직에서 사용하는 입력값입니다.
+   * @returns 처리 결과 값을 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
+  updateActivityImages: (
+    id: string,
+    inputs: ApiUpdateActivityImageBatchItemInput[],
+  ) =>
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiActivityImage[]>(`/activities/${id}/images/batch`, "PATCH", inputs),
       [ADMIN_CACHE_TAGS.activities],
     ),
     /**
@@ -310,6 +339,18 @@ export const adminResourceApi = {
       [ADMIN_CACHE_TAGS.exhibitions],
     ),
     /**
+   * addExhibitionImages의 핵심 비즈니스 로직을 수행합니다.
+   * @param id 대상을 식별하기 위한 ID 값입니다.
+   * @param inputs 함수 로직에서 사용하는 입력값입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
+  addExhibitionImages: (id: string, inputs: ApiCreateExhibitionImageInput[]) =>
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiExhibitionImage[]>(`/exhibitions/${id}/images/batch`, "POST", inputs),
+      [ADMIN_CACHE_TAGS.exhibitions],
+    ),
+    /**
    * updateExhibitionImage 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
    * @param imageId 대상을 식별하기 위한 ID 값입니다.
@@ -324,6 +365,21 @@ export const adminResourceApi = {
   ) =>
     withAdminCacheRevalidation(
       () => adminRequest<ApiExhibitionImage>(`/exhibitions/${id}/images/${imageId}`, "PATCH", input),
+      [ADMIN_CACHE_TAGS.exhibitions],
+    ),
+    /**
+   * updateExhibitionImages 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
+   * @param id 대상을 식별하기 위한 ID 값입니다.
+   * @param inputs 함수 로직에서 사용하는 입력값입니다.
+   * @returns 처리 결과 값을 반환합니다.
+   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+   */
+  updateExhibitionImages: (
+    id: string,
+    inputs: ApiUpdateExhibitionImageBatchItemInput[],
+  ) =>
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiExhibitionImage[]>(`/exhibitions/${id}/images/batch`, "PATCH", inputs),
       [ADMIN_CACHE_TAGS.exhibitions],
     ),
     /**

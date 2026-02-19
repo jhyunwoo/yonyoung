@@ -3,12 +3,13 @@ import {
   ApiActivitySchema,
   ApiExhibitionSchema,
   ApiGenerationSchema,
+  ApiIdParamSchema,
   ApiLinktreeSchema,
   ApiPublicGenerationWithMembersSchema,
   ApiSupporterSchema,
 } from "../lib/openapi/schemas";
-import { dataResponse } from "../lib/openapi/responses";
-import { ok } from "../lib/http/response";
+import { dataResponse, errorResponses } from "../lib/openapi/responses";
+import { badRequest, notFound, ok } from "../lib/http/response";
 import { respondWithPublicCache } from "../lib/http/public-cache";
 import { AppDependencies } from "../lib/services/dependencies";
 import HonoAppType from "../types/honoAppType";
@@ -32,6 +33,36 @@ const listPublicExhibitionsRoute = createRoute({
   operationId: "listPublicExhibitions",
   responses: {
     200: dataResponse(ApiExhibitionSchema.array(), "공개 전시 목록 조회 성공"),
+  },
+});
+
+const getPublicActivityByIdRoute = createRoute({
+  method: "get",
+  path: "/api/public/activities/{id}",
+  tags: ["Public"],
+  operationId: "getPublicActivityById",
+  request: {
+    params: ApiIdParamSchema,
+  },
+  responses: {
+    200: dataResponse(ApiActivitySchema, "공개 활동 상세 조회 성공"),
+    400: errorResponses[400],
+    404: errorResponses[404],
+  },
+});
+
+const getPublicExhibitionByIdRoute = createRoute({
+  method: "get",
+  path: "/api/public/exhibitions/{id}",
+  tags: ["Public"],
+  operationId: "getPublicExhibitionById",
+  request: {
+    params: ApiIdParamSchema,
+  },
+  responses: {
+    200: dataResponse(ApiExhibitionSchema, "공개 전시 상세 조회 성공"),
+    400: errorResponses[400],
+    404: errorResponses[404],
   },
 });
 
@@ -96,9 +127,43 @@ export const registerPublicRoutes = (
     }),
   );
 
+  app.openapi(getPublicActivityByIdRoute, async (c): Promise<any> =>
+    respondWithPublicCache(c, async () => {
+      const params = ApiIdParamSchema.safeParse(c.req.param());
+      if (!params.success) {
+        return badRequest(c, params.error.issues[0]?.message ?? "잘못된 요청입니다.");
+      }
+
+      const data = await dependencies
+        .getDataService(c)
+        .getActivityById(params.data.id);
+      if (!data) {
+        return notFound(c);
+      }
+      return ok(c, data);
+    }),
+  );
+
   app.openapi(listPublicExhibitionsRoute, async (c): Promise<any> =>
     respondWithPublicCache(c, async () => {
       const data = await dependencies.getDataService(c).listPublicExhibitions();
+      return ok(c, data);
+    }),
+  );
+
+  app.openapi(getPublicExhibitionByIdRoute, async (c): Promise<any> =>
+    respondWithPublicCache(c, async () => {
+      const params = ApiIdParamSchema.safeParse(c.req.param());
+      if (!params.success) {
+        return badRequest(c, params.error.issues[0]?.message ?? "잘못된 요청입니다.");
+      }
+
+      const data = await dependencies
+        .getDataService(c)
+        .getExhibitionById(params.data.id);
+      if (!data) {
+        return notFound(c);
+      }
       return ok(c, data);
     }),
   );

@@ -294,6 +294,46 @@ export const ApiUpdateActivityImageSchema = z
   .strict()
   .openapi("ApiUpdateActivityImageInput");
 
+export const ApiCreateActivityImageBatchSchema = z
+  .array(ApiCreateActivityImageSchema)
+  .min(1, "세부 이미지를 하나 이상 전달해야 합니다.")
+  .openapi("ApiCreateActivityImageBatchInput");
+
+export const ApiUpdateActivityImageBatchItemSchema = z
+  .object({
+    imageId: z.string().uuid().openapi({
+      description: "수정할 세부 이미지 UUID",
+      example: EXAMPLE_IMAGE_ID,
+    }),
+    imageUrl: urlField(
+      "수정할 활동 세부 이미지 URL",
+      "https://cdn.yonyoung.example/activities/detail/updated-detail.jpg",
+    ).optional(),
+    sortOrder: z.number().int().nonnegative().optional().openapi({
+      description: "수정할 세부 이미지 표시 순서",
+      example: 1,
+    }),
+  })
+  .strict()
+  .refine(
+    (value) => value.imageUrl !== undefined || value.sortOrder !== undefined,
+    {
+      message: "수정할 필드를 하나 이상 전달해야 합니다.",
+    },
+  )
+  .openapi("ApiUpdateActivityImageBatchItemInput");
+
+export const ApiUpdateActivityImageBatchSchema = z
+  .array(ApiUpdateActivityImageBatchItemSchema)
+  .min(1, "세부 이미지를 하나 이상 전달해야 합니다.")
+  .refine(
+    (items) => new Set(items.map((item) => item.imageId)).size === items.length,
+    {
+      message: "중복된 imageId를 전달할 수 없습니다.",
+    },
+  )
+  .openapi("ApiUpdateActivityImageBatchInput");
+
 export const ApiSupporterSchema = z
   .object({
     id: z.string().uuid().openapi({
@@ -460,6 +500,46 @@ export const ApiUpdateExhibitionImageSchema = z
   })
   .strict()
   .openapi("ApiUpdateExhibitionImageInput");
+
+export const ApiCreateExhibitionImageBatchSchema = z
+  .array(ApiCreateExhibitionImageSchema)
+  .min(1, "세부 이미지를 하나 이상 전달해야 합니다.")
+  .openapi("ApiCreateExhibitionImageBatchInput");
+
+export const ApiUpdateExhibitionImageBatchItemSchema = z
+  .object({
+    imageId: z.string().uuid().openapi({
+      description: "수정할 세부 이미지 UUID",
+      example: EXAMPLE_IMAGE_ID,
+    }),
+    imageUrl: urlField(
+      "수정할 전시 세부 이미지 URL",
+      "https://cdn.yonyoung.example/exhibitions/detail/updated-detail.jpg",
+    ).optional(),
+    sortOrder: z.number().int().nonnegative().optional().openapi({
+      description: "수정할 세부 이미지 노출 순서",
+      example: 1,
+    }),
+  })
+  .strict()
+  .refine(
+    (value) => value.imageUrl !== undefined || value.sortOrder !== undefined,
+    {
+      message: "수정할 필드를 하나 이상 전달해야 합니다.",
+    },
+  )
+  .openapi("ApiUpdateExhibitionImageBatchItemInput");
+
+export const ApiUpdateExhibitionImageBatchSchema = z
+  .array(ApiUpdateExhibitionImageBatchItemSchema)
+  .min(1, "세부 이미지를 하나 이상 전달해야 합니다.")
+  .refine(
+    (items) => new Set(items.map((item) => item.imageId)).size === items.length,
+    {
+      message: "중복된 imageId를 전달할 수 없습니다.",
+    },
+  )
+  .openapi("ApiUpdateExhibitionImageBatchInput");
 
 export const ApiLinktreeItemSchema = z
   .object({

@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type ChangeEvent, type FormEvent, useEffect, useMemo, useState } from "react";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
 import { PRESIGN_PATHS } from "../../../../lib/admin-api/upload";
 import type {
@@ -22,6 +22,7 @@ import AdminInfoBox from "../components/admin-info-box";
 import AdminPageHeader from "../components/admin-page-header";
 import ImageInput from "../components/image-input";
 import { useAdminDrawerQuerySync } from "../components/use-admin-drawer-query-sync";
+import { useBatchImageUpload } from "../components/use-batch-image-upload";
 import { useImmediateImageUpload } from "../components/use-immediate-image-upload";
 
 type ActivityFormState = {
@@ -31,10 +32,6 @@ type ActivityFormState = {
   generationId: string;
 };
 
-type DetailImageFormState = {
-  sortOrder: string;
-};
-
 const emptyActivityForm: ActivityFormState = {
   title: "",
   description: "",
@@ -42,8 +39,9 @@ const emptyActivityForm: ActivityFormState = {
   generationId: "",
 };
 
-const emptyDetailForm: DetailImageFormState = {
-  sortOrder: "0",
+type DetailImageDraft = {
+  sortOrder: string;
+  imageUrl: string;
 };
 
 type ActivitiesAdminPageProps = {
@@ -121,8 +119,10 @@ export default function ActivitiesAdminPage({
 
   const [createForm, setCreateForm] = useState<ActivityFormState>(emptyActivityForm);
   const [editForm, setEditForm] = useState<ActivityFormState>(emptyActivityForm);
-  const [detailCreateForm, setDetailCreateForm] = useState<DetailImageFormState>(emptyDetailForm);
-  const [detailEditForm, setDetailEditForm] = useState<DetailImageFormState>(emptyDetailForm);
+  const [detailDrafts, setDetailDrafts] = useState<Record<string, DetailImageDraft>>({});
+  const [detailUploadTargetImageId, setDetailUploadTargetImageId] = useState<string | null>(
+    null,
+  );
 
   const createCoverUpload = useImmediateImageUpload({
     presignPath: PRESIGN_PATHS.activityCover,
@@ -130,9 +130,8 @@ export default function ActivitiesAdminPage({
   const editCoverUpload = useImmediateImageUpload({
     presignPath: PRESIGN_PATHS.activityCover,
   });
-  const detailCreateUpload = useImmediateImageUpload({
-    presignPath: PRESIGN_PATHS.activityDetail,
-  });
+  const createDetailBatchUpload = useBatchImageUpload(PRESIGN_PATHS.activityDetail);
+  const detailBatchUpload = useBatchImageUpload(PRESIGN_PATHS.activityDetail);
   const detailEditUpload = useImmediateImageUpload({
     presignPath: PRESIGN_PATHS.activityDetail,
   });
@@ -140,7 +139,12 @@ export default function ActivitiesAdminPage({
   const [isLoading, setIsLoading] = useState(() => !initialData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeSubmitAction, setActiveSubmitAction] = useState<
-    "createActivity" | "deleteActivity" | "createDetailImage" | "deleteDetailImage" | null
+    | "createActivity"
+    | "deleteActivity"
+    | "createDetailImages"
+    | "saveDetailImages"
+    | "deleteDetailImage"
+    | null
   >(null);
   const [deleteTarget, setDeleteTarget] = useState<"activity" | "detail" | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -157,6 +161,12 @@ export default function ActivitiesAdminPage({
     () => selected?.detailImages.find((image) => image.id === selectedImageId) ?? null,
     [selected, selectedImageId],
   );
+  const selectedImageDraft = useMemo(() => {
+    if (!selectedImage) {
+      return null;
+    }
+    return detailDrafts[selectedImage.id] ?? null;
+  }, [detailDrafts, selectedImage]);
 
   const filteredItems = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -188,17 +198,15 @@ export default function ActivitiesAdminPage({
     editCoverUpload.reset(item.coverImageUrl);
   };
 
-  const syncDetailEditForm = (image: ApiActivityImage | null) => {
-    if (!image) {
-      setDetailEditForm(emptyDetailForm);
-      detailEditUpload.reset(null);
-      return;
+  const syncDetailDrafts = (images: ApiActivityImage[]) => {
+    const nextDrafts: Record<string, DetailImageDraft> = {};
+    for (const image of images) {
+      nextDrafts[image.id] = {
+        sortOrder: String(image.sortOrder),
+        imageUrl: image.imageUrl,
+      };
     }
-
-    setDetailEditForm({
-      sortOrder: String(image.sortOrder),
-    });
-    detailEditUpload.reset(image.imageUrl);
+    setDetailDrafts(nextDrafts);
   };
 
   const applyLoadedData = (
@@ -227,7 +235,9 @@ export default function ActivitiesAdminPage({
       setSelectedId(null);
       setSelectedImageId(null);
       syncActivityEditForm(null);
-      syncDetailEditForm(null);
+      setDetailDrafts({});
+      detailEditUpload.reset(null);
+      detailBatchUpload.clear();
       setErrorMessage("선택한 기수를 찾을 수 없습니다.");
       setPanelMode(null);
       return;
@@ -237,7 +247,9 @@ export default function ActivitiesAdminPage({
       setSelectedId(null);
       setSelectedImageId(null);
       syncActivityEditForm(null);
-      syncDetailEditForm(null);
+      setDetailDrafts({});
+      detailEditUpload.reset(null);
+      detailBatchUpload.clear();
       if (panelMode === "edit") {
         setPanelMode(null);
       }
@@ -264,11 +276,13 @@ export default function ActivitiesAdminPage({
         : selectedActivity?.detailImages[0]?.id ?? null;
 
     setSelectedImageId(nextImageId);
-    syncDetailEditForm(
+    syncDetailDrafts(selectedActivity?.detailImages ?? []);
+    detailEditUpload.reset(
       nextImageId
-        ? selectedActivity?.detailImages.find((image) => image.id === nextImageId) ?? null
+        ? selectedActivity?.detailImages.find((image) => image.id === nextImageId)?.imageUrl ?? null
         : null,
     );
+    detailBatchUpload.clear();
   };
 
   const loadData = async (preferredSelectedId?: string | null) => {
@@ -304,9 +318,10 @@ export default function ActivitiesAdminPage({
     syncActivityEditForm(item);
     const firstImage = item.detailImages[0] ?? null;
     setSelectedImageId(firstImage?.id ?? null);
-    syncDetailEditForm(firstImage);
-    detailCreateUpload.reset(null);
-    setDetailCreateForm(emptyDetailForm);
+    syncDetailDrafts(item.detailImages);
+    detailEditUpload.reset(firstImage?.imageUrl ?? null);
+    detailBatchUpload.clear();
+    setDetailUploadTargetImageId(null);
     setPanelMode("edit");
     setDrawerQuery("edit", item.id);
     setErrorMessage(null);
@@ -315,7 +330,9 @@ export default function ActivitiesAdminPage({
 
   const handleSelectDetailImage = (image: ApiActivityImage) => {
     setSelectedImageId(image.id);
-    syncDetailEditForm(image);
+    const draftImageUrl = detailDrafts[image.id]?.imageUrl ?? image.imageUrl;
+    detailEditUpload.reset(draftImageUrl);
+    setDetailUploadTargetImageId(null);
   };
 
   useEffect(() => {
@@ -334,6 +351,7 @@ export default function ActivitiesAdminPage({
           generationId: scopedGenerationId ?? generations[0]?.id ?? "",
         });
         createCoverUpload.reset(null);
+        createDetailBatchUpload.clear();
         setPanelMode("create");
         setErrorMessage(null);
         setSuccessMessage(null);
@@ -369,6 +387,14 @@ export default function ActivitiesAdminPage({
       setErrorMessage("대표 이미지 업로드를 완료해 주세요.");
       return;
     }
+    if (createDetailBatchUpload.hasUploading) {
+      setErrorMessage("세부 이미지 업로드가 완료될 때까지 기다려 주세요.");
+      return;
+    }
+    if (createDetailBatchUpload.hasError) {
+      setErrorMessage("업로드 실패한 세부 이미지를 제거하거나 재시도해 주세요.");
+      return;
+    }
 
     setIsSubmitting(true);
     setActiveSubmitAction("createActivity");
@@ -384,11 +410,22 @@ export default function ActivitiesAdminPage({
         generationId: scopedGenerationId ?? createForm.generationId,
       });
 
+      if (createDetailBatchUpload.uploadedItems.length > 0) {
+        await adminResourceApi.addActivityImages(
+          created.id,
+          createDetailBatchUpload.uploadedItems.map((item) => ({
+            imageUrl: item.imageUrl,
+            sortOrder: item.sortOrder,
+          })),
+        );
+      }
+
       setCreateForm({
         ...emptyActivityForm,
         generationId: scopedGenerationId ?? generations[0]?.id ?? "",
       });
       createCoverUpload.reset(null);
+      createDetailBatchUpload.clear();
       setSuccessMessage("활동을 생성했습니다.");
       setPanelMode("edit");
       setDrawerQuery("edit", created.id);
@@ -462,32 +499,72 @@ export default function ActivitiesAdminPage({
     }
   };
 
-  const handleCreateDetailImage = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleCreateDetailFilesChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) {
+      return;
+    }
+    const nextSortOrder =
+      createDetailBatchUpload.items.reduce(
+        (max, item) => Math.max(max, item.sortOrder),
+        -1,
+      ) + 1;
+    createDetailBatchUpload.addFiles(files, nextSortOrder);
+    event.target.value = "";
+  };
+
+  const handleEditDetailFilesChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (!selected) {
       return;
     }
-    if (detailCreateUpload.isUploading || detailCreateUpload.hasUploadError) {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) {
       return;
     }
-    if (!detailCreateUpload.currentUrl) {
-      setErrorMessage("세부 이미지 업로드를 완료해 주세요.");
+    const existingMaxSortOrder = selected.detailImages.reduce(
+      (max, item) => Math.max(max, item.sortOrder),
+      -1,
+    );
+    const queuedMaxSortOrder = detailBatchUpload.items.reduce(
+      (max, item) => Math.max(max, item.sortOrder),
+      -1,
+    );
+    const nextSortOrder = Math.max(existingMaxSortOrder, queuedMaxSortOrder) + 1;
+    detailBatchUpload.addFiles(files, nextSortOrder);
+    event.target.value = "";
+  };
+
+  const handleCreateDetailImages = async () => {
+    if (!selected) {
+      return;
+    }
+    if (detailBatchUpload.items.length === 0) {
+      setErrorMessage("추가할 세부 이미지를 선택해 주세요.");
+      return;
+    }
+    if (detailBatchUpload.hasUploading) {
+      setErrorMessage("세부 이미지 업로드가 완료될 때까지 기다려 주세요.");
+      return;
+    }
+    if (detailBatchUpload.hasError) {
+      setErrorMessage("업로드 실패한 세부 이미지를 제거하거나 재시도해 주세요.");
       return;
     }
 
     setIsSubmitting(true);
-    setActiveSubmitAction("createDetailImage");
+    setActiveSubmitAction("createDetailImages");
     setErrorMessage(null);
     setSuccessMessage(null);
 
     try {
-      await adminResourceApi.addActivityImage(selected.id, {
-        imageUrl: detailCreateUpload.currentUrl,
-        sortOrder: toPositiveInteger(detailCreateForm.sortOrder, "sortOrder"),
-      });
-
-      setDetailCreateForm(emptyDetailForm);
-      detailCreateUpload.reset(null);
+      await adminResourceApi.addActivityImages(
+        selected.id,
+        detailBatchUpload.uploadedItems.map((item) => ({
+          imageUrl: item.imageUrl,
+          sortOrder: item.sortOrder,
+        })),
+      );
+      detailBatchUpload.clear();
       setSuccessMessage("세부 이미지를 추가했습니다.");
       await loadData(selected.id);
     } catch (error) {
@@ -498,30 +575,85 @@ export default function ActivitiesAdminPage({
     }
   };
 
-  const handleUpdateDetailImage = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!selected || !selectedImage) {
+  const handleDetailSortOrderChange = (imageId: string, nextValue: string) => {
+    setDetailDrafts((previous) => ({
+      ...previous,
+      [imageId]: {
+        sortOrder: nextValue,
+        imageUrl: previous[imageId]?.imageUrl ?? "",
+      },
+    }));
+  };
+
+  const handleDetailImageFileChange = (file: File | null) => {
+    if (!selectedImage || !file) {
+      return;
+    }
+    setDetailUploadTargetImageId(selectedImage.id);
+    detailEditUpload.selectFile(file);
+  };
+
+  useEffect(() => {
+    if (
+      detailEditUpload.status !== "uploaded" ||
+      !detailUploadTargetImageId ||
+      !detailEditUpload.currentUrl
+    ) {
+      return;
+    }
+
+    setDetailDrafts((previous) => ({
+      ...previous,
+      [detailUploadTargetImageId]: {
+        sortOrder: previous[detailUploadTargetImageId]?.sortOrder ?? "0",
+        imageUrl: detailEditUpload.currentUrl,
+      },
+    }));
+  }, [
+    detailEditUpload.currentUrl,
+    detailEditUpload.status,
+    detailUploadTargetImageId,
+  ]);
+
+  const handleSaveDetailImages = async () => {
+    if (!selected) {
       return;
     }
     if (detailEditUpload.isUploading || detailEditUpload.hasUploadError) {
       return;
     }
-    if (!detailEditUpload.currentUrl) {
-      setErrorMessage("세부 이미지 업로드를 완료해 주세요.");
-      return;
-    }
 
     setIsSubmitting(true);
+    setActiveSubmitAction("saveDetailImages");
     setErrorMessage(null);
     setSuccessMessage(null);
 
     try {
-      await adminResourceApi.updateActivityImage(selected.id, selectedImage.id, {
-        imageUrl: detailEditUpload.currentUrl,
-        sortOrder: toPositiveInteger(detailEditForm.sortOrder, "sortOrder"),
+      const changedImages = selected.detailImages.flatMap((image) => {
+        const draft = detailDrafts[image.id];
+        if (!draft) {
+          return [];
+        }
+        const nextSortOrder = toPositiveInteger(draft.sortOrder, "sortOrder");
+        if (draft.imageUrl === image.imageUrl && nextSortOrder === image.sortOrder) {
+          return [];
+        }
+        return [
+          {
+            imageId: image.id,
+            imageUrl: draft.imageUrl,
+            sortOrder: nextSortOrder,
+          },
+        ];
       });
 
-      setSuccessMessage("세부 이미지를 수정했습니다.");
+      if (changedImages.length === 0) {
+        setSuccessMessage("변경된 세부 이미지가 없습니다.");
+        return;
+      }
+
+      await adminResourceApi.updateActivityImages(selected.id, changedImages);
+      setSuccessMessage("세부 이미지 변경사항을 저장했습니다.");
       await loadData(selected.id);
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
@@ -558,6 +690,8 @@ export default function ActivitiesAdminPage({
     !isSubmitting &&
     !createCoverUpload.isUploading &&
     !createCoverUpload.hasUploadError &&
+    !createDetailBatchUpload.hasUploading &&
+    !createDetailBatchUpload.hasError &&
     Boolean(createCoverUpload.currentUrl);
 
   const canSubmitEditActivity =
@@ -566,17 +700,10 @@ export default function ActivitiesAdminPage({
     !editCoverUpload.hasUploadError &&
     Boolean(editCoverUpload.currentUrl);
 
-  const canSubmitCreateDetail =
-    !isSubmitting &&
-    !detailCreateUpload.isUploading &&
-    !detailCreateUpload.hasUploadError &&
-    Boolean(detailCreateUpload.currentUrl);
-
-  const canSubmitEditDetail =
+  const canSaveDetailImages =
     !isSubmitting &&
     !detailEditUpload.isUploading &&
-    !detailEditUpload.hasUploadError &&
-    Boolean(detailEditUpload.currentUrl);
+    !detailEditUpload.hasUploadError;
 
   return (
     <div className="space-y-6" data-testid="activities-page">
@@ -593,6 +720,7 @@ export default function ActivitiesAdminPage({
                 generationId: scopedGenerationId ?? generations[0]?.id ?? "",
               });
               createCoverUpload.reset(null);
+              createDetailBatchUpload.clear();
               setPanelMode("create");
               setDrawerQuery("create");
               setErrorMessage(null);
@@ -621,7 +749,7 @@ export default function ActivitiesAdminPage({
       </AdminPageHeader>
 
       <AdminInfoBox title="작업 안내">
-        커버/세부 이미지는 파일 선택 즉시 업로드됩니다. 업로드가 끝나면 저장 버튼이 활성화됩니다.
+        커버/세부 이미지는 파일 선택 즉시 업로드됩니다. 세부 이미지는 여러 장을 한 번에 추가할 수 있고, 수정은 모두 저장으로 일괄 반영됩니다.
       </AdminInfoBox>
 
       {errorMessage ? (
@@ -802,6 +930,83 @@ export default function ActivitiesAdminPage({
               disabled={isSubmitting}
             />
 
+            <section
+              className="space-y-3 rounded-lg border border-gray-200 p-3"
+              data-testid="activity-create-detail-batch"
+            >
+              <div>
+                <h3 className="text-sm font-semibold">세부 이미지(선택)</h3>
+                <p className="text-xs text-gray-500">
+                  여러 장을 한 번에 업로드한 뒤 활동 생성과 함께 저장됩니다.
+                </p>
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleCreateDetailFilesChange}
+                className="block w-full text-sm"
+                data-testid="activity-create-detail-files"
+                disabled={isSubmitting}
+              />
+              {createDetailBatchUpload.items.length > 0 ? (
+                <ul className="space-y-2">
+                  {createDetailBatchUpload.items.map((item) => (
+                    <li
+                      key={item.id}
+                      className="rounded-md border border-gray-200 p-2"
+                      data-testid={`activity-create-detail-upload-${item.id}`}
+                    >
+                      <p className="truncate text-xs text-gray-600">{item.fileName}</p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <label className="flex items-center gap-2 text-xs text-gray-600">
+                          정렬 순서
+                          <input
+                            type="number"
+                            min={0}
+                            value={item.sortOrder}
+                            onChange={(event) => {
+                              const nextValue = Number(event.target.value);
+                              if (!Number.isInteger(nextValue) || nextValue < 0) {
+                                return;
+                              }
+                              createDetailBatchUpload.setSortOrder(item.id, nextValue);
+                            }}
+                            className="w-20 rounded-md border border-gray-300 px-2 py-1 text-sm"
+                          />
+                        </label>
+                        <p className="text-xs text-gray-500">
+                          {item.status === "uploading"
+                            ? `업로드 중... ${item.progress}%`
+                            : item.status === "uploaded"
+                              ? "업로드 완료"
+                              : item.errorMessage ?? "업로드 실패"}
+                        </p>
+                      </div>
+                      <div className="mt-2 flex gap-2">
+                        {item.status === "failed" ? (
+                          <button
+                            type="button"
+                            onClick={() => createDetailBatchUpload.retryItem(item.id)}
+                            className="rounded-md border border-gray-300 px-2 py-1 text-xs"
+                          >
+                            재시도
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={() => createDetailBatchUpload.removeItem(item.id)}
+                          className="rounded-md border border-gray-300 px-2 py-1 text-xs"
+                        >
+                          제거
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </section>
+
             <AdminActionButton
               type="submit"
               loading={activeSubmitAction === "createActivity"}
@@ -934,56 +1139,91 @@ export default function ActivitiesAdminPage({
               </div>
             </form>
 
-            <form
-              onSubmit={handleCreateDetailImage}
+            <section
               className="space-y-3 rounded-lg border border-gray-200 p-3"
               data-testid="activity-detail-create-form"
             >
-              <h3 className="text-sm font-semibold">세부 이미지 추가</h3>
+              <h3 className="text-sm font-semibold">세부 이미지 일괄 추가</h3>
               <p className="text-xs text-gray-500">선택된 활동: {selected.title}</p>
 
-              <ImageInput
-                label="세부 이미지"
-                file={detailCreateUpload.file}
-                onFileChange={detailCreateUpload.selectFile}
-                currentUrl={detailCreateUpload.currentUrl}
-                status={detailCreateUpload.status}
-                errorMessage={detailCreateUpload.errorMessage}
-                onRetry={detailCreateUpload.retry}
-                uploadProgress={detailCreateUpload.progress}
-                isUploading={detailCreateUpload.isUploading}
-                testIdPrefix="activity-detail-create-image"
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleEditDetailFilesChange}
+                className="block w-full text-sm"
+                data-testid="activity-detail-create-files"
                 disabled={isSubmitting}
               />
 
-              <label className="block text-sm">
-                <span className="mb-1 block">정렬 순서</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={detailCreateForm.sortOrder}
-                  onChange={(event) =>
-                    setDetailCreateForm((previous) => ({
-                      ...previous,
-                      sortOrder: event.target.value,
-                    }))
-                  }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
-                  required
-                  data-testid="activity-detail-create-sort-order"
-                />
-              </label>
+              {detailBatchUpload.items.length > 0 ? (
+                <ul className="space-y-2">
+                  {detailBatchUpload.items.map((item) => (
+                    <li key={item.id} className="rounded-md border border-gray-200 p-2">
+                      <p className="truncate text-xs text-gray-600">{item.fileName}</p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <label className="flex items-center gap-2 text-xs text-gray-600">
+                          정렬 순서
+                          <input
+                            type="number"
+                            min={0}
+                            value={item.sortOrder}
+                            onChange={(event) => {
+                              const nextValue = Number(event.target.value);
+                              if (!Number.isInteger(nextValue) || nextValue < 0) {
+                                return;
+                              }
+                              detailBatchUpload.setSortOrder(item.id, nextValue);
+                            }}
+                            className="w-20 rounded-md border border-gray-300 px-2 py-1 text-sm"
+                          />
+                        </label>
+                        <p className="text-xs text-gray-500">
+                          {item.status === "uploading"
+                            ? `업로드 중... ${item.progress}%`
+                            : item.status === "uploaded"
+                              ? "업로드 완료"
+                              : item.errorMessage ?? "업로드 실패"}
+                        </p>
+                      </div>
+                      <div className="mt-2 flex gap-2">
+                        {item.status === "failed" ? (
+                          <button
+                            type="button"
+                            onClick={() => detailBatchUpload.retryItem(item.id)}
+                            className="rounded-md border border-gray-300 px-2 py-1 text-xs"
+                          >
+                            재시도
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={() => detailBatchUpload.removeItem(item.id)}
+                          className="rounded-md border border-gray-300 px-2 py-1 text-xs"
+                        >
+                          제거
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
 
               <AdminActionButton
-                type="submit"
-                loading={activeSubmitAction === "createDetailImage"}
-                disabled={!canSubmitCreateDetail}
+                onClick={() => void handleCreateDetailImages()}
+                loading={activeSubmitAction === "createDetailImages"}
+                disabled={
+                  isSubmitting ||
+                  detailBatchUpload.items.length === 0 ||
+                  detailBatchUpload.hasUploading ||
+                  detailBatchUpload.hasError
+                }
                 loadingText="이미지 추가 중..."
                 testId="activity-detail-create-submit"
               >
-                세부 이미지 추가
+                세부 이미지 일괄 추가
               </AdminActionButton>
-            </form>
+            </section>
 
             <article
               className="rounded-lg border border-gray-200 p-3"
@@ -1015,14 +1255,14 @@ export default function ActivitiesAdminPage({
                 </ul>
               )}
 
-              <form onSubmit={handleUpdateDetailImage} className="space-y-3" data-testid="activity-detail-edit-form">
+              <div className="space-y-3" data-testid="activity-detail-edit-form">
                 {selectedImage ? (
                   <>
                     <ImageInput
                       label="세부 이미지"
                       file={detailEditUpload.file}
-                      onFileChange={detailEditUpload.selectFile}
-                      currentUrl={detailEditUpload.currentUrl}
+                      onFileChange={handleDetailImageFileChange}
+                      currentUrl={selectedImageDraft?.imageUrl ?? selectedImage.imageUrl}
                       status={detailEditUpload.status}
                       errorMessage={detailEditUpload.errorMessage}
                       onRetry={detailEditUpload.retry}
@@ -1037,12 +1277,9 @@ export default function ActivitiesAdminPage({
                       <input
                         type="number"
                         min={0}
-                        value={detailEditForm.sortOrder}
+                        value={selectedImageDraft?.sortOrder ?? ""}
                         onChange={(event) =>
-                          setDetailEditForm((previous) => ({
-                            ...previous,
-                            sortOrder: event.target.value,
-                          }))
+                          handleDetailSortOrderChange(selectedImage.id, event.target.value)
                         }
                         className="w-full rounded-md border border-gray-300 px-3 py-2"
                         required
@@ -1052,11 +1289,13 @@ export default function ActivitiesAdminPage({
 
                     <div className="flex gap-2">
                       <AdminActionButton
-                        type="submit"
-                        disabled={!canSubmitEditDetail}
-                        testId="activity-detail-edit-submit"
+                        onClick={() => void handleSaveDetailImages()}
+                        loading={activeSubmitAction === "saveDetailImages"}
+                        disabled={!canSaveDetailImages}
+                        loadingText="저장 중..."
+                        testId="activity-detail-save-all"
                       >
-                        수정 저장
+                        모두 저장
                       </AdminActionButton>
                       <AdminActionButton
                         variant="danger"
@@ -1079,7 +1318,7 @@ export default function ActivitiesAdminPage({
                 ) : (
                   <p className="text-sm text-gray-500">수정할 세부 이미지를 선택해 주세요.</p>
                 )}
-              </form>
+              </div>
             </article>
           </div>
         ) : (

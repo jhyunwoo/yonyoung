@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { listPublicActivities, safeList } from "../../../../lib/public-api";
 import { shouldUseUnoptimizedImage } from "../../../../lib/image-utils";
 import { createPageMetadata } from "../../../../lib/seo";
@@ -29,9 +30,6 @@ export default async function ArchiveRecordsPage() {
       <div className={styles.archiveHeader}>
         <div className={styles.container}>
           <h1>활동 기록</h1>
-          <button type="button" className={styles.uploadTriggerBtn} aria-label="이미지 업로드">
-            +
-          </button>
         </div>
       </div>
 
@@ -43,10 +41,12 @@ export default async function ArchiveRecordsPage() {
         ) : (
           <div className={styles.imageGrid} data-testid="archive-records-grid">
             {activities.map((activity) => (
-              <article
+              <Link
                 key={activity.id}
+                href={`/archive/records/${activity.id}`}
                 className={styles.gridItem}
                 data-testid={`archive-record-card-${activity.id}`}
+                aria-label={`${activity.title} 상세 보기`}
               >
                 <div className={styles.imageWrapper}>
                   <Image
@@ -64,7 +64,7 @@ export default async function ArchiveRecordsPage() {
                     <span className={styles.imageDate}>{formatDate(activity.activityDate)}</span>
                   </div>
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
         )}

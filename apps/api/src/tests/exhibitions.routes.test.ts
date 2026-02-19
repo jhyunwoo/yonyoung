@@ -261,6 +261,55 @@ describe("exhibition routes", /** describe 실행 과정에서 필요한 연산�
     expect(addExhibitionImage).toHaveBeenCalledWith(IDs.exhibition, payload);
   });
 
+  it("manager는 전시 상세 이미지를 일괄 추가할 수 있다", async () => {
+    const addExhibitionImages = fn(async () => [
+      createExhibitionImage({ id: IDs.exhibitionImage }),
+      createExhibitionImage({
+        id: "41000000-0000-4000-8000-000000000002",
+        sortOrder: 1,
+      }),
+    ]);
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ addExhibitionImages }),
+    });
+
+    const payload = [
+      { imageUrl: "https://example.com/exhibition-detail-1.jpg", sortOrder: 0 },
+      { imageUrl: "https://example.com/exhibition-detail-2.jpg", sortOrder: 1 },
+    ];
+    const response = await app.request(`/api/exhibitions/${IDs.exhibition}/images/batch`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    expect(response.status).toBe(201);
+    const body = await readJson<{ data: Array<{ id: string }> }>(response);
+    expect(body.data).toHaveLength(2);
+    expect(addExhibitionImages).toHaveBeenCalledWith(IDs.exhibition, payload);
+  });
+
+  it("전시 상세 이미지 일괄 추가 시 상위 전시가 없으면 404를 반환한다", async () => {
+    const addExhibitionImages = fn(async () => null);
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ addExhibitionImages }),
+    });
+
+    const response = await app.request(`/api/exhibitions/${IDs.exhibition}/images/batch`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify([
+        { imageUrl: "https://example.com/exhibition-detail-1.jpg", sortOrder: 0 },
+      ]),
+    });
+
+    expect(response.status).toBe(404);
+    const body = await readJson<{ error: { message: string } }>(response);
+    expect(body.error.message).toContain("전시");
+  });
+
   it("전시 상세 이미지 수정 본문이 비어 있으면 400을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({ actor: createActor("manager", IDs.manager) });
 
@@ -323,6 +372,56 @@ describe("exhibition routes", /** describe 실행 과정에서 필요한 연산�
       IDs.exhibitionImage,
       payload,
     );
+  });
+
+  it("manager는 전시 상세 이미지를 일괄 수정할 수 있다", async () => {
+    const updateExhibitionImages = fn(async () => [
+      createExhibitionImage({ id: IDs.exhibitionImage, sortOrder: 2 }),
+      createExhibitionImage({
+        id: "41000000-0000-4000-8000-000000000002",
+        sortOrder: 3,
+      }),
+    ]);
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ updateExhibitionImages }),
+    });
+
+    const payload = [
+      { imageId: IDs.exhibitionImage, sortOrder: 2 },
+      {
+        imageId: "41000000-0000-4000-8000-000000000002",
+        sortOrder: 3,
+      },
+    ];
+    const response = await app.request(`/api/exhibitions/${IDs.exhibition}/images/batch`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    expect(response.status).toBe(200);
+    const body = await readJson<{ data: Array<{ sortOrder: number }> }>(response);
+    expect(body.data.map((item) => item.sortOrder)).toEqual([2, 3]);
+    expect(updateExhibitionImages).toHaveBeenCalledWith(IDs.exhibition, payload);
+  });
+
+  it("전시 상세 이미지 일괄 수정 대상이 없으면 404를 반환한다", async () => {
+    const updateExhibitionImages = fn(async () => null);
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ updateExhibitionImages }),
+    });
+
+    const response = await app.request(`/api/exhibitions/${IDs.exhibition}/images/batch`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify([{ imageId: IDs.exhibitionImage, sortOrder: 1 }]),
+    });
+
+    expect(response.status).toBe(404);
+    const body = await readJson<{ error: { message: string } }>(response);
+    expect(body.error.message).toContain("세부 이미지");
   });
 
   it("manager는 전시 상세 이미지 삭제 권한이 없어 403을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
@@ -421,6 +520,16 @@ describe("exhibition routes", /** describe 실행 과정에서 필요한 연산�
         path: `/api/exhibitions/${IDs.exhibition}/images/${IDs.exhibitionImage}`,
         method: "PATCH",
         body: { sortOrder: 2 },
+      },
+      {
+        path: `/api/exhibitions/${IDs.exhibition}/images/batch`,
+        method: "POST",
+        body: [{ imageUrl: "https://example.com/exhibition-detail.jpg", sortOrder: 0 }],
+      },
+      {
+        path: `/api/exhibitions/${IDs.exhibition}/images/batch`,
+        method: "PATCH",
+        body: [{ imageId: IDs.exhibitionImage, sortOrder: 2 }],
       },
       {
         path: `/api/exhibitions/${IDs.exhibition}/images/${IDs.exhibitionImage}`,
@@ -522,6 +631,22 @@ describe("exhibition routes", /** describe 실행 과정에서 필요한 연산�
     );
     expect(deleteResponse.status).toBe(400);
     await expectErrorCode(deleteResponse, "BAD_REQUEST");
+
+    const batchCreateResponse = await app.request("/api/exhibitions/not-a-uuid/images/batch", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify([{ imageUrl: "https://example.com/exhibition-detail.jpg", sortOrder: 0 }]),
+    });
+    expect(batchCreateResponse.status).toBe(400);
+    await expectErrorCode(batchCreateResponse, "BAD_REQUEST");
+
+    const batchUpdateResponse = await app.request("/api/exhibitions/not-a-uuid/images/batch", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify([{ imageId: IDs.exhibitionImage, sortOrder: 1 }]),
+    });
+    expect(batchUpdateResponse.status).toBe(400);
+    await expectErrorCode(batchUpdateResponse, "BAD_REQUEST");
   });
 
   it("member 계열 사용자는 전시 상세 이미지 수정 권한이 없어 403을 반환한다", async () => {

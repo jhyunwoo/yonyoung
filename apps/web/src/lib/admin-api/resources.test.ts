@@ -172,6 +172,20 @@ describe("adminResourceApi", /** describe 실행 과정에서 필요한 연산�
       expectedBody: { imageUrl: "https://example.com/detail.jpg", sortOrder: 0 },
     },
     {
+      name: "addActivityImages",
+      invoke: () =>
+        adminResourceApi.addActivityImages("a1", [
+          { imageUrl: "https://example.com/detail-1.jpg", sortOrder: 0 },
+          { imageUrl: "https://example.com/detail-2.jpg", sortOrder: 1 },
+        ]),
+      expectedPath: "/activities/a1/images/batch",
+      expectedMethod: "POST",
+      expectedBody: [
+        { imageUrl: "https://example.com/detail-1.jpg", sortOrder: 0 },
+        { imageUrl: "https://example.com/detail-2.jpg", sortOrder: 1 },
+      ],
+    },
+    {
       name: "updateActivityImage",
             /**
        * invoke의 핵심 비즈니스 로직을 수행합니다.
@@ -182,6 +196,20 @@ describe("adminResourceApi", /** describe 실행 과정에서 필요한 연산�
       expectedPath: "/activities/a1/images/i1",
       expectedMethod: "PATCH",
       expectedBody: { sortOrder: 1 },
+    },
+    {
+      name: "updateActivityImages",
+      invoke: () =>
+        adminResourceApi.updateActivityImages("a1", [
+          { imageId: "i1", sortOrder: 1 },
+          { imageId: "i2", imageUrl: "https://example.com/detail-2-updated.jpg" },
+        ]),
+      expectedPath: "/activities/a1/images/batch",
+      expectedMethod: "PATCH",
+      expectedBody: [
+        { imageId: "i1", sortOrder: 1 },
+        { imageId: "i2", imageUrl: "https://example.com/detail-2-updated.jpg" },
+      ],
     },
     {
       name: "deleteActivityImage",
@@ -353,6 +381,20 @@ describe("adminResourceApi", /** describe 실행 과정에서 필요한 연산�
       expectedBody: { imageUrl: "https://example.com/detail.jpg", sortOrder: 0 },
     },
     {
+      name: "addExhibitionImages",
+      invoke: () =>
+        adminResourceApi.addExhibitionImages("e1", [
+          { imageUrl: "https://example.com/ex-detail-1.jpg", sortOrder: 0 },
+          { imageUrl: "https://example.com/ex-detail-2.jpg", sortOrder: 1 },
+        ]),
+      expectedPath: "/exhibitions/e1/images/batch",
+      expectedMethod: "POST",
+      expectedBody: [
+        { imageUrl: "https://example.com/ex-detail-1.jpg", sortOrder: 0 },
+        { imageUrl: "https://example.com/ex-detail-2.jpg", sortOrder: 1 },
+      ],
+    },
+    {
       name: "updateExhibitionImage",
             /**
        * invoke의 핵심 비즈니스 로직을 수행합니다.
@@ -364,6 +406,20 @@ describe("adminResourceApi", /** describe 실행 과정에서 필요한 연산�
       expectedPath: "/exhibitions/e1/images/i1",
       expectedMethod: "PATCH",
       expectedBody: { sortOrder: 1 },
+    },
+    {
+      name: "updateExhibitionImages",
+      invoke: () =>
+        adminResourceApi.updateExhibitionImages("e1", [
+          { imageId: "i1", sortOrder: 1 },
+          { imageId: "i2", imageUrl: "https://example.com/ex-detail-2-updated.jpg" },
+        ]),
+      expectedPath: "/exhibitions/e1/images/batch",
+      expectedMethod: "PATCH",
+      expectedBody: [
+        { imageId: "i1", sortOrder: 1 },
+        { imageId: "i2", imageUrl: "https://example.com/ex-detail-2-updated.jpg" },
+      ],
     },
     {
       name: "deleteExhibitionImage",

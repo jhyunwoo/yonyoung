@@ -581,6 +581,50 @@ export const createDbDataService = (database: D1Database): DataService => {
       );
     },
         /**
+     * addActivityImages의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+     * @param activityId 대상을 식별하기 위한 ID 값입니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 비동기 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
+    async addActivityImages(activityId, input) {
+      const parent = await db.query.activities.findFirst({
+        where: and(eq(activities.id, activityId), isNull(activities.deletedAt)),
+      });
+      if (!parent) {
+        return null;
+      }
+
+      const createdIds: string[] = [];
+      await db.transaction(async (transaction) => {
+        for (const item of input) {
+          const id = crypto.randomUUID();
+          createdIds.push(id);
+          await transaction.insert(activityImages).values({
+            id,
+            activityId,
+            imageUrl: item.imageUrl,
+            sortOrder: item.sortOrder,
+          });
+        }
+      });
+
+      if (createdIds.length === 0) {
+        return [];
+      }
+
+      return db
+        .select()
+        .from(activityImages)
+        .where(
+          and(
+            inArray(activityImages.id, createdIds),
+            isNull(activityImages.deletedAt),
+          ),
+        )
+        .orderBy(asc(activityImages.sortOrder));
+    },
+        /**
      * updateActivityImage 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
      * @param activityId 대상을 식별하기 위한 ID 값입니다.
      * @param imageId 대상을 식별하기 위한 ID 값입니다.
@@ -625,6 +669,70 @@ export const createDbDataService = (database: D1Database): DataService => {
           ),
         })) ?? null
       );
+    },
+        /**
+     * updateActivityImages 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
+     * @param activityId 대상을 식별하기 위한 ID 값입니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
+    async updateActivityImages(activityId, input) {
+      const parent = await db.query.activities.findFirst({
+        where: and(eq(activities.id, activityId), isNull(activities.deletedAt)),
+      });
+      if (!parent) {
+        return null;
+      }
+
+      const imageIds = input.map((item) => item.imageId);
+      if (imageIds.length === 0) {
+        return [];
+      }
+      const existing = await db
+        .select({ id: activityImages.id })
+        .from(activityImages)
+        .where(
+          and(
+            eq(activityImages.activityId, activityId),
+            inArray(activityImages.id, imageIds),
+            isNull(activityImages.deletedAt),
+          ),
+        );
+
+      if (existing.length !== imageIds.length) {
+        return null;
+      }
+
+      await db.transaction(async (transaction) => {
+        for (const item of input) {
+          await transaction
+            .update(activityImages)
+            .set({
+              ...(item.imageUrl !== undefined ? { imageUrl: item.imageUrl } : {}),
+              ...(item.sortOrder !== undefined ? { sortOrder: item.sortOrder } : {}),
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(activityImages.id, item.imageId),
+                eq(activityImages.activityId, activityId),
+                isNull(activityImages.deletedAt),
+              ),
+            );
+        }
+      });
+
+      return db
+        .select()
+        .from(activityImages)
+        .where(
+          and(
+            inArray(activityImages.id, imageIds),
+            isNull(activityImages.deletedAt),
+          ),
+        )
+        .orderBy(asc(activityImages.sortOrder));
     },
         /**
      * deleteActivityImage 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
@@ -959,6 +1067,53 @@ export const createDbDataService = (database: D1Database): DataService => {
       );
     },
         /**
+     * addExhibitionImages의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+     * @param exhibitionId 대상을 식별하기 위한 ID 값입니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 비동기 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
+    async addExhibitionImages(exhibitionId, input) {
+      const parent = await db.query.exhibitions.findFirst({
+        where: and(
+          eq(exhibitions.id, exhibitionId),
+          isNull(exhibitions.deletedAt),
+        ),
+      });
+      if (!parent) {
+        return null;
+      }
+
+      const createdIds: string[] = [];
+      await db.transaction(async (transaction) => {
+        for (const item of input) {
+          const id = crypto.randomUUID();
+          createdIds.push(id);
+          await transaction.insert(exhibitionImages).values({
+            id,
+            exhibitionId,
+            imageUrl: item.imageUrl,
+            sortOrder: item.sortOrder,
+          });
+        }
+      });
+
+      if (createdIds.length === 0) {
+        return [];
+      }
+
+      return db
+        .select()
+        .from(exhibitionImages)
+        .where(
+          and(
+            inArray(exhibitionImages.id, createdIds),
+            isNull(exhibitionImages.deletedAt),
+          ),
+        )
+        .orderBy(asc(exhibitionImages.sortOrder));
+    },
+        /**
      * updateExhibitionImage 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
      * @param exhibitionId 대상을 식별하기 위한 ID 값입니다.
      * @param imageId 대상을 식별하기 위한 ID 값입니다.
@@ -1003,6 +1158,73 @@ export const createDbDataService = (database: D1Database): DataService => {
           ),
         })) ?? null
       );
+    },
+        /**
+     * updateExhibitionImages 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
+     * @param exhibitionId 대상을 식별하기 위한 ID 값입니다.
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 처리 결과를 Promise로 반환합니다.
+     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
+     */
+    async updateExhibitionImages(exhibitionId, input) {
+      const parent = await db.query.exhibitions.findFirst({
+        where: and(
+          eq(exhibitions.id, exhibitionId),
+          isNull(exhibitions.deletedAt),
+        ),
+      });
+      if (!parent) {
+        return null;
+      }
+
+      const imageIds = input.map((item) => item.imageId);
+      if (imageIds.length === 0) {
+        return [];
+      }
+      const existing = await db
+        .select({ id: exhibitionImages.id })
+        .from(exhibitionImages)
+        .where(
+          and(
+            eq(exhibitionImages.exhibitionId, exhibitionId),
+            inArray(exhibitionImages.id, imageIds),
+            isNull(exhibitionImages.deletedAt),
+          ),
+        );
+
+      if (existing.length !== imageIds.length) {
+        return null;
+      }
+
+      await db.transaction(async (transaction) => {
+        for (const item of input) {
+          await transaction
+            .update(exhibitionImages)
+            .set({
+              ...(item.imageUrl !== undefined ? { imageUrl: item.imageUrl } : {}),
+              ...(item.sortOrder !== undefined ? { sortOrder: item.sortOrder } : {}),
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(exhibitionImages.id, item.imageId),
+                eq(exhibitionImages.exhibitionId, exhibitionId),
+                isNull(exhibitionImages.deletedAt),
+              ),
+            );
+        }
+      });
+
+      return db
+        .select()
+        .from(exhibitionImages)
+        .where(
+          and(
+            inArray(exhibitionImages.id, imageIds),
+            isNull(exhibitionImages.deletedAt),
+          ),
+        )
+        .orderBy(asc(exhibitionImages.sortOrder));
     },
         /**
      * deleteExhibitionImage 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
