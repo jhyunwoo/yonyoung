@@ -82,36 +82,36 @@ export default async function HomePage() {
         title="최근 활동 기록"
         description="가장 최근의 연영회 활동을 사진과 함께 확인해보세요."
       >
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="home-activities-grid">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3" data-testid="home-activities-grid">
           {recentActivities.length === 0 ? (
-            <div className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-6 text-sm text-(--text-secondary)">
+            <div className="border border-(--surface-strong-border) bg-(--surface-elevated) p-6 text-sm text-(--text-muted)">
               아직 공개된 활동이 없습니다. 관리자에서 활동을 추가하면 여기에 반영됩니다.
             </div>
           ) : (
             recentActivities.map((activity, index) => (
               <MotionReveal key={activity.id} delay={index * 0.04}>
                 <article
-                  className="group overflow-hidden rounded-2xl border border-(--surface-border) bg-(--surface-elevated) shadow-[0_22px_50px_-36px_var(--shadow-strong)]"
+                  className="group overflow-hidden border border-(--surface-strong-border) bg-(--surface-elevated) transition-transform duration-300 hover:scale-[1.03]"
                   data-testid={`home-activity-card-${activity.id}`}
                 >
-                  <div className="relative aspect-[5/4] overflow-hidden">
+                  <div className="relative aspect-[4/3] overflow-hidden">
                     <Image
                       src={activity.coverImageUrl}
                       alt={activity.title}
                       fill
                       unoptimized={shouldUseUnoptimizedImage(activity.coverImageUrl)}
                       sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      className="h-full w-full object-cover"
                     />
                   </div>
-                  <div className="space-y-2 p-4">
-                    <p className="text-xs uppercase tracking-[0.14em] text-(--text-muted)">
+                  <div className="space-y-2 p-5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.1em] text-(--text-muted)">
                       {formatDate(activity.activityDate)}
                     </p>
-                    <h3 className="font-display text-2xl text-(--text-primary)">
+                    <h3 className="font-display text-[1.3rem] leading-tight text-(--text-primary)">
                       {activity.title}
                     </h3>
-                    <p className="line-clamp-2 text-sm leading-relaxed text-(--text-secondary)">
+                    <p className="line-clamp-2 text-sm leading-relaxed text-(--text-muted)">
                       {activity.description}
                     </p>
                   </div>
@@ -127,7 +127,7 @@ export default async function HomePage() {
         eyebrow="Supporters"
         title="연영회를 함께 만드는 후원사"
         description="연영회의 활동과 전시를 함께 만들어주시는 파트너입니다."
-        className="bg-(--surface-elevated)/60"
+        className="bg-(--surface-elevated)"
       >
         <SupporterGrid
           supporters={highlightedSupporters}
@@ -143,9 +143,9 @@ export default async function HomePage() {
         title="자주 찾는 링크"
         description="공식 링크와 커뮤니티 채널을 한 번에 연결합니다."
       >
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-testid="home-quicklinks-grid">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="home-quicklinks-grid">
           {quickLinks.length === 0 ? (
-            <div className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-6 text-sm text-(--text-secondary)">
+            <div className="border border-(--surface-strong-border) bg-(--surface-elevated) p-6 text-sm text-(--text-muted)">
               공개 링크트리 항목이 없습니다.
             </div>
           ) : (
@@ -156,15 +156,15 @@ export default async function HomePage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   data-testid={`home-quicklink-card-${item.id}`}
-                  className="group block rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-4 transition hover:border-(--accent) hover:bg-(--surface-muted)"
+                  className="group block border border-(--surface-border) bg-(--surface-elevated) p-4 transition hover:border-(--surface-strong-border) hover:bg-(--surface-muted)"
                 >
-                  <p className="text-xs uppercase tracking-[0.14em] text-(--text-muted)">
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-(--text-muted)">
                     {item.groupName}
                   </p>
                   <p className="mt-2 text-base font-semibold text-(--text-primary)">
                     {item.name}
                   </p>
-                  <p className="mt-1 truncate text-xs text-(--text-secondary)">
+                  <p className="mt-1 truncate text-xs text-(--text-muted)">
                     {item.link}
                   </p>
                 </a>
@@ -174,14 +174,14 @@ export default async function HomePage() {
         </div>
 
         <MotionReveal className="mt-8">
-          <div className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-6 text-center">
-            <p className="text-sm text-(--text-secondary)">
+          <div className="border border-(--surface-strong-border) bg-(--surface-elevated) p-6 text-center">
+            <p className="text-sm text-(--text-muted)">
               연영회의 더 많은 전시와 활동을 아카이브에서 확인해보세요.
             </p>
             <Link
               href="/archive/records"
               data-testid="home-cta-archive-bottom"
-              className="mt-4 inline-flex rounded-full bg-(--accent) px-5 py-2.5 text-sm font-medium text-(--accent-foreground) transition hover:opacity-90"
+              className="mt-4 inline-flex border border-(--surface-strong-border) px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-(--text-primary) transition hover:bg-(--text-primary) hover:text-white"
             >
               아카이브 보러가기
             </Link>

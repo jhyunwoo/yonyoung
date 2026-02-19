@@ -25,19 +25,19 @@ export default function SectionShell({
   className,
 }: SectionShellProps) {
   return (
-    <section id={id} className={["px-4 py-12 md:px-6 md:py-16", className].join(" ")}>
-      <div className="mx-auto w-full max-w-6xl">
-        <MotionReveal className="mb-8 md:mb-10">
+    <section id={id} className={["px-4 py-12 md:px-8 md:py-16", className].join(" ")}>
+      <div className="mx-auto w-full max-w-[1200px]">
+        <MotionReveal className="mb-10 text-center md:mb-12">
           {eyebrow ? (
-            <p className="mb-2 text-xs uppercase tracking-[0.18em] text-(--text-muted)">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-(--text-muted)">
               {eyebrow}
             </p>
           ) : null}
-          <h2 className="font-display text-3xl leading-tight text-(--text-primary) md:text-5xl">
+          <h2 className="font-display text-[2.2rem] leading-tight text-(--text-primary) md:text-[2.5rem]">
             {title}
           </h2>
           {description ? (
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-(--text-secondary) md:text-base">
+            <p className="mx-auto mt-4 max-w-3xl text-sm leading-relaxed text-(--text-muted) md:text-base">
               {description}
             </p>
           ) : null}

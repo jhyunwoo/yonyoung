@@ -1,6 +1,6 @@
 import { test, expect } from "./fixtures";
 
-test.describe("public navigation and theme", () => {
+test.describe("public navigation", () => {
   test("데스크톱 헤더 네비게이션과 로고 이동이 정상 동작한다", async ({
     page,
   }) => {
@@ -9,15 +9,13 @@ test.describe("public navigation and theme", () => {
     await page.goto("/");
     await expect(page.getByTestId("public-nav-desktop")).toBeVisible();
 
-    const desktopHomeLink = page.getByTestId("public-nav-desktop-home");
     const desktopAboutLink = page.getByTestId("public-nav-desktop-about");
     const desktopArchiveLink = page.getByTestId("public-nav-desktop-archive");
     const desktopLinktreeLink = page.getByTestId("public-nav-desktop-linktree");
     const desktopDonateLink = page.getByTestId("public-nav-desktop-donate");
 
-    await expect(desktopHomeLink).toHaveAttribute("href", "/");
     await expect(desktopAboutLink).toHaveAttribute("href", "/about");
-    await expect(desktopArchiveLink).toHaveAttribute("href", "/archive/records");
+    await expect(desktopArchiveLink).toHaveAttribute("href", "/archive");
     await expect(desktopLinktreeLink).toHaveAttribute("href", "/linktree");
     await expect(desktopDonateLink).toHaveAttribute("href", "/donate");
 
@@ -46,54 +44,32 @@ test.describe("public navigation and theme", () => {
     await expect(page.getByTestId("public-nav-mobile")).toHaveCount(0);
   });
 
-  test("테마 선택 상태가 저장되고 새로고침 후 유지된다", async ({ page }) => {
+  test("관리자 모드 토글 상태가 로컬스토리지에 저장된다", async ({ page }) => {
     await page.goto("/");
     await page.evaluate(() => {
-      window.localStorage.removeItem("theme");
+      window.localStorage.removeItem("isAdminMode");
     });
     await page.reload();
 
-    const visibleThemeSelect = page
-      .locator('[data-testid="theme-toggle-select"]:visible')
-      .first();
-    const initialThemeMode = await visibleThemeSelect.inputValue();
-    expect(["light", "dark", "system"]).toContain(initialThemeMode);
-    const initialTheme = await page.evaluate(() => document.documentElement.dataset.theme ?? "");
-    expect(["light", "dark"]).toContain(initialTheme);
+    const adminToggle = page.getByRole("button", { name: "관리자 모드 토글" });
+    await expect(adminToggle).toBeVisible();
+    await expect
+      .poll(() => page.evaluate(() => window.localStorage.getItem("isAdminMode")))
+      .toBeNull();
 
-    await visibleThemeSelect.selectOption("dark");
+    await adminToggle.click();
     await expect
-      .poll(() => page.evaluate(() => document.documentElement.dataset.theme ?? ""))
-      .toBe("dark");
-    await expect
-      .poll(() => page.evaluate(() => window.localStorage.getItem("theme")))
-      .toBe("dark");
-
-    await visibleThemeSelect.selectOption("light");
-    await expect
-      .poll(() => page.evaluate(() => document.documentElement.dataset.theme ?? ""))
-      .toBe("light");
-    await expect
-      .poll(() => page.evaluate(() => window.localStorage.getItem("theme")))
-      .toBe("light");
-
-    const expectedSystemTheme = await page.evaluate(() =>
-      window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light",
-    );
-    await visibleThemeSelect.selectOption("system");
-    await expect
-      .poll(() => page.evaluate(() => document.documentElement.dataset.theme ?? ""))
-      .toBe(expectedSystemTheme);
-    await expect
-      .poll(() => page.evaluate(() => window.localStorage.getItem("theme")))
-      .toBe("system");
+      .poll(() => page.evaluate(() => window.localStorage.getItem("isAdminMode")))
+      .toBe("true");
 
     await page.reload();
     await expect
-      .poll(() => page.evaluate(() => document.documentElement.dataset.theme ?? ""))
-      .toBe(expectedSystemTheme);
-    await expect(
-      page.locator('[data-testid="theme-toggle-select"]:visible').first(),
-    ).toHaveValue("system");
+      .poll(() => page.evaluate(() => window.localStorage.getItem("isAdminMode")))
+      .toBe("true");
+
+    await page.getByRole("button", { name: "관리자 모드 토글" }).click();
+    await expect
+      .poll(() => page.evaluate(() => window.localStorage.getItem("isAdminMode")))
+      .toBe("false");
   });
 });

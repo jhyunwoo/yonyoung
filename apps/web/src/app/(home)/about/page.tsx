@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
-import MotionReveal from "../components/motion-reveal";
-import SectionShell from "../components/section-shell";
 import { listPublicGenerations, safeList } from "../../../lib/public-api";
 import { createPageMetadata } from "../../../lib/seo";
-import AboutSubNav from "./components/about-subnav";
 
 const yearFormatter = new Intl.DateTimeFormat("ko-KR", { year: "numeric" });
 
@@ -16,9 +13,8 @@ const annualActivities = [
   { month: "February", title: "신인 사진전" },
 ];
 
-const formatYearRange = (startDate: number, endDate: number): string => {
-  return `${yearFormatter.format(startDate)} - ${yearFormatter.format(endDate)}`;
-};
+const formatYearRange = (startDate: number, endDate: number): string =>
+  `${yearFormatter.format(startDate)} - ${yearFormatter.format(endDate)}`;
 
 export const metadata: Metadata = createPageMetadata({
   title: "연영회 소개 | 연세대학교 중앙사진동아리",
@@ -42,129 +38,72 @@ export default async function AboutPage() {
   ];
 
   return (
-    <div className="pb-16 md:pb-20">
-      <section className="px-4 pb-10 pt-14 md:px-6 md:pb-14 md:pt-18">
-        <div className="mx-auto w-full max-w-6xl rounded-3xl border border-(--surface-border) bg-(--surface-elevated) p-6 shadow-[0_20px_70px_-42px_var(--shadow-strong)] md:p-10">
-          <MotionReveal>
-            <p className="text-xs uppercase tracking-[0.2em] text-(--text-muted)">
-              About YeonYoungHoe
-            </p>
-            <h1 className="mt-3 font-display text-4xl leading-tight text-(--text-primary) md:text-6xl">
-              카메라를 넘어 시선을 나누는 동아리
-            </h1>
-            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-(--text-secondary) md:text-base">
-              연영회는 1966년부터 이어진 연세대학교 중앙사진동아리입니다. 사진을
-              통해 사회와 학교, 그리고 서로의 순간을 기록하며 정기전과 프로젝트를
-              이어갑니다.
-            </p>
-          </MotionReveal>
-        </div>
-      </section>
+    <div className="px-4 pb-16 pt-28 md:px-8 md:pb-20 md:pt-32">
+      <main className="mx-auto w-full max-w-[1200px] space-y-14" data-testid="about-page">
+        <section className="space-y-4">
+          <h1 className="text-[2.4rem] leading-tight font-semibold text-(--text-primary) md:text-[3rem]">
+            연영회 소개
+          </h1>
+          <p className="max-w-5xl text-base leading-relaxed text-(--text-muted)">
+            연영회는 사진을 통해 세상을 기록하고 표현하는 동아리입니다. 우리는 다양한 주제와
+            스타일로 사진을 찍으며, 서로의 작품을 공유하고 함께 성장해 나갑니다.
+          </p>
+        </section>
 
-      <AboutSubNav active="about" />
-
-      <SectionShell
-        eyebrow="Introduction"
-        title="연영회 소개"
-        description="사진을 통해 세상을 기록하고 표현하며 함께 성장하는 중앙사진동아리입니다."
-      >
-        <MotionReveal>
-          <article className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-5 md:p-6">
-            <p className="text-sm leading-relaxed text-(--text-secondary) md:text-base">
-              연영회는 서로의 시선과 결과물을 공유하며 사진의 깊이를 넓혀가는
-              공동체입니다. 학기 중에는 촬영 실습, 출사, 워크숍, 전시 준비를
-              이어가고, 정기전과 프로젝트를 통해 학교와 사회의 장면을 기록합니다.
-            </p>
-          </article>
-        </MotionReveal>
-      </SectionShell>
-
-      <SectionShell
-        eyebrow="Annual Activities"
-        title="연간 활동"
-        description="프리뷰 사이트의 활동 구조를 현재 디자인에 맞춰 반영했습니다."
-      >
-        <div
-          className="grid gap-4 md:grid-cols-2"
-          data-testid="about-annual-activities"
-        >
-          {activityColumns.map((column, columnIndex) => (
-            <MotionReveal key={`about-activity-column-${columnIndex}`} delay={columnIndex * 0.05}>
-              <article className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-5">
-                <div className="space-y-4">
-                  {column.map((activity, activityIndex) => (
-                    <div
+        <section className="space-y-6" data-testid="about-annual-activities">
+          <h2 className="text-[2rem] font-semibold text-(--text-primary)">연간 활동</h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {activityColumns.map((column, index) => (
+              <article key={`about-activities-${index}`} className="border border-(--surface-border) p-5">
+                <ul className="space-y-4">
+                  {column.map((activity) => (
+                    <li
                       key={`${activity.month}-${activity.title}`}
-                      className={[
-                        "flex items-start gap-3",
-                        activityIndex === column.length - 1
-                          ? ""
-                          : "border-b border-(--surface-border) pb-4",
-                      ].join(" ")}
+                      className="flex items-start justify-between gap-4 border-b border-(--surface-border) pb-3 last:border-none last:pb-0"
                     >
-                      <span className="mt-2 h-2.5 w-2.5 rounded-full bg-(--accent)" />
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.14em] text-(--text-muted)">
-                          {activity.month}
-                        </p>
-                        <p className="mt-1 text-sm font-medium text-(--text-primary)">
-                          {activity.title}
-                        </p>
-                      </div>
-                    </div>
+                      <span className="text-sm font-semibold tracking-[0.04em] text-(--text-primary)">
+                        {activity.month}
+                      </span>
+                      <span className="text-right text-sm text-(--text-muted)">
+                        {activity.title}
+                      </span>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </article>
-            </MotionReveal>
-          ))}
-        </div>
-      </SectionShell>
+            ))}
+          </div>
+        </section>
 
-      <SectionShell
-        eyebrow="History"
-        title="연영회의 발자취"
-        description="창단 연혁과 기수 데이터를 함께 확인할 수 있습니다."
-      >
-        <div
-          className="relative border-l border-(--surface-border) pl-5 md:pl-8"
-          data-testid="about-history"
-        >
-          <MotionReveal className="mb-6">
-            <article className="relative rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-5">
-              <span className="absolute -left-[2.15rem] top-6 h-3 w-3 rounded-full bg-(--accent) md:-left-[2.7rem]" />
+        <section className="space-y-6" data-testid="about-history">
+          <h2 className="text-[2rem] font-semibold text-(--text-primary)">연혁</h2>
+          <div className="space-y-3 border-l border-(--surface-border) pl-4">
+            <article className="border border-(--surface-border) p-4">
               <p className="text-sm font-semibold text-(--text-primary)">1966</p>
-              <p className="mt-1 text-sm text-(--text-secondary)">
-                연세대학교 중앙사진동아리 연영회 창단
-              </p>
+              <p className="text-sm text-(--text-muted)">연영회 창단</p>
             </article>
-          </MotionReveal>
 
-          {generations.map((generation, index) => (
-            <MotionReveal key={generation.id} delay={index * 0.04} className="mb-4">
+            {generations.map((generation) => (
               <article
-                className="relative rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-5"
+                key={generation.id}
+                className="border border-(--surface-border) p-4"
                 data-testid={`about-generation-card-${generation.id}`}
               >
-                <span className="absolute -left-[2.15rem] top-6 h-3 w-3 rounded-full bg-(--surface-border) md:-left-[2.7rem]" />
-                <p className="text-sm font-semibold text-(--text-primary)">
-                  {generation.name}
-                </p>
-                <p className="mt-1 text-sm text-(--text-secondary)">
+                <p className="text-sm font-semibold text-(--text-primary)">{generation.name}</p>
+                <p className="text-sm text-(--text-muted)">
                   {formatYearRange(generation.startDate, generation.endDate)}
                 </p>
               </article>
-            </MotionReveal>
-          ))}
+            ))}
 
-          {generations.length === 0 ? (
-            <MotionReveal>
-              <article className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-5 text-sm text-(--text-secondary)">
+            {generations.length === 0 ? (
+              <article className="border border-(--surface-border) p-4 text-sm text-(--text-muted)">
                 공개된 기수 정보가 없습니다.
               </article>
-            </MotionReveal>
-          ) : null}
-        </div>
-      </SectionShell>
+            ) : null}
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

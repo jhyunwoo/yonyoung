@@ -25,9 +25,9 @@ export default function SupporterGrid({
   showExpiresAt = false,
 }: SupporterGridProps) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-testid={containerTestId}>
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-testid={containerTestId}>
       {supporters.length === 0 ? (
-        <div className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-6 text-sm text-(--text-secondary)">
+        <div className="border border-(--surface-strong-border) bg-(--surface-elevated) p-6 text-sm text-(--text-muted)">
           {emptyMessage}
         </div>
       ) : (
@@ -38,17 +38,16 @@ export default function SupporterGrid({
               target="_blank"
               rel="noopener noreferrer"
               data-testid={`${cardTestIdPrefix}-${supporter.id}`}
-              className="group block rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-4 transition hover:-translate-y-1 hover:border-(--accent)"
+              className="group block border border-(--surface-border) bg-(--surface-elevated) p-4 transition hover:-translate-y-1 hover:border-(--surface-strong-border)"
             >
-              <div className="mb-4 flex h-12 items-center justify-center overflow-hidden rounded-xl bg-(--surface-muted) px-3">
+              <div className="relative mb-4 aspect-[3/2] overflow-hidden border border-(--surface-border) bg-(--surface-muted)">
                 <Image
                   src={supporter.logoUrl}
                   alt={supporter.name}
-                  width={160}
-                  height={48}
+                  fill
                   unoptimized={shouldUseUnoptimizedImage(supporter.logoUrl)}
-                  sizes="160px"
-                  className="max-h-8 w-auto object-contain"
+                  sizes="(min-width: 1024px) 18vw, (min-width: 640px) 42vw, 90vw"
+                  className="h-full w-full object-cover"
                 />
               </div>
               <p className="text-sm font-medium text-(--text-primary)">{supporter.name}</p>

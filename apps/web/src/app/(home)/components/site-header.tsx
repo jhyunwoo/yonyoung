@@ -1,154 +1,170 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import ThemeToggle from "./theme-toggle";
+import { useEffect, useState } from "react";
+import styles from "./site-header.module.css";
 
-const navItems = [
-  { href: "/", label: "Home" },
-  { href: "/about", label: "About" },
-  { href: "/archive/records", label: "Archive" },
-  { href: "/linktree", label: "Linktree" },
-  { href: "/donate", label: "Donate" },
-];
-
-const isNavActive = (pathname: string, href: string): boolean => {
-  if (href === "/archive/records") {
-    return pathname.startsWith("/archive");
-  }
-
-  return pathname === href;
+type NavChild = {
+  href: string;
+  label: string;
 };
 
-/**
- * SiteHeader 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
- * @returns 렌더링할 JSX 트리를 반환합니다.
- * @remarks UI 상태와 권한 조건이 변경될 때 렌더링 분기가 달라질 수 있습니다.
- */
+type NavItem = {
+  href: string;
+  label: string;
+  testId: string;
+  children?: NavChild[];
+};
+
+const navItems: NavItem[] = [
+  {
+    href: "/about",
+    label: "ABOUT",
+    testId: "about",
+    children: [
+      { href: "/about", label: "소개" },
+      { href: "/about/photographers", label: "PHOTOGRAPHERS" },
+      { href: "/about/recruiting", label: "RECRUITING" },
+    ],
+  },
+  {
+    href: "/archive",
+    label: "ARCHIVE",
+    testId: "archive",
+    children: [
+      { href: "/archive/records", label: "활동 기록" },
+      { href: "/archive/supporters", label: "서포터즈" },
+      { href: "/archive/exhibitions", label: "전시회" },
+    ],
+  },
+  { href: "/linktree", label: "LINKTREE", testId: "linktree" },
+  { href: "/donate", label: "DONATE US", testId: "donate" },
+];
+
+const isActivePath = (pathname: string, item: NavItem): boolean => {
+  if (item.href === "/about") {
+    return pathname.startsWith("/about");
+  }
+  if (item.href === "/archive") {
+    return pathname.startsWith("/archive");
+  }
+  return pathname === item.href;
+};
+
 export default function SiteHeader() {
   const pathname = usePathname();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    setIsMenuOpen(false);
+    setIsMobileMenuOpen(false);
   }, [pathname]);
 
-  useEffect(() => {
-    const onScroll = () => setIsScrolled(window.scrollY > 16);
-    window.addEventListener("scroll", onScroll);
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const headerClassName = useMemo(
-    () =>
-      [
-        "sticky top-0 z-50 border-b transition-all",
-        isScrolled
-          ? "border-(--surface-border) bg-(--surface-elevated)/95 backdrop-blur-xl"
-          : "border-transparent bg-(--surface-elevated)/70 backdrop-blur-md",
-      ].join(" "),
-    [isScrolled],
-  );
-
   return (
-    <header className={headerClassName} data-testid="public-header">
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 md:h-18 md:px-6">
-        <Link
-          href="/"
-          className="group inline-flex items-center gap-3"
-          data-testid="public-logo-link"
-        >
-          <div className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-(--surface-border) bg-(--surface-muted) text-sm font-semibold text-(--text-primary)">
-            Y
-          </div>
-          <div className="leading-tight">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-(--text-muted)">
-              Yonsei Photo Club
-            </p>
-            <p className="font-display text-xl text-(--text-primary)">
+    <header
+      className={[styles.navigation, isScrolled ? styles.scrolled : ""]
+        .join(" ")
+        .trim()}
+      data-testid="public-header"
+    >
+      <div className={styles.navContainer}>
+        <div className={styles.navLeft}>
+          <Link href="/" className={styles.logo} data-testid="public-logo-link">
+            <div className={styles.logoImage}>
+              <Image
+                src="/yonyoung-logo-black.png"
+                alt="연영회 로고"
+                width={40}
+                height={40}
+                priority
+              />
+            </div>
+            <div className={styles.logoText}>
+              <span>연세대학교 중앙사진동아리</span>
               연영회
-            </p>
-          </div>
-        </Link>
+            </div>
+          </Link>
+        </div>
 
-        <nav
-          className="hidden items-center gap-2 md:flex"
-          data-testid="public-nav-desktop"
-        >
-          {navItems.map((item) => {
-            const isActive = isNavActive(pathname, item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                data-testid={`public-nav-desktop-${item.label.toLowerCase()}`}
-                className={[
-                  "rounded-full px-4 py-2 text-sm transition",
-                  isActive
-                    ? "bg-(--accent) text-white"
-                    : "text-(--text-secondary) hover:bg-(--surface-muted) hover:text-(--text-primary)",
-                ].join(" ")}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-          <ThemeToggle />
+        <nav className={styles.desktopNav} data-testid="public-nav-desktop">
+          <ul className={styles.navMenu}>
+            {navItems.map((item) => {
+              const active = isActivePath(pathname, item);
+              return (
+                <li
+                  key={item.href}
+                  className={item.children ? styles.hasDropdown : undefined}
+                >
+                  <Link
+                    href={item.href}
+                    className={active ? styles.activeLink : undefined}
+                    data-testid={`public-nav-desktop-${item.testId}`}
+                  >
+                    {item.label}
+                  </Link>
+                  {item.children ? (
+                    <ul className={styles.dropdown}>
+                      {item.children.map((child) => (
+                        <li key={child.href}>
+                          <Link href={child.href}>{child.label}</Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
         </nav>
 
-        <div className="flex items-center gap-2 md:hidden">
-          <ThemeToggle />
-          <button
-            type="button"
-            onClick={() => setIsMenuOpen((prev) => !prev)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-(--surface-border) bg-(--surface-elevated) text-(--text-primary)"
-            aria-label="모바일 메뉴 토글"
-            aria-expanded={isMenuOpen}
-            data-testid="public-nav-toggle"
-          >
-            {isMenuOpen ? "×" : "☰"}
-          </button>
-        </div>
+        <button
+          type="button"
+          className={styles.mobileMenuToggle}
+          onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+          aria-label="모바일 메뉴 토글"
+          aria-expanded={isMobileMenuOpen}
+          data-testid="public-nav-toggle"
+        >
+          <span />
+          <span />
+          <span />
+        </button>
       </div>
 
-      <AnimatePresence>
-        {isMenuOpen ? (
-          <motion.nav
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="border-t border-(--surface-border) bg-(--surface-elevated) px-4 py-4 md:hidden"
-            data-testid="public-nav-mobile"
-          >
-            <ul className="space-y-2">
-              {navItems.map((item) => {
-                const isActive = isNavActive(pathname, item.href);
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      data-testid={`public-nav-mobile-${item.label.toLowerCase()}`}
-                      className={[
-                        "block rounded-xl px-4 py-3 text-sm transition",
-                        isActive
-                          ? "bg-(--accent) text-white"
-                          : "bg-(--surface-muted) text-(--text-secondary)",
-                      ].join(" ")}
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </motion.nav>
-        ) : null}
-      </AnimatePresence>
+      {isMobileMenuOpen ? (
+        <nav className={styles.mobileNav} data-testid="public-nav-mobile">
+          <ul className={styles.mobileMenuList}>
+            {navItems.map((item) => {
+              const active = isActivePath(pathname, item);
+              return (
+                <li
+                  key={item.href}
+                  className={item.children ? styles.hasDropdown : undefined}
+                >
+                  <Link
+                    href={item.href}
+                    className={active ? styles.activeLink : undefined}
+                    data-testid={`public-nav-mobile-${item.testId}`}
+                  >
+                    {item.label}
+                  </Link>
+                  {item.children ? (
+                    <ul className={styles.dropdownMobile}>
+                      {item.children.map((child) => (
+                        <li key={child.href}>
+                          <Link href={child.href}>{child.label}</Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      ) : null}
     </header>
   );
 }

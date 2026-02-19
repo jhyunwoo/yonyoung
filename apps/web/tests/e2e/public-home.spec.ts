@@ -25,9 +25,7 @@ test.describe("public home", () => {
     await page.goto("/");
     await page.getByTestId("home-cta-about").click();
     await expect(page).toHaveURL(/\/about$/);
-    await expect(
-      page.getByRole("heading", { name: "카메라를 넘어 시선을 나누는 동아리" }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "연영회 소개" })).toBeVisible();
 
     await page.goto("/");
     await page.getByTestId("home-cta-archive-bottom").click();

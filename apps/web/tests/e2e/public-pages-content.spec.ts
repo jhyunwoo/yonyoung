@@ -5,21 +5,15 @@ test.describe("public pages content", () => {
     page,
   }) => {
     await page.goto("/about");
-    await expect(page.getByRole("heading", { name: "카메라를 넘어 시선을 나누는 동아리" })).toBeVisible();
-    await expect(page.getByTestId("about-subnav")).toBeVisible();
-    await expect(page.getByTestId("about-subnav-about")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "연영회 소개" })).toBeVisible();
     await expect(page.getByTestId("about-history")).toBeVisible();
-    await expect(page.getByTestId("about-link-photographers")).toBeVisible();
-    await expect(page.getByTestId("about-link-recruiting")).toBeVisible();
 
     await page.goto("/about/photographers");
     await expect(page.getByRole("heading", { name: "PHOTOGRAPHERS" })).toBeVisible();
-    await expect(page.getByTestId("about-subnav-photographers")).toBeVisible();
     await expect(page.getByTestId("about-photographers-page")).toBeVisible();
 
     await page.goto("/about/recruiting");
     await expect(page.getByRole("heading", { name: "RECRUITING" })).toBeVisible();
-    await expect(page.getByTestId("about-subnav-recruiting")).toBeVisible();
     await expect(page.getByRole("heading", { name: "지원 방법" })).toBeVisible();
     await expect(page.getByTestId("about-recruiting-steps")).toBeVisible();
 
@@ -36,11 +30,11 @@ test.describe("public pages content", () => {
     await expect(page.getByTestId("archive-supporters-grid")).toBeVisible();
 
     await page.goto("/archive/exhibitions");
-    await expect(page.getByRole("heading", { name: "전시 아카이브" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "전시회" })).toBeVisible();
     await expect(page.getByTestId("archive-exhibitions-grid")).toBeVisible();
 
     await page.goto("/linktree");
-    await expect(page.getByRole("heading", { name: "연영회 공식 링크 모음" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "LINKTREE" })).toBeVisible();
     await expect(page.getByTestId("linktree-groups")).toBeVisible();
 
     await page.goto("/donate");

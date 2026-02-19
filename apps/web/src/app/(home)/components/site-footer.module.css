@@ -1,0 +1,109 @@
+.footer {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  padding: 4rem 0 2rem;
+  margin-top: 4rem;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.footerTop {
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #333333;
+  margin-bottom: 2rem;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+}
+
+.logoImage {
+  height: 1.92rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logoText {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  text-align: left;
+  line-height: 1.2;
+}
+
+.logoText span {
+  display: block;
+  letter-spacing: -0.05em;
+}
+
+.footerBottom {
+  margin-bottom: 3rem;
+}
+
+.footerInfoGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.5rem;
+}
+
+.footerInfoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.infoLabel {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #999999;
+  text-transform: uppercase;
+}
+
+.infoContent {
+  font-size: 0.9rem;
+  color: #cccccc;
+  line-height: 1.6;
+  word-break: break-all;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a.infoContent:hover {
+  color: #ffffff;
+}
+
+@media (max-width: 1024px) {
+  .footerInfoGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .footer {
+    padding: 3rem 0 1.5rem;
+  }
+
+  .container {
+    padding: 0 1rem;
+  }
+
+  .footerInfoGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .footerTop {
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+}

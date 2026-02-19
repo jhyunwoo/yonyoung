@@ -1,94 +1,69 @@
 import type { Metadata } from "next";
-import MotionReveal from "../components/motion-reveal";
-import SectionShell from "../components/section-shell";
 import { listPublicLinktrees, safeList } from "../../../lib/public-api";
 import { createPageMetadata } from "../../../lib/seo";
+import styles from "./linktree.module.css";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "공식 링크 모음 | 연영회",
+  title: "LINKTREE | 연영회",
   description: "연영회 공식 SNS, 문의 채널, 활동 관련 외부 링크를 한 곳에서 확인하세요.",
   path: "/linktree",
   keywords: ["연영회 링크", "연영회 SNS", "연영회 문의", "Linktree"],
 });
 
-/**
- * LinktreePage 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
- * @returns 렌더링할 JSX 트리를 반환합니다.
- * @remarks UI 상태와 권한 조건이 변경될 때 렌더링 분기가 달라질 수 있습니다.
- */
 export default async function LinktreePage() {
   const linktrees = await safeList(listPublicLinktrees, []);
 
   return (
-    <div className="pb-16 md:pb-20">
-      <section className="px-4 pb-8 pt-14 md:px-6 md:pb-12 md:pt-18">
-        <div className="mx-auto w-full max-w-6xl rounded-3xl border border-(--surface-border) bg-(--surface-elevated) p-6 md:p-10">
-          <MotionReveal>
-            <p className="text-xs uppercase tracking-[0.2em] text-(--text-muted)">
-              Linktree
-            </p>
-            <h1 className="mt-3 font-display text-4xl leading-tight text-(--text-primary) md:text-6xl">
-              연영회 공식 링크 모음
-            </h1>
-            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-(--text-secondary) md:text-base">
-              인스타그램, 문의 채널, 활동 관련 외부 링크를 한 곳에서 확인할 수 있습니다.
-            </p>
-          </MotionReveal>
-        </div>
-      </section>
+    <div className={styles.linktreePage}>
+      <div className={styles.container}>
+        <header className={styles.linktreeHeader}>
+          <div className={styles.headerTitleRow}>
+            <h1>LINKTREE</h1>
+          </div>
+          <p className={styles.subtitle}>연영회 공식 채널 및 서비스</p>
+        </header>
 
-      <SectionShell
-        eyebrow="Official Channels"
-        title="카테고리별 링크"
-        description="프리뷰의 컬럼형 Linktree 구성을 현재 디자인 시스템으로 적용했습니다."
-      >
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" data-testid="linktree-groups">
+        <section className={styles.linktreeColumns} data-testid="linktree-groups">
           {linktrees.length === 0 ? (
-            <MotionReveal>
-              <div className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-6 text-sm text-(--text-secondary) md:col-span-2 xl:col-span-3">
-                공개된 링크 그룹이 없습니다.
+            <div className={styles.linkColumn}>
+              <h2 className={styles.columnTitle}>링크</h2>
+              <div className={styles.emptyCategory}>
+                <span>준비 중입니다.</span>
               </div>
-            </MotionReveal>
+            </div>
           ) : (
-            linktrees.map((group, groupIndex) => (
-              <MotionReveal key={group.id} delay={groupIndex * 0.06}>
-                <section
-                  className="h-full rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-5"
-                  data-testid={`linktree-group-card-${group.id}`}
-                >
-                  <h2 className="font-display text-3xl text-(--text-primary)">{group.name}</h2>
-                  <div className="mt-4 space-y-3">
-                    {group.items.length === 0 ? (
-                      <div className="rounded-xl border border-dashed border-(--surface-border) bg-(--surface-muted) px-4 py-6 text-center text-sm text-(--text-secondary)">
-                        준비 중입니다.
-                      </div>
-                    ) : (
-                      group.items.map((item, itemIndex) => (
-                        <MotionReveal key={item.id} delay={Math.min(itemIndex * 0.03, 0.2)}>
-                          <a
-                            href={item.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            data-testid={`linktree-item-card-${item.id}`}
-                            className="block rounded-xl border border-(--surface-border) bg-(--surface-muted) px-4 py-3 transition hover:-translate-y-0.5 hover:border-(--accent)"
-                          >
-                            <p className="text-sm font-medium text-(--text-primary)">
-                              {item.name}
-                            </p>
-                            <p className="mt-1 truncate text-xs text-(--text-secondary)">
-                              {item.link}
-                            </p>
-                          </a>
-                        </MotionReveal>
-                      ))
-                    )}
-                  </div>
-                </section>
-              </MotionReveal>
+            linktrees.map((group) => (
+              <article
+                key={group.id}
+                className={styles.linkColumn}
+                data-testid={`linktree-group-card-${group.id}`}
+              >
+                <h2 className={styles.columnTitle}>{group.name}</h2>
+                <div className={styles.columnLinks}>
+                  {group.items.length > 0 ? (
+                    group.items.map((item) => (
+                      <a
+                        key={item.id}
+                        href={item.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.linkCard}
+                        data-testid={`linktree-item-card-${item.id}`}
+                      >
+                        <span className={styles.linkName}>{item.name}</span>
+                      </a>
+                    ))
+                  ) : (
+                    <div className={styles.emptyCategory}>
+                      <span>준비 중입니다.</span>
+                    </div>
+                  )}
+                </div>
+              </article>
             ))
           )}
-        </div>
-      </SectionShell>
+        </section>
+      </div>
     </div>
   );
 }

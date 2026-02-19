@@ -1,33 +1,66 @@
-const currentYear = new Date().getFullYear();
+import Image from "next/image";
+import styles from "./site-footer.module.css";
 
-/**
- * SiteFooter 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
- * @returns 렌더링할 JSX 트리를 반환합니다.
- * @remarks UI 상태와 권한 조건이 변경될 때 렌더링 분기가 달라질 수 있습니다.
- */
 export default function SiteFooter() {
   return (
-    <footer
-      className="border-t border-(--surface-border) bg-(--surface-elevated)"
-      data-testid="public-footer"
-    >
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10 md:flex-row md:items-end md:justify-between md:px-6">
-        <div>
-          <p className="font-display text-2xl text-(--text-primary)">연영회</p>
-          <p className="mt-2 text-sm text-(--text-muted)">
-            연세대학교 중앙사진동아리
-          </p>
-          <p className="mt-3 text-sm text-(--text-secondary)">
-            One Step Closer
-          </p>
+    <footer className={styles.footer} data-testid="public-footer">
+      <div className={styles.container}>
+        <div className={styles.footerTop}>
+          <div className={styles.logo}>
+            <div className={styles.logoImage}>
+              <Image
+                src="/yonyong-logo-white.png"
+                alt="연영회 로고"
+                width={40}
+                height={40}
+                style={{ objectFit: "contain" }}
+              />
+            </div>
+            <div className={styles.logoText}>
+              <span>연세대학교 중앙사진동아리</span>
+              연영회
+            </div>
+          </div>
         </div>
-        <div className="space-y-2 text-sm text-(--text-secondary)">
-          <p>Email: kimse0604@naver.com</p>
-          <p>Instagram: @yonyoungpage</p>
-          <p>Open Kakao: open.kakao.com/o/snVWZ4th</p>
-          <p className="text-(--text-muted)">
-            © {currentYear} Yonyoung Photography Club
-          </p>
+
+        <div className={styles.footerBottom}>
+          <div className={styles.footerInfoGrid}>
+            <div className={styles.footerInfoItem}>
+              <span className={styles.infoLabel}>오픈 카톡방</span>
+              <a
+                href="https://open.kakao.com/o/snVWZ4th"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.infoContent}
+              >
+                https://open.kakao.com/o/snVWZ4th
+              </a>
+            </div>
+
+            <div className={styles.footerInfoItem}>
+              <span className={styles.infoLabel}>INSTAGRAM</span>
+              <span className={styles.infoContent}>@yonyongpage</span>
+            </div>
+
+            <div className={styles.footerInfoItem}>
+              <span className={styles.infoLabel}>E-mail</span>
+              <a href="mailto:kimse0604@naver.com" className={styles.infoContent}>
+                kimse0604@naver.com
+              </a>
+            </div>
+
+            <div className={styles.footerInfoItem}>
+              <span className={styles.infoLabel}>HP</span>
+              <span className={styles.infoContent}>010-6814-1800</span>
+            </div>
+
+            <div className={styles.footerInfoItem}>
+              <span className={styles.infoLabel}>주소</span>
+              <span className={styles.infoContent}>
+                서울특별시 서대문구 연희로 50 연세대학교 대강당 nn호
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

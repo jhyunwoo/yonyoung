@@ -66,7 +66,7 @@ export default function ThemeToggle() {
 
   return (
     <div
-      className="inline-flex items-center rounded-full border border-(--surface-border) bg-(--surface-elevated) px-2"
+      className="inline-flex items-center border border-(--surface-border) bg-(--surface-elevated) px-1"
       data-testid="theme-toggle"
     >
       <label className="sr-only" htmlFor="public-theme-mode-select">
@@ -76,7 +76,7 @@ export default function ThemeToggle() {
         id="public-theme-mode-select"
         value={themeMode}
         onChange={(event) => handleThemeModeChange(event.target.value as ThemeMode)}
-        className="h-10 rounded-full bg-transparent px-2 text-sm text-(--text-primary) outline-none"
+        className="h-9 bg-transparent px-2 text-xs font-medium tracking-[0.04em] text-(--text-primary) outline-none"
         aria-label="테마 선택"
         data-testid="theme-toggle-select"
       >

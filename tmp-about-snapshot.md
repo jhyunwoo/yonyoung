@@ -1,0 +1,96 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - button "관리자 모드 토글" [ref=e5] [cursor=pointer]:
+          - img [ref=e6]
+        - link "연영회 로고 연세대학교 중앙사진동아리 연영회" [ref=e8] [cursor=pointer]:
+          - /url: /
+          - img "연영회 로고" [ref=e10]
+          - generic [ref=e11]:
+            - generic [ref=e12]: 연세대학교 중앙사진동아리
+            - text: 연영회
+      - navigation [ref=e13]:
+        - list [ref=e14]:
+          - listitem [ref=e15]:
+            - link "ABOUT" [ref=e16] [cursor=pointer]:
+              - /url: /about
+          - listitem [ref=e17]:
+            - link "ARCHIVE" [ref=e18] [cursor=pointer]:
+              - /url: /archive
+          - listitem [ref=e19]:
+            - link "LINKTREE" [ref=e20] [cursor=pointer]:
+              - /url: /linktree
+          - listitem [ref=e21]:
+            - link "DONATE US" [ref=e22] [cursor=pointer]:
+              - /url: /donate
+  - main [ref=e23]:
+    - main [ref=e25]:
+      - generic [ref=e26]:
+        - heading "연영회 소개" [level=1] [ref=e27]
+        - paragraph [ref=e28]: 연영회는 사진을 통해 세상을 기록하고 표현하는 동아리입니다. 우리는 다양한 주제와 스타일로 사진을 찍으며, 서로의 작품을 공유하고 함께 성장해 나갑니다.
+      - generic [ref=e29]:
+        - heading "연간 활동" [level=2] [ref=e30]
+        - generic [ref=e31]:
+          - article [ref=e32]:
+            - list [ref=e33]:
+              - listitem [ref=e34]:
+                - generic [ref=e35]: March
+                - generic [ref=e36]: 리크루팅
+              - listitem [ref=e37]:
+                - generic [ref=e38]: May
+                - generic [ref=e39]: 연세대학교 대동제 보도 사진전
+              - listitem [ref=e40]:
+                - generic [ref=e41]: June
+                - generic [ref=e42]: MT
+          - article [ref=e43]:
+            - list [ref=e44]:
+              - listitem [ref=e45]:
+                - generic [ref=e46]: August
+                - generic [ref=e47]: 정기 사진전
+              - listitem [ref=e48]:
+                - generic [ref=e49]: October
+                - generic [ref=e50]: 정기연고전 보도 사진전
+              - listitem [ref=e51]:
+                - generic [ref=e52]: February
+                - generic [ref=e53]: 신인 사진전
+      - generic [ref=e54]:
+        - heading "연혁" [level=2] [ref=e55]
+        - generic [ref=e56]:
+          - article [ref=e57]:
+            - paragraph [ref=e58]: "1966"
+            - paragraph [ref=e59]: 연영회 창단
+          - article [ref=e60]:
+            - paragraph [ref=e61]: 60기
+            - paragraph [ref=e62]: 2025년 - 2026년
+          - article [ref=e63]:
+            - paragraph [ref=e64]: 61기
+            - paragraph [ref=e65]: 2026년 - 2027년
+  - contentinfo [ref=e66]:
+    - generic [ref=e67]:
+      - generic [ref=e69]:
+        - img "연영회 로고" [ref=e71]
+        - generic [ref=e72]:
+          - generic [ref=e73]: 연세대학교 중앙사진동아리
+          - text: 연영회
+      - generic [ref=e75]:
+        - generic [ref=e76]:
+          - generic [ref=e77]: 오픈 카톡방
+          - link "https://open.kakao.com/o/snVWZ4th" [ref=e78] [cursor=pointer]:
+            - /url: https://open.kakao.com/o/snVWZ4th
+        - generic [ref=e79]:
+          - generic [ref=e80]: INSTAGRAM
+          - generic [ref=e81]: "@yonyongpage"
+        - generic [ref=e82]:
+          - generic [ref=e83]: E-mail
+          - link "kimse0604@naver.com" [ref=e84] [cursor=pointer]:
+            - /url: mailto:kimse0604@naver.com
+        - generic [ref=e85]:
+          - generic [ref=e86]: HP
+          - generic [ref=e87]: 010-6814-1800
+        - generic [ref=e88]:
+          - generic [ref=e89]: 주소
+          - generic [ref=e90]: 서울특별시 서대문구 연희로 50 연세대학교 대강당 nn호
+  - button "Open Next.js Dev Tools" [ref=e96] [cursor=pointer]:
+    - img [ref=e97]
+  - alert [ref=e100]

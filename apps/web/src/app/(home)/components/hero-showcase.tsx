@@ -49,36 +49,36 @@ export default function HeroShowcase({
   return (
     <section
       ref={rootRef}
-      className="relative overflow-hidden border-b border-(--surface-border) px-4 pb-16 pt-14 md:px-6 md:pb-20 md:pt-18"
+      className="relative border-b border-(--surface-border) bg-(--surface-elevated) px-4 pb-16 pt-32 md:px-8 md:pb-20 md:pt-36"
       data-testid="home-hero"
     >
       <div className="hero-glow -left-16 top-10" />
       <div className="hero-glow bottom-8 -right-24" />
 
-      <div className="mx-auto grid w-full max-w-6xl gap-8 md:grid-cols-[1.1fr_0.9fr] md:items-end">
+      <div className="mx-auto grid w-full max-w-[1200px] gap-10 md:grid-cols-[1.1fr_0.9fr] md:items-end">
         <motion.div style={shouldReduceMotion ? undefined : { y: textOffset }}>
-          <p className="mb-3 text-xs uppercase tracking-[0.2em] text-(--text-muted)">
+          <p className="mb-3 text-sm font-medium uppercase tracking-[0.1em] text-(--text-muted)">
             Yonsei University Photography Club
           </p>
-          <h1 className="font-display text-5xl leading-[0.94] text-(--text-primary) md:text-7xl">
+          <h1 className="font-display text-6xl leading-[0.96] text-(--text-primary) md:text-8xl">
             연영회
           </h1>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-(--text-secondary) md:text-lg">
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-(--text-muted) md:text-lg">
             1966년부터 이어온 연세대학교 중앙사진동아리. 기록과 전시, 그리고
             서로의 시선이 만나는 장소를 만듭니다.
           </p>
-          <div className="mt-7 flex flex-wrap gap-3">
+          <div className="mt-8 flex flex-wrap gap-3">
             <Link
               href="/archive/records"
               data-testid="home-cta-archive"
-              className="rounded-full bg-(--accent) px-5 py-2.5 text-sm font-medium text-(--accent-foreground) transition hover:opacity-90"
+              className="inline-flex border border-(--surface-strong-border) bg-(--accent) px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-(--accent-foreground) transition hover:opacity-90"
             >
               활동 아카이브 보기
             </Link>
             <Link
               href="/about"
               data-testid="home-cta-about"
-              className="rounded-full border border-(--surface-border) bg-(--surface-elevated) px-5 py-2.5 text-sm font-medium text-(--text-primary) transition hover:border-(--accent) hover:text-(--accent)"
+              className="inline-flex border border-(--surface-strong-border) px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-(--text-primary) transition hover:bg-(--text-primary) hover:text-white"
             >
               동아리 소개 보기
             </Link>
@@ -92,7 +92,7 @@ export default function HeroShowcase({
           <motion.article
             whileHover={shouldReduceMotion ? undefined : { y: -4, scale: 1.01 }}
             transition={{ type: "spring", damping: 20, stiffness: 260 }}
-            className="overflow-hidden rounded-2xl border border-(--surface-border) bg-(--surface-elevated) shadow-[0_20px_60px_-40px_var(--shadow-strong)]"
+            className="overflow-hidden border border-(--surface-strong-border) bg-(--surface-elevated)"
           >
             <div className="relative aspect-[4/3]">
               {featuredExhibition ? (
@@ -116,17 +116,17 @@ export default function HeroShowcase({
               )}
             </div>
             <div
-              className="space-y-2 p-4"
+              className="space-y-2 p-5"
               data-testid="home-hero-exhibition-meta"
             >
-              <p className="text-xs uppercase tracking-[0.16em] text-(--text-muted)">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-(--text-muted)">
                 Latest Exhibition
               </p>
-              <h2 className="font-display text-2xl text-(--text-primary)">
+              <h2 className="font-display text-[1.7rem] text-(--text-primary)">
                 {featuredExhibition?.title ?? "준비 중"}
               </h2>
               {featuredExhibition ? (
-                <p className="text-sm text-(--text-secondary)">
+                <p className="text-sm text-(--text-muted)">
                   {formatDateRange(
                     featuredExhibition.startDate,
                     featuredExhibition.endDate,
@@ -140,9 +140,9 @@ export default function HeroShowcase({
           <div className="grid grid-cols-2 gap-3">
             <motion.div
               whileHover={shouldReduceMotion ? undefined : { y: -4 }}
-              className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-4"
+              className="border border-(--surface-border) bg-(--surface-elevated) p-4"
             >
-              <p className="text-xs uppercase tracking-[0.14em] text-(--text-muted)">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-(--text-muted)">
                 Recent Activity
               </p>
               <p className="mt-2 line-clamp-2 text-sm font-medium text-(--text-primary)">
@@ -151,12 +151,12 @@ export default function HeroShowcase({
             </motion.div>
             <motion.div
               whileHover={shouldReduceMotion ? undefined : { y: -4 }}
-              className="rounded-2xl border border-(--surface-border) bg-(--surface-elevated) p-4"
+              className="border border-(--surface-border) bg-(--surface-elevated) p-4"
             >
-              <p className="text-xs uppercase tracking-[0.14em] text-(--text-muted)">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-(--text-muted)">
                 Since
               </p>
-              <p className="mt-2 font-display text-3xl text-(--text-primary)">
+              <p className="mt-2 text-3xl font-semibold text-(--text-primary)">
                 1966
               </p>
             </motion.div>
