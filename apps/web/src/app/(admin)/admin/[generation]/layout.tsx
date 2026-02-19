@@ -3,7 +3,6 @@ import { forbidden, notFound } from "next/navigation";
 import { getAccessibleGenerations, resolveGenerationBySortOrder } from "../../../../lib/admin-generation";
 import {
   fetchGenerationsFromServer,
-  readServerCookieHeader,
 } from "../../../../lib/admin-generation-server";
 import { serverAuthTool } from "../../../../lib/auth-server-tool";
 
@@ -28,8 +27,7 @@ export default async function GenerationScopedLayout({
   const { generation } = await params;
   const session = await serverAuthTool.requireAdminPageAccess();
   await serverAuthTool.redirectIfProfileIncomplete(session);
-  const cookieHeader = await readServerCookieHeader();
-  const generations = await fetchGenerationsFromServer(cookieHeader);
+  const generations = await fetchGenerationsFromServer(null);
   const accessible = getAccessibleGenerations(session, generations);
 
   if (accessible.length === 0) {

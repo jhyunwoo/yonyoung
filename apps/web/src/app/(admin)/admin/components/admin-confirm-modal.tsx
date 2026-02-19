@@ -36,7 +36,7 @@ export default function AdminConfirmModal({
       aria-modal="true"
       data-testid="confirm-modal"
     >
-      <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white/95 p-5 shadow-xl">
+      <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-5 shadow-xl">
         <h3 className="text-base font-semibold text-gray-900">{title}</h3>
         <p className="mt-2 text-sm text-gray-600">{description}</p>
 

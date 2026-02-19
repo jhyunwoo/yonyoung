@@ -23,10 +23,12 @@ const themeInitScript = `
 (() => {
   try {
     const stored = localStorage.getItem("theme");
+    const mode = stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
     const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const theme = stored === "light" || stored === "dark" ? stored : (systemDark ? "dark" : "light");
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    document.documentElement.dataset.theme = theme;
+    const resolvedTheme = mode === "system" ? (systemDark ? "dark" : "light") : mode;
+    document.documentElement.classList.toggle("dark", resolvedTheme === "dark");
+    document.documentElement.dataset.theme = resolvedTheme;
+    document.documentElement.dataset.themeMode = mode;
   } catch (_) {}
 })();
 `;

@@ -61,7 +61,7 @@ export default function AdminDrawer({
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            className="flex h-full w-full max-w-3xl flex-col border-l border-gray-200 bg-white/95 shadow-2xl xl:max-w-4xl"
+            className="flex h-full w-full max-w-3xl flex-col border-l border-gray-200 bg-white shadow-2xl xl:max-w-4xl"
             onClick={(event) => event.stopPropagation()}
             data-testid={testId}
             initial={{ x: 56, opacity: 0.98 }}
@@ -89,7 +89,7 @@ export default function AdminDrawer({
             <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-6">{children}</div>
 
             {footer ? (
-              <footer className="border-t border-gray-200 bg-white/90 px-5 py-3 md:px-6">
+              <footer className="border-t border-gray-200 bg-white px-5 py-3 md:px-6">
                 {footer}
               </footer>
             ) : null}

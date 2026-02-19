@@ -1,28 +1,34 @@
-import ExhibitionsAdminPage from "../../exhibitions/page";
+import ExhibitionsAdminPageClient from "../../exhibitions/exhibitions-admin-page-client";
+import {
+  fetchAdminExhibitionsFromServer,
+  fetchAdminGenerationsFromServer,
+} from "../../../../../lib/admin-resource-server";
+import { readServerCookieHeader } from "../../../../../lib/admin-generation-server";
 
 type GenerationExhibitionsPageProps = {
   params: Promise<{ generation: string }>;
 };
 
-/**
- * GenerationExhibitionsPage 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
- * @param {
-  params,
-} 동작 분기를 제어하는 파라미터입니다.
- * @returns 렌더링할 JSX 트리를 반환합니다.
- * @remarks UI 상태와 권한 조건이 변경될 때 렌더링 분기가 달라질 수 있습니다.
- */
 export default async function GenerationExhibitionsPage({
   params,
 }: GenerationExhibitionsPageProps) {
   const { generation } = await params;
   const generationSortOrder = Number.parseInt(generation, 10);
 
+  const cookieHeader = await readServerCookieHeader();
+  const [exhibitions, generations] = await Promise.all([
+    fetchAdminExhibitionsFromServer(cookieHeader),
+    fetchAdminGenerationsFromServer(cookieHeader),
+  ]);
+
   return (
-    <ExhibitionsAdminPage
+    <ExhibitionsAdminPageClient
       generationSortOrder={Number.isFinite(generationSortOrder) ? generationSortOrder : null}
       generationScoped
+      initialData={{
+        exhibitions,
+        generations,
+      }}
     />
   );
 }
-

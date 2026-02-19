@@ -712,7 +712,7 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
   updateUser: mkSpec({
     summary: "사용자 정보 수정",
     overview:
-      "역할별로 수정 가능 범위가 다릅니다. 관리자는 확장 필드(role/generationId 및 학적 정보 포함), member 계열 role 및 unverified는 본인 프로필 필드만 수정 가능합니다.",
+      "역할별로 수정 가능 범위가 다릅니다. 관리자는 확장 필드(role/generationIds 및 학적 정보 포함), member 계열 role 및 unverified는 본인 프로필 필드만 수정 가능합니다.",
     parameters: ["`id` (path, UUID): 수정 대상 사용자 식별자"],
     requestBody: [
       "관리자 요청: `ApiAdminUpdateUserSchema` 기준",

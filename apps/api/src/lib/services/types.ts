@@ -88,6 +88,7 @@ export type UserEntity = {
   phoneNumber: string | null;
   role: string | null;
   generationId: string | null;
+  generationIds: string[];
   createdAt: Date;
   updatedAt: Date;
 };
@@ -236,6 +237,7 @@ export type DataService = {
       studentNumber: string | null;
       phoneNumber: string | null;
       role: string;
+      generationIds: string[];
       generationId: string | null;
     }>,
   ) => Promise<UserEntity | null>;

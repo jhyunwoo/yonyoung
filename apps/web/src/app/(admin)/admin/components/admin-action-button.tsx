@@ -20,7 +20,7 @@ const VARIANT_CLASS_MAP: Record<AdminActionButtonVariant, string> = {
   danger:
     "border border-red-300 bg-white text-red-600 shadow-sm hover:bg-red-50 disabled:bg-red-50 disabled:text-red-300",
   ghost:
-    "border border-gray-300 bg-white/90 text-gray-700 shadow-sm hover:bg-gray-100 disabled:text-gray-400",
+    "border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-100 disabled:text-gray-400",
 };
 
 export default function AdminActionButton({

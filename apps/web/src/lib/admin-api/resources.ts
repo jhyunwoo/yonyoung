@@ -1,4 +1,5 @@
 import { adminRequest } from "./http";
+import { ADMIN_CACHE_TAGS, type AdminCacheTag } from "../admin-cache";
 import type {
   ApiActivity,
   ApiActivityImage,
@@ -28,6 +29,38 @@ import type {
   ApiUser,
 } from "./types";
 
+const ADMIN_REVALIDATE_ENDPOINT = "/api/admin/revalidate";
+
+const revalidateAdminCache = async (tags: readonly AdminCacheTag[]): Promise<void> => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    await fetch(ADMIN_REVALIDATE_ENDPOINT, {
+      method: "POST",
+      credentials: "include",
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ tags }),
+    });
+  } catch {
+    // 재검증 호출 실패는 변이 성공을 막지 않는다.
+  }
+};
+
+const withAdminCacheRevalidation = async <T>(
+  operation: () => Promise<T>,
+  tags: readonly AdminCacheTag[],
+): Promise<T> => {
+  const result = await operation();
+  await revalidateAdminCache(tags);
+  return result;
+};
+
 export const adminResourceApi = {
     /**
    * listGenerations의 핵심 비즈니스 로직을 수행합니다.
@@ -42,7 +75,10 @@ export const adminResourceApi = {
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
   createGeneration: (input: ApiCreateGenerationInput) =>
-    adminRequest<ApiGeneration>("/generations", "POST", input),
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiGeneration>("/generations", "POST", input),
+      [ADMIN_CACHE_TAGS.generations, ADMIN_CACHE_TAGS.users],
+    ),
     /**
    * getGenerationById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
@@ -59,14 +95,21 @@ export const adminResourceApi = {
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
   updateGeneration: (id: string, input: ApiUpdateGenerationInput) =>
-    adminRequest<ApiGeneration>(`/generations/${id}`, "PATCH", input),
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiGeneration>(`/generations/${id}`, "PATCH", input),
+      [ADMIN_CACHE_TAGS.generations, ADMIN_CACHE_TAGS.users],
+    ),
     /**
    * deleteGeneration 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
    * @returns 처리 결과 값을 반환합니다.
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
-  deleteGeneration: (id: string) => adminRequest<void>(`/generations/${id}`, "DELETE"),
+  deleteGeneration: (id: string) =>
+    withAdminCacheRevalidation(
+      () => adminRequest<void>(`/generations/${id}`, "DELETE"),
+      [ADMIN_CACHE_TAGS.generations, ADMIN_CACHE_TAGS.users],
+    ),
 
     /**
    * listActivities의 핵심 비즈니스 로직을 수행합니다.
@@ -81,7 +124,10 @@ export const adminResourceApi = {
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
   createActivity: (input: ApiCreateActivityInput) =>
-    adminRequest<ApiActivity>("/activities", "POST", input),
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiActivity>("/activities", "POST", input),
+      [ADMIN_CACHE_TAGS.activities],
+    ),
     /**
    * getActivityById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
@@ -97,14 +143,21 @@ export const adminResourceApi = {
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
   updateActivity: (id: string, input: ApiUpdateActivityInput) =>
-    adminRequest<ApiActivity>(`/activities/${id}`, "PATCH", input),
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiActivity>(`/activities/${id}`, "PATCH", input),
+      [ADMIN_CACHE_TAGS.activities],
+    ),
     /**
    * deleteActivity 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
    * @returns 처리 결과 값을 반환합니다.
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
-  deleteActivity: (id: string) => adminRequest<void>(`/activities/${id}`, "DELETE"),
+  deleteActivity: (id: string) =>
+    withAdminCacheRevalidation(
+      () => adminRequest<void>(`/activities/${id}`, "DELETE"),
+      [ADMIN_CACHE_TAGS.activities],
+    ),
     /**
    * addActivityImage의 핵심 비즈니스 로직을 수행합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
@@ -113,7 +166,10 @@ export const adminResourceApi = {
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
   addActivityImage: (id: string, input: ApiCreateActivityImageInput) =>
-    adminRequest<ApiActivityImage>(`/activities/${id}/images`, "POST", input),
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiActivityImage>(`/activities/${id}/images`, "POST", input),
+      [ADMIN_CACHE_TAGS.activities],
+    ),
     /**
    * updateActivityImage 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
@@ -126,7 +182,11 @@ export const adminResourceApi = {
     id: string,
     imageId: string,
     input: ApiUpdateActivityImageInput,
-  ) => adminRequest<ApiActivityImage>(`/activities/${id}/images/${imageId}`, "PATCH", input),
+  ) =>
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiActivityImage>(`/activities/${id}/images/${imageId}`, "PATCH", input),
+      [ADMIN_CACHE_TAGS.activities],
+    ),
     /**
    * deleteActivityImage 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
@@ -135,7 +195,10 @@ export const adminResourceApi = {
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
   deleteActivityImage: (id: string, imageId: string) =>
-    adminRequest<void>(`/activities/${id}/images/${imageId}`, "DELETE"),
+    withAdminCacheRevalidation(
+      () => adminRequest<void>(`/activities/${id}/images/${imageId}`, "DELETE"),
+      [ADMIN_CACHE_TAGS.activities],
+    ),
 
     /**
    * listSupporters의 핵심 비즈니스 로직을 수행합니다.
@@ -150,7 +213,10 @@ export const adminResourceApi = {
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
   createSupporter: (input: ApiCreateSupporterInput) =>
-    adminRequest<ApiSupporter>("/supporters", "POST", input),
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiSupporter>("/supporters", "POST", input),
+      [ADMIN_CACHE_TAGS.supporters],
+    ),
     /**
    * getSupporterById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
@@ -167,14 +233,21 @@ export const adminResourceApi = {
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
   updateSupporter: (id: string, input: ApiUpdateSupporterInput) =>
-    adminRequest<ApiSupporter>(`/supporters/${id}`, "PATCH", input),
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiSupporter>(`/supporters/${id}`, "PATCH", input),
+      [ADMIN_CACHE_TAGS.supporters],
+    ),
     /**
    * deleteSupporter 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
    * @returns 처리 결과 값을 반환합니다.
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
-  deleteSupporter: (id: string) => adminRequest<void>(`/supporters/${id}`, "DELETE"),
+  deleteSupporter: (id: string) =>
+    withAdminCacheRevalidation(
+      () => adminRequest<void>(`/supporters/${id}`, "DELETE"),
+      [ADMIN_CACHE_TAGS.supporters],
+    ),
 
     /**
    * listExhibitions의 핵심 비즈니스 로직을 수행합니다.
@@ -189,7 +262,10 @@ export const adminResourceApi = {
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
   createExhibition: (input: ApiCreateExhibitionInput) =>
-    adminRequest<ApiExhibition>("/exhibitions", "POST", input),
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiExhibition>("/exhibitions", "POST", input),
+      [ADMIN_CACHE_TAGS.exhibitions],
+    ),
     /**
    * getExhibitionById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
@@ -206,14 +282,21 @@ export const adminResourceApi = {
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
   updateExhibition: (id: string, input: ApiUpdateExhibitionInput) =>
-    adminRequest<ApiExhibition>(`/exhibitions/${id}`, "PATCH", input),
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiExhibition>(`/exhibitions/${id}`, "PATCH", input),
+      [ADMIN_CACHE_TAGS.exhibitions],
+    ),
     /**
    * deleteExhibition 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
    * @returns 처리 결과 값을 반환합니다.
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
-  deleteExhibition: (id: string) => adminRequest<void>(`/exhibitions/${id}`, "DELETE"),
+  deleteExhibition: (id: string) =>
+    withAdminCacheRevalidation(
+      () => adminRequest<void>(`/exhibitions/${id}`, "DELETE"),
+      [ADMIN_CACHE_TAGS.exhibitions],
+    ),
     /**
    * addExhibitionImage의 핵심 비즈니스 로직을 수행합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
@@ -222,7 +305,10 @@ export const adminResourceApi = {
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
   addExhibitionImage: (id: string, input: ApiCreateExhibitionImageInput) =>
-    adminRequest<ApiExhibitionImage>(`/exhibitions/${id}/images`, "POST", input),
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiExhibitionImage>(`/exhibitions/${id}/images`, "POST", input),
+      [ADMIN_CACHE_TAGS.exhibitions],
+    ),
     /**
    * updateExhibitionImage 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
@@ -235,7 +321,11 @@ export const adminResourceApi = {
     id: string,
     imageId: string,
     input: ApiUpdateExhibitionImageInput,
-  ) => adminRequest<ApiExhibitionImage>(`/exhibitions/${id}/images/${imageId}`, "PATCH", input),
+  ) =>
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiExhibitionImage>(`/exhibitions/${id}/images/${imageId}`, "PATCH", input),
+      [ADMIN_CACHE_TAGS.exhibitions],
+    ),
     /**
    * deleteExhibitionImage 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
@@ -244,7 +334,10 @@ export const adminResourceApi = {
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
   deleteExhibitionImage: (id: string, imageId: string) =>
-    adminRequest<void>(`/exhibitions/${id}/images/${imageId}`, "DELETE"),
+    withAdminCacheRevalidation(
+      () => adminRequest<void>(`/exhibitions/${id}/images/${imageId}`, "DELETE"),
+      [ADMIN_CACHE_TAGS.exhibitions],
+    ),
 
     /**
    * listLinktrees의 핵심 비즈니스 로직을 수행합니다.
@@ -259,7 +352,10 @@ export const adminResourceApi = {
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
   createLinktree: (input: ApiCreateLinktreeInput) =>
-    adminRequest<ApiLinktree>("/linktree", "POST", input),
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiLinktree>("/linktree", "POST", input),
+      [ADMIN_CACHE_TAGS.linktree],
+    ),
     /**
    * getLinktreeById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
@@ -275,14 +371,21 @@ export const adminResourceApi = {
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
   updateLinktree: (id: string, input: ApiUpdateLinktreeInput) =>
-    adminRequest<ApiLinktree>(`/linktree/${id}`, "PATCH", input),
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiLinktree>(`/linktree/${id}`, "PATCH", input),
+      [ADMIN_CACHE_TAGS.linktree],
+    ),
     /**
    * deleteLinktree 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
    * @returns 처리 결과 값을 반환합니다.
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
-  deleteLinktree: (id: string) => adminRequest<void>(`/linktree/${id}`, "DELETE"),
+  deleteLinktree: (id: string) =>
+    withAdminCacheRevalidation(
+      () => adminRequest<void>(`/linktree/${id}`, "DELETE"),
+      [ADMIN_CACHE_TAGS.linktree],
+    ),
     /**
    * addLinktreeItem의 핵심 비즈니스 로직을 수행합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
@@ -291,7 +394,10 @@ export const adminResourceApi = {
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
   addLinktreeItem: (id: string, input: ApiCreateLinktreeItemInput) =>
-    adminRequest<ApiLinktreeItem>(`/linktree/${id}/items`, "POST", input),
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiLinktreeItem>(`/linktree/${id}/items`, "POST", input),
+      [ADMIN_CACHE_TAGS.linktree],
+    ),
     /**
    * updateLinktreeItem 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
@@ -301,7 +407,10 @@ export const adminResourceApi = {
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
   updateLinktreeItem: (id: string, itemId: string, input: ApiUpdateLinktreeItemInput) =>
-    adminRequest<ApiLinktreeItem>(`/linktree/${id}/items/${itemId}`, "PATCH", input),
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiLinktreeItem>(`/linktree/${id}/items/${itemId}`, "PATCH", input),
+      [ADMIN_CACHE_TAGS.linktree],
+    ),
     /**
    * deleteLinktreeItem 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
@@ -310,7 +419,10 @@ export const adminResourceApi = {
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
   deleteLinktreeItem: (id: string, itemId: string) =>
-    adminRequest<void>(`/linktree/${id}/items/${itemId}`, "DELETE"),
+    withAdminCacheRevalidation(
+      () => adminRequest<void>(`/linktree/${id}/items/${itemId}`, "DELETE"),
+      [ADMIN_CACHE_TAGS.linktree],
+    ),
 
     /**
    * listUsers의 핵심 비즈니스 로직을 수행합니다.
@@ -333,12 +445,19 @@ export const adminResourceApi = {
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
   updateUser: (id: string, input: ApiUpdateUserInput) =>
-    adminRequest<ApiUser>(`/users/${id}`, "PATCH", input),
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiUser>(`/users/${id}`, "PATCH", input),
+      [ADMIN_CACHE_TAGS.users, ADMIN_CACHE_TAGS.generations],
+    ),
     /**
    * deleteUser 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.
    * @returns 처리 결과 값을 반환합니다.
    * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
    */
-  deleteUser: (id: string) => adminRequest<void>(`/users/${id}`, "DELETE"),
+  deleteUser: (id: string) =>
+    withAdminCacheRevalidation(
+      () => adminRequest<void>(`/users/${id}`, "DELETE"),
+      [ADMIN_CACHE_TAGS.users, ADMIN_CACHE_TAGS.generations],
+    ),
 } as const;

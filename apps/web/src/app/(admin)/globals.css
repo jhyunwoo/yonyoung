@@ -72,8 +72,28 @@ body {
   background-color: color-mix(in srgb, var(--admin-surface), transparent 2%);
 }
 
+.admin-root .bg-white\/95 {
+  background-color: color-mix(in srgb, var(--admin-surface), transparent 5%);
+}
+
+.admin-root .bg-white\/90 {
+  background-color: color-mix(in srgb, var(--admin-surface), transparent 10%);
+}
+
+.admin-root .bg-white\/80 {
+  background-color: color-mix(in srgb, var(--admin-surface), transparent 18%);
+}
+
+.admin-root .bg-white\/70 {
+  background-color: color-mix(in srgb, var(--admin-surface), transparent 26%);
+}
+
 .admin-root .bg-gray-50 {
   background-color: color-mix(in srgb, var(--admin-surface-muted), transparent 4%);
+}
+
+.admin-root .bg-gray-50\/70 {
+  background-color: color-mix(in srgb, var(--admin-surface-muted), transparent 16%);
 }
 
 .admin-root .bg-gray-100 {
@@ -88,6 +108,10 @@ body {
   border-color: var(--admin-border);
 }
 
+.admin-root .border-gray-200\/80 {
+  border-color: color-mix(in srgb, var(--admin-border), transparent 20%);
+}
+
 .admin-root .border-gray-300 {
   border-color: var(--admin-border-strong);
 }
@@ -100,13 +124,25 @@ body {
   color: var(--admin-text-secondary);
 }
 
+.admin-root .text-gray-800 {
+  color: var(--admin-text-primary);
+}
+
 .admin-root .text-gray-600,
 .admin-root .text-gray-500 {
   color: var(--admin-text-muted);
 }
 
+.admin-root .text-gray-400 {
+  color: color-mix(in srgb, var(--admin-text-muted), #fff 8%);
+}
+
 .admin-root .bg-black {
   background-color: var(--admin-accent);
+}
+
+.admin-root .bg-gray-900 {
+  background-color: color-mix(in srgb, var(--admin-accent-strong), #000 18%);
 }
 
 .admin-root .border-black {
@@ -173,6 +209,23 @@ body {
   box-shadow: 0 10px 20px -18px color-mix(in srgb, #0f172a, transparent 15%);
 }
 
+.admin-root .hover\:bg-white:hover {
+  background-color: color-mix(in srgb, var(--admin-surface), transparent 2%);
+}
+
+.admin-root .from-white {
+  --tw-gradient-from: color-mix(in srgb, var(--admin-surface), transparent 2%)
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, var(--admin-surface), transparent 100%)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
+.admin-root .to-gray-50 {
+  --tw-gradient-to: color-mix(in srgb, var(--admin-surface-muted), transparent 4%)
+    var(--tw-gradient-to-position);
+}
+
 .admin-root section,
 .admin-root aside,
 .admin-root form {
@@ -183,8 +236,28 @@ body {
   background-color: color-mix(in srgb, var(--admin-surface), #000 6%);
 }
 
+.dark .admin-root .bg-white\/95 {
+  background-color: color-mix(in srgb, var(--admin-surface), #000 7%);
+}
+
+.dark .admin-root .bg-white\/90 {
+  background-color: color-mix(in srgb, var(--admin-surface), #000 9%);
+}
+
+.dark .admin-root .bg-white\/80 {
+  background-color: color-mix(in srgb, var(--admin-surface), #000 14%);
+}
+
+.dark .admin-root .bg-white\/70 {
+  background-color: color-mix(in srgb, var(--admin-surface), #000 20%);
+}
+
 .dark .admin-root .bg-gray-50 {
   background-color: color-mix(in srgb, var(--admin-surface-muted), #000 4%);
+}
+
+.dark .admin-root .bg-gray-50\/70 {
+  background-color: color-mix(in srgb, var(--admin-surface-muted), #000 9%);
 }
 
 .dark .admin-root .bg-gray-100 {
@@ -199,6 +272,10 @@ body {
   border-color: var(--admin-border);
 }
 
+.dark .admin-root .border-gray-200\/80 {
+  border-color: color-mix(in srgb, var(--admin-border), #000 10%);
+}
+
 .dark .admin-root .border-gray-300 {
   border-color: var(--admin-border-strong);
 }
@@ -211,12 +288,24 @@ body {
   color: var(--admin-text-secondary);
 }
 
+.dark .admin-root .text-gray-800 {
+  color: var(--admin-text-primary);
+}
+
 .dark .admin-root .text-gray-600,
 .dark .admin-root .text-gray-500 {
   color: var(--admin-text-muted);
 }
 
+.dark .admin-root .text-gray-400 {
+  color: color-mix(in srgb, var(--admin-text-muted), #fff 15%);
+}
+
 .dark .admin-root .bg-black {
+  background-color: var(--admin-accent);
+}
+
+.dark .admin-root .bg-gray-900 {
   background-color: var(--admin-accent);
 }
 
@@ -234,6 +323,31 @@ body {
 
 .dark .admin-root .hover\:bg-gray-100:hover {
   background-color: color-mix(in srgb, var(--admin-surface-subtle), #000 12%);
+}
+
+.dark .admin-root .hover\:bg-white:hover {
+  background-color: color-mix(in srgb, var(--admin-surface-subtle), #000 6%);
+}
+
+.dark .admin-root .focus\:border-gray-500:focus {
+  border-color: color-mix(in srgb, var(--admin-accent), #fff 24%);
+}
+
+.dark .admin-root .focus\:ring-gray-200:focus {
+  --tw-ring-color: color-mix(in srgb, var(--admin-accent), transparent 74%);
+}
+
+.dark .admin-root .from-white {
+  --tw-gradient-from: color-mix(in srgb, var(--admin-surface), #000 8%)
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, var(--admin-surface), transparent 100%)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
+.dark .admin-root .to-gray-50 {
+  --tw-gradient-to: color-mix(in srgb, var(--admin-surface-muted), #000 10%)
+    var(--tw-gradient-to-position);
 }
 
 .dark .admin-root .bg-blue-50\/70 {

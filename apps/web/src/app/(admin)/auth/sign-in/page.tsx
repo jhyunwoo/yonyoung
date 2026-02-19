@@ -73,9 +73,9 @@ export default function SignInPage() {
   };
 
   return (
-    <main className="min-h-screen w-full flex items-center justify-center px-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
-        <h1 className="text-2xl font-bold">관리자 로그인</h1>
+    <main className="admin-root flex min-h-screen w-full items-center justify-center bg-[var(--admin-bg-primary)] px-4 text-[var(--admin-text-primary)]">
+      <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-xl">
+        <h1 className="text-2xl font-bold text-gray-900">관리자 로그인</h1>
         <p className="mt-2 text-sm text-gray-600">
           관리자 페이지 접근을 위해 로그인해 주세요.
         </p>
@@ -85,7 +85,7 @@ export default function SignInPage() {
             type="button"
             onClick={handleGoogleSignIn}
             disabled={isPending}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isGooglePending ? "Google 로그인 중..." : "Google로 로그인"}
           </button>

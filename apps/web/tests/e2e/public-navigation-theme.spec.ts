@@ -46,36 +46,54 @@ test.describe("public navigation and theme", () => {
     await expect(page.getByTestId("public-nav-mobile")).toHaveCount(0);
   });
 
-  test("테마 토글 상태가 저장되고 새로고침 후 유지된다", async ({ page }) => {
+  test("테마 선택 상태가 저장되고 새로고침 후 유지된다", async ({ page }) => {
     await page.goto("/");
     await page.evaluate(() => {
       window.localStorage.removeItem("theme");
     });
     await page.reload();
 
-    const currentTheme = await page.evaluate(
-      () => document.documentElement.dataset.theme ?? "",
-    );
-    expect(["light", "dark"]).toContain(currentTheme);
-
-    const visibleThemeToggle = page
-      .locator('[data-testid="theme-toggle"]:visible')
+    const visibleThemeSelect = page
+      .locator('[data-testid="theme-toggle-select"]:visible')
       .first();
+    const initialThemeMode = await visibleThemeSelect.inputValue();
+    expect(["light", "dark", "system"]).toContain(initialThemeMode);
+    const initialTheme = await page.evaluate(() => document.documentElement.dataset.theme ?? "");
+    expect(["light", "dark"]).toContain(initialTheme);
 
-    await visibleThemeToggle.click();
+    await visibleThemeSelect.selectOption("dark");
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.dataset.theme ?? ""))
+      .toBe("dark");
+    await expect
+      .poll(() => page.evaluate(() => window.localStorage.getItem("theme")))
+      .toBe("dark");
 
-    const toggledTheme = await page.evaluate(
-      () => document.documentElement.dataset.theme ?? "",
+    await visibleThemeSelect.selectOption("light");
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.dataset.theme ?? ""))
+      .toBe("light");
+    await expect
+      .poll(() => page.evaluate(() => window.localStorage.getItem("theme")))
+      .toBe("light");
+
+    const expectedSystemTheme = await page.evaluate(() =>
+      window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light",
     );
-    expect(toggledTheme).toBe(currentTheme === "dark" ? "light" : "dark");
-
-    const storedTheme = await page.evaluate(() => window.localStorage.getItem("theme"));
-    expect(storedTheme).toBe(toggledTheme);
+    await visibleThemeSelect.selectOption("system");
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.dataset.theme ?? ""))
+      .toBe(expectedSystemTheme);
+    await expect
+      .poll(() => page.evaluate(() => window.localStorage.getItem("theme")))
+      .toBe("system");
 
     await page.reload();
-    const reloadedTheme = await page.evaluate(
-      () => document.documentElement.dataset.theme ?? "",
-    );
-    expect(reloadedTheme).toBe(toggledTheme);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.dataset.theme ?? ""))
+      .toBe(expectedSystemTheme);
+    await expect(
+      page.locator('[data-testid="theme-toggle-select"]:visible').first(),
+    ).toHaveValue("system");
   });
 });

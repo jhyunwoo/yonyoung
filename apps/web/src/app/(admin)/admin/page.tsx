@@ -2,7 +2,6 @@ import { forbidden, redirect } from "next/navigation";
 import { getAccessibleGenerations, buildGenerationPath } from "../../../lib/admin-generation";
 import {
   fetchGenerationsFromServer,
-  readServerCookieHeader,
 } from "../../../lib/admin-generation-server";
 import { canManageGenerations } from "../../../lib/auth-shared";
 import { serverAuthTool } from "../../../lib/auth-server-tool";
@@ -26,8 +25,7 @@ export default async function AdminPage() {
     redirect(buildGenerationPath(latestSortOrderInSession));
   }
 
-  const cookieHeader = await readServerCookieHeader();
-  const generations = await fetchGenerationsFromServer(cookieHeader);
+  const generations = await fetchGenerationsFromServer(null);
   const accessible = getAccessibleGenerations(session, generations);
 
   if (accessible.length === 0) {

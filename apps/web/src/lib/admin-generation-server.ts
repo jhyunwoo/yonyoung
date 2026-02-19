@@ -1,8 +1,9 @@
 import { cookies } from "next/headers";
 import { resolveAuthApiUrl } from "./auth-server";
+import { ADMIN_CACHE_TAGS } from "./admin-cache";
 import type { ApiGeneration } from "./admin-api/types";
 
-const GENERATIONS_PATH = "/api/generations";
+const PUBLIC_GENERATIONS_PATH = "/api/public/generations";
 
 type DataEnvelope<T> = {
   data: T;
@@ -70,19 +71,17 @@ export const readServerCookieHeader = async (): Promise<string | null> => {
 export const fetchGenerationsFromServer = async (
   cookieHeader: string | null,
 ): Promise<ApiGeneration[]> => {
-  const headers = new Headers({
-    Accept: "application/json",
-  });
-
-  if (cookieHeader) {
-    headers.set("cookie", cookieHeader);
-  }
+  void cookieHeader;
 
   try {
-    const response = await fetch(`${resolveAuthApiUrl()}${GENERATIONS_PATH}`, {
+    const response = await fetch(`${resolveAuthApiUrl()}${PUBLIC_GENERATIONS_PATH}`, {
       method: "GET",
-      headers,
-      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+      },
+      next: {
+        tags: [ADMIN_CACHE_TAGS.generations],
+      },
     });
 
     if (!response.ok) {
@@ -95,4 +94,3 @@ export const fetchGenerationsFromServer = async (
     return [];
   }
 };
-

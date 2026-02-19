@@ -17,7 +17,7 @@ type AdminSidebarProps = {
   session: AuthSession;
 };
 
-type AdminTheme = "light" | "dark";
+type AdminThemeMode = "light" | "dark" | "system";
 type SidebarIconName =
   | "profile"
   | "generations"
@@ -29,10 +29,25 @@ type SidebarIconName =
 
 const THEME_STORAGE_KEY = "theme";
 
-const applyTheme = (theme: AdminTheme) => {
-  document.documentElement.classList.toggle("dark", theme === "dark");
-  document.documentElement.dataset.theme = theme;
-  window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+const isAdminThemeMode = (value: string | null): value is AdminThemeMode =>
+  value === "light" || value === "dark" || value === "system";
+
+const resolveTheme = (mode: AdminThemeMode): "light" | "dark" => {
+  if (mode === "light" || mode === "dark") {
+    return mode;
+  }
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+};
+
+const applyThemeMode = (mode: AdminThemeMode, persist = true) => {
+  const resolved = resolveTheme(mode);
+  document.documentElement.classList.toggle("dark", resolved === "dark");
+  document.documentElement.dataset.theme = resolved;
+  document.documentElement.dataset.themeMode = mode;
+  if (persist) {
+    window.localStorage.setItem(THEME_STORAGE_KEY, mode);
+  }
 };
 
 const RESOURCE_MENU_ITEMS = [
@@ -206,7 +221,7 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
   const router = useRouter();
   const [generationList, setGenerationList] = useState<ApiGeneration[]>([]);
   const [isGenerationLoading, setIsGenerationLoading] = useState(true);
-  const [theme, setTheme] = useState<AdminTheme>("light");
+  const [themeMode, setThemeMode] = useState<AdminThemeMode>("system");
   const canManageGenerationsFlag = canManageGenerations(session);
   const canManageGlobalUsersFlag = canManageGlobalUsers(session);
 
@@ -247,20 +262,42 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
-      if (stored === "light" || stored === "dark") {
-        setTheme(stored);
-        applyTheme(stored);
-        return;
-      }
+      const fromDataset = document.documentElement.dataset.themeMode ?? null;
+      const initialMode: AdminThemeMode = isAdminThemeMode(stored)
+        ? stored
+        : isAdminThemeMode(fromDataset)
+        ? fromDataset
+        : "system";
+
+      setThemeMode(initialMode);
+      applyThemeMode(initialMode, false);
+      return;
     } catch {
       // localStorage 접근 실패 시 DOM 상태를 기준으로 동기화한다.
     }
 
-    const currentTheme = document.documentElement.classList.contains("dark")
+    const fallbackMode = document.documentElement.classList.contains("dark")
       ? "dark"
       : "light";
-    setTheme(currentTheme);
+    setThemeMode(fallbackMode);
+    applyThemeMode(fallbackMode, false);
   }, []);
+
+  useEffect(() => {
+    if (themeMode !== "system") {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = () => {
+      applyThemeMode("system", false);
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange);
+    };
+  }, [themeMode]);
 
   const routeContext = useMemo(
         /**
@@ -334,6 +371,32 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
     router.push(nextPath);
   };
 
+  useEffect(() => {
+    const targets = new Set<string>(["/admin/profile"]);
+
+    if (selectedSortOrder !== null) {
+      targets.add(buildGenerationPath(selectedSortOrder));
+      for (const item of RESOURCE_MENU_ITEMS) {
+        targets.add(buildGenerationPath(selectedSortOrder, item.resourcePath));
+      }
+    }
+
+    if (canManageGenerationsFlag) {
+      targets.add("/admin/generations");
+    }
+    if (canManageGlobalUsersFlag) {
+      targets.add("/admin/users");
+    }
+
+    for (const path of targets) {
+      try {
+        router.prefetch(path);
+      } catch {
+        // prefetch 실패 시 현재 탐색 흐름은 유지한다.
+      }
+    }
+  }, [canManageGenerationsFlag, canManageGlobalUsersFlag, router, selectedSortOrder]);
+
   const isGenerationSettingsActive =
     pathname === "/admin/generations" || pathname.startsWith("/admin/generations/");
   const isGlobalUsersActive =
@@ -350,12 +413,12 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
   const userInitial = userDisplayName.slice(0, 1).toUpperCase();
   const userRoleLabel = getRoleLabelInKorean(session.user.role);
 
-  const handleThemeToggle = () => {
-    setTheme((previous) => {
-      const next = previous === "dark" ? "light" : "dark";
-      applyTheme(next);
-      return next;
-    });
+  const handleThemeModeChange = (nextModeRaw: string) => {
+    if (!isAdminThemeMode(nextModeRaw)) {
+      return;
+    }
+    setThemeMode(nextModeRaw);
+    applyThemeMode(nextModeRaw);
   };
 
   return (
@@ -374,12 +437,12 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
           <p className="truncate text-[11px] font-semibold tracking-[0.16em] text-gray-500">
             YONYOUNG
           </p>
-          <p className="truncate text-sm font-semibold text-gray-800">Admin Console</p>
+          <p className="truncate text-sm font-semibold text-gray-700">Admin Console</p>
         </div>
         <button
           type="button"
           onClick={onToggle}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-300 bg-white/70 text-gray-700 shadow-sm hover:bg-gray-100"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] shadow-sm hover:bg-[var(--admin-surface-subtle)]"
           data-testid="admin-sidebar-toggle"
           aria-label={collapsed ? "사이드바 펼치기" : "사이드바 접기"}
         >
@@ -406,7 +469,7 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
           <label className="block text-xs font-medium text-gray-600">
             현재 작업 기수
             <select
-              className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white/70 px-3 py-2 text-sm text-gray-700 shadow-sm"
+              className="mt-1.5 w-full rounded-xl border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] px-3 py-2 text-sm text-[var(--admin-text-secondary)] shadow-sm"
               value={selectedSortOrder ?? ""}
               onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) => handleGenerationChange(event.target.value)}
               disabled={generationOptions.length === 0 || isGenerationLoading}
@@ -442,6 +505,7 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
               <li>
                 <Link
                   href="/admin/profile"
+                  prefetch
                   data-testid="admin-nav-profile"
                   className={`${NAV_ITEM_BASE_CLASS} ${
                     isProfileActive
@@ -468,6 +532,7 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
                 <li>
                   <Link
                     href="/admin/generations"
+                    prefetch
                     data-testid="admin-nav-generation-settings"
                     className={`${NAV_ITEM_BASE_CLASS} ${
                       isGenerationSettingsActive
@@ -494,6 +559,7 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
                 <li>
                   <Link
                     href="/admin/users"
+                    prefetch
                     data-testid="admin-nav-global-users"
                     className={`${NAV_ITEM_BASE_CLASS} ${
                       isGlobalUsersActive
@@ -546,6 +612,7 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
                     <li key={item.resourcePath}>
                       <Link
                         href={href}
+                        prefetch
                         data-testid={`admin-nav-${item.shortLabel.toLowerCase()}`}
                         className={`${NAV_ITEM_BASE_CLASS} ${
                           active
@@ -607,22 +674,26 @@ export default function AdminSidebar({ collapsed, onToggle, session }: AdminSide
           </section>
         )}
 
-        <button
-          type="button"
-          onClick={handleThemeToggle}
-          className={`inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white/70 px-3 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-100 ${
-            collapsed ? "w-11" : "w-full"
+        <label
+          className={`inline-flex items-center rounded-xl border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] shadow-sm ${
+            collapsed ? "w-11 justify-center px-1" : "w-full justify-between px-3"
           }`}
-          data-testid="admin-theme-toggle"
-          aria-label={theme === "dark" ? "라이트 모드로 전환" : "다크 모드로 전환"}
         >
-          <span aria-hidden="true" className="text-base leading-none">
-            {theme === "dark" ? "☀" : "☾"}
-          </span>
-          {collapsed ? null : (
-            <span>{theme === "dark" ? "라이트 모드" : "다크 모드"}</span>
-          )}
-        </button>
+          <span className={collapsed ? "sr-only" : "text-sm font-medium"}>테마</span>
+          <select
+            value={themeMode}
+            onChange={(event) => handleThemeModeChange(event.target.value)}
+            className={`h-10 rounded-xl bg-transparent text-sm outline-none ${
+              collapsed ? "w-9 text-center text-[11px]" : "w-[8.5rem] text-right"
+            }`}
+            data-testid="admin-theme-toggle"
+            aria-label="관리자 테마 선택"
+          >
+            <option value="light">{collapsed ? "L" : "라이트"}</option>
+            <option value="dark">{collapsed ? "D" : "다크"}</option>
+            <option value="system">{collapsed ? "S" : "기기"}</option>
+          </select>
+        </label>
         <LogoutButton compact={collapsed} />
       </div>
     </aside>

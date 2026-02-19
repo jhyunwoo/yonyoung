@@ -79,18 +79,72 @@ const ROLE_FILTER_OPTIONS: { value: RoleFilterValue; label: string }[] = [
 type UsersAdminPageClientProps = {
   generationScoped?: boolean;
   generationSortOrder?: number | null;
+  initialData?: {
+    users: ApiUser[];
+    generations: ApiGeneration[];
+  };
 };
 
 const toSelectionSet = (ids: string[]): Set<string> => new Set(ids);
 
+type ResolvedUsersData = {
+  scopedGeneration: ApiGeneration | null;
+  visibleGenerations: ApiGeneration[];
+  visibleUsers: ApiUser[];
+};
+
+const resolveUsersData = (
+  users: ApiUser[],
+  generationList: ApiGeneration[],
+  generationScoped: boolean,
+  generationSortOrder: number | null,
+): ResolvedUsersData => {
+  const scopedGeneration = generationScoped
+    ? generationList.find((generation) => generation.sortOrder === generationSortOrder) ?? null
+    : null;
+
+  const visibleGenerations = generationScoped
+    ? scopedGeneration
+      ? [scopedGeneration]
+      : []
+    : generationList;
+
+  const visibleUsers =
+    generationScoped && scopedGeneration
+      ? users.filter((user) => user.generationId === scopedGeneration.id)
+      : generationScoped
+        ? []
+        : users;
+
+  return {
+    scopedGeneration,
+    visibleGenerations,
+    visibleUsers,
+  };
+};
+
 export default function UsersAdminPageClient({
   generationScoped = false,
   generationSortOrder = null,
+  initialData,
 }: UsersAdminPageClientProps = {}) {
   const inlineDetailMode = !generationScoped;
-  const [items, setItems] = useState<ApiUser[]>([]);
-  const [generations, setGenerations] = useState<ApiGeneration[]>([]);
-  const [scopedGeneration, setScopedGeneration] = useState<ApiGeneration | null>(null);
+  const initialResolvedData = initialData
+    ? resolveUsersData(
+        initialData.users,
+        initialData.generations,
+        generationScoped,
+        generationSortOrder,
+      )
+    : null;
+
+  const [items, setItems] = useState<ApiUser[]>(initialResolvedData?.visibleUsers ?? []);
+  const [generations, setGenerations] = useState<ApiGeneration[]>(
+    initialResolvedData?.visibleGenerations ?? [],
+  );
+  const [scopedGeneration, setScopedGeneration] = useState<ApiGeneration | null>(
+    initialResolvedData?.scopedGeneration ?? null,
+  );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedDetail, setSelectedDetail] = useState<ApiUser | null>(null);
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
@@ -103,7 +157,7 @@ export default function UsersAdminPageClient({
   const [editForm, setEditForm] = useState<UserFormState>(emptyForm);
   const imageUpload = useImmediateImageUpload({ presignPath: PRESIGN_PATHS.userProfile });
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => !initialData);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeSubmitAction, setActiveSubmitAction] = useState<
@@ -229,6 +283,77 @@ export default function UsersAdminPageClient({
     }
   };
 
+  const applyLoadedData = async (
+    users: ApiUser[],
+    generationList: ApiGeneration[],
+    preferredSelectedId?: string | null,
+  ) => {
+    const { scopedGeneration, visibleGenerations, visibleUsers } = resolveUsersData(
+      users,
+      generationList,
+      generationScoped,
+      generationSortOrder,
+    );
+
+    setScopedGeneration(scopedGeneration);
+    setItems(visibleUsers);
+    setGenerations(visibleGenerations);
+    setSelectedIds((previous) =>
+      previous.filter((id) => visibleUsers.some((user) => user.id === id)),
+    );
+
+    if (generationScoped && !scopedGeneration) {
+      setSelectedId(null);
+      setExpandedUserId(null);
+      clearSelectedDetail();
+      setErrorMessage("선택한 기수를 찾을 수 없습니다.");
+      setPanelOpen(false);
+      return;
+    }
+
+    if (visibleUsers.length === 0) {
+      setSelectedId(null);
+      setExpandedUserId(null);
+      clearSelectedDetail();
+      setPanelOpen(false);
+      return;
+    }
+
+    const fallbackId = visibleUsers[0]?.id ?? null;
+    const candidateSelectedId =
+      preferredSelectedId ??
+      (selectedId && visibleUsers.some((user) => user.id === selectedId)
+        ? selectedId
+        : null) ??
+      fallbackId;
+    setSelectedId(candidateSelectedId);
+
+    if (!candidateSelectedId) {
+      setExpandedUserId(null);
+      clearSelectedDetail();
+      return;
+    }
+
+    if (inlineDetailMode) {
+      const targetExpandedId =
+        preferredSelectedId ??
+        (expandedUserId && visibleUsers.some((user) => user.id === expandedUserId)
+          ? expandedUserId
+          : null);
+      if (!targetExpandedId) {
+        setExpandedUserId(null);
+        clearSelectedDetail();
+        return;
+      }
+      setExpandedUserId(targetExpandedId);
+      setSelectedId(targetExpandedId);
+      await loadUserDetail(targetExpandedId);
+      return;
+    }
+
+    await loadUserDetail(candidateSelectedId);
+  };
+
   const loadData = async (preferredSelectedId?: string | null) => {
     setIsLoading(true);
     setErrorMessage(null);
@@ -239,80 +364,7 @@ export default function UsersAdminPageClient({
         adminResourceApi.listGenerations(),
       ]);
 
-      const nextScopedGeneration = generationScoped
-        ? generationList.find((generation) => generation.sortOrder === generationSortOrder) ?? null
-        : null;
-
-      const visibleGenerations = generationScoped
-        ? nextScopedGeneration
-          ? [nextScopedGeneration]
-          : []
-        : generationList;
-
-      const visibleUsers =
-        generationScoped && nextScopedGeneration
-          ? users.filter((user) => user.generationId === nextScopedGeneration.id)
-          : generationScoped
-            ? []
-            : users;
-
-      setScopedGeneration(nextScopedGeneration);
-      setItems(visibleUsers);
-      setGenerations(visibleGenerations);
-      setSelectedIds((previous) =>
-        previous.filter((id) => visibleUsers.some((user) => user.id === id)),
-      );
-
-      if (generationScoped && !nextScopedGeneration) {
-        setSelectedId(null);
-        setExpandedUserId(null);
-        clearSelectedDetail();
-        setErrorMessage("선택한 기수를 찾을 수 없습니다.");
-        setPanelOpen(false);
-        return;
-      }
-
-      if (visibleUsers.length === 0) {
-        setSelectedId(null);
-        setExpandedUserId(null);
-        clearSelectedDetail();
-        setPanelOpen(false);
-        return;
-      }
-
-      const fallbackId = visibleUsers[0]?.id ?? null;
-      const candidateSelectedId =
-        preferredSelectedId ??
-        (selectedId && visibleUsers.some((user) => user.id === selectedId)
-          ? selectedId
-          : null) ??
-        fallbackId;
-      setSelectedId(candidateSelectedId);
-
-      if (!candidateSelectedId) {
-        setExpandedUserId(null);
-        clearSelectedDetail();
-        return;
-      }
-
-      if (inlineDetailMode) {
-        const targetExpandedId =
-          preferredSelectedId ??
-          (expandedUserId && visibleUsers.some((user) => user.id === expandedUserId)
-            ? expandedUserId
-            : null);
-        if (!targetExpandedId) {
-          setExpandedUserId(null);
-          clearSelectedDetail();
-          return;
-        }
-        setExpandedUserId(targetExpandedId);
-        setSelectedId(targetExpandedId);
-        await loadUserDetail(targetExpandedId);
-        return;
-      }
-
-      await loadUserDetail(candidateSelectedId);
+      await applyLoadedData(users, generationList, preferredSelectedId);
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -321,9 +373,19 @@ export default function UsersAdminPageClient({
   };
 
   useEffect(() => {
+    if (initialData) {
+      setIsLoading(true);
+      setErrorMessage(null);
+
+      void applyLoadedData(initialData.users, initialData.generations).finally(() => {
+        setIsLoading(false);
+      });
+      return;
+    }
+
     void loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [generationScoped, generationSortOrder]);
+  }, [generationScoped, generationSortOrder, initialData]);
 
   useEffect(() => {
     if (inlineDetailMode) {
@@ -366,13 +428,13 @@ export default function UsersAdminPageClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryState, isLoading, items, selectedId, panelOpen]);
 
-  const toggleSelection = (userId: string, checked: boolean) => {
+  const toggleSelection = (userId: string) => {
     setSelectedIds((previous) => {
       const next = new Set(previous);
-      if (checked) {
-        next.add(userId);
-      } else {
+      if (next.has(userId)) {
         next.delete(userId);
+      } else {
+        next.add(userId);
       }
       return Array.from(next);
     });
@@ -402,6 +464,15 @@ export default function UsersAdminPageClient({
     setErrorMessage(null);
     setSuccessMessage(null);
     await loadUserDetail(user.id);
+  };
+
+  const handleCardSelect = async (user: ApiUser) => {
+    setSelectedId(user.id);
+    toggleSelection(user.id);
+
+    if (!inlineDetailMode) {
+      await handleSelect(user);
+    }
   };
 
   const handleToggleInlineDetail = async (user: ApiUser) => {
@@ -778,6 +849,7 @@ export default function UsersAdminPageClient({
               onRetry={imageUpload.retry}
               uploadProgress={imageUpload.progress}
               isUploading={imageUpload.isUploading}
+              previewShape="avatar"
               disabled={isSubmitting}
               testIdPrefix="user-edit-image"
             />
@@ -922,15 +994,26 @@ export default function UsersAdminPageClient({
         <div className="rounded-md border border-gray-200 bg-gray-50 p-3">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">
             <p data-testid="user-selected-count">선택된 사용자: {selectedIds.length}명</p>
-            <label className="inline-flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={allVisibleSelected}
-                onChange={(event) => handleToggleSelectAllVisible(event.target.checked)}
+            <div className="inline-flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleToggleSelectAllVisible(true)}
+                disabled={allVisibleSelected || filteredItems.length === 0}
+                className="rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                 data-testid="user-select-all-visible"
-              />
-              <span>현재 목록 전체 선택</span>
-            </label>
+              >
+                현재 목록 전체 선택
+              </button>
+              <button
+                type="button"
+                onClick={() => handleToggleSelectAllVisible(false)}
+                disabled={selectedIds.length === 0}
+                className="rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                data-testid="user-clear-selection"
+              >
+                전체 선택 해제
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -984,33 +1067,35 @@ export default function UsersAdminPageClient({
               <li
                 key={item.id}
                 className={`rounded-md border p-3 ${
-                  selectedId === item.id ? "border-emerald-300 bg-emerald-50/40" : "border-gray-200"
-                }`}
+                  selectedIdSet.has(item.id)
+                    ? "border-[var(--admin-accent-strong)] bg-[var(--admin-surface-subtle)]"
+                    : "border-gray-200"
+                } cursor-pointer`}
                 data-testid={`user-row-${item.id}`}
+                onClick={() => void handleCardSelect(item)}
               >
                 <div className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    checked={selectedIdSet.has(item.id)}
-                    onChange={(event) => toggleSelection(item.id, event.target.checked)}
-                    className="mt-1 h-4 w-4"
-                    data-testid={`user-select-${item.id}`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => void handleSelect(item)}
-                    className="min-w-0 flex-1 text-left"
-                  >
-                    <p className="font-medium">{formatKoreanName(item)}</p>
+                  <div className="min-w-0 flex-1 text-left" data-testid={`user-select-${item.id}`}>
+                    <p className="font-medium">
+                      {formatKoreanName(item)}
+                      {selectedIdSet.has(item.id) ? (
+                        <span className="ml-2 text-xs font-normal text-[var(--admin-accent)]">
+                          선택됨
+                        </span>
+                      ) : null}
+                    </p>
                     <p className="text-xs text-gray-500">{item.email}</p>
                     <p className="text-xs text-gray-500">
                       권한: {readAdminRoleLabel(item.role)}
                     </p>
-                  </button>
+                  </div>
                   {inlineDetailMode ? (
                     <button
                       type="button"
-                      onClick={() => void handleToggleInlineDetail(item)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void handleToggleInlineDetail(item);
+                      }}
                       className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
                       data-testid={`user-inline-toggle-${item.id}`}
                     >

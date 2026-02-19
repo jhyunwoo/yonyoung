@@ -575,6 +575,10 @@ export const ApiUserSchema = z
       description: "소속 기수 UUID (없으면 null)",
       example: EXAMPLE_GENERATION_ID,
     }),
+    generationIds: z.array(z.string().uuid()).openapi({
+      description: "소속 기수 UUID 목록 (다중 소속 가능, 없으면 빈 배열)",
+      example: [EXAMPLE_GENERATION_ID],
+    }),
     createdAt: timestampField("사용자 생성 시각", EXAMPLE_TIMESTAMP_MS),
     updatedAt: timestampField("사용자 수정 시각", EXAMPLE_TIMESTAMP_MS),
   })
@@ -711,6 +715,14 @@ export const ApiAdminUpdateUserSchema = z
       description: "소속 기수 UUID(관리자 수정 가능)",
       example: EXAMPLE_GENERATION_ID,
     }),
+    generationIds: z
+      .array(z.string().uuid("generationIds 항목 형식이 올바르지 않습니다."))
+      .optional()
+      .openapi({
+        description:
+          "소속 기수 UUID 목록(관리자 수정 가능). 전달 시 기존 소속을 전체 교체합니다.",
+        example: [EXAMPLE_GENERATION_ID],
+      }),
   })
   .strict()
   .openapi("ApiAdminUpdateUserInput");

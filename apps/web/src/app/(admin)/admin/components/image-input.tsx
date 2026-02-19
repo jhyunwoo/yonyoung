@@ -15,6 +15,7 @@ type ImageInputProps = {
   disabled?: boolean;
   uploadProgress?: number | null;
   isUploading?: boolean;
+  previewShape?: "default" | "avatar";
   testIdPrefix: string;
 };
 
@@ -41,9 +42,11 @@ export default function ImageInput({
   disabled = false,
   uploadProgress = null,
   isUploading = false,
+  previewShape = "default",
   testIdPrefix,
 }: ImageInputProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputId = `${testIdPrefix}-file-input`;
 
   useEffect(() => {
     if (!file) {
@@ -64,19 +67,43 @@ export default function ImageInput({
       ? Math.max(0, Math.min(100, uploadProgress))
       : null;
   const previewImageUrl = previewUrl ?? currentUrl;
+  const isAvatarPreview = previewShape === "avatar";
 
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium text-gray-700">{label}</label>
-      <div className="space-y-1">
-        <input
-          type="file"
-          accept="image/*"
-          onChange={/** 조건 분기 처리 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param event 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (event) => onFileChange(event.target.files?.[0] ?? null)}
-          disabled={disabled}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-          data-testid={`${testIdPrefix}-file`}
-        />
+      <div className="space-y-1.5">
+        <label
+          htmlFor={fileInputId}
+          className={`relative block rounded-xl border-2 border-dashed p-4 transition ${
+            disabled
+              ? "cursor-not-allowed border-gray-200 bg-gray-100"
+              : "cursor-pointer border-gray-300 bg-white hover:border-gray-400 hover:bg-gray-50"
+          }`}
+        >
+          <input
+            id={fileInputId}
+            type="file"
+            accept="image/*"
+            onChange={(event) => onFileChange(event.target.files?.[0] ?? null)}
+            disabled={disabled}
+            aria-label={`${label} 파일 선택`}
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
+            data-testid={`${testIdPrefix}-file`}
+          />
+          <div className="pointer-events-none flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900">이미지 파일 선택</p>
+              <p className="mt-0.5 text-xs text-gray-500">
+                클릭해서 업로드할 이미지를 선택하세요. (JPG, PNG, WEBP)
+              </p>
+            </div>
+            <span className="shrink-0 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700">
+              {file ? "다시 선택" : "파일 찾기"}
+            </span>
+          </div>
+        </label>
+
         <p className="text-xs text-gray-500" data-testid={`${testIdPrefix}-file-name`}>
           {file ? file.name : "선택된 파일 없음"}
         </p>
@@ -87,13 +114,17 @@ export default function ImageInput({
           <p className="text-xs text-gray-500">
             {previewUrl ? "선택한 이미지 미리보기" : "현재 이미지"}
           </p>
-          <div className="overflow-hidden rounded-md border border-gray-200 bg-gray-50">
+          <div
+            className={`overflow-hidden border border-gray-200 bg-gray-50 ${
+              isAvatarPreview ? "h-40 w-40 rounded-full" : "rounded-md"
+            }`}
+          >
             <Image
               src={previewImageUrl}
               alt={`${label} 미리보기`}
-              width={960}
-              height={540}
-              className="h-40 w-full object-cover"
+              width={isAvatarPreview ? 320 : 960}
+              height={isAvatarPreview ? 320 : 540}
+              className={isAvatarPreview ? "h-full w-full object-cover" : "h-40 w-full object-cover"}
               unoptimized
             />
           </div>

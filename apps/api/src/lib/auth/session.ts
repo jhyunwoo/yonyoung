@@ -1,15 +1,15 @@
-import { eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { Context } from "hono";
 import { normalizeRole } from "../authorization/policy";
 import { Actor } from "../authorization/types";
 import createDB from "../db";
-import { user } from "../db/schema";
+import { generations, user, userGenerations } from "../db/schema";
 import { createAuth } from "../auth";
 import HonoAppType from "../../types/honoAppType";
 
 /**
  * Better Auth 세션 기반으로 현재 사용자 정보를 로드한다.
- * 권한 판정 정확도를 위해 role/generationId는 DB에서 다시 읽는다.
+ * 권한 판정 정확도를 위해 role/generation 정보는 DB에서 다시 읽는다.
  */
 export const getActorFromSession = async (
   c: Context<HonoAppType>,
@@ -39,12 +39,32 @@ export const getActorFromSession = async (
     return null;
   }
 
+  const generationRows = await db
+    .select({
+      generationId: userGenerations.generationId,
+    })
+    .from(userGenerations)
+    .innerJoin(generations, eq(userGenerations.generationId, generations.id))
+    .where(
+      and(
+        eq(userGenerations.userId, dbUser.id),
+        isNull(generations.deletedAt),
+      ),
+    )
+    .orderBy(desc(generations.sortOrder));
+
+  const generationIds = generationRows.map((row) => row.generationId);
+  const legacyGenerationId =
+    generationIds[0] ??
+    (typeof dbUser.generationId === "string" ? dbUser.generationId : null);
+
   return {
     id: dbUser.id,
     role: normalizeRole(dbUser.role),
     rawRole: dbUser.role ?? "unverified",
     name: dbUser.name,
     email: dbUser.email,
-    generationId: dbUser.generationId,
+    generationId: legacyGenerationId,
+    generationIds,
   };
 };

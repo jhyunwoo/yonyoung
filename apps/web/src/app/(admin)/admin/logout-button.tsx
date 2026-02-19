@@ -48,7 +48,7 @@ export default function LogoutButton({ compact = false }: LogoutButtonProps) {
         disabled={isPending}
         data-testid="admin-logout-button"
         aria-label={isPending ? "로그아웃 중" : "로그아웃"}
-        className={`inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white/80 px-3 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 ${
+        className={`inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] px-3 py-2.5 text-sm font-medium text-[var(--admin-text-secondary)] shadow-sm transition-colors hover:bg-[var(--admin-surface-subtle)] disabled:cursor-not-allowed disabled:opacity-60 ${
           compact ? "h-11 w-11" : "w-full"
         }`}
       >

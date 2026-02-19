@@ -64,6 +64,13 @@
       "when": 1771485731552,
       "tag": "0008_pretty_wild_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1771491837936,
+      "tag": "0009_optimal_demogoblin",
+      "breakpoints": true
     }
   ]
 }

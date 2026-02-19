@@ -39,6 +39,7 @@ export default async function GenerationEntryPage({
           <Link
             key={item.href}
             href={`/admin/${generation}/${item.href}`}
+            prefetch
             className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-800 transition-colors hover:bg-gray-50"
             data-testid={`generation-entry-link-${item.href}`}
           >
@@ -49,4 +50,3 @@ export default async function GenerationEntryPage({
     </main>
   );
 }
-

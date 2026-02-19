@@ -1,5 +1,5 @@
 import { relations, sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 const nowTimestamp = sql`(cast(unixepoch('subsecond') * 1000 as integer))`;
 
@@ -61,6 +61,40 @@ export const user = sqliteTable("user", {
   latestGenerationSortOrder: integer("latest_generation_sort_order"),
   deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
 });
+
+export const userGenerations = sqliteTable(
+  "user_generations",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(/** text("user_id")
+      .notNull()
+      .references 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => user.id, {
+        onDelete: "cascade",
+      }),
+    generationId: text("generation_id")
+      .notNull()
+      .references(/** text("generation_id")
+      .notNull()
+      .references 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => generations.id, {
+        onDelete: "cascade",
+      }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .notNull(),
+  },
+    /**
+   * sqliteTable 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+   * @param table 함수 로직에서 사용하는 입력값입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+   */
+  (table) => [
+    primaryKey({ columns: [table.userId, table.generationId] }),
+    index("user_generations_user_id_idx").on(table.userId),
+    index("user_generations_generation_id_idx").on(table.generationId),
+  ],
+);
 
 export const session = sqliteTable(
   "session",
@@ -389,6 +423,7 @@ export const linktreeItems = sqliteTable(
 
 export const generationsRelations = relations(generations, /** relations 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param { many } 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ ({ many }) => ({
   users: many(user),
+  userGenerations: many(userGenerations),
   activities: many(activities),
   exhibitions: many(exhibitions),
 }));
@@ -398,10 +433,31 @@ export const userRelations = relations(user, /** relations 실행 과정에서 �
     fields: [user.generationId],
     references: [generations.id],
   }),
+  generationLinks: many(userGenerations),
   sessions: many(session),
   accounts: many(account),
   passkeys: many(passkey),
 }));
+
+export const userGenerationsRelations = relations(
+  userGenerations,
+    /**
+   * relations 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
+   * @param { one } 함수 로직에서 사용하는 입력값입니다.
+   * @returns 함수 실행 결과를 반환합니다.
+   * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
+   */
+  ({ one }) => ({
+    user: one(user, {
+      fields: [userGenerations.userId],
+      references: [user.id],
+    }),
+    generation: one(generations, {
+      fields: [userGenerations.generationId],
+      references: [generations.id],
+    }),
+  }),
+);
 
 export const sessionRelations = relations(session, /** relations 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param { one } 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ ({ one }) => ({
   user: one(user, {

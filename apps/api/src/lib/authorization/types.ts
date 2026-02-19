@@ -21,4 +21,5 @@ export type Actor = {
   name: string;
   email: string;
   generationId: string | null;
+  generationIds: string[];
 };

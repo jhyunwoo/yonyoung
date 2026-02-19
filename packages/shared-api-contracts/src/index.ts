@@ -182,6 +182,7 @@ export type ApiUser = {
   phoneNumber: string | null;
   role: ApiRole | null;
   generationId: string | null;
+  generationIds: string[];
   createdAt: number;
   updatedAt: number;
 };
@@ -215,6 +216,7 @@ export type ApiAdminUpdateUserInput = {
   studentNumber?: string | null;
   phoneNumber?: string | null;
   role?: CoreRole;
+  generationIds?: string[];
   generationId?: string | null;
 };
 

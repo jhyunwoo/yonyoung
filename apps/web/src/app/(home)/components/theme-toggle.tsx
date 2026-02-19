@@ -2,12 +2,30 @@
 
 import { useEffect, useState } from "react";
 
-type Theme = "light" | "dark";
+type ThemeMode = "light" | "dark" | "system";
 
-const setTheme = (theme: Theme) => {
-  document.documentElement.classList.toggle("dark", theme === "dark");
-  document.documentElement.dataset.theme = theme;
-  localStorage.setItem("theme", theme);
+const THEME_STORAGE_KEY = "theme";
+
+const isThemeMode = (value: string | null): value is ThemeMode =>
+  value === "light" || value === "dark" || value === "system";
+
+const resolveTheme = (mode: ThemeMode): "light" | "dark" => {
+  if (mode === "light" || mode === "dark") {
+    return mode;
+  }
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+};
+
+const applyThemeMode = (mode: ThemeMode, persist = true) => {
+  const resolved = resolveTheme(mode);
+  document.documentElement.classList.toggle("dark", resolved === "dark");
+  document.documentElement.dataset.theme = resolved;
+  document.documentElement.dataset.themeMode = mode;
+
+  if (persist) {
+    localStorage.setItem(THEME_STORAGE_KEY, mode);
+  }
 };
 
 /**
@@ -16,40 +34,56 @@ const setTheme = (theme: Theme) => {
  * @remarks UI 상태와 권한 조건이 변경될 때 렌더링 분기가 달라질 수 있습니다.
  */
 export default function ThemeToggle() {
-  const [theme, setThemeState] = useState<Theme | null>(null);
+  const [themeMode, setThemeMode] = useState<ThemeMode>("system");
 
   useEffect(() => {
-    const stored = localStorage.getItem("theme");
-    if (stored === "light" || stored === "dark") {
-      setTheme(stored);
-      setThemeState(stored);
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    const initialMode: ThemeMode = isThemeMode(stored) ? stored : "system";
+    setThemeMode(initialMode);
+    applyThemeMode(initialMode, false);
+  }, []);
+
+  useEffect(() => {
+    if (themeMode !== "system") {
       return;
     }
 
-    const initialTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light";
-    setTheme(initialTheme);
-    setThemeState(initialTheme);
-  }, []);
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = () => {
+      applyThemeMode("system", false);
+    };
 
-  const toggleTheme = () => {
-    const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    setThemeState(next);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange);
+    };
+  }, [themeMode]);
+
+  const handleThemeModeChange = (nextMode: ThemeMode) => {
+    setThemeMode(nextMode);
+    applyThemeMode(nextMode);
   };
 
   return (
-    <button
-      type="button"
-      onClick={toggleTheme}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-(--surface-border) bg-(--surface-elevated) text-(--text-primary) transition hover:scale-105 hover:border-(--accent) hover:text-(--accent)"
-      aria-label="테마 변경"
+    <div
+      className="inline-flex items-center rounded-full border border-(--surface-border) bg-(--surface-elevated) px-2"
       data-testid="theme-toggle"
     >
-      <span className="text-lg leading-none" data-testid="theme-toggle-icon">
-        {theme === "dark" ? "☀" : "☾"}
-      </span>
-    </button>
+      <label className="sr-only" htmlFor="public-theme-mode-select">
+        테마 선택
+      </label>
+      <select
+        id="public-theme-mode-select"
+        value={themeMode}
+        onChange={(event) => handleThemeModeChange(event.target.value as ThemeMode)}
+        className="h-10 rounded-full bg-transparent px-2 text-sm text-(--text-primary) outline-none"
+        aria-label="테마 선택"
+        data-testid="theme-toggle-select"
+      >
+        <option value="light">라이트</option>
+        <option value="dark">다크</option>
+        <option value="system">기기</option>
+      </select>
+    </div>
   );
 }

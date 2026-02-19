@@ -128,7 +128,12 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
 
     if (actorResult.actor.role === "manager") {
       const data = await dependencies.getDataService(c).listUsers();
-      if (!actorResult.actor.generationId) {
+      const actorGenerationIdSet = new Set(actorResult.actor.generationIds);
+      if (actorResult.actor.generationId) {
+        actorGenerationIdSet.add(actorResult.actor.generationId);
+      }
+
+      if (actorGenerationIdSet.size === 0) {
         return ok(c, []);
       }
       return ok(
@@ -140,7 +145,15 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
            * @returns 함수 실행 결과를 반환합니다.
            * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
            */
-          (candidate) => candidate.generationId === actorResult.actor.generationId,
+          (candidate) => {
+            const candidateGenerationIds =
+              candidate.generationIds.length > 0
+                ? candidate.generationIds
+                : candidate.generationId
+                  ? [candidate.generationId]
+                  : [];
+            return candidateGenerationIds.some((id) => actorGenerationIdSet.has(id));
+          },
         ),
       );
     }
@@ -184,8 +197,22 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
     if (
       actorResult.actor.role === "manager" &&
       !isSelf &&
-      (!actorResult.actor.generationId ||
-        data.generationId !== actorResult.actor.generationId)
+      (() => {
+        const actorGenerationIdSet = new Set(actorResult.actor.generationIds);
+        if (actorResult.actor.generationId) {
+          actorGenerationIdSet.add(actorResult.actor.generationId);
+        }
+        if (actorGenerationIdSet.size === 0) {
+          return true;
+        }
+        const targetGenerationIds =
+          data.generationIds.length > 0
+            ? data.generationIds
+            : data.generationId
+              ? [data.generationId]
+              : [];
+        return !targetGenerationIds.some((id) => actorGenerationIdSet.has(id));
+      })()
     ) {
       return forbidden(c);
     }

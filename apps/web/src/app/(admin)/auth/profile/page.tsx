@@ -1,5 +1,10 @@
+import { redirect } from "next/navigation";
 import { serverAuthTool } from "../../../../lib/auth-server-tool";
-import { canAccessAdminPage } from "../../../../lib/auth-shared";
+import {
+  canAccessAdminPage,
+  hasCompletedRequiredProfile,
+  isUnverifiedRole,
+} from "../../../../lib/auth-shared";
 import ProfilePageClient from "../../admin/profile/profile-page-client";
 
 /**
@@ -9,7 +14,20 @@ import ProfilePageClient from "../../admin/profile/profile-page-client";
  */
 export default async function AuthProfilePage() {
   const session = await serverAuthTool.requireSession();
-  const successRedirectPath = canAccessAdminPage(session) ? "/admin" : "/";
+  const isProfileComplete = hasCompletedRequiredProfile(session.user);
+  const canAccessAdmin = canAccessAdminPage(session);
+
+  if (canAccessAdmin && isProfileComplete) {
+    redirect("/admin");
+  }
+
+  if (isUnverifiedRole(session.user.role) && isProfileComplete) {
+    redirect("/auth/pending-approval");
+  }
+
+  const successRedirectPath = isUnverifiedRole(session.user.role)
+    ? "/auth/pending-approval"
+    : "/";
 
   return (
     <ProfilePageClient

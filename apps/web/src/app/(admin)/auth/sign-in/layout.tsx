@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { serverAuthTool } from "../../../../lib/auth-server-tool";
-import { canAccessAdminPage } from "../../../../lib/auth-shared";
+import { canAccessAdminPage, hasCompletedRequiredProfile } from "../../../../lib/auth-shared";
 
 /**
  * SignInRedirectLayout 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
@@ -21,9 +21,14 @@ export default async function SignInRedirectLayout({
     return children;
   }
 
+  const isProfileComplete = hasCompletedRequiredProfile(session.user);
+
   if (canAccessAdminPage(session)) {
-    const landingPath = await serverAuthTool.resolveAdminLandingPath(session);
-    redirect(landingPath);
+    redirect(isProfileComplete ? "/admin" : "/auth/profile");
+  }
+
+  if (isProfileComplete) {
+    redirect("/auth/pending-approval");
   }
 
   redirect("/auth/profile");

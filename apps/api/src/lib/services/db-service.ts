@@ -10,6 +10,7 @@ import {
   linktreeItems,
   supporters,
   user,
+  userGenerations,
 } from "../db/schema";
 import {
   ActivityEntity,
@@ -19,6 +20,7 @@ import {
   ExhibitionImageEntity,
   LinktreeEntity,
   LinktreeItemEntity,
+  UserEntity,
 } from "./types";
 
 /**

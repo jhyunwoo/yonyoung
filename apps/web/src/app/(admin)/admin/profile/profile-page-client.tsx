@@ -9,7 +9,7 @@ import type {
   ApiMemberProfileUpdateInput,
   ApiUser,
 } from "../../../../lib/admin-api/types";
-import { hasCompletedRequiredProfile } from "../../../../lib/auth-shared";
+import { hasCompletedRequiredProfile, isUnverifiedRole } from "../../../../lib/auth-shared";
 import { readErrorMessage } from "../components/admin-form-utils";
 import AdminActionButton from "../components/admin-action-button";
 import ImageInput from "../components/image-input";
@@ -75,6 +75,7 @@ export default function ProfilePageClient({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const imageUpload = useImmediateImageUpload({ presignPath: PRESIGN_PATHS.userProfile });
   const resetImageUpload = imageUpload.reset;
+  const canUploadProfileImage = !isUnverifiedRole(profile?.role);
 
   const isProfileComplete = useMemo(() => {
     return hasCompletedRequiredProfile({
@@ -147,7 +148,7 @@ export default function ProfilePageClient({
       setErrorMessage("학번은 숫자 10자리로 입력해 주세요.");
       return;
     }
-    if (imageUpload.isUploading || imageUpload.hasUploadError) {
+    if (canUploadProfileImage && (imageUpload.isUploading || imageUpload.hasUploadError)) {
       setErrorMessage("프로필 이미지 업로드를 완료한 뒤 저장해 주세요.");
       return;
     }
@@ -164,7 +165,7 @@ export default function ProfilePageClient({
         department: toTrimmed(form.department),
         studentNumber,
         phoneNumber: toTrimmed(form.phoneNumber),
-        image: imageUpload.currentUrl.trim() || null,
+        ...(canUploadProfileImage ? { image: imageUpload.currentUrl.trim() || null } : {}),
       };
 
       await adminResourceApi.updateUser(profile.id, payload);
@@ -383,24 +384,27 @@ export default function ProfilePageClient({
                   </div>
                 </section>
 
-                <section className="space-y-4">
-                  <h2 className="text-base font-semibold text-[var(--admin-text-primary)]">
-                    프로필 이미지
-                  </h2>
-                  <ImageInput
-                    label="프로필 이미지"
-                    file={imageUpload.file}
-                    onFileChange={imageUpload.selectFile}
-                    currentUrl={imageUpload.currentUrl}
-                    status={imageUpload.status}
-                    errorMessage={imageUpload.errorMessage}
-                    onRetry={imageUpload.retry}
-                    uploadProgress={imageUpload.progress}
-                    isUploading={imageUpload.isUploading}
-                    disabled={isSubmitting}
-                    testIdPrefix="admin-profile-image"
-                  />
-                </section>
+                {canUploadProfileImage ? (
+                  <section className="space-y-4">
+                    <h2 className="text-base font-semibold text-[var(--admin-text-primary)]">
+                      프로필 이미지
+                    </h2>
+                    <ImageInput
+                      label="프로필 이미지"
+                      file={imageUpload.file}
+                      onFileChange={imageUpload.selectFile}
+                      currentUrl={imageUpload.currentUrl}
+                      status={imageUpload.status}
+                      errorMessage={imageUpload.errorMessage}
+                      onRetry={imageUpload.retry}
+                      uploadProgress={imageUpload.progress}
+                      isUploading={imageUpload.isUploading}
+                      previewShape="avatar"
+                      disabled={isSubmitting}
+                      testIdPrefix="admin-profile-image"
+                    />
+                  </section>
+                ) : null}
 
                 {!isProfileComplete ? (
                   <p
@@ -417,7 +421,11 @@ export default function ProfilePageClient({
                   </p>
                   <AdminActionButton
                     type="submit"
-                    disabled={isSubmitting || imageUpload.isUploading || imageUpload.hasUploadError}
+                    disabled={
+                      isSubmitting ||
+                      (canUploadProfileImage &&
+                        (imageUpload.isUploading || imageUpload.hasUploadError))
+                    }
                     loading={isSubmitting}
                     loadingText="저장 중..."
                     className="min-w-[182px] rounded-xl border-[var(--admin-accent)] bg-[var(--admin-accent)] px-4 py-2.5 font-semibold text-[var(--admin-bg-primary)] shadow-sm transition hover:brightness-110 disabled:border-[var(--admin-border-strong)] disabled:bg-[var(--admin-border-strong)] disabled:text-[var(--admin-bg-primary)]"

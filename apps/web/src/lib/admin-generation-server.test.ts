@@ -90,9 +90,12 @@ describe("admin-generation-server", /** describe 실행 과정에서 필요한 �
     ]);
 
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe("http://api.example.com/api/generations");
+    expect(url).toBe("http://api.example.com/api/public/generations");
     expect(options.method).toBe("GET");
-    expect((options.headers as Headers).get("cookie")).toBe("session=abc");
+    expect((options.headers as Record<string, string>).cookie).toBeUndefined();
+    expect((options as RequestInit & { next?: { tags?: string[] } }).next?.tags).toEqual([
+      "admin:generations",
+    ]);
     expect(mockResolveAuthApiUrl).toHaveBeenCalledTimes(1);
   });
 
@@ -129,7 +132,7 @@ describe("admin-generation-server", /** describe 실행 과정에서 필요한 �
     ]);
 
     const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect((options.headers as Headers).has("cookie")).toBe(false);
+    expect((options.headers as Record<string, string>).cookie).toBeUndefined();
   });
 
   it("fetchGenerationsFromServer는 실패 응답 또는 예외에서 빈 배열을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
