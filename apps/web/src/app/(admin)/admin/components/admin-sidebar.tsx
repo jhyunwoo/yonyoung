@@ -880,7 +880,7 @@ export default function AdminSidebar({
                   <Monitor className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
                 )
               ) : (
-                <span className="inline-flex items-center gap-2 text-sm font-medium">
+                <span className="inline-flex items-center gap-2 whitespace-nowrap text-xs font-medium">
                   {themeMode === "light" ? (
                     <Sun className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
                   ) : themeMode === "dark" ? (

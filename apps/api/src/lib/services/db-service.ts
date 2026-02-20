@@ -719,15 +719,18 @@ export const createDbDataService = (database: D1Database): DataService => {
       }
 
       const createdIds: string[] = [];
-      for (const item of input) {
+      const statements = input.map((item) => {
         const id = crypto.randomUUID();
         createdIds.push(id);
-        await db.insert(activityImages).values({
-          id,
-          activityId,
-          imageUrl: item.imageUrl,
-          sortOrder: item.sortOrder,
-        });
+        return database
+          .prepare(
+            `insert into "activity_images" ("id", "activity_id", "image_url", "sort_order") values (?, ?, ?, ?)`,
+          )
+          .bind(id, activityId, item.imageUrl, item.sortOrder);
+      });
+
+      if (statements.length > 0) {
+        await database.batch(statements);
       }
 
       if (createdIds.length === 0) {
@@ -1204,15 +1207,18 @@ export const createDbDataService = (database: D1Database): DataService => {
       }
 
       const createdIds: string[] = [];
-      for (const item of input) {
+      const statements = input.map((item) => {
         const id = crypto.randomUUID();
         createdIds.push(id);
-        await db.insert(exhibitionImages).values({
-          id,
-          exhibitionId,
-          imageUrl: item.imageUrl,
-          sortOrder: item.sortOrder,
-        });
+        return database
+          .prepare(
+            `insert into "exhibition_images" ("id", "exhibition_id", "image_url", "sort_order") values (?, ?, ?, ?)`,
+          )
+          .bind(id, exhibitionId, item.imageUrl, item.sortOrder);
+      });
+
+      if (statements.length > 0) {
+        await database.batch(statements);
       }
 
       if (createdIds.length === 0) {

@@ -109,16 +109,13 @@ export const registerDocsRoutes = (
       const merged = mergeOpenApiDocuments(internalDoc, authDoc);
       const enriched = enrichOpenApiDocument(merged);
       return c.json(enriched, 200);
-    } catch (error) {
-      console.error("openapi merge failed", error);
+    } catch {
       return internalError(c, "OpenAPI 문서를 생성하지 못했습니다.");
     }
   });
 
   const scalarReference = Scalar<HonoAppType>({
-    spec: {
-      url: "/api/openapi.json",
-    },
+    url: "/api/openapi.json",
     pageTitle: "Yonyoung API Docs",
     theme: "saturn",
   });

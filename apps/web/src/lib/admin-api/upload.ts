@@ -97,6 +97,7 @@ export const uploadWithPresign = async (input: {
   const presign = await adminRequest<ApiPresignResponse>(input.presignPath, "POST", {
     fileName: input.file.name,
     contentType,
+    fileSize: input.file.size,
   });
 
   const uploadHeaders = resolveUploadHeaders(presign.requiredHeaders, contentType);

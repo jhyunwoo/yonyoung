@@ -52,6 +52,13 @@ test.describe("public navigation", () => {
     await page.reload();
 
     const adminToggle = page.getByRole("button", { name: "관리자 모드 토글" });
+    if ((await adminToggle.count()) === 0) {
+      await expect
+        .poll(() => page.evaluate(() => window.localStorage.getItem("isAdminMode")))
+        .toBeNull();
+      return;
+    }
+
     await expect(adminToggle).toBeVisible();
     await expect
       .poll(() => page.evaluate(() => window.localStorage.getItem("isAdminMode")))

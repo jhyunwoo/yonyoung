@@ -1,7 +1,31 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  AbortMultipartUploadCommand,
+  CompleteMultipartUploadCommand,
+  CreateMultipartUploadCommand,
+  PutObjectCommand,
+  S3Client,
+  UploadPartCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type { AppBindings } from "../../types/honoAppType";
 import type { PresignService } from "../services/types";
+
+export const UPLOAD_LIMITS = {
+  maxSinglePartBytes: 12 * 1024 * 1024,
+  maxMultipartBytes: 512 * 1024 * 1024,
+  multipartPartSizeBytes: 8 * 1024 * 1024,
+  multipartMaxParts: 10_000,
+} as const;
+
+export const ALLOWED_IMAGE_CONTENT_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/avif",
+  "image/heic",
+  "image/heif",
+] as const;
 
 type StorageEnv = {
   endpoint: string;
@@ -26,28 +50,13 @@ type StorageEnvKey = keyof typeof storageEnvKeyMap;
 export class MissingStorageConfigError extends Error {
   readonly missingKeys: string[];
 
-    /**
-   * constructor의 핵심 비즈니스 로직을 수행합니다.
-   * @param missingKeys 함수 로직에서 사용하는 입력값입니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
   constructor(missingKeys: string[]) {
-    super(
-      `필수 스토리지 설정이 누락되었습니다: ${missingKeys.join(", ")}`,
-    );
+    super(`필수 스토리지 설정이 누락되었습니다: ${missingKeys.join(", ")}`);
     this.name = "MissingStorageConfigError";
     this.missingKeys = missingKeys;
   }
 }
 
-/**
- * getEnvValue 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
- * @param env 함수 로직에서 사용하는 입력값입니다.
- * @param key 함수 로직에서 사용하는 입력값입니다.
- * @returns 조회/계산된 결과 값을 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 const getEnvValue = (
   env: AppBindings,
   key: StorageEnvKey,
@@ -66,12 +75,6 @@ const getEnvValue = (
   return undefined;
 };
 
-/**
- * sanitizeFileName의 핵심 비즈니스 로직을 수행합니다.
- * @param fileName 함수 로직에서 사용하는 입력값입니다.
- * @returns 함수 실행 결과를 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 const sanitizeFileName = (fileName: string): string => {
   const trimmed = fileName.trim();
   if (!trimmed) {
@@ -81,27 +84,13 @@ const sanitizeFileName = (fileName: string): string => {
   return trimmed.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
 };
 
-/**
- * encodeKeyForPublicUrl의 핵심 비즈니스 로직을 수행합니다.
- * @param key 함수 로직에서 사용하는 입력값입니다.
- * @returns 함수 실행 결과를 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 const encodeKeyForPublicUrl = (key: string) => {
   return key
     .split("/")
-    .map(/** key
-    .split("/")
-    .map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param segment 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (segment) => encodeURIComponent(segment))
+    .map((segment) => encodeURIComponent(segment))
     .join("/");
 };
 
-/**
- * buildPublicUrl의 핵심 비즈니스 로직을 수행합니다.
- * @param input 함수 로직에서 사용하는 입력값입니다.
- * @returns 함수 실행 결과를 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 const buildPublicUrl = (input: {
   objectKey: string;
   uploadUrl: string;
@@ -117,12 +106,6 @@ const buildPublicUrl = (input: {
   return `${parsedUploadUrl.origin}${parsedUploadUrl.pathname}`;
 };
 
-/**
- * resolveStorageEnv 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
- * @param env 함수 로직에서 사용하는 입력값입니다.
- * @returns 조회/계산된 결과 값을 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 const resolveStorageEnv = (env: AppBindings): StorageEnv => {
   const endpoint = getEnvValue(env, "endpoint");
   const accessKeyId = getEnvValue(env, "accessKeyId");
@@ -148,21 +131,30 @@ const resolveStorageEnv = (env: AppBindings): StorageEnv => {
     throw new MissingStorageConfigError(missingKeys);
   }
 
+  const resolvedEndpoint = endpoint as string;
+  const resolvedAccessKeyId = accessKeyId as string;
+  const resolvedSecretAccessKey = secretAccessKey as string;
+  const resolvedBucket = bucket as string;
+
   return {
-    endpoint,
-    accessKeyId,
-    secretAccessKey,
-    bucket,
+    endpoint: resolvedEndpoint,
+    accessKeyId: resolvedAccessKeyId,
+    secretAccessKey: resolvedSecretAccessKey,
+    bucket: resolvedBucket,
     publicBaseUrl: publicBaseUrl?.replace(/\/+$/, ""),
   };
 };
 
-/**
- * createR2PresignService 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
- * @param env 함수 로직에서 사용하는 입력값입니다.
- * @returns 처리 결과 값을 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
+const buildObjectKey = (input: {
+  actorId: string;
+  resource: "activities" | "exhibitions" | "supporters" | "users";
+  slot: "cover" | "detail" | "logo" | "profile";
+  fileName: string;
+}): string => {
+  const safeFileName = sanitizeFileName(input.fileName);
+  return `${input.resource}/${input.actorId}/${input.slot}/${Date.now()}-${safeFileName}`;
+};
+
 export const createR2PresignService = (env: AppBindings): PresignService => {
   const storageEnv = resolveStorageEnv(env);
   const client = new S3Client({
@@ -174,41 +166,120 @@ export const createR2PresignService = (env: AppBindings): PresignService => {
     },
   });
 
+  const resolvePublicUrlFromSignedUrl = (uploadUrl: string, objectKey: string) => {
+    return buildPublicUrl({
+      objectKey,
+      uploadUrl,
+      configuredPublicBaseUrl: storageEnv.publicBaseUrl,
+    });
+  };
+
   return {
-        /**
-     * issuePresignedPutUrl 조건을 평가해 사용 가능 여부를 판별합니다.
-     * @param input 함수 로직에서 사용하는 입력값입니다.
-     * @returns 조건 판별 결과(boolean)를 반환합니다.
-     * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-     */
     async issuePresignedPutUrl(input) {
-      const safeFileName = sanitizeFileName(input.fileName);
-      const objectKey = `${input.resource}/${input.actorId}/${input.slot}/${Date.now()}-${safeFileName}`;
+      const objectKey = buildObjectKey(input);
 
       const command = new PutObjectCommand({
         Bucket: storageEnv.bucket,
         Key: objectKey,
         ContentType: input.contentType,
+        ContentLength: input.fileSize,
       });
 
       const uploadUrl = await getSignedUrl(client, command, {
         expiresIn: PRESIGNED_URL_EXPIRES_IN_SECONDS,
       });
 
-      const publicUrl = buildPublicUrl({
-        objectKey,
-        uploadUrl,
-        configuredPublicBaseUrl: storageEnv.publicBaseUrl,
-      });
-
       return {
         uploadUrl,
         objectKey,
-        publicUrl,
+        publicUrl: resolvePublicUrlFromSignedUrl(uploadUrl, objectKey),
         requiredHeaders: {
           "Content-Type": input.contentType,
         },
       };
+    },
+
+    async initiateMultipartUpload(input) {
+      const objectKey = buildObjectKey(input);
+
+      const created = await client.send(
+        new CreateMultipartUploadCommand({
+          Bucket: storageEnv.bucket,
+          Key: objectKey,
+          ContentType: input.contentType,
+        }),
+      );
+
+      if (!created.UploadId) {
+        throw new Error("multipart uploadId 생성에 실패했습니다.");
+      }
+
+      const maxPartNumber = Math.ceil(
+        input.fileSize / UPLOAD_LIMITS.multipartPartSizeBytes,
+      );
+
+      return {
+        uploadId: created.UploadId,
+        objectKey,
+        publicUrl: storageEnv.publicBaseUrl
+          ? `${storageEnv.publicBaseUrl}/${encodeKeyForPublicUrl(objectKey)}`
+          : `${storageEnv.endpoint.replace(/\/+$/, "")}/${storageEnv.bucket}/${encodeKeyForPublicUrl(objectKey)}`,
+        partSize: UPLOAD_LIMITS.multipartPartSizeBytes,
+        maxPartNumber,
+      };
+    },
+
+    async issueMultipartUploadPartUrl(input) {
+      const command = new UploadPartCommand({
+        Bucket: storageEnv.bucket,
+        Key: input.objectKey,
+        UploadId: input.uploadId,
+        PartNumber: input.partNumber,
+      });
+
+      const uploadUrl = await getSignedUrl(client, command, {
+        expiresIn: PRESIGNED_URL_EXPIRES_IN_SECONDS,
+      });
+
+      return {
+        uploadUrl,
+        requiredHeaders: {},
+      };
+    },
+
+    async completeMultipartUpload(input) {
+      await client.send(
+        new CompleteMultipartUploadCommand({
+          Bucket: storageEnv.bucket,
+          Key: input.objectKey,
+          UploadId: input.uploadId,
+          MultipartUpload: {
+            Parts: [...input.parts]
+              .sort((a, b) => a.partNumber - b.partNumber)
+              .map((part) => ({
+                ETag: part.etag,
+                PartNumber: part.partNumber,
+              })),
+          },
+        }),
+      );
+
+      const fallbackUploadUrl = `${storageEnv.endpoint.replace(/\/+$/, "")}/${storageEnv.bucket}/${encodeKeyForPublicUrl(input.objectKey)}`;
+
+      return {
+        objectKey: input.objectKey,
+        publicUrl: resolvePublicUrlFromSignedUrl(fallbackUploadUrl, input.objectKey),
+      };
+    },
+
+    async abortMultipartUpload(input) {
+      await client.send(
+        new AbortMultipartUploadCommand({
+          Bucket: storageEnv.bucket,
+          Key: input.objectKey,
+          UploadId: input.uploadId,
+        }),
+      );
     },
   };
 };

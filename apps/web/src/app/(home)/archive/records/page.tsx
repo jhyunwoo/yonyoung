@@ -13,8 +13,14 @@ export const metadata: Metadata = createPageMetadata({
   keywords: ["연영회 활동 기록", "사진 동아리 활동", "연세대 연영회 아카이브"],
 });
 
+const getArchiveRecords = async () => {
+  "use cache";
+
+  return safeList(listPublicActivities, []);
+};
+
 export default async function ArchiveRecordsPage() {
-  const activities = await safeList(listPublicActivities, []);
+  const activities = await getArchiveRecords();
 
   return (
     <div className="min-h-screen bg-white pt-[72px] md:pt-[80px]">

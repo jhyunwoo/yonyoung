@@ -89,7 +89,11 @@ describe("admin-generation-server", /** describe 실행 과정에서 필요한 �
       },
     ]);
 
-    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const firstCall = fetchMock.mock.calls[0];
+    if (!firstCall) {
+      throw new Error("expected fetch call");
+    }
+    const [url, options] = firstCall as unknown as [string, RequestInit];
     expect(url).toBe("http://api.example.com/api/public/generations");
     expect(options.method).toBe("GET");
     expect((options.headers as Record<string, string>).cookie).toBeUndefined();
@@ -131,7 +135,11 @@ describe("admin-generation-server", /** describe 실행 과정에서 필요한 �
       },
     ]);
 
-    const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const firstCall = fetchMock.mock.calls[0];
+    if (!firstCall) {
+      throw new Error("expected fetch call");
+    }
+    const [, options] = firstCall as unknown as [string, RequestInit];
     expect((options.headers as Record<string, string>).cookie).toBeUndefined();
   });
 

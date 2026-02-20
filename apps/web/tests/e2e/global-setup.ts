@@ -176,21 +176,31 @@ export default async function globalSetup(_config: FullConfig) {
     }
 
     if (userId) {
-      const profileResponse = await apiContext.patch(`/api/users/${userId}`, {
-        data: {
-          familyName: "E2E",
-          givenName: "Admin",
-          college: "공과대학",
-          department: "컴퓨터과학과",
-          studentNumber: "2026000001",
-          phoneNumber: "010-0000-0000",
-        },
-      });
+      try {
+        const profileResponse = await apiContext.patch(`/api/users/${userId}`, {
+          data: {
+            familyName: "E2E",
+            givenName: "Admin",
+            college: "공과대학",
+            department: "컴퓨터과학과",
+            studentNumber: "2026000001",
+            phoneNumber: "010-0000-0000",
+          },
+        });
 
-      if (!profileResponse.ok()) {
-        const body = await profileResponse.text();
-        throw new Error(
-          `Failed to update E2E admin profile (${profileResponse.status()}): ${body.slice(0, 300)}`,
+        if (!profileResponse.ok()) {
+          const body = await profileResponse.text();
+          throw new Error(
+            `Failed to update E2E admin profile (${profileResponse.status()}): ${body.slice(0, 300)}`,
+          );
+        }
+      } catch (error) {
+        if (!isTimeoutError(error)) {
+          throw error;
+        }
+
+        console.warn(
+          "E2E admin profile update timed out; continuing with existing profile data.",
         );
       }
     }

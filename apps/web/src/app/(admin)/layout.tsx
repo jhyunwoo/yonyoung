@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ReactNode } from "react";
+import Script from "next/script";
 import { resolveSiteUrl } from "../../lib/seo";
+import { WebVitalsReporter } from "../_components/web-vitals-reporter";
 
 export const metadata: Metadata = {
   title: "연영회 관리자 페이지",
@@ -20,20 +22,6 @@ export const metadata: Metadata = {
   },
 };
 
-const themeInitScript = `
-(() => {
-  try {
-    const stored = localStorage.getItem("theme");
-    const mode = stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
-    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const resolvedTheme = mode === "system" ? (systemDark ? "dark" : "light") : mode;
-    document.documentElement.classList.toggle("dark", resolvedTheme === "dark");
-    document.documentElement.dataset.theme = resolvedTheme;
-    document.documentElement.dataset.themeMode = mode;
-  } catch (_) {}
-})();
-`;
-
 /**
  * RootLayout 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
  * @param {
@@ -50,10 +38,13 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml"></link>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <Script src="/theme-init.js" strategy="beforeInteractive" />
       </head>
-      <body>{children}</body>
+      <body>
+        <WebVitalsReporter />
+        {children}
+      </body>
     </html>
   );
 }

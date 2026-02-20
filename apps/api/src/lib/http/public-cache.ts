@@ -6,9 +6,11 @@ const PUBLIC_CACHE_STALE_REVALIDATE_SECONDS = 120;
 export const PUBLIC_CACHE_CONTROL = `public, s-maxage=${PUBLIC_CACHE_TTL_SECONDS}, stale-while-revalidate=${PUBLIC_CACHE_STALE_REVALIDATE_SECONDS}`;
 
 const getDefaultCache = (): Cache | null => {
-  const cacheStorage = globalThis.caches as
-    | (CacheStorage & { default?: Cache })
-    | undefined;
+  const cacheStorage = (
+    globalThis as typeof globalThis & {
+      caches?: CacheStorage & { default?: Cache };
+    }
+  ).caches;
   return cacheStorage?.default ?? null;
 };
 
@@ -50,7 +52,9 @@ export const respondWithPublicCache = async (
     if (cached) {
       return cached;
     }
-  } catch {}
+  } catch {
+    // ignore cache lookup failures and continue with origin response
+  }
 
   const response = withPublicCacheHeaders(await buildResponse());
   if (!response.ok) {
@@ -59,7 +63,9 @@ export const respondWithPublicCache = async (
 
   try {
     await cache.put(cacheKey, response.clone());
-  } catch {}
+  } catch {
+    // ignore cache write failures and continue with origin response
+  }
 
   return response;
 };
@@ -76,5 +82,7 @@ export const purgePublicCachePath = async (
   const cacheKey = buildCacheRequest(c, path);
   try {
     await cache.delete(cacheKey);
-  } catch {}
+  } catch {
+    // ignore cache purge failures
+  }
 };

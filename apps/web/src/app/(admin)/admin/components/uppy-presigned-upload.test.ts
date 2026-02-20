@@ -94,6 +94,7 @@ describe("uppy presigned uploader", () => {
       {
         fileName: "detail-1.png",
         contentType: "image/png",
+        fileSize: firstFile.size,
       },
     );
     expect(mockAdminRequest).toHaveBeenNthCalledWith(
@@ -103,6 +104,7 @@ describe("uppy presigned uploader", () => {
       {
         fileName: "detail-2.png",
         contentType: "image/png",
+        fileSize: secondFile.size,
       },
     );
     expect(fetchMock).toHaveBeenCalledTimes(2);

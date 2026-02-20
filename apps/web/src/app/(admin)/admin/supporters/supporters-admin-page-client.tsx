@@ -14,7 +14,10 @@ import {
 import AdminActionButton from "../components/admin-action-button";
 import AdminConfirmModal from "../components/admin-confirm-modal";
 import AdminDrawer from "../components/admin-drawer";
-import { type AdminEntityRouteMode, buildAdminEntityRoute } from "../components/admin-entity-route";
+import {
+  type AdminEntityRouteMode,
+  buildAdminEntityRoute,
+} from "../components/admin-entity-route";
 import AdminInfoBox from "../components/admin-info-box";
 import AdminPageHeader from "../components/admin-page-header";
 import ImageInput from "../components/image-input";
@@ -50,7 +53,9 @@ export default function SupportersAdminPage({
   initialData,
 }: SupportersAdminPageProps = {}) {
   const router = useRouter();
-  const [items, setItems] = useState<ApiSupporter[]>(initialData?.supporters ?? []);
+  const [items, setItems] = useState<ApiSupporter[]>(
+    initialData?.supporters ?? [],
+  );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [panelMode, setPanelMode] = useState<"create" | "edit" | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -66,12 +71,15 @@ export default function SupportersAdminPage({
 
   const [isLoading, setIsLoading] = useState(() => !initialData);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeSubmitAction, setActiveSubmitAction] = useState<"create" | "delete" | null>(null);
+  const [activeSubmitAction, setActiveSubmitAction] = useState<
+    "create" | "delete" | null
+  >(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const isDetailRoute = routeMode === "detail";
+  const isStandaloneRoute = routeMode === "detail" || routeMode === "edit";
 
   const selected = useMemo(
     () => items.find((item) => item.id === selectedId) ?? null,
@@ -125,7 +133,9 @@ export default function SupportersAdminPage({
     const fallbackId = data[0]?.id ?? null;
     const candidateSelectedId =
       preferredSelectedId ??
-      (selectedId && data.some((item) => item.id === selectedId) ? selectedId : null) ??
+      (selectedId && data.some((item) => item.id === selectedId)
+        ? selectedId
+        : null) ??
       fallbackId;
 
     setSelectedId(candidateSelectedId);
@@ -178,7 +188,9 @@ export default function SupportersAdminPage({
     if (routeMode === "detail" || routeMode === "edit") {
       const target = items.find((item) => item.id === routeId) ?? null;
       if (!target) {
-        router.replace(buildAdminEntityRoute(basePath, "list"), { scroll: false });
+        router.replace(buildAdminEntityRoute(basePath, "list"), {
+          scroll: false,
+        });
         return;
       }
 
@@ -199,14 +211,34 @@ export default function SupportersAdminPage({
       setPanelMode(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeMode, routeId, isLoading, panelMode, items, selectedId, router, basePath]);
+  }, [
+    routeMode,
+    routeId,
+    isLoading,
+    panelMode,
+    items,
+    selectedId,
+    router,
+    basePath,
+  ]);
 
   const handleSelect = (item: ApiSupporter) => {
     setSelectedId(item.id);
     syncEditForm(item);
     setErrorMessage(null);
     setSuccessMessage(null);
-    router.push(buildAdminEntityRoute(basePath, "detail", item.id), { scroll: false });
+    router.push(buildAdminEntityRoute(basePath, "detail", item.id), {
+      scroll: false,
+    });
+  };
+
+  const handleNavigateBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false });
   };
 
   const openCreatePanel = () =>
@@ -306,7 +338,9 @@ export default function SupportersAdminPage({
       setDeleteModalOpen(false);
       setPanelMode(null);
       await loadData();
-      router.replace(buildAdminEntityRoute(basePath, "list"), { scroll: false });
+      router.replace(buildAdminEntityRoute(basePath, "list"), {
+        scroll: false,
+      });
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -334,29 +368,51 @@ export default function SupportersAdminPage({
         description="홈페이지에 노출할 후원사 정보를 등록하고 수정하는 화면입니다."
         guidance="목록에서 항목을 선택해 상세 페이지로 이동하고, 상세 페이지에서 수정 페이지로 이동해 편집하세요."
       >
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <AdminActionButton onClick={openCreatePanel} testId="supporter-open-create">
-            + 신규 후원사
-          </AdminActionButton>
-          <button
-            type="button"
-            onClick={() => void loadData()}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-            data-testid="supporters-reload-button"
-          >
-            새로고침
-          </button>
-          {generationSortOrder !== null ? (
-            <p className="text-xs text-gray-500" data-testid="supporters-global-note">
-              공통 설정: 선택한 {generationSortOrder}기와 관계없이 전체에 적용됩니다.
-            </p>
-          ) : null}
-        </div>
+        {isStandaloneRoute ? (
+          <div className="mt-3 flex items-center">
+            <AdminActionButton
+              variant="ghost"
+              onClick={handleNavigateBack}
+              testId="supporter-route-back"
+            >
+              ← 이전 페이지
+            </AdminActionButton>
+          </div>
+        ) : (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <AdminActionButton
+              onClick={openCreatePanel}
+              testId="supporter-open-create"
+            >
+              + 신규 후원사
+            </AdminActionButton>
+            <button
+              type="button"
+              onClick={() => void loadData()}
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+              data-testid="supporters-reload-button"
+            >
+              새로고침
+            </button>
+            {generationSortOrder !== null ? (
+              <p
+                className="text-xs text-gray-500"
+                data-testid="supporters-global-note"
+              >
+                공통 설정: 선택한 {generationSortOrder}기와 관계없이 전체에
+                적용됩니다.
+              </p>
+            ) : null}
+          </div>
+        )}
       </AdminPageHeader>
 
-      <AdminInfoBox title="작업 안내">
-        로고는 파일 선택 즉시 업로드됩니다. 저장 버튼은 업로드 완료 이후에만 활성화됩니다.
-      </AdminInfoBox>
+      {!isStandaloneRoute ? (
+        <AdminInfoBox title="작업 안내">
+          로고는 파일 선택 즉시 업로드됩니다. 저장 버튼은 업로드 완료 이후에만
+          활성화됩니다.
+        </AdminInfoBox>
+      ) : null}
 
       {errorMessage ? (
         <p
@@ -376,53 +432,60 @@ export default function SupportersAdminPage({
         </p>
       ) : null}
 
-      <section className="rounded-lg border border-gray-200 bg-white p-4">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold">등록된 후원사 목록</h2>
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="이름/링크 검색"
-            className="w-full max-w-xs rounded-md border border-gray-300 px-3 py-2 text-sm"
-            data-testid="supporter-search-input"
-          />
-        </div>
+      {!isStandaloneRoute ? (
+        <section className="rounded-lg border border-gray-200 bg-white p-4">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold">등록된 후원사 목록</h2>
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="이름/링크 검색"
+              className="w-full max-w-xs rounded-md border border-gray-300 px-3 py-2 text-sm"
+              data-testid="supporter-search-input"
+            />
+          </div>
 
-        {isLoading ? (
-          <p className="text-sm text-gray-500">불러오는 중...</p>
-        ) : filteredItems.length === 0 ? (
-          <p className="text-sm text-gray-500">
-            {items.length === 0
-              ? "아직 등록된 후원사가 없습니다."
-              : "검색 조건에 맞는 후원사가 없습니다."}
-          </p>
-        ) : (
-          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" data-testid="supporters-list">
-            {filteredItems.map((item) => (
-              <li
-                key={item.id}
-                className="rounded-md border border-gray-200 p-3"
-                data-testid={`supporter-row-${item.id}`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <button
-                    type="button"
-                    onClick={() => handleSelect(item)}
-                    className="min-w-0 flex-1 text-left"
-                  >
-                    <p className="font-medium">{item.name}</p>
-                    <p className="truncate text-xs text-gray-500">링크: {item.link}</p>
-                    <p className="text-xs text-gray-500">
-                      노출 종료일: {formatTimestamp(item.expiresAt)}
-                    </p>
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          {isLoading ? (
+            <p className="text-sm text-gray-500">불러오는 중...</p>
+          ) : filteredItems.length === 0 ? (
+            <p className="text-sm text-gray-500">
+              {items.length === 0
+                ? "아직 등록된 후원사가 없습니다."
+                : "검색 조건에 맞는 후원사가 없습니다."}
+            </p>
+          ) : (
+            <ul
+              className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"
+              data-testid="supporters-list"
+            >
+              {filteredItems.map((item) => (
+                <li
+                  key={item.id}
+                  className="rounded-md border border-gray-200 p-3"
+                  data-testid={`supporter-row-${item.id}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleSelect(item)}
+                      className="min-w-0 flex-1 text-left"
+                    >
+                      <p className="font-medium">{item.name}</p>
+                      <p className="truncate text-xs text-gray-500">
+                        링크: {item.link}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        노출 종료일: {formatTimestamp(item.expiresAt)}
+                      </p>
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
 
       <AdminDrawer
         open={panelMode !== null}
@@ -439,10 +502,13 @@ export default function SupportersAdminPage({
             return;
           }
           setPanelMode(null);
-          router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false });
+          router.push(buildAdminEntityRoute(basePath, "list"), {
+            scroll: false,
+          });
         }}
         testId="supporter-drawer"
         variant="page"
+        showCloseButton={!isStandaloneRoute}
       >
         {panelMode === "create" ? (
           <form
@@ -456,7 +522,10 @@ export default function SupportersAdminPage({
                 type="text"
                 value={createForm.name}
                 onChange={(event) =>
-                  setCreateForm((previous) => ({ ...previous, name: event.target.value }))
+                  setCreateForm((previous) => ({
+                    ...previous,
+                    name: event.target.value,
+                  }))
                 }
                 className="w-full rounded-md border border-gray-300 px-3 py-2"
                 required
@@ -470,7 +539,10 @@ export default function SupportersAdminPage({
                 type="url"
                 value={createForm.link}
                 onChange={(event) =>
-                  setCreateForm((previous) => ({ ...previous, link: event.target.value }))
+                  setCreateForm((previous) => ({
+                    ...previous,
+                    link: event.target.value,
+                  }))
                 }
                 className="w-full rounded-md border border-gray-300 px-3 py-2"
                 required
@@ -523,29 +595,32 @@ export default function SupportersAdminPage({
           </form>
         ) : selected && isDetailRoute ? (
           <div className="space-y-4">
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <p className="text-sm font-semibold text-gray-900">{selected.name}</p>
-              <p className="mt-1 text-sm text-gray-600">노출 종료일: {formatTimestamp(selected.expiresAt)}</p>
-              <p className="mt-1 truncate text-sm text-gray-600">연결 링크: {selected.link}</p>
-            </div>
             <div className="flex flex-wrap gap-2">
               <AdminActionButton
                 onClick={() =>
-                  router.push(buildAdminEntityRoute(basePath, "edit", selected.id), {
-                    scroll: false,
-                  })
+                  router.push(
+                    buildAdminEntityRoute(basePath, "edit", selected.id),
+                    {
+                      scroll: false,
+                    },
+                  )
                 }
                 testId="supporter-open-edit"
               >
                 수정 페이지로 이동
               </AdminActionButton>
-              <AdminActionButton
-                variant="ghost"
-                onClick={() => router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false })}
-                testId="supporter-back-list"
-              >
-                목록으로
-              </AdminActionButton>
+            </div>
+
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <p className="text-sm font-semibold text-gray-900">
+                {selected.name}
+              </p>
+              <p className="mt-1 text-sm text-gray-600">
+                노출 종료일: {formatTimestamp(selected.expiresAt)}
+              </p>
+              <p className="mt-1 truncate text-sm text-gray-600">
+                연결 링크: {selected.link}
+              </p>
             </div>
           </div>
         ) : selected ? (
@@ -560,7 +635,10 @@ export default function SupportersAdminPage({
                 type="text"
                 value={editForm.name}
                 onChange={(event) =>
-                  setEditForm((previous) => ({ ...previous, name: event.target.value }))
+                  setEditForm((previous) => ({
+                    ...previous,
+                    name: event.target.value,
+                  }))
                 }
                 className="w-full rounded-md border border-gray-300 px-3 py-2"
                 required
@@ -574,7 +652,10 @@ export default function SupportersAdminPage({
                 type="url"
                 value={editForm.link}
                 onChange={(event) =>
-                  setEditForm((previous) => ({ ...previous, link: event.target.value }))
+                  setEditForm((previous) => ({
+                    ...previous,
+                    link: event.target.value,
+                  }))
                 }
                 className="w-full rounded-md border border-gray-300 px-3 py-2"
                 required
@@ -639,7 +720,9 @@ export default function SupportersAdminPage({
             </div>
           </form>
         ) : (
-          <p className="text-sm text-gray-500">수정할 후원사를 선택해 주세요.</p>
+          <p className="text-sm text-gray-500">
+            수정할 후원사를 선택해 주세요.
+          </p>
         )}
       </AdminDrawer>
 

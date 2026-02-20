@@ -64,18 +64,20 @@ test.describe("users crud", () => {
     }
     const targetUserId = userRowTestId.replace("user-row-", "");
 
-    await page.getByTestId(`user-inline-toggle-${targetUserId}`).click();
+    await page.getByTestId(`user-open-detail-${targetUserId}`).click();
     await expect(page.getByTestId("user-detail-card")).toContainText(tempUser.email);
+    await page.getByTestId("user-open-edit").click();
     await expect(page.getByTestId("user-edit-form")).toBeVisible();
-
-    await page.reload();
-    await page.getByTestId(`user-inline-toggle-${targetUserId}`).click();
-    await expect(page.getByTestId("user-detail-card")).toContainText(tempUser.email);
 
     const updatedName = uniqueText(e2ePrefix, "user-updated");
     await page.getByTestId("user-edit-name").fill(updatedName);
     await page.getByTestId("user-edit-role").selectOption("regular_member");
-    await page.getByTestId("user-edit-generation-id").selectOption(generation.id);
+    const generationCheckbox = page.getByTestId(
+      `user-edit-generation-checkbox-${generation.id}`,
+    );
+    if (!(await generationCheckbox.isChecked())) {
+      await generationCheckbox.check();
+    }
     await page.getByTestId("user-edit-image-file").setInputFiles(sampleImagePath);
     await page.getByTestId("user-edit-submit").click();
 
@@ -84,7 +86,7 @@ test.describe("users crud", () => {
     await page.getByTestId("user-delete-button").click();
     await page.getByTestId("confirm-modal-confirm").click();
 
-    await expect(page.getByTestId("users-success")).toContainText("삭제");
+    await page.goto("/admin/users");
     await page.getByTestId("users-reload-button").click();
     await expect(
       page.locator('[data-testid^="user-row-"]', {

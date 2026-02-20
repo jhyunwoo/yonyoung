@@ -108,6 +108,18 @@ export const errorResponses = {
   409: errorResponse(
     "리소스 제약 조건 충돌이 발생했습니다(예: generation.sortOrder UNIQUE 충돌). 서버는 데이터 무결성 위반을 감지하면 CONFLICT를 반환하며, 클라이언트는 중복 값을 조정한 뒤 재시도해야 합니다.",
   ),
+  413: errorResponse(
+    "업로드 허용 크기를 초과했습니다. 클라이언트는 파일 크기를 줄이거나 멀티파트 업로드를 사용해야 합니다.",
+  ),
+  415: errorResponse(
+    "지원하지 않는 미디어 타입입니다. 서버가 허용한 content-type 목록을 확인하세요.",
+  ),
+  422: errorResponse(
+    "요청 구조는 유효하지만 의미적으로 처리할 수 없습니다. 업로드 파트/ETag 정보를 점검하세요.",
+  ),
+  429: errorResponse(
+    "요청 빈도가 허용량을 초과했습니다. 잠시 후 다시 시도하세요.",
+  ),
   500: errorResponse(
     "서버 내부 예외 또는 외부 의존성(Auth/R2/DB) 오류로 요청 처리에 실패했습니다. 서버는 INTERNAL_ERROR를 반환하며, 클라이언트는 사용자에게 재시도/잠시 후 다시 시도 안내를 제공해야 합니다.",
   ),

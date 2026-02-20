@@ -294,10 +294,45 @@ export type PresignService = {
     slot: "cover" | "detail" | "logo" | "profile";
     fileName: string;
     contentType: string;
+    fileSize: number;
   }) => Promise<{
     uploadUrl: string;
     objectKey: string;
     publicUrl: string;
     requiredHeaders: Record<string, string>;
   }>;
+  initiateMultipartUpload: (input: {
+    actorId: string;
+    resource: "activities" | "exhibitions" | "supporters" | "users";
+    slot: "cover" | "detail" | "logo" | "profile";
+    fileName: string;
+    contentType: string;
+    fileSize: number;
+  }) => Promise<{
+    uploadId: string;
+    objectKey: string;
+    publicUrl: string;
+    partSize: number;
+    maxPartNumber: number;
+  }>;
+  issueMultipartUploadPartUrl: (input: {
+    uploadId: string;
+    objectKey: string;
+    partNumber: number;
+  }) => Promise<{
+    uploadUrl: string;
+    requiredHeaders: Record<string, string>;
+  }>;
+  completeMultipartUpload: (input: {
+    uploadId: string;
+    objectKey: string;
+    parts: Array<{ partNumber: number; etag: string }>;
+  }) => Promise<{
+    objectKey: string;
+    publicUrl: string;
+  }>;
+  abortMultipartUpload: (input: {
+    uploadId: string;
+    objectKey: string;
+  }) => Promise<void>;
 };

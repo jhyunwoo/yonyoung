@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { ReactNode } from "react";
+import { ReactNode, Suspense } from "react";
+import Script from "next/script";
 import SiteHeader from "./components/site-header";
 import SiteFooter from "./components/site-footer";
 import { createPageMetadata } from "../../lib/seo";
+import { WebVitalsReporter } from "../_components/web-vitals-reporter";
 
 export const metadata: Metadata = createPageMetadata({
   title: "연영회 | 연세대학교 중앙사진동아리",
@@ -18,20 +20,6 @@ export const metadata: Metadata = createPageMetadata({
     "아카이브",
   ],
 });
-
-const themeInitScript = `
-(() => {
-  try {
-    const stored = localStorage.getItem("theme");
-    const mode = stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
-    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const resolvedTheme = mode === "system" ? (systemDark ? "dark" : "light") : mode;
-    document.documentElement.classList.toggle("dark", resolvedTheme === "dark");
-    document.documentElement.dataset.theme = resolvedTheme;
-    document.documentElement.dataset.themeMode = mode;
-  } catch (_) {}
-})();
-`;
 
 /**
  * RootLayout 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
@@ -49,11 +37,16 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml"></link>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <Script src="/theme-init.js" strategy="beforeInteractive" />
       </head>
       <body className="min-h-screen bg-(--bg-primary) text-(--text-primary) antialiased">
-        <SiteHeader />
+        <Suspense fallback={null}>
+          <WebVitalsReporter />
+        </Suspense>
+        <Suspense fallback={<div className="h-[72px]" aria-hidden="true" />}>
+          <SiteHeader />
+        </Suspense>
         <main>{children}</main>
         <SiteFooter />
       </body>

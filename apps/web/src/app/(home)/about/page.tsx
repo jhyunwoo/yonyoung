@@ -20,13 +20,19 @@ export const metadata: Metadata = createPageMetadata({
   keywords: ["연영회 소개", "연영회 역사", "연세대학교 동아리", "사진 동아리 활동"],
 });
 
+const getPublicGenerations = async () => {
+  "use cache";
+
+  return safeList(listPublicGenerations, []);
+};
+
 /**
  * AboutPage 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
  * @returns 렌더링할 JSX 트리를 반환합니다.
  * @remarks UI 상태와 권한 조건이 변경될 때 렌더링 분기가 달라질 수 있습니다.
  */
 export default async function AboutPage() {
-  const generations = await safeList(listPublicGenerations, []);
+  const generations = await getPublicGenerations();
   const splitIndex = Math.ceil(annualActivities.length / 2);
   const activityColumns = [
     annualActivities.slice(0, splitIndex),

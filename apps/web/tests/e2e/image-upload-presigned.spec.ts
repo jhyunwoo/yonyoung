@@ -22,6 +22,14 @@ const parseJsonBody = (raw: string | null): Record<string, unknown> | null => {
   }
 };
 
+const readStringField = (
+  payload: Record<string, unknown> | null,
+  field: string,
+): string | null => {
+  const value = payload?.[field];
+  return typeof value === "string" ? value : null;
+};
+
 test.describe("presigned image upload flow", () => {
   test.afterEach(async ({ request }, testInfo) => {
     const prefix = testInfo.annotations.find(
@@ -97,8 +105,9 @@ test.describe("presigned image upload flow", () => {
       title,
       generationId: generation.id,
     });
-    expect(typeof createPayload?.coverImageUrl).toBe("string");
-    expect(createPayload?.coverImageUrl).toContain("https://storage.yonyoung.moveto.kr/activities/");
+    const coverImageUrl = readStringField(createPayload, "coverImageUrl");
+    expect(typeof coverImageUrl).toBe("string");
+    expect(coverImageUrl).toContain("https://storage.yonyoung.moveto.kr/activities/");
   });
 
   test("exhibition 생성 시 커버 이미지 업로드 계약을 만족한다", async ({
@@ -170,7 +179,9 @@ test.describe("presigned image upload flow", () => {
       title,
       generationId: generation.id,
     });
-    expect(createPayload?.coverImageUrl).toContain("https://storage.yonyoung.moveto.kr/exhibitions/");
+    expect(readStringField(createPayload, "coverImageUrl")).toContain(
+      "https://storage.yonyoung.moveto.kr/exhibitions/",
+    );
   });
 
   test("supporter 생성 시 로고 업로드 계약을 만족한다", async ({
@@ -237,7 +248,9 @@ test.describe("presigned image upload flow", () => {
     expect(createPayload).toMatchObject({
       name,
     });
-    expect(createPayload?.logoUrl).toContain("https://storage.yonyoung.moveto.kr/supporters/");
+    expect(readStringField(createPayload, "logoUrl")).toContain(
+      "https://storage.yonyoung.moveto.kr/supporters/",
+    );
   });
 
   test("user 수정 시 프로필 업로드 계약을 만족한다", async ({
@@ -292,13 +305,20 @@ test.describe("presigned image upload flow", () => {
       throw new Error("target user row test id is missing");
     }
     const targetUserId = userRowTestId.replace("user-row-", "");
-    await page.getByTestId(`user-inline-toggle-${targetUserId}`).click();
+    await page.getByTestId(`user-open-detail-${targetUserId}`).click();
     await expect(page.getByTestId("user-detail-card")).toContainText(tempUser.email);
+    await page.getByTestId("user-open-edit").click();
+    await expect(page.getByTestId("user-edit-form")).toBeVisible();
     await expect(page.getByTestId("user-edit-name")).toHaveValue(tempUser.name);
 
     await page.getByTestId("user-edit-name").fill(uniqueText(e2ePrefix, "user-contract"));
     await page.getByTestId("user-edit-role").selectOption("regular_member");
-    await page.getByTestId("user-edit-generation-id").selectOption(generation.id);
+    const generationCheckbox = page.getByTestId(
+      `user-edit-generation-checkbox-${generation.id}`,
+    );
+    if (!(await generationCheckbox.isChecked())) {
+      await generationCheckbox.check();
+    }
     await page.getByTestId("user-edit-image-file").setInputFiles(sampleImagePath);
 
     await expect(page.getByTestId("user-edit-image-upload-progress")).toBeVisible();
@@ -316,8 +336,13 @@ test.describe("presigned image upload flow", () => {
     expect(uploadMock.getUploadRequests("user-profile")[0]?.headers["x-amz-meta-source"]).toBe(
       "e2e-contract-user",
     );
-    expect(updatePayload?.generationId).toBe(generation.id);
-    expect(updatePayload?.image).toContain("https://storage.yonyoung.moveto.kr/users/");
+    const generationIds = Array.isArray(updatePayload?.["generationIds"])
+      ? updatePayload?.["generationIds"]
+      : [];
+    expect(generationIds).toContain(generation.id);
+    expect(readStringField(updatePayload, "image")).toContain(
+      "https://storage.yonyoung.moveto.kr/users/",
+    );
   });
 
   test("내 프로필 수정 시 프로필 업로드 계약을 만족한다", async ({
@@ -374,7 +399,9 @@ test.describe("presigned image upload flow", () => {
     expect(uploadMock.getUploadRequests("profile-self")[0]?.headers["x-amz-meta-source"]).toBe(
       "e2e-contract-profile-self",
     );
-    expect(updatePayload?.image).toContain("https://storage.yonyoung.moveto.kr/users/");
+    expect(readStringField(updatePayload, "image")).toContain(
+      "https://storage.yonyoung.moveto.kr/users/",
+    );
   });
 
   test("activity 업로드 실패 후 재시도하면 생성이 정상 완료된다", async ({

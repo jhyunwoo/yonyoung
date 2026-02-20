@@ -1,6 +1,6 @@
 export type AdminEntityRouteMode = "list" | "create" | "detail" | "edit";
 
-export const normalizeAdminBasePath = (basePath: string): string =>
+const normalizeAdminBasePath = (basePath: string): string =>
   basePath.endsWith("/") ? basePath.slice(0, -1) : basePath;
 
 export const buildAdminEntityRoute = (

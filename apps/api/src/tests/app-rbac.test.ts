@@ -502,6 +502,7 @@ describe("RBAC routes", /** describe 실행 과정에서 필요한 연산을 수
       body: JSON.stringify({
         fileName: "profile.png",
         contentType: "image/png",
+        fileSize: 1024,
       }),
     });
 
@@ -532,6 +533,7 @@ describe("RBAC routes", /** describe 실행 과정에서 필요한 연산을 수
       body: JSON.stringify({
         fileName: "profile.png",
         contentType: "image/png",
+        fileSize: 1024,
       }),
     });
 
@@ -542,6 +544,7 @@ describe("RBAC routes", /** describe 실행 과정에서 필요한 연산을 수
       slot: "profile",
       fileName: "profile.png",
       contentType: "image/png",
+      fileSize: 1024,
     });
   });
 
@@ -569,6 +572,7 @@ describe("RBAC routes", /** describe 실행 과정에서 필요한 연산을 수
       body: JSON.stringify({
         fileName: "cover.png",
         contentType: "image/png",
+        fileSize: 1024,
       }),
     });
 
@@ -579,6 +583,7 @@ describe("RBAC routes", /** describe 실행 과정에서 필요한 연산을 수
       slot: "cover",
       fileName: "cover.png",
       contentType: "image/png",
+      fileSize: 1024,
     });
   });
 });

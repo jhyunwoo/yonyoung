@@ -43,7 +43,7 @@ const BASE_DATE = new Date("2030-01-01T00:00:00.000Z");
  * @returns 처리 결과 값을 반환합니다.
  * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
  */
-export const createActor = (role: Role, id = IDs.member): Actor => ({
+export const createActor = (role: Role, id: string = IDs.member): Actor => ({
   id,
   role,
   rawRole: role,

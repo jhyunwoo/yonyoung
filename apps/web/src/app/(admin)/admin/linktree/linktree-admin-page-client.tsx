@@ -3,12 +3,18 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
-import type { ApiLinktree, ApiLinktreeItem } from "../../../../lib/admin-api/types";
+import type {
+  ApiLinktree,
+  ApiLinktreeItem,
+} from "../../../../lib/admin-api/types";
 import { readErrorMessage } from "../components/admin-form-utils";
 import AdminActionButton from "../components/admin-action-button";
 import AdminConfirmModal from "../components/admin-confirm-modal";
 import AdminDrawer from "../components/admin-drawer";
-import { type AdminEntityRouteMode, buildAdminEntityRoute } from "../components/admin-entity-route";
+import {
+  type AdminEntityRouteMode,
+  buildAdminEntityRoute,
+} from "../components/admin-entity-route";
 import AdminInfoBox from "../components/admin-info-box";
 import AdminPageHeader from "../components/admin-page-header";
 
@@ -48,27 +54,36 @@ export default function LinktreeAdminPage({
   initialData,
 }: LinktreeAdminPageProps = {}) {
   const router = useRouter();
-  const [items, setItems] = useState<ApiLinktree[]>(initialData?.linktrees ?? []);
+  const [items, setItems] = useState<ApiLinktree[]>(
+    initialData?.linktrees ?? [],
+  );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [panelMode, setPanelMode] = useState<"create" | "edit" | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const [createForm, setCreateForm] = useState<LinktreeFormState>(emptyLinktreeForm);
-  const [editForm, setEditForm] = useState<LinktreeFormState>(emptyLinktreeForm);
-  const [itemCreateForm, setItemCreateForm] = useState<LinktreeItemFormState>(emptyItemForm);
-  const [itemEditForm, setItemEditForm] = useState<LinktreeItemFormState>(emptyItemForm);
+  const [createForm, setCreateForm] =
+    useState<LinktreeFormState>(emptyLinktreeForm);
+  const [editForm, setEditForm] =
+    useState<LinktreeFormState>(emptyLinktreeForm);
+  const [itemCreateForm, setItemCreateForm] =
+    useState<LinktreeItemFormState>(emptyItemForm);
+  const [itemEditForm, setItemEditForm] =
+    useState<LinktreeItemFormState>(emptyItemForm);
 
   const [isLoading, setIsLoading] = useState(() => !initialData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeSubmitAction, setActiveSubmitAction] = useState<
     "createLinktree" | "deleteLinktree" | "createItem" | "deleteItem" | null
   >(null);
-  const [deleteTarget, setDeleteTarget] = useState<"linktree" | "item" | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<"linktree" | "item" | null>(
+    null,
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const isDetailRoute = routeMode === "detail";
+  const isStandaloneRoute = routeMode === "detail" || routeMode === "edit";
 
   const selected = useMemo(
     () => items.find((item) => item.id === selectedId) ?? null,
@@ -130,7 +145,9 @@ export default function LinktreeAdminPage({
     const fallbackId = data[0]?.id ?? null;
     const nextSelectedId =
       preferredSelectedId ??
-      (selectedId && data.some((item) => item.id === selectedId) ? selectedId : null) ??
+      (selectedId && data.some((item) => item.id === selectedId)
+        ? selectedId
+        : null) ??
       fallbackId;
 
     setSelectedId(nextSelectedId);
@@ -180,7 +197,9 @@ export default function LinktreeAdminPage({
     if (routeMode === "detail" || routeMode === "edit") {
       const target = items.find((item) => item.id === routeId) ?? null;
       if (!target) {
-        router.replace(buildAdminEntityRoute(basePath, "list"), { scroll: false });
+        router.replace(buildAdminEntityRoute(basePath, "list"), {
+          scroll: false,
+        });
         return;
       }
 
@@ -194,7 +213,16 @@ export default function LinktreeAdminPage({
       setPanelMode(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeMode, routeId, isLoading, panelMode, items, selectedId, router, basePath]);
+  }, [
+    routeMode,
+    routeId,
+    isLoading,
+    panelMode,
+    items,
+    selectedId,
+    router,
+    basePath,
+  ]);
 
   const handleSelectLinktree = (item: ApiLinktree, navigate = true) => {
     setSelectedId(item.id);
@@ -202,8 +230,19 @@ export default function LinktreeAdminPage({
     setErrorMessage(null);
     setSuccessMessage(null);
     if (navigate) {
-      router.push(buildAdminEntityRoute(basePath, "detail", item.id), { scroll: false });
+      router.push(buildAdminEntityRoute(basePath, "detail", item.id), {
+        scroll: false,
+      });
     }
+  };
+
+  const handleNavigateBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false });
   };
 
   const handleSelectItem = (item: ApiLinktreeItem) => {
@@ -286,7 +325,9 @@ export default function LinktreeAdminPage({
       setDeleteTarget(null);
       setPanelMode(null);
       await loadData();
-      router.replace(buildAdminEntityRoute(basePath, "list"), { scroll: false });
+      router.replace(buildAdminEntityRoute(basePath, "list"), {
+        scroll: false,
+      });
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -379,34 +420,56 @@ export default function LinktreeAdminPage({
         description="대외 링크 묶음을 만들고, 각 묶음에 개별 링크를 추가하는 화면입니다."
         guidance="목록에서 링크 모음을 선택해 상세 페이지로 이동한 뒤 수정 페이지에서 링크 모음과 아이템을 편집하세요."
       >
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <AdminActionButton
-            onClick={() => {
-              router.push(buildAdminEntityRoute(basePath, "create"), { scroll: false });
-            }}
-            testId="linktree-open-create"
-          >
-            + 신규 링크 모음
-          </AdminActionButton>
-          <button
-            type="button"
-            onClick={() => void loadData()}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-            data-testid="linktree-reload-button"
-          >
-            새로고침
-          </button>
-          {generationSortOrder !== null ? (
-            <p className="text-xs text-gray-500" data-testid="linktree-global-note">
-              공통 설정: 선택한 {generationSortOrder}기와 관계없이 전체에 적용됩니다.
-            </p>
-          ) : null}
-        </div>
+        {isStandaloneRoute ? (
+          <div className="mt-3 flex items-center">
+            <AdminActionButton
+              variant="ghost"
+              onClick={handleNavigateBack}
+              testId="linktree-route-back"
+            >
+              ← 이전 페이지
+            </AdminActionButton>
+          </div>
+        ) : (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <AdminActionButton
+              onClick={() => {
+                router.push(buildAdminEntityRoute(basePath, "create"), {
+                  scroll: false,
+                });
+              }}
+              testId="linktree-open-create"
+            >
+              + 신규 링크 모음
+            </AdminActionButton>
+            <button
+              type="button"
+              onClick={() => void loadData()}
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+              data-testid="linktree-reload-button"
+            >
+              새로고침
+            </button>
+            {generationSortOrder !== null ? (
+              <p
+                className="text-xs text-gray-500"
+                data-testid="linktree-global-note"
+              >
+                공통 설정: 선택한 {generationSortOrder}기와 관계없이 전체에
+                적용됩니다.
+              </p>
+            ) : null}
+          </div>
+        )}
       </AdminPageHeader>
 
-      <AdminInfoBox title="작업 안내">
-        링크 모음을 먼저 만든 뒤 하위 링크 아이템을 추가하세요. 상세 페이지에서 수정 페이지로 이동해 링크 모음과 아이템을 함께 편집할 수 있습니다.
-      </AdminInfoBox>
+      {!isStandaloneRoute ? (
+        <AdminInfoBox title="작업 안내">
+          링크 모음을 먼저 만든 뒤 하위 링크 아이템을 추가하세요. 상세
+          페이지에서 수정 페이지로 이동해 링크 모음과 아이템을 함께 편집할 수
+          있습니다.
+        </AdminInfoBox>
+      ) : null}
 
       {errorMessage ? (
         <p
@@ -426,50 +489,57 @@ export default function LinktreeAdminPage({
         </p>
       ) : null}
 
-      <section className="rounded-lg border border-gray-200 bg-white p-4">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold">링크 모음 목록</h2>
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="링크 모음 검색"
-            className="w-full max-w-xs rounded-md border border-gray-300 px-3 py-2 text-sm"
-            data-testid="linktree-search-input"
-          />
-        </div>
+      {!isStandaloneRoute ? (
+        <section className="rounded-lg border border-gray-200 bg-white p-4">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold">링크 모음 목록</h2>
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="링크 모음 검색"
+              className="w-full max-w-xs rounded-md border border-gray-300 px-3 py-2 text-sm"
+              data-testid="linktree-search-input"
+            />
+          </div>
 
-        {isLoading ? (
-          <p className="text-sm text-gray-500">불러오는 중...</p>
-        ) : filteredItems.length === 0 ? (
-          <p className="text-sm text-gray-500">
-            {items.length === 0
-              ? "아직 등록된 링크 모음이 없습니다."
-              : "검색 조건에 맞는 링크 모음이 없습니다."}
-          </p>
-        ) : (
-          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" data-testid="linktree-list">
-            {filteredItems.map((item) => (
-              <li
-                key={item.id}
-                className="rounded-md border border-gray-200 p-3"
-                data-testid={`linktree-row-${item.id}`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <button
-                    type="button"
-                    onClick={() => handleSelectLinktree(item)}
-                    className="min-w-0 flex-1 text-left"
-                  >
-                    <p className="font-medium">{item.name}</p>
-                    <p className="text-xs text-gray-500">포함 링크 수: {item.items.length}</p>
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          {isLoading ? (
+            <p className="text-sm text-gray-500">불러오는 중...</p>
+          ) : filteredItems.length === 0 ? (
+            <p className="text-sm text-gray-500">
+              {items.length === 0
+                ? "아직 등록된 링크 모음이 없습니다."
+                : "검색 조건에 맞는 링크 모음이 없습니다."}
+            </p>
+          ) : (
+            <ul
+              className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"
+              data-testid="linktree-list"
+            >
+              {filteredItems.map((item) => (
+                <li
+                  key={item.id}
+                  className="rounded-md border border-gray-200 p-3"
+                  data-testid={`linktree-row-${item.id}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleSelectLinktree(item)}
+                      className="min-w-0 flex-1 text-left"
+                    >
+                      <p className="font-medium">{item.name}</p>
+                      <p className="text-xs text-gray-500">
+                        포함 링크 수: {item.items.length}
+                      </p>
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
 
       <AdminDrawer
         open={panelMode !== null}
@@ -484,21 +554,31 @@ export default function LinktreeAdminPage({
         onClose={() => {
           if (!isSubmitting) {
             setPanelMode(null);
-            router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false });
+            router.push(buildAdminEntityRoute(basePath, "list"), {
+              scroll: false,
+            });
           }
         }}
         testId="linktree-drawer"
         variant="page"
+        showCloseButton={!isStandaloneRoute}
       >
         {panelMode === "create" ? (
-          <form onSubmit={handleCreate} className="space-y-3" data-testid="linktree-create-form">
+          <form
+            onSubmit={handleCreate}
+            className="space-y-3"
+            data-testid="linktree-create-form"
+          >
             <label className="block text-sm">
               <span className="mb-1 block">링크 모음 이름</span>
               <input
                 type="text"
                 value={createForm.name}
                 onChange={(event) =>
-                  setCreateForm((previous) => ({ ...previous, name: event.target.value }))
+                  setCreateForm((previous) => ({
+                    ...previous,
+                    name: event.target.value,
+                  }))
                 }
                 className="w-full rounded-md border border-gray-300 px-3 py-2"
                 required
@@ -519,8 +599,12 @@ export default function LinktreeAdminPage({
         ) : selected && isDetailRoute ? (
           <div className="space-y-4">
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <p className="text-sm font-semibold text-gray-900">{selected.name}</p>
-              <p className="mt-1 text-sm text-gray-600">포함 링크 수: {selected.items.length}</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {selected.name}
+              </p>
+              <p className="mt-1 text-sm text-gray-600">
+                포함 링크 수: {selected.items.length}
+              </p>
               <ul className="mt-3 space-y-1 text-xs text-gray-600">
                 {selected.items.map((item) => (
                   <li key={item.id}>
@@ -532,33 +616,36 @@ export default function LinktreeAdminPage({
             <div className="flex flex-wrap gap-2">
               <AdminActionButton
                 onClick={() =>
-                  router.push(buildAdminEntityRoute(basePath, "edit", selected.id), {
-                    scroll: false,
-                  })
+                  router.push(
+                    buildAdminEntityRoute(basePath, "edit", selected.id),
+                    {
+                      scroll: false,
+                    },
+                  )
                 }
                 testId="linktree-open-edit"
               >
                 수정 페이지로 이동
               </AdminActionButton>
-              <AdminActionButton
-                variant="ghost"
-                onClick={() => router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false })}
-                testId="linktree-back-list"
-              >
-                목록으로
-              </AdminActionButton>
             </div>
           </div>
         ) : selected ? (
           <div className="space-y-5">
-            <form onSubmit={handleUpdate} className="space-y-3" data-testid="linktree-edit-form">
+            <form
+              onSubmit={handleUpdate}
+              className="space-y-3"
+              data-testid="linktree-edit-form"
+            >
               <label className="block text-sm">
                 <span className="mb-1 block">링크 모음 이름</span>
                 <input
                   type="text"
                   value={editForm.name}
                   onChange={(event) =>
-                    setEditForm((previous) => ({ ...previous, name: event.target.value }))
+                    setEditForm((previous) => ({
+                      ...previous,
+                      name: event.target.value,
+                    }))
                   }
                   className="w-full rounded-md border border-gray-300 px-3 py-2"
                   required
@@ -566,7 +653,11 @@ export default function LinktreeAdminPage({
                 />
               </label>
               <div className="mt-2 flex gap-2">
-                <AdminActionButton type="submit" disabled={isSubmitting} testId="linktree-edit-submit">
+                <AdminActionButton
+                  type="submit"
+                  disabled={isSubmitting}
+                  testId="linktree-edit-submit"
+                >
                   수정 저장
                 </AdminActionButton>
                 <AdminActionButton
@@ -598,7 +689,10 @@ export default function LinktreeAdminPage({
                       type="text"
                       value={itemCreateForm.name}
                       onChange={(event) =>
-                        setItemCreateForm((previous) => ({ ...previous, name: event.target.value }))
+                        setItemCreateForm((previous) => ({
+                          ...previous,
+                          name: event.target.value,
+                        }))
                       }
                       className="w-full rounded-md border border-gray-300 px-3 py-2"
                       required
@@ -611,7 +705,10 @@ export default function LinktreeAdminPage({
                       type="url"
                       value={itemCreateForm.link}
                       onChange={(event) =>
-                        setItemCreateForm((previous) => ({ ...previous, link: event.target.value }))
+                        setItemCreateForm((previous) => ({
+                          ...previous,
+                          link: event.target.value,
+                        }))
                       }
                       className="w-full rounded-md border border-gray-300 px-3 py-2"
                       required
@@ -621,7 +718,9 @@ export default function LinktreeAdminPage({
                   <AdminActionButton
                     type="submit"
                     loading={activeSubmitAction === "createItem"}
-                    disabled={isSubmitting && activeSubmitAction !== "createItem"}
+                    disabled={
+                      isSubmitting && activeSubmitAction !== "createItem"
+                    }
                     loadingText="링크 추가 중..."
                     testId="linktree-item-create-submit"
                   >
@@ -634,11 +733,18 @@ export default function LinktreeAdminPage({
                 className="rounded-lg border border-gray-200 p-3"
                 data-testid="linktree-item-edit-card"
               >
-                <h3 className="mb-2 text-sm font-semibold">선택 링크 아이템 수정/삭제</h3>
+                <h3 className="mb-2 text-sm font-semibold">
+                  선택 링크 아이템 수정/삭제
+                </h3>
                 {selected.items.length === 0 ? (
-                  <p className="text-sm text-gray-500">등록된 링크 아이템이 없습니다.</p>
+                  <p className="text-sm text-gray-500">
+                    등록된 링크 아이템이 없습니다.
+                  </p>
                 ) : (
-                  <ul className="mb-3 space-y-2" data-testid="linktree-item-list">
+                  <ul
+                    className="mb-3 space-y-2"
+                    data-testid="linktree-item-list"
+                  >
                     {selected.items.map((item) => (
                       <li
                         key={item.id}
@@ -652,7 +758,9 @@ export default function LinktreeAdminPage({
                             className="min-w-0 flex-1 text-left"
                           >
                             <p className="text-sm font-medium">{item.name}</p>
-                            <p className="truncate text-xs text-gray-500">{item.link}</p>
+                            <p className="truncate text-xs text-gray-500">
+                              {item.link}
+                            </p>
                           </button>
                         </div>
                       </li>
@@ -660,7 +768,11 @@ export default function LinktreeAdminPage({
                   </ul>
                 )}
 
-                <form onSubmit={handleUpdateItem} className="space-y-2" data-testid="linktree-item-edit-form">
+                <form
+                  onSubmit={handleUpdateItem}
+                  className="space-y-2"
+                  data-testid="linktree-item-edit-form"
+                >
                   {selectedItem ? (
                     <>
                       <label className="block text-sm">
@@ -669,7 +781,10 @@ export default function LinktreeAdminPage({
                           type="text"
                           value={itemEditForm.name}
                           onChange={(event) =>
-                            setItemEditForm((previous) => ({ ...previous, name: event.target.value }))
+                            setItemEditForm((previous) => ({
+                              ...previous,
+                              name: event.target.value,
+                            }))
                           }
                           className="w-full rounded-md border border-gray-300 px-3 py-2"
                           required
@@ -683,7 +798,10 @@ export default function LinktreeAdminPage({
                           type="url"
                           value={itemEditForm.link}
                           onChange={(event) =>
-                            setItemEditForm((previous) => ({ ...previous, link: event.target.value }))
+                            setItemEditForm((previous) => ({
+                              ...previous,
+                              link: event.target.value,
+                            }))
                           }
                           className="w-full rounded-md border border-gray-300 px-3 py-2"
                           required
@@ -714,20 +832,28 @@ export default function LinktreeAdminPage({
                       </div>
                     </>
                   ) : (
-                    <p className="text-sm text-gray-500">수정할 링크 아이템을 선택해 주세요.</p>
+                    <p className="text-sm text-gray-500">
+                      수정할 링크 아이템을 선택해 주세요.
+                    </p>
                   )}
                 </form>
               </article>
             </section>
           </div>
         ) : (
-          <p className="text-sm text-gray-500">수정할 링크 모음을 선택해 주세요.</p>
+          <p className="text-sm text-gray-500">
+            수정할 링크 모음을 선택해 주세요.
+          </p>
         )}
       </AdminDrawer>
 
       <AdminConfirmModal
         open={deleteTarget !== null}
-        title={deleteTarget === "item" ? "링크를 삭제할까요?" : "링크 모음을 삭제할까요?"}
+        title={
+          deleteTarget === "item"
+            ? "링크를 삭제할까요?"
+            : "링크 모음을 삭제할까요?"
+        }
         description={
           deleteTarget === "item"
             ? selectedItem
@@ -740,7 +866,8 @@ export default function LinktreeAdminPage({
         confirmText="삭제하기"
         confirmLoadingText="삭제 중..."
         isLoading={
-          activeSubmitAction === "deleteLinktree" || activeSubmitAction === "deleteItem"
+          activeSubmitAction === "deleteLinktree" ||
+          activeSubmitAction === "deleteItem"
         }
         onConfirm={() => {
           if (deleteTarget === "item") {

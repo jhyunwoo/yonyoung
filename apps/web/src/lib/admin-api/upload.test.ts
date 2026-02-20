@@ -41,9 +41,14 @@ describe("upload helpers", /** describe 실행 과정에서 필요한 연산을 
     expect(mockAdminRequest).toHaveBeenCalledWith(PRESIGN_PATHS.activityCover, "POST", {
       fileName: "photo.png",
       contentType: "image/png",
+      fileSize: file.size,
     });
 
-    const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const firstCall = fetchMock.mock.calls[0];
+    if (!firstCall) {
+      throw new Error("expected upload request call");
+    }
+    const [, options] = firstCall as unknown as [string, RequestInit];
     expect(options.method).toBe("PUT");
     expect((options.body as File).name).toBe("photo.png");
     expect((options.headers as Record<string, string>)["Content-Type"]).toBe(
@@ -70,9 +75,14 @@ describe("upload helpers", /** describe 실행 과정에서 필요한 연산을 
     expect(mockAdminRequest).toHaveBeenCalledWith(PRESIGN_PATHS.supporterLogo, "POST", {
       fileName: "photo.gif",
       contentType: "image/gif",
+      fileSize: file.size,
     });
 
-    const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const firstCall = fetchMock.mock.calls[0];
+    if (!firstCall) {
+      throw new Error("expected upload request call");
+    }
+    const [, options] = firstCall as unknown as [string, RequestInit];
     expect((options.headers as Record<string, string>)["Content-Type"]).toBe(
       "image/gif",
     );
@@ -97,6 +107,7 @@ describe("upload helpers", /** describe 실행 과정에서 필요한 연산을 
     expect(mockAdminRequest).toHaveBeenCalledWith(PRESIGN_PATHS.exhibitionDetail, "POST", {
       fileName: "photo.unknown",
       contentType: "image/jpeg",
+      fileSize: file.size,
     });
   });
 
@@ -138,7 +149,11 @@ describe("upload helpers", /** describe 실행 과정에서 필요한 연산을 
       file,
     });
 
-    const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const firstCall = fetchMock.mock.calls[0];
+    if (!firstCall) {
+      throw new Error("expected upload request call");
+    }
+    const [, options] = firstCall as unknown as [string, RequestInit];
     expect(options.headers).toEqual({
       "Content-Type": "image/png",
       "x-amz-meta-source": "admin",
@@ -218,6 +233,7 @@ describe("upload helpers", /** describe 실행 과정에서 필요한 연산을 
     expect(mockAdminRequest).toHaveBeenCalledWith(PRESIGN_PATHS.userProfile, "POST", {
       fileName: "profile.webp",
       contentType: "image/webp",
+      fileSize: file.size,
     });
   });
 

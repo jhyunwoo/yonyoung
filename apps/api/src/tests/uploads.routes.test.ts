@@ -45,7 +45,7 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
       const response = await app.request(route.path, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ fileName: "cover.png", contentType: "image/png" }),
+        body: JSON.stringify({ fileName: "cover.png", contentType: "image/png", fileSize: 1024 }),
       });
 
       expect(response.status).toBe(401);
@@ -67,7 +67,7 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
       const response = await app.request(route.path, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ fileName: "cover.png", contentType: "image/png" }),
+        body: JSON.stringify({ fileName: "cover.png", contentType: "image/png", fileSize: 1024 }),
       });
 
       expect(response.status).toBe(403);
@@ -115,7 +115,7 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
       const response = await app.request(route.path, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ fileName: "cover.png", contentType: "image/png" }),
+        body: JSON.stringify({ fileName: "cover.png", contentType: "image/png", fileSize: 1024 }),
       });
 
       expect(response.status).toBe(201);
@@ -130,6 +130,7 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
         slot: route.expected.slot,
         fileName: "cover.png",
         contentType: "image/png",
+        fileSize: 1024,
       });
     });
 
@@ -145,7 +146,7 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
       const response = await app.request(route.path, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ fileName: "cover.png", contentType: "image/png" }),
+        body: JSON.stringify({ fileName: "cover.png", contentType: "image/png", fileSize: 1024 }),
       });
 
       expect(response.status).toBe(500);
@@ -169,7 +170,7 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
       const response = await app.request("/api/activities/presign/cover", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ fileName: "cover.png", contentType: "image/png" }),
+        body: JSON.stringify({ fileName: "cover.png", contentType: "image/png", fileSize: 1024 }),
       });
 
       expect(response.status).toBe(500);
@@ -196,7 +197,7 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     const response = await app.request("/api/users/presign/profile", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png" }),
+      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png", fileSize: 1024 }),
     });
 
     expect(response.status).toBe(403);
@@ -209,7 +210,7 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     const response = await app.request("/api/users/presign/profile", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png" }),
+      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png", fileSize: 1024 }),
     });
 
     expect(response.status).toBe(401);
@@ -231,7 +232,7 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     const response = await app.request("/api/users/presign/profile", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png" }),
+      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png", fileSize: 1024 }),
     });
 
     expect(response.status).toBe(201);
@@ -241,6 +242,7 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
       slot: "profile",
       fileName: "profile.png",
       contentType: "image/png",
+      fileSize: 1024,
     });
   });
 
@@ -259,7 +261,7 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     const response = await app.request("/api/users/presign/profile", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png" }),
+      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png", fileSize: 1024 }),
     });
 
     expect(response.status).toBe(201);
@@ -269,6 +271,7 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
       slot: "profile",
       fileName: "profile.png",
       contentType: "image/png",
+      fileSize: 1024,
     });
   });
 
@@ -309,7 +312,7 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     const response = await app.request("/api/users/presign/profile", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png" }),
+      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png", fileSize: 1024 }),
     });
 
     expect(response.status).toBe(500);
@@ -328,11 +331,152 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     const response = await app.request("/api/users/presign/profile", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png" }),
+      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png", fileSize: 1024 }),
     });
 
     expect(response.status).toBe(500);
     const body = await readJson<{ error: { message: string } }>(response);
     expect(body.error.message).toContain("R2_*");
+  });
+
+  it("단일 업로드는 허용 크기 초과 시 413을 반환한다", async () => {
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+    });
+
+    const response = await app.request("/api/activities/presign/cover", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "cover.png",
+        contentType: "image/png",
+        fileSize: 99_999_999,
+      }),
+    });
+
+    expect(response.status).toBe(413);
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+
+  it("단일 업로드는 허용되지 않은 content-type 요청을 거부한다", async () => {
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+    });
+
+    const response = await app.request("/api/activities/presign/cover", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "cover.svg",
+        contentType: "image/svg+xml",
+        fileSize: 1024,
+      }),
+    });
+
+    expect(response.status).toBe(415);
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+
+  it("멀티파트 업로드 init/part/complete/abort 경로가 정상 동작한다", async () => {
+    const initiateMultipartUpload = fn(async () => ({
+      uploadId: "upload-id-1",
+      objectKey: `activities/${IDs.manager}/detail/multipart-key`,
+      publicUrl: "https://cdn.example.com/multipart-key",
+      partSize: 8 * 1024 * 1024,
+      maxPartNumber: 2,
+    }));
+    const issueMultipartUploadPartUrl = fn(async () => ({
+      uploadUrl: "https://upload.example.com/multipart/part-1",
+      requiredHeaders: {},
+    }));
+    const completeMultipartUpload = fn(async () => ({
+      objectKey: `activities/${IDs.manager}/detail/multipart-key`,
+      publicUrl: "https://cdn.example.com/multipart-key",
+    }));
+    const abortMultipartUpload = fn(async () => undefined);
+
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      presignService: createPresignServiceMock({
+        initiateMultipartUpload,
+        issueMultipartUploadPartUrl,
+        completeMultipartUpload,
+        abortMultipartUpload,
+      }),
+    });
+
+    const initResponse = await app.request("/api/activities/multipart/detail/init", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "large.png",
+        contentType: "image/png",
+        fileSize: 20 * 1024 * 1024,
+      }),
+    });
+    expect(initResponse.status).toBe(201);
+    expect(initiateMultipartUpload).toHaveBeenCalled();
+
+    const partResponse = await app.request("/api/uploads/multipart/part", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        uploadId: "upload-id-1",
+        objectKey: `activities/${IDs.manager}/detail/multipart-key`,
+        partNumber: 1,
+      }),
+    });
+    expect(partResponse.status).toBe(200);
+    expect(issueMultipartUploadPartUrl).toHaveBeenCalled();
+
+    const completeResponse = await app.request("/api/uploads/multipart/complete", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        uploadId: "upload-id-1",
+        objectKey: `activities/${IDs.manager}/detail/multipart-key`,
+        parts: [{ partNumber: 1, etag: "\"etag-1\"" }],
+      }),
+    });
+    expect(completeResponse.status).toBe(200);
+    expect(completeMultipartUpload).toHaveBeenCalled();
+
+    const abortResponse = await app.request("/api/uploads/multipart/abort", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        uploadId: "upload-id-1",
+        objectKey: `activities/${IDs.manager}/detail/multipart-key`,
+      }),
+    });
+    expect(abortResponse.status).toBe(204);
+    expect(abortMultipartUpload).toHaveBeenCalled();
+  });
+
+  it("멀티파트 part 요청은 본인 소유 objectKey가 아니면 403을 반환한다", async () => {
+    const issueMultipartUploadPartUrl = fn(async () => ({
+      uploadUrl: "https://upload.example.com/multipart/part-1",
+      requiredHeaders: {},
+    }));
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      presignService: createPresignServiceMock({
+        issueMultipartUploadPartUrl,
+      }),
+    });
+
+    const response = await app.request("/api/uploads/multipart/part", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        uploadId: "upload-id-1",
+        objectKey: `activities/${IDs.otherUser}/detail/multipart-key`,
+        partNumber: 1,
+      }),
+    });
+
+    expect(response.status).toBe(403);
+    await expectErrorCode(response, "FORBIDDEN");
+    expect(issueMultipartUploadPartUrl).not.toHaveBeenCalled();
   });
 });

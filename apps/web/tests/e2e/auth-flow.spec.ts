@@ -24,7 +24,7 @@ test.describe("auth flow", () => {
     await ensureAdminSession(page);
 
     await page.goto("/auth/sign-in");
-    await expect(page).toHaveURL(/\/admin\/\d+$/);
+    await expect(page).toHaveURL(/\/admin(?:\/\d+)?(?:\?generation=\d+)?$/);
     await expect(page.getByTestId("admin-shell")).toBeVisible();
   });
 });

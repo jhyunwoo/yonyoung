@@ -265,6 +265,7 @@ export type ApiAdminDashboardStats = {
 export type ApiPresignRequest = {
   fileName: string;
   contentType: string;
+  fileSize: number;
 };
 
 export type ApiPresignResponse = {
@@ -272,4 +273,50 @@ export type ApiPresignResponse = {
   objectKey: string;
   publicUrl: string;
   requiredHeaders?: Record<string, string>;
+};
+
+export type ApiMultipartUploadInitRequest = {
+  fileName: string;
+  contentType: string;
+  fileSize: number;
+};
+
+export type ApiMultipartUploadInitResponse = {
+  uploadId: string;
+  objectKey: string;
+  publicUrl: string;
+  partSize: number;
+  maxPartNumber: number;
+};
+
+export type ApiMultipartUploadPartRequest = {
+  uploadId: string;
+  objectKey: string;
+  partNumber: number;
+};
+
+export type ApiMultipartUploadPartResponse = {
+  uploadUrl: string;
+  requiredHeaders: Record<string, string>;
+};
+
+export type ApiMultipartUploadedPart = {
+  partNumber: number;
+  etag: string;
+};
+
+export type ApiMultipartUploadCompleteRequest = {
+  uploadId: string;
+  objectKey: string;
+  parts: ApiMultipartUploadedPart[];
+};
+
+export type ApiMultipartUploadCompleteResponse = {
+  objectKey: string;
+  publicUrl: string;
+};
+
+export type ApiMultipartUploadAbortRequest = {
+  uploadId: string;
+  objectKey: string;
 };

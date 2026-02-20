@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import MotionReveal from "./components/motion-reveal";
 import SectionShell from "./components/section-shell";
 import HeroShowcase from "./components/hero-showcase";
@@ -13,27 +14,115 @@ import {
   safeList,
 } from "../../lib/public-api";
 import { shouldUseUnoptimizedImage } from "../../lib/image-utils";
-import { pickFeaturedPublicExhibition } from "../../lib/public-exhibition";
 import { resolveSiteUrl } from "../../lib/seo";
 import { formatKoreanDateRange } from "../../lib/date-formatters";
 
-/**
- * HomePage 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
- * @returns 렌더링할 JSX 트리를 반환합니다.
- * @remarks UI 상태와 권한 조건이 변경될 때 렌더링 분기가 달라질 수 있습니다.
- */
-export default async function HomePage() {
-  const [activities, exhibitions, supporters, linktrees] = await Promise.all([
+const getHomePrimaryData = async () => {
+  "use cache";
+
+  return Promise.all([
     safeList(listPublicActivities, []),
     safeList(listPublicExhibitions, []),
-    safeList(listPublicSupporters, []),
-    safeList(listPublicLinktrees, []),
   ]);
+};
 
-  const featuredExhibition = pickFeaturedPublicExhibition(exhibitions);
-  const recentActivities = activities.slice(0, 6);
+const getHomeSupporters = async () => {
+  "use cache";
+
+  return safeList(listPublicSupporters, []);
+};
+
+const getHomeQuickLinks = async () => {
+  "use cache";
+
+  const linktrees = await safeList(listPublicLinktrees, []);
+  return flattenLinktreeItems(linktrees).slice(0, 6);
+};
+
+const HomeSupportersSection = async () => {
+  const supporters = await getHomeSupporters();
   const highlightedSupporters = supporters.slice(0, 8);
-  const quickLinks = flattenLinktreeItems(linktrees).slice(0, 6);
+
+  return (
+    <SectionShell
+      id="sponsors"
+      eyebrow="Supporters"
+      title="연영회를 함께 만드는 후원사"
+      description="연영회의 활동과 전시를 함께 만들어주시는 파트너입니다."
+      className="bg-(--surface-elevated)"
+    >
+      <SupporterGrid
+        supporters={highlightedSupporters}
+        emptyMessage="현재 공개된 후원사 정보가 없습니다."
+        containerTestId="home-supporters-grid"
+        cardTestIdPrefix="home-supporter-card"
+      />
+    </SectionShell>
+  );
+};
+
+const HomeQuickLinksSection = async () => {
+  const quickLinks = await getHomeQuickLinks();
+
+  return (
+    <SectionShell
+      id="quick-links"
+      eyebrow="Quick Access"
+      title="자주 찾는 링크"
+      description="공식 링크와 커뮤니티 채널을 한 번에 연결합니다."
+    >
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="home-quicklinks-grid">
+        {quickLinks.length === 0 ? (
+          <div className="border border-(--surface-strong-border) bg-(--surface-elevated) p-6 text-sm text-(--text-muted)">
+            공개 링크트리 항목이 없습니다.
+          </div>
+        ) : (
+          quickLinks.map((item, index) => (
+            <MotionReveal key={item.id} delay={index * 0.04} className="min-w-0">
+              <a
+                href={item.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid={`home-quicklink-card-${item.id}`}
+                className="group block min-w-0 border border-(--surface-border) bg-(--surface-elevated) p-4 transition hover:border-(--surface-strong-border) hover:bg-(--surface-muted)"
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-(--text-muted)">
+                  {item.groupName}
+                </p>
+                <p className="mt-2 text-base font-semibold text-(--text-primary)">
+                  {item.name}
+                </p>
+                <p className="mt-1 truncate text-xs text-(--text-muted)">
+                  {item.link}
+                </p>
+              </a>
+            </MotionReveal>
+          ))
+        )}
+      </div>
+
+      <MotionReveal className="mt-8">
+        <div className="border border-(--surface-strong-border) bg-(--surface-elevated) p-6 text-center">
+          <p className="text-sm text-(--text-muted)">
+            연영회의 더 많은 전시와 활동을 아카이브에서 확인해보세요.
+          </p>
+          <Link
+            href="/archive/records"
+            data-testid="home-cta-archive-bottom"
+            className="mt-4 inline-flex border border-(--surface-strong-border) px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-(--text-primary) transition hover:bg-(--text-primary) hover:text-white"
+          >
+            아카이브 보러가기
+          </Link>
+        </div>
+      </MotionReveal>
+    </SectionShell>
+  );
+};
+
+export default async function HomePage() {
+  const [activities, exhibitions] = await getHomePrimaryData();
+
+  const recentActivities = activities.slice(0, 6);
   const siteUrl = resolveSiteUrl();
   const organizationJsonLd = {
     "@context": "https://schema.org",
@@ -41,7 +130,6 @@ export default async function HomePage() {
     name: "연영회",
     alternateName: "YonYoungHoe",
     url: siteUrl,
-    sameAs: quickLinks.map((item) => item.link),
   };
   const websiteJsonLd = {
     "@context": "https://schema.org",
@@ -65,7 +153,8 @@ export default async function HomePage() {
         }}
       />
       <HeroShowcase
-        featuredExhibition={featuredExhibition}
+        featuredExhibition={exhibitions[0] ?? null}
+        exhibitions={exhibitions}
         recentActivities={recentActivities}
       />
 
@@ -115,72 +204,36 @@ export default async function HomePage() {
         </div>
       </SectionShell>
 
-      <SectionShell
-        id="sponsors"
-        eyebrow="Supporters"
-        title="연영회를 함께 만드는 후원사"
-        description="연영회의 활동과 전시를 함께 만들어주시는 파트너입니다."
-        className="bg-(--surface-elevated)"
+      <Suspense
+        fallback={
+          <SectionShell
+            id="sponsors"
+            eyebrow="Supporters"
+            title="연영회를 함께 만드는 후원사"
+            description="연영회의 활동과 전시를 함께 만들어주시는 파트너입니다."
+            className="bg-(--surface-elevated)"
+          >
+            <div className="h-28 animate-pulse border border-(--surface-strong-border) bg-(--surface-muted)" />
+          </SectionShell>
+        }
       >
-        <SupporterGrid
-          supporters={highlightedSupporters}
-          emptyMessage="현재 공개된 후원사 정보가 없습니다."
-          containerTestId="home-supporters-grid"
-          cardTestIdPrefix="home-supporter-card"
-        />
-      </SectionShell>
+        <HomeSupportersSection />
+      </Suspense>
 
-      <SectionShell
-        id="quick-links"
-        eyebrow="Quick Access"
-        title="자주 찾는 링크"
-        description="공식 링크와 커뮤니티 채널을 한 번에 연결합니다."
+      <Suspense
+        fallback={
+          <SectionShell
+            id="quick-links"
+            eyebrow="Quick Access"
+            title="자주 찾는 링크"
+            description="공식 링크와 커뮤니티 채널을 한 번에 연결합니다."
+          >
+            <div className="h-36 animate-pulse border border-(--surface-strong-border) bg-(--surface-muted)" />
+          </SectionShell>
+        }
       >
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="home-quicklinks-grid">
-          {quickLinks.length === 0 ? (
-            <div className="border border-(--surface-strong-border) bg-(--surface-elevated) p-6 text-sm text-(--text-muted)">
-              공개 링크트리 항목이 없습니다.
-            </div>
-          ) : (
-            quickLinks.map((item, index) => (
-              <MotionReveal key={item.id} delay={index * 0.04} className="min-w-0">
-                <a
-                  href={item.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-testid={`home-quicklink-card-${item.id}`}
-                  className="group block min-w-0 border border-(--surface-border) bg-(--surface-elevated) p-4 transition hover:border-(--surface-strong-border) hover:bg-(--surface-muted)"
-                >
-                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-(--text-muted)">
-                    {item.groupName}
-                  </p>
-                  <p className="mt-2 text-base font-semibold text-(--text-primary)">
-                    {item.name}
-                  </p>
-                  <p className="mt-1 truncate text-xs text-(--text-muted)">
-                    {item.link}
-                  </p>
-                </a>
-              </MotionReveal>
-            ))
-          )}
-        </div>
-
-        <MotionReveal className="mt-8">
-          <div className="border border-(--surface-strong-border) bg-(--surface-elevated) p-6 text-center">
-            <p className="text-sm text-(--text-muted)">
-              연영회의 더 많은 전시와 활동을 아카이브에서 확인해보세요.
-            </p>
-            <Link
-              href="/archive/records"
-              data-testid="home-cta-archive-bottom"
-              className="mt-4 inline-flex border border-(--surface-strong-border) px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-(--text-primary) transition hover:bg-(--text-primary) hover:text-white"
-            >
-              아카이브 보러가기
-            </Link>
-          </div>
-        </MotionReveal>
-      </SectionShell>
+        <HomeQuickLinksSection />
+      </Suspense>
     </div>
   );
 }

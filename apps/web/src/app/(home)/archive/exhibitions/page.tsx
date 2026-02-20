@@ -13,8 +13,14 @@ export const metadata: Metadata = createPageMetadata({
   keywords: ["연영회 전시", "연영회 전시 아카이브", "대학생 사진 전시"],
 });
 
+const getArchiveExhibitions = async () => {
+  "use cache";
+
+  return safeList(listPublicExhibitions, []);
+};
+
 export default async function ArchiveExhibitionsPage() {
-  const exhibitions = await safeList(listPublicExhibitions, []);
+  const exhibitions = await getArchiveExhibitions();
 
   return (
     <div className="min-h-screen bg-white pt-[72px] md:pt-[80px]">

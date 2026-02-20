@@ -4,6 +4,10 @@ import {
   STUDENT_NUMBER_REGEX,
 } from "@repo/shared-auth/profile";
 import { API_ERROR_CODES } from "@repo/shared-api-contracts";
+import {
+  ALLOWED_IMAGE_CONTENT_TYPES,
+  UPLOAD_LIMITS,
+} from "../storage/presign";
 
 const EXAMPLE_ID = "11111111-1111-4111-8111-111111111111";
 const EXAMPLE_PARENT_ID = "22222222-2222-4222-8222-222222222222";
@@ -1017,15 +1021,17 @@ export const ApiPresignRequestSchema = z
     contentType: z
       .string()
       .min(1)
-      .refine(/** z
-      .string()
-      .min(1)
-      .refine 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param value 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (value) => value.startsWith("image/"), {
-        message: "이미지 파일만 업로드할 수 있습니다.",
-      })
       .openapi({
-        description: "파일 MIME 타입 (`image/*`만 허용)",
-        example: "image/jpeg",
+        description: "파일 MIME 타입",
+        example: ALLOWED_IMAGE_CONTENT_TYPES[0],
+      }),
+    fileSize: z
+      .number()
+      .int()
+      .positive()
+      .openapi({
+        description: `파일 크기(바이트). 단일 업로드 최대 ${UPLOAD_LIMITS.maxSinglePartBytes} bytes`,
+        example: 1024 * 1024,
       }),
   })
   .strict()
@@ -1046,7 +1052,7 @@ export const ApiPresignResponseSchema = z
       description: "업로드 후 DB에 저장할 공개 접근 URL",
       example: "https://cdn.yonyoung.example/activities/cover/cover-image.jpg",
     }),
-    requiredHeaders: z.record(z.string()).openapi({
+    requiredHeaders: z.record(z.string(), z.string()).openapi({
       description:
         "presigned URL 업로드 시 클라이언트가 그대로 전달해야 하는 헤더 목록",
       example: {
@@ -1055,6 +1061,121 @@ export const ApiPresignResponseSchema = z
     }),
   })
   .openapi("ApiPresignResponse");
+
+export const ApiMultipartUploadInitRequestSchema = z
+  .object({
+    fileName: ApiPresignRequestSchema.shape.fileName,
+    contentType: ApiPresignRequestSchema.shape.contentType,
+    fileSize: z
+      .number()
+      .int()
+      .positive()
+      .openapi({
+        description: `멀티파트 업로드 파일 크기(바이트). 최대 ${UPLOAD_LIMITS.maxMultipartBytes} bytes`,
+        example: 50 * 1024 * 1024,
+      }),
+  })
+  .strict()
+  .openapi("ApiMultipartUploadInitRequest");
+
+export const ApiMultipartUploadInitResponseSchema = z
+  .object({
+    uploadId: z.string().openapi({
+      description: "멀티파트 업로드 세션 ID",
+      example: "VXBsb2FkIElE",
+    }),
+    objectKey: ApiPresignResponseSchema.shape.objectKey,
+    publicUrl: ApiPresignResponseSchema.shape.publicUrl,
+    partSize: z.number().int().positive().openapi({
+      description: "각 파트 최소 권장 크기(바이트)",
+      example: UPLOAD_LIMITS.multipartPartSizeBytes,
+    }),
+    maxPartNumber: z.number().int().positive().openapi({
+      description: "이번 업로드에서 허용되는 최대 partNumber",
+      example: 10,
+    }),
+  })
+  .openapi("ApiMultipartUploadInitResponse");
+
+export const ApiMultipartUploadPartRequestSchema = z
+  .object({
+    uploadId: z.string().min(1).openapi({
+      description: "멀티파트 업로드 세션 ID",
+      example: "VXBsb2FkIElE",
+    }),
+    objectKey: z.string().min(1).openapi({
+      description: "업로드 대상 객체 키",
+      example: "activities/user-1/detail/1700000000000-file.jpg",
+    }),
+    partNumber: z
+      .number()
+      .int()
+      .min(1)
+      .max(UPLOAD_LIMITS.multipartMaxParts)
+      .openapi({
+        description: "업로드할 파트 번호 (1~10000)",
+        example: 1,
+      }),
+  })
+  .strict()
+  .openapi("ApiMultipartUploadPartRequest");
+
+export const ApiMultipartUploadPartResponseSchema = z
+  .object({
+    uploadUrl: z.string().url().openapi({
+      description: "해당 파트를 업로드할 presigned URL",
+      example: "https://example.r2.cloudflarestorage.com/...",
+    }),
+    requiredHeaders: z.record(z.string(), z.string()).openapi({
+      description: "파트 업로드 시 필요한 헤더",
+      example: {},
+    }),
+  })
+  .openapi("ApiMultipartUploadPartResponse");
+
+const ApiMultipartUploadedPartSchema = z
+  .object({
+    partNumber: z
+      .number()
+      .int()
+      .min(1)
+      .max(UPLOAD_LIMITS.multipartMaxParts)
+      .openapi({
+        description: "완료된 파트 번호",
+        example: 1,
+      }),
+    etag: z.string().min(1).openapi({
+      description: "각 파트 업로드 결과 ETag",
+      example: "\"9b2cf535f27731c974343645a3985328\"",
+    }),
+  })
+  .openapi("ApiMultipartUploadedPart");
+
+export const ApiMultipartUploadCompleteRequestSchema = z
+  .object({
+    uploadId: ApiMultipartUploadPartRequestSchema.shape.uploadId,
+    objectKey: ApiMultipartUploadPartRequestSchema.shape.objectKey,
+    parts: z.array(ApiMultipartUploadedPartSchema).min(1).openapi({
+      description: "업로드된 파트 목록",
+    }),
+  })
+  .strict()
+  .openapi("ApiMultipartUploadCompleteRequest");
+
+export const ApiMultipartUploadCompleteResponseSchema = z
+  .object({
+    objectKey: ApiPresignResponseSchema.shape.objectKey,
+    publicUrl: ApiPresignResponseSchema.shape.publicUrl,
+  })
+  .openapi("ApiMultipartUploadCompleteResponse");
+
+export const ApiMultipartUploadAbortRequestSchema = z
+  .object({
+    uploadId: ApiMultipartUploadPartRequestSchema.shape.uploadId,
+    objectKey: ApiMultipartUploadPartRequestSchema.shape.objectKey,
+  })
+  .strict()
+  .openapi("ApiMultipartUploadAbortRequest");
 
 export const ApiOpenApiDocumentSchema = z
   .object({

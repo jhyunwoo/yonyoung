@@ -139,6 +139,7 @@ export const createUppyPresignedUploader = (presignPath: PresignPath) => {
         const presign = await adminRequest<ApiPresignResponse>(presignPath, "POST", {
           fileName: sourceFile.name,
           contentType,
+          fileSize: sourceFile.size,
         });
         publicUrlByFileId.set(file.id, presign.publicUrl);
         const headers = resolveUploadHeaders(presign.requiredHeaders, contentType);

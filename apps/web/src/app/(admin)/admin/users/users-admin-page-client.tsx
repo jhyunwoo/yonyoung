@@ -4,7 +4,11 @@ import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
 import { PRESIGN_PATHS } from "../../../../lib/admin-api/upload";
-import type { ApiAdminUpdateUserInput, ApiGeneration, ApiUser } from "../../../../lib/admin-api/types";
+import type {
+  ApiAdminUpdateUserInput,
+  ApiGeneration,
+  ApiUser,
+} from "../../../../lib/admin-api/types";
 import { formatKoreanName } from "../../../../lib/user-name";
 import {
   ADMIN_USER_ROLE_OPTIONS,
@@ -14,7 +18,10 @@ import {
 import AdminActionButton from "../components/admin-action-button";
 import AdminConfirmModal from "../components/admin-confirm-modal";
 import AdminDrawer from "../components/admin-drawer";
-import { type AdminEntityRouteMode, buildAdminEntityRoute } from "../components/admin-entity-route";
+import {
+  type AdminEntityRouteMode,
+  buildAdminEntityRoute,
+} from "../components/admin-entity-route";
 import AdminInfoBox from "../components/admin-info-box";
 import AdminPageHeader from "../components/admin-page-header";
 import ImageInput from "../components/image-input";
@@ -66,7 +73,10 @@ const readAdminRoleLabel = (role: string | null | undefined): string => {
   return ADMIN_ROLE_LABELS[role] ?? role;
 };
 
-type RoleFilterValue = "all" | "unset" | (typeof ADMIN_USER_ROLE_OPTIONS)[number];
+type RoleFilterValue =
+  | "all"
+  | "unset"
+  | (typeof ADMIN_USER_ROLE_OPTIONS)[number];
 
 const ROLE_FILTER_OPTIONS: { value: RoleFilterValue; label: string }[] = [
   { value: "all", label: "전체 권한" },
@@ -117,7 +127,9 @@ const resolveUsersData = (
   generationSortOrder: number | null,
 ): ResolvedUsersData => {
   const scopedGeneration = generationScoped
-    ? generationList.find((generation) => generation.sortOrder === generationSortOrder) ?? null
+    ? (generationList.find(
+        (generation) => generation.sortOrder === generationSortOrder,
+      ) ?? null)
     : null;
 
   const visibleGenerations = generationScoped
@@ -128,7 +140,9 @@ const resolveUsersData = (
 
   const visibleUsers =
     generationScoped && scopedGeneration
-      ? users.filter((user) => readUserGenerationIds(user).includes(scopedGeneration.id))
+      ? users.filter((user) =>
+          readUserGenerationIds(user).includes(scopedGeneration.id),
+        )
       : generationScoped
         ? []
         : users;
@@ -159,13 +173,16 @@ export default function UsersAdminPageClient({
       )
     : null;
 
-  const [items, setItems] = useState<ApiUser[]>(initialResolvedData?.visibleUsers ?? []);
+  const [items, setItems] = useState<ApiUser[]>(
+    initialResolvedData?.visibleUsers ?? [],
+  );
   const [generations, setGenerations] = useState<ApiGeneration[]>(
     initialResolvedData?.visibleGenerations ?? [],
   );
-  const [scopedGeneration, setScopedGeneration] = useState<ApiGeneration | null>(
-    initialResolvedData?.scopedGeneration ?? null,
-  );
+  const [scopedGeneration, setScopedGeneration] =
+    useState<ApiGeneration | null>(
+      initialResolvedData?.scopedGeneration ?? null,
+    );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedDetail, setSelectedDetail] = useState<ApiUser | null>(null);
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
@@ -176,7 +193,9 @@ export default function UsersAdminPageClient({
   const [generationFilter, setGenerationFilter] = useState<string>("all");
   const [bulkRole, setBulkRole] = useState<string>("regular_member");
   const [editForm, setEditForm] = useState<UserFormState>(emptyForm);
-  const imageUpload = useImmediateImageUpload({ presignPath: PRESIGN_PATHS.userProfile });
+  const imageUpload = useImmediateImageUpload({
+    presignPath: PRESIGN_PATHS.userProfile,
+  });
 
   const [isLoading, setIsLoading] = useState(() => !initialData);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
@@ -190,9 +209,15 @@ export default function UsersAdminPageClient({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const detailRequestSequenceRef = useRef(0);
   const isDetailRoute = routeMode === "detail";
+  const isStandaloneRoute = routeMode === "detail" || routeMode === "edit";
 
-  const scopedGenerationId = generationScoped ? scopedGeneration?.id ?? null : null;
-  const selectedIdSet = useMemo(() => toSelectionSet(selectedIds), [selectedIds]);
+  const scopedGenerationId = generationScoped
+    ? (scopedGeneration?.id ?? null)
+    : null;
+  const selectedIdSet = useMemo(
+    () => toSelectionSet(selectedIds),
+    [selectedIds],
+  );
   const selectedUsers = useMemo(
     () => items.filter((item) => selectedIdSet.has(item.id)),
     [items, selectedIdSet],
@@ -212,7 +237,10 @@ export default function UsersAdminPageClient({
       return "없음";
     }
     return generationIds
-      .map((generationId) => generationLabelById.get(generationId) ?? "미확인 기수")
+      .map(
+        (generationId) =>
+          generationLabelById.get(generationId) ?? "미확인 기수",
+      )
       .join(", ");
   };
 
@@ -233,7 +261,11 @@ export default function UsersAdminPageClient({
 
       const targetGenerationFilter =
         scopedGenerationId ??
-        (generationFilter === "all" ? null : generationFilter === "unassigned" ? "unassigned" : generationFilter);
+        (generationFilter === "all"
+          ? null
+          : generationFilter === "unassigned"
+            ? "unassigned"
+            : generationFilter);
       const itemGenerationIds = readUserGenerationIds(item);
       if (targetGenerationFilter) {
         if (targetGenerationFilter === "unassigned") {
@@ -265,7 +297,8 @@ export default function UsersAdminPageClient({
   }, [generationFilter, items, roleFilter, scopedGenerationId, searchQuery]);
 
   const allVisibleSelected =
-    filteredItems.length > 0 && filteredItems.every((item) => selectedIdSet.has(item.id));
+    filteredItems.length > 0 &&
+    filteredItems.every((item) => selectedIdSet.has(item.id));
 
   const syncForm = (user: ApiUser | null) => {
     if (!user) {
@@ -328,12 +361,13 @@ export default function UsersAdminPageClient({
     generationList: ApiGeneration[],
     preferredSelectedId?: string | null,
   ) => {
-    const { scopedGeneration, visibleGenerations, visibleUsers } = resolveUsersData(
-      users,
-      generationList,
-      generationScoped,
-      generationSortOrder,
-    );
+    const { scopedGeneration, visibleGenerations, visibleUsers } =
+      resolveUsersData(
+        users,
+        generationList,
+        generationScoped,
+        generationSortOrder,
+      );
 
     setScopedGeneration(scopedGeneration);
     setItems(visibleUsers);
@@ -377,7 +411,8 @@ export default function UsersAdminPageClient({
     if (inlineDetailMode) {
       const targetExpandedId =
         preferredSelectedId ??
-        (expandedUserId && visibleUsers.some((user) => user.id === expandedUserId)
+        (expandedUserId &&
+        visibleUsers.some((user) => user.id === expandedUserId)
           ? expandedUserId
           : null);
       if (!targetExpandedId) {
@@ -417,9 +452,11 @@ export default function UsersAdminPageClient({
       setIsLoading(true);
       setErrorMessage(null);
 
-      void applyLoadedData(initialData.users, initialData.generations).finally(() => {
-        setIsLoading(false);
-      });
+      void applyLoadedData(initialData.users, initialData.generations).finally(
+        () => {
+          setIsLoading(false);
+        },
+      );
       return;
     }
 
@@ -435,7 +472,9 @@ export default function UsersAdminPageClient({
     if (routeMode === "detail" || routeMode === "edit") {
       const target = items.find((user) => user.id === routeId) ?? null;
       if (!target) {
-        router.replace(buildAdminEntityRoute(basePath, "list"), { scroll: false });
+        router.replace(buildAdminEntityRoute(basePath, "list"), {
+          scroll: false,
+        });
         return;
       }
 
@@ -449,7 +488,16 @@ export default function UsersAdminPageClient({
       setPanelOpen(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeMode, routeId, isLoading, items, selectedId, panelOpen, router, basePath]);
+  }, [
+    routeMode,
+    routeId,
+    isLoading,
+    items,
+    selectedId,
+    panelOpen,
+    router,
+    basePath,
+  ]);
 
   const toggleSelection = (userId: string) => {
     setSelectedIds((previous) => {
@@ -500,10 +548,21 @@ export default function UsersAdminPageClient({
     setPanelOpen(true);
     setErrorMessage(null);
     setSuccessMessage(null);
-    await loadUserDetail(user.id);
     if (navigate) {
-      router.push(buildAdminEntityRoute(basePath, "detail", user.id), { scroll: false });
+      router.push(buildAdminEntityRoute(basePath, "detail", user.id), {
+        scroll: false,
+      });
     }
+    await loadUserDetail(user.id);
+  };
+
+  const handleNavigateBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false });
   };
 
   const handleCardSelect = async (user: ApiUser) => {
@@ -547,7 +606,12 @@ export default function UsersAdminPageClient({
 
     try {
       const generationIdsForPayload = scopedGenerationId
-        ? Array.from(new Set([...readUserGenerationIds(selectedDetail), scopedGenerationId]))
+        ? Array.from(
+            new Set([
+              ...readUserGenerationIds(selectedDetail),
+              scopedGenerationId,
+            ]),
+          )
         : editForm.generationIds;
 
       const payload: ApiAdminUpdateUserInput = {
@@ -567,9 +631,12 @@ export default function UsersAdminPageClient({
       setSuccessMessage("사용자 정보를 수정했습니다.");
       await loadData(selectedDetail.id);
       if (routeMode === "edit") {
-        router.replace(buildAdminEntityRoute(basePath, "detail", selectedDetail.id), {
-          scroll: false,
-        });
+        router.replace(
+          buildAdminEntityRoute(basePath, "detail", selectedDetail.id),
+          {
+            scroll: false,
+          },
+        );
       }
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
@@ -594,9 +661,13 @@ export default function UsersAdminPageClient({
       setDeleteModalOpen(false);
       setExpandedUserId(null);
       setPanelOpen(false);
-      setSelectedIds((previous) => previous.filter((id) => id !== selectedDetail.id));
+      setSelectedIds((previous) =>
+        previous.filter((id) => id !== selectedDetail.id),
+      );
       await loadData();
-      router.replace(buildAdminEntityRoute(basePath, "list"), { scroll: false });
+      router.replace(buildAdminEntityRoute(basePath, "list"), {
+        scroll: false,
+      });
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -648,7 +719,9 @@ export default function UsersAdminPageClient({
       const results = await Promise.allSettled(
         targetIds.map((id) => adminResourceApi.deleteUser(id)),
       );
-      const successCount = results.filter((result) => result.status === "fulfilled").length;
+      const successCount = results.filter(
+        (result) => result.status === "fulfilled",
+      ).length;
       const failureCount = results.length - successCount;
 
       setBulkDeleteModalOpen(false);
@@ -679,7 +752,9 @@ export default function UsersAdminPageClient({
         className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4"
         data-testid="user-detail-card"
       >
-        <h3 className="mb-2 text-sm font-semibold text-gray-900">선택 사용자 상세 정보</h3>
+        <h3 className="mb-2 text-sm font-semibold text-gray-900">
+          선택 사용자 상세 정보
+        </h3>
         {isDetailLoading ? (
           <p className="text-sm text-gray-500">불러오는 중...</p>
         ) : selectedDetail ? (
@@ -688,8 +763,14 @@ export default function UsersAdminPageClient({
             <p>표시 이름: {formatKoreanName(selectedDetail)}</p>
             <p>이메일: {selectedDetail.email}</p>
             <p>권한: {readAdminRoleLabel(selectedDetail.role)}</p>
-            <p>성/이름: {(selectedDetail.familyName ?? "-")}/{(selectedDetail.givenName ?? "-")}</p>
-            <p>대학/학과: {(selectedDetail.college ?? "-")}/{(selectedDetail.department ?? "-")}</p>
+            <p>
+              성/이름: {selectedDetail.familyName ?? "-"}/
+              {selectedDetail.givenName ?? "-"}
+            </p>
+            <p>
+              대학/학과: {selectedDetail.college ?? "-"}/
+              {selectedDetail.department ?? "-"}
+            </p>
             <p>학번: {selectedDetail.studentNumber ?? "-"}</p>
             <p>전화번호: {selectedDetail.phoneNumber ?? "-"}</p>
             <p>소속 기수: {readGenerationSummary(selectedDetail)}</p>
@@ -701,7 +782,11 @@ export default function UsersAdminPageClient({
         )}
       </div>
 
-      <form onSubmit={handleUpdate} className="space-y-3" data-testid="user-edit-form">
+      <form
+        onSubmit={handleUpdate}
+        className="space-y-3"
+        data-testid="user-edit-form"
+      >
         {selectedDetail ? (
           <>
             <label className="block text-sm">
@@ -710,7 +795,10 @@ export default function UsersAdminPageClient({
                 type="text"
                 value={editForm.name}
                 onChange={(event) =>
-                  setEditForm((previous) => ({ ...previous, name: event.target.value }))
+                  setEditForm((previous) => ({
+                    ...previous,
+                    name: event.target.value,
+                  }))
                 }
                 className="w-full rounded-md border border-gray-300 px-3 py-2"
                 required
@@ -826,7 +914,10 @@ export default function UsersAdminPageClient({
               <select
                 value={editForm.role}
                 onChange={(event) =>
-                  setEditForm((previous) => ({ ...previous, role: event.target.value }))
+                  setEditForm((previous) => ({
+                    ...previous,
+                    role: event.target.value,
+                  }))
                 }
                 className="w-full rounded-md border border-gray-300 px-3 py-2"
                 required
@@ -855,7 +946,9 @@ export default function UsersAdminPageClient({
                   data-testid="user-edit-generation-id"
                 >
                   {generations.length === 0 ? (
-                    <p className="text-xs text-gray-500">등록된 기수가 없습니다.</p>
+                    <p className="text-xs text-gray-500">
+                      등록된 기수가 없습니다.
+                    </p>
                   ) : null}
                   {generations.map((generation) => (
                     <label
@@ -900,7 +993,11 @@ export default function UsersAdminPageClient({
             <div className="mt-2 flex gap-2">
               <AdminActionButton
                 type="submit"
-                disabled={isSubmitting || imageUpload.isUploading || imageUpload.hasUploadError}
+                disabled={
+                  isSubmitting ||
+                  imageUpload.isUploading ||
+                  imageUpload.hasUploadError
+                }
                 testId="user-edit-submit"
               >
                 수정 저장
@@ -922,7 +1019,9 @@ export default function UsersAdminPageClient({
             </div>
           </>
         ) : (
-          <p className="text-sm text-gray-500">수정할 사용자를 선택해 주세요.</p>
+          <p className="text-sm text-gray-500">
+            수정할 사용자를 선택해 주세요.
+          </p>
         )}
       </form>
     </>
@@ -935,28 +1034,46 @@ export default function UsersAdminPageClient({
         description="가입한 사용자 정보를 조회하고 권한/소속을 관리하는 화면입니다."
         guidance="목록에서 사용자를 선택해 상세 페이지로 이동한 뒤 수정 페이지에서 편집하세요. 검색/필터/다중 선택으로 일괄 작업할 수 있습니다."
       >
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => void loadData()}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-            data-testid="users-reload-button"
-          >
-            새로고침
-          </button>
-          {generationScoped ? (
-            <p className="text-xs text-gray-500" data-testid="users-scoped-generation">
-              {scopedGeneration
-                ? `현재 기수: ${scopedGeneration.sortOrder}기 (${scopedGeneration.name})`
-                : "현재 기수를 확인하는 중..."}
-            </p>
-          ) : null}
-        </div>
+        {isStandaloneRoute ? (
+          <div className="mt-3 flex items-center">
+            <AdminActionButton
+              variant="ghost"
+              onClick={handleNavigateBack}
+              testId="user-route-back"
+            >
+              ← 이전 페이지
+            </AdminActionButton>
+          </div>
+        ) : (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void loadData()}
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+              data-testid="users-reload-button"
+            >
+              새로고침
+            </button>
+            {generationScoped ? (
+              <p
+                className="text-xs text-gray-500"
+                data-testid="users-scoped-generation"
+              >
+                {scopedGeneration
+                  ? `현재 기수: ${scopedGeneration.sortOrder}기 (${scopedGeneration.name})`
+                  : "현재 기수를 확인하는 중..."}
+              </p>
+            ) : null}
+          </div>
+        )}
       </AdminPageHeader>
 
-      <AdminInfoBox title="작업 안내">
-        프로필 이미지는 파일 선택 즉시 업로드됩니다. 업로드가 끝난 뒤 저장하면 사용자 정보에 반영됩니다.
-      </AdminInfoBox>
+      {!isStandaloneRoute ? (
+        <AdminInfoBox title="작업 안내">
+          프로필 이미지는 파일 선택 즉시 업로드됩니다. 업로드가 끝난 뒤 저장하면
+          사용자 정보에 반영됩니다.
+        </AdminInfoBox>
+      ) : null}
 
       {errorMessage ? (
         <p
@@ -976,186 +1093,214 @@ export default function UsersAdminPageClient({
         </p>
       ) : null}
 
-      <section className="space-y-3 rounded-lg border border-gray-200 bg-white p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold">사용자 목록</h2>
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="이름/이메일/학번 검색"
-            className="w-full max-w-xs rounded-md border border-gray-300 px-3 py-2 text-sm"
-            data-testid="user-search-input"
-          />
-        </div>
+      {!isStandaloneRoute ? (
+        <section className="space-y-3 rounded-lg border border-gray-200 bg-white p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold">사용자 목록</h2>
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="이름/이메일/학번 검색"
+              className="w-full max-w-xs rounded-md border border-gray-300 px-3 py-2 text-sm"
+              data-testid="user-search-input"
+            />
+          </div>
 
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          <label className="block text-sm">
-            <span className="mb-1 block text-gray-600">권한 필터</span>
-            <select
-              value={roleFilter}
-              onChange={(event) => setRoleFilter(event.target.value as RoleFilterValue)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2"
-              data-testid="user-role-filter"
-            >
-              {ROLE_FILTER_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          {scopedGenerationId ? (
-            <div
-              className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
-              data-testid="user-generation-filter-scoped"
-            >
-              기수 필터는 현재 선택 기수로 고정됩니다.
-            </div>
-          ) : (
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             <label className="block text-sm">
-              <span className="mb-1 block text-gray-600">기수 필터</span>
+              <span className="mb-1 block text-gray-600">권한 필터</span>
               <select
-                value={generationFilter}
-                onChange={(event) => setGenerationFilter(event.target.value)}
+                value={roleFilter}
+                onChange={(event) =>
+                  setRoleFilter(event.target.value as RoleFilterValue)
+                }
                 className="w-full rounded-md border border-gray-300 px-3 py-2"
-                data-testid="user-generation-filter"
+                data-testid="user-role-filter"
               >
-                <option value="all">전체 기수</option>
-                <option value="unassigned">미배정</option>
-                {generations.map((generation) => (
-                  <option key={generation.id} value={generation.id}>
-                    {generation.sortOrder}기 ({generation.name})
+                {ROLE_FILTER_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
                   </option>
                 ))}
               </select>
             </label>
-          )}
-        </div>
 
-        <div className="rounded-md border border-gray-200 bg-gray-50 p-3">
-          <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">
-            <p data-testid="user-selected-count">선택된 사용자: {selectedIds.length}명</p>
-            <div className="inline-flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => handleToggleSelectAllVisible(true)}
-                disabled={allVisibleSelected || filteredItems.length === 0}
-                className="rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                data-testid="user-select-all-visible"
+            {scopedGenerationId ? (
+              <div
+                className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+                data-testid="user-generation-filter-scoped"
               >
-                현재 목록 전체 선택
-              </button>
-              <button
-                type="button"
-                onClick={() => handleToggleSelectAllVisible(false)}
-                disabled={selectedIds.length === 0}
-                className="rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                data-testid="user-clear-selection"
+                기수 필터는 현재 선택 기수로 고정됩니다.
+              </div>
+            ) : (
+              <label className="block text-sm">
+                <span className="mb-1 block text-gray-600">기수 필터</span>
+                <select
+                  value={generationFilter}
+                  onChange={(event) => setGenerationFilter(event.target.value)}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  data-testid="user-generation-filter"
+                >
+                  <option value="all">전체 기수</option>
+                  <option value="unassigned">미배정</option>
+                  {generations.map((generation) => (
+                    <option key={generation.id} value={generation.id}>
+                      {generation.sortOrder}기 ({generation.name})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </div>
+
+          <div className="rounded-md border border-gray-200 bg-gray-50 p-3">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">
+              <p data-testid="user-selected-count">
+                선택된 사용자: {selectedIds.length}명
+              </p>
+              <div className="inline-flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleToggleSelectAllVisible(true)}
+                  disabled={allVisibleSelected || filteredItems.length === 0}
+                  className="rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  data-testid="user-select-all-visible"
+                >
+                  현재 목록 전체 선택
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleToggleSelectAllVisible(false)}
+                  disabled={selectedIds.length === 0}
+                  className="rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  data-testid="user-clear-selection"
+                >
+                  전체 선택 해제
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={bulkRole}
+                onChange={(event) => setBulkRole(event.target.value)}
+                className="min-w-48 rounded-md border border-gray-300 px-3 py-2 text-sm"
+                data-testid="user-bulk-role"
               >
-                전체 선택 해제
-              </button>
+                {ADMIN_USER_ROLE_OPTIONS.map((role) => (
+                  <option key={role} value={role}>
+                    {readAdminRoleLabel(role)}
+                  </option>
+                ))}
+              </select>
+              <AdminActionButton
+                onClick={() => void handleBulkRoleUpdate()}
+                loading={activeSubmitAction === "bulk-role"}
+                disabled={
+                  isSubmitting ||
+                  selectedIds.length === 0 ||
+                  !isAllowedAdminRole(bulkRole)
+                }
+                loadingText="일괄 권한 변경 중..."
+                testId="user-bulk-role-submit"
+              >
+                선택 사용자 권한 변경
+              </AdminActionButton>
+              <AdminActionButton
+                variant="danger"
+                onClick={() => {
+                  if (!isSubmitting && selectedIds.length > 0) {
+                    setBulkDeleteModalOpen(true);
+                  }
+                }}
+                disabled={isSubmitting || selectedIds.length === 0}
+                testId="user-bulk-delete-button"
+              >
+                선택 사용자 삭제
+              </AdminActionButton>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <select
-              value={bulkRole}
-              onChange={(event) => setBulkRole(event.target.value)}
-              className="min-w-48 rounded-md border border-gray-300 px-3 py-2 text-sm"
-              data-testid="user-bulk-role"
+          {isLoading ? (
+            <p className="text-sm text-gray-500">불러오는 중...</p>
+          ) : filteredItems.length === 0 ? (
+            <p className="text-sm text-gray-500">
+              {items.length === 0
+                ? "표시할 사용자가 없습니다."
+                : "검색/필터 조건에 맞는 사용자가 없습니다."}
+            </p>
+          ) : (
+            <ul
+              className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"
+              data-testid="users-list"
             >
-              {ADMIN_USER_ROLE_OPTIONS.map((role) => (
-                <option key={role} value={role}>
-                  {readAdminRoleLabel(role)}
-                </option>
-              ))}
-            </select>
-            <AdminActionButton
-              onClick={() => void handleBulkRoleUpdate()}
-              loading={activeSubmitAction === "bulk-role"}
-              disabled={isSubmitting || selectedIds.length === 0 || !isAllowedAdminRole(bulkRole)}
-              loadingText="일괄 권한 변경 중..."
-              testId="user-bulk-role-submit"
-            >
-              선택 사용자 권한 변경
-            </AdminActionButton>
-            <AdminActionButton
-              variant="danger"
-              onClick={() => {
-                if (!isSubmitting && selectedIds.length > 0) {
-                  setBulkDeleteModalOpen(true);
-                }
-              }}
-              disabled={isSubmitting || selectedIds.length === 0}
-              testId="user-bulk-delete-button"
-            >
-              선택 사용자 삭제
-            </AdminActionButton>
-          </div>
-        </div>
-
-        {isLoading ? (
-          <p className="text-sm text-gray-500">불러오는 중...</p>
-        ) : filteredItems.length === 0 ? (
-          <p className="text-sm text-gray-500">
-            {items.length === 0
-              ? "표시할 사용자가 없습니다."
-              : "검색/필터 조건에 맞는 사용자가 없습니다."}
-          </p>
-        ) : (
-          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" data-testid="users-list">
-            {filteredItems.map((item) => (
-              <li
-                key={item.id}
-                className={`rounded-md border p-3 ${
-                  selectedIdSet.has(item.id)
-                    ? "border-[var(--admin-accent-strong)] bg-[var(--admin-surface-subtle)]"
-                    : "border-gray-200"
-                } cursor-pointer`}
-                data-testid={`user-row-${item.id}`}
-                onClick={() => void handleCardSelect(item)}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="min-w-0 flex-1 text-left" data-testid={`user-select-${item.id}`}>
-                    <p className="font-medium">
-                      {formatKoreanName(item)}
-                      {selectedIdSet.has(item.id) ? (
-                        <span className="ml-2 text-xs font-normal text-[var(--admin-accent)]">
-                          선택됨
-                        </span>
-                      ) : null}
-                    </p>
-                    <p className="text-xs text-gray-500">{item.email}</p>
-                    <p className="text-xs text-gray-500">
-                      권한: {readAdminRoleLabel(item.role)}
-                    </p>
-                  </div>
-                  {inlineDetailMode ? (
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        void handleToggleInlineDetail(item);
-                      }}
-                      className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                      data-testid={`user-inline-toggle-${item.id}`}
+              {filteredItems.map((item) => (
+                <li
+                  key={item.id}
+                  className={`rounded-md border p-3 ${
+                    selectedIdSet.has(item.id)
+                      ? "border-[var(--admin-accent-strong)] bg-[var(--admin-surface-subtle)]"
+                      : "border-gray-200"
+                  } cursor-pointer`}
+                  data-testid={`user-row-${item.id}`}
+                  onClick={() => void handleCardSelect(item)}
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className="min-w-0 flex-1 text-left"
+                      data-testid={`user-select-${item.id}`}
                     >
-                      {expandedUserId === item.id ? "상세 닫기" : "상세 보기"}
-                    </button>
-                  ) : null}
-                </div>
-                {inlineDetailMode && expandedUserId === item.id ? (
-                  <div className="mt-3 rounded-lg border border-gray-200 bg-white p-4">
-                    {renderUserEditor()}
+                      <p className="font-medium">
+                        {formatKoreanName(item)}
+                        {selectedIdSet.has(item.id) ? (
+                          <span className="ml-2 text-xs font-normal text-[var(--admin-accent)]">
+                            선택됨
+                          </span>
+                        ) : null}
+                      </p>
+                      <p className="text-xs text-gray-500">{item.email}</p>
+                      <p className="text-xs text-gray-500">
+                        권한: {readAdminRoleLabel(item.role)}
+                      </p>
+                    </div>
+                    {inlineDetailMode ? (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          void handleToggleInlineDetail(item);
+                        }}
+                        className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                        data-testid={`user-inline-toggle-${item.id}`}
+                      >
+                        {expandedUserId === item.id ? "상세 닫기" : "상세 보기"}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          void handleSelect(item);
+                        }}
+                        className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-100"
+                        data-testid={`user-open-detail-${item.id}`}
+                      >
+                        수정
+                      </button>
+                    )}
                   </div>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+                  {inlineDetailMode && expandedUserId === item.id ? (
+                    <div className="mt-3 rounded-lg border border-gray-200 bg-white p-4">
+                      {renderUserEditor()}
+                    </div>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
 
       <AdminDrawer
         open={panelOpen}
@@ -1170,15 +1315,40 @@ export default function UsersAdminPageClient({
         onClose={() => {
           if (!isSubmitting) {
             setPanelOpen(false);
-            router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false });
+            router.push(buildAdminEntityRoute(basePath, "list"), {
+              scroll: false,
+            });
           }
         }}
         testId="user-drawer"
         variant="page"
+        showCloseButton={!isStandaloneRoute}
       >
         {isDetailRoute ? (
           <div className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {selectedDetail ? (
+                <AdminActionButton
+                  onClick={() =>
+                    router.push(
+                      buildAdminEntityRoute(
+                        basePath,
+                        "edit",
+                        selectedDetail.id,
+                      ),
+                      {
+                        scroll: false,
+                      },
+                    )
+                  }
+                  testId="user-open-edit"
+                >
+                  수정 페이지로 이동
+                </AdminActionButton>
+              ) : null}
+            </div>
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <div data-testid="user-detail-card">
               {isDetailLoading ? (
                 <p className="text-sm text-gray-500">불러오는 중...</p>
               ) : selectedDetail ? (
@@ -1189,29 +1359,11 @@ export default function UsersAdminPageClient({
                   <p>소속 기수: {readGenerationSummary(selectedDetail)}</p>
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">사용자 정보를 찾을 수 없습니다.</p>
+                <p className="text-sm text-gray-500">
+                  사용자 정보를 찾을 수 없습니다.
+                </p>
               )}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {selectedDetail ? (
-                <AdminActionButton
-                  onClick={() =>
-                    router.push(buildAdminEntityRoute(basePath, "edit", selectedDetail.id), {
-                      scroll: false,
-                    })
-                  }
-                  testId="user-open-edit"
-                >
-                  수정 페이지로 이동
-                </AdminActionButton>
-              ) : null}
-              <AdminActionButton
-                variant="ghost"
-                onClick={() => router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false })}
-                testId="user-back-list"
-              >
-                목록으로
-              </AdminActionButton>
+              </div>
             </div>
           </div>
         ) : (

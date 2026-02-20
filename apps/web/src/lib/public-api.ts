@@ -54,13 +54,6 @@ const resolvePublicApiBaseUrl = (): string =>
 const resolvePublicApiUrl = (path: string): string =>
   `${resolvePublicApiBaseUrl()}${normalizePath(path)}`;
 
-const addCacheBuster = (url: string): string => {
-  const cacheBuster = `_e2e=${Date.now().toString(36)}${Math.random()
-    .toString(36)
-    .slice(2, 8)}`;
-  return `${url}${url.includes("?") ? "&" : "?"}${cacheBuster}`;
-};
-
 const parseEnvelope = <T>(value: unknown): T => {
   if (!isRecord(value) || !("data" in value)) {
     throw new Error("공개 API 응답 형식이 올바르지 않습니다.");
@@ -86,9 +79,7 @@ const publicGet = async <T>(
       } as const);
 
   try {
-    const targetUrl = IS_E2E_MODE
-      ? addCacheBuster(resolvePublicApiUrl(path))
-      : resolvePublicApiUrl(path);
+    const targetUrl = resolvePublicApiUrl(path);
 
     const response = await fetch(targetUrl, {
       method: "GET",

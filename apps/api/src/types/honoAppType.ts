@@ -5,6 +5,7 @@ export type AppBindings = CloudflareBindings & {
   BETTER_AUTH_URL?: string;
   BETTER_AUTH_TRUSTED_ORIGINS?: string;
   BETTER_AUTH_SECRET?: string;
+  BETTER_AUTH_EMAIL_AND_PASSWORD_ENABLED?: string;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
   R2_S3_ENDPOINT?: string;
@@ -19,6 +20,8 @@ type HonoAppType = {
   Bindings: AppBindings;
   Variables: {
     actor: Actor | null;
+    requestId: string;
+    startedAt: number;
   };
 };
 

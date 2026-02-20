@@ -16,7 +16,8 @@ export const requireActor = async (
   c: Context<HonoAppType>,
   dependencies: AppDependencies,
 ): Promise<{ actor: Actor } | { response: Response }> => {
-  const actor = await dependencies.resolveActor(c);
+  const existingActor = c.get("actor");
+  const actor = existingActor ?? (await dependencies.resolveActor(c));
   if (!actor) {
     return { response: unauthorized(c) };
   }

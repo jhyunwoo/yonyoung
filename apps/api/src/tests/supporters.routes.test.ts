@@ -127,9 +127,11 @@ describe("supporter routes", /** describe 실행 과정에서 필요한 연산�
       });
 
       expect(deleteMock).toHaveBeenCalledTimes(1);
-      const [request] = deleteMock.mock.calls[0] ?? [];
+      const firstCall = deleteMock.mock.calls[0];
+      expect(firstCall).toBeDefined();
+      const [request] = firstCall as unknown as [Request];
       expect(request).toBeInstanceOf(Request);
-      expect((request as Request).url).toContain("/api/public/supporters");
+      expect(request.url).toContain("/api/public/supporters");
     } finally {
       (globalThis as { caches?: unknown }).caches = originalCaches;
     }

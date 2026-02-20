@@ -31,7 +31,9 @@ describe("adminRequest", /** describe 실행 과정에서 필요한 연산을 �
     expect(result).toEqual([{ id: "g1" }]);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const firstCall = fetchMock.mock.calls[0];
+    expect(firstCall).toBeDefined();
+    const [url, options] = firstCall as unknown as [string, RequestInit];
     expect(url).toBe("http://api.example.com/api/generations");
     expect(options.method).toBe("GET");
     expect(options.credentials).toBe("include");
@@ -54,7 +56,9 @@ describe("adminRequest", /** describe 실행 과정에서 필요한 연산을 �
     });
     expect(result).toEqual({ ok: true });
 
-    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const firstCall = fetchMock.mock.calls[0];
+    expect(firstCall).toBeDefined();
+    const [url, options] = firstCall as unknown as [string, RequestInit];
     expect(url).toBe("http://api.example.com/api/linktree");
     expect(options.method).toBe("POST");
     expect(options.body).toBe(JSON.stringify({ name: "new-linktree" }));

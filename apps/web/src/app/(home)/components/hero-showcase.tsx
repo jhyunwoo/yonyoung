@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   motion,
   useReducedMotion,
@@ -12,9 +12,11 @@ import {
 import type { ApiActivity, ApiExhibition } from "../../../lib/admin-api/types";
 import { formatKoreanDateRange } from "../../../lib/date-formatters";
 import { shouldUseUnoptimizedImage } from "../../../lib/image-utils";
+import { pickFeaturedPublicExhibition } from "../../../lib/public-exhibition";
 
 type HeroShowcaseProps = {
   featuredExhibition: ApiExhibition | null;
+  exhibitions: ApiExhibition[];
   recentActivities: ApiActivity[];
 };
 
@@ -26,9 +28,12 @@ type HeroShowcaseProps = {
  */
 export default function HeroShowcase({
   featuredExhibition,
+  exhibitions,
   recentActivities,
 }: HeroShowcaseProps) {
   const rootRef = useRef<HTMLElement | null>(null);
+  const [resolvedFeaturedExhibition, setResolvedFeaturedExhibition] =
+    useState<ApiExhibition | null>(featuredExhibition);
   const shouldReduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({
     target: rootRef,
@@ -37,6 +42,10 @@ export default function HeroShowcase({
   const textOffset = useTransform(scrollYProgress, [0, 1], [0, -80]);
   const imageOffset = useTransform(scrollYProgress, [0, 1], [0, 110]);
   const firstActivity = recentActivities[0];
+
+  useEffect(() => {
+    setResolvedFeaturedExhibition(pickFeaturedPublicExhibition(exhibitions));
+  }, [exhibitions]);
 
   return (
     <section
@@ -84,13 +93,13 @@ export default function HeroShowcase({
             className="overflow-hidden border border-(--surface-strong-border) bg-(--surface-elevated)"
           >
             <div className="relative aspect-[4/3]">
-              {featuredExhibition ? (
+              {resolvedFeaturedExhibition ? (
                 <Image
-                  src={featuredExhibition.coverImageUrl}
-                  alt={featuredExhibition.title}
+                  src={resolvedFeaturedExhibition.coverImageUrl}
+                  alt={resolvedFeaturedExhibition.title}
                   fill
                   unoptimized={shouldUseUnoptimizedImage(
-                    featuredExhibition.coverImageUrl,
+                    resolvedFeaturedExhibition.coverImageUrl,
                   )}
                   sizes="(min-width: 768px) 40vw, 100vw"
                   className="h-full w-full object-cover"
@@ -112,15 +121,15 @@ export default function HeroShowcase({
                 Latest Exhibition
               </p>
               <h2 className="text-[1.7rem] tracking-[-0.02em] text-(--text-primary)">
-                {featuredExhibition?.title ?? "준비 중"}
+                {resolvedFeaturedExhibition?.title ?? "준비 중"}
               </h2>
-              {featuredExhibition ? (
+              {resolvedFeaturedExhibition ? (
                 <p className="text-sm text-(--text-muted)">
                   {formatKoreanDateRange(
-                    featuredExhibition.startDate,
-                    featuredExhibition.endDate,
+                    resolvedFeaturedExhibition.startDate,
+                    resolvedFeaturedExhibition.endDate,
                   )}{" "}
-                  · {featuredExhibition.place}
+                  · {resolvedFeaturedExhibition.place}
                 </p>
               ) : null}
             </div>

@@ -1,0 +1,50 @@
+{
+  "shared": {
+    "files": [],
+    "baselineBytes": 522844,
+    "maxRegressionPercent": 10
+  },
+  "routes": [
+    {
+      "name": "home",
+      "routeKeyCandidates": [
+        "/",
+        "/(home)/page"
+      ],
+      "baselineBytes": 739767,
+      "maxRegressionPercent": 10
+    },
+    {
+      "name": "archive-records",
+      "routeKeyCandidates": [
+        "/archive/records",
+        "/(home)/archive/records/page"
+      ],
+      "baselineBytes": 595798,
+      "maxRegressionPercent": 10
+    },
+    {
+      "name": "archive-exhibitions",
+      "routeKeyCandidates": [
+        "/archive/exhibitions",
+        "/(home)/archive/exhibitions/page"
+      ],
+      "baselineBytes": 595798,
+      "maxRegressionPercent": 10
+    },
+    {
+      "name": "about",
+      "routeKeyCandidates": [
+        "/about",
+        "/(home)/about/page"
+      ],
+      "baselineBytes": 595798,
+      "maxRegressionPercent": 10
+    }
+  ],
+  "thirdParty": {
+    "maxCount": 0,
+    "maxBytes": 0,
+    "approvedHosts": []
+  }
+}

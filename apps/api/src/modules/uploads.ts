@@ -1,59 +1,184 @@
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-import HonoAppType from "../types/honoAppType";
-import { badRequest, forbidden, internalError, ok } from "../lib/http/response";
+import type HonoAppType from "../types/honoAppType";
+import {
+  badRequest,
+  forbidden,
+  internalError,
+  noContent,
+  ok,
+  payloadTooLarge,
+  unprocessableEntity,
+  unsupportedMediaType,
+} from "../lib/http/response";
 import { parseBody } from "../lib/validation/request";
-import { AppDependencies } from "../lib/services/dependencies";
+import type { AppDependencies } from "../lib/services/dependencies";
 import { requireActor } from "../lib/http/authz";
 import { can, isMemberLikeRole } from "../lib/authorization/policy";
-import { Resource } from "../lib/authorization/types";
+import type { Actor, Resource, Role } from "../lib/authorization/types";
 import { MissingStorageConfigError } from "../lib/storage/presign";
 import {
   createdResponse,
+  dataResponse,
   errorResponses,
   jsonBody,
+  noContentResponse,
 } from "../lib/openapi/responses";
 import {
+  ApiMultipartUploadAbortRequestSchema,
+  ApiMultipartUploadCompleteRequestSchema,
+  ApiMultipartUploadCompleteResponseSchema,
+  ApiMultipartUploadInitRequestSchema,
+  ApiMultipartUploadInitResponseSchema,
+  ApiMultipartUploadPartRequestSchema,
+  ApiMultipartUploadPartResponseSchema,
   ApiPresignRequestSchema,
   ApiPresignResponseSchema,
 } from "../lib/openapi/schemas";
+import {
+  ALLOWED_IMAGE_CONTENT_TYPES,
+  UPLOAD_LIMITS,
+} from "../lib/storage/presign";
 
 type App = OpenAPIHono<HonoAppType>;
+type ManagedResource = Extract<Resource, "activity" | "exhibition" | "supporter">;
+type UploadResourcePath = "activities" | "exhibitions" | "supporters" | "users";
+type UploadSlot = "cover" | "detail" | "logo" | "profile";
 
-/**
- * canCreateOrUpdate 조건을 평가해 사용 가능 여부를 판별합니다.
- * @param role 권한 판단에 사용되는 역할 정보입니다.
- * @param resource 응답 데이터 또는 응답 객체입니다.
- * @returns 조건 판별 결과(boolean)를 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
-const canCreateOrUpdate = (role: Parameters<typeof can>[0], resource: Resource) => {
+const canCreateOrUpdate = (role: Role, resource: Resource) => {
   return can(role, resource, "create") || can(role, resource, "update");
 };
 
-const resourceUploadPathMap = {
+const resourceUploadPathMap: Record<ManagedResource, UploadResourcePath> = {
   activity: "activities",
   exhibition: "exhibitions",
   supporter: "supporters",
-} as const;
+};
 
-/**
- * registerResourcePresignRoute 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
- * @param app 함수 로직에서 사용하는 입력값입니다.
- * @param dependencies 함수 로직에서 사용하는 입력값입니다.
- * @param routePath 리소스 경로 또는 라우팅 경로 문자열입니다.
- * @param operationId 대상을 식별하기 위한 ID 값입니다.
- * @param resource 응답 데이터 또는 응답 객체입니다.
- * @param slot 함수 로직에서 사용하는 입력값입니다.
- * @returns 처리 결과 값을 반환합니다.
- * @remarks 권한/인증 분기에서 잘못된 흐름이 발생하지 않도록 호출 순서를 유지해야 합니다.
- */
+const resourceByPath: Record<UploadResourcePath, Resource | "user"> = {
+  activities: "activity",
+  exhibitions: "exhibition",
+  supporters: "supporter",
+  users: "user",
+};
+
+const slotAllowlistByPath: Record<UploadResourcePath, UploadSlot[]> = {
+  activities: ["cover", "detail"],
+  exhibitions: ["cover", "detail"],
+  supporters: ["logo"],
+  users: ["profile"],
+};
+
+const isAllowedContentType = (contentType: string): boolean =>
+  ALLOWED_IMAGE_CONTENT_TYPES.includes(
+    contentType as (typeof ALLOWED_IMAGE_CONTENT_TYPES)[number],
+  );
+
+const validateUploadPayload = (
+  input: { contentType: string; fileSize: number },
+  options: { maxFileSizeBytes: number },
+): { code: "unsupported_type" | "too_large"; message: string } | null => {
+  if (!isAllowedContentType(input.contentType)) {
+    return {
+      code: "unsupported_type",
+      message: `지원하지 않는 이미지 형식입니다. (${ALLOWED_IMAGE_CONTENT_TYPES.join(", ")})`,
+    };
+  }
+
+  if (input.fileSize > options.maxFileSizeBytes) {
+    return {
+      code: "too_large",
+      message: `업로드 최대 크기(${options.maxFileSizeBytes} bytes)를 초과했습니다.`,
+    };
+  }
+
+  return null;
+};
+
+const readUploadValidationResponse = (
+  c: Parameters<typeof badRequest>[0],
+  validationResult: ReturnType<typeof validateUploadPayload>,
+): Response | null => {
+  if (!validationResult) {
+    return null;
+  }
+
+  if (validationResult.code === "unsupported_type") {
+    return unsupportedMediaType(c, validationResult.message);
+  }
+
+  return payloadTooLarge(c, validationResult.message);
+};
+
+const isUserProfileUploadAllowed = (role: Role): boolean => {
+  return can(role, "user", "update") || isMemberLikeRole(role);
+};
+
+const parseUploadObjectKey = (
+  objectKey: string,
+): {
+  resourcePath: UploadResourcePath;
+  actorId: string;
+  slot: UploadSlot;
+} | null => {
+  const [resourcePathRaw, actorId, slotRaw] = objectKey.split("/");
+  if (!resourcePathRaw || !actorId || !slotRaw) {
+    return null;
+  }
+
+  if (!Object.hasOwn(resourceByPath, resourcePathRaw)) {
+    return null;
+  }
+
+  const resourcePath = resourcePathRaw as UploadResourcePath;
+  const slot = slotRaw as UploadSlot;
+
+  if (!slotAllowlistByPath[resourcePath].includes(slot)) {
+    return null;
+  }
+
+  return {
+    resourcePath,
+    actorId,
+    slot,
+  };
+};
+
+const ensureMultipartOwnership = (input: {
+  actor: Pick<Actor, "id" | "role">;
+  objectKey: string;
+  c: Parameters<typeof badRequest>[0];
+}): Response | null => {
+  const parsed = parseUploadObjectKey(input.objectKey);
+  if (!parsed) {
+    return badRequest(input.c, "objectKey 형식이 올바르지 않습니다.");
+  }
+
+  if (parsed.actorId !== input.actor.id) {
+    return forbidden(input.c, "본인 소유 업로드만 처리할 수 있습니다.");
+  }
+
+  const mappedResource = resourceByPath[parsed.resourcePath];
+  if (mappedResource === "user") {
+    if (!isUserProfileUploadAllowed(input.actor.role)) {
+      return forbidden(input.c);
+    }
+    return null;
+  }
+
+  if (!canCreateOrUpdate(input.actor.role, mappedResource)) {
+    return forbidden(input.c);
+  }
+
+  return null;
+};
+
 const registerResourcePresignRoute = (
   app: App,
   dependencies: AppDependencies,
   routePath: string,
   operationId: string,
-  resource: Extract<Resource, "activity" | "exhibition" | "supporter">,
-  slot: "cover" | "detail" | "logo",
+  resource: ManagedResource,
+  slot: Exclude<UploadSlot, "profile">,
 ) => {
   const route = createRoute({
     method: "post",
@@ -69,11 +194,13 @@ const registerResourcePresignRoute = (
       400: errorResponses[400],
       401: errorResponses[401],
       403: errorResponses[403],
+      413: errorResponses[413],
+      415: errorResponses[415],
       500: errorResponses[500],
     },
   });
 
-  app.openapi(route, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 권한/인증 분기에서 잘못된 흐름이 발생하지 않도록 호출 순서를 유지해야 합니다. */ async (c): Promise<any> => {
+  app.openapi(route, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -88,6 +215,14 @@ const registerResourcePresignRoute = (
       return badRequest(c, body.message);
     }
 
+    const validation = validateUploadPayload(body.data, {
+      maxFileSizeBytes: UPLOAD_LIMITS.maxSinglePartBytes,
+    });
+    const validationResponse = readUploadValidationResponse(c, validation);
+    if (validationResponse) {
+      return validationResponse;
+    }
+
     try {
       const data = await dependencies.getPresignService(c).issuePresignedPutUrl({
         actorId: actorResult.actor.id,
@@ -95,6 +230,7 @@ const registerResourcePresignRoute = (
         slot,
         fileName: body.data.fileName,
         contentType: body.data.contentType,
+        fileSize: body.data.fileSize,
       });
       return ok(c, data, 201);
     } catch (error) {
@@ -104,8 +240,96 @@ const registerResourcePresignRoute = (
           "업로드 스토리지 설정이 누락되었습니다. R2_* 환경변수를 확인해 주세요.",
         );
       }
-      console.error("presign issue failed", error);
       return internalError(c, "업로드 URL 발급에 실패했습니다.");
+    }
+  });
+};
+
+const registerResourceMultipartInitRoute = (
+  app: App,
+  dependencies: AppDependencies,
+  routePath: string,
+  operationId: string,
+  resource: ManagedResource,
+  slot: Exclude<UploadSlot, "profile">,
+) => {
+  const route = createRoute({
+    method: "post",
+    path: routePath,
+    tags: ["Uploads"],
+    operationId,
+    security: [{ cookieAuth: [] }],
+    request: {
+      body: jsonBody(
+        ApiMultipartUploadInitRequestSchema,
+        "멀티파트 업로드 초기화 요청",
+      ),
+    },
+    responses: {
+      201: createdResponse(
+        ApiMultipartUploadInitResponseSchema,
+        "멀티파트 업로드 초기화 성공",
+      ),
+      400: errorResponses[400],
+      401: errorResponses[401],
+      403: errorResponses[403],
+      413: errorResponses[413],
+      415: errorResponses[415],
+      500: errorResponses[500],
+    },
+  });
+
+  app.openapi(route, async (c): Promise<any> => {
+    const actorResult = await requireActor(c, dependencies);
+    if ("response" in actorResult) {
+      return actorResult.response;
+    }
+
+    if (!canCreateOrUpdate(actorResult.actor.role, resource)) {
+      return forbidden(c);
+    }
+
+    const body = await parseBody(c, ApiMultipartUploadInitRequestSchema);
+    if (!body.success) {
+      return badRequest(c, body.message);
+    }
+
+    const validation = validateUploadPayload(body.data, {
+      maxFileSizeBytes: UPLOAD_LIMITS.maxMultipartBytes,
+    });
+    const validationResponse = readUploadValidationResponse(c, validation);
+    if (validationResponse) {
+      return validationResponse;
+    }
+
+    const expectedPartCount = Math.ceil(
+      body.data.fileSize / UPLOAD_LIMITS.multipartPartSizeBytes,
+    );
+    if (expectedPartCount > UPLOAD_LIMITS.multipartMaxParts) {
+      return payloadTooLarge(
+        c,
+        `파트 수가 허용 범위(${UPLOAD_LIMITS.multipartMaxParts})를 초과합니다.`,
+      );
+    }
+
+    try {
+      const data = await dependencies.getPresignService(c).initiateMultipartUpload({
+        actorId: actorResult.actor.id,
+        resource: resourceUploadPathMap[resource],
+        slot,
+        fileName: body.data.fileName,
+        contentType: body.data.contentType,
+        fileSize: body.data.fileSize,
+      });
+      return ok(c, data, 201);
+    } catch (error) {
+      if (error instanceof MissingStorageConfigError) {
+        return internalError(
+          c,
+          "업로드 스토리지 설정이 누락되었습니다. R2_* 환경변수를 확인해 주세요.",
+        );
+      }
+      return internalError(c, "멀티파트 업로드 초기화에 실패했습니다.");
     }
   });
 };
@@ -124,17 +348,108 @@ const userProfilePresignRoute = createRoute({
     400: errorResponses[400],
     401: errorResponses[401],
     403: errorResponses[403],
+    413: errorResponses[413],
+    415: errorResponses[415],
     500: errorResponses[500],
   },
 });
 
-/**
- * registerUploadRoutes 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
- * @param app 함수 로직에서 사용하는 입력값입니다.
- * @param dependencies 함수 로직에서 사용하는 입력값입니다.
- * @returns 처리 결과 값을 반환합니다.
- * @remarks 권한/인증 분기에서 잘못된 흐름이 발생하지 않도록 호출 순서를 유지해야 합니다.
- */
+const userProfileMultipartInitRoute = createRoute({
+  method: "post",
+  path: "/api/users/multipart/profile/init",
+  tags: ["Uploads"],
+  operationId: "initUserProfileMultipartUpload",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: jsonBody(
+      ApiMultipartUploadInitRequestSchema,
+      "프로필 멀티파트 업로드 초기화 요청",
+    ),
+  },
+  responses: {
+    201: createdResponse(
+      ApiMultipartUploadInitResponseSchema,
+      "멀티파트 업로드 초기화 성공",
+    ),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    413: errorResponses[413],
+    415: errorResponses[415],
+    500: errorResponses[500],
+  },
+});
+
+const multipartPartRoute = createRoute({
+  method: "post",
+  path: "/api/uploads/multipart/part",
+  tags: ["Uploads"],
+  operationId: "issueMultipartUploadPartPresign",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: jsonBody(
+      ApiMultipartUploadPartRequestSchema,
+      "멀티파트 개별 파트 presigned URL 발급 요청",
+    ),
+  },
+  responses: {
+    200: dataResponse(
+      ApiMultipartUploadPartResponseSchema,
+      "파트 업로드 URL 발급 성공",
+    ),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    500: errorResponses[500],
+  },
+});
+
+const multipartCompleteRoute = createRoute({
+  method: "post",
+  path: "/api/uploads/multipart/complete",
+  tags: ["Uploads"],
+  operationId: "completeMultipartUpload",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: jsonBody(
+      ApiMultipartUploadCompleteRequestSchema,
+      "멀티파트 업로드 완료 요청",
+    ),
+  },
+  responses: {
+    200: dataResponse(
+      ApiMultipartUploadCompleteResponseSchema,
+      "멀티파트 업로드 완료 성공",
+    ),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    422: errorResponses[422],
+    500: errorResponses[500],
+  },
+});
+
+const multipartAbortRoute = createRoute({
+  method: "post",
+  path: "/api/uploads/multipart/abort",
+  tags: ["Uploads"],
+  operationId: "abortMultipartUpload",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: jsonBody(
+      ApiMultipartUploadAbortRequestSchema,
+      "멀티파트 업로드 중단 요청",
+    ),
+  },
+  responses: {
+    204: noContentResponse,
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    500: errorResponses[500],
+  },
+});
+
 export const registerUploadRoutes = (
   app: App,
   dependencies: AppDependencies,
@@ -180,22 +495,68 @@ export const registerUploadRoutes = (
     "logo",
   );
 
-  // 사용자 프로필 이미지는 관리자 업데이트 권한 또는 member 계열 role 본인 프로필 수정 권한을 기준으로 발급한다.
-  app.openapi(userProfilePresignRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 권한/인증 분기에서 잘못된 흐름이 발생하지 않도록 호출 순서를 유지해야 합니다. */ async (c): Promise<any> => {
+  registerResourceMultipartInitRoute(
+    app,
+    dependencies,
+    "/api/activities/multipart/cover/init",
+    "initActivityCoverMultipartUpload",
+    "activity",
+    "cover",
+  );
+  registerResourceMultipartInitRoute(
+    app,
+    dependencies,
+    "/api/activities/multipart/detail/init",
+    "initActivityDetailMultipartUpload",
+    "activity",
+    "detail",
+  );
+  registerResourceMultipartInitRoute(
+    app,
+    dependencies,
+    "/api/exhibitions/multipart/cover/init",
+    "initExhibitionCoverMultipartUpload",
+    "exhibition",
+    "cover",
+  );
+  registerResourceMultipartInitRoute(
+    app,
+    dependencies,
+    "/api/exhibitions/multipart/detail/init",
+    "initExhibitionDetailMultipartUpload",
+    "exhibition",
+    "detail",
+  );
+  registerResourceMultipartInitRoute(
+    app,
+    dependencies,
+    "/api/supporters/multipart/logo/init",
+    "initSupporterLogoMultipartUpload",
+    "supporter",
+    "logo",
+  );
+
+  app.openapi(userProfilePresignRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
     }
 
-    const canUserUpdate = can(actorResult.actor.role, "user", "update");
-    const canMemberSelfProfile = isMemberLikeRole(actorResult.actor.role);
-    if (!canUserUpdate && !canMemberSelfProfile) {
+    if (!isUserProfileUploadAllowed(actorResult.actor.role)) {
       return forbidden(c);
     }
 
     const body = await parseBody(c, ApiPresignRequestSchema);
     if (!body.success) {
       return badRequest(c, body.message);
+    }
+
+    const validation = validateUploadPayload(body.data, {
+      maxFileSizeBytes: UPLOAD_LIMITS.maxSinglePartBytes,
+    });
+    const validationResponse = readUploadValidationResponse(c, validation);
+    if (validationResponse) {
+      return validationResponse;
     }
 
     try {
@@ -205,6 +566,7 @@ export const registerUploadRoutes = (
         slot: "profile",
         fileName: body.data.fileName,
         contentType: body.data.contentType,
+        fileSize: body.data.fileSize,
       });
       return ok(c, data, 201);
     } catch (error) {
@@ -214,8 +576,154 @@ export const registerUploadRoutes = (
           "업로드 스토리지 설정이 누락되었습니다. R2_* 환경변수를 확인해 주세요.",
         );
       }
-      console.error("presign issue failed", error);
       return internalError(c, "업로드 URL 발급에 실패했습니다.");
+    }
+  });
+
+  app.openapi(userProfileMultipartInitRoute, async (c): Promise<any> => {
+    const actorResult = await requireActor(c, dependencies);
+    if ("response" in actorResult) {
+      return actorResult.response;
+    }
+
+    if (!isUserProfileUploadAllowed(actorResult.actor.role)) {
+      return forbidden(c);
+    }
+
+    const body = await parseBody(c, ApiMultipartUploadInitRequestSchema);
+    if (!body.success) {
+      return badRequest(c, body.message);
+    }
+
+    const validation = validateUploadPayload(body.data, {
+      maxFileSizeBytes: UPLOAD_LIMITS.maxMultipartBytes,
+    });
+    const validationResponse = readUploadValidationResponse(c, validation);
+    if (validationResponse) {
+      return validationResponse;
+    }
+
+    const expectedPartCount = Math.ceil(
+      body.data.fileSize / UPLOAD_LIMITS.multipartPartSizeBytes,
+    );
+    if (expectedPartCount > UPLOAD_LIMITS.multipartMaxParts) {
+      return payloadTooLarge(
+        c,
+        `파트 수가 허용 범위(${UPLOAD_LIMITS.multipartMaxParts})를 초과합니다.`,
+      );
+    }
+
+    try {
+      const data = await dependencies.getPresignService(c).initiateMultipartUpload({
+        actorId: actorResult.actor.id,
+        resource: "users",
+        slot: "profile",
+        fileName: body.data.fileName,
+        contentType: body.data.contentType,
+        fileSize: body.data.fileSize,
+      });
+      return ok(c, data, 201);
+    } catch (error) {
+      if (error instanceof MissingStorageConfigError) {
+        return internalError(
+          c,
+          "업로드 스토리지 설정이 누락되었습니다. R2_* 환경변수를 확인해 주세요.",
+        );
+      }
+      return internalError(c, "멀티파트 업로드 초기화에 실패했습니다.");
+    }
+  });
+
+  app.openapi(multipartPartRoute, async (c): Promise<any> => {
+    const actorResult = await requireActor(c, dependencies);
+    if ("response" in actorResult) {
+      return actorResult.response;
+    }
+
+    const body = await parseBody(c, ApiMultipartUploadPartRequestSchema);
+    if (!body.success) {
+      return badRequest(c, body.message);
+    }
+
+    const ownership = ensureMultipartOwnership({
+      actor: actorResult.actor,
+      objectKey: body.data.objectKey,
+      c,
+    });
+    if (ownership) {
+      return ownership;
+    }
+
+    try {
+      const data = await dependencies
+        .getPresignService(c)
+        .issueMultipartUploadPartUrl(body.data);
+      return ok(c, data);
+    } catch {
+      return internalError(c, "멀티파트 파트 URL 발급에 실패했습니다.");
+    }
+  });
+
+  app.openapi(multipartCompleteRoute, async (c): Promise<any> => {
+    const actorResult = await requireActor(c, dependencies);
+    if ("response" in actorResult) {
+      return actorResult.response;
+    }
+
+    const body = await parseBody(c, ApiMultipartUploadCompleteRequestSchema);
+    if (!body.success) {
+      return badRequest(c, body.message);
+    }
+
+    const ownership = ensureMultipartOwnership({
+      actor: actorResult.actor,
+      objectKey: body.data.objectKey,
+      c,
+    });
+    if (ownership) {
+      return ownership;
+    }
+
+    const uniquePartCount = new Set(body.data.parts.map((part) => part.partNumber)).size;
+    if (uniquePartCount !== body.data.parts.length) {
+      return unprocessableEntity(c, "중복된 partNumber가 존재합니다.");
+    }
+
+    try {
+      const data = await dependencies
+        .getPresignService(c)
+        .completeMultipartUpload(body.data);
+      return ok(c, data);
+    } catch {
+      return internalError(c, "멀티파트 업로드 완료 처리에 실패했습니다.");
+    }
+  });
+
+  app.openapi(multipartAbortRoute, async (c): Promise<any> => {
+    const actorResult = await requireActor(c, dependencies);
+    if ("response" in actorResult) {
+      return actorResult.response;
+    }
+
+    const body = await parseBody(c, ApiMultipartUploadAbortRequestSchema);
+    if (!body.success) {
+      return badRequest(c, body.message);
+    }
+
+    const ownership = ensureMultipartOwnership({
+      actor: actorResult.actor,
+      objectKey: body.data.objectKey,
+      c,
+    });
+    if (ownership) {
+      return ownership;
+    }
+
+    try {
+      await dependencies.getPresignService(c).abortMultipartUpload(body.data);
+      return noContent(c);
+    } catch {
+      return internalError(c, "멀티파트 업로드 중단 처리에 실패했습니다.");
     }
   });
 };

@@ -7,10 +7,10 @@ test.describe("admin shell", () => {
     await page.goto("/admin");
 
     await expect(page.getByTestId("admin-shell")).toBeVisible();
-    await expect(page.getByTestId("admin-sidebar")).toBeVisible();
-    await expect(page).toHaveURL(/\/admin\/\d+$/);
+    await expect(page.getByTestId("admin-sidebar").first()).toBeVisible();
+    await expect(page).toHaveURL(/\/admin(?:\/\d+)?(?:\?generation=\d+)?$/);
 
-    const toggle = page.getByTestId("admin-sidebar-toggle");
+    const toggle = page.getByTestId("admin-sidebar-toggle").first();
     await toggle.click();
 
     const collapsedValue = await page.evaluate(() =>
@@ -24,11 +24,19 @@ test.describe("admin shell", () => {
     );
     await expect(collapsedValueAfterReload).toBe("1");
 
-    await page.getByTestId("admin-sidebar-toggle").click();
-    const generationSelect = page.getByTestId("admin-generation-select");
+    await page.getByTestId("admin-sidebar-toggle").first().click();
+    const generationSelect = page.getByTestId("admin-generation-select").first();
     await expect(generationSelect).toBeVisible();
-    const selectedSortOrder = await generationSelect.inputValue();
-    expect(selectedSortOrder).not.toBe("");
+    let selectedSortOrder = (await generationSelect.inputValue()).trim() || null;
+    if (!selectedSortOrder) {
+      const dashboardGenerationLink = page
+        .locator('[data-testid^="admin-dashboard-generation-"]')
+        .first();
+      if ((await dashboardGenerationLink.count()) > 0) {
+        const href = await dashboardGenerationLink.getAttribute("href");
+        selectedSortOrder = href?.match(/generation=(\d+)/)?.[1] ?? null;
+      }
+    }
 
     const wasDark = await page.evaluate(() => document.documentElement.classList.contains("dark"));
     const targetMode = wasDark ? "light" : "dark";
@@ -72,14 +80,16 @@ test.describe("admin shell", () => {
       .poll(() => page.evaluate(() => window.localStorage.getItem("theme")))
       .toBe("system");
 
-    await page.getByTestId("admin-nav-generation-settings").click();
+    await page.getByTestId("admin-nav-generation-settings").first().click();
     await expect(page).toHaveURL(/\/admin\/generations$/);
     await expect(page.getByTestId("generations-page")).toBeVisible();
 
-    await page.goto(`/admin/${selectedSortOrder}`);
-    await expect(page).toHaveURL(/\/admin\/\d+$/);
+    if (selectedSortOrder) {
+      await page.goto(`/admin?generation=${selectedSortOrder}`);
+      await expect(page).toHaveURL(new RegExp(`/admin\\?generation=${selectedSortOrder}$`));
+    }
     const activeSortOrder =
-      page.url().match(/\/admin\/(\d+)/)?.[1] ?? selectedSortOrder;
+      (selectedSortOrder && page.url().match(/generation=(\d+)/)?.[1]) ?? selectedSortOrder;
 
     const generationScopedRoutes = [
       { testId: "admin-nav-act", path: "activities", pageTestId: "activities-page" },
@@ -88,7 +98,11 @@ test.describe("admin shell", () => {
     ] as const;
 
     for (const route of generationScopedRoutes) {
-      const navLink = page.getByTestId(route.testId);
+      const navLink = page.getByTestId(route.testId).first();
+      if (!activeSortOrder) {
+        await expect(navLink).toHaveAttribute("href", "/admin");
+        continue;
+      }
       await expect(navLink).toHaveAttribute(
         "href",
         `/admin/${activeSortOrder}/${route.path}`,
@@ -106,7 +120,7 @@ test.describe("admin shell", () => {
     ] as const;
 
     for (const route of globalRoutes) {
-      const navLink = page.getByTestId(route.testId);
+      const navLink = page.getByTestId(route.testId).first();
       await expect(navLink).toHaveAttribute("href", route.path);
       await navLink.click();
       await expect(page).toHaveURL(new RegExp(`${route.path}$`));

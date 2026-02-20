@@ -12,6 +12,7 @@ type AdminDrawerProps = {
   footer?: ReactNode;
   testId?: string;
   variant?: "overlay" | "page";
+  showCloseButton?: boolean;
 };
 
 export default function AdminDrawer({
@@ -23,6 +24,7 @@ export default function AdminDrawer({
   footer,
   testId = "admin-drawer",
   variant = "overlay",
+  showCloseButton = true,
 }: AdminDrawerProps) {
   useEffect(() => {
     if (variant === "page" || !open) {
@@ -62,14 +64,16 @@ export default function AdminDrawer({
             <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
             {description ? <p className="mt-1 text-sm text-gray-600">{description}</p> : null}
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-xl border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-600 hover:bg-gray-100"
-            data-testid={`${testId}-close`}
-          >
-            닫기
-          </button>
+          {showCloseButton ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-xl border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-600 hover:bg-gray-100"
+              data-testid={`${testId}-close`}
+            >
+              닫기
+            </button>
+          ) : null}
         </header>
 
         <div className="px-5 py-5 md:px-6">{children}</div>
@@ -114,14 +118,16 @@ export default function AdminDrawer({
                   <p className="mt-1 text-sm text-gray-600">{description}</p>
                 ) : null}
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-xl border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-600 hover:bg-gray-100"
-                data-testid={`${testId}-close`}
-              >
-                닫기
-              </button>
+              {showCloseButton ? (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-xl border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-600 hover:bg-gray-100"
+                  data-testid={`${testId}-close`}
+                >
+                  닫기
+                </button>
+              ) : null}
             </header>
 
             <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-6">{children}</div>

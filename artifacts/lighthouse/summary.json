@@ -1,0 +1,34 @@
+[
+  {
+    "route": "/",
+    "lcp": 1424.528,
+    "cls": 0,
+    "inp": null,
+    "performanceScore": 0.9,
+    "outputPath": "/Users/jhyunwoo/projects/yonyoung/artifacts/lighthouse/home.json"
+  },
+  {
+    "route": "/archive/records",
+    "lcp": 1343.995,
+    "cls": 0,
+    "inp": null,
+    "performanceScore": 0.9,
+    "outputPath": "/Users/jhyunwoo/projects/yonyoung/artifacts/lighthouse/archive_records.json"
+  },
+  {
+    "route": "/archive/exhibitions",
+    "lcp": 1378.399,
+    "cls": 0,
+    "inp": null,
+    "performanceScore": 0.9,
+    "outputPath": "/Users/jhyunwoo/projects/yonyoung/artifacts/lighthouse/archive_exhibitions.json"
+  },
+  {
+    "route": "/about",
+    "lcp": 1392.95,
+    "cls": 0,
+    "inp": null,
+    "performanceScore": 1,
+    "outputPath": "/Users/jhyunwoo/projects/yonyoung/artifacts/lighthouse/about.json"
+  }
+]

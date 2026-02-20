@@ -51,8 +51,14 @@ export const parseBody = async <T>(
   c: Context,
   schema: ZodType<T>,
 ): Promise<ParseResult<T>> => {
-  const raw = await c.req.json().catch(/** c.req.json().catch 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => null);
-  if (!raw) {
+  let raw: unknown;
+  try {
+    raw = await c.req.json();
+  } catch {
+    return { success: false, message: "Malformed JSON in request body" };
+  }
+
+  if (raw === null || raw === undefined) {
     return { success: false, message: "JSON 본문이 필요합니다." };
   }
 
