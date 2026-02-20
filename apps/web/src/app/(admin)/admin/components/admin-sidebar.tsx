@@ -402,38 +402,6 @@ export default function AdminSidebar({
     router.push(nextPath);
   };
 
-  useEffect(() => {
-    const targets = new Set<string>(["/admin/profile"]);
-    if (selectedSortOrder !== null) {
-      targets.add(`/admin?generation=${selectedSortOrder}`);
-    }
-
-    if (selectedSortOrder !== null) {
-      targets.add(buildGenerationPath(selectedSortOrder));
-      for (const item of RESOURCE_MENU_ITEMS) {
-        targets.add(buildGenerationPath(selectedSortOrder, item.resourcePath));
-      }
-    }
-
-    if (canManageGenerationsFlag) {
-      targets.add("/admin/generations");
-    }
-    if (canManageGlobalUsersFlag) {
-      targets.add("/admin/users");
-    }
-    for (const item of GLOBAL_RESOURCE_MENU_ITEMS) {
-      targets.add(item.href);
-    }
-
-    for (const path of targets) {
-      try {
-        router.prefetch(path);
-      } catch {
-        // prefetch 실패 시 현재 탐색 흐름은 유지한다.
-      }
-    }
-  }, [canManageGenerationsFlag, canManageGlobalUsersFlag, router, selectedSortOrder]);
-
   const isGenerationSettingsActive =
     pathname === "/admin/generations" || pathname.startsWith("/admin/generations/");
   const isGlobalUsersActive =
@@ -586,7 +554,7 @@ export default function AdminSidebar({
                 <li>
                   <Link
                     href="/admin/profile"
-                    prefetch
+                    prefetch={false}
                     data-testid="admin-nav-profile"
                     className={getNavItemClassName({
                       active: isProfileActive,
@@ -625,7 +593,7 @@ export default function AdminSidebar({
                   <li>
                     <Link
                       href="/admin/generations"
-                      prefetch
+                      prefetch={false}
                       data-testid="admin-nav-generation-settings"
                       className={getNavItemClassName({
                         active: isGenerationSettingsActive,
@@ -675,7 +643,7 @@ export default function AdminSidebar({
                     <li key={item.href}>
                       <Link
                         href={item.href}
-                        prefetch
+                        prefetch={false}
                         data-testid={item.testId}
                         className={getNavItemClassName({
                           active,
@@ -716,7 +684,7 @@ export default function AdminSidebar({
                   <li>
                     <Link
                       href="/admin/users"
-                      prefetch
+                      prefetch={false}
                       data-testid="admin-nav-global-users"
                       className={getNavItemClassName({
                         active: isGlobalUsersActive,
@@ -793,7 +761,7 @@ export default function AdminSidebar({
                     <li key={item.resourcePath}>
                       <Link
                         href={href}
-                        prefetch
+                        prefetch={false}
                         data-testid={`admin-nav-${item.shortLabel.toLowerCase()}`}
                         className={getNavItemClassName({
                           active,

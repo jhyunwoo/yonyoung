@@ -132,7 +132,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   <Link
                     key={generation.id}
                     href={`/admin?generation=${generation.sortOrder}`}
-                    prefetch
+                    prefetch={false}
                     className={`rounded-xl border px-3 py-2 text-sm font-medium transition ${
                       isActive
                         ? "border-black bg-black text-white"
@@ -176,21 +176,21 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <>
               <Link
                 href={buildGenerationPath(selectedGeneration.sortOrder, "activities")}
-                prefetch
+                prefetch={false}
                 className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
               >
                 {selectedGeneration.sortOrder}기 활동 관리
               </Link>
               <Link
                 href={buildGenerationPath(selectedGeneration.sortOrder, "exhibitions")}
-                prefetch
+                prefetch={false}
                 className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
               >
                 {selectedGeneration.sortOrder}기 전시 관리
               </Link>
               <Link
                 href={buildGenerationPath(selectedGeneration.sortOrder, "users")}
-                prefetch
+                prefetch={false}
                 className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
               >
                 {selectedGeneration.sortOrder}기 멤버 관리
@@ -200,14 +200,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
           <Link
             href="/admin/supporters"
-            prefetch
+            prefetch={false}
             className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
           >
             서포터즈 관리
           </Link>
           <Link
             href="/admin/linktree"
-            prefetch
+            prefetch={false}
             className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
           >
             Linktree 관리
@@ -215,7 +215,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           {canManageGlobalUsers(session) ? (
             <Link
               href="/admin/users"
-              prefetch
+              prefetch={false}
               className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
             >
               사용자 권한 관리
@@ -224,7 +224,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           {canManageGenerations(session) ? (
             <Link
               href="/admin/generations"
-              prefetch
+              prefetch={false}
               className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
             >
               기수 설정
