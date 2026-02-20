@@ -1,5 +1,8 @@
 import { z } from "@hono/zod-openapi";
-import { STUDENT_NUMBER_REGEX } from "@repo/shared-auth/profile";
+import {
+  KOREAN_MOBILE_PHONE_REGEX,
+  STUDENT_NUMBER_REGEX,
+} from "@repo/shared-auth/profile";
 import { API_ERROR_CODES } from "@repo/shared-api-contracts";
 
 const EXAMPLE_ID = "11111111-1111-4111-8111-111111111111";
@@ -900,9 +903,19 @@ export const ApiMemberProfileUpdateSchema = z
     studentNumber: studentNumberField("본인 학번 10자리 수정", "2026000123")
       .nullable()
       .optional(),
-    phoneNumber: phoneNumberField("본인 전화번호 수정", "010-1234-5678")
+    phoneNumber: z
+      .string()
+      .trim()
+      .regex(
+        KOREAN_MOBILE_PHONE_REGEX,
+        "전화번호는 010-1234-5678 형식이어야 합니다.",
+      )
       .nullable()
-      .optional(),
+      .optional()
+      .openapi({
+        description: "본인 전화번호 수정",
+        example: "010-1234-5678",
+      }),
   })
   .strict()
   .openapi("ApiMemberProfileUpdateInput");

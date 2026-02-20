@@ -23,8 +23,11 @@ export default async function GenerationUsersPage({
 
   return (
     <UsersAdminPageClient
+      basePath={`/admin/${generation}/users`}
       generationSortOrder={Number.isFinite(generationSortOrder) ? generationSortOrder : null}
       generationScoped
+      routeId={null}
+      routeMode="list"
       initialData={{
         users,
         generations,

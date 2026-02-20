@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
 import { PRESIGN_PATHS } from "../../../../lib/admin-api/upload";
 import type {
@@ -19,10 +21,11 @@ import AdminActionButton from "../components/admin-action-button";
 import BatchImageDropzone from "../components/batch-image-dropzone";
 import AdminConfirmModal from "../components/admin-confirm-modal";
 import AdminDrawer from "../components/admin-drawer";
+import { type AdminEntityRouteMode, buildAdminEntityRoute } from "../components/admin-entity-route";
 import AdminInfoBox from "../components/admin-info-box";
 import AdminPageHeader from "../components/admin-page-header";
+import DragReorderBadge from "../components/drag-reorder-badge";
 import ImageInput from "../components/image-input";
-import { useAdminDrawerQuerySync } from "../components/use-admin-drawer-query-sync";
 import { useBatchImageUpload } from "../components/use-batch-image-upload";
 import { useImmediateImageUpload } from "../components/use-immediate-image-upload";
 
@@ -48,8 +51,11 @@ type DetailImageDraft = {
 };
 
 type ActivitiesAdminPageProps = {
+  basePath?: string;
   generationScoped?: boolean;
   generationSortOrder?: number | null;
+  routeId?: string | null;
+  routeMode?: AdminEntityRouteMode;
   initialData?: {
     activities: ApiActivity[];
     generations: ApiGeneration[];
@@ -93,10 +99,14 @@ const resolveActivitiesData = (
 };
 
 export default function ActivitiesAdminPage({
+  basePath = "/admin/activities",
   generationScoped = false,
   generationSortOrder = null,
+  routeId = null,
+  routeMode = "list",
   initialData,
 }: ActivitiesAdminPageProps = {}) {
+  const router = useRouter();
   const initialResolvedData = initialData
     ? resolveActivitiesData(
         initialData.activities,
@@ -123,9 +133,6 @@ export default function ActivitiesAdminPage({
   const [createForm, setCreateForm] = useState<ActivityFormState>(emptyActivityForm);
   const [editForm, setEditForm] = useState<ActivityFormState>(emptyActivityForm);
   const [detailDrafts, setDetailDrafts] = useState<Record<string, DetailImageDraft>>({});
-  const [detailUploadTargetImageId, setDetailUploadTargetImageId] = useState<string | null>(
-    null,
-  );
   const [createQueuedDragId, setCreateQueuedDragId] = useState<string | null>(null);
   const [editQueuedDragId, setEditQueuedDragId] = useState<string | null>(null);
   const [detailImageDragId, setDetailImageDragId] = useState<string | null>(null);
@@ -138,9 +145,6 @@ export default function ActivitiesAdminPage({
   });
   const createDetailBatchUpload = useBatchImageUpload(PRESIGN_PATHS.activityDetail);
   const detailBatchUpload = useBatchImageUpload(PRESIGN_PATHS.activityDetail);
-  const detailEditUpload = useImmediateImageUpload({
-    presignPath: PRESIGN_PATHS.activityDetail,
-  });
 
   const [isLoading, setIsLoading] = useState(() => !initialData);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -156,7 +160,7 @@ export default function ActivitiesAdminPage({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const scopedGenerationId = generationScoped ? scopedGeneration?.id ?? null : null;
-  const { queryState, setDrawerQuery, normalizeDrawerQuery } = useAdminDrawerQuerySync();
+  const isDetailRoute = routeMode === "detail";
 
   const selected = useMemo(
     () => items.find((item) => item.id === selectedId) ?? null,
@@ -167,12 +171,16 @@ export default function ActivitiesAdminPage({
     () => selected?.detailImages.find((image) => image.id === selectedImageId) ?? null,
     [selected, selectedImageId],
   );
-  const selectedImageDraft = useMemo(() => {
-    if (!selectedImage) {
-      return null;
-    }
-    return detailDrafts[selectedImage.id] ?? null;
-  }, [detailDrafts, selectedImage]);
+  const generationLabelById = useMemo(
+    () =>
+      new Map(
+        generations.map((generation) => [
+          generation.id,
+          `${generation.sortOrder}기 (${generation.name})`,
+        ]),
+      ),
+    [generations],
+  );
 
   const sortedSelectedDetailImages = useMemo(() => {
     if (!selected) {
@@ -259,7 +267,6 @@ export default function ActivitiesAdminPage({
       setSelectedImageId(null);
       syncActivityEditForm(null);
       setDetailDrafts({});
-      detailEditUpload.reset(null);
       detailBatchUpload.clear();
       setErrorMessage("선택한 기수를 찾을 수 없습니다.");
       setPanelMode(null);
@@ -271,7 +278,6 @@ export default function ActivitiesAdminPage({
       setSelectedImageId(null);
       syncActivityEditForm(null);
       setDetailDrafts({});
-      detailEditUpload.reset(null);
       detailBatchUpload.clear();
       if (panelMode === "edit") {
         setPanelMode(null);
@@ -300,11 +306,6 @@ export default function ActivitiesAdminPage({
 
     setSelectedImageId(nextImageId);
     syncDetailDrafts(selectedActivity?.detailImages ?? []);
-    detailEditUpload.reset(
-      nextImageId
-        ? selectedActivity?.detailImages.find((image) => image.id === nextImageId)?.imageUrl ?? null
-        : null,
-    );
     detailBatchUpload.clear();
   };
 
@@ -336,38 +337,26 @@ export default function ActivitiesAdminPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generationScoped, generationSortOrder, initialData]);
 
-  const handleSelectActivity = (item: ApiActivity) => {
+  const handleSelectActivity = (item: ApiActivity, navigate = true) => {
     setSelectedId(item.id);
     syncActivityEditForm(item);
     const firstImage = item.detailImages[0] ?? null;
     setSelectedImageId(firstImage?.id ?? null);
     syncDetailDrafts(item.detailImages);
-    detailEditUpload.reset(firstImage?.imageUrl ?? null);
     detailBatchUpload.clear();
-    setDetailUploadTargetImageId(null);
-    setPanelMode("edit");
-    setDrawerQuery("edit", item.id);
     setErrorMessage(null);
     setSuccessMessage(null);
+    if (navigate) {
+      router.push(buildAdminEntityRoute(basePath, "detail", item.id), { scroll: false });
+    }
   };
-
-  const handleSelectDetailImage = (image: ApiActivityImage) => {
-    setSelectedImageId(image.id);
-    const draftImageUrl = detailDrafts[image.id]?.imageUrl ?? image.imageUrl;
-    detailEditUpload.reset(draftImageUrl);
-    setDetailUploadTargetImageId(null);
-  };
-
-  useEffect(() => {
-    normalizeDrawerQuery();
-  }, [normalizeDrawerQuery]);
 
   useEffect(() => {
     if (isLoading) {
       return;
     }
 
-    if (queryState.panel === "create") {
+    if (routeMode === "create") {
       if (panelMode !== "create") {
         setCreateForm({
           ...emptyActivityForm,
@@ -382,15 +371,21 @@ export default function ActivitiesAdminPage({
       return;
     }
 
-    if (queryState.panel === "edit") {
-      const target = items.find((item) => item.id === queryState.id) ?? null;
+    if (routeMode === "detail" || routeMode === "edit") {
+      const target = items.find((item) => item.id === routeId) ?? null;
       if (!target) {
-        setDrawerQuery(null);
+        router.replace(buildAdminEntityRoute(basePath, "list"), { scroll: false });
         return;
       }
 
-      if (selectedId !== target.id || panelMode !== "edit") {
-        handleSelectActivity(target);
+      if (selectedId !== target.id) {
+        handleSelectActivity(target, false);
+      }
+
+      if (panelMode !== "edit") {
+        setPanelMode("edit");
+        setErrorMessage(null);
+        setSuccessMessage(null);
       }
       return;
     }
@@ -399,7 +394,18 @@ export default function ActivitiesAdminPage({
       setPanelMode(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryState, isLoading, panelMode, items, selectedId, scopedGenerationId, generations]);
+  }, [
+    routeMode,
+    routeId,
+    isLoading,
+    panelMode,
+    items,
+    selectedId,
+    scopedGenerationId,
+    generations,
+    router,
+    basePath,
+  ]);
 
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -451,9 +457,10 @@ export default function ActivitiesAdminPage({
       createCoverUpload.reset(null);
       createDetailBatchUpload.clear();
       setSuccessMessage("활동을 생성했습니다.");
-      setPanelMode("edit");
-      setDrawerQuery("edit", created.id);
       await loadData(created.id);
+      router.replace(buildAdminEntityRoute(basePath, "detail", created.id), {
+        scroll: false,
+      });
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -491,6 +498,11 @@ export default function ActivitiesAdminPage({
 
       setSuccessMessage("활동을 수정했습니다.");
       await loadData(selected.id);
+      if (routeMode === "edit") {
+        router.replace(buildAdminEntityRoute(basePath, "detail", selected.id), {
+          scroll: false,
+        });
+      }
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -514,8 +526,8 @@ export default function ActivitiesAdminPage({
       setSuccessMessage("활동을 삭제했습니다.");
       setDeleteTarget(null);
       setPanelMode(null);
-      setDrawerQuery(null);
       await loadData();
+      router.replace(buildAdminEntityRoute(basePath, "list"), { scroll: false });
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -596,16 +608,6 @@ export default function ActivitiesAdminPage({
     }
   };
 
-  const handleDetailSortOrderChange = (imageId: string, nextValue: string) => {
-    setDetailDrafts((previous) => ({
-      ...previous,
-      [imageId]: {
-        sortOrder: nextValue,
-        imageUrl: previous[imageId]?.imageUrl ?? "",
-      },
-    }));
-  };
-
   const handleReorderDetailImages = (draggedImageId: string, targetImageId: string) => {
     if (!selected || draggedImageId === targetImageId) {
       return;
@@ -639,41 +641,8 @@ export default function ActivitiesAdminPage({
     });
   };
 
-  const handleDetailImageFileChange = (file: File | null) => {
-    if (!selectedImage || !file) {
-      return;
-    }
-    setDetailUploadTargetImageId(selectedImage.id);
-    detailEditUpload.selectFile(file);
-  };
-
-  useEffect(() => {
-    if (
-      detailEditUpload.status !== "uploaded" ||
-      !detailUploadTargetImageId ||
-      !detailEditUpload.currentUrl
-    ) {
-      return;
-    }
-
-    setDetailDrafts((previous) => ({
-      ...previous,
-      [detailUploadTargetImageId]: {
-        sortOrder: previous[detailUploadTargetImageId]?.sortOrder ?? "0",
-        imageUrl: detailEditUpload.currentUrl,
-      },
-    }));
-  }, [
-    detailEditUpload.currentUrl,
-    detailEditUpload.status,
-    detailUploadTargetImageId,
-  ]);
-
   const handleSaveDetailImages = async () => {
     if (!selected) {
-      return;
-    }
-    if (detailEditUpload.isUploading || detailEditUpload.hasUploadError) {
       return;
     }
 
@@ -754,17 +723,14 @@ export default function ActivitiesAdminPage({
     !editCoverUpload.hasUploadError &&
     Boolean(editCoverUpload.currentUrl);
 
-  const canSaveDetailImages =
-    !isSubmitting &&
-    !detailEditUpload.isUploading &&
-    !detailEditUpload.hasUploadError;
+  const canSaveDetailImages = !isSubmitting;
 
   return (
     <div className="space-y-6" data-testid="activities-page">
       <AdminPageHeader
         title="활동 관리"
         description="활동 정보와 상세 이미지를 관리하는 화면입니다."
-        guidance="목록에서 선택한 항목을 드로어에서 편집하거나 신규 버튼으로 빠르게 생성하세요."
+        guidance="목록에서 활동을 선택해 상세 페이지로 이동하고, 상세 페이지에서 수정 페이지로 이동해 편집하세요."
       >
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <AdminActionButton
@@ -776,7 +742,7 @@ export default function ActivitiesAdminPage({
               createCoverUpload.reset(null);
               createDetailBatchUpload.clear();
               setPanelMode("create");
-              setDrawerQuery("create");
+              router.push(buildAdminEntityRoute(basePath, "create"), { scroll: false });
               setErrorMessage(null);
               setSuccessMessage(null);
             }}
@@ -846,7 +812,7 @@ export default function ActivitiesAdminPage({
               : "검색 조건에 맞는 활동이 없습니다."}
           </p>
         ) : (
-          <ul className="space-y-2" data-testid="activities-list">
+          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" data-testid="activities-list">
             {filteredItems.map((item) => (
               <li
                 key={item.id}
@@ -860,7 +826,9 @@ export default function ActivitiesAdminPage({
                     className="min-w-0 flex-1 text-left"
                   >
                     <p className="font-medium text-gray-900">{item.title}</p>
-                    <p className="text-xs text-gray-500">소속 기수 ID: {item.generationId}</p>
+                    <p className="text-xs text-gray-500">
+                      소속 기수: {generationLabelById.get(item.generationId) ?? "미확인 기수"}
+                    </p>
                     <p className="text-xs text-gray-500">
                       활동 기간: {formatTimestamp(item.startDate)} ~ {formatTimestamp(item.endDate)}
                     </p>
@@ -886,10 +854,11 @@ export default function ActivitiesAdminPage({
         onClose={() => {
           if (!isSubmitting) {
             setPanelMode(null);
-            setDrawerQuery(null);
+            router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false });
           }
         }}
         testId="activity-drawer"
+        variant="page"
       >
         {panelMode === "create" ? (
           <form onSubmit={handleCreate} className="space-y-3" data-testid="activity-create-form">
@@ -1014,6 +983,9 @@ export default function ActivitiesAdminPage({
                 <p className="text-xs text-gray-500">
                   여러 장을 한 번에 업로드한 뒤 활동 생성과 함께 저장됩니다.
                 </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  카드의 드래그 핸들을 마우스로 잡아 순서를 조정할 수 있습니다.
+                </p>
               </div>
               <BatchImageDropzone
                 title="세부 이미지 추가"
@@ -1023,11 +995,11 @@ export default function ActivitiesAdminPage({
                 onFilesSelected={queueCreateDetailFiles}
               />
               {createDetailBatchUpload.items.length > 0 ? (
-                <ul className="space-y-2">
+                <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
                   {createDetailBatchUpload.items.map((item) => (
                     <li
                       key={item.id}
-                      className={`rounded-md border border-gray-200 p-2 ${
+                      className={`relative aspect-[4/3] cursor-grab overflow-hidden rounded-md border border-gray-200 bg-gray-50 transition-shadow hover:shadow-sm active:cursor-grabbing ${
                         createQueuedDragId === item.id ? "opacity-60" : ""
                       }`}
                       data-testid={`activity-create-detail-upload-${item.id}`}
@@ -1044,50 +1016,50 @@ export default function ActivitiesAdminPage({
                       }}
                       onDragEnd={() => setCreateQueuedDragId(null)}
                     >
-                      <p className="truncate text-xs text-gray-600">{item.fileName}</p>
-                      <div className="mt-2 flex items-center gap-2">
-                        <label className="flex items-center gap-2 text-xs text-gray-600">
-                          정렬 순서
-                          <input
-                            type="number"
-                            min={0}
-                            value={item.sortOrder}
-                            onChange={(event) => {
-                              const nextValue = Number(event.target.value);
-                              if (!Number.isInteger(nextValue) || nextValue < 0) {
-                                return;
-                              }
-                              createDetailBatchUpload.setSortOrder(item.id, nextValue);
-                            }}
-                            className="w-20 rounded-md border border-gray-300 px-2 py-1 text-sm"
-                          />
-                        </label>
-                        <p className="text-xs text-gray-500">
-                          {item.status === "uploading"
-                            ? `업로드 중... ${item.progress}%`
-                            : item.status === "uploaded"
-                              ? "업로드 완료"
-                              : item.errorMessage ?? "업로드 실패"}
-                        </p>
-                      </div>
-                      <div className="mt-2 flex gap-2">
-                        {item.status === "failed" ? (
-                          <button
-                            type="button"
-                            onClick={() => createDetailBatchUpload.retryItem(item.id)}
-                            className="rounded-md border border-gray-300 px-2 py-1 text-xs"
-                          >
-                            재시도
-                          </button>
-                        ) : null}
+                      <DragReorderBadge compact className="absolute left-2 top-2 z-10" />
+                      {item.status === "failed" ? (
                         <button
                           type="button"
-                          onClick={() => createDetailBatchUpload.removeItem(item.id)}
-                          className="rounded-md border border-gray-300 px-2 py-1 text-xs"
+                          onClick={() => createDetailBatchUpload.retryItem(item.id)}
+                          className="absolute top-2 right-14 z-10 rounded-md bg-white/90 px-2 py-1 text-xs text-gray-700 hover:bg-white"
                         >
-                          제거
+                          재시도
                         </button>
-                      </div>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => createDetailBatchUpload.removeItem(item.id)}
+                        className="absolute top-2 right-2 z-10 rounded-md bg-white/90 px-2 py-1 text-xs text-red-700 hover:bg-white"
+                      >
+                        삭제
+                      </button>
+                      <span className="absolute left-2 bottom-2 z-10 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white">
+                        정렬 {item.sortOrder}
+                      </span>
+                      <span className="absolute right-2 bottom-2 z-10 rounded-md bg-black/60 px-2 py-1 text-xs text-white">
+                        {item.status === "pending"
+                          ? "준비"
+                          : item.status === "uploading"
+                            ? item.progress > 0
+                              ? `${item.progress}%`
+                              : "업로드"
+                            : item.status === "uploaded"
+                              ? "완료"
+                              : "실패"}
+                      </span>
+                      {item.imageUrl ? (
+                        <Image
+                          src={item.imageUrl}
+                          alt={`${item.fileName} 미리보기`}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
+                          업로드 중
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -1105,6 +1077,59 @@ export default function ActivitiesAdminPage({
               활동 생성
             </AdminActionButton>
           </form>
+        ) : selected && isDetailRoute ? (
+          <div className="space-y-4">
+            <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <p className="text-base font-semibold text-gray-900">{selected.title}</p>
+              <p className="mt-1 text-sm text-gray-600">{selected.description}</p>
+              <p className="mt-2 text-sm text-gray-600">
+                소속 기수: {generationLabelById.get(selected.generationId) ?? "미확인 기수"}
+              </p>
+              <p className="mt-1 text-sm text-gray-600">
+                활동 기간: {formatTimestamp(selected.startDate)} ~ {formatTimestamp(selected.endDate)}
+              </p>
+              <p className="mt-1 text-sm text-gray-600">세부 이미지 수: {selected.detailImages.length}</p>
+            </section>
+
+            {sortedSelectedDetailImages.length > 0 ? (
+              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+                {sortedSelectedDetailImages.map((image) => (
+                  <li key={image.id} className="relative aspect-[4/3] overflow-hidden rounded-md border border-gray-200 bg-gray-50">
+                    <span className="absolute left-2 bottom-2 z-10 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white">
+                      정렬 {detailDrafts[image.id]?.sortOrder ?? image.sortOrder}
+                    </span>
+                    <Image
+                      src={detailDrafts[image.id]?.imageUrl ?? image.imageUrl}
+                      alt={`${selected.title} 세부 이미지`}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+
+            <div className="flex flex-wrap gap-2">
+              <AdminActionButton
+                onClick={() =>
+                  router.push(buildAdminEntityRoute(basePath, "edit", selected.id), {
+                    scroll: false,
+                  })
+                }
+                testId="activity-open-edit"
+              >
+                수정 페이지로 이동
+              </AdminActionButton>
+              <AdminActionButton
+                variant="ghost"
+                onClick={() => router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false })}
+                testId="activity-back-list"
+              >
+                목록으로
+              </AdminActionButton>
+            </div>
+          </div>
         ) : selected ? (
           <div className="space-y-5">
             <form onSubmit={handleUpdate} className="space-y-3" data-testid="activity-edit-form">
@@ -1220,99 +1245,59 @@ export default function ActivitiesAdminPage({
                 disabled={isSubmitting}
               />
 
-              <div className="mt-2 flex gap-2">
-                <AdminActionButton
-                  type="submit"
-                  disabled={!canSubmitEditActivity}
-                  testId="activity-edit-submit"
-                >
-                  수정 저장
-                </AdminActionButton>
-                <AdminActionButton
-                  variant="danger"
-                  onClick={() => {
-                    if (!isSubmitting) {
-                      setDeleteTarget("activity");
-                    }
-                  }}
-                  loading={activeSubmitAction === "deleteActivity"}
-                  disabled={isSubmitting && activeSubmitAction !== "deleteActivity"}
-                  loadingText="활동 삭제 중..."
-                  testId="activity-delete-button"
-                >
-                  활동 삭제
-                </AdminActionButton>
-              </div>
-            </form>
-
             <section
               className="space-y-3 rounded-lg border border-gray-200 p-3"
-              data-testid="activity-detail-create-form"
+              data-testid="activity-detail-manager"
             >
-              <h3 className="text-sm font-semibold">세부 이미지 일괄 추가</h3>
-              <p className="text-xs text-gray-500">선택된 활동: {selected.title}</p>
+              <div>
+                <h3 className="text-sm font-semibold">세부 이미지 관리</h3>
+                <p className="text-xs text-gray-500">
+                  파일 선택 창은 하나만 사용합니다. 선택한 이미지는 병렬로 업로드되며, 목록에서
+                  미리보기와 순서를 함께 관리할 수 있습니다.
+                </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  카드의 드래그 핸들을 마우스로 잡아 순서를 바꿔 주세요.
+                </p>
+                <p className="mt-1 text-xs text-gray-500">선택된 활동: {selected.title}</p>
+              </div>
 
               <BatchImageDropzone
                 title="세부 이미지 추가"
                 description="이미지를 끌어다 놓거나 클릭해 업로드할 수 있습니다."
-                testId="activity-detail-create-files"
+                testId="activity-detail-create-image"
                 disabled={isSubmitting}
                 onFilesSelected={queueEditDetailFiles}
               />
 
               {detailBatchUpload.items.length > 0 ? (
-                <ul className="space-y-2">
-                  {detailBatchUpload.items.map((item) => (
-                    <li
-                      key={item.id}
-                      className={`rounded-md border border-gray-200 p-2 ${
-                        editQueuedDragId === item.id ? "opacity-60" : ""
-                      }`}
-                      draggable
-                      onDragStart={() => setEditQueuedDragId(item.id)}
-                      onDragOver={(event) => event.preventDefault()}
-                      onDrop={(event) => {
-                        event.preventDefault();
-                        if (!editQueuedDragId || editQueuedDragId === item.id) {
-                          return;
-                        }
-                        detailBatchUpload.moveItem(editQueuedDragId, item.id);
-                        setEditQueuedDragId(null);
-                      }}
-                      onDragEnd={() => setEditQueuedDragId(null)}
-                    >
-                      <p className="truncate text-xs text-gray-600">{item.fileName}</p>
-                      <div className="mt-2 flex items-center gap-2">
-                        <label className="flex items-center gap-2 text-xs text-gray-600">
-                          정렬 순서
-                          <input
-                            type="number"
-                            min={0}
-                            value={item.sortOrder}
-                            onChange={(event) => {
-                              const nextValue = Number(event.target.value);
-                              if (!Number.isInteger(nextValue) || nextValue < 0) {
-                                return;
-                              }
-                              detailBatchUpload.setSortOrder(item.id, nextValue);
-                            }}
-                            className="w-20 rounded-md border border-gray-300 px-2 py-1 text-sm"
-                          />
-                        </label>
-                        <p className="text-xs text-gray-500">
-                          {item.status === "uploading"
-                            ? `업로드 중... ${item.progress}%`
-                            : item.status === "uploaded"
-                              ? "업로드 완료"
-                              : item.errorMessage ?? "업로드 실패"}
-                        </p>
-                      </div>
-                      <div className="mt-2 flex gap-2">
+                <div className="space-y-2" data-testid="activity-detail-upload-queue">
+                  <p className="text-xs font-medium text-gray-700">업로드 대기/진행 이미지</p>
+                  <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+                    {detailBatchUpload.items.map((item) => (
+                      <li
+                        key={item.id}
+                        className={`relative aspect-[4/3] cursor-grab overflow-hidden rounded-md border border-gray-200 bg-gray-50 transition-shadow hover:shadow-sm active:cursor-grabbing ${
+                          editQueuedDragId === item.id ? "opacity-60" : ""
+                        }`}
+                        draggable
+                        onDragStart={() => setEditQueuedDragId(item.id)}
+                        onDragOver={(event) => event.preventDefault()}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          if (!editQueuedDragId || editQueuedDragId === item.id) {
+                            return;
+                          }
+                          detailBatchUpload.moveItem(editQueuedDragId, item.id);
+                          setEditQueuedDragId(null);
+                        }}
+                        onDragEnd={() => setEditQueuedDragId(null)}
+                      >
+                        <DragReorderBadge compact className="absolute left-2 top-2 z-10" />
                         {item.status === "failed" ? (
                           <button
                             type="button"
                             onClick={() => detailBatchUpload.retryItem(item.id)}
-                            className="rounded-md border border-gray-300 px-2 py-1 text-xs"
+                            className="absolute top-2 right-14 z-10 rounded-md bg-white/90 px-2 py-1 text-xs text-gray-700 hover:bg-white"
                           >
                             재시도
                           </button>
@@ -1320,144 +1305,160 @@ export default function ActivitiesAdminPage({
                         <button
                           type="button"
                           onClick={() => detailBatchUpload.removeItem(item.id)}
-                          className="rounded-md border border-gray-300 px-2 py-1 text-xs"
+                          className="absolute top-2 right-2 z-10 rounded-md bg-white/90 px-2 py-1 text-xs text-red-700 hover:bg-white"
                         >
-                          제거
+                          삭제
                         </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                        <span className="absolute left-2 bottom-2 z-10 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white">
+                          정렬 {item.sortOrder}
+                        </span>
+                        <span className="absolute right-2 bottom-2 z-10 rounded-md bg-black/60 px-2 py-1 text-xs text-white">
+                          {item.status === "pending"
+                            ? "준비"
+                            : item.status === "uploading"
+                              ? item.progress > 0
+                                ? `${item.progress}%`
+                                : "업로드"
+                              : item.status === "uploaded"
+                                ? "완료"
+                                : "실패"}
+                        </span>
+                        {item.imageUrl ? (
+                          <Image
+                            src={item.imageUrl}
+                            alt={`${item.fileName} 미리보기`}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
+                            업로드 중
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ) : null}
 
-              <AdminActionButton
-                onClick={() => void handleCreateDetailImages()}
-                loading={activeSubmitAction === "createDetailImages"}
-                disabled={
-                  isSubmitting ||
-                  detailBatchUpload.items.length === 0 ||
-                  detailBatchUpload.hasUploading ||
-                  detailBatchUpload.hasError
-                }
-                loadingText="이미지 추가 중..."
-                testId="activity-detail-create-submit"
-              >
-                세부 이미지 일괄 추가
-              </AdminActionButton>
-            </section>
+              <div className="flex flex-wrap gap-2">
+                <AdminActionButton
+                  onClick={() => void handleCreateDetailImages()}
+                  loading={activeSubmitAction === "createDetailImages"}
+                  disabled={
+                    isSubmitting ||
+                    detailBatchUpload.items.length === 0 ||
+                    detailBatchUpload.hasUploading ||
+                    detailBatchUpload.hasError
+                  }
+                  loadingText="이미지 추가 중..."
+                  testId="activity-detail-create-submit"
+                >
+                  업로드한 이미지 반영
+                </AdminActionButton>
+                <AdminActionButton
+                  onClick={() => void handleSaveDetailImages()}
+                  loading={activeSubmitAction === "saveDetailImages"}
+                  disabled={!canSaveDetailImages}
+                  loadingText="저장 중..."
+                  testId="activity-detail-save-all"
+                >
+                  순서 저장
+                </AdminActionButton>
+              </div>
 
-            <article
-              className="rounded-lg border border-gray-200 p-3"
-              data-testid="activity-detail-edit-card"
-            >
-              <h3 className="mb-2 text-sm font-semibold">세부 이미지 수정/삭제</h3>
               {selected.detailImages.length === 0 ? (
                 <p className="text-sm text-gray-500">등록된 세부 이미지가 없습니다.</p>
               ) : (
-                <ul className="mb-3 space-y-2" data-testid="activity-detail-list">
-                  {sortedSelectedDetailImages.map((image) => (
-                    <li
-                      key={image.id}
-                      className={`rounded-md border border-gray-200 p-2 ${
-                        detailImageDragId === image.id ? "opacity-60" : ""
-                      }`}
-                      data-testid={`activity-detail-row-${image.id}`}
-                      draggable
-                      onDragStart={() => setDetailImageDragId(image.id)}
-                      onDragOver={(event) => event.preventDefault()}
-                      onDrop={(event) => {
-                        event.preventDefault();
-                        if (!detailImageDragId || detailImageDragId === image.id) {
-                          return;
-                        }
-                        handleReorderDetailImages(detailImageDragId, image.id);
-                        setDetailImageDragId(null);
-                      }}
-                      onDragEnd={() => setDetailImageDragId(null)}
-                    >
-                      <div className="flex items-center justify-between gap-2">
+                <div className="space-y-2">
+                  <p className="text-xs text-gray-500">
+                    카드의 드래그 핸들을 마우스로 잡아 홈페이지 노출 순서를 변경할 수 있습니다.
+                  </p>
+                  <ul
+                    className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4"
+                    data-testid="activity-detail-list"
+                  >
+                  {sortedSelectedDetailImages.map((image) => {
+                    const imageUrl = detailDrafts[image.id]?.imageUrl ?? image.imageUrl;
+                    const sortOrder = detailDrafts[image.id]?.sortOrder ?? image.sortOrder;
+
+                    return (
+                      <li
+                        key={image.id}
+                        className={`relative aspect-[4/3] cursor-grab overflow-hidden rounded-md border border-gray-200 bg-gray-50 transition-shadow hover:shadow-sm active:cursor-grabbing ${
+                          detailImageDragId === image.id ? "opacity-60" : ""
+                        }`}
+                        data-testid={`activity-detail-row-${image.id}`}
+                        draggable
+                        onDragStart={() => setDetailImageDragId(image.id)}
+                        onDragOver={(event) => event.preventDefault()}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          if (!detailImageDragId || detailImageDragId === image.id) {
+                            return;
+                          }
+                          handleReorderDetailImages(detailImageDragId, image.id);
+                          setDetailImageDragId(null);
+                        }}
+                        onDragEnd={() => setDetailImageDragId(null)}
+                      >
+                        <DragReorderBadge compact className="absolute left-2 top-2 z-10" />
                         <button
                           type="button"
-                          onClick={() => handleSelectDetailImage(image)}
-                          className="min-w-0 flex-1 text-left"
+                          onClick={() => {
+                            if (!isSubmitting) {
+                              setSelectedImageId(image.id);
+                              setDeleteTarget("detail");
+                            }
+                          }}
+                          className="absolute top-2 right-2 z-10 rounded-md bg-white/90 px-2 py-1 text-xs text-red-700 hover:bg-white"
+                          data-testid={`activity-detail-delete-button-${image.id}`}
                         >
-                          <p className="text-sm font-medium">
-                            정렬 순서: {detailDrafts[image.id]?.sortOrder ?? image.sortOrder}
-                          </p>
-                          <p className="truncate text-xs text-gray-500">{image.imageUrl}</p>
+                          삭제
                         </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                        <span className="absolute left-2 bottom-2 z-10 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white">
+                          정렬 {sortOrder}
+                        </span>
+                        <Image
+                          src={imageUrl}
+                          alt={`${selected.title} 세부 이미지`}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </li>
+                    );
+                  })}
+                  </ul>
+                </div>
               )}
+            </section>
 
-              <div className="space-y-3" data-testid="activity-detail-edit-form">
-                {selectedImage ? (
-                  <>
-                    <ImageInput
-                      label="세부 이미지"
-                      file={detailEditUpload.file}
-                      onFileChange={handleDetailImageFileChange}
-                      currentUrl={selectedImageDraft?.imageUrl ?? selectedImage.imageUrl}
-                      status={detailEditUpload.status}
-                      errorMessage={detailEditUpload.errorMessage}
-                      onRetry={detailEditUpload.retry}
-                      uploadProgress={detailEditUpload.progress}
-                      isUploading={detailEditUpload.isUploading}
-                      previewAspectRatio="4/3"
-                      testIdPrefix="activity-detail-edit-image"
-                      disabled={isSubmitting}
-                    />
-
-                    <label className="block text-sm">
-                      <span className="mb-1 block">정렬 순서</span>
-                      <input
-                        type="number"
-                        min={0}
-                        value={selectedImageDraft?.sortOrder ?? ""}
-                        onChange={(event) =>
-                          handleDetailSortOrderChange(selectedImage.id, event.target.value)
-                        }
-                        className="w-full rounded-md border border-gray-300 px-3 py-2"
-                        required
-                        data-testid="activity-detail-edit-sort-order"
-                      />
-                    </label>
-
-                    <div className="flex gap-2">
-                      <AdminActionButton
-                        onClick={() => void handleSaveDetailImages()}
-                        loading={activeSubmitAction === "saveDetailImages"}
-                        disabled={!canSaveDetailImages}
-                        loadingText="저장 중..."
-                        testId="activity-detail-save-all"
-                      >
-                        모두 저장
-                      </AdminActionButton>
-                      <AdminActionButton
-                        variant="danger"
-                        onClick={() => {
-                          if (!isSubmitting) {
-                            setDeleteTarget("detail");
-                          }
-                        }}
-                        loading={activeSubmitAction === "deleteDetailImage"}
-                        disabled={
-                          isSubmitting && activeSubmitAction !== "deleteDetailImage"
-                        }
-                        loadingText="이미지 삭제 중..."
-                        testId="activity-detail-delete-button"
-                      >
-                        이미지 삭제
-                      </AdminActionButton>
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-sm text-gray-500">수정할 세부 이미지를 선택해 주세요.</p>
-                )}
-              </div>
-            </article>
+            <div className="mt-2 flex gap-2">
+              <AdminActionButton
+                type="submit"
+                disabled={!canSubmitEditActivity}
+                testId="activity-edit-submit"
+              >
+                수정 저장
+              </AdminActionButton>
+              <AdminActionButton
+                variant="danger"
+                onClick={() => {
+                  if (!isSubmitting) {
+                    setDeleteTarget("activity");
+                  }
+                }}
+                loading={activeSubmitAction === "deleteActivity"}
+                disabled={isSubmitting && activeSubmitAction !== "deleteActivity"}
+                loadingText="활동 삭제 중..."
+                testId="activity-delete-button"
+              >
+                활동 삭제
+              </AdminActionButton>
+            </div>
+          </form>
           </div>
         ) : (
           <p className="text-sm text-gray-500">수정할 활동을 선택해 주세요.</p>

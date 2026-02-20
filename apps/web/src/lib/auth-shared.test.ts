@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatKoreanMobilePhoneNumber,
+  isKoreanMobilePhoneNumber,
+} from "@repo/shared-auth/profile";
+import {
   canAccessAdminPage,
   canManageGenerations,
   canManageGlobalUsers,
@@ -90,5 +94,16 @@ describe("auth-shared helpers", /** describe 실행 과정에서 필요한 연�
         phoneNumber: "010-1234-5678",
       }),
     ).toBe(false);
+  });
+
+  it("formatKoreanMobilePhoneNumber는 숫자 입력을 010-1234-5678 형태로 변환한다", () => {
+    expect(formatKoreanMobilePhoneNumber("01092602402")).toBe("010-9260-2402");
+    expect(formatKoreanMobilePhoneNumber("010-9260-2402")).toBe("010-9260-2402");
+  });
+
+  it("isKoreanMobilePhoneNumber는 010-1234-5678 형식만 허용한다", () => {
+    expect(isKoreanMobilePhoneNumber("010-9260-2402")).toBe(true);
+    expect(isKoreanMobilePhoneNumber("01092602402")).toBe(false);
+    expect(isKoreanMobilePhoneNumber("011-9260-2402")).toBe(false);
   });
 });

@@ -13,7 +13,6 @@ import {
   Moon,
   PanelLeft,
   PanelRight,
-  Palette,
   Sun,
   UserRound,
   UsersRound,
@@ -36,7 +35,6 @@ type AdminSidebarProps = {
 };
 
 type AdminThemeMode = "light" | "dark" | "system";
-type AdminColorStyle = "ocean" | "graphite" | "forest";
 type SidebarIconName =
   | "profile"
   | "generations"
@@ -47,13 +45,9 @@ type SidebarIconName =
   | "users";
 
 const THEME_STORAGE_KEY = "theme";
-const COLOR_STYLE_STORAGE_KEY = "admin.theme.style";
 
 const isAdminThemeMode = (value: string | null): value is AdminThemeMode =>
   value === "light" || value === "dark" || value === "system";
-
-const isAdminColorStyle = (value: string | null): value is AdminColorStyle =>
-  value === "ocean" || value === "graphite" || value === "forest";
 
 const resolveTheme = (mode: AdminThemeMode): "light" | "dark" => {
   if (mode === "light" || mode === "dark") {
@@ -70,13 +64,6 @@ const applyThemeMode = (mode: AdminThemeMode, persist = true) => {
   document.documentElement.dataset.themeMode = mode;
   if (persist) {
     window.localStorage.setItem(THEME_STORAGE_KEY, mode);
-  }
-};
-
-const applyColorStyle = (style: AdminColorStyle, persist = true) => {
-  document.documentElement.dataset.adminThemeStyle = style;
-  if (persist) {
-    window.localStorage.setItem(COLOR_STYLE_STORAGE_KEY, style);
   }
 };
 
@@ -256,7 +243,6 @@ export default function AdminSidebar({
   const [generationList, setGenerationList] = useState<ApiGeneration[]>([]);
   const [isGenerationLoading, setIsGenerationLoading] = useState(true);
   const [themeMode, setThemeMode] = useState<AdminThemeMode>("system");
-  const [colorStyle, setColorStyle] = useState<AdminColorStyle>("ocean");
   const canManageGenerationsFlag = canManageGenerations(session);
   const canManageGlobalUsersFlag = canManageGlobalUsers(session);
 
@@ -333,27 +319,6 @@ export default function AdminSidebar({
       mediaQuery.removeEventListener("change", handleChange);
     };
   }, [themeMode]);
-
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(COLOR_STYLE_STORAGE_KEY);
-      const fromDataset = document.documentElement.dataset.adminThemeStyle ?? null;
-      const initialStyle: AdminColorStyle = isAdminColorStyle(stored)
-        ? stored
-        : isAdminColorStyle(fromDataset)
-        ? fromDataset
-        : "ocean";
-
-      setColorStyle(initialStyle);
-      applyColorStyle(initialStyle, false);
-      return;
-    } catch {
-      // localStorage 접근 실패 시에도 기본 스타일을 보장한다.
-    }
-
-    setColorStyle("ocean");
-    applyColorStyle("ocean", false);
-  }, []);
 
   const routeContext = useMemo(
         /**
@@ -495,14 +460,6 @@ export default function AdminSidebar({
     }
     setThemeMode(nextModeRaw);
     applyThemeMode(nextModeRaw);
-  };
-
-  const handleColorStyleChange = (nextStyleRaw: string) => {
-    if (!isAdminColorStyle(nextStyleRaw)) {
-      return;
-    }
-    setColorStyle(nextStyleRaw);
-    applyColorStyle(nextStyleRaw);
   };
 
   const sidebarWidthClass = isMobileVariant
@@ -908,74 +865,50 @@ export default function AdminSidebar({
             </section>
           )}
 
-          <label
-            className={`inline-flex items-center rounded-2xl border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] shadow-sm ${
-              collapsed ? "w-11 justify-center px-1" : "w-full justify-between px-3"
-            }`}
-          >
-            {collapsed ? (
-              <Palette className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
-            ) : (
-              <span className="inline-flex items-center gap-2 text-sm font-medium">
-                <Palette className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
-                스타일
-              </span>
-            )}
-            <select
-              value={colorStyle}
-              onChange={(event) => handleColorStyleChange(event.target.value)}
-              className={`h-10 rounded-2xl bg-transparent text-sm outline-none ${
-                collapsed ? "pointer-events-none w-0 opacity-0" : "w-[8.5rem] text-right"
+          <div className={`flex items-stretch gap-2 ${collapsed ? "justify-center" : ""}`}>
+            <label
+              className={`inline-flex items-center rounded-2xl border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] shadow-sm ${
+                collapsed ? "w-11 justify-center px-1" : "min-w-0 flex-1 justify-between px-3"
               }`}
-              data-testid="admin-color-style-toggle"
-              aria-label="관리자 색상 스타일 선택"
             >
-              <option value="ocean">Ocean</option>
-              <option value="graphite">Graphite</option>
-              <option value="forest">Forest</option>
-            </select>
-          </label>
-
-          <label
-            className={`inline-flex items-center rounded-2xl border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] shadow-sm ${
-              collapsed ? "w-11 justify-center px-1" : "w-full justify-between px-3"
-            }`}
-          >
-            {collapsed ? (
-              themeMode === "light" ? (
-                <Sun className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
-              ) : themeMode === "dark" ? (
-                <Moon className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
-              ) : (
-                <Monitor className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
-              )
-            ) : (
-              <span className="inline-flex items-center gap-2 text-sm font-medium">
-                {themeMode === "light" ? (
+              {collapsed ? (
+                themeMode === "light" ? (
                   <Sun className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
                 ) : themeMode === "dark" ? (
                   <Moon className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
                 ) : (
                   <Monitor className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
-                )}
-                테마
-              </span>
-            )}
-            <select
-              value={themeMode}
-              onChange={(event) => handleThemeModeChange(event.target.value)}
-              className={`h-10 rounded-2xl bg-transparent text-sm outline-none ${
-                collapsed ? "w-9 text-center text-[11px]" : "w-[8.5rem] text-right"
-              }`}
-              data-testid="admin-theme-toggle"
-              aria-label="관리자 테마 선택"
-            >
-              <option value="light">{collapsed ? "L" : "라이트"}</option>
-              <option value="dark">{collapsed ? "D" : "다크"}</option>
-              <option value="system">{collapsed ? "S" : "기기"}</option>
-            </select>
-          </label>
-          <LogoutButton compact={collapsed} />
+                )
+              ) : (
+                <span className="inline-flex items-center gap-2 text-sm font-medium">
+                  {themeMode === "light" ? (
+                    <Sun className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
+                  ) : themeMode === "dark" ? (
+                    <Moon className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
+                  ) : (
+                    <Monitor className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
+                  )}
+                  테마
+                </span>
+              )}
+              <select
+                value={themeMode}
+                onChange={(event) => handleThemeModeChange(event.target.value)}
+                className={`h-10 rounded-2xl bg-transparent text-sm outline-none ${
+                  collapsed ? "w-9 text-center text-[11px]" : "w-[7rem] text-right"
+                }`}
+                data-testid="admin-theme-toggle"
+                aria-label="관리자 테마 선택"
+              >
+                <option value="light">{collapsed ? "L" : "라이트"}</option>
+                <option value="dark">{collapsed ? "D" : "다크"}</option>
+                <option value="system">{collapsed ? "S" : "기기"}</option>
+              </select>
+            </label>
+            <div className={collapsed ? "" : "w-[8.75rem] shrink-0"}>
+              <LogoutButton compact={collapsed} />
+            </div>
+          </div>
         </div>
       </div>
     </aside>

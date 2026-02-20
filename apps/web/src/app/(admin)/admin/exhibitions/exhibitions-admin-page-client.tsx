@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
 import { PRESIGN_PATHS } from "../../../../lib/admin-api/upload";
 import type {
@@ -19,10 +21,11 @@ import AdminActionButton from "../components/admin-action-button";
 import BatchImageDropzone from "../components/batch-image-dropzone";
 import AdminConfirmModal from "../components/admin-confirm-modal";
 import AdminDrawer from "../components/admin-drawer";
+import { type AdminEntityRouteMode, buildAdminEntityRoute } from "../components/admin-entity-route";
 import AdminInfoBox from "../components/admin-info-box";
 import AdminPageHeader from "../components/admin-page-header";
+import DragReorderBadge from "../components/drag-reorder-badge";
 import ImageInput from "../components/image-input";
-import { useAdminDrawerQuerySync } from "../components/use-admin-drawer-query-sync";
 import { useBatchImageUpload } from "../components/use-batch-image-upload";
 import { useImmediateImageUpload } from "../components/use-immediate-image-upload";
 
@@ -50,8 +53,11 @@ type DetailImageDraft = {
 };
 
 type ExhibitionsAdminPageProps = {
+  basePath?: string;
   generationScoped?: boolean;
   generationSortOrder?: number | null;
+  routeId?: string | null;
+  routeMode?: AdminEntityRouteMode;
   initialData?: {
     exhibitions: ApiExhibition[];
     generations: ApiGeneration[];
@@ -95,10 +101,14 @@ const resolveExhibitionsData = (
 };
 
 export default function ExhibitionsAdminPage({
+  basePath = "/admin/exhibitions",
   generationScoped = false,
   generationSortOrder = null,
+  routeId = null,
+  routeMode = "list",
   initialData,
 }: ExhibitionsAdminPageProps = {}) {
+  const router = useRouter();
   const initialResolvedData = initialData
     ? resolveExhibitionsData(
         initialData.exhibitions,
@@ -158,7 +168,7 @@ export default function ExhibitionsAdminPage({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const scopedGenerationId = generationScoped ? scopedGeneration?.id ?? null : null;
-  const { queryState, setDrawerQuery, normalizeDrawerQuery } = useAdminDrawerQuerySync();
+  const isDetailRoute = routeMode === "detail";
 
   const selected = useMemo(
     () => items.find((item) => item.id === selectedId) ?? null,
@@ -168,6 +178,16 @@ export default function ExhibitionsAdminPage({
   const selectedImage = useMemo(
     () => selected?.detailImages.find((image) => image.id === selectedImageId) ?? null,
     [selected, selectedImageId],
+  );
+  const generationLabelById = useMemo(
+    () =>
+      new Map(
+        generations.map((generation) => [
+          generation.id,
+          `${generation.sortOrder}기 (${generation.name})`,
+        ]),
+      ),
+    [generations],
   );
   const selectedImageDraft = useMemo(() => {
     if (!selectedImage) {
@@ -340,7 +360,7 @@ export default function ExhibitionsAdminPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generationScoped, generationSortOrder, initialData]);
 
-  const handleSelect = (item: ApiExhibition) => {
+  const handleSelect = (item: ApiExhibition, navigate = true) => {
     setSelectedId(item.id);
     syncEditForm(item);
     const firstImage = item.detailImages[0] ?? null;
@@ -349,10 +369,11 @@ export default function ExhibitionsAdminPage({
     detailEditUpload.reset(firstImage?.imageUrl ?? null);
     detailBatchUpload.clear();
     setDetailUploadTargetImageId(null);
-    setPanelMode("edit");
-    setDrawerQuery("edit", item.id);
     setErrorMessage(null);
     setSuccessMessage(null);
+    if (navigate) {
+      router.push(buildAdminEntityRoute(basePath, "detail", item.id), { scroll: false });
+    }
   };
 
   const handleSelectImage = (image: ApiExhibitionImage) => {
@@ -363,15 +384,11 @@ export default function ExhibitionsAdminPage({
   };
 
   useEffect(() => {
-    normalizeDrawerQuery();
-  }, [normalizeDrawerQuery]);
-
-  useEffect(() => {
     if (isLoading) {
       return;
     }
 
-    if (queryState.panel === "create") {
+    if (routeMode === "create") {
       if (panelMode !== "create") {
         setCreateForm({
           ...emptyExhibitionForm,
@@ -386,15 +403,15 @@ export default function ExhibitionsAdminPage({
       return;
     }
 
-    if (queryState.panel === "edit") {
-      const target = items.find((item) => item.id === queryState.id) ?? null;
+    if (routeMode === "detail" || routeMode === "edit") {
+      const target = items.find((item) => item.id === routeId) ?? null;
       if (!target) {
-        setDrawerQuery(null);
+        router.replace(buildAdminEntityRoute(basePath, "list"), { scroll: false });
         return;
       }
 
       if (selectedId !== target.id || panelMode !== "edit") {
-        handleSelect(target);
+        handleSelect(target, false);
       }
       return;
     }
@@ -403,7 +420,18 @@ export default function ExhibitionsAdminPage({
       setPanelMode(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryState, isLoading, panelMode, items, selectedId, scopedGenerationId, generations]);
+  }, [
+    routeMode,
+    routeId,
+    isLoading,
+    panelMode,
+    items,
+    selectedId,
+    scopedGenerationId,
+    generations,
+    router,
+    basePath,
+  ]);
 
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -456,9 +484,10 @@ export default function ExhibitionsAdminPage({
       createCoverUpload.reset(null);
       createDetailBatchUpload.clear();
       setSuccessMessage("전시를 생성했습니다.");
-      setPanelMode("edit");
-      setDrawerQuery("edit", created.id);
       await loadData(created.id);
+      router.replace(buildAdminEntityRoute(basePath, "detail", created.id), {
+        scroll: false,
+      });
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -497,6 +526,11 @@ export default function ExhibitionsAdminPage({
 
       setSuccessMessage("전시를 수정했습니다.");
       await loadData(selected.id);
+      if (routeMode === "edit") {
+        router.replace(buildAdminEntityRoute(basePath, "detail", selected.id), {
+          scroll: false,
+        });
+      }
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -520,8 +554,8 @@ export default function ExhibitionsAdminPage({
       setSuccessMessage("전시를 삭제했습니다.");
       setDeleteTarget(null);
       setPanelMode(null);
-      setDrawerQuery(null);
       await loadData();
+      router.replace(buildAdminEntityRoute(basePath, "list"), { scroll: false });
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -770,7 +804,7 @@ export default function ExhibitionsAdminPage({
       <AdminPageHeader
         title="전시 관리"
         description="전시 일정/장소/설명과 세부 이미지를 관리하는 화면입니다."
-        guidance="목록에서 전시를 선택하면 우측 패널에서 기본 정보와 세부 이미지를 한 번에 수정할 수 있습니다."
+        guidance="목록에서 전시를 선택해 상세 페이지로 이동하고, 상세 페이지에서 수정 페이지로 이동해 편집하세요."
       >
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <AdminActionButton
@@ -782,7 +816,7 @@ export default function ExhibitionsAdminPage({
               createCoverUpload.reset(null);
               createDetailBatchUpload.clear();
               setPanelMode("create");
-              setDrawerQuery("create");
+              router.push(buildAdminEntityRoute(basePath, "create"), { scroll: false });
               setErrorMessage(null);
               setSuccessMessage(null);
             }}
@@ -852,7 +886,7 @@ export default function ExhibitionsAdminPage({
               : "검색 조건에 맞는 전시가 없습니다."}
           </p>
         ) : (
-          <ul className="space-y-2" data-testid="exhibitions-list">
+          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" data-testid="exhibitions-list">
             {filteredItems.map((item) => (
               <li
                 key={item.id}
@@ -867,7 +901,9 @@ export default function ExhibitionsAdminPage({
                   >
                     <p className="font-medium">{item.title}</p>
                     <p className="text-xs text-gray-500">장소: {item.place}</p>
-                    <p className="text-xs text-gray-500">소속 기수 ID: {item.generationId}</p>
+                    <p className="text-xs text-gray-500">
+                      소속 기수: {generationLabelById.get(item.generationId) ?? "미확인 기수"}
+                    </p>
                     <p className="text-xs text-gray-500">
                       전시 기간: {formatTimestamp(item.startDate)} ~ {formatTimestamp(item.endDate)}
                     </p>
@@ -893,10 +929,11 @@ export default function ExhibitionsAdminPage({
         onClose={() => {
           if (!isSubmitting) {
             setPanelMode(null);
-            setDrawerQuery(null);
+            router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false });
           }
         }}
         testId="exhibition-drawer"
+        variant="page"
       >
         {panelMode === "create" ? (
           <form onSubmit={handleCreate} className="space-y-3" data-testid="exhibition-create-form">
@@ -1037,6 +1074,9 @@ export default function ExhibitionsAdminPage({
                 <p className="text-xs text-gray-500">
                   여러 장을 한 번에 업로드한 뒤 전시 생성과 함께 저장됩니다.
                 </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  카드의 드래그 핸들을 마우스로 잡아 순서를 조정할 수 있습니다.
+                </p>
               </div>
               <BatchImageDropzone
                 title="세부 이미지 추가"
@@ -1046,11 +1086,11 @@ export default function ExhibitionsAdminPage({
                 onFilesSelected={queueCreateDetailFiles}
               />
               {createDetailBatchUpload.items.length > 0 ? (
-                <ul className="space-y-2">
+                <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
                   {createDetailBatchUpload.items.map((item) => (
                     <li
                       key={item.id}
-                      className={`rounded-md border border-gray-200 p-2 ${
+                      className={`relative aspect-[2/3] cursor-grab overflow-hidden rounded-md border border-gray-200 bg-gray-50 transition-shadow hover:shadow-sm active:cursor-grabbing ${
                         createQueuedDragId === item.id ? "opacity-60" : ""
                       }`}
                       data-testid={`exhibition-create-detail-upload-${item.id}`}
@@ -1067,50 +1107,50 @@ export default function ExhibitionsAdminPage({
                       }}
                       onDragEnd={() => setCreateQueuedDragId(null)}
                     >
-                      <p className="truncate text-xs text-gray-600">{item.fileName}</p>
-                      <div className="mt-2 flex items-center gap-2">
-                        <label className="flex items-center gap-2 text-xs text-gray-600">
-                          정렬 순서
-                          <input
-                            type="number"
-                            min={0}
-                            value={item.sortOrder}
-                            onChange={(event) => {
-                              const nextValue = Number(event.target.value);
-                              if (!Number.isInteger(nextValue) || nextValue < 0) {
-                                return;
-                              }
-                              createDetailBatchUpload.setSortOrder(item.id, nextValue);
-                            }}
-                            className="w-20 rounded-md border border-gray-300 px-2 py-1 text-sm"
-                          />
-                        </label>
-                        <p className="text-xs text-gray-500">
-                          {item.status === "uploading"
-                            ? `업로드 중... ${item.progress}%`
-                            : item.status === "uploaded"
-                              ? "업로드 완료"
-                              : item.errorMessage ?? "업로드 실패"}
-                        </p>
-                      </div>
-                      <div className="mt-2 flex gap-2">
-                        {item.status === "failed" ? (
-                          <button
-                            type="button"
-                            onClick={() => createDetailBatchUpload.retryItem(item.id)}
-                            className="rounded-md border border-gray-300 px-2 py-1 text-xs"
-                          >
-                            재시도
-                          </button>
-                        ) : null}
+                      <DragReorderBadge compact className="absolute left-2 top-2 z-10" />
+                      {item.status === "failed" ? (
                         <button
                           type="button"
-                          onClick={() => createDetailBatchUpload.removeItem(item.id)}
-                          className="rounded-md border border-gray-300 px-2 py-1 text-xs"
+                          onClick={() => createDetailBatchUpload.retryItem(item.id)}
+                          className="absolute top-2 right-14 z-10 rounded-md bg-white/90 px-2 py-1 text-xs text-gray-700 hover:bg-white"
                         >
-                          제거
+                          재시도
                         </button>
-                      </div>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => createDetailBatchUpload.removeItem(item.id)}
+                        className="absolute top-2 right-2 z-10 rounded-md bg-white/90 px-2 py-1 text-xs text-red-700 hover:bg-white"
+                      >
+                        삭제
+                      </button>
+                      <span className="absolute left-2 bottom-2 z-10 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white">
+                        정렬 {item.sortOrder}
+                      </span>
+                      <span className="absolute right-2 bottom-2 z-10 rounded-md bg-black/60 px-2 py-1 text-xs text-white">
+                        {item.status === "pending"
+                          ? "준비"
+                          : item.status === "uploading"
+                            ? item.progress > 0
+                              ? `${item.progress}%`
+                              : "업로드"
+                            : item.status === "uploaded"
+                              ? "완료"
+                              : "실패"}
+                      </span>
+                      {item.imageUrl ? (
+                        <Image
+                          src={item.imageUrl}
+                          alt={`${item.fileName} 미리보기`}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
+                          업로드 중
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -1128,6 +1168,60 @@ export default function ExhibitionsAdminPage({
               전시 생성
             </AdminActionButton>
           </form>
+        ) : selected && isDetailRoute ? (
+          <div className="space-y-4">
+            <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <p className="text-base font-semibold text-gray-900">{selected.title}</p>
+              <p className="mt-1 text-sm text-gray-600">{selected.description}</p>
+              <p className="mt-2 text-sm text-gray-600">장소: {selected.place}</p>
+              <p className="mt-1 text-sm text-gray-600">
+                소속 기수: {generationLabelById.get(selected.generationId) ?? "미확인 기수"}
+              </p>
+              <p className="mt-1 text-sm text-gray-600">
+                전시 기간: {formatTimestamp(selected.startDate)} ~ {formatTimestamp(selected.endDate)}
+              </p>
+              <p className="mt-1 text-sm text-gray-600">세부 이미지 수: {selected.detailImages.length}</p>
+            </section>
+
+            {sortedSelectedDetailImages.length > 0 ? (
+              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+                {sortedSelectedDetailImages.map((image) => (
+                  <li key={image.id} className="relative aspect-[2/3] overflow-hidden rounded-md border border-gray-200 bg-gray-50">
+                    <span className="absolute left-2 bottom-2 z-10 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white">
+                      정렬 {detailDrafts[image.id]?.sortOrder ?? image.sortOrder}
+                    </span>
+                    <Image
+                      src={detailDrafts[image.id]?.imageUrl ?? image.imageUrl}
+                      alt={`${selected.title} 세부 이미지`}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+
+            <div className="flex flex-wrap gap-2">
+              <AdminActionButton
+                onClick={() =>
+                  router.push(buildAdminEntityRoute(basePath, "edit", selected.id), {
+                    scroll: false,
+                  })
+                }
+                testId="exhibition-open-edit"
+              >
+                수정 페이지로 이동
+              </AdminActionButton>
+              <AdminActionButton
+                variant="ghost"
+                onClick={() => router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false })}
+                testId="exhibition-back-list"
+              >
+                목록으로
+              </AdminActionButton>
+            </div>
+          </div>
         ) : selected ? (
           <div className="space-y-5">
             <form onSubmit={handleUpdate} className="space-y-3" data-testid="exhibition-edit-form">
@@ -1289,6 +1383,9 @@ export default function ExhibitionsAdminPage({
               data-testid="exhibition-detail-create-form"
             >
               <h3 className="text-sm font-semibold">세부 이미지 일괄 추가</h3>
+              <p className="text-xs text-gray-500">
+                카드의 드래그 핸들을 마우스로 잡아 순서를 바꿀 수 있습니다.
+              </p>
               <p className="text-xs text-gray-500">선택된 전시: {selected.title}</p>
 
               <BatchImageDropzone
@@ -1300,11 +1397,11 @@ export default function ExhibitionsAdminPage({
               />
 
               {detailBatchUpload.items.length > 0 ? (
-                <ul className="space-y-2">
+                <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
                   {detailBatchUpload.items.map((item) => (
                     <li
                       key={item.id}
-                      className={`rounded-md border border-gray-200 p-2 ${
+                      className={`relative aspect-[2/3] cursor-grab overflow-hidden rounded-md border border-gray-200 bg-gray-50 transition-shadow hover:shadow-sm active:cursor-grabbing ${
                         editQueuedDragId === item.id ? "opacity-60" : ""
                       }`}
                       draggable
@@ -1320,50 +1417,50 @@ export default function ExhibitionsAdminPage({
                       }}
                       onDragEnd={() => setEditQueuedDragId(null)}
                     >
-                      <p className="truncate text-xs text-gray-600">{item.fileName}</p>
-                      <div className="mt-2 flex items-center gap-2">
-                        <label className="flex items-center gap-2 text-xs text-gray-600">
-                          정렬 순서
-                          <input
-                            type="number"
-                            min={0}
-                            value={item.sortOrder}
-                            onChange={(event) => {
-                              const nextValue = Number(event.target.value);
-                              if (!Number.isInteger(nextValue) || nextValue < 0) {
-                                return;
-                              }
-                              detailBatchUpload.setSortOrder(item.id, nextValue);
-                            }}
-                            className="w-20 rounded-md border border-gray-300 px-2 py-1 text-sm"
-                          />
-                        </label>
-                        <p className="text-xs text-gray-500">
-                          {item.status === "uploading"
-                            ? `업로드 중... ${item.progress}%`
-                            : item.status === "uploaded"
-                              ? "업로드 완료"
-                              : item.errorMessage ?? "업로드 실패"}
-                        </p>
-                      </div>
-                      <div className="mt-2 flex gap-2">
-                        {item.status === "failed" ? (
-                          <button
-                            type="button"
-                            onClick={() => detailBatchUpload.retryItem(item.id)}
-                            className="rounded-md border border-gray-300 px-2 py-1 text-xs"
-                          >
-                            재시도
-                          </button>
-                        ) : null}
+                      <DragReorderBadge compact className="absolute left-2 top-2 z-10" />
+                      {item.status === "failed" ? (
                         <button
                           type="button"
-                          onClick={() => detailBatchUpload.removeItem(item.id)}
-                          className="rounded-md border border-gray-300 px-2 py-1 text-xs"
+                          onClick={() => detailBatchUpload.retryItem(item.id)}
+                          className="absolute top-2 right-14 z-10 rounded-md bg-white/90 px-2 py-1 text-xs text-gray-700 hover:bg-white"
                         >
-                          제거
+                          재시도
                         </button>
-                      </div>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => detailBatchUpload.removeItem(item.id)}
+                        className="absolute top-2 right-2 z-10 rounded-md bg-white/90 px-2 py-1 text-xs text-red-700 hover:bg-white"
+                      >
+                        삭제
+                      </button>
+                      <span className="absolute left-2 bottom-2 z-10 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white">
+                        정렬 {item.sortOrder}
+                      </span>
+                      <span className="absolute right-2 bottom-2 z-10 rounded-md bg-black/60 px-2 py-1 text-xs text-white">
+                        {item.status === "pending"
+                          ? "준비"
+                          : item.status === "uploading"
+                            ? item.progress > 0
+                              ? `${item.progress}%`
+                              : "업로드"
+                            : item.status === "uploaded"
+                              ? "완료"
+                              : "실패"}
+                      </span>
+                      {item.imageUrl ? (
+                        <Image
+                          src={item.imageUrl}
+                          alt={`${item.fileName} 미리보기`}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
+                          업로드 중
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -1393,11 +1490,18 @@ export default function ExhibitionsAdminPage({
               {selected.detailImages.length === 0 ? (
                 <p className="text-sm text-gray-500">등록된 세부 이미지가 없습니다.</p>
               ) : (
-                <ul className="mb-3 space-y-2" data-testid="exhibition-detail-list">
+                <div className="mb-3 space-y-2">
+                  <p className="text-xs text-gray-500">
+                    카드의 드래그 핸들을 마우스로 잡아 홈페이지 노출 순서를 변경할 수 있습니다.
+                  </p>
+                  <ul
+                    className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4"
+                    data-testid="exhibition-detail-list"
+                  >
                   {sortedSelectedDetailImages.map((image) => (
                     <li
                       key={image.id}
-                      className={`rounded-md border border-gray-200 p-2 ${
+                      className={`relative aspect-[2/3] cursor-grab overflow-hidden rounded-md border border-gray-200 bg-gray-50 transition-shadow hover:shadow-sm active:cursor-grabbing ${
                         detailImageDragId === image.id ? "opacity-60" : ""
                       }`}
                       data-testid={`exhibition-detail-row-${image.id}`}
@@ -1414,21 +1518,40 @@ export default function ExhibitionsAdminPage({
                       }}
                       onDragEnd={() => setDetailImageDragId(null)}
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleSelectImage(image)}
-                          className="min-w-0 flex-1 text-left"
-                        >
-                          <p className="text-sm font-medium">
-                            정렬 순서: {detailDrafts[image.id]?.sortOrder ?? image.sortOrder}
-                          </p>
-                          <p className="truncate text-xs text-gray-500">{image.imageUrl}</p>
-                        </button>
-                      </div>
+                      <DragReorderBadge compact className="absolute left-2 top-2 z-10" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!isSubmitting) {
+                            setSelectedImageId(image.id);
+                            setDeleteTarget("detail");
+                          }
+                        }}
+                        className="absolute top-2 right-2 z-10 rounded-md bg-white/90 px-2 py-1 text-xs text-red-700 hover:bg-white"
+                        data-testid={`exhibition-detail-delete-button-${image.id}`}
+                      >
+                        삭제
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSelectImage(image)}
+                        className="absolute inset-0"
+                        aria-label="세부 이미지 선택"
+                      />
+                      <span className="absolute left-2 bottom-2 z-10 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white">
+                        정렬 {detailDrafts[image.id]?.sortOrder ?? image.sortOrder}
+                      </span>
+                      <Image
+                        src={detailDrafts[image.id]?.imageUrl ?? image.imageUrl}
+                        alt={`${selected.title} 세부 이미지`}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
                     </li>
                   ))}
-                </ul>
+                  </ul>
+                </div>
               )}
 
               <div className="space-y-3" data-testid="exhibition-detail-edit-form">

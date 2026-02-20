@@ -6,5 +6,12 @@ export default async function SupportersPage() {
   const cookieHeader = await readServerCookieHeader();
   const supporters = await fetchAdminSupportersFromServer(cookieHeader);
 
-  return <SupportersAdminPageClient initialData={{ supporters }} />;
+  return (
+    <SupportersAdminPageClient
+      basePath="/admin/supporters"
+      routeId={null}
+      routeMode="list"
+      initialData={{ supporters }}
+    />
+  );
 }

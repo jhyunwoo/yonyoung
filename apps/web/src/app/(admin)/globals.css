@@ -1,44 +1,6 @@
 @import "tailwindcss";
 
 :root {
-  --admin-bg-primary: #eef4ff;
-  --admin-bg-secondary: #e2ebfb;
-  --admin-surface: #fefeff;
-  --admin-surface-muted: #ecf2fd;
-  --admin-surface-subtle: #d8e5fa;
-  --admin-border: #d0ddf2;
-  --admin-border-strong: #afc4e5;
-  --admin-text-primary: #0f172a;
-  --admin-text-secondary: #30445f;
-  --admin-text-muted: #5d7594;
-  --admin-accent: #1d4ed8;
-  --admin-accent-strong: #1e40af;
-  --admin-global-surface: #e8f1ff;
-  --admin-global-hover: #deebff;
-  --admin-global-border: #b7cced;
-  --admin-global-text: #1e3f75;
-}
-
-.dark {
-  --admin-bg-primary: #0d1728;
-  --admin-bg-secondary: #132136;
-  --admin-surface: #111d2f;
-  --admin-surface-muted: #16263d;
-  --admin-surface-subtle: #233754;
-  --admin-border: #2f425f;
-  --admin-border-strong: #436086;
-  --admin-text-primary: #e2ecfb;
-  --admin-text-secondary: #c0d0ea;
-  --admin-text-muted: #90a6c8;
-  --admin-accent: #7fb2ff;
-  --admin-accent-strong: #5f95f0;
-  --admin-global-surface: #153255;
-  --admin-global-hover: #1a3e68;
-  --admin-global-border: #3d6698;
-  --admin-global-text: #d9eaff;
-}
-
-:root[data-admin-theme-style="graphite"] {
   --admin-bg-primary: #f4f6f8;
   --admin-bg-secondary: #e9edf2;
   --admin-surface: #ffffff;
@@ -57,7 +19,7 @@
   --admin-global-text: #334155;
 }
 
-.dark[data-admin-theme-style="graphite"] {
+.dark {
   --admin-bg-primary: #101318;
   --admin-bg-secondary: #171c24;
   --admin-surface: #161b23;
@@ -74,44 +36,6 @@
   --admin-global-hover: #273447;
   --admin-global-border: #3c4d64;
   --admin-global-text: #d5e1f3;
-}
-
-:root[data-admin-theme-style="forest"] {
-  --admin-bg-primary: #eff9f3;
-  --admin-bg-secondary: #e3f2e8;
-  --admin-surface: #fdfefe;
-  --admin-surface-muted: #edf8f0;
-  --admin-surface-subtle: #daeddc;
-  --admin-border: #cde2d0;
-  --admin-border-strong: #a9c8ae;
-  --admin-text-primary: #0f2916;
-  --admin-text-secondary: #244933;
-  --admin-text-muted: #52745f;
-  --admin-accent: #15803d;
-  --admin-accent-strong: #166534;
-  --admin-global-surface: #e8f8ed;
-  --admin-global-hover: #dff4e6;
-  --admin-global-border: #abd3ba;
-  --admin-global-text: #19553a;
-}
-
-.dark[data-admin-theme-style="forest"] {
-  --admin-bg-primary: #0f1b14;
-  --admin-bg-secondary: #15241b;
-  --admin-surface: #142117;
-  --admin-surface-muted: #182a1d;
-  --admin-surface-subtle: #223528;
-  --admin-border: #2f4a39;
-  --admin-border-strong: #42634f;
-  --admin-text-primary: #e0f2e5;
-  --admin-text-secondary: #bddcc5;
-  --admin-text-muted: #8cb49b;
-  --admin-accent: #4ade80;
-  --admin-accent-strong: #22c55e;
-  --admin-global-surface: #173325;
-  --admin-global-hover: #1d3f2f;
-  --admin-global-border: #2f6b4d;
-  --admin-global-text: #d4f6df;
 }
 
 html {
@@ -346,11 +270,6 @@ body {
     transform 180ms ease;
 }
 
-.admin-root button:hover,
-.admin-root a:hover {
-  box-shadow: 0 10px 20px -18px color-mix(in srgb, #0f172a, transparent 15%);
-}
-
 .admin-root .hover\:bg-white:hover {
   background-color: color-mix(in srgb, var(--admin-surface), transparent 2%);
 }
@@ -366,12 +285,6 @@ body {
 .admin-root .to-gray-50 {
   --tw-gradient-to: color-mix(in srgb, var(--admin-surface-muted), transparent 4%)
     var(--tw-gradient-to-position);
-}
-
-.admin-root section,
-.admin-root aside,
-.admin-root form {
-  box-shadow: 0 16px 40px -36px color-mix(in srgb, #0f172a, transparent 18%);
 }
 
 .dark .admin-root .bg-white {

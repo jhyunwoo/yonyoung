@@ -1,6 +1,7 @@
 "use client";
 
 import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
 import { PRESIGN_PATHS } from "../../../../lib/admin-api/upload";
 import type { ApiSupporter } from "../../../../lib/admin-api/types";
@@ -13,10 +14,10 @@ import {
 import AdminActionButton from "../components/admin-action-button";
 import AdminConfirmModal from "../components/admin-confirm-modal";
 import AdminDrawer from "../components/admin-drawer";
+import { type AdminEntityRouteMode, buildAdminEntityRoute } from "../components/admin-entity-route";
 import AdminInfoBox from "../components/admin-info-box";
 import AdminPageHeader from "../components/admin-page-header";
 import ImageInput from "../components/image-input";
-import { useAdminDrawerQuerySync } from "../components/use-admin-drawer-query-sync";
 import { useImmediateImageUpload } from "../components/use-immediate-image-upload";
 
 type SupporterFormState = {
@@ -33,6 +34,9 @@ const emptyForm: SupporterFormState = {
 
 type SupportersAdminPageProps = {
   generationSortOrder?: number | null;
+  basePath?: string;
+  routeId?: string | null;
+  routeMode?: AdminEntityRouteMode;
   initialData?: {
     supporters: ApiSupporter[];
   };
@@ -40,8 +44,12 @@ type SupportersAdminPageProps = {
 
 export default function SupportersAdminPage({
   generationSortOrder = null,
+  basePath = "/admin/supporters",
+  routeId = null,
+  routeMode = "list",
   initialData,
 }: SupportersAdminPageProps = {}) {
+  const router = useRouter();
   const [items, setItems] = useState<ApiSupporter[]>(initialData?.supporters ?? []);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [panelMode, setPanelMode] = useState<"create" | "edit" | null>(null);
@@ -62,7 +70,8 @@ export default function SupportersAdminPage({
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const { queryState, setDrawerQuery, normalizeDrawerQuery } = useAdminDrawerQuerySync();
+
+  const isDetailRoute = routeMode === "detail";
 
   const selected = useMemo(
     () => items.find((item) => item.id === selectedId) ?? null,
@@ -151,15 +160,11 @@ export default function SupportersAdminPage({
   }, [initialData]);
 
   useEffect(() => {
-    normalizeDrawerQuery();
-  }, [normalizeDrawerQuery]);
-
-  useEffect(() => {
     if (isLoading) {
       return;
     }
 
-    if (queryState.panel === "create") {
+    if (routeMode === "create") {
       if (panelMode !== "create") {
         setCreateForm(emptyForm);
         createUpload.reset(null);
@@ -170,10 +175,10 @@ export default function SupportersAdminPage({
       return;
     }
 
-    if (queryState.panel === "edit") {
-      const target = items.find((item) => item.id === queryState.id) ?? null;
+    if (routeMode === "detail" || routeMode === "edit") {
+      const target = items.find((item) => item.id === routeId) ?? null;
       if (!target) {
-        setDrawerQuery(null);
+        router.replace(buildAdminEntityRoute(basePath, "list"), { scroll: false });
         return;
       }
 
@@ -194,25 +199,18 @@ export default function SupportersAdminPage({
       setPanelMode(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryState, isLoading, panelMode, items, selectedId]);
+  }, [routeMode, routeId, isLoading, panelMode, items, selectedId, router, basePath]);
 
   const handleSelect = (item: ApiSupporter) => {
     setSelectedId(item.id);
     syncEditForm(item);
-    setPanelMode("edit");
-    setDrawerQuery("edit", item.id);
     setErrorMessage(null);
     setSuccessMessage(null);
+    router.push(buildAdminEntityRoute(basePath, "detail", item.id), { scroll: false });
   };
 
-  const openCreatePanel = () => {
-    setCreateForm(emptyForm);
-    createUpload.reset(null);
-    setPanelMode("create");
-    setDrawerQuery("create");
-    setErrorMessage(null);
-    setSuccessMessage(null);
-  };
+  const openCreatePanel = () =>
+    router.push(buildAdminEntityRoute(basePath, "create"), { scroll: false });
 
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -240,10 +238,11 @@ export default function SupportersAdminPage({
       setCreateForm(emptyForm);
       createUpload.reset(null);
       setSelectedId(created.id);
-      setPanelMode("edit");
-      setDrawerQuery("edit", created.id);
       setSuccessMessage("후원사를 생성했습니다.");
       await loadData(created.id);
+      router.replace(buildAdminEntityRoute(basePath, "detail", created.id), {
+        scroll: false,
+      });
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -279,6 +278,11 @@ export default function SupportersAdminPage({
 
       setSuccessMessage("후원사를 수정했습니다.");
       await loadData(selected.id);
+      if (routeMode === "edit") {
+        router.replace(buildAdminEntityRoute(basePath, "detail", selected.id), {
+          scroll: false,
+        });
+      }
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -301,8 +305,8 @@ export default function SupportersAdminPage({
       setSuccessMessage("후원사를 삭제했습니다.");
       setDeleteModalOpen(false);
       setPanelMode(null);
-      setDrawerQuery(null);
       await loadData();
+      router.replace(buildAdminEntityRoute(basePath, "list"), { scroll: false });
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -328,7 +332,7 @@ export default function SupportersAdminPage({
       <AdminPageHeader
         title="후원사 관리"
         description="홈페이지에 노출할 후원사 정보를 등록하고 수정하는 화면입니다."
-        guidance="목록에서 항목을 선택해 오른쪽 패널에서 수정하거나, 신규 버튼으로 새 항목을 만드세요."
+        guidance="목록에서 항목을 선택해 상세 페이지로 이동하고, 상세 페이지에서 수정 페이지로 이동해 편집하세요."
       >
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <AdminActionButton onClick={openCreatePanel} testId="supporter-open-create">
@@ -394,7 +398,7 @@ export default function SupportersAdminPage({
               : "검색 조건에 맞는 후원사가 없습니다."}
           </p>
         ) : (
-          <ul className="space-y-2" data-testid="supporters-list">
+          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" data-testid="supporters-list">
             {filteredItems.map((item) => (
               <li
                 key={item.id}
@@ -435,9 +439,10 @@ export default function SupportersAdminPage({
             return;
           }
           setPanelMode(null);
-          setDrawerQuery(null);
+          router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false });
         }}
         testId="supporter-drawer"
+        variant="page"
       >
         {panelMode === "create" ? (
           <form
@@ -516,6 +521,33 @@ export default function SupportersAdminPage({
               후원사 추가
             </AdminActionButton>
           </form>
+        ) : selected && isDetailRoute ? (
+          <div className="space-y-4">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <p className="text-sm font-semibold text-gray-900">{selected.name}</p>
+              <p className="mt-1 text-sm text-gray-600">노출 종료일: {formatTimestamp(selected.expiresAt)}</p>
+              <p className="mt-1 truncate text-sm text-gray-600">연결 링크: {selected.link}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <AdminActionButton
+                onClick={() =>
+                  router.push(buildAdminEntityRoute(basePath, "edit", selected.id), {
+                    scroll: false,
+                  })
+                }
+                testId="supporter-open-edit"
+              >
+                수정 페이지로 이동
+              </AdminActionButton>
+              <AdminActionButton
+                variant="ghost"
+                onClick={() => router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false })}
+                testId="supporter-back-list"
+              >
+                목록으로
+              </AdminActionButton>
+            </div>
+          </div>
         ) : selected ? (
           <form
             onSubmit={handleUpdate}

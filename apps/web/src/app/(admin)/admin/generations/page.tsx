@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
 import type { ApiGeneration, ApiUser } from "../../../../lib/admin-api/types";
 import { formatKoreanName } from "../../../../lib/user-name";
@@ -15,9 +16,9 @@ import {
 import AdminActionButton from "../components/admin-action-button";
 import AdminConfirmModal from "../components/admin-confirm-modal";
 import AdminDrawer from "../components/admin-drawer";
+import { type AdminEntityRouteMode, buildAdminEntityRoute } from "../components/admin-entity-route";
 import AdminInfoBox from "../components/admin-info-box";
 import AdminPageHeader from "../components/admin-page-header";
-import { useAdminDrawerQuerySync } from "../components/use-admin-drawer-query-sync";
 
 type GenerationFormState = {
   name: string;
@@ -75,7 +76,18 @@ const readUserGenerationIds = (target: ApiUser): string[] => {
   return target.generationId ? [target.generationId] : [];
 };
 
-export default function GenerationsAdminPage() {
+type GenerationsAdminPageProps = {
+  basePath?: string;
+  routeId?: string | null;
+  routeMode?: AdminEntityRouteMode;
+};
+
+export default function GenerationsAdminPage({
+  basePath = "/admin/generations",
+  routeId = null,
+  routeMode = "list",
+}: GenerationsAdminPageProps = {}) {
+  const router = useRouter();
   const [items, setItems] = useState<ApiGeneration[]>([]);
   const [users, setUsers] = useState<ApiUser[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -103,7 +115,7 @@ export default function GenerationsAdminPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const { queryState, setDrawerQuery, normalizeDrawerQuery } = useAdminDrawerQuerySync();
+  const isDetailRoute = routeMode === "detail";
 
   const selected = useMemo(
     () => items.find((item) => item.id === selectedId) ?? null,
@@ -276,15 +288,11 @@ export default function GenerationsAdminPage() {
   }, []);
 
   useEffect(() => {
-    normalizeDrawerQuery();
-  }, [normalizeDrawerQuery]);
-
-  useEffect(() => {
     if (isLoading) {
       return;
     }
 
-    if (queryState.panel === "create") {
+    if (routeMode === "create") {
       if (panelMode !== "create") {
         setCreateForm(emptyForm);
         setPanelMode("create");
@@ -294,10 +302,10 @@ export default function GenerationsAdminPage() {
       return;
     }
 
-    if (queryState.panel === "edit") {
-      const target = items.find((item) => item.id === queryState.id) ?? null;
+    if (routeMode === "detail" || routeMode === "edit") {
+      const target = items.find((item) => item.id === routeId) ?? null;
       if (!target) {
-        setDrawerQuery(null);
+        router.replace(buildAdminEntityRoute(basePath, "list"), { scroll: false });
         return;
       }
 
@@ -317,7 +325,7 @@ export default function GenerationsAdminPage() {
     if (panelMode !== null) {
       setPanelMode(null);
     }
-  }, [isLoading, items, panelMode, queryState, selectedId, setDrawerQuery]);
+  }, [isLoading, items, panelMode, selectedId, routeMode, routeId, router, basePath]);
 
   useEffect(() => {
     if (!selected) {
@@ -350,9 +358,10 @@ export default function GenerationsAdminPage() {
 
       setCreateForm(emptyForm);
       setSuccessMessage("기수를 생성했습니다.");
-      setPanelMode("edit");
-      setDrawerQuery("edit", created.id);
       await loadItems(created.id);
+      router.replace(buildAdminEntityRoute(basePath, "detail", created.id), {
+        scroll: false,
+      });
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -380,6 +389,11 @@ export default function GenerationsAdminPage() {
       });
       setSuccessMessage("기수를 수정했습니다.");
       await loadItems(selected.id);
+      if (routeMode === "edit") {
+        router.replace(buildAdminEntityRoute(basePath, "detail", selected.id), {
+          scroll: false,
+        });
+      }
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -403,8 +417,8 @@ export default function GenerationsAdminPage() {
       setSuccessMessage("기수를 삭제했습니다.");
       setDeleteModalOpen(false);
       setPanelMode(null);
-      setDrawerQuery(null);
       await loadItems();
+      router.replace(buildAdminEntityRoute(basePath, "list"), { scroll: false });
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -416,10 +430,9 @@ export default function GenerationsAdminPage() {
   const handleSelect = (item: ApiGeneration) => {
     setSelectedId(item.id);
     syncEditForm(item);
-    setPanelMode("edit");
-    setDrawerQuery("edit", item.id);
     setErrorMessage(null);
     setSuccessMessage(null);
+    router.push(buildAdminEntityRoute(basePath, "detail", item.id), { scroll: false });
   };
 
   const handleAssignMember = (userId: string) => {
@@ -520,16 +533,12 @@ export default function GenerationsAdminPage() {
       <AdminPageHeader
         title="기수 관리"
         description="운영 기간별 기수를 만들고 수정해, 멤버 분류 기준을 정리하는 화면입니다."
-        guidance="목록에서 항목을 선택해 수정 패널을 열거나, 신규 버튼으로 새 기수를 등록하세요."
+        guidance="목록에서 항목을 선택해 상세 페이지로 이동하고, 상세 페이지에서 수정 페이지로 이동해 편집하세요."
       >
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <AdminActionButton
             onClick={() => {
-              setCreateForm(emptyForm);
-              setPanelMode("create");
-              setDrawerQuery("create");
-              setErrorMessage(null);
-              setSuccessMessage(null);
+              router.push(buildAdminEntityRoute(basePath, "create"), { scroll: false });
             }}
             testId="generation-open-create"
           >
@@ -547,7 +556,7 @@ export default function GenerationsAdminPage() {
       </AdminPageHeader>
 
       <AdminInfoBox title="작업 안내">
-        기수 생성/수정은 오른쪽 패널에서 처리하고, 멤버 배정은 선택된 기수 기준으로 같은 패널에서 바로 관리할 수 있습니다.
+        목록에서 기수 상세 페이지로 이동한 뒤, 수정 페이지에서 기본 정보와 멤버 배정을 함께 관리할 수 있습니다.
       </AdminInfoBox>
 
       {errorMessage ? (
@@ -592,7 +601,7 @@ export default function GenerationsAdminPage() {
               : "검색 조건에 맞는 기수가 없습니다."}
           </p>
         ) : (
-          <ul className="space-y-2" data-testid="generations-list">
+          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" data-testid="generations-list">
             {filteredItems.map((item) => (
               <li
                 key={item.id}
@@ -630,10 +639,11 @@ export default function GenerationsAdminPage() {
         onClose={() => {
           if (!isSubmitting) {
             setPanelMode(null);
-            setDrawerQuery(null);
+            router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false });
           }
         }}
         testId="generation-drawer"
+        variant="page"
       >
         {panelMode === "create" ? (
           <form onSubmit={handleCreate} className="space-y-3" data-testid="generation-create-form">
@@ -705,6 +715,36 @@ export default function GenerationsAdminPage() {
               기수 생성
             </AdminActionButton>
           </form>
+        ) : selected && isDetailRoute ? (
+          <div className="space-y-4">
+            <section className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <h3 className="text-base font-semibold text-gray-900">{selected.name}</h3>
+              <p className="mt-1 text-sm text-gray-600">표시 순서: {selected.sortOrder}</p>
+              <p className="mt-1 text-sm text-gray-600">
+                기간: {formatTimestamp(selected.startDate)} ~ {formatTimestamp(selected.endDate)}
+              </p>
+              <p className="mt-1 text-sm text-gray-600">배정 멤버: {selectedMembers.length}명</p>
+            </section>
+            <div className="flex flex-wrap gap-2">
+              <AdminActionButton
+                onClick={() =>
+                  router.push(buildAdminEntityRoute(basePath, "edit", selected.id), {
+                    scroll: false,
+                  })
+                }
+                testId="generation-open-edit"
+              >
+                수정 페이지로 이동
+              </AdminActionButton>
+              <AdminActionButton
+                variant="ghost"
+                onClick={() => router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false })}
+                testId="generation-back-list"
+              >
+                목록으로
+              </AdminActionButton>
+            </div>
+          </div>
         ) : selected ? (
           <div className="space-y-5">
             <section className="rounded-2xl border border-gray-200/80 bg-gradient-to-br from-white to-gray-50 p-4 shadow-sm">

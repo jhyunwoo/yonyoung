@@ -6,5 +6,12 @@ export default async function LinktreePage() {
   const cookieHeader = await readServerCookieHeader();
   const linktrees = await fetchAdminLinktreesFromServer(cookieHeader);
 
-  return <LinktreeAdminPageClient initialData={{ linktrees }} />;
+  return (
+    <LinktreeAdminPageClient
+      basePath="/admin/linktree"
+      routeId={null}
+      routeMode="list"
+      initialData={{ linktrees }}
+    />
+  );
 }

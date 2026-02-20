@@ -79,7 +79,8 @@ test.describe("activities crud", () => {
     await page
       .getByTestId("activity-create-description")
       .fill(`${e2ePrefix} activity description`);
-    await page.getByTestId("activity-create-date").fill("2030-03-01");
+    await page.getByTestId("activity-create-start-date").fill("2030-03-01");
+    await page.getByTestId("activity-create-end-date").fill("2030-03-01");
     await page.getByTestId("activity-create-generation-id").selectOption(generation.id);
     await page.getByTestId("activity-create-cover-file").setInputFiles(sampleImagePath);
     await page.getByTestId("activity-create-submit").click();
@@ -110,7 +111,8 @@ test.describe("activities crud", () => {
 
     await page.getByTestId("activity-edit-title").fill(updatedTitle);
     await page.getByTestId("activity-edit-description").fill(`${e2ePrefix} activity edited`);
-    await page.getByTestId("activity-edit-date").fill("2030-03-15");
+    await page.getByTestId("activity-edit-start-date").fill("2030-03-15");
+    await page.getByTestId("activity-edit-end-date").fill("2030-03-15");
     await page.getByTestId("activity-edit-generation-id").selectOption(generation.id);
     await page.getByTestId("activity-edit-cover-file").setInputFiles(sampleImagePath);
     await page.getByTestId("activity-edit-submit").click();
@@ -123,23 +125,13 @@ test.describe("activities crud", () => {
     await expect(updatedRow).toBeVisible();
 
     await page.getByTestId("activity-detail-create-image-file").setInputFiles(sampleImagePath);
-    await page.getByTestId("activity-detail-create-sort-order").fill("0");
     await page.getByTestId("activity-detail-create-submit").click();
 
     await expect(page.getByTestId("activities-success")).toContainText("추가");
 
     const detailRow = page.locator('[data-testid^="activity-detail-row-"]').first();
     await expect(detailRow).toBeVisible();
-    await detailRow.getByRole("button").click();
-    await expect(page.getByTestId("activity-detail-edit-sort-order")).toHaveValue("0");
-
-    await page.getByTestId("activity-detail-edit-image-file").setInputFiles(sampleImagePath);
-    await page.getByTestId("activity-detail-edit-sort-order").fill("1");
-    await page.getByTestId("activity-detail-edit-submit").click();
-
-    await expect(page.getByTestId("activities-success")).toContainText("수정");
-
-    await page.getByTestId("activity-detail-delete-button").click();
+    await page.locator('[data-testid^="activity-detail-delete-button-"]').first().click();
     await page.getByTestId("confirm-modal-confirm").click();
 
     await expect(page.getByTestId("activities-success")).toContainText("삭제");
@@ -164,7 +156,7 @@ test.describe("activities crud", () => {
       });
 
       expect(uploadMock.getUploadCount("activity-cover")).toBe(2);
-      expect(uploadMock.getUploadCount("activity-detail")).toBe(2);
+      expect(uploadMock.getUploadCount("activity-detail")).toBe(1);
 
       const firstCoverUpload = uploadMock.getUploadRequests("activity-cover")[0];
       const firstDetailUpload = uploadMock.getUploadRequests("activity-detail")[0];

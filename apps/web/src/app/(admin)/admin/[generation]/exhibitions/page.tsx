@@ -23,8 +23,11 @@ export default async function GenerationExhibitionsPage({
 
   return (
     <ExhibitionsAdminPageClient
+      basePath={`/admin/${generation}/exhibitions`}
       generationSortOrder={Number.isFinite(generationSortOrder) ? generationSortOrder : null}
       generationScoped
+      routeId={null}
+      routeMode="list"
       initialData={{
         exhibitions,
         generations,

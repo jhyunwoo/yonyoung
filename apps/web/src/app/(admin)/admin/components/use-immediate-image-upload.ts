@@ -157,22 +157,20 @@ export const useImmediateImageUpload = ({
       }
     }
 
-    const nextFileId = `single-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
-    activeFileIdRef.current = nextFileId;
-
     setFile(nextFile);
     setStatus("uploading");
     setProgress(0);
     setErrorMessage(null);
 
     try {
-      uploader.uppy.addFile({
-        id: nextFileId,
+      const nextFileId = uploader.uppy.addFile({
         name: nextFile.name,
         type: nextFile.type,
         data: nextFile,
       });
+      activeFileIdRef.current = nextFileId;
     } catch (error) {
+      activeFileIdRef.current = null;
       setStatus("failed");
       setProgress(null);
       setErrorMessage(readUploadErrorMessage(error));

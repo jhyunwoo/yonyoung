@@ -1,6 +1,7 @@
 "use client";
 
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
 import { PRESIGN_PATHS } from "../../../../lib/admin-api/upload";
 import type { ApiAdminUpdateUserInput, ApiGeneration, ApiUser } from "../../../../lib/admin-api/types";
@@ -13,10 +14,10 @@ import {
 import AdminActionButton from "../components/admin-action-button";
 import AdminConfirmModal from "../components/admin-confirm-modal";
 import AdminDrawer from "../components/admin-drawer";
+import { type AdminEntityRouteMode, buildAdminEntityRoute } from "../components/admin-entity-route";
 import AdminInfoBox from "../components/admin-info-box";
 import AdminPageHeader from "../components/admin-page-header";
 import ImageInput from "../components/image-input";
-import { useAdminDrawerQuerySync } from "../components/use-admin-drawer-query-sync";
 import { useImmediateImageUpload } from "../components/use-immediate-image-upload";
 
 type UserFormState = {
@@ -79,6 +80,9 @@ const ROLE_FILTER_OPTIONS: { value: RoleFilterValue; label: string }[] = [
 type UsersAdminPageClientProps = {
   generationScoped?: boolean;
   generationSortOrder?: number | null;
+  basePath?: string;
+  routeId?: string | null;
+  routeMode?: AdminEntityRouteMode;
   initialData?: {
     users: ApiUser[];
     generations: ApiGeneration[];
@@ -139,9 +143,13 @@ const resolveUsersData = (
 export default function UsersAdminPageClient({
   generationScoped = false,
   generationSortOrder = null,
+  basePath = "/admin/users",
+  routeId = null,
+  routeMode = "list",
   initialData,
 }: UsersAdminPageClientProps = {}) {
-  const inlineDetailMode = !generationScoped;
+  const router = useRouter();
+  const inlineDetailMode = false;
   const initialResolvedData = initialData
     ? resolveUsersData(
         initialData.users,
@@ -180,8 +188,8 @@ export default function UsersAdminPageClient({
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const { queryState, setDrawerQuery, normalizeDrawerQuery } = useAdminDrawerQuerySync();
   const detailRequestSequenceRef = useRef(0);
+  const isDetailRoute = routeMode === "detail";
 
   const scopedGenerationId = generationScoped ? scopedGeneration?.id ?? null : null;
   const selectedIdSet = useMemo(() => toSelectionSet(selectedIds), [selectedIds]);
@@ -204,7 +212,7 @@ export default function UsersAdminPageClient({
       return "없음";
     }
     return generationIds
-      .map((generationId) => generationLabelById.get(generationId) ?? generationId)
+      .map((generationId) => generationLabelById.get(generationId) ?? "미확인 기수")
       .join(", ");
   };
 
@@ -420,36 +428,19 @@ export default function UsersAdminPageClient({
   }, [generationScoped, generationSortOrder, initialData]);
 
   useEffect(() => {
-    if (inlineDetailMode) {
-      setDrawerQuery(null);
-      return;
-    }
-    normalizeDrawerQuery();
-  }, [inlineDetailMode, normalizeDrawerQuery, setDrawerQuery]);
-
-  useEffect(() => {
-    if (inlineDetailMode) {
-      return;
-    }
-
     if (isLoading) {
       return;
     }
 
-    if (queryState.panel === "create") {
-      setDrawerQuery(null);
-      return;
-    }
-
-    if (queryState.panel === "edit") {
-      const target = items.find((user) => user.id === queryState.id) ?? null;
+    if (routeMode === "detail" || routeMode === "edit") {
+      const target = items.find((user) => user.id === routeId) ?? null;
       if (!target) {
-        setDrawerQuery(null);
+        router.replace(buildAdminEntityRoute(basePath, "list"), { scroll: false });
         return;
       }
 
       if (selectedId !== target.id || !panelOpen) {
-        void handleSelect(target);
+        void handleSelect(target, false);
       }
       return;
     }
@@ -458,7 +449,7 @@ export default function UsersAdminPageClient({
       setPanelOpen(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryState, isLoading, items, selectedId, panelOpen]);
+  }, [routeMode, routeId, isLoading, items, selectedId, panelOpen, router, basePath]);
 
   const toggleSelection = (userId: string) => {
     setSelectedIds((previous) => {
@@ -504,25 +495,22 @@ export default function UsersAdminPageClient({
     });
   };
 
-  const handleSelect = async (user: ApiUser) => {
+  const handleSelect = async (user: ApiUser, navigate = true) => {
     setSelectedId(user.id);
-    if (inlineDetailMode) {
-      return;
-    }
     setPanelOpen(true);
-    setDrawerQuery("edit", user.id);
     setErrorMessage(null);
     setSuccessMessage(null);
     await loadUserDetail(user.id);
+    if (navigate) {
+      router.push(buildAdminEntityRoute(basePath, "detail", user.id), { scroll: false });
+    }
   };
 
   const handleCardSelect = async (user: ApiUser) => {
     setSelectedId(user.id);
     toggleSelection(user.id);
 
-    if (!inlineDetailMode) {
-      await handleSelect(user);
-    }
+    await handleSelect(user);
   };
 
   const handleToggleInlineDetail = async (user: ApiUser) => {
@@ -578,6 +566,11 @@ export default function UsersAdminPageClient({
       await adminResourceApi.updateUser(selectedDetail.id, payload);
       setSuccessMessage("사용자 정보를 수정했습니다.");
       await loadData(selectedDetail.id);
+      if (routeMode === "edit") {
+        router.replace(buildAdminEntityRoute(basePath, "detail", selectedDetail.id), {
+          scroll: false,
+        });
+      }
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -600,12 +593,10 @@ export default function UsersAdminPageClient({
       setSuccessMessage("사용자를 삭제했습니다.");
       setDeleteModalOpen(false);
       setExpandedUserId(null);
-      if (!inlineDetailMode) {
-        setPanelOpen(false);
-        setDrawerQuery(null);
-      }
+      setPanelOpen(false);
       setSelectedIds((previous) => previous.filter((id) => id !== selectedDetail.id));
       await loadData();
+      router.replace(buildAdminEntityRoute(basePath, "list"), { scroll: false });
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -671,10 +662,7 @@ export default function UsersAdminPageClient({
 
       if (selectedDetail && targetIds.includes(selectedDetail.id)) {
         setExpandedUserId(null);
-        if (!inlineDetailMode) {
-          setPanelOpen(false);
-          setDrawerQuery(null);
-        }
+        setPanelOpen(false);
       }
       await loadData();
     } catch (error) {
@@ -945,7 +933,7 @@ export default function UsersAdminPageClient({
       <AdminPageHeader
         title="사용자 관리"
         description="가입한 사용자 정보를 조회하고 권한/소속을 관리하는 화면입니다."
-        guidance="검색/필터/다중 선택을 이용해 여러 사용자 권한을 한 번에 변경할 수 있습니다."
+        guidance="목록에서 사용자를 선택해 상세 페이지로 이동한 뒤 수정 페이지에서 편집하세요. 검색/필터/다중 선택으로 일괄 작업할 수 있습니다."
       >
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <button
@@ -1117,7 +1105,7 @@ export default function UsersAdminPageClient({
               : "검색/필터 조건에 맞는 사용자가 없습니다."}
           </p>
         ) : (
-          <ul className="space-y-2" data-testid="users-list">
+          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" data-testid="users-list">
             {filteredItems.map((item) => (
               <li
                 key={item.id}
@@ -1169,26 +1157,67 @@ export default function UsersAdminPageClient({
         )}
       </section>
 
-      {!inlineDetailMode ? (
-        <AdminDrawer
-          open={panelOpen}
-          title="사용자 수정"
-          description={
-            selectedDetail
-              ? `${selectedDetail.email} 계정을 편집합니다.`
-              : "사용자 상세 정보를 불러오는 중입니다."
+      <AdminDrawer
+        open={panelOpen}
+        title={isDetailRoute ? "사용자 상세" : "사용자 수정"}
+        description={
+          selectedDetail
+            ? isDetailRoute
+              ? `${selectedDetail.email} 계정 상세 정보입니다.`
+              : `${selectedDetail.email} 계정을 편집합니다.`
+            : "사용자 상세 정보를 불러오는 중입니다."
+        }
+        onClose={() => {
+          if (!isSubmitting) {
+            setPanelOpen(false);
+            router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false });
           }
-          onClose={() => {
-            if (!isSubmitting) {
-              setPanelOpen(false);
-              setDrawerQuery(null);
-            }
-          }}
-          testId="user-drawer"
-        >
-          {renderUserEditor()}
-        </AdminDrawer>
-      ) : null}
+        }}
+        testId="user-drawer"
+        variant="page"
+      >
+        {isDetailRoute ? (
+          <div className="space-y-4">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              {isDetailLoading ? (
+                <p className="text-sm text-gray-500">불러오는 중...</p>
+              ) : selectedDetail ? (
+                <div className="space-y-1 text-sm text-gray-700">
+                  <p>표시 이름: {formatKoreanName(selectedDetail)}</p>
+                  <p>이메일: {selectedDetail.email}</p>
+                  <p>권한: {readAdminRoleLabel(selectedDetail.role)}</p>
+                  <p>소속 기수: {readGenerationSummary(selectedDetail)}</p>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">사용자 정보를 찾을 수 없습니다.</p>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {selectedDetail ? (
+                <AdminActionButton
+                  onClick={() =>
+                    router.push(buildAdminEntityRoute(basePath, "edit", selectedDetail.id), {
+                      scroll: false,
+                    })
+                  }
+                  testId="user-open-edit"
+                >
+                  수정 페이지로 이동
+                </AdminActionButton>
+              ) : null}
+              <AdminActionButton
+                variant="ghost"
+                onClick={() => router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false })}
+                testId="user-back-list"
+              >
+                목록으로
+              </AdminActionButton>
+            </div>
+          </div>
+        ) : (
+          renderUserEditor()
+        )}
+      </AdminDrawer>
 
       <AdminConfirmModal
         open={deleteModalOpen}

@@ -17,6 +17,9 @@ export default async function GlobalUsersPage() {
 
   return (
     <UsersAdminPageClient
+      basePath="/admin/users"
+      routeId={null}
+      routeMode="list"
       initialData={{
         users,
         generations,

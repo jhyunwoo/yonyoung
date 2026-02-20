@@ -719,18 +719,16 @@ export const createDbDataService = (database: D1Database): DataService => {
       }
 
       const createdIds: string[] = [];
-      await db.transaction(async (transaction) => {
-        for (const item of input) {
-          const id = crypto.randomUUID();
-          createdIds.push(id);
-          await transaction.insert(activityImages).values({
-            id,
-            activityId,
-            imageUrl: item.imageUrl,
-            sortOrder: item.sortOrder,
-          });
-        }
-      });
+      for (const item of input) {
+        const id = crypto.randomUUID();
+        createdIds.push(id);
+        await db.insert(activityImages).values({
+          id,
+          activityId,
+          imageUrl: item.imageUrl,
+          sortOrder: item.sortOrder,
+        });
+      }
 
       if (createdIds.length === 0) {
         return [];
@@ -827,24 +825,22 @@ export const createDbDataService = (database: D1Database): DataService => {
         return null;
       }
 
-      await db.transaction(async (transaction) => {
-        for (const item of input) {
-          await transaction
-            .update(activityImages)
-            .set({
-              ...(item.imageUrl !== undefined ? { imageUrl: item.imageUrl } : {}),
-              ...(item.sortOrder !== undefined ? { sortOrder: item.sortOrder } : {}),
-              updatedAt: new Date(),
-            })
-            .where(
-              and(
-                eq(activityImages.id, item.imageId),
-                eq(activityImages.activityId, activityId),
-                isNull(activityImages.deletedAt),
-              ),
-            );
-        }
-      });
+      for (const item of input) {
+        await db
+          .update(activityImages)
+          .set({
+            ...(item.imageUrl !== undefined ? { imageUrl: item.imageUrl } : {}),
+            ...(item.sortOrder !== undefined ? { sortOrder: item.sortOrder } : {}),
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(activityImages.id, item.imageId),
+              eq(activityImages.activityId, activityId),
+              isNull(activityImages.deletedAt),
+            ),
+          );
+      }
 
       return db
         .select()
@@ -1208,18 +1204,16 @@ export const createDbDataService = (database: D1Database): DataService => {
       }
 
       const createdIds: string[] = [];
-      await db.transaction(async (transaction) => {
-        for (const item of input) {
-          const id = crypto.randomUUID();
-          createdIds.push(id);
-          await transaction.insert(exhibitionImages).values({
-            id,
-            exhibitionId,
-            imageUrl: item.imageUrl,
-            sortOrder: item.sortOrder,
-          });
-        }
-      });
+      for (const item of input) {
+        const id = crypto.randomUUID();
+        createdIds.push(id);
+        await db.insert(exhibitionImages).values({
+          id,
+          exhibitionId,
+          imageUrl: item.imageUrl,
+          sortOrder: item.sortOrder,
+        });
+      }
 
       if (createdIds.length === 0) {
         return [];
@@ -1319,24 +1313,22 @@ export const createDbDataService = (database: D1Database): DataService => {
         return null;
       }
 
-      await db.transaction(async (transaction) => {
-        for (const item of input) {
-          await transaction
-            .update(exhibitionImages)
-            .set({
-              ...(item.imageUrl !== undefined ? { imageUrl: item.imageUrl } : {}),
-              ...(item.sortOrder !== undefined ? { sortOrder: item.sortOrder } : {}),
-              updatedAt: new Date(),
-            })
-            .where(
-              and(
-                eq(exhibitionImages.id, item.imageId),
-                eq(exhibitionImages.exhibitionId, exhibitionId),
-                isNull(exhibitionImages.deletedAt),
-              ),
-            );
-        }
-      });
+      for (const item of input) {
+        await db
+          .update(exhibitionImages)
+          .set({
+            ...(item.imageUrl !== undefined ? { imageUrl: item.imageUrl } : {}),
+            ...(item.sortOrder !== undefined ? { sortOrder: item.sortOrder } : {}),
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(exhibitionImages.id, item.imageId),
+              eq(exhibitionImages.exhibitionId, exhibitionId),
+              isNull(exhibitionImages.deletedAt),
+            ),
+          );
+      }
 
       return db
         .select()
@@ -1681,17 +1673,15 @@ export const createDbDataService = (database: D1Database): DataService => {
         return [];
       }
 
-      await db.transaction(async (transaction) => {
-        for (const targetUserId of targetUserIds) {
-          await transaction
-            .update(user)
-            .set({
-              role: input.role,
-              updatedAt: new Date(),
-            })
-            .where(and(eq(user.id, targetUserId), isNull(user.deletedAt)));
-        }
-      });
+      for (const targetUserId of targetUserIds) {
+        await db
+          .update(user)
+          .set({
+            role: input.role,
+            updatedAt: new Date(),
+          })
+          .where(and(eq(user.id, targetUserId), isNull(user.deletedAt)));
+      }
 
       const rows = await db
         .select()

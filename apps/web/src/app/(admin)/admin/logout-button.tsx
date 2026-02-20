@@ -41,7 +41,11 @@ export default function LogoutButton({ compact = false }: LogoutButtonProps) {
   };
 
   return (
-    <div className={`flex w-full flex-col gap-2 ${compact ? "items-center" : "items-stretch"}`}>
+    <div
+      className={`flex flex-col gap-2 ${
+        compact ? "w-auto items-center" : "w-full items-stretch"
+      }`}
+    >
       <button
         type="button"
         onClick={handleSignOut}

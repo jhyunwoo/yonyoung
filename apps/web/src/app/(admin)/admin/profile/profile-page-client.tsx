@@ -2,7 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
-import { STUDENT_NUMBER_REGEX } from "@repo/shared-auth/profile";
+import {
+  formatKoreanMobilePhoneNumber,
+  KOREAN_MOBILE_PHONE_REGEX,
+  STUDENT_NUMBER_REGEX,
+} from "@repo/shared-auth/profile";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
 import { PRESIGN_PATHS } from "../../../../lib/admin-api/upload";
 import type {
@@ -113,7 +117,7 @@ export default function ProfilePageClient({
             college: user.college ?? "",
             department: user.department ?? "",
             studentNumber: user.studentNumber ?? "",
-            phoneNumber: user.phoneNumber ?? "",
+            phoneNumber: formatKoreanMobilePhoneNumber(user.phoneNumber ?? ""),
           });
           resetImageUpload(user.image);
         } catch (error) {
@@ -148,6 +152,11 @@ export default function ProfilePageClient({
       setErrorMessage("학번은 숫자 10자리로 입력해 주세요.");
       return;
     }
+    const phoneNumber = toTrimmed(form.phoneNumber);
+    if (!KOREAN_MOBILE_PHONE_REGEX.test(phoneNumber)) {
+      setErrorMessage("전화번호는 010-1234-5678 형식으로 입력해 주세요.");
+      return;
+    }
     if (canUploadProfileImage && (imageUpload.isUploading || imageUpload.hasUploadError)) {
       setErrorMessage("프로필 이미지 업로드를 완료한 뒤 저장해 주세요.");
       return;
@@ -164,7 +173,7 @@ export default function ProfilePageClient({
         college: toTrimmed(form.college),
         department: toTrimmed(form.department),
         studentNumber,
-        phoneNumber: toTrimmed(form.phoneNumber),
+        phoneNumber,
         ...(canUploadProfileImage ? { image: imageUpload.currentUrl.trim() || null } : {}),
       };
 
@@ -368,11 +377,14 @@ export default function ProfilePageClient({
                       <span className={fieldLabelClassName}>전화번호</span>
                       <input
                         type="text"
+                        inputMode="numeric"
+                        pattern="010-[0-9]{4}-[0-9]{4}"
+                        maxLength={13}
                         value={form.phoneNumber}
                         onChange={(event) =>
                           setForm((previous) => ({
                             ...previous,
-                            phoneNumber: event.target.value,
+                            phoneNumber: formatKoreanMobilePhoneNumber(event.target.value),
                           }))
                         }
                         placeholder="예: 010-1234-5678"
@@ -470,8 +482,7 @@ export default function ProfilePageClient({
                 FORMAT TIP
               </h3>
               <p className="mt-2 text-xs leading-5 text-[var(--admin-text-muted)]">
-                학번은 숫자 10자리 형식만 저장됩니다. 하이픈이나 공백 없이
-                입력해 주세요.
+                학번은 숫자 10자리, 전화번호는 010-1234-5678 형식으로 저장됩니다.
               </p>
             </section>
           </aside>

@@ -1,15 +1,16 @@
 "use client";
 
 import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
 import type { ApiLinktree, ApiLinktreeItem } from "../../../../lib/admin-api/types";
 import { readErrorMessage } from "../components/admin-form-utils";
 import AdminActionButton from "../components/admin-action-button";
 import AdminConfirmModal from "../components/admin-confirm-modal";
 import AdminDrawer from "../components/admin-drawer";
+import { type AdminEntityRouteMode, buildAdminEntityRoute } from "../components/admin-entity-route";
 import AdminInfoBox from "../components/admin-info-box";
 import AdminPageHeader from "../components/admin-page-header";
-import { useAdminDrawerQuerySync } from "../components/use-admin-drawer-query-sync";
 
 type LinktreeFormState = {
   name: string;
@@ -31,6 +32,9 @@ const emptyItemForm: LinktreeItemFormState = {
 
 type LinktreeAdminPageProps = {
   generationSortOrder?: number | null;
+  basePath?: string;
+  routeId?: string | null;
+  routeMode?: AdminEntityRouteMode;
   initialData?: {
     linktrees: ApiLinktree[];
   };
@@ -38,8 +42,12 @@ type LinktreeAdminPageProps = {
 
 export default function LinktreeAdminPage({
   generationSortOrder = null,
+  basePath = "/admin/linktree",
+  routeId = null,
+  routeMode = "list",
   initialData,
 }: LinktreeAdminPageProps = {}) {
+  const router = useRouter();
   const [items, setItems] = useState<ApiLinktree[]>(initialData?.linktrees ?? []);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
@@ -59,7 +67,8 @@ export default function LinktreeAdminPage({
   const [deleteTarget, setDeleteTarget] = useState<"linktree" | "item" | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const { queryState, setDrawerQuery, normalizeDrawerQuery } = useAdminDrawerQuerySync();
+
+  const isDetailRoute = routeMode === "detail";
 
   const selected = useMemo(
     () => items.find((item) => item.id === selectedId) ?? null,
@@ -154,15 +163,11 @@ export default function LinktreeAdminPage({
   }, [initialData]);
 
   useEffect(() => {
-    normalizeDrawerQuery();
-  }, [normalizeDrawerQuery]);
-
-  useEffect(() => {
     if (isLoading) {
       return;
     }
 
-    if (queryState.panel === "create") {
+    if (routeMode === "create") {
       if (panelMode !== "create") {
         setCreateForm(emptyLinktreeForm);
         setPanelMode("create");
@@ -172,15 +177,15 @@ export default function LinktreeAdminPage({
       return;
     }
 
-    if (queryState.panel === "edit") {
-      const target = items.find((item) => item.id === queryState.id) ?? null;
+    if (routeMode === "detail" || routeMode === "edit") {
+      const target = items.find((item) => item.id === routeId) ?? null;
       if (!target) {
-        setDrawerQuery(null);
+        router.replace(buildAdminEntityRoute(basePath, "list"), { scroll: false });
         return;
       }
 
       if (selectedId !== target.id || panelMode !== "edit") {
-        handleSelectLinktree(target);
+        handleSelectLinktree(target, false);
       }
       return;
     }
@@ -189,15 +194,16 @@ export default function LinktreeAdminPage({
       setPanelMode(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryState, isLoading, panelMode, items, selectedId]);
+  }, [routeMode, routeId, isLoading, panelMode, items, selectedId, router, basePath]);
 
-  const handleSelectLinktree = (item: ApiLinktree) => {
+  const handleSelectLinktree = (item: ApiLinktree, navigate = true) => {
     setSelectedId(item.id);
     syncEditForm(item);
-    setPanelMode("edit");
-    setDrawerQuery("edit", item.id);
     setErrorMessage(null);
     setSuccessMessage(null);
+    if (navigate) {
+      router.push(buildAdminEntityRoute(basePath, "detail", item.id), { scroll: false });
+    }
   };
 
   const handleSelectItem = (item: ApiLinktreeItem) => {
@@ -222,9 +228,10 @@ export default function LinktreeAdminPage({
 
       setCreateForm(emptyLinktreeForm);
       setSuccessMessage("링크트리를 생성했습니다.");
-      setPanelMode("edit");
-      setDrawerQuery("edit", created.id);
       await loadData(created.id);
+      router.replace(buildAdminEntityRoute(basePath, "detail", created.id), {
+        scroll: false,
+      });
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -250,6 +257,11 @@ export default function LinktreeAdminPage({
 
       setSuccessMessage("링크트리를 수정했습니다.");
       await loadData(selected.id);
+      if (routeMode === "edit") {
+        router.replace(buildAdminEntityRoute(basePath, "detail", selected.id), {
+          scroll: false,
+        });
+      }
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -273,8 +285,8 @@ export default function LinktreeAdminPage({
       setSuccessMessage("링크트리를 삭제했습니다.");
       setDeleteTarget(null);
       setPanelMode(null);
-      setDrawerQuery(null);
       await loadData();
+      router.replace(buildAdminEntityRoute(basePath, "list"), { scroll: false });
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -365,16 +377,12 @@ export default function LinktreeAdminPage({
       <AdminPageHeader
         title="링크 모음 관리"
         description="대외 링크 묶음을 만들고, 각 묶음에 개별 링크를 추가하는 화면입니다."
-        guidance="목록에서 링크 모음을 선택하면 오른쪽 패널에서 링크 모음과 아이템을 함께 편집할 수 있습니다."
+        guidance="목록에서 링크 모음을 선택해 상세 페이지로 이동한 뒤 수정 페이지에서 링크 모음과 아이템을 편집하세요."
       >
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <AdminActionButton
             onClick={() => {
-              setCreateForm(emptyLinktreeForm);
-              setPanelMode("create");
-              setDrawerQuery("create");
-              setErrorMessage(null);
-              setSuccessMessage(null);
+              router.push(buildAdminEntityRoute(basePath, "create"), { scroll: false });
             }}
             testId="linktree-open-create"
           >
@@ -397,7 +405,7 @@ export default function LinktreeAdminPage({
       </AdminPageHeader>
 
       <AdminInfoBox title="작업 안내">
-        링크 모음을 먼저 만든 뒤, 하위 링크 아이템을 추가하세요. 수정/삭제는 드로어에서 한 번에 처리할 수 있습니다.
+        링크 모음을 먼저 만든 뒤 하위 링크 아이템을 추가하세요. 상세 페이지에서 수정 페이지로 이동해 링크 모음과 아이템을 함께 편집할 수 있습니다.
       </AdminInfoBox>
 
       {errorMessage ? (
@@ -440,7 +448,7 @@ export default function LinktreeAdminPage({
               : "검색 조건에 맞는 링크 모음이 없습니다."}
           </p>
         ) : (
-          <ul className="space-y-2" data-testid="linktree-list">
+          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" data-testid="linktree-list">
             {filteredItems.map((item) => (
               <li
                 key={item.id}
@@ -476,10 +484,11 @@ export default function LinktreeAdminPage({
         onClose={() => {
           if (!isSubmitting) {
             setPanelMode(null);
-            setDrawerQuery(null);
+            router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false });
           }
         }}
         testId="linktree-drawer"
+        variant="page"
       >
         {panelMode === "create" ? (
           <form onSubmit={handleCreate} className="space-y-3" data-testid="linktree-create-form">
@@ -507,6 +516,39 @@ export default function LinktreeAdminPage({
               링크 모음 생성
             </AdminActionButton>
           </form>
+        ) : selected && isDetailRoute ? (
+          <div className="space-y-4">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <p className="text-sm font-semibold text-gray-900">{selected.name}</p>
+              <p className="mt-1 text-sm text-gray-600">포함 링크 수: {selected.items.length}</p>
+              <ul className="mt-3 space-y-1 text-xs text-gray-600">
+                {selected.items.map((item) => (
+                  <li key={item.id}>
+                    {item.name}: {item.link}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <AdminActionButton
+                onClick={() =>
+                  router.push(buildAdminEntityRoute(basePath, "edit", selected.id), {
+                    scroll: false,
+                  })
+                }
+                testId="linktree-open-edit"
+              >
+                수정 페이지로 이동
+              </AdminActionButton>
+              <AdminActionButton
+                variant="ghost"
+                onClick={() => router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false })}
+                testId="linktree-back-list"
+              >
+                목록으로
+              </AdminActionButton>
+            </div>
+          </div>
         ) : selected ? (
           <div className="space-y-5">
             <form onSubmit={handleUpdate} className="space-y-3" data-testid="linktree-edit-form">

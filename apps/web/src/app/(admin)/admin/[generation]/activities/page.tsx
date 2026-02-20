@@ -23,8 +23,11 @@ export default async function GenerationActivitiesPage({
 
   return (
     <ActivitiesAdminPageClient
+      basePath={`/admin/${generation}/activities`}
       generationSortOrder={Number.isFinite(generationSortOrder) ? generationSortOrder : null}
       generationScoped
+      routeId={null}
+      routeMode="list"
       initialData={{
         activities,
         generations,

@@ -14,6 +14,9 @@ export default async function ExhibitionsPage() {
 
   return (
     <ExhibitionsAdminPageClient
+      basePath="/admin/exhibitions"
+      routeId={null}
+      routeMode="list"
       initialData={{
         exhibitions,
         generations,

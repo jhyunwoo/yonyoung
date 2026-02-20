@@ -83,10 +83,11 @@ const uploadViaXhr = async (
     }
 
     request.upload.onprogress = (event) => {
-      if (!event.lengthComputable || event.total <= 0) {
+      const total = event.total > 0 ? event.total : file.size;
+      if (total <= 0) {
         return;
       }
-      const value = Math.round((event.loaded / event.total) * 100);
+      const value = Math.round((event.loaded / total) * 100);
       onProgress(Math.max(0, Math.min(100, value)));
     };
 
@@ -117,19 +118,23 @@ export const createUppyPresignedUploader = (presignPath: PresignPath) => {
   });
 
   const emitUppyEvent = (eventName: string, ...args: unknown[]) => {
-    const emit = uppy.emit as unknown as (name: string, ...payload: unknown[]) => void;
-    emit(eventName, ...args);
+    const emit = uppy.emit as unknown as (
+      name: string,
+      ...payload: unknown[]
+    ) => void;
+    emit.call(uppy, eventName, ...args);
   };
 
   uppy.addUploader(async (fileIDs) => {
-    for (const fileId of fileIDs) {
+    const uploadFile = async (fileId: string) => {
       const file = uppy.getFile(fileId);
       if (!file || !(file.data instanceof File)) {
-        continue;
+        return;
       }
 
       const sourceFile = file.data;
       try {
+        emitUppyEvent("upload-started", file);
         const contentType = defaultContentType(sourceFile);
         const presign = await adminRequest<ApiPresignResponse>(presignPath, "POST", {
           fileName: sourceFile.name,
@@ -166,7 +171,9 @@ export const createUppyPresignedUploader = (presignPath: PresignPath) => {
           error instanceof Error ? error : new Error("이미지 업로드에 실패했습니다.");
         emitUppyEvent("upload-error", file, normalizedError);
       }
-    }
+    };
+
+    await Promise.all(fileIDs.map((fileId) => uploadFile(fileId)));
   });
 
   return {

@@ -14,6 +14,9 @@ export default async function ActivitiesPage() {
 
   return (
     <ActivitiesAdminPageClient
+      basePath="/admin/activities"
+      routeId={null}
+      routeMode="list"
       initialData={{
         activities,
         generations,

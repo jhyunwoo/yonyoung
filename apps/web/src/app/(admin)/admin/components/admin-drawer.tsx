@@ -11,6 +11,7 @@ type AdminDrawerProps = {
   children: ReactNode;
   footer?: ReactNode;
   testId?: string;
+  variant?: "overlay" | "page";
 };
 
 export default function AdminDrawer({
@@ -21,9 +22,10 @@ export default function AdminDrawer({
   children,
   footer,
   testId = "admin-drawer",
+  variant = "overlay",
 }: AdminDrawerProps) {
   useEffect(() => {
-    if (!open) {
+    if (variant === "page" || !open) {
       return;
     }
 
@@ -41,7 +43,43 @@ export default function AdminDrawer({
       window.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = previousOverflow;
     };
-  }, [open, onClose]);
+  }, [open, onClose, variant]);
+
+  if (variant === "page") {
+    if (!open) {
+      return null;
+    }
+
+    return (
+      <section
+        role="region"
+        aria-label={title}
+        className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+        data-testid={testId}
+      >
+        <header className="flex items-start justify-between gap-3 border-b border-gray-200 px-5 py-4 md:px-6">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+            {description ? <p className="mt-1 text-sm text-gray-600">{description}</p> : null}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-600 hover:bg-gray-100"
+            data-testid={`${testId}-close`}
+          >
+            닫기
+          </button>
+        </header>
+
+        <div className="px-5 py-5 md:px-6">{children}</div>
+
+        {footer ? (
+          <footer className="border-t border-gray-200 bg-white px-5 py-3 md:px-6">{footer}</footer>
+        ) : null}
+      </section>
+    );
+  }
 
   return (
     <AnimatePresence>
