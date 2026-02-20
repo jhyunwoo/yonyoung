@@ -14,8 +14,6 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 const getArchiveRecords = async () => {
-  "use cache";
-
   return safeList(listPublicActivities, []);
 };
 

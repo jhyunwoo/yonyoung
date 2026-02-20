@@ -18,8 +18,6 @@ import { resolveSiteUrl } from "../../lib/seo";
 import { formatKoreanDateRange } from "../../lib/date-formatters";
 
 const getHomePrimaryData = async () => {
-  "use cache";
-
   return Promise.all([
     safeList(listPublicActivities, []),
     safeList(listPublicExhibitions, []),
@@ -27,14 +25,10 @@ const getHomePrimaryData = async () => {
 };
 
 const getHomeSupporters = async () => {
-  "use cache";
-
   return safeList(listPublicSupporters, []);
 };
 
 const getHomeQuickLinks = async () => {
-  "use cache";
-
   const linktrees = await safeList(listPublicLinktrees, []);
   return flattenLinktreeItems(linktrees).slice(0, 6);
 };

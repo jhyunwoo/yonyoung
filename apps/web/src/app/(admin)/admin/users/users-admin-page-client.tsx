@@ -565,11 +565,9 @@ export default function UsersAdminPageClient({
     router.push(buildAdminEntityRoute(basePath, "list"), { scroll: false });
   };
 
-  const handleCardSelect = async (user: ApiUser) => {
+  const handleCardSelect = (user: ApiUser) => {
     setSelectedId(user.id);
     toggleSelection(user.id);
-
-    await handleSelect(user);
   };
 
   const handleToggleInlineDetail = async (user: ApiUser) => {
@@ -1032,7 +1030,7 @@ export default function UsersAdminPageClient({
       <AdminPageHeader
         title="사용자 관리"
         description="가입한 사용자 정보를 조회하고 권한/소속을 관리하는 화면입니다."
-        guidance="목록에서 사용자를 선택해 상세 페이지로 이동한 뒤 수정 페이지에서 편집하세요. 검색/필터/다중 선택으로 일괄 작업할 수 있습니다."
+        guidance="사용자 카드를 클릭하면 선택만 됩니다. 카드 오른쪽의 수정 버튼으로 상세 페이지로 이동해 편집하세요. 검색/필터/다중 선택으로 일괄 작업할 수 있습니다."
       >
         {isStandaloneRoute ? (
           <div className="mt-3 flex items-center">

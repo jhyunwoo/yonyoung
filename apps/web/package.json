@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "NEXT_PRIVATE_STANDALONE=true next build --webpack",
     "start": "next start",
     "lint": "eslint src --max-warnings 0",
     "check-types": "tsc --noEmit",
@@ -18,9 +18,9 @@
     "test:e2e:headed": "E2E_SUITE_MODE=smoke playwright test --headed",
     "perf:budget": "node ../../scripts/perf-budget.mjs",
     "perf:lighthouse": "node ../../scripts/lighthouse-runner.mjs",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
-    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "pnpm run build && opennextjs-cloudflare build --skipNextBuild && opennextjs-cloudflare deploy",
+    "upload": "pnpm run build && opennextjs-cloudflare build --skipNextBuild && opennextjs-cloudflare upload",
+    "preview": "pnpm run build && opennextjs-cloudflare build --skipNextBuild && opennextjs-cloudflare preview",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv ./cloudflare-env.d.ts"
   },
   "dependencies": {

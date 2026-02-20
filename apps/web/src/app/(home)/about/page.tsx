@@ -21,8 +21,6 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 const getPublicGenerations = async () => {
-  "use cache";
-
   return safeList(listPublicGenerations, []);
 };
 

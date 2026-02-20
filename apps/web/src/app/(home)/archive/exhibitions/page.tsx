@@ -14,8 +14,6 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 const getArchiveExhibitions = async () => {
-  "use cache";
-
   return safeList(listPublicExhibitions, []);
 };
 
