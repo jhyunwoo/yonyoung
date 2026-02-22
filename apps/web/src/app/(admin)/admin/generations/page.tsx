@@ -20,6 +20,7 @@ import {
   type AdminEntityRouteMode,
   buildAdminEntityRoute,
 } from "../components/admin-entity-route";
+import { AdminStatusMessage, AdminTextInput } from "../components/admin-form-controls";
 import AdminInfoBox from "../components/admin-info-box";
 import AdminPageHeader from "../components/admin-page-header";
 
@@ -594,14 +595,15 @@ export default function GenerationsAdminPage({
             >
               + 신규 기수
             </AdminActionButton>
-            <button
+            <AdminActionButton
               type="button"
+              variant="secondary"
+              size="sm"
               onClick={() => void loadItems()}
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm"
               data-testid="generations-reload-button"
             >
               새로고침
-            </button>
+            </AdminActionButton>
           </div>
         )}
       </AdminPageHeader>
@@ -614,33 +616,27 @@ export default function GenerationsAdminPage({
       ) : null}
 
       {errorMessage ? (
-        <p
-          className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700"
-          data-testid="generations-error"
-        >
+        <AdminStatusMessage tone="error" testId="generations-error">
           {errorMessage}
-        </p>
+        </AdminStatusMessage>
       ) : null}
 
       {successMessage ? (
-        <p
-          className="rounded-md border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-700"
-          data-testid="generations-success"
-        >
+        <AdminStatusMessage tone="success" testId="generations-success">
           {successMessage}
-        </p>
+        </AdminStatusMessage>
       ) : null}
 
       {!isStandaloneRoute ? (
         <section className="rounded-lg border border-gray-200 bg-white p-4">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">현재 기수 목록</h2>
-            <input
+            <AdminTextInput
               type="search"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="기수명/표시 순서 검색"
-              className="w-full max-w-xs rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="max-w-xs"
               data-testid="generation-search-input"
             />
           </div>
@@ -724,7 +720,7 @@ export default function GenerationsAdminPage({
           >
             <label className="block text-sm">
               <span className="mb-1 block text-gray-700">기수 이름</span>
-              <input
+              <AdminTextInput
                 type="text"
                 value={createForm.name}
                 onChange={(event) =>
@@ -733,7 +729,7 @@ export default function GenerationsAdminPage({
                     name: event.target.value,
                   }))
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className="w-full"
                 required
                 data-testid="generation-create-name"
               />
@@ -743,7 +739,7 @@ export default function GenerationsAdminPage({
               <span className="mb-1 block text-gray-700">
                 표시 순서 (작을수록 먼저 보여요)
               </span>
-              <input
+              <AdminTextInput
                 type="number"
                 min={0}
                 value={createForm.sortOrder}
@@ -753,7 +749,7 @@ export default function GenerationsAdminPage({
                     sortOrder: event.target.value,
                   }))
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className="w-full"
                 required
                 data-testid="generation-create-sort-order"
               />
@@ -761,7 +757,7 @@ export default function GenerationsAdminPage({
 
             <label className="block text-sm">
               <span className="mb-1 block text-gray-700">시작일</span>
-              <input
+              <AdminTextInput
                 type="date"
                 value={createForm.startDate}
                 onChange={(event) =>
@@ -770,7 +766,7 @@ export default function GenerationsAdminPage({
                     startDate: event.target.value,
                   }))
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className="w-full"
                 required
                 data-testid="generation-create-start-date"
               />
@@ -778,7 +774,7 @@ export default function GenerationsAdminPage({
 
             <label className="block text-sm">
               <span className="mb-1 block text-gray-700">종료일</span>
-              <input
+              <AdminTextInput
                 type="date"
                 value={createForm.endDate}
                 onChange={(event) =>
@@ -787,7 +783,7 @@ export default function GenerationsAdminPage({
                     endDate: event.target.value,
                   }))
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className="w-full"
                 required
                 data-testid="generation-create-end-date"
               />
@@ -878,7 +874,7 @@ export default function GenerationsAdminPage({
                 <div className="grid gap-3 md:grid-cols-2">
                   <label className="block text-sm">
                     <span className="mb-1 block text-gray-700">기수 이름</span>
-                    <input
+                    <AdminTextInput
                       type="text"
                       value={editForm.name}
                       onChange={(event) =>
@@ -887,7 +883,7 @@ export default function GenerationsAdminPage({
                           name: event.target.value,
                         }))
                       }
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 transition focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                      className="w-full"
                       required
                       data-testid="generation-edit-name"
                     />
@@ -895,7 +891,7 @@ export default function GenerationsAdminPage({
 
                   <label className="block text-sm">
                     <span className="mb-1 block text-gray-700">표시 순서</span>
-                    <input
+                    <AdminTextInput
                       type="number"
                       min={0}
                       value={editForm.sortOrder}
@@ -905,7 +901,7 @@ export default function GenerationsAdminPage({
                           sortOrder: event.target.value,
                         }))
                       }
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 transition focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                      className="w-full"
                       required
                       data-testid="generation-edit-sort-order"
                     />
@@ -913,7 +909,7 @@ export default function GenerationsAdminPage({
 
                   <label className="block text-sm">
                     <span className="mb-1 block text-gray-700">시작일</span>
-                    <input
+                    <AdminTextInput
                       type="date"
                       value={editForm.startDate}
                       onChange={(event) =>
@@ -922,7 +918,7 @@ export default function GenerationsAdminPage({
                           startDate: event.target.value,
                         }))
                       }
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 transition focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                      className="w-full"
                       required
                       data-testid="generation-edit-start-date"
                     />
@@ -930,7 +926,7 @@ export default function GenerationsAdminPage({
 
                   <label className="block text-sm">
                     <span className="mb-1 block text-gray-700">종료일</span>
-                    <input
+                    <AdminTextInput
                       type="date"
                       value={editForm.endDate}
                       onChange={(event) =>
@@ -939,7 +935,7 @@ export default function GenerationsAdminPage({
                           endDate: event.target.value,
                         }))
                       }
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 transition focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                      className="w-full"
                       required
                       data-testid="generation-edit-end-date"
                     />
@@ -1014,15 +1010,16 @@ export default function GenerationsAdminPage({
                             권한: {readAdminRoleLabel(member.role)}
                           </p>
                         </div>
-                        <button
+                        <AdminActionButton
                           type="button"
+                          variant="danger"
+                          size="sm"
                           onClick={() => handleUnassignMember(member.id)}
                           disabled={isSubmitting}
-                          className="rounded-md border border-red-300 px-2 py-1 text-xs font-medium text-red-600 disabled:opacity-50"
                           data-testid={`generation-member-unassign-${member.id}`}
                         >
                           해제
-                        </button>
+                        </AdminActionButton>
                       </li>
                     ))}
                   </ul>
@@ -1035,37 +1032,39 @@ export default function GenerationsAdminPage({
                     멤버 배정
                   </h3>
                   <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-                    <input
+                    <AdminTextInput
                       type="search"
                       value={assignMemberSearchQuery}
                       onChange={(event) =>
                         setAssignMemberSearchQuery(event.target.value)
                       }
                       placeholder="이름 검색"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm transition focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200 sm:w-56"
+                      className="w-full sm:w-56"
                       data-testid="generation-assignable-search-input"
                     />
-                    <button
+                    <AdminActionButton
                       type="button"
+                      variant="secondary"
+                      size="sm"
                       onClick={() =>
                         setShowRoleFilters((previous) => !previous)
                       }
-                      className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
                       data-testid="generation-assignable-role-filter-toggle"
                     >
                       {showRoleFilters ? "권한 필터 숨기기" : "권한 필터 보기"}
-                    </button>
-                    <button
+                    </AdminActionButton>
+                    <AdminActionButton
                       type="button"
+                      variant="secondary"
+                      size="sm"
                       onClick={() => {
                         setAssignMemberIncludeRoleFilters([]);
                         setAssignMemberExcludeRoleFilters([]);
                       }}
-                      className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50"
                       data-testid="generation-assignable-role-filter-reset"
                     >
                       권한 필터 초기화
-                    </button>
+                    </AdminActionButton>
                   </div>
                 </div>
 
@@ -1176,15 +1175,16 @@ export default function GenerationsAdminPage({
                               : "미배정"}
                           </p>
                         </div>
-                        <button
+                        <AdminActionButton
                           type="button"
+                          variant="secondary"
+                          size="sm"
                           onClick={() => handleAssignMember(member.id)}
                           disabled={isSubmitting}
-                          className="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 disabled:opacity-50"
                           data-testid={`generation-member-assign-${member.id}`}
                         >
                           배정
-                        </button>
+                        </AdminActionButton>
                       </li>
                     ))}
                   </ul>

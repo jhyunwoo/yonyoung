@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import { type DragEvent, useEffect, useState } from "react";
+import AdminActionButton from "./admin-action-button";
+import { AdminStatusMessage } from "./admin-form-controls";
 import type { ImmediateUploadStatus } from "./use-immediate-image-upload";
 
 type ImageInputProps = {
@@ -104,10 +106,10 @@ export default function ImageInput({
           htmlFor={fileInputId}
           className={`relative block rounded-xl border-2 border-dashed p-4 transition ${
             disabled
-              ? "cursor-not-allowed border-gray-200 bg-gray-100"
+              ? "cursor-not-allowed border-gray-300 bg-gray-100"
               : isDragOver
-                ? "cursor-pointer border-black bg-gray-100"
-                : "cursor-pointer border-gray-300 bg-white hover:border-gray-400 hover:bg-gray-50"
+                ? "cursor-pointer border-[var(--admin-accent)] bg-[var(--admin-surface-subtle)]"
+                : "cursor-pointer border-[var(--admin-border-strong)] bg-[var(--admin-surface)] hover:border-[var(--admin-accent)] hover:bg-[var(--admin-surface-muted)]"
           }`}
           onDragOver={(event) => {
             event.preventDefault();
@@ -188,23 +190,29 @@ export default function ImageInput({
       ) : null}
 
       {status === "uploaded" && !isUploading ? (
-        <p className="text-xs text-green-700" data-testid={`${testIdPrefix}-upload-success`}>
+        <AdminStatusMessage
+          tone="success"
+          className="px-2.5 py-1.5 text-xs"
+          testId={`${testIdPrefix}-upload-success`}
+        >
           이미지 업로드 완료
-        </p>
+        </AdminStatusMessage>
       ) : null}
 
       {status === "failed" ? (
         <div className="space-y-1" data-testid={`${testIdPrefix}-upload-error`}>
-          <p className="text-xs text-red-700">{errorMessage ?? "이미지 업로드에 실패했습니다."}</p>
+          <AdminStatusMessage tone="error" className="px-2.5 py-1.5 text-xs">
+            {errorMessage ?? "이미지 업로드에 실패했습니다."}
+          </AdminStatusMessage>
           {onRetry ? (
-            <button
-              type="button"
+            <AdminActionButton
+              variant="danger"
+              size="sm"
               onClick={onRetry}
-              className="rounded-md border border-red-300 px-2 py-1 text-xs text-red-700 hover:bg-red-50"
               data-testid={`${testIdPrefix}-upload-retry`}
             >
               업로드 재시도
-            </button>
+            </AdminActionButton>
           ) : null}
         </div>
       ) : null}

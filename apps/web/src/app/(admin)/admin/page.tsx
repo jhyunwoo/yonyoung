@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { buildGenerationPath, getAccessibleGenerations } from "../../../lib/admin-generation";
 import {
   fetchGenerationsFromServer,
@@ -7,6 +6,7 @@ import {
 import { fetchAdminDashboardStatsFromServer } from "../../../lib/admin-resource-server";
 import { canManageGenerations, canManageGlobalUsers } from "../../../lib/auth-shared";
 import { serverAuthTool } from "../../../lib/auth-server-tool";
+import { AdminLinkButton, AdminStatusMessage } from "./components/admin-form-controls";
 
 type AdminPageProps = {
   searchParams: Promise<{
@@ -121,27 +121,23 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <div className="mt-4 space-y-2">
           <p className="text-xs font-medium text-gray-500">작업 기수 선택</p>
           {accessibleGenerations.length === 0 ? (
-            <p className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            <AdminStatusMessage tone="warning" className="px-3 py-2 text-sm">
               접근 가능한 기수가 없습니다. 권한 또는 소속 기수를 확인해 주세요.
-            </p>
+            </AdminStatusMessage>
           ) : (
             <div className="flex flex-wrap gap-2" data-testid="admin-dashboard-generation-filter">
               {accessibleGenerations.map((generation) => {
                 const isActive = selectedGeneration?.id === generation.id;
                 return (
-                  <Link
+                  <AdminLinkButton
                     key={generation.id}
                     href={`/admin?generation=${generation.sortOrder}`}
                     prefetch={false}
-                    className={`rounded-xl border px-3 py-2 text-sm font-medium transition ${
-                      isActive
-                        ? "border-black bg-black text-white"
-                        : "border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
-                    }`}
+                    variant={isActive ? "primary" : "secondary"}
                     data-testid={`admin-dashboard-generation-${generation.sortOrder}`}
                   >
                     {generation.sortOrder}기 ({generation.name})
-                  </Link>
+                  </AdminLinkButton>
                 );
               })}
             </div>
@@ -174,61 +170,68 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           {selectedGeneration ? (
             <>
-              <Link
+              <AdminLinkButton
                 href={buildGenerationPath(selectedGeneration.sortOrder, "activities")}
                 prefetch={false}
-                className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                variant="secondary"
+                className="w-full justify-start"
               >
                 {selectedGeneration.sortOrder}기 활동 관리
-              </Link>
-              <Link
+              </AdminLinkButton>
+              <AdminLinkButton
                 href={buildGenerationPath(selectedGeneration.sortOrder, "exhibitions")}
                 prefetch={false}
-                className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                variant="secondary"
+                className="w-full justify-start"
               >
                 {selectedGeneration.sortOrder}기 전시 관리
-              </Link>
-              <Link
+              </AdminLinkButton>
+              <AdminLinkButton
                 href={buildGenerationPath(selectedGeneration.sortOrder, "users")}
                 prefetch={false}
-                className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                variant="secondary"
+                className="w-full justify-start"
               >
                 {selectedGeneration.sortOrder}기 멤버 관리
-              </Link>
+              </AdminLinkButton>
             </>
           ) : null}
 
-          <Link
+          <AdminLinkButton
             href="/admin/supporters"
             prefetch={false}
-            className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+            variant="secondary"
+            className="w-full justify-start"
           >
             서포터즈 관리
-          </Link>
-          <Link
+          </AdminLinkButton>
+          <AdminLinkButton
             href="/admin/linktree"
             prefetch={false}
-            className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+            variant="secondary"
+            className="w-full justify-start"
           >
             Linktree 관리
-          </Link>
+          </AdminLinkButton>
           {canManageGlobalUsers(session) ? (
-            <Link
+            <AdminLinkButton
               href="/admin/users"
               prefetch={false}
-              className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+              variant="secondary"
+              className="w-full justify-start"
             >
               사용자 권한 관리
-            </Link>
+            </AdminLinkButton>
           ) : null}
           {canManageGenerations(session) ? (
-            <Link
+            <AdminLinkButton
               href="/admin/generations"
               prefetch={false}
-              className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+              variant="secondary"
+              className="w-full justify-start"
             >
               기수 설정
-            </Link>
+            </AdminLinkButton>
           ) : null}
         </div>
       </section>

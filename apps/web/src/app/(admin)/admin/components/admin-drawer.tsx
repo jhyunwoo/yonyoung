@@ -2,6 +2,7 @@
 
 import { useEffect, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import AdminActionButton from "./admin-action-button";
 
 type AdminDrawerProps = {
   open: boolean;
@@ -56,7 +57,7 @@ export default function AdminDrawer({
       <section
         role="region"
         aria-label={title}
-        className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+        className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_16px_30px_-24px_rgba(0,0,0,0.55)]"
         data-testid={testId}
       >
         <header className="flex items-start justify-between gap-3 border-b border-gray-200 px-5 py-4 md:px-6">
@@ -65,14 +66,14 @@ export default function AdminDrawer({
             {description ? <p className="mt-1 text-sm text-gray-600">{description}</p> : null}
           </div>
           {showCloseButton ? (
-            <button
-              type="button"
+            <AdminActionButton
+              variant="secondary"
+              size="sm"
               onClick={onClose}
-              className="rounded-xl border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-600 hover:bg-gray-100"
               data-testid={`${testId}-close`}
             >
               닫기
-            </button>
+            </AdminActionButton>
           ) : null}
         </header>
 
@@ -90,7 +91,7 @@ export default function AdminDrawer({
       {open ? (
         <motion.div
           key="drawer-backdrop"
-          className="fixed inset-0 z-50 flex justify-end bg-black/45 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-[2px]"
           onClick={onClose}
           data-testid={`${testId}-backdrop`}
           initial={{ opacity: 0 }}
@@ -103,7 +104,7 @@ export default function AdminDrawer({
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            className="flex h-full w-full max-w-3xl flex-col border-l border-gray-200 bg-white shadow-2xl xl:max-w-4xl"
+            className="flex h-full w-full max-w-3xl flex-col border-l border-gray-200 bg-white shadow-[0_14px_36px_-22px_rgba(0,0,0,0.65)] xl:max-w-4xl"
             onClick={(event) => event.stopPropagation()}
             data-testid={testId}
             initial={{ x: 56, opacity: 0.98 }}
@@ -119,14 +120,14 @@ export default function AdminDrawer({
                 ) : null}
               </div>
               {showCloseButton ? (
-                <button
-                  type="button"
+                <AdminActionButton
+                  variant="secondary"
+                  size="sm"
                   onClick={onClose}
-                  className="rounded-xl border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-600 hover:bg-gray-100"
                   data-testid={`${testId}-close`}
                 >
                   닫기
-                </button>
+                </AdminActionButton>
               ) : null}
             </header>
 

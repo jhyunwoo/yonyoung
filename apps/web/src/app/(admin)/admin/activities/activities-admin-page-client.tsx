@@ -25,6 +25,12 @@ import {
   type AdminEntityRouteMode,
   buildAdminEntityRoute,
 } from "../components/admin-entity-route";
+import {
+  AdminSelect,
+  AdminStatusMessage,
+  AdminTextarea,
+  AdminTextInput,
+} from "../components/admin-form-controls";
 import AdminInfoBox from "../components/admin-info-box";
 import AdminPageHeader from "../components/admin-page-header";
 import DragReorderBadge from "../components/drag-reorder-badge";
@@ -822,14 +828,15 @@ export default function ActivitiesAdminPage({
             >
               + 신규 활동
             </AdminActionButton>
-            <button
+            <AdminActionButton
               type="button"
+              variant="secondary"
+              size="sm"
               onClick={() => void loadData()}
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm"
               data-testid="activities-reload-button"
             >
               새로고침
-            </button>
+            </AdminActionButton>
             {generationScoped ? (
               <p
                 className="text-xs text-gray-500"
@@ -853,33 +860,27 @@ export default function ActivitiesAdminPage({
       ) : null}
 
       {errorMessage ? (
-        <p
-          className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700"
-          data-testid="activities-error"
-        >
+        <AdminStatusMessage tone="error" testId="activities-error">
           {errorMessage}
-        </p>
+        </AdminStatusMessage>
       ) : null}
 
       {successMessage ? (
-        <p
-          className="rounded-md border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-700"
-          data-testid="activities-success"
-        >
+        <AdminStatusMessage tone="success" testId="activities-success">
           {successMessage}
-        </p>
+        </AdminStatusMessage>
       ) : null}
 
       {!isStandaloneRoute ? (
         <section className="rounded-lg border border-gray-200 bg-white p-4">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">활동 목록</h2>
-            <input
+            <AdminTextInput
               type="search"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="제목/설명 검색"
-              className="w-full max-w-xs rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="max-w-xs"
               data-testid="activity-search-input"
             />
           </div>
@@ -961,7 +962,7 @@ export default function ActivitiesAdminPage({
           >
             <label className="block text-sm">
               <span className="mb-1 block">활동 제목</span>
-              <input
+              <AdminTextInput
                 type="text"
                 value={createForm.title}
                 onChange={(event) =>
@@ -970,7 +971,7 @@ export default function ActivitiesAdminPage({
                     title: event.target.value,
                   }))
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className="w-full"
                 required
                 data-testid="activity-create-title"
               />
@@ -978,7 +979,7 @@ export default function ActivitiesAdminPage({
 
             <label className="block text-sm">
               <span className="mb-1 block">설명</span>
-              <textarea
+              <AdminTextarea
                 value={createForm.description}
                 onChange={(event) =>
                   setCreateForm((previous) => ({
@@ -986,7 +987,7 @@ export default function ActivitiesAdminPage({
                     description: event.target.value,
                   }))
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className="w-full"
                 rows={4}
                 required
                 data-testid="activity-create-description"
@@ -996,7 +997,7 @@ export default function ActivitiesAdminPage({
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block text-sm">
                 <span className="mb-1 block">활동 시작일</span>
-                <input
+                <AdminTextInput
                   type="date"
                   value={createForm.startDate}
                   onChange={(event) =>
@@ -1005,14 +1006,14 @@ export default function ActivitiesAdminPage({
                       startDate: event.target.value,
                     }))
                   }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  className="w-full"
                   required
                   data-testid="activity-create-start-date"
                 />
               </label>
               <label className="block text-sm">
                 <span className="mb-1 block">활동 종료일</span>
-                <input
+                <AdminTextInput
                   type="date"
                   value={createForm.endDate}
                   onChange={(event) =>
@@ -1021,7 +1022,7 @@ export default function ActivitiesAdminPage({
                       endDate: event.target.value,
                     }))
                   }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  className="w-full"
                   required
                   data-testid="activity-create-end-date"
                 />
@@ -1029,16 +1030,16 @@ export default function ActivitiesAdminPage({
             </div>
 
             {scopedGenerationId ? (
-              <div
-                className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
-                data-testid="activity-create-scoped-generation-field"
+              <AdminStatusMessage
+                tone="info"
+                testId="activity-create-scoped-generation-field"
               >
                 소속 기수는 현재 선택한 기수로 고정됩니다.
-              </div>
+              </AdminStatusMessage>
             ) : (
               <label className="block text-sm">
                 <span className="mb-1 block">소속 기수</span>
-                <select
+                <AdminSelect
                   value={createForm.generationId}
                   onChange={(event) =>
                     setCreateForm((previous) => ({
@@ -1046,7 +1047,7 @@ export default function ActivitiesAdminPage({
                       generationId: event.target.value,
                     }))
                   }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  className="w-full"
                   required
                   data-testid="activity-create-generation-id"
                 >
@@ -1058,7 +1059,7 @@ export default function ActivitiesAdminPage({
                       {generation.name} ({generation.sortOrder})
                     </option>
                   ))}
-                </select>
+                </AdminSelect>
               </label>
             )}
 
@@ -1130,25 +1131,29 @@ export default function ActivitiesAdminPage({
                         className="absolute left-2 top-2 z-10"
                       />
                       {item.status === "failed" ? (
-                        <button
+                        <AdminActionButton
                           type="button"
+                          variant="secondary"
+                          size="sm"
                           onClick={() =>
                             createDetailBatchUpload.retryItem(item.id)
                           }
-                          className="absolute top-2 right-14 z-10 rounded-md bg-white/90 px-2 py-1 text-xs text-gray-700 hover:bg-white"
+                          className="absolute right-14 top-2 z-10 border-white/80 bg-white/85"
                         >
                           재시도
-                        </button>
+                        </AdminActionButton>
                       ) : null}
-                      <button
+                      <AdminActionButton
                         type="button"
+                        variant="danger"
+                        size="sm"
                         onClick={() =>
                           createDetailBatchUpload.removeItem(item.id)
                         }
-                        className="absolute top-2 right-2 z-10 rounded-md bg-white/90 px-2 py-1 text-xs text-red-700 hover:bg-white"
+                        className="absolute right-2 top-2 z-10 border-white/80 bg-white/85"
                       >
                         삭제
-                      </button>
+                      </AdminActionButton>
                       <span className="absolute left-2 bottom-2 z-10 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white">
                         정렬 {item.sortOrder}
                       </span>
@@ -1264,7 +1269,7 @@ export default function ActivitiesAdminPage({
             >
               <label className="block text-sm">
                 <span className="mb-1 block">활동 제목</span>
-                <input
+                <AdminTextInput
                   type="text"
                   value={editForm.title}
                   onChange={(event) =>
@@ -1273,7 +1278,7 @@ export default function ActivitiesAdminPage({
                       title: event.target.value,
                     }))
                   }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  className="w-full"
                   required
                   data-testid="activity-edit-title"
                 />
@@ -1281,7 +1286,7 @@ export default function ActivitiesAdminPage({
 
               <label className="block text-sm">
                 <span className="mb-1 block">설명</span>
-                <textarea
+                <AdminTextarea
                   value={editForm.description}
                   onChange={(event) =>
                     setEditForm((previous) => ({
@@ -1289,7 +1294,7 @@ export default function ActivitiesAdminPage({
                       description: event.target.value,
                     }))
                   }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  className="w-full"
                   rows={4}
                   required
                   data-testid="activity-edit-description"
@@ -1299,7 +1304,7 @@ export default function ActivitiesAdminPage({
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block text-sm">
                   <span className="mb-1 block">활동 시작일</span>
-                  <input
+                  <AdminTextInput
                     type="date"
                     value={editForm.startDate}
                     onChange={(event) =>
@@ -1308,14 +1313,14 @@ export default function ActivitiesAdminPage({
                         startDate: event.target.value,
                       }))
                     }
-                    className="w-full rounded-md border border-gray-300 px-3 py-2"
+                    className="w-full"
                     required
                     data-testid="activity-edit-start-date"
                   />
                 </label>
                 <label className="block text-sm">
                   <span className="mb-1 block">활동 종료일</span>
-                  <input
+                  <AdminTextInput
                     type="date"
                     value={editForm.endDate}
                     onChange={(event) =>
@@ -1324,7 +1329,7 @@ export default function ActivitiesAdminPage({
                         endDate: event.target.value,
                       }))
                     }
-                    className="w-full rounded-md border border-gray-300 px-3 py-2"
+                    className="w-full"
                     required
                     data-testid="activity-edit-end-date"
                   />
@@ -1332,16 +1337,16 @@ export default function ActivitiesAdminPage({
               </div>
 
               {scopedGenerationId ? (
-                <div
-                  className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
-                  data-testid="activity-edit-scoped-generation-field"
+                <AdminStatusMessage
+                  tone="info"
+                  testId="activity-edit-scoped-generation-field"
                 >
                   소속 기수는 현재 선택한 기수로 고정됩니다.
-                </div>
+                </AdminStatusMessage>
               ) : (
                 <label className="block text-sm">
                   <span className="mb-1 block">소속 기수</span>
-                  <select
+                  <AdminSelect
                     value={editForm.generationId}
                     onChange={(event) =>
                       setEditForm((previous) => ({
@@ -1349,7 +1354,7 @@ export default function ActivitiesAdminPage({
                         generationId: event.target.value,
                       }))
                     }
-                    className="w-full rounded-md border border-gray-300 px-3 py-2"
+                    className="w-full"
                     required
                     data-testid="activity-edit-generation-id"
                   >
@@ -1361,7 +1366,7 @@ export default function ActivitiesAdminPage({
                         {generation.name} ({generation.sortOrder})
                       </option>
                     ))}
-                  </select>
+                  </AdminSelect>
                 </label>
               )}
 
@@ -1446,25 +1451,29 @@ export default function ActivitiesAdminPage({
                             className="absolute left-2 top-2 z-10"
                           />
                           {item.status === "failed" ? (
-                            <button
+                            <AdminActionButton
                               type="button"
+                              variant="secondary"
+                              size="sm"
                               onClick={() =>
                                 detailBatchUpload.retryItem(item.id)
                               }
-                              className="absolute top-2 right-14 z-10 rounded-md bg-white/90 px-2 py-1 text-xs text-gray-700 hover:bg-white"
+                              className="absolute right-14 top-2 z-10 border-white/80 bg-white/85"
                             >
                               재시도
-                            </button>
+                            </AdminActionButton>
                           ) : null}
-                          <button
+                          <AdminActionButton
                             type="button"
+                            variant="danger"
+                            size="sm"
                             onClick={() =>
                               detailBatchUpload.removeItem(item.id)
                             }
-                            className="absolute top-2 right-2 z-10 rounded-md bg-white/90 px-2 py-1 text-xs text-red-700 hover:bg-white"
+                            className="absolute right-2 top-2 z-10 border-white/80 bg-white/85"
                           >
                             삭제
-                          </button>
+                          </AdminActionButton>
                           <span className="absolute left-2 bottom-2 z-10 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white">
                             정렬 {item.sortOrder}
                           </span>
@@ -1574,19 +1583,21 @@ export default function ActivitiesAdminPage({
                               compact
                               className="absolute left-2 top-2 z-10"
                             />
-                            <button
+                            <AdminActionButton
                               type="button"
+                              variant="danger"
+                              size="sm"
                               onClick={() => {
                                 if (!isSubmitting) {
                                   setSelectedImageId(image.id);
                                   setDeleteTarget("detail");
                                 }
                               }}
-                              className="absolute top-2 right-2 z-10 rounded-md bg-white/90 px-2 py-1 text-xs text-red-700 hover:bg-white"
+                              className="absolute right-2 top-2 z-10 border-white/80 bg-white/85"
                               data-testid={`activity-detail-delete-button-${image.id}`}
                             >
                               삭제
-                            </button>
+                            </AdminActionButton>
                             <span className="absolute left-2 bottom-2 z-10 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white">
                               정렬 {sortOrder}
                             </span>

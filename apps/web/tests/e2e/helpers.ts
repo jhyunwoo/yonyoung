@@ -77,6 +77,27 @@ const readErrorMessage = (
   return fallback;
 };
 
+const isNotFoundApiPayload = (status: number, payload: unknown): boolean => {
+  if (status !== 404) {
+    return false;
+  }
+
+  if (
+    payload &&
+    typeof payload === "object" &&
+    "error" in payload &&
+    payload.error &&
+    typeof payload.error === "object" &&
+    "code" in payload.error &&
+    payload.error.code === "NOT_FOUND"
+  ) {
+    return true;
+  }
+
+  const message = readErrorMessage(payload, "");
+  return message.includes("대상을 찾을 수 없습니다.");
+};
+
 const delay = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -651,7 +672,7 @@ export const ensureAdminSession = async (page: Page): Promise<void> => {
       return;
     }
 
-    await page.request.patch(`${apiUrl}/api/users/${userId}`, {
+    const profileResponse = await page.request.patch(`${apiUrl}/api/users/${userId}`, {
       headers: buildAuthHeaders(),
       data: {
         familyName: "E2E",
@@ -663,6 +684,24 @@ export const ensureAdminSession = async (page: Page): Promise<void> => {
       },
       failOnStatusCode: false,
     });
+
+    if (profileResponse.ok()) {
+      return;
+    }
+
+    const payload = await readJsonSafe(profileResponse);
+    if (isNotFoundApiPayload(profileResponse.status(), payload)) {
+      console.warn(
+        "E2E admin profile sync skipped: /api/users 대상 계정이 없어 초기화만 건너뜁니다.",
+      );
+      return;
+    }
+
+    const message = readErrorMessage(
+      payload,
+      `status=${profileResponse.status()} ${profileResponse.statusText()}`,
+    );
+    console.warn(`E2E admin profile sync failed (non-fatal): ${message}`);
   };
 
   if (await verifySession()) {
@@ -1010,6 +1049,24 @@ export const cleanupByPrefix = async (
   request: APIRequestContext,
   prefix: string,
 ): Promise<void> => {
+  const protectedUserIds = new Set<string>();
+  const protectedUserEmails = new Set<string>();
+
+  const configuredAdminEmail = process.env.E2E_ADMIN_EMAIL?.trim().toLowerCase();
+  if (configuredAdminEmail) {
+    protectedUserEmails.add(configuredAdminEmail);
+  }
+
+  const activeSession = await fetchSession(request).catch(() => null);
+  const activeUserId = activeSession?.user?.id?.trim();
+  const activeUserEmail = activeSession?.user?.email?.trim().toLowerCase();
+  if (activeUserId) {
+    protectedUserIds.add(activeUserId);
+  }
+  if (activeUserEmail) {
+    protectedUserEmails.add(activeUserEmail);
+  }
+
   const safeList = async <T>(path: string): Promise<T[]> => {
     try {
       const data = await adminApiRequest<T[]>(request, {
@@ -1073,6 +1130,11 @@ export const cleanupByPrefix = async (
     email: string;
   }>("/users");
   for (const user of users) {
+    const normalizedUserEmail = user.email.trim().toLowerCase();
+    if (protectedUserIds.has(user.id) || protectedUserEmails.has(normalizedUserEmail)) {
+      continue;
+    }
+
     const isOwnedByPrefix =
       user.name.includes(prefix) ||
       user.email.includes(prefix);

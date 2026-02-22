@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { execFile } from "node:child_process";
 import type { FullConfig } from "@playwright/test";
 import { request } from "@playwright/test";
 import { loadE2eEnv, readE2eEnv, requireE2eEnv } from "./env";
@@ -43,6 +44,90 @@ const buildApiTimeoutMessage = (apiUrl: string, endpoint: string): string => {
     "예시:",
     "pnpm --filter api dev",
   ].join("\n");
+};
+
+const isNotFoundApiResponse = (status: number, body: string): boolean => {
+  if (status !== 404) {
+    return false;
+  }
+
+  return body.includes("\"code\":\"NOT_FOUND\"") || body.includes("대상을 찾을 수 없습니다.");
+};
+
+const runCommand = async (
+  cmd: string,
+  args: string[],
+  cwd: string,
+): Promise<{ stdout: string; stderr: string }> => {
+  return await new Promise((resolve, reject) => {
+    execFile(
+      cmd,
+      args,
+      {
+        cwd,
+        timeout: 20_000,
+        maxBuffer: 1024 * 1024,
+      },
+      (error, stdout, stderr) => {
+        if (error) {
+          reject(
+            new Error(
+              [
+                `command failed: ${cmd} ${args.join(" ")}`,
+                stderr?.trim() || error.message,
+              ].join("\n"),
+            ),
+          );
+          return;
+        }
+
+        resolve({
+          stdout: stdout ?? "",
+          stderr: stderr ?? "",
+        });
+      },
+    );
+  });
+};
+
+const escapeSqlLiteral = (value: string): string => value.replace(/'/g, "''");
+
+const recoverSoftDeletedAdminUser = async (userId: string): Promise<boolean> => {
+  const dbName = process.env.E2E_D1_DATABASE_NAME?.trim() || "yonyoung-db";
+  const escapedUserId = escapeSqlLiteral(userId);
+  const sql = [
+    "UPDATE \"user\"",
+    "SET \"deleted_at\" = NULL,",
+    "    \"updated_at\" = cast(unixepoch('subsecond') * 1000 as integer)",
+    `WHERE \"id\" = '${escapedUserId}'`,
+    "  AND \"deleted_at\" IS NOT NULL;",
+  ].join(" ");
+
+  const apiDir = path.resolve(__dirname, "..", "..", "..", "api");
+  const locations: Array<"remote" | "local"> = ["remote", "local"];
+  for (const location of locations) {
+    try {
+      await runCommand(
+        "pnpm",
+        [
+          "exec",
+          "wrangler",
+          "d1",
+          "execute",
+          dbName,
+          location === "remote" ? "--remote" : "--local",
+          "--command",
+          sql,
+        ],
+        apiDir,
+      );
+      return true;
+    } catch {
+      // 다음 위치(remote/local)로 fallback 한다.
+    }
+  }
+
+  return false;
 };
 
 export default async function globalSetup(_config: FullConfig) {
@@ -177,22 +262,57 @@ export default async function globalSetup(_config: FullConfig) {
 
     if (userId) {
       try {
-        const profileResponse = await apiContext.patch(`/api/users/${userId}`, {
+        const adminProfilePatch = {
+          familyName: "E2E",
+          givenName: "Admin",
+          college: "공과대학",
+          department: "컴퓨터과학과",
+          studentNumber: "2026000001",
+          phoneNumber: "010-0000-0000",
+        };
+
+        let profileResponse = await apiContext.patch(`/api/users/${userId}`, {
           data: {
-            familyName: "E2E",
-            givenName: "Admin",
-            college: "공과대학",
-            department: "컴퓨터과학과",
-            studentNumber: "2026000001",
-            phoneNumber: "010-0000-0000",
+            ...adminProfilePatch,
           },
         });
 
         if (!profileResponse.ok()) {
-          const body = await profileResponse.text();
-          throw new Error(
-            `Failed to update E2E admin profile (${profileResponse.status()}): ${body.slice(0, 300)}`,
-          );
+          let body = await profileResponse.text();
+          if (isNotFoundApiResponse(profileResponse.status(), body)) {
+            const recovered = await recoverSoftDeletedAdminUser(userId);
+            if (recovered) {
+              profileResponse = await apiContext.patch(`/api/users/${userId}`, {
+                data: {
+                  ...adminProfilePatch,
+                },
+              });
+
+              if (!profileResponse.ok()) {
+                body = await profileResponse.text();
+              } else {
+                body = "";
+              }
+            }
+
+            if (!recovered || !profileResponse.ok()) {
+              throw new Error(
+                [
+                  `Failed to restore E2E admin /api/users record for ${userId}.`,
+                  `Recovery attempted: ${recovered ? "yes" : "no"}`,
+                  `PATCH status: ${profileResponse.status()}`,
+                  `PATCH response: ${body.slice(0, 300)}`,
+                  "확인할 내용:",
+                  "1) wrangler remote/local D1 접근 권한",
+                  "2) E2E_ADMIN_EMAIL 계정이 Better Auth에 유효한지",
+                ].join("\n"),
+              );
+            }
+          } else {
+            throw new Error(
+              `Failed to update E2E admin profile (${profileResponse.status()}): ${body.slice(0, 300)}`,
+            );
+          }
         }
       } catch (error) {
         if (!isTimeoutError(error)) {

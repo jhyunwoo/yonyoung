@@ -15,6 +15,7 @@ import {
   type AdminEntityRouteMode,
   buildAdminEntityRoute,
 } from "../components/admin-entity-route";
+import { AdminStatusMessage, AdminTextInput } from "../components/admin-form-controls";
 import AdminInfoBox from "../components/admin-info-box";
 import AdminPageHeader from "../components/admin-page-header";
 
@@ -442,14 +443,15 @@ export default function LinktreeAdminPage({
             >
               + 신규 링크 모음
             </AdminActionButton>
-            <button
+            <AdminActionButton
               type="button"
+              variant="secondary"
+              size="sm"
               onClick={() => void loadData()}
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm"
               data-testid="linktree-reload-button"
             >
               새로고침
-            </button>
+            </AdminActionButton>
             {generationSortOrder !== null ? (
               <p
                 className="text-xs text-gray-500"
@@ -472,33 +474,27 @@ export default function LinktreeAdminPage({
       ) : null}
 
       {errorMessage ? (
-        <p
-          className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700"
-          data-testid="linktree-error"
-        >
+        <AdminStatusMessage tone="error" testId="linktree-error">
           {errorMessage}
-        </p>
+        </AdminStatusMessage>
       ) : null}
 
       {successMessage ? (
-        <p
-          className="rounded-md border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-700"
-          data-testid="linktree-success"
-        >
+        <AdminStatusMessage tone="success" testId="linktree-success">
           {successMessage}
-        </p>
+        </AdminStatusMessage>
       ) : null}
 
       {!isStandaloneRoute ? (
         <section className="rounded-lg border border-gray-200 bg-white p-4">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">링크 모음 목록</h2>
-            <input
+            <AdminTextInput
               type="search"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="링크 모음 검색"
-              className="w-full max-w-xs rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="max-w-xs"
               data-testid="linktree-search-input"
             />
           </div>
@@ -571,7 +567,7 @@ export default function LinktreeAdminPage({
           >
             <label className="block text-sm">
               <span className="mb-1 block">링크 모음 이름</span>
-              <input
+              <AdminTextInput
                 type="text"
                 value={createForm.name}
                 onChange={(event) =>
@@ -580,7 +576,7 @@ export default function LinktreeAdminPage({
                     name: event.target.value,
                   }))
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className="w-full"
                 required
                 data-testid="linktree-create-name"
               />
@@ -638,7 +634,7 @@ export default function LinktreeAdminPage({
             >
               <label className="block text-sm">
                 <span className="mb-1 block">링크 모음 이름</span>
-                <input
+                <AdminTextInput
                   type="text"
                   value={editForm.name}
                   onChange={(event) =>
@@ -647,7 +643,7 @@ export default function LinktreeAdminPage({
                       name: event.target.value,
                     }))
                   }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  className="w-full"
                   required
                   data-testid="linktree-edit-name"
                 />
@@ -685,7 +681,7 @@ export default function LinktreeAdminPage({
                 <div className="space-y-2">
                   <label className="block text-sm">
                     <span className="mb-1 block">링크 이름</span>
-                    <input
+                    <AdminTextInput
                       type="text"
                       value={itemCreateForm.name}
                       onChange={(event) =>
@@ -694,14 +690,14 @@ export default function LinktreeAdminPage({
                           name: event.target.value,
                         }))
                       }
-                      className="w-full rounded-md border border-gray-300 px-3 py-2"
+                      className="w-full"
                       required
                       data-testid="linktree-item-create-name"
                     />
                   </label>
                   <label className="block text-sm">
                     <span className="mb-1 block">이동 주소(URL)</span>
-                    <input
+                    <AdminTextInput
                       type="url"
                       value={itemCreateForm.link}
                       onChange={(event) =>
@@ -710,7 +706,7 @@ export default function LinktreeAdminPage({
                           link: event.target.value,
                         }))
                       }
-                      className="w-full rounded-md border border-gray-300 px-3 py-2"
+                      className="w-full"
                       required
                       data-testid="linktree-item-create-link"
                     />
@@ -777,7 +773,7 @@ export default function LinktreeAdminPage({
                     <>
                       <label className="block text-sm">
                         <span className="mb-1 block">링크 이름</span>
-                        <input
+                        <AdminTextInput
                           type="text"
                           value={itemEditForm.name}
                           onChange={(event) =>
@@ -786,7 +782,7 @@ export default function LinktreeAdminPage({
                               name: event.target.value,
                             }))
                           }
-                          className="w-full rounded-md border border-gray-300 px-3 py-2"
+                          className="w-full"
                           required
                           data-testid="linktree-item-edit-name"
                         />
@@ -794,7 +790,7 @@ export default function LinktreeAdminPage({
 
                       <label className="block text-sm">
                         <span className="mb-1 block">이동 주소(URL)</span>
-                        <input
+                        <AdminTextInput
                           type="url"
                           value={itemEditForm.link}
                           onChange={(event) =>
@@ -803,7 +799,7 @@ export default function LinktreeAdminPage({
                               link: event.target.value,
                             }))
                           }
-                          className="w-full rounded-md border border-gray-300 px-3 py-2"
+                          className="w-full"
                           required
                           data-testid="linktree-item-edit-link"
                         />

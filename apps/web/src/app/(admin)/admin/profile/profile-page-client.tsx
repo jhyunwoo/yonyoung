@@ -16,6 +16,7 @@ import type {
 import { hasCompletedRequiredProfile, isUnverifiedRole } from "../../../../lib/auth-shared";
 import { readErrorMessage } from "../components/admin-form-utils";
 import AdminActionButton from "../components/admin-action-button";
+import { AdminStatusMessage, AdminTextInput } from "../components/admin-form-controls";
 import ImageInput from "../components/image-input";
 import { useImmediateImageUpload } from "../components/use-immediate-image-upload";
 
@@ -47,8 +48,7 @@ const toTrimmed = (value: string): string => value.trim();
 
 const fieldLabelClassName =
   "mb-1.5 block text-sm font-medium text-[var(--admin-text-secondary)]";
-const fieldInputClassName =
-  "w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3.5 py-2.5 text-sm text-[var(--admin-text-primary)] shadow-sm transition focus:border-[var(--admin-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--admin-border-strong)] placeholder:text-[var(--admin-text-muted)]";
+const fieldInputClassName = "h-11 px-3.5";
 const requiredFieldItems = [
   "성",
   "이름",
@@ -205,11 +205,8 @@ export default function ProfilePageClient({
       }
     >
       <div className="space-y-6" data-testid="admin-profile-page">
-        <section className="relative overflow-hidden rounded-3xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-6 shadow-[0_24px_50px_-40px_rgba(15,23,42,0.7)] md:p-8">
-          <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-[var(--admin-surface-subtle)] opacity-80 blur-3xl" />
-          <div className="pointer-events-none absolute -left-12 bottom-0 h-36 w-36 rounded-full bg-[var(--admin-surface-muted)] opacity-70 blur-2xl" />
-
-          <div className="relative space-y-4">
+        <section className="rounded-3xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-6 shadow-[0_14px_28px_-22px_rgba(0,0,0,0.52)] md:p-8">
+          <div className="space-y-4">
             <span className="inline-flex items-center rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] px-3 py-1 text-xs font-semibold tracking-[0.08em] text-[var(--admin-text-muted)]">
               PROFILE SETUP
             </span>
@@ -246,21 +243,15 @@ export default function ProfilePageClient({
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
           <div className="space-y-4">
             {errorMessage ? (
-              <p
-                className="rounded-xl border border-red-300 bg-red-50 px-3.5 py-2.5 text-sm text-red-700"
-                data-testid="admin-profile-error"
-              >
+              <AdminStatusMessage tone="error" testId="admin-profile-error">
                 {errorMessage}
-              </p>
+              </AdminStatusMessage>
             ) : null}
 
             {successMessage ? (
-              <p
-                className="rounded-xl border border-green-300 bg-green-50 px-3.5 py-2.5 text-sm text-green-700"
-                data-testid="admin-profile-success"
-              >
+              <AdminStatusMessage tone="success" testId="admin-profile-success">
                 {successMessage}
-              </p>
+              </AdminStatusMessage>
             ) : null}
 
             {isLoading ? (
@@ -282,7 +273,7 @@ export default function ProfilePageClient({
                   <div className="grid gap-4 md:grid-cols-2">
                     <label className="block">
                       <span className={fieldLabelClassName}>성</span>
-                      <input
+                      <AdminTextInput
                         type="text"
                         value={form.familyName}
                         onChange={(event) =>
@@ -300,7 +291,7 @@ export default function ProfilePageClient({
 
                     <label className="block">
                       <span className={fieldLabelClassName}>이름</span>
-                      <input
+                      <AdminTextInput
                         type="text"
                         value={form.givenName}
                         onChange={(event) =>
@@ -318,7 +309,7 @@ export default function ProfilePageClient({
 
                     <label className="block">
                       <span className={fieldLabelClassName}>대학</span>
-                      <input
+                      <AdminTextInput
                         type="text"
                         value={form.college}
                         onChange={(event) =>
@@ -336,7 +327,7 @@ export default function ProfilePageClient({
 
                     <label className="block">
                       <span className={fieldLabelClassName}>학과</span>
-                      <input
+                      <AdminTextInput
                         type="text"
                         value={form.department}
                         onChange={(event) =>
@@ -354,7 +345,7 @@ export default function ProfilePageClient({
 
                     <label className="block">
                       <span className={fieldLabelClassName}>학번 (10자리)</span>
-                      <input
+                      <AdminTextInput
                         type="text"
                         inputMode="numeric"
                         pattern="[0-9]{10}"
@@ -375,7 +366,7 @@ export default function ProfilePageClient({
 
                     <label className="block">
                       <span className={fieldLabelClassName}>전화번호</span>
-                      <input
+                      <AdminTextInput
                         type="text"
                         inputMode="numeric"
                         pattern="010-[0-9]{4}-[0-9]{4}"
@@ -419,12 +410,9 @@ export default function ProfilePageClient({
                 ) : null}
 
                 {!isProfileComplete ? (
-                  <p
-                    className="rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2.5 text-sm text-amber-700"
-                    data-testid="admin-profile-incomplete-hint"
-                  >
+                  <AdminStatusMessage tone="warning" testId="admin-profile-incomplete-hint">
                     필수 항목이 비어 있습니다. 모두 입력 후 저장해 주세요.
-                  </p>
+                  </AdminStatusMessage>
                 ) : null}
 
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--admin-border)] pt-4">
@@ -433,6 +421,7 @@ export default function ProfilePageClient({
                   </p>
                   <AdminActionButton
                     type="submit"
+                    variant="primary"
                     disabled={
                       isSubmitting ||
                       (canUploadProfileImage &&
@@ -440,7 +429,7 @@ export default function ProfilePageClient({
                     }
                     loading={isSubmitting}
                     loadingText="저장 중..."
-                    className="min-w-[182px] rounded-xl border-[var(--admin-accent)] bg-[var(--admin-accent)] px-4 py-2.5 font-semibold text-[var(--admin-bg-primary)] shadow-sm transition hover:brightness-110 disabled:border-[var(--admin-border-strong)] disabled:bg-[var(--admin-border-strong)] disabled:text-[var(--admin-bg-primary)]"
+                    className="min-w-[182px]"
                     testId="admin-profile-submit"
                   >
                     저장하고 계속하기

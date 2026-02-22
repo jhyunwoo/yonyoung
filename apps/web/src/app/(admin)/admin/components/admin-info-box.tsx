@@ -13,11 +13,11 @@ export default function AdminInfoBox({
 }: AdminInfoBoxProps) {
   return (
     <div
-      className="rounded-xl border border-blue-200 bg-blue-50/70 px-3.5 py-2.5 text-sm text-blue-900"
+      className="rounded-xl border border-[var(--admin-status-info-border)] bg-[var(--admin-status-info-bg)] px-3.5 py-2.5 text-sm text-[var(--admin-status-info-text)]"
       data-testid={testId}
     >
       <p className="font-medium">{title}</p>
-      <div className="mt-1.5 text-xs leading-5 text-blue-900/80">{children}</div>
+      <div className="mt-1.5 text-xs leading-5 text-[var(--admin-status-info-text)]/85">{children}</div>
     </div>
   );
 }

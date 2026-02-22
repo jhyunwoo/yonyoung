@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AdminLinkButton } from "../components/admin-form-controls";
 
 type GenerationEntryPageProps = {
   params: Promise<{ generation: string }>;
@@ -34,45 +34,49 @@ export default async function GenerationEntryPage({
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {RESOURCE_LINKS.map(/** RESOURCE_LINKS.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => (
-          <Link
+          <AdminLinkButton
             key={item.href}
             href={`/admin/${generation}/${item.href}`}
             prefetch
-            className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-800 transition-colors hover:bg-gray-50"
+            variant="secondary"
+            className="w-full justify-start"
             data-testid={`generation-entry-link-${item.href}`}
           >
             {item.label}
-          </Link>
+          </AdminLinkButton>
         ))}
       </section>
 
       <section className="rounded-lg border border-gray-200 bg-white p-4">
         <h2 className="text-base font-semibold text-gray-900">전역 관리 바로가기</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <Link
+          <AdminLinkButton
             href="/admin/supporters"
             prefetch
-            className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-800 transition-colors hover:bg-gray-50"
+            variant="secondary"
+            className="w-full justify-start"
             data-testid="generation-entry-link-global-supporters"
           >
             Supporters
-          </Link>
-          <Link
+          </AdminLinkButton>
+          <AdminLinkButton
             href="/admin/linktree"
             prefetch
-            className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-800 transition-colors hover:bg-gray-50"
+            variant="secondary"
+            className="w-full justify-start"
             data-testid="generation-entry-link-global-linktree"
           >
             Linktree
-          </Link>
-          <Link
+          </AdminLinkButton>
+          <AdminLinkButton
             href="/admin/users"
             prefetch
-            className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-800 transition-colors hover:bg-gray-50"
+            variant="secondary"
+            className="w-full justify-start"
             data-testid="generation-entry-link-global-users"
           >
             User Permissions
-          </Link>
+          </AdminLinkButton>
         </div>
       </section>
     </main>

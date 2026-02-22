@@ -18,6 +18,7 @@ import {
   type AdminEntityRouteMode,
   buildAdminEntityRoute,
 } from "../components/admin-entity-route";
+import { AdminStatusMessage, AdminTextInput } from "../components/admin-form-controls";
 import AdminInfoBox from "../components/admin-info-box";
 import AdminPageHeader from "../components/admin-page-header";
 import ImageInput from "../components/image-input";
@@ -386,14 +387,15 @@ export default function SupportersAdminPage({
             >
               + 신규 후원사
             </AdminActionButton>
-            <button
+            <AdminActionButton
               type="button"
+              variant="secondary"
+              size="sm"
               onClick={() => void loadData()}
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm"
               data-testid="supporters-reload-button"
             >
               새로고침
-            </button>
+            </AdminActionButton>
             {generationSortOrder !== null ? (
               <p
                 className="text-xs text-gray-500"
@@ -415,33 +417,27 @@ export default function SupportersAdminPage({
       ) : null}
 
       {errorMessage ? (
-        <p
-          className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700"
-          data-testid="supporters-error"
-        >
+        <AdminStatusMessage tone="error" testId="supporters-error">
           {errorMessage}
-        </p>
+        </AdminStatusMessage>
       ) : null}
 
       {successMessage ? (
-        <p
-          className="rounded-md border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-700"
-          data-testid="supporters-success"
-        >
+        <AdminStatusMessage tone="success" testId="supporters-success">
           {successMessage}
-        </p>
+        </AdminStatusMessage>
       ) : null}
 
       {!isStandaloneRoute ? (
         <section className="rounded-lg border border-gray-200 bg-white p-4">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">등록된 후원사 목록</h2>
-            <input
+            <AdminTextInput
               type="search"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="이름/링크 검색"
-              className="w-full max-w-xs rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="max-w-xs"
               data-testid="supporter-search-input"
             />
           </div>
@@ -518,7 +514,7 @@ export default function SupportersAdminPage({
           >
             <label className="block text-sm">
               <span className="mb-1 block">후원사 이름</span>
-              <input
+              <AdminTextInput
                 type="text"
                 value={createForm.name}
                 onChange={(event) =>
@@ -527,7 +523,7 @@ export default function SupportersAdminPage({
                     name: event.target.value,
                   }))
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className="w-full"
                 required
                 data-testid="supporter-create-name"
               />
@@ -535,7 +531,7 @@ export default function SupportersAdminPage({
 
             <label className="block text-sm">
               <span className="mb-1 block">연결 링크</span>
-              <input
+              <AdminTextInput
                 type="url"
                 value={createForm.link}
                 onChange={(event) =>
@@ -544,7 +540,7 @@ export default function SupportersAdminPage({
                     link: event.target.value,
                   }))
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className="w-full"
                 required
                 data-testid="supporter-create-link"
               />
@@ -552,7 +548,7 @@ export default function SupportersAdminPage({
 
             <label className="block text-sm">
               <span className="mb-1 block">노출 종료일</span>
-              <input
+              <AdminTextInput
                 type="date"
                 value={createForm.expiresAt}
                 onChange={(event) =>
@@ -561,7 +557,7 @@ export default function SupportersAdminPage({
                     expiresAt: event.target.value,
                   }))
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className="w-full"
                 required
                 data-testid="supporter-create-expires-at"
               />
@@ -631,7 +627,7 @@ export default function SupportersAdminPage({
           >
             <label className="block text-sm">
               <span className="mb-1 block">후원사 이름</span>
-              <input
+              <AdminTextInput
                 type="text"
                 value={editForm.name}
                 onChange={(event) =>
@@ -640,7 +636,7 @@ export default function SupportersAdminPage({
                     name: event.target.value,
                   }))
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className="w-full"
                 required
                 data-testid="supporter-edit-name"
               />
@@ -648,7 +644,7 @@ export default function SupportersAdminPage({
 
             <label className="block text-sm">
               <span className="mb-1 block">연결 링크</span>
-              <input
+              <AdminTextInput
                 type="url"
                 value={editForm.link}
                 onChange={(event) =>
@@ -657,7 +653,7 @@ export default function SupportersAdminPage({
                     link: event.target.value,
                   }))
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className="w-full"
                 required
                 data-testid="supporter-edit-link"
               />
@@ -665,7 +661,7 @@ export default function SupportersAdminPage({
 
             <label className="block text-sm">
               <span className="mb-1 block">노출 종료일</span>
-              <input
+              <AdminTextInput
                 type="date"
                 value={editForm.expiresAt}
                 onChange={(event) =>
@@ -674,7 +670,7 @@ export default function SupportersAdminPage({
                     expiresAt: event.target.value,
                   }))
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className="w-full"
                 required
                 data-testid="supporter-edit-expires-at"
               />

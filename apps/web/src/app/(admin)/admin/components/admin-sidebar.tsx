@@ -19,6 +19,8 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import AdminActionButton from "./admin-action-button";
+import { AdminSelect } from "./admin-form-controls";
 import LogoutButton from "../logout-button";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
 import { buildGenerationPath, extractGenerationRouteContext, getAccessibleGenerations } from "../../../../lib/admin-generation";
@@ -132,7 +134,7 @@ const getNavItemClassName = ({
       : "border-gray-200 bg-white/90 text-gray-700 hover:-translate-y-px hover:bg-white";
 
   const activeClassName =
-    "border-[var(--admin-accent-strong)] bg-[var(--admin-accent)] text-white shadow-lg shadow-black/25 hover:translate-y-0";
+    "border-[var(--admin-accent-strong)] bg-[var(--admin-accent)] text-[var(--admin-accent-contrast)] shadow-lg shadow-black/25 hover:translate-y-0";
 
   return [
     NAV_ITEM_BASE_CLASS,
@@ -149,7 +151,7 @@ const getNavIconWrapperClassName = ({
   tone: NavItemTone;
 }): string => {
   if (active) {
-    return `${NAV_ICON_WRAPPER_CLASS} border-[var(--admin-accent-strong)] bg-[var(--admin-accent)] text-white`;
+    return `${NAV_ICON_WRAPPER_CLASS} border-[var(--admin-accent-strong)] bg-[var(--admin-accent)] text-[var(--admin-accent-contrast)]`;
   }
 
   if (tone === "global") {
@@ -469,11 +471,13 @@ export default function AdminSidebar({
                 </p>
               </div>
             </div>
-            <button
-              type="button"
+            <AdminActionButton
+              variant="secondary"
+              size="sm"
+              iconOnly
               onClick={onToggle}
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] shadow-sm hover:-translate-y-px hover:bg-[var(--admin-surface-subtle)]"
               data-testid="admin-sidebar-toggle"
+              title={toggleLabel}
               aria-label={toggleLabel}
             >
               {isMobileVariant ? (
@@ -483,7 +487,7 @@ export default function AdminSidebar({
               ) : (
                 <PanelLeft className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
               )}
-            </button>
+            </AdminActionButton>
           </div>
         </header>
 
@@ -505,8 +509,8 @@ export default function AdminSidebar({
             <section className="rounded-2xl border border-gray-200 bg-white/90 p-3">
               <label className="block text-xs font-semibold tracking-[0.08em] text-gray-500">
                 현재 작업 기수
-                <select
-                  className="mt-2 w-full rounded-xl border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] px-3 py-2 text-sm text-[var(--admin-text-secondary)] shadow-sm"
+                <AdminSelect
+                  className="mt-2 text-[var(--admin-text-secondary)]"
                   value={selectedSortOrder ?? ""}
                   onChange={(event) => handleGenerationChange(event.target.value)}
                   disabled={generationOptions.length === 0 || isGenerationLoading}
@@ -521,7 +525,7 @@ export default function AdminSidebar({
                       </option>
                     ))
                   )}
-                </select>
+                </AdminSelect>
               </label>
               <p className="mt-2 text-[11px] text-gray-500">
                 접근 가능 기수 {generationOptions.length}개
@@ -859,10 +863,10 @@ export default function AdminSidebar({
                   테마
                 </span>
               )}
-              <select
+              <AdminSelect
                 value={themeMode}
                 onChange={(event) => handleThemeModeChange(event.target.value)}
-                className={`h-10 rounded-2xl bg-transparent text-sm outline-none ${
+                className={`h-10 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0 ${
                   collapsed ? "w-9 text-center text-[11px]" : "w-[7rem] text-right"
                 }`}
                 data-testid="admin-theme-toggle"
@@ -871,7 +875,7 @@ export default function AdminSidebar({
                 <option value="light">{collapsed ? "L" : "라이트"}</option>
                 <option value="dark">{collapsed ? "D" : "다크"}</option>
                 <option value="system">{collapsed ? "S" : "기기"}</option>
-              </select>
+              </AdminSelect>
             </label>
             <div className={collapsed ? "" : "w-[8.75rem] shrink-0"}>
               <LogoutButton compact={collapsed} />

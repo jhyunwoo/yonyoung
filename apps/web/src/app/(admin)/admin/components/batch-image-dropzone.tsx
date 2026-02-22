@@ -56,10 +56,10 @@ export default function BatchImageDropzone({
       htmlFor={inputId}
       className={`relative block rounded-xl border-2 border-dashed p-4 transition ${
         disabled
-          ? "cursor-not-allowed border-gray-200 bg-gray-100"
+          ? "cursor-not-allowed border-gray-300 bg-gray-100"
           : isDragOver
-            ? "cursor-pointer border-black bg-gray-100"
-            : "cursor-pointer border-gray-300 bg-white hover:border-gray-400 hover:bg-gray-50"
+            ? "cursor-pointer border-[var(--admin-accent)] bg-[var(--admin-surface-subtle)]"
+            : "cursor-pointer border-[var(--admin-border-strong)] bg-[var(--admin-surface)] hover:border-[var(--admin-accent)] hover:bg-[var(--admin-surface-muted)]"
       }`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}

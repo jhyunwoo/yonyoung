@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
 import AdminSidebar from "./admin-sidebar";
+import AdminActionButton from "./admin-action-button";
 import type { AuthSession } from "../../../../lib/auth-shared";
 
 const COLLAPSED_STORAGE_KEY = "admin.sidebar.collapsed";
@@ -143,7 +144,7 @@ export default function AdminShell({ children, session }: AdminShellProps) {
       </div>
 
       <div
-        className={`fixed inset-0 z-40 bg-black/45 backdrop-blur-sm transition-opacity duration-200 lg:hidden ${
+        className={`fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] transition-opacity duration-200 lg:hidden ${
           isMobileSidebarOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
         }`}
         onClick={() => setIsMobileSidebarOpen(false)}
@@ -169,18 +170,19 @@ export default function AdminShell({ children, session }: AdminShellProps) {
           className="mx-auto w-full max-w-[94rem] p-4 md:p-6 xl:p-7"
           data-testid="admin-shell-content"
         >
-          <header className="mb-4 flex items-center justify-between rounded-2xl border border-gray-200/80 bg-white/80 px-3 py-2.5 shadow-sm lg:hidden">
-            <button
-              type="button"
+          <header className="mb-4 flex items-center justify-between rounded-2xl border border-gray-200/80 bg-white/92 px-3 py-2.5 shadow-[0_10px_20px_-18px_rgba(0,0,0,0.45)] lg:hidden">
+            <AdminActionButton
+              variant="secondary"
+              size="sm"
+              iconOnly
               onClick={() => setIsMobileSidebarOpen(true)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] shadow-sm"
               aria-label="사이드바 열기"
               data-testid="admin-mobile-menu-toggle"
             >
               <Menu className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
-            </button>
+            </AdminActionButton>
             <p className="text-sm font-semibold tracking-[0.08em] text-gray-700">{mobileTitle}</p>
-            <span className="inline-flex h-9 min-w-9 items-center justify-center rounded-xl border border-gray-300 bg-gray-100 px-2 text-[11px] font-semibold text-gray-600">
+            <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-lg border border-gray-300 bg-gray-100 px-2 text-[11px] font-semibold text-gray-600">
               {isMobileViewport ? "M" : "D"}
             </span>
           </header>

@@ -22,6 +22,7 @@ import {
   type AdminEntityRouteMode,
   buildAdminEntityRoute,
 } from "../components/admin-entity-route";
+import { AdminSelect, AdminStatusMessage, AdminTextInput } from "../components/admin-form-controls";
 import AdminInfoBox from "../components/admin-info-box";
 import AdminPageHeader from "../components/admin-page-header";
 import ImageInput from "../components/image-input";
@@ -789,7 +790,7 @@ export default function UsersAdminPageClient({
           <>
             <label className="block text-sm">
               <span className="mb-1 block">레거시 이름</span>
-              <input
+              <AdminTextInput
                 type="text"
                 value={editForm.name}
                 onChange={(event) =>
@@ -798,7 +799,7 @@ export default function UsersAdminPageClient({
                     name: event.target.value,
                   }))
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className="w-full"
                 required
                 data-testid="user-edit-name"
               />
@@ -807,7 +808,7 @@ export default function UsersAdminPageClient({
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block text-sm">
                 <span className="mb-1 block">성</span>
-                <input
+                <AdminTextInput
                   type="text"
                   value={editForm.familyName}
                   onChange={(event) =>
@@ -816,14 +817,14 @@ export default function UsersAdminPageClient({
                       familyName: event.target.value,
                     }))
                   }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  className="w-full"
                   data-testid="user-edit-family-name"
                 />
               </label>
 
               <label className="block text-sm">
                 <span className="mb-1 block">이름</span>
-                <input
+                <AdminTextInput
                   type="text"
                   value={editForm.givenName}
                   onChange={(event) =>
@@ -832,7 +833,7 @@ export default function UsersAdminPageClient({
                       givenName: event.target.value,
                     }))
                   }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  className="w-full"
                   data-testid="user-edit-given-name"
                 />
               </label>
@@ -841,7 +842,7 @@ export default function UsersAdminPageClient({
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block text-sm">
                 <span className="mb-1 block">대학</span>
-                <input
+                <AdminTextInput
                   type="text"
                   value={editForm.college}
                   onChange={(event) =>
@@ -850,14 +851,14 @@ export default function UsersAdminPageClient({
                       college: event.target.value,
                     }))
                   }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  className="w-full"
                   data-testid="user-edit-college"
                 />
               </label>
 
               <label className="block text-sm">
                 <span className="mb-1 block">학과</span>
-                <input
+                <AdminTextInput
                   type="text"
                   value={editForm.department}
                   onChange={(event) =>
@@ -866,7 +867,7 @@ export default function UsersAdminPageClient({
                       department: event.target.value,
                     }))
                   }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  className="w-full"
                   data-testid="user-edit-department"
                 />
               </label>
@@ -875,7 +876,7 @@ export default function UsersAdminPageClient({
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block text-sm">
                 <span className="mb-1 block">학번 (10자리)</span>
-                <input
+                <AdminTextInput
                   type="text"
                   inputMode="numeric"
                   value={editForm.studentNumber}
@@ -885,14 +886,14 @@ export default function UsersAdminPageClient({
                       studentNumber: event.target.value,
                     }))
                   }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  className="w-full"
                   data-testid="user-edit-student-number"
                 />
               </label>
 
               <label className="block text-sm">
                 <span className="mb-1 block">전화번호</span>
-                <input
+                <AdminTextInput
                   type="text"
                   value={editForm.phoneNumber}
                   onChange={(event) =>
@@ -901,7 +902,7 @@ export default function UsersAdminPageClient({
                       phoneNumber: event.target.value,
                     }))
                   }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  className="w-full"
                   data-testid="user-edit-phone-number"
                 />
               </label>
@@ -909,7 +910,7 @@ export default function UsersAdminPageClient({
 
             <label className="block text-sm">
               <span className="mb-1 block">권한</span>
-              <select
+              <AdminSelect
                 value={editForm.role}
                 onChange={(event) =>
                   setEditForm((previous) => ({
@@ -917,7 +918,7 @@ export default function UsersAdminPageClient({
                     role: event.target.value,
                   }))
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className="w-full"
                 required
                 data-testid="user-edit-role"
               >
@@ -926,16 +927,16 @@ export default function UsersAdminPageClient({
                     {readAdminRoleLabel(role)}
                   </option>
                 ))}
-              </select>
+              </AdminSelect>
             </label>
 
             {scopedGenerationId ? (
-              <div
-                className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
-                data-testid="user-scoped-generation-field"
+              <AdminStatusMessage
+                tone="info"
+                testId="user-scoped-generation-field"
               >
                 현재 선택한 기수는 자동 포함됩니다. 다른 소속 기수는 유지됩니다.
-              </div>
+              </AdminStatusMessage>
             ) : (
               <div className="block text-sm">
                 <span className="mb-1 block">소속 기수 (복수 선택)</span>
@@ -1044,14 +1045,15 @@ export default function UsersAdminPageClient({
           </div>
         ) : (
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <button
+            <AdminActionButton
               type="button"
+              variant="secondary"
+              size="sm"
               onClick={() => void loadData()}
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm"
               data-testid="users-reload-button"
             >
               새로고침
-            </button>
+            </AdminActionButton>
             {generationScoped ? (
               <p
                 className="text-xs text-gray-500"
@@ -1074,33 +1076,27 @@ export default function UsersAdminPageClient({
       ) : null}
 
       {errorMessage ? (
-        <p
-          className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700"
-          data-testid="users-error"
-        >
+        <AdminStatusMessage tone="error" testId="users-error">
           {errorMessage}
-        </p>
+        </AdminStatusMessage>
       ) : null}
 
       {successMessage ? (
-        <p
-          className="rounded-md border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-700"
-          data-testid="users-success"
-        >
+        <AdminStatusMessage tone="success" testId="users-success">
           {successMessage}
-        </p>
+        </AdminStatusMessage>
       ) : null}
 
       {!isStandaloneRoute ? (
         <section className="space-y-3 rounded-lg border border-gray-200 bg-white p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">사용자 목록</h2>
-            <input
+            <AdminTextInput
               type="search"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="이름/이메일/학번 검색"
-              className="w-full max-w-xs rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="max-w-xs"
               data-testid="user-search-input"
             />
           </div>
@@ -1108,12 +1104,12 @@ export default function UsersAdminPageClient({
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             <label className="block text-sm">
               <span className="mb-1 block text-gray-600">권한 필터</span>
-              <select
+              <AdminSelect
                 value={roleFilter}
                 onChange={(event) =>
                   setRoleFilter(event.target.value as RoleFilterValue)
                 }
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
+                className="w-full"
                 data-testid="user-role-filter"
               >
                 {ROLE_FILTER_OPTIONS.map((option) => (
@@ -1121,23 +1117,20 @@ export default function UsersAdminPageClient({
                     {option.label}
                   </option>
                 ))}
-              </select>
+              </AdminSelect>
             </label>
 
             {scopedGenerationId ? (
-              <div
-                className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
-                data-testid="user-generation-filter-scoped"
-              >
+              <AdminStatusMessage tone="info" testId="user-generation-filter-scoped">
                 기수 필터는 현재 선택 기수로 고정됩니다.
-              </div>
+              </AdminStatusMessage>
             ) : (
               <label className="block text-sm">
                 <span className="mb-1 block text-gray-600">기수 필터</span>
-                <select
+                <AdminSelect
                   value={generationFilter}
                   onChange={(event) => setGenerationFilter(event.target.value)}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  className="w-full"
                   data-testid="user-generation-filter"
                 >
                   <option value="all">전체 기수</option>
@@ -1147,7 +1140,7 @@ export default function UsersAdminPageClient({
                       {generation.sortOrder}기 ({generation.name})
                     </option>
                   ))}
-                </select>
+                </AdminSelect>
               </label>
             )}
           </div>
@@ -1158,32 +1151,34 @@ export default function UsersAdminPageClient({
                 선택된 사용자: {selectedIds.length}명
               </p>
               <div className="inline-flex items-center gap-2">
-                <button
+                <AdminActionButton
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   onClick={() => handleToggleSelectAllVisible(true)}
                   disabled={allVisibleSelected || filteredItems.length === 0}
-                  className="rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                   data-testid="user-select-all-visible"
                 >
                   현재 목록 전체 선택
-                </button>
-                <button
+                </AdminActionButton>
+                <AdminActionButton
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   onClick={() => handleToggleSelectAllVisible(false)}
                   disabled={selectedIds.length === 0}
-                  className="rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                   data-testid="user-clear-selection"
                 >
                   전체 선택 해제
-                </button>
+                </AdminActionButton>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <select
+              <AdminSelect
                 value={bulkRole}
                 onChange={(event) => setBulkRole(event.target.value)}
-                className="min-w-48 rounded-md border border-gray-300 px-3 py-2 text-sm"
+                className="min-w-48"
                 data-testid="user-bulk-role"
               >
                 {ADMIN_USER_ROLE_OPTIONS.map((role) => (
@@ -1191,7 +1186,7 @@ export default function UsersAdminPageClient({
                     {readAdminRoleLabel(role)}
                   </option>
                 ))}
-              </select>
+              </AdminSelect>
               <AdminActionButton
                 onClick={() => void handleBulkRoleUpdate()}
                 loading={activeSubmitAction === "bulk-role"}
@@ -1263,29 +1258,31 @@ export default function UsersAdminPageClient({
                       </p>
                     </div>
                     {inlineDetailMode ? (
-                      <button
+                      <AdminActionButton
                         type="button"
+                        variant="secondary"
+                        size="sm"
                         onClick={(event) => {
                           event.stopPropagation();
                           void handleToggleInlineDetail(item);
                         }}
-                        className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
                         data-testid={`user-inline-toggle-${item.id}`}
                       >
                         {expandedUserId === item.id ? "상세 닫기" : "상세 보기"}
-                      </button>
+                      </AdminActionButton>
                     ) : (
-                      <button
+                      <AdminActionButton
                         type="button"
+                        variant="secondary"
+                        size="sm"
                         onClick={(event) => {
                           event.stopPropagation();
                           void handleSelect(item);
                         }}
-                        className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-100"
                         data-testid={`user-open-detail-${item.id}`}
                       >
                         수정
-                      </button>
+                      </AdminActionButton>
                     )}
                   </div>
                   {inlineDetailMode && expandedUserId === item.id ? (

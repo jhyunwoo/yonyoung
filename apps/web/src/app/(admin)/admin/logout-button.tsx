@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { signOut } from "../../../lib/auth-client-tool";
+import AdminActionButton from "./components/admin-action-button";
+import { AdminStatusMessage } from "./components/admin-form-controls";
 
 type LogoutButtonProps = {
   compact?: boolean;
@@ -46,15 +48,16 @@ export default function LogoutButton({ compact = false }: LogoutButtonProps) {
         compact ? "w-auto items-center" : "w-full items-stretch"
       }`}
     >
-      <button
+      <AdminActionButton
         type="button"
         onClick={handleSignOut}
         disabled={isPending}
         data-testid="admin-logout-button"
         aria-label={isPending ? "로그아웃 중" : "로그아웃"}
-        className={`inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] px-3 py-2.5 text-sm font-medium text-[var(--admin-text-secondary)] shadow-sm transition-colors hover:bg-[var(--admin-surface-subtle)] disabled:cursor-not-allowed disabled:opacity-60 ${
-          compact ? "h-11 w-11" : "w-full"
-        }`}
+        variant="secondary"
+        fullWidth={!compact}
+        iconOnly={compact}
+        className={compact ? "h-11 w-11" : undefined}
       >
         {compact ? (
           <span aria-hidden="true" className="text-base leading-none">
@@ -68,12 +71,12 @@ export default function LogoutButton({ compact = false }: LogoutButtonProps) {
             <span>{isPending ? "로그아웃 중..." : "로그아웃"}</span>
           </>
         )}
-      </button>
+      </AdminActionButton>
 
       {errorMessage ? (
-        <p className="text-xs text-red-600" data-testid="admin-logout-error">
+        <AdminStatusMessage tone="error" className="px-2.5 py-1.5 text-xs" testId="admin-logout-error">
           {errorMessage}
-        </p>
+        </AdminStatusMessage>
       ) : null}
     </div>
   );

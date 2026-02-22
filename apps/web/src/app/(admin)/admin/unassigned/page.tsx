@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AdminLinkButton } from "../components/admin-form-controls";
 
 /**
  * AdminUnassignedPage 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
@@ -17,12 +17,13 @@ export default function AdminUnassignedPage() {
       <p className="text-sm text-gray-700">
         회장에게 기수 배정을 요청해 주세요. 배정 후 다시 접속하면 정상적으로 접근할 수 있습니다.
       </p>
-      <Link
+      <AdminLinkButton
         href="/auth/sign-in"
-        className="inline-flex rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700"
+        variant="secondary"
+        size="md"
       >
         로그인 페이지로 이동
-      </Link>
+      </AdminLinkButton>
     </main>
   );
 }
