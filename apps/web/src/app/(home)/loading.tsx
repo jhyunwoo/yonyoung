@@ -15,14 +15,18 @@ export default function HomeLoading() {
             <div className={`mt-5 h-5 w-full max-w-xl ${pulse}`} />
             <div className={`mt-2 h-5 w-full max-w-md ${pulse}`} />
             <div className="mt-8 flex flex-wrap gap-3">
-              <div className={`h-12 w-40 border border-(--surface-strong-border) ${pulse}`} />
-              <div className={`h-12 w-40 border border-(--surface-strong-border) ${pulse}`} />
+              <div
+                className={`h-12 w-40 border border-(--surface-strong-border) ${pulse}`}
+              />
+              <div
+                className={`h-12 w-40 border border-(--surface-strong-border) ${pulse}`}
+              />
             </div>
           </div>
 
           <div className="space-y-4">
             <article className="overflow-hidden border border-(--surface-strong-border) bg-(--surface-elevated)">
-              <div className={`aspect-[4/3] ${pulse}`} />
+              <div className={`aspect-4/3 ${pulse}`} />
               <div className="space-y-2 p-5">
                 <div className={`h-3 w-32 ${pulse}`} />
                 <div className={`h-8 w-2/3 ${pulse}`} />
@@ -58,7 +62,7 @@ export default function HomeLoading() {
                 key={`home-loading-activity-${index}`}
                 className="overflow-hidden border border-(--surface-strong-border) bg-(--surface-elevated)"
               >
-                <div className={`aspect-[4/3] ${pulse}`} />
+                <div className={`aspect-4/3 ${pulse}`} />
                 <div className="space-y-2 p-5">
                   <div className={`h-3 w-32 ${pulse}`} />
                   <div className={`h-7 w-3/4 ${pulse}`} />
@@ -84,7 +88,9 @@ export default function HomeLoading() {
                 key={`home-loading-supporter-${index}`}
                 className="border border-(--surface-border) bg-(--surface-elevated) p-4"
               >
-                <div className={`aspect-[3/2] border border-(--surface-border) ${pulse}`} />
+                <div
+                  className={`aspect-3/2 border border-(--surface-border) ${pulse}`}
+                />
                 <div className={`mt-4 h-5 w-3/4 ${pulse}`} />
               </article>
             ))}
@@ -115,7 +121,9 @@ export default function HomeLoading() {
 
           <div className="mt-8 border border-(--surface-strong-border) bg-(--surface-elevated) p-6 text-center">
             <div className={`mx-auto h-4 w-full max-w-lg ${pulse}`} />
-            <div className={`mx-auto mt-4 h-11 w-44 border border-(--surface-strong-border) ${pulse}`} />
+            <div
+              className={`mx-auto mt-4 h-11 w-44 border border-(--surface-strong-border) ${pulse}`}
+            />
           </div>
         </div>
       </section>

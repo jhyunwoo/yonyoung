@@ -1,39 +1,37 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `apps/api`: Hono Worker API. Route modules live in `src/modules/*.ts`, shared services and helpers in `src/lib`, tests in `src/tests`, and Drizzle migrations in `drizzle/`.
-- `apps/web`: Next.js App Router frontend. Routes and layouts are in `src/app`, client/server API helpers in `src/lib`, unit tests in `src/**/*.test.ts(x)`, and Playwright E2E specs in `tests/e2e`.
-- `packages/eslint-config`, `packages/typescript-config`, and `packages/ui` provide shared tooling and reusable code.
-- Monorepo wiring is defined in `pnpm-workspace.yaml` and task orchestration in `turbo.json`.
+- `apps/web`: Next.js 16 App Router frontend. Public pages live in `src/app/(home)`, admin pages in `src/app/(dashboard)`, shared helpers in `src/lib`, and end-to-end tests in `tests/e2e`.
+- `apps/api`: Hono API on Cloudflare Workers. HTTP modules are in `src/modules`, middleware in `src/middlewares`, core auth/db/services in `src/lib`, tests in `src/tests`, and D1 migrations in `drizzle/`.
+- `packages/*`: shared workspace libraries and configs (`shared-auth`, `shared-http`, `shared-api-contracts`, `ui`, ESLint/TypeScript configs).
+- `scripts/`: repo-level verification scripts such as `lighthouse-runner.mjs`, `perf-budget.mjs`, `cache-verify.mjs`, and `api-load-test.mjs`.
 
 ## Build, Test, and Development Commands
-Use `pnpm` from the repo root (Node `>=18`):
-- `pnpm install`: Install all workspace dependencies.
-- `pnpm dev`: Run all app dev tasks via Turbo.
-- `pnpm web:dev`: Start only the web app (Next.js).
-- `pnpm api:dev`: Start only the API (Wrangler).
-- `pnpm lint`: Run ESLint across the workspace.
-- `pnpm check-types`: Run TypeScript checks.
-- `pnpm api:test`: Run API Vitest tests.
-- `pnpm --filter web test:unit`: Run web unit tests.
-- `pnpm --filter web test:e2e:smoke`: Run Playwright smoke E2E.
+Use `pnpm` from the repository root (Node `>=18`; CI uses Node 20).
+- `pnpm dev`: run workspace dev tasks through Turbo.
+- `pnpm web:dev` / `pnpm api:dev`: run only one app locally.
+- `pnpm build`: build all workspaces.
+- `pnpm lint && pnpm check-types`: run static quality checks.
+- `pnpm api:test`, `pnpm api:test:integration`, `pnpm web:test:unit`, `pnpm web:test:e2e:smoke`: core test suites.
+- `pnpm quality:ci`: full quality gate used by GitHub Actions.
 
 ## Coding Style & Naming Conventions
-- Primary language is strict TypeScript.
-- Formatting/linting: Prettier (`pnpm format`) and shared ESLint config.
-- Follow existing style: 2-space indentation, double quotes, trailing commas.
-- Name API modules by resource (`activities.ts`, `users.ts`, `supporters.ts`).
-- Test names should be explicit and behavior-driven, using `*.test.ts`, `*.test.tsx`, or `*.spec.ts`.
+- TypeScript-first; prefer explicit types and small, focused modules.
+- Formatting and linting are authoritative: run `pnpm format` and `pnpm lint`.
+- Follow existing style: 2-space indentation, semicolons, and clear named exports in shared code.
+- Naming conventions:
+  - source modules: kebab-case (for example `public-cache.ts`)
+  - unit tests: `*.test.ts` / `*.test.tsx`
+  - Playwright specs: `*.spec.ts`
 
 ## Testing Guidelines
-- API tests: Vitest in `apps/api/src/tests/**/*.test.ts` (Node environment).
-- Web unit tests: Vitest + Testing Library in `apps/web/src/**/*.test.ts(x)`.
-- Web E2E tests: Playwright in `apps/web/tests/e2e/*.spec.ts`.
-- For PRs, run tests for changed areas; include smoke E2E for auth/admin or routing changes.
-- Run coverage when touching core flows: `pnpm api:test:coverage` and/or `pnpm --filter web test:unit:coverage`.
+- API tests use Vitest (`apps/api/src/tests`) with coverage thresholds: 90% lines/functions/statements and 85% branches.
+- Web unit tests use Vitest (`apps/web/src/**/*.test.ts(x)`) with thresholds: 85% lines/functions/statements and 80% branches.
+- Web E2E uses Playwright (`apps/web/tests/e2e/**/*.spec.ts`); bootstrap env with `cp tests/e2e/.env.e2e.example tests/e2e/.env.e2e`.
+- Add or update tests for behavior changes, especially auth, RBAC, uploads, and caching paths.
 
 ## Commit & Pull Request Guidelines
-- Keep commit subjects short, imperative, and scoped when useful (example: `web: add auth smoke test`, `api: tighten cache headers`).
-- Recent history mixes Korean and English; keep language consistent within a PR.
-- PRs should include: summary, affected paths (`apps/api`, `apps/web`, `packages/*`), test commands run, and screenshots/video for UI changes.
-- Link related issues and clearly note migration or environment-variable changes.
+- Current history favors short, imperative, single-topic commit messages (Korean or English both used).
+- Keep commit subjects concise and scoped (example: `fix upload ownership check`).
+- PRs should include a summary, linked issue (if available), commands run for verification, and screenshots for UI changes.
+- Before requesting review, ensure `pnpm quality:ci` passes locally.

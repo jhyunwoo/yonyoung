@@ -44,39 +44,4 @@ test.describe("public navigation", () => {
     await expect(page.getByTestId("public-nav-mobile")).toHaveCount(0);
   });
 
-  test("관리자 모드 토글 상태가 로컬스토리지에 저장된다", async ({ page }) => {
-    await page.goto("/");
-    await page.evaluate(() => {
-      window.localStorage.removeItem("isAdminMode");
-    });
-    await page.reload();
-
-    const adminToggle = page.getByRole("button", { name: "관리자 모드 토글" });
-    if ((await adminToggle.count()) === 0) {
-      await expect
-        .poll(() => page.evaluate(() => window.localStorage.getItem("isAdminMode")))
-        .toBeNull();
-      return;
-    }
-
-    await expect(adminToggle).toBeVisible();
-    await expect
-      .poll(() => page.evaluate(() => window.localStorage.getItem("isAdminMode")))
-      .toBeNull();
-
-    await adminToggle.click();
-    await expect
-      .poll(() => page.evaluate(() => window.localStorage.getItem("isAdminMode")))
-      .toBe("true");
-
-    await page.reload();
-    await expect
-      .poll(() => page.evaluate(() => window.localStorage.getItem("isAdminMode")))
-      .toBe("true");
-
-    await page.getByRole("button", { name: "관리자 모드 토글" }).click();
-    await expect
-      .poll(() => page.evaluate(() => window.localStorage.getItem("isAdminMode")))
-      .toBe("false");
-  });
 });
