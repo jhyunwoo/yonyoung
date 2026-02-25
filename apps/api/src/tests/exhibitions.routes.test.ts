@@ -30,6 +30,29 @@ describe("exhibition routes", /** describe 실행 과정에서 필요한 연산�
     expect(typeof body.data[0]?.startDate).toBe("number");
   });
 
+  it("전시 목록 응답의 설명 HTML은 sanitize 된다", async () => {
+    const listExhibitions = fn(async () => [
+      createExhibition({
+        description:
+          '<h2>정상</h2><script>alert("xss")</script><p onclick="evil()">본문</p>',
+      }),
+    ]);
+    const app = createTestApp({
+      actor: createActor("new_member"),
+      dataService: createDataServiceMock({ listExhibitions }),
+    });
+
+    const response = await app.request("/api/exhibitions");
+    expect(response.status).toBe(200);
+    const body = await readJson<{ data: Array<{ description: string }> }>(response);
+    const description = body.data[0]?.description ?? "";
+
+    expect(description).toContain("<h2>정상</h2>");
+    expect(description).toContain("<p>본문</p>");
+    expect(description).not.toContain("<script");
+    expect(description).not.toContain("onclick=");
+  });
+
   it("member 계열 사용자는 전시 생성 권한이 없다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const createExhibitionMock = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => createExhibition());
     const app = createTestApp({
@@ -99,6 +122,58 @@ describe("exhibition routes", /** describe 실행 과정에서 필요한 연산�
     const body = await readJson<{ data: { title: string } }>(response);
     expect(body.data.title).toBe("new-exhibition");
     expect(createExhibitionMock).toHaveBeenCalledWith(payload);
+  });
+
+  it("전시 생성 시 설명 HTML을 sanitize 하고 빈 본문을 차단한다", async () => {
+    const createExhibitionMock = fn(async (input: { description: string }) =>
+      createExhibition({ description: input.description }),
+    );
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ createExhibition: createExhibitionMock }),
+    });
+
+    const payload = {
+      title: "rich-exhibition",
+      startDate: Date.parse("2031-01-01T00:00:00.000Z"),
+      endDate: Date.parse("2031-01-10T00:00:00.000Z"),
+      generationId: IDs.generation,
+      place: "갤러리",
+      coverImageUrl: "https://example.com/exhibition-cover.jpg",
+      description:
+        '<h2>섹션</h2><script>alert(1)</script><p onclick="evil()">본문</p><a href="javascript:alert(1)">bad</a>',
+    };
+
+    const response = await app.request("/api/exhibitions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    expect(response.status).toBe(201);
+    const body = await readJson<{ data: { description: string } }>(response);
+    const description = body.data.description;
+    expect(description).toContain("<h2>섹션</h2>");
+    expect(description).toContain("<p>본문</p>");
+    expect(description).not.toContain("<script");
+    expect(description).not.toContain("onclick=");
+    expect(description).not.toContain("javascript:");
+    expect(createExhibitionMock).toHaveBeenCalledWith({
+      ...payload,
+      description,
+    });
+
+    const emptyDescriptionResponse = await app.request("/api/exhibitions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        ...payload,
+        description: "<p><br></p>",
+      }),
+    });
+    expect(emptyDescriptionResponse.status).toBe(400);
+    await expectErrorCode(emptyDescriptionResponse, "BAD_REQUEST");
+    expect(createExhibitionMock).toHaveBeenCalledTimes(1);
   });
 
   it("전시 상세 조회에서 UUID가 유효하지 않으면 400을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
@@ -201,10 +276,26 @@ describe("exhibition routes", /** describe 실행 과정에서 필요한 연산�
     expect(deleteExhibition).not.toHaveBeenCalled();
   });
 
-  it("vice_president는 전시를 삭제할 수 있다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+  it("vice_president는 전시 삭제 권한이 없어 403을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const deleteExhibition = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => true);
     const app = createTestApp({
       actor: createActor("vice_president", IDs.vicePresident),
+      dataService: createDataServiceMock({ deleteExhibition }),
+    });
+
+    const response = await app.request(`/api/exhibitions/${IDs.exhibition}`, {
+      method: "DELETE",
+    });
+
+    expect(response.status).toBe(403);
+    await expectErrorCode(response, "FORBIDDEN");
+    expect(deleteExhibition).not.toHaveBeenCalled();
+  });
+
+  it("president는 전시를 삭제할 수 있다", async () => {
+    const deleteExhibition = fn(async () => true);
+    const app = createTestApp({
+      actor: createActor("president", IDs.president),
       dataService: createDataServiceMock({ deleteExhibition }),
     });
 
@@ -424,7 +515,7 @@ describe("exhibition routes", /** describe 실행 과정에서 필요한 연산�
     expect(body.error.message).toContain("세부 이미지");
   });
 
-  it("manager는 전시 상세 이미지 삭제 권한이 없어 403을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+  it("manager는 전시 상세 이미지를 삭제할 수 있다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const deleteExhibitionImage = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => true);
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
@@ -438,9 +529,11 @@ describe("exhibition routes", /** describe 실행 과정에서 필요한 연산�
       },
     );
 
-    expect(response.status).toBe(403);
-    await expectErrorCode(response, "FORBIDDEN");
-    expect(deleteExhibitionImage).not.toHaveBeenCalled();
+    expect(response.status).toBe(204);
+    expect(deleteExhibitionImage).toHaveBeenCalledWith(
+      IDs.exhibition,
+      IDs.exhibitionImage,
+    );
   });
 
   it("존재하지 않는 전시 상세 이미지 삭제는 404를 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
@@ -481,6 +574,25 @@ describe("exhibition routes", /** describe 실행 과정에서 필요한 연산�
       IDs.exhibition,
       IDs.exhibitionImage,
     );
+  });
+
+  it("regular_member는 전시 상세 이미지 삭제 권한이 없어 403을 반환한다", async () => {
+    const deleteExhibitionImage = fn(async () => true);
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({ deleteExhibitionImage }),
+    });
+
+    const response = await app.request(
+      `/api/exhibitions/${IDs.exhibition}/images/${IDs.exhibitionImage}`,
+      {
+        method: "DELETE",
+      },
+    );
+
+    expect(response.status).toBe(403);
+    await expectErrorCode(response, "FORBIDDEN");
+    expect(deleteExhibitionImage).not.toHaveBeenCalled();
   });
 
   it("인증되지 않은 요청은 전시 관련 엔드포인트에서 401을 반환한다", async () => {
@@ -573,7 +685,7 @@ describe("exhibition routes", /** describe 실행 과정에서 필요한 연산�
   });
 
   it("전시 삭제 파라미터가 유효하지 않으면 400을 반환한다", async () => {
-    const app = createTestApp({ actor: createActor("vice_president", IDs.vicePresident) });
+    const app = createTestApp({ actor: createActor("president", IDs.president) });
     const response = await app.request("/api/exhibitions/not-a-uuid", {
       method: "DELETE",
     });
@@ -691,6 +803,23 @@ describe("exhibition routes", /** describe 실행 과정에서 필요한 연산�
     );
     expect(updateImageResponse.status).toBe(400);
     await expectErrorCode(updateImageResponse, "BAD_REQUEST");
+  });
+
+  it("전시 수정 시 빈 설명 HTML은 400을 반환한다", async () => {
+    const updateExhibition = fn(async () => createExhibition());
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ updateExhibition }),
+    });
+
+    const response = await app.request(`/api/exhibitions/${IDs.exhibition}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ description: "<p><br></p>" }),
+    });
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+    expect(updateExhibition).not.toHaveBeenCalled();
   });
 
   it("전시/전시 이미지 수정 본문이 JSON이 아니면 400을 반환한다", async () => {

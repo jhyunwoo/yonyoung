@@ -1,6 +1,9 @@
 export {
   type ApiActivity,
   type ApiActivityImage,
+  type ApiAuditActor,
+  type ApiAuditLog,
+  type ApiAuditResourceType,
   type ApiAdminDashboardStats,
   type ApiAdminUpdateUserInput,
   type ApiBulkUpdateUserRoleInput,
@@ -17,6 +20,7 @@ export {
   type ApiExhibition,
   type ApiExhibitionImage,
   type ApiGeneration,
+  type ApiGenerationMemberSummary,
   type ApiGenerationNotice,
   type ApiGlobalNotice,
   type ApiLinktree,

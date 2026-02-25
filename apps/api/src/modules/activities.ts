@@ -5,6 +5,15 @@ import { parseBody, parseParams } from "../lib/validation/request";
 import { AppDependencies } from "../lib/services/dependencies";
 import { requireActor, requirePermission } from "../lib/http/authz";
 import {
+  recordAuditLog,
+  readChangedFields,
+  withUpdatedByActor,
+} from "../lib/audit";
+import {
+  hasMeaningfulRichTextHtml,
+  sanitizeRichTextHtml,
+} from "../lib/content/rich-text";
+import {
   createdResponse,
   dataResponse,
   errorResponses,
@@ -25,6 +34,13 @@ import {
 } from "../lib/openapi/schemas";
 
 type App = OpenAPIHono<HonoAppType>;
+
+const sanitizeActivityDescriptionField = <T extends { description: string }>(
+  activity: T,
+): T => ({
+  ...activity,
+  description: sanitizeRichTextHtml(activity.description),
+});
 
 const listActivitiesRoute = createRoute({
   method: "get",
@@ -223,7 +239,7 @@ export const registerActivityRoutes = (
     }
 
     const data = await dependencies.getDataService(c).listActivities();
-    return ok(c, data);
+    return ok(c, data.map(sanitizeActivityDescriptionField));
   });
 
   app.openapi(createActivityRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
@@ -241,8 +257,38 @@ export const registerActivityRoutes = (
       return badRequest(c, body.message);
     }
 
-    const data = await dependencies.getDataService(c).createActivity(body.data);
-    return ok(c, data, 201);
+    const sanitizedDescription = sanitizeRichTextHtml(body.data.description);
+    if (!hasMeaningfulRichTextHtml(sanitizedDescription)) {
+      return badRequest(c, "활동 설명은 비워둘 수 없습니다.");
+    }
+
+    const dataService = dependencies.getDataService(c);
+    const data = await dataService.createActivity({
+      ...body.data,
+      description: sanitizedDescription,
+    });
+
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "activity",
+      resourceId: data.id,
+      action: "create",
+      changedFields: readChangedFields(body.data, [
+        "title",
+        "description",
+        "startDate",
+        "endDate",
+        "coverImageUrl",
+        "generationId",
+      ]),
+    });
+
+    return ok(
+      c,
+      withUpdatedByActor(sanitizeActivityDescriptionField(data), actorResult.actor),
+      201,
+    );
   });
 
   app.openapi(getActivityByIdRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
@@ -264,7 +310,7 @@ export const registerActivityRoutes = (
     if (!data) {
       return notFound(c);
     }
-    return ok(c, data);
+    return ok(c, sanitizeActivityDescriptionField(data));
   });
 
   app.openapi(updateActivityRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
@@ -286,17 +332,38 @@ export const registerActivityRoutes = (
     if (!body.success) {
       return badRequest(c, body.message);
     }
-    if (Object.keys(body.data).length === 0) {
+    const nextBody = { ...body.data };
+    if (nextBody.description !== undefined) {
+      const sanitizedDescription = sanitizeRichTextHtml(nextBody.description);
+      if (!hasMeaningfulRichTextHtml(sanitizedDescription)) {
+        return badRequest(c, "활동 설명은 비워둘 수 없습니다.");
+      }
+      nextBody.description = sanitizedDescription;
+    }
+
+    if (Object.keys(nextBody).length === 0) {
       return badRequest(c, "수정할 필드를 하나 이상 전달해야 합니다.");
     }
 
-    const data = await dependencies
-      .getDataService(c)
-      .updateActivity(params.data.id, body.data);
+    const dataService = dependencies.getDataService(c);
+    const data = await dataService.updateActivity(params.data.id, nextBody);
     if (!data) {
       return notFound(c);
     }
-    return ok(c, data);
+
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "activity",
+      resourceId: data.id,
+      action: "update",
+      changedFields: readChangedFields(nextBody, ["updatedAt"]),
+    });
+
+    return ok(
+      c,
+      withUpdatedByActor(sanitizeActivityDescriptionField(data), actorResult.actor),
+    );
   });
 
   app.openapi(deleteActivityRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
@@ -314,10 +381,21 @@ export const registerActivityRoutes = (
       return badRequest(c, params.message);
     }
 
-    const deleted = await dependencies.getDataService(c).deleteActivity(params.data.id);
+    const dataService = dependencies.getDataService(c);
+    const deleted = await dataService.deleteActivity(params.data.id);
     if (!deleted) {
       return notFound(c);
     }
+
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "activity",
+      resourceId: params.data.id,
+      action: "delete",
+      changedFields: ["deletedAt"],
+    });
+
     return noContent(c);
   });
 
@@ -341,12 +419,21 @@ export const registerActivityRoutes = (
       return badRequest(c, body.message);
     }
 
-    const data = await dependencies
-      .getDataService(c)
-      .addActivityImage(params.data.id, body.data);
+    const dataService = dependencies.getDataService(c);
+    const data = await dataService.addActivityImage(params.data.id, body.data);
     if (!data) {
       return notFound(c, "활동을 찾을 수 없습니다.");
     }
+
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "activity",
+      resourceId: params.data.id,
+      action: "update",
+      changedFields: ["detailImages"],
+    });
+
     return ok(c, data, 201);
   });
 
@@ -369,12 +456,21 @@ export const registerActivityRoutes = (
       return badRequest(c, body.message);
     }
 
-    const data = await dependencies
-      .getDataService(c)
-      .addActivityImages(params.data.id, body.data);
+    const dataService = dependencies.getDataService(c);
+    const data = await dataService.addActivityImages(params.data.id, body.data);
     if (!data) {
       return notFound(c, "활동을 찾을 수 없습니다.");
     }
+
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "activity",
+      resourceId: params.data.id,
+      action: "update",
+      changedFields: ["detailImages"],
+    });
+
     return ok(c, data, 201);
   });
 
@@ -397,12 +493,21 @@ export const registerActivityRoutes = (
       return badRequest(c, body.message);
     }
 
-    const data = await dependencies
-      .getDataService(c)
-      .updateActivityImages(params.data.id, body.data);
+    const dataService = dependencies.getDataService(c);
+    const data = await dataService.updateActivityImages(params.data.id, body.data);
     if (!data) {
       return notFound(c, "세부 이미지를 찾을 수 없습니다.");
     }
+
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "activity",
+      resourceId: params.data.id,
+      action: "update",
+      changedFields: ["detailImages"],
+    });
+
     return ok(c, data);
   });
 
@@ -428,12 +533,25 @@ export const registerActivityRoutes = (
       return badRequest(c, "수정할 필드를 하나 이상 전달해야 합니다.");
     }
 
-    const data = await dependencies
-      .getDataService(c)
-      .updateActivityImage(params.data.id, params.data.imageId, body.data);
+    const dataService = dependencies.getDataService(c);
+    const data = await dataService.updateActivityImage(
+      params.data.id,
+      params.data.imageId,
+      body.data,
+    );
     if (!data) {
       return notFound(c, "세부 이미지를 찾을 수 없습니다.");
     }
+
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "activity",
+      resourceId: params.data.id,
+      action: "update",
+      changedFields: ["detailImages"],
+    });
+
     return ok(c, data);
   });
 
@@ -452,12 +570,24 @@ export const registerActivityRoutes = (
       return badRequest(c, params.message);
     }
 
-    const deleted = await dependencies
-      .getDataService(c)
-      .deleteActivityImage(params.data.id, params.data.imageId);
+    const dataService = dependencies.getDataService(c);
+    const deleted = await dataService.deleteActivityImage(
+      params.data.id,
+      params.data.imageId,
+    );
     if (!deleted) {
       return notFound(c, "세부 이미지를 찾을 수 없습니다.");
     }
+
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "activity",
+      resourceId: params.data.id,
+      action: "update",
+      changedFields: ["detailImages"],
+    });
+
     return noContent(c);
   });
 };

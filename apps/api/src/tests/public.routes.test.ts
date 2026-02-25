@@ -6,6 +6,7 @@ import {
   createExhibition,
   createGeneration,
   createLinktree,
+  createLinktreeItem,
   createSupporter,
   createTestApp,
   createUser,
@@ -102,6 +103,29 @@ describe("public routes", () => {
     expect(listPublicExhibitions).toHaveBeenCalledTimes(1);
   });
 
+  it("공개 전시 응답의 설명 HTML은 sanitize 된다", async () => {
+    const listPublicExhibitions = fn(async () => [
+      createExhibition({
+        description:
+          '<h3>전시 안내</h3><script>alert("xss")</script><p onclick="evil()">본문</p>',
+      }),
+    ]);
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({ listPublicExhibitions }),
+    });
+
+    const response = await app.request("/api/public/exhibitions");
+    expect(response.status).toBe(200);
+
+    const body = await readJson<{ data: Array<{ description: string }> }>(response);
+    const description = body.data[0]?.description ?? "";
+    expect(description).toContain("<h3>전시 안내</h3>");
+    expect(description).toContain("<p>본문</p>");
+    expect(description).not.toContain("<script");
+    expect(description).not.toContain("onclick=");
+  });
+
   it("비로그인 접근 시 공개 전시 상세를 조회한다", async () => {
     const getExhibitionById = fn(async () =>
       createExhibition({ id: IDs.exhibition, title: "전시 상세" }),
@@ -119,6 +143,28 @@ describe("public routes", () => {
     expect(body.data.id).toBe(IDs.exhibition);
     expect(body.data.title).toBe("전시 상세");
     expect(getExhibitionById).toHaveBeenCalledWith(IDs.exhibition);
+  });
+
+  it("공개 전시 상세 응답도 설명 HTML을 sanitize 한다", async () => {
+    const getExhibitionById = fn(async () =>
+      createExhibition({
+        id: IDs.exhibition,
+        description:
+          '<h2>타이틀</h2><p><a href="javascript:alert(1)">bad</a><a href="https://safe.example">safe</a></p>',
+      }),
+    );
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({ getExhibitionById }),
+    });
+
+    const response = await app.request(`/api/public/exhibitions/${IDs.exhibition}`);
+    expect(response.status).toBe(200);
+
+    const body = await readJson<{ data: { description: string } }>(response);
+    expect(body.data.description).toContain("<h2>타이틀</h2>");
+    expect(body.data.description).toContain('href="https://safe.example"');
+    expect(body.data.description).not.toContain("javascript:");
   });
 
   it("공개 전시 상세가 없으면 404를 반환한다", async () => {
@@ -169,12 +215,12 @@ describe("public routes", () => {
       createLinktree({
         id: IDs.linktree,
         items: [
-          {
+          createLinktreeItem({
             id: IDs.linktreeItem,
             linktreeId: IDs.linktree,
             name: "Instagram",
             link: "https://instagram.com/yonyoung",
-          },
+          }),
         ],
       }),
     ]);

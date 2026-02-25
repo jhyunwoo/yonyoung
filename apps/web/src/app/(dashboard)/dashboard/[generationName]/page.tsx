@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ApiActivity, ApiExhibition } from "@repo/shared-api-contracts";
+import { formatAuditActor } from "../../../../lib/audit-display";
 import { formatKoreanDate, formatKoreanDateRange } from "../../../../lib/date-formatters";
 import {
   listPublicActivities,
@@ -75,6 +76,9 @@ export default async function GenerationDashboardPage({
           </p>
           <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
             해당 기수의 공지, 최근 활동, 최근 전시 등 핵심 정보를 한눈에 확인할 수 있습니다.
+          </p>
+          <p className="mt-2 text-xs text-slate-500">
+            최근 수정: {formatKoreanDate(generation.updatedAt)} · {formatAuditActor(generation.updatedBy)}
           </p>
 
           <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

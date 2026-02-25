@@ -10,6 +10,12 @@ import {
   readJson,
 } from "./test-helpers";
 
+const supporterWriteRoles = [
+  { role: "president", actorId: IDs.president },
+  { role: "vice_president", actorId: IDs.vicePresident },
+  { role: "manager", actorId: IDs.manager },
+] as const;
+
 describe("supporter routes", /** describe 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
   it("인증되지 않은 요청은 401을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({ actor: null });
@@ -219,6 +225,32 @@ describe("supporter routes", /** describe 실행 과정에서 필요한 연산�
     expect(body.data.name).toBe("updated");
   });
 
+  it.each(supporterWriteRoles)(
+    "$role는 후원사를 수정할 수 있다",
+    async ({ role, actorId }) => {
+      const updateSupporter = fn(async () =>
+        createSupporter({ name: `updated-${role}` }),
+      );
+      const app = createTestApp({
+        actor: createActor(role, actorId),
+        dataService: createDataServiceMock({ updateSupporter }),
+      });
+
+      const response = await app.request(`/api/supporters/${IDs.supporter}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: `updated-${role}` }),
+      });
+
+      expect(response.status).toBe(200);
+      const body = await readJson<{ data: { name: string } }>(response);
+      expect(body.data.name).toBe(`updated-${role}`);
+      expect(updateSupporter).toHaveBeenCalledWith(IDs.supporter, {
+        name: `updated-${role}`,
+      });
+    },
+  );
+
   it("member 계열 사용자는 후원사 삭제 권한이 없다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const deleteSupporter = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => true);
     const app = createTestApp({
@@ -264,6 +296,24 @@ describe("supporter routes", /** describe 실행 과정에서 필요한 연산�
     expect(response.status).toBe(204);
     expect(deleteSupporter).toHaveBeenCalledWith(IDs.supporter);
   });
+
+  it.each(supporterWriteRoles)(
+    "$role는 후원사를 삭제할 수 있다",
+    async ({ role, actorId }) => {
+      const deleteSupporter = fn(async () => true);
+      const app = createTestApp({
+        actor: createActor(role, actorId),
+        dataService: createDataServiceMock({ deleteSupporter }),
+      });
+
+      const response = await app.request(`/api/supporters/${IDs.supporter}`, {
+        method: "DELETE",
+      });
+
+      expect(response.status).toBe(204);
+      expect(deleteSupporter).toHaveBeenCalledWith(IDs.supporter);
+    },
+  );
 
   it("인증되지 않은 요청은 후원사 관련 엔드포인트에서 401을 반환한다", async () => {
     const app = createTestApp({ actor: null });

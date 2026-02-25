@@ -37,7 +37,6 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <Script src="/theme-init.js" strategy="beforeInteractive" />
       </head>
       <body className="min-h-screen bg-(--bg-primary) text-(--text-primary) antialiased">

@@ -11,6 +11,11 @@ import { parseBody, parseParams } from "../lib/validation/request";
 import { AppDependencies } from "../lib/services/dependencies";
 import { requireActor } from "../lib/http/authz";
 import {
+  recordAuditLog,
+  readChangedFields,
+  withUpdatedByActor,
+} from "../lib/audit";
+import {
   can,
   canAssignRole,
   isMemberLikeRole,
@@ -296,7 +301,19 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
       userIds: body.data.userIds,
       role: normalizedNextRole,
     });
-    return ok(c, updatedUsers);
+    await Promise.all(
+      updatedUsers.map((updatedUser) =>
+        recordAuditLog({
+          dataService,
+          actor: actorResult.actor,
+          resourceType: "user",
+          resourceId: updatedUser.id,
+          action: "update",
+          changedFields: ["role", "updatedAt"],
+        }),
+      ),
+    );
+    return ok(c, updatedUsers.map((updatedUser) => withUpdatedByActor(updatedUser, actorResult.actor)));
   });
 
   app.openapi(updateUserRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 권한/인증 분기에서 잘못된 흐름이 발생하지 않도록 호출 순서를 유지해야 합니다. */ async (c): Promise<any> => {
@@ -362,7 +379,15 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
       if (!data) {
         return notFound(c);
       }
-      return ok(c, data);
+      await recordAuditLog({
+        dataService,
+        actor: actorResult.actor,
+        resourceType: "user",
+        resourceId: data.id,
+        action: "update",
+        changedFields: readChangedFields(updateInput, ["updatedAt"]),
+      });
+      return ok(c, withUpdatedByActor(data, actorResult.actor));
     }
 
     // member 계열 role 및 unverified는 본인 프로필 필드만 수정 가능하다.
@@ -382,7 +407,15 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
       if (!data) {
         return notFound(c);
       }
-      return ok(c, data);
+      await recordAuditLog({
+        dataService,
+        actor: actorResult.actor,
+        resourceType: "user",
+        resourceId: data.id,
+        action: "update",
+        changedFields: readChangedFields(body.data, ["updatedAt"]),
+      });
+      return ok(c, withUpdatedByActor(data, actorResult.actor));
     }
 
     return forbidden(c);
@@ -406,10 +439,19 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
       }
     }
 
-    const deleted = await dependencies.getDataService(c).deleteUser(params.data.id);
+    const dataService = dependencies.getDataService(c);
+    const deleted = await dataService.deleteUser(params.data.id);
     if (!deleted) {
       return notFound(c);
     }
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "user",
+      resourceId: params.data.id,
+      action: "delete",
+      changedFields: ["deletedAt"],
+    });
     return noContent(c);
   });
 };

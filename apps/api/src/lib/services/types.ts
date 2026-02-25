@@ -6,6 +6,36 @@ export type GenerationEntity = {
   endDate: Date;
   createdAt: Date;
   updatedAt: Date;
+  updatedBy: AuditActorEntity | null;
+};
+
+export type AuditResourceType =
+  | "generation"
+  | "activity"
+  | "exhibition"
+  | "generation_notice"
+  | "global_notice"
+  | "supporter"
+  | "linktree"
+  | "linktree_item"
+  | "user";
+
+export type AuditAction = "create" | "update" | "delete";
+
+export type AuditActorEntity = {
+  id: string;
+  name: string;
+  role: string | null;
+};
+
+export type AuditLogEntity = {
+  id: string;
+  resourceType: AuditResourceType;
+  resourceId: string;
+  action: AuditAction;
+  actor: AuditActorEntity | null;
+  changedFields: string[];
+  createdAt: Date;
 };
 
 export type ActivityImageEntity = {
@@ -27,6 +57,7 @@ export type ActivityEntity = {
   generationId: string;
   createdAt: Date;
   updatedAt: Date;
+  updatedBy: AuditActorEntity | null;
   detailImages: ActivityImageEntity[];
 };
 
@@ -38,6 +69,7 @@ export type SupporterEntity = {
   expiresAt: Date;
   createdAt: Date;
   updatedAt: Date;
+  updatedBy: AuditActorEntity | null;
 };
 
 export type ExhibitionImageEntity = {
@@ -60,6 +92,7 @@ export type ExhibitionEntity = {
   description: string;
   createdAt: Date;
   updatedAt: Date;
+  updatedBy: AuditActorEntity | null;
   detailImages: ExhibitionImageEntity[];
 };
 
@@ -68,11 +101,17 @@ export type LinktreeItemEntity = {
   linktreeId: string;
   name: string;
   link: string;
+  createdAt: Date;
+  updatedAt: Date;
+  updatedBy: AuditActorEntity | null;
 };
 
 export type LinktreeEntity = {
   id: string;
   name: string;
+  createdAt: Date;
+  updatedAt: Date;
+  updatedBy: AuditActorEntity | null;
   items: LinktreeItemEntity[];
 };
 
@@ -88,18 +127,22 @@ export type GenerationNoticeEntity = {
   generationId: string;
   title: string;
   content: string;
+  imageUrls: string[];
   author: NoticeAuthorEntity;
   createdAt: Date;
   updatedAt: Date;
+  updatedBy: AuditActorEntity | null;
 };
 
 export type GlobalNoticeEntity = {
   id: string;
   title: string;
   content: string;
+  imageUrls: string[];
   author: NoticeAuthorEntity;
   createdAt: Date;
   updatedAt: Date;
+  updatedBy: AuditActorEntity | null;
 };
 
 export type UserEntity = {
@@ -118,6 +161,7 @@ export type UserEntity = {
   generationIds?: string[];
   createdAt: Date;
   updatedAt: Date;
+  updatedBy: AuditActorEntity | null;
 };
 
 export type AdminDashboardStatsEntity = {
@@ -132,6 +176,29 @@ export type AdminDashboardStatsEntity = {
 };
 
 export type DataService = {
+  createAuditLog: (input: {
+    resourceType: AuditResourceType;
+    resourceId: string;
+    action: AuditAction;
+    actorId: string | null;
+    actorName: string;
+    actorRole: string | null;
+    changedFields: string[];
+  }) => Promise<void>;
+  listAuditLogs: (
+    resourceType: AuditResourceType,
+    resourceId: string,
+    limit: number,
+  ) => Promise<AuditLogEntity[]>;
+  getLatestAuditActor: (
+    resourceType: AuditResourceType,
+    resourceId: string,
+  ) => Promise<AuditActorEntity | null>;
+  listLatestAuditActors: (
+    resourceType: AuditResourceType,
+    resourceIds: string[],
+  ) => Promise<Record<string, AuditActorEntity | null>>;
+
   listGenerations: () => Promise<GenerationEntity[]>;
   createGeneration: (input: {
     name: string;
@@ -293,6 +360,7 @@ export type DataService = {
     input: {
       title: string;
       content: string;
+      imageUrls: string[];
       authorId: string;
     },
   ) => Promise<GenerationNoticeEntity | null>;
@@ -306,6 +374,7 @@ export type DataService = {
     input: Partial<{
       title: string;
       content: string;
+      imageUrls: string[];
     }>,
   ) => Promise<GenerationNoticeEntity | null>;
   deleteGenerationNotice: (generationId: string, noticeId: string) => Promise<boolean>;
@@ -314,6 +383,7 @@ export type DataService = {
   createGlobalNotice: (input: {
     title: string;
     content: string;
+    imageUrls: string[];
     authorId: string;
   }) => Promise<GlobalNoticeEntity | null>;
   getGlobalNoticeById: (noticeId: string) => Promise<GlobalNoticeEntity | null>;
@@ -322,6 +392,7 @@ export type DataService = {
     input: Partial<{
       title: string;
       content: string;
+      imageUrls: string[];
     }>,
   ) => Promise<GlobalNoticeEntity | null>;
   deleteGlobalNotice: (noticeId: string) => Promise<boolean>;
@@ -355,8 +426,8 @@ export type DataService = {
 export type PresignService = {
   issuePresignedPutUrl: (input: {
     actorId: string;
-    resource: "activities" | "exhibitions" | "supporters" | "users";
-    slot: "cover" | "detail" | "logo" | "profile";
+    resource: "activities" | "exhibitions" | "supporters" | "users" | "notices";
+    slot: "cover" | "detail" | "logo" | "profile" | "image";
     fileName: string;
     contentType: string;
     fileSize: number;
@@ -368,8 +439,8 @@ export type PresignService = {
   }>;
   initiateMultipartUpload: (input: {
     actorId: string;
-    resource: "activities" | "exhibitions" | "supporters" | "users";
-    slot: "cover" | "detail" | "logo" | "profile";
+    resource: "activities" | "exhibitions" | "supporters" | "users" | "notices";
+    slot: "cover" | "detail" | "logo" | "profile" | "image";
     fileName: string;
     contentType: string;
     fileSize: number;

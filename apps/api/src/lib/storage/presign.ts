@@ -11,8 +11,8 @@ import type { AppBindings } from "../../types/honoAppType";
 import type { PresignService } from "../services/types";
 
 export const UPLOAD_LIMITS = {
-  maxSinglePartBytes: 12 * 1024 * 1024,
-  maxMultipartBytes: 512 * 1024 * 1024,
+  maxSinglePartBytes: 1024 * 1024 * 1024,
+  maxMultipartBytes: 1024 * 1024 * 1024,
   multipartPartSizeBytes: 8 * 1024 * 1024,
   multipartMaxParts: 10_000,
 } as const;
@@ -147,8 +147,8 @@ const resolveStorageEnv = (env: AppBindings): StorageEnv => {
 
 const buildObjectKey = (input: {
   actorId: string;
-  resource: "activities" | "exhibitions" | "supporters" | "users";
-  slot: "cover" | "detail" | "logo" | "profile";
+  resource: "activities" | "exhibitions" | "supporters" | "users" | "notices";
+  slot: "cover" | "detail" | "logo" | "profile" | "image";
   fileName: string;
 }): string => {
   const safeFileName = sanitizeFileName(input.fileName);

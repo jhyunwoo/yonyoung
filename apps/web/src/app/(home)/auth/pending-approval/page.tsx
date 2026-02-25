@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { serverAuthTool } from "../../../../lib/auth-server-tool";
 import { hasCompletedRequiredProfile, isUnverifiedRole } from "../../../../lib/auth-shared";
+import { createPageMetadata } from "../../../../lib/seo";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "승인 대기 | 연영회",
+  description: "연영회 계정 승인 대기 상태와 다음 절차를 확인하세요.",
+  path: "/auth/pending-approval",
+});
 
 export default async function PendingApprovalPage() {
   const session = await serverAuthTool.requireSession();

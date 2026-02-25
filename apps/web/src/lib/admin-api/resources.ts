@@ -4,6 +4,8 @@ import type {
   ApiActivity,
   ApiActivityImage,
   ApiAdminDashboardStats,
+  ApiAuditLog,
+  ApiAuditResourceType,
   ApiBulkUpdateUserRoleInput,
   ApiCreateActivityImageInput,
   ApiCreateActivityInput,
@@ -18,6 +20,7 @@ import type {
   ApiExhibition,
   ApiExhibitionImage,
   ApiGeneration,
+  ApiGenerationMemberSummary,
   ApiGenerationNotice,
   ApiGlobalNotice,
   ApiLinktree,
@@ -72,6 +75,19 @@ const withAdminCacheRevalidation = async <T>(
 };
 
 export const adminResourceApi = {
+  listAuditLogs: (
+    resourceType: ApiAuditResourceType,
+    resourceId: string,
+    limit = 20,
+  ) => {
+    const safeLimit = Math.max(1, Math.min(100, Math.floor(limit)));
+    const encodedResourceId = encodeURIComponent(resourceId);
+    return adminRequest<ApiAuditLog[]>(
+      `/audit/${resourceType}/${encodedResourceId}?limit=${safeLimit}`,
+      "GET",
+    );
+  },
+
     /**
    * listGenerations의 핵심 비즈니스 로직을 수행합니다.
    * @returns 함수 실행 결과를 반환합니다.
@@ -97,6 +113,11 @@ export const adminResourceApi = {
    */
   getGenerationById: (id: string) =>
     adminRequest<ApiGeneration>(`/generations/${id}`, "GET"),
+  listGenerationMembers: (generationId: string) =>
+    adminRequest<ApiGenerationMemberSummary[]>(
+      `/generations/${generationId}/members`,
+      "GET",
+    ),
     /**
    * updateGeneration 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
    * @param id 대상을 식별하기 위한 ID 값입니다.

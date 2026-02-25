@@ -13,8 +13,24 @@ import { badRequest, notFound, ok } from "../lib/http/response";
 import { respondWithPublicCache } from "../lib/http/public-cache";
 import { AppDependencies } from "../lib/services/dependencies";
 import HonoAppType from "../types/honoAppType";
+import { sanitizeRichTextHtml } from "../lib/content/rich-text";
+import { sanitizeExhibitionRichText } from "../lib/content/exhibition-rich-text";
 
 type App = OpenAPIHono<HonoAppType>;
+
+const sanitizeExhibitionDescriptionField = <T extends { description: string }>(
+  exhibition: T,
+): T => ({
+  ...exhibition,
+  description: sanitizeExhibitionRichText(exhibition.description),
+});
+
+const sanitizeActivityDescriptionField = <T extends { description: string }>(
+  activity: T,
+): T => ({
+  ...activity,
+  description: sanitizeRichTextHtml(activity.description),
+});
 
 const listPublicActivitiesRoute = createRoute({
   method: "get",
@@ -123,7 +139,7 @@ export const registerPublicRoutes = (
   app.openapi(listPublicActivitiesRoute, async (c): Promise<any> =>
     respondWithPublicCache(c, async () => {
       const data = await dependencies.getDataService(c).listPublicActivities();
-      return ok(c, data);
+      return ok(c, data.map(sanitizeActivityDescriptionField));
     }),
   );
 
@@ -140,14 +156,14 @@ export const registerPublicRoutes = (
       if (!data) {
         return notFound(c);
       }
-      return ok(c, data);
+      return ok(c, sanitizeActivityDescriptionField(data));
     }),
   );
 
   app.openapi(listPublicExhibitionsRoute, async (c): Promise<any> =>
     respondWithPublicCache(c, async () => {
       const data = await dependencies.getDataService(c).listPublicExhibitions();
-      return ok(c, data);
+      return ok(c, data.map(sanitizeExhibitionDescriptionField));
     }),
   );
 
@@ -164,7 +180,7 @@ export const registerPublicRoutes = (
       if (!data) {
         return notFound(c);
       }
-      return ok(c, data);
+      return ok(c, sanitizeExhibitionDescriptionField(data));
     }),
   );
 

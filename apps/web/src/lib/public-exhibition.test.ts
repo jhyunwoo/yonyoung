@@ -20,6 +20,7 @@ const createExhibition = (
   description: "exhibition description",
   createdAt: 0,
   updatedAt: 0,
+  updatedBy: null,
   detailImages: [],
 });
 

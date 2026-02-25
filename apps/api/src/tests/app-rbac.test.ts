@@ -63,6 +63,7 @@ const createUser = (
   generationId,
   createdAt: new Date(0),
   updatedAt: new Date(0),
+  updatedBy: null,
 });
 
 /**
@@ -72,7 +73,15 @@ const createUser = (
  * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
  */
 const createDataServiceMock = (overrides: Partial<DataService> = {}): DataService => {
-  return new Proxy(overrides as DataService, {
+  const base: Partial<DataService> = {
+    createAuditLog: async () => undefined,
+    listAuditLogs: async () => [],
+    getLatestAuditActor: async () => null,
+    listLatestAuditActors: async () => ({}),
+  };
+  const merged = { ...base, ...overrides } as DataService;
+
+  return new Proxy(merged, {
         /**
      * get 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
      * @param target 함수 로직에서 사용하는 입력값입니다.
@@ -195,6 +204,58 @@ describe("RBAC routes", /** describe 실행 과정에서 필요한 연산을 수
       method: "DELETE",
     });
     expect(response.status).toBe(403);
+  });
+
+  it("부회장은 exhibition 삭제가 불가하다", async () => {
+    const app = createTestApp({
+      actor: createActor("vice_president", IDs.member),
+    });
+
+    const response = await app.request(`/api/exhibitions/${IDs.exhibition}`, {
+      method: "DELETE",
+    });
+    expect(response.status).toBe(403);
+  });
+
+  it("부장은 exhibition 세부 이미지 삭제가 가능하다", async () => {
+    const deleteExhibitionImage = vi.fn(async () => true);
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({
+        deleteExhibitionImage,
+      }),
+    });
+
+    const response = await app.request(
+      `/api/exhibitions/${IDs.exhibition}/images/21000000-0000-4000-8000-000000000001`,
+      {
+        method: "DELETE",
+      },
+    );
+    expect(response.status).toBe(204);
+    expect(deleteExhibitionImage).toHaveBeenCalledWith(
+      IDs.exhibition,
+      "21000000-0000-4000-8000-000000000001",
+    );
+  });
+
+  it("부원은 exhibition 세부 이미지 삭제가 불가하다", async () => {
+    const deleteExhibitionImage = vi.fn(async () => true);
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({
+        deleteExhibitionImage,
+      }),
+    });
+
+    const response = await app.request(
+      `/api/exhibitions/${IDs.exhibition}/images/21000000-0000-4000-8000-000000000001`,
+      {
+        method: "DELETE",
+      },
+    );
+    expect(response.status).toBe(403);
+    expect(deleteExhibitionImage).not.toHaveBeenCalled();
   });
 
   it("부원의 users 목록 조회는 본인 1건만 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
@@ -466,9 +527,25 @@ describe("RBAC routes", /** describe 실행 과정에서 필요한 연산을 수
     expect(deleteUser).toHaveBeenCalledWith(IDs.member);
   });
 
-  it("부원은 activities 생성이 불가하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+  it("부원은 activities 생성이 가능하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const createActivity = vi.fn(async () => ({
+      id: IDs.exhibition,
+      title: "t",
+      description: "d",
+      startDate: new Date(0),
+      endDate: new Date(0),
+      coverImageUrl: "https://example.com/a.jpg",
+      generationId: IDs.generation,
+      createdAt: new Date(0),
+      updatedAt: new Date(0),
+      updatedBy: null,
+      detailImages: [],
+    }));
     const app = createTestApp({
       actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({
+        createActivity,
+      }),
     });
 
     const response = await app.request("/api/activities", {
@@ -486,7 +563,8 @@ describe("RBAC routes", /** describe 실행 과정에서 필요한 연산을 수
       }),
     });
 
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(201);
+    expect(createActivity).toHaveBeenCalled();
   });
 
   it("부장은 사용자 프로필 presign 발급이 불가하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {

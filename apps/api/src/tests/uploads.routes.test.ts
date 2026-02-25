@@ -37,6 +37,11 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
       role: "manager" as const,
       expected: { resource: "supporters", slot: "logo" as const },
     },
+    {
+      path: "/api/notices/presign/image",
+      role: "manager" as const,
+      expected: { resource: "notices", slot: "image" as const },
+    },
   ];
 
   for (const route of resourceRoutes) {
@@ -45,7 +50,11 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
       const response = await app.request(route.path, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ fileName: "cover.png", contentType: "image/png", fileSize: 1024 }),
+        body: JSON.stringify({
+          fileName: "cover.png",
+          contentType: "image/png",
+          fileSize: 1024,
+        }),
       });
 
       expect(response.status).toBe(401);
@@ -53,21 +62,30 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     });
 
     it(`${route.path}는 권한 없는 사용자에게 403을 반환한다`, /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
-      const issuePresignedPutUrl = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => ({
-        uploadUrl: "https://upload.example.com/signed",
-        objectKey: "object-key",
-        publicUrl: "https://cdn.example.com/object-key",
-        requiredHeaders: { "Content-Type": "image/png" },
-      }));
+      const forbiddenRole = route.path.startsWith("/api/activities/")
+        ? ("unverified" as const)
+        : ("regular_member" as const);
+      const issuePresignedPutUrl = fn(
+        /** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => ({
+          uploadUrl: "https://upload.example.com/signed",
+          objectKey: "object-key",
+          publicUrl: "https://cdn.example.com/object-key",
+          requiredHeaders: { "Content-Type": "image/png" },
+        }),
+      );
       const app = createTestApp({
-        actor: createActor("regular_member"),
+        actor: createActor(forbiddenRole),
         presignService: createPresignServiceMock({ issuePresignedPutUrl }),
       });
 
       const response = await app.request(route.path, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ fileName: "cover.png", contentType: "image/png", fileSize: 1024 }),
+        body: JSON.stringify({
+          fileName: "cover.png",
+          contentType: "image/png",
+          fileSize: 1024,
+        }),
       });
 
       expect(response.status).toBe(403);
@@ -76,7 +94,9 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     });
 
     it(`${route.path}는 본문 검증 실패 시 400을 반환한다`, /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
-      const app = createTestApp({ actor: createActor(route.role, IDs.manager) });
+      const app = createTestApp({
+        actor: createActor(route.role, IDs.manager),
+      });
 
       const response = await app.request(route.path, {
         method: "POST",
@@ -89,7 +109,9 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     });
 
     it(`${route.path}는 JSON 본문이 깨졌으면 400을 반환한다`, async () => {
-      const app = createTestApp({ actor: createActor(route.role, IDs.manager) });
+      const app = createTestApp({
+        actor: createActor(route.role, IDs.manager),
+      });
       const response = await app.request(route.path, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -101,12 +123,14 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     });
 
     it(`${route.path}는 presign 생성 성공 시 201과 URL을 반환한다`, /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
-      const issuePresignedPutUrl = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => ({
-        uploadUrl: "https://upload.example.com/signed",
-        objectKey: "object-key",
-        publicUrl: "https://cdn.example.com/object-key",
-        requiredHeaders: { "Content-Type": "image/png" },
-      }));
+      const issuePresignedPutUrl = fn(
+        /** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => ({
+          uploadUrl: "https://upload.example.com/signed",
+          objectKey: "object-key",
+          publicUrl: "https://cdn.example.com/object-key",
+          requiredHeaders: { "Content-Type": "image/png" },
+        }),
+      );
       const app = createTestApp({
         actor: createActor(route.role, IDs.manager),
         presignService: createPresignServiceMock({ issuePresignedPutUrl }),
@@ -115,13 +139,17 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
       const response = await app.request(route.path, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ fileName: "cover.png", contentType: "image/png", fileSize: 1024 }),
+        body: JSON.stringify({
+          fileName: "cover.png",
+          contentType: "image/png",
+          fileSize: 1024,
+        }),
       });
 
       expect(response.status).toBe(201);
-      const body = await readJson<{ data: { uploadUrl: string; publicUrl: string } }>(
-        response,
-      );
+      const body = await readJson<{
+        data: { uploadUrl: string; publicUrl: string };
+      }>(response);
       expect(body.data.uploadUrl).toContain("upload.example.com");
       expect(body.data.publicUrl).toContain("cdn.example.com");
       expect(issuePresignedPutUrl).toHaveBeenCalledWith({
@@ -135,9 +163,11 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     });
 
     it(`${route.path}는 presign 서비스 예외 시 500을 반환한다`, /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
-      const issuePresignedPutUrl = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
-        throw new Error("r2 unavailable");
-      });
+      const issuePresignedPutUrl = fn(
+        /** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+          throw new Error("r2 unavailable");
+        },
+      );
       const app = createTestApp({
         actor: createActor(route.role, IDs.manager),
         presignService: createPresignServiceMock({ issuePresignedPutUrl }),
@@ -146,7 +176,11 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
       const response = await app.request(route.path, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ fileName: "cover.png", contentType: "image/png", fileSize: 1024 }),
+        body: JSON.stringify({
+          fileName: "cover.png",
+          contentType: "image/png",
+          fileSize: 1024,
+        }),
       });
 
       expect(response.status).toBe(500);
@@ -154,10 +188,68 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     });
   }
 
-  it("R2 설정 누락 에러는 내부 오류로 처리하되 상세 안내 메시지를 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
-    const issuePresignedPutUrl = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
-      throw new MissingStorageConfigError(["R2_S3_ENDPOINT", "R2_ACCESS_KEY_ID"]);
+  it("세션 조회 중 예외가 발생해도 500 대신 401을 반환한다", async () => {
+    const app = createTestApp({
+      actor: null,
+      resolveActor: async () => {
+        throw new Error("Network connection lost.");
+      },
     });
+
+    const response = await app.request("/api/activities/presign/cover", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "cover.png",
+        contentType: "image/png",
+        fileSize: 1024,
+      }),
+    });
+
+    expect(response.status).toBe(401);
+    await expectErrorCode(response, "UNAUTHORIZED");
+  });
+
+  for (const path of [
+    "/api/activities/presign/cover",
+    "/api/activities/presign/detail",
+  ]) {
+    it(`${path}는 regular_member에게 허용된다`, async () => {
+      const issuePresignedPutUrl = fn(async () => ({
+        uploadUrl: "https://upload.example.com/signed",
+        objectKey: "activities/object-key",
+        publicUrl: "https://cdn.example.com/activities/object-key",
+        requiredHeaders: { "Content-Type": "image/png" },
+      }));
+      const app = createTestApp({
+        actor: createActor("regular_member", IDs.member),
+        presignService: createPresignServiceMock({ issuePresignedPutUrl }),
+      });
+
+      const response = await app.request(path, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          fileName: "cover.png",
+          contentType: "image/png",
+          fileSize: 1024,
+        }),
+      });
+
+      expect(response.status).toBe(201);
+      expect(issuePresignedPutUrl).toHaveBeenCalled();
+    });
+  }
+
+  it("R2 설정 누락 에러는 내부 오류로 처리하되 상세 안내 메시지를 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+    const issuePresignedPutUrl = fn(
+      /** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+        throw new MissingStorageConfigError([
+          "R2_S3_ENDPOINT",
+          "R2_ACCESS_KEY_ID",
+        ]);
+      },
+    );
     const consoleSpy = fn();
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
@@ -170,7 +262,11 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
       const response = await app.request("/api/activities/presign/cover", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ fileName: "cover.png", contentType: "image/png", fileSize: 1024 }),
+        body: JSON.stringify({
+          fileName: "cover.png",
+          contentType: "image/png",
+          fileSize: 1024,
+        }),
       });
 
       expect(response.status).toBe(500);
@@ -183,12 +279,14 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
   });
 
   it("/api/users/presign/profile는 manager에게 403을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
-    const issuePresignedPutUrl = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => ({
-      uploadUrl: "https://upload.example.com/signed",
-      objectKey: "users/profile-key",
-      publicUrl: "https://cdn.example.com/users/profile-key",
-      requiredHeaders: { "Content-Type": "image/png" },
-    }));
+    const issuePresignedPutUrl = fn(
+      /** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => ({
+        uploadUrl: "https://upload.example.com/signed",
+        objectKey: "users/profile-key",
+        publicUrl: "https://cdn.example.com/users/profile-key",
+        requiredHeaders: { "Content-Type": "image/png" },
+      }),
+    );
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
       presignService: createPresignServiceMock({ issuePresignedPutUrl }),
@@ -197,7 +295,11 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     const response = await app.request("/api/users/presign/profile", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png", fileSize: 1024 }),
+      body: JSON.stringify({
+        fileName: "profile.png",
+        contentType: "image/png",
+        fileSize: 1024,
+      }),
     });
 
     expect(response.status).toBe(403);
@@ -210,7 +312,11 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     const response = await app.request("/api/users/presign/profile", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png", fileSize: 1024 }),
+      body: JSON.stringify({
+        fileName: "profile.png",
+        contentType: "image/png",
+        fileSize: 1024,
+      }),
     });
 
     expect(response.status).toBe(401);
@@ -218,12 +324,14 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
   });
 
   it("/api/users/presign/profile는 member 계열 사용자에게 허용된다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
-    const issuePresignedPutUrl = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => ({
-      uploadUrl: "https://upload.example.com/signed",
-      objectKey: "users/profile-key",
-      publicUrl: "https://cdn.example.com/users/profile-key",
-      requiredHeaders: { "Content-Type": "image/png" },
-    }));
+    const issuePresignedPutUrl = fn(
+      /** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => ({
+        uploadUrl: "https://upload.example.com/signed",
+        objectKey: "users/profile-key",
+        publicUrl: "https://cdn.example.com/users/profile-key",
+        requiredHeaders: { "Content-Type": "image/png" },
+      }),
+    );
     const app = createTestApp({
       actor: createActor("associate_member", IDs.member),
       presignService: createPresignServiceMock({ issuePresignedPutUrl }),
@@ -232,7 +340,11 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     const response = await app.request("/api/users/presign/profile", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png", fileSize: 1024 }),
+      body: JSON.stringify({
+        fileName: "profile.png",
+        contentType: "image/png",
+        fileSize: 1024,
+      }),
     });
 
     expect(response.status).toBe(201);
@@ -247,12 +359,14 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
   });
 
   it("/api/users/presign/profile는 user update 권한이 있는 관리자에게 허용된다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
-    const issuePresignedPutUrl = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => ({
-      uploadUrl: "https://upload.example.com/signed",
-      objectKey: "users/profile-key",
-      publicUrl: "https://cdn.example.com/users/profile-key",
-      requiredHeaders: { "Content-Type": "image/png" },
-    }));
+    const issuePresignedPutUrl = fn(
+      /** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => ({
+        uploadUrl: "https://upload.example.com/signed",
+        objectKey: "users/profile-key",
+        publicUrl: "https://cdn.example.com/users/profile-key",
+        requiredHeaders: { "Content-Type": "image/png" },
+      }),
+    );
     const app = createTestApp({
       actor: createActor("vice_president", IDs.vicePresident),
       presignService: createPresignServiceMock({ issuePresignedPutUrl }),
@@ -261,7 +375,11 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     const response = await app.request("/api/users/presign/profile", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png", fileSize: 1024 }),
+      body: JSON.stringify({
+        fileName: "profile.png",
+        contentType: "image/png",
+        fileSize: 1024,
+      }),
     });
 
     expect(response.status).toBe(201);
@@ -276,7 +394,9 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
   });
 
   it("/api/users/presign/profile 본문이 유효하지 않으면 400을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
-    const app = createTestApp({ actor: createActor("associate_member", IDs.member) });
+    const app = createTestApp({
+      actor: createActor("associate_member", IDs.member),
+    });
 
     const response = await app.request("/api/users/presign/profile", {
       method: "POST",
@@ -289,7 +409,9 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
   });
 
   it("/api/users/presign/profile는 JSON 본문이 깨졌으면 400을 반환한다", async () => {
-    const app = createTestApp({ actor: createActor("associate_member", IDs.member) });
+    const app = createTestApp({
+      actor: createActor("associate_member", IDs.member),
+    });
     const response = await app.request("/api/users/presign/profile", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -301,9 +423,11 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
   });
 
   it("/api/users/presign/profile는 presign 서비스 예외 시 500을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
-    const issuePresignedPutUrl = fn(/** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
-      throw new Error("r2 unavailable");
-    });
+    const issuePresignedPutUrl = fn(
+      /** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+        throw new Error("r2 unavailable");
+      },
+    );
     const app = createTestApp({
       actor: createActor("associate_member", IDs.member),
       presignService: createPresignServiceMock({ issuePresignedPutUrl }),
@@ -312,7 +436,11 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     const response = await app.request("/api/users/presign/profile", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png", fileSize: 1024 }),
+      body: JSON.stringify({
+        fileName: "profile.png",
+        contentType: "image/png",
+        fileSize: 1024,
+      }),
     });
 
     expect(response.status).toBe(500);
@@ -331,7 +459,11 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     const response = await app.request("/api/users/presign/profile", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ fileName: "profile.png", contentType: "image/png", fileSize: 1024 }),
+      body: JSON.stringify({
+        fileName: "profile.png",
+        contentType: "image/png",
+        fileSize: 1024,
+      }),
     });
 
     expect(response.status).toBe(500);
@@ -350,7 +482,7 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
       body: JSON.stringify({
         fileName: "cover.png",
         contentType: "image/png",
-        fileSize: 99_999_999,
+        fileSize: 1024 * 1024 * 1024 + 1,
       }),
     });
 
@@ -374,6 +506,44 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     });
 
     expect(response.status).toBe(415);
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+
+  it("/api/notices/presign/image는 허용되지 않은 content-type 요청을 거부한다", async () => {
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+    });
+
+    const response = await app.request("/api/notices/presign/image", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "notice.svg",
+        contentType: "image/svg+xml",
+        fileSize: 1024,
+      }),
+    });
+
+    expect(response.status).toBe(415);
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+
+  it("/api/notices/presign/image는 허용 크기 초과 시 413을 반환한다", async () => {
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+    });
+
+    const response = await app.request("/api/notices/presign/image", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "notice.png",
+        contentType: "image/png",
+        fileSize: 1024 * 1024 * 1024 + 1,
+      }),
+    });
+
+    expect(response.status).toBe(413);
     await expectErrorCode(response, "BAD_REQUEST");
   });
 
@@ -405,15 +575,18 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
       }),
     });
 
-    const initResponse = await app.request("/api/activities/multipart/detail/init", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        fileName: "large.png",
-        contentType: "image/png",
-        fileSize: 20 * 1024 * 1024,
-      }),
-    });
+    const initResponse = await app.request(
+      "/api/activities/multipart/detail/init",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          fileName: "large.png",
+          contentType: "image/png",
+          fileSize: 20 * 1024 * 1024,
+        }),
+      },
+    );
     expect(initResponse.status).toBe(201);
     expect(initiateMultipartUpload).toHaveBeenCalled();
 
@@ -429,15 +602,18 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     expect(partResponse.status).toBe(200);
     expect(issueMultipartUploadPartUrl).toHaveBeenCalled();
 
-    const completeResponse = await app.request("/api/uploads/multipart/complete", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        uploadId: "upload-id-1",
-        objectKey: `activities/${IDs.manager}/detail/multipart-key`,
-        parts: [{ partNumber: 1, etag: "\"etag-1\"" }],
-      }),
-    });
+    const completeResponse = await app.request(
+      "/api/uploads/multipart/complete",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          uploadId: "upload-id-1",
+          objectKey: `activities/${IDs.manager}/detail/multipart-key`,
+          parts: [{ partNumber: 1, etag: '"etag-1"' }],
+        }),
+      },
+    );
     expect(completeResponse.status).toBe(200);
     expect(completeMultipartUpload).toHaveBeenCalled();
 

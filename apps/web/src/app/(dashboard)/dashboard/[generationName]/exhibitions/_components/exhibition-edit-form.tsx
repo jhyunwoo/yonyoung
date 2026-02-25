@@ -1,0 +1,495 @@
+"use client";
+
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { ApiExhibition } from "../../../../../../lib/admin-api/types";
+import { adminResourceApi } from "../../../../../../lib/admin-api/resources";
+import {
+  PRESIGN_PATHS,
+  uploadWithPresign,
+} from "../../../../../../lib/admin-api/upload";
+import { shouldUseUnoptimizedImage } from "../../../../../../lib/image-utils";
+import AuditHistoryPanel from "../../../../_components/audit-history-panel";
+import LastUpdatedMeta from "../../../../_components/last-updated-meta";
+import SortableImageGrid from "../../../../_components/sortable-image-grid";
+import ExhibitionRichTextEditor from "./exhibition-rich-text-editor";
+import {
+  formatTimestampToDateInput,
+  hasMeaningfulExhibitionDescription,
+  readExhibitionErrorMessage,
+  validateExhibitionDateRange,
+} from "./exhibition-shared";
+
+type ExhibitionEditFormProps = {
+  exhibitionId: string;
+  generationId: string;
+  generationName: string;
+  generationPath: string;
+  initialMessage: string | null;
+};
+
+type EditableDetailImage = {
+  id: string;
+  imageUrl: string;
+  kind: "existing" | "new";
+  file?: File;
+};
+
+const readFileList = (files: FileList | null): File[] => (files ? Array.from(files) : []);
+
+const createNewDetailImage = (file: File): EditableDetailImage => ({
+  id: `new-${crypto.randomUUID()}`,
+  imageUrl: URL.createObjectURL(file),
+  kind: "new",
+  file,
+});
+
+const EMPTY_DESCRIPTION_HTML = "<p></p>";
+
+export default function ExhibitionEditForm({
+  exhibitionId,
+  generationId,
+  generationName,
+  generationPath,
+  initialMessage,
+}: ExhibitionEditFormProps) {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [noticeMessage, setNoticeMessage] = useState<string | null>(initialMessage);
+
+  const [exhibition, setExhibition] = useState<ApiExhibition | null>(null);
+  const [title, setTitle] = useState("");
+  const [place, setPlace] = useState("");
+  const [descriptionHtml, setDescriptionHtml] = useState(EMPTY_DESCRIPTION_HTML);
+  const [startDateInput, setStartDateInput] = useState("");
+  const [endDateInput, setEndDateInput] = useState("");
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+
+  const [detailImages, setDetailImages] = useState<EditableDetailImage[]>([]);
+  const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]);
+
+  const detailImagesRef = useRef<EditableDetailImage[]>([]);
+
+  useEffect(() => {
+    detailImagesRef.current = detailImages;
+  }, [detailImages]);
+
+  useEffect(() => {
+    return () => {
+      if (coverPreviewUrl) {
+        URL.revokeObjectURL(coverPreviewUrl);
+      }
+
+      for (const image of detailImagesRef.current) {
+        if (image.kind === "new") {
+          URL.revokeObjectURL(image.imageUrl);
+        }
+      }
+    };
+  }, [coverPreviewUrl]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const load = async () => {
+      setIsLoading(true);
+      setErrorMessage(null);
+
+      try {
+        const row = await adminResourceApi.getExhibitionById(exhibitionId);
+        if (!mounted) {
+          return;
+        }
+
+        if (row.generationId !== generationId) {
+          router.replace(`${generationPath}/exhibitions`);
+          return;
+        }
+
+        const sortedImages = row.detailImages
+          .slice()
+          .sort((left, right) => left.sortOrder - right.sortOrder)
+          .map((image) => ({
+            id: image.id,
+            imageUrl: image.imageUrl,
+            kind: "existing" as const,
+          }));
+
+        setExhibition(row);
+        setTitle(row.title);
+        setPlace(row.place);
+        setDescriptionHtml(row.description.length > 0 ? row.description : EMPTY_DESCRIPTION_HTML);
+        setStartDateInput(formatTimestampToDateInput(row.startDate));
+        setEndDateInput(formatTimestampToDateInput(row.endDate));
+        setDetailImages(sortedImages);
+        setDeletedImageIds([]);
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+        setErrorMessage(readExhibitionErrorMessage(error));
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void load();
+    return () => {
+      mounted = false;
+    };
+  }, [exhibitionId, generationId, generationPath, router]);
+
+  const isSubmitDisabled = useMemo(() => {
+    return (
+      isSaving ||
+      isLoading ||
+      title.trim().length === 0 ||
+      place.trim().length === 0 ||
+      !hasMeaningfulExhibitionDescription(descriptionHtml) ||
+      startDateInput.trim().length === 0 ||
+      endDateInput.trim().length === 0 ||
+      exhibition === null
+    );
+  }, [descriptionHtml, endDateInput, exhibition, isLoading, isSaving, place, startDateInput, title]);
+
+  const handleCoverFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const nextFile = event.target.files?.[0] ?? null;
+
+    if (coverPreviewUrl) {
+      URL.revokeObjectURL(coverPreviewUrl);
+    }
+
+    setCoverFile(nextFile);
+    if (!nextFile) {
+      setCoverPreviewUrl(null);
+      return;
+    }
+
+    setCoverPreviewUrl(URL.createObjectURL(nextFile));
+  };
+
+  const handleAddDetailFiles = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = readFileList(event.target.files);
+    event.target.value = "";
+    if (files.length === 0) {
+      return;
+    }
+
+    setDetailImages((previous) => [...previous, ...files.map(createNewDetailImage)]);
+  };
+
+  const handleRemoveDetailImage = (imageId: string) => {
+    setDetailImages((previous) => {
+      const target = previous.find((image) => image.id === imageId);
+      if (target?.kind === "new") {
+        URL.revokeObjectURL(target.imageUrl);
+      }
+      return previous.filter((image) => image.id !== imageId);
+    });
+
+    const targetExistingId = detailImages.find((image) => image.id === imageId && image.kind === "existing")?.id;
+    if (targetExistingId) {
+      setDeletedImageIds((previous) => (previous.includes(targetExistingId) ? previous : [...previous, targetExistingId]));
+    }
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setErrorMessage(null);
+    setNoticeMessage(null);
+
+    if (!exhibition) {
+      setErrorMessage("전시 정보를 먼저 불러와 주세요.");
+      return;
+    }
+
+    const trimmedTitle = title.trim();
+    const trimmedPlace = place.trim();
+    if (!trimmedTitle || !trimmedPlace) {
+      setErrorMessage("전시 제목과 장소를 모두 입력해 주세요.");
+      return;
+    }
+
+    if (!hasMeaningfulExhibitionDescription(descriptionHtml)) {
+      setErrorMessage("전시 상세 설명을 입력해 주세요.");
+      return;
+    }
+
+    const dateRangeResult = validateExhibitionDateRange({
+      startDateInput,
+      endDateInput,
+    });
+    if ("errorMessage" in dateRangeResult) {
+      setErrorMessage(dateRangeResult.errorMessage);
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      let nextCoverImageUrl = exhibition.coverImageUrl;
+      if (coverFile) {
+        nextCoverImageUrl = await uploadWithPresign({
+          presignPath: PRESIGN_PATHS.exhibitionCover,
+          file: coverFile,
+        });
+      }
+
+      await adminResourceApi.updateExhibition(exhibition.id, {
+        title: trimmedTitle,
+        place: trimmedPlace,
+        description: descriptionHtml,
+        startDate: dateRangeResult.startDate,
+        endDate: dateRangeResult.endDate,
+        coverImageUrl: nextCoverImageUrl,
+        generationId,
+      });
+
+      if (deletedImageIds.length > 0) {
+        await Promise.all(
+          deletedImageIds.map((imageId) => adminResourceApi.deleteExhibitionImage(exhibition.id, imageId)),
+        );
+      }
+
+      const existingOrder = detailImages.filter((image) => image.kind === "existing");
+      const newOrder = detailImages.filter((image) => image.kind === "new" && image.file);
+
+      const createdMap = new Map<string, string>();
+      if (newOrder.length > 0) {
+        const uploadedUrls = await Promise.all(
+          newOrder.map((image) =>
+            uploadWithPresign({
+              presignPath: PRESIGN_PATHS.exhibitionDetail,
+              file: image.file!,
+            }),
+          ),
+        );
+
+        const created = await adminResourceApi.addExhibitionImages(
+          exhibition.id,
+          uploadedUrls.map((imageUrl, index) => ({
+            imageUrl,
+            sortOrder: existingOrder.length + index,
+          })),
+        );
+
+        created.forEach((row, index) => {
+          const local = newOrder[index];
+          if (local) {
+            createdMap.set(local.id, row.id);
+          }
+        });
+      }
+
+      const finalOrder = detailImages
+        .map((image) => {
+          if (image.kind === "existing") {
+            return image.id;
+          }
+
+          return createdMap.get(image.id) ?? null;
+        })
+        .filter((id): id is string => Boolean(id));
+
+      if (finalOrder.length > 0) {
+        await adminResourceApi.updateExhibitionImages(
+          exhibition.id,
+          finalOrder.map((imageId, sortOrder) => ({
+            imageId,
+            sortOrder,
+          })),
+        );
+      }
+
+      router.push(`${generationPath}/exhibitions/${exhibition.id}`);
+    } catch (error) {
+      setErrorMessage(readExhibitionErrorMessage(error));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <section className="mx-auto w-full max-w-5xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Exhibitions</p>
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">{generationName} 전시 수정</h1>
+      <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
+        전시 기본 정보와 세부 이미지를 함께 수정할 수 있습니다.
+      </p>
+
+      {noticeMessage ? (
+        <p className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {noticeMessage}
+        </p>
+      ) : null}
+
+      {errorMessage ? (
+        <p className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {errorMessage}
+        </p>
+      ) : null}
+
+      {isLoading ? (
+        <p className="mt-6 text-sm text-slate-500">전시 정보를 불러오는 중입니다...</p>
+      ) : exhibition ? (
+        <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
+          <label className="block space-y-1">
+            <span className="text-sm font-semibold text-slate-900">전시 제목</span>
+            <input
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              disabled={isSaving}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            />
+          </label>
+
+          <label className="block space-y-1">
+            <span className="text-sm font-semibold text-slate-900">전시 장소</span>
+            <input
+              value={place}
+              onChange={(event) => setPlace(event.target.value)}
+              disabled={isSaving}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            />
+          </label>
+
+          <div className="space-y-1">
+            <span className="text-sm font-semibold text-slate-900">전시 상세 설명 (리치 텍스트)</span>
+            <ExhibitionRichTextEditor
+              value={descriptionHtml}
+              onChange={setDescriptionHtml}
+              disabled={isSaving}
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block space-y-1">
+              <span className="text-sm font-semibold text-slate-900">시작일</span>
+              <input
+                type="date"
+                value={startDateInput}
+                onChange={(event) => setStartDateInput(event.target.value)}
+                disabled={isSaving}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="block space-y-1">
+              <span className="text-sm font-semibold text-slate-900">종료일</span>
+              <input
+                type="date"
+                value={endDateInput}
+                onChange={(event) => setEndDateInput(event.target.value)}
+                disabled={isSaving}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              />
+            </label>
+          </div>
+
+          <div className="space-y-2 rounded-xl border border-slate-200 p-4">
+            <p className="text-sm font-semibold text-slate-900">대표 이미지 교체 (선택)</p>
+            <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+              <Image
+                src={exhibition.coverImageUrl}
+                alt={`${exhibition.title} 대표 이미지`}
+                fill
+                className="object-cover"
+                unoptimized={shouldUseUnoptimizedImage(exhibition.coverImageUrl)}
+                sizes="(max-width: 768px) 100vw, 400px"
+              />
+            </div>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleCoverFileChange}
+              disabled={isSaving}
+              className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            />
+            <p className="text-xs text-slate-500">
+              {coverFile ? `선택됨: ${coverFile.name}` : "대표 이미지를 교체하지 않으려면 비워 두세요."}
+            </p>
+            {coverPreviewUrl ? (
+              <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-emerald-200 bg-emerald-50">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={coverPreviewUrl} alt="새 대표 이미지 미리보기" className="h-full w-full object-cover" />
+              </div>
+            ) : null}
+          </div>
+
+          <div className="space-y-2 rounded-xl border border-slate-200 p-4">
+            <p className="text-sm font-semibold text-slate-900">세부 이미지</p>
+            <label className="block space-y-1">
+              <span className="text-xs text-slate-500">새 세부 이미지 추가 (선택, 다중)</span>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleAddDetailFiles}
+                disabled={isSaving}
+                className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              />
+            </label>
+            <p className="text-xs text-slate-500">드래그하여 세부 이미지 순서를 변경할 수 있습니다.</p>
+            <SortableImageGrid
+              items={detailImages.map((image, index) => ({
+                id: image.id,
+                imageUrl: image.imageUrl,
+                label: image.kind === "existing" ? `기존 이미지 ${index + 1}` : image.file?.name ?? `새 이미지 ${index + 1}`,
+                subtitle: image.kind === "existing" ? "기존" : "새 업로드",
+              }))}
+              onReorder={(nextItems) => {
+                const imageMap = new Map(detailImages.map((image) => [image.id, image]));
+                setDetailImages(
+                  nextItems
+                    .map((item) => imageMap.get(item.id))
+                    .filter((item): item is EditableDetailImage => item !== undefined),
+                );
+              }}
+              onRemoveItem={handleRemoveDetailImage}
+              disabled={isSaving}
+              emptyMessage="등록된 세부 이미지가 없습니다."
+            />
+          </div>
+
+          <LastUpdatedMeta
+            updatedAt={exhibition.updatedAt}
+            updatedBy={exhibition.updatedBy}
+            className="text-xs text-slate-500"
+          />
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="submit"
+              disabled={isSubmitDisabled}
+              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSaving ? "저장 중..." : "수정 저장"}
+            </button>
+            <Link
+              href={`${generationPath}/exhibitions/${exhibition.id}`}
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
+            >
+              상세로
+            </Link>
+            <Link
+              href={`${generationPath}/exhibitions`}
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
+            >
+              목록으로
+            </Link>
+          </div>
+        </form>
+      ) : null}
+
+      <div className="mt-6">
+        <AuditHistoryPanel resourceType="exhibition" resourceId={exhibitionId} />
+      </div>
+    </section>
+  );
+}

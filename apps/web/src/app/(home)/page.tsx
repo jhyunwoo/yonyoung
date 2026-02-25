@@ -14,6 +14,7 @@ import {
   safeList,
 } from "../../lib/public-api";
 import { shouldUseUnoptimizedImage } from "../../lib/image-utils";
+import { summarizeRichTextHtml } from "../../lib/rich-text";
 import { resolveSiteUrl } from "../../lib/seo";
 import { formatKoreanDateRange } from "../../lib/date-formatters";
 
@@ -188,7 +189,7 @@ export default async function HomePage() {
                       {activity.title}
                     </h3>
                     <p className="line-clamp-2 text-sm leading-relaxed text-(--text-muted)">
-                      {activity.description}
+                      {summarizeRichTextHtml(activity.description, 90)}
                     </p>
                   </div>
                 </article>

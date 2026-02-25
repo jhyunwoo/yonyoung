@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "db:generation": "drizzle-kit generate",
+    "db:backfill:rich-text": "node scripts/backfill-rich-text-html.mjs",
     "db:migrate": "wrangler d1 migrations apply yonyoung-db --remote",
     "db:migrate:remote": "pnpm run db:migrate",
     "db:push": "drizzle-kit generate && wrangler d1 migrations apply yonyoung-db --remote",
@@ -28,6 +29,7 @@
     "dotenv": "^17.3.1",
     "drizzle-orm": "^0.45.1",
     "hono": "^4.12.0",
+    "xss": "^1.0.15",
     "zod": "^4.3.6"
   },
   "devDependencies": {

@@ -1,4 +1,12 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { createPageMetadata } from "../../../lib/seo";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "아카이브 | 연영회",
+  description: "연영회의 활동 기록, 전시, 서포터즈 아카이브를 확인하세요.",
+  path: "/archive",
+});
 
 /**
  * ArchiveRootPage 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.

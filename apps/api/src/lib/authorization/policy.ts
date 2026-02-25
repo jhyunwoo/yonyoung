@@ -85,7 +85,7 @@ const permissionMatrix: PermissionMatrix = {
     activity: { ...allTrue },
     notice: { ...allTrue },
     supporter: { ...allTrue },
-    exhibition: { ...allTrue },
+    exhibition: { ...allTrue, delete: false },
     linktree: { ...allTrue },
     user: { ...allTrue },
   },
@@ -100,7 +100,7 @@ const permissionMatrix: PermissionMatrix = {
   },
   new_member: {
     generation: { ...readOnly },
-    activity: { ...readOnly },
+    activity: { create: true, read: true, update: true, delete: false },
     notice: { ...readOnly },
     supporter: { ...readOnly },
     exhibition: { ...readOnly },
@@ -109,7 +109,7 @@ const permissionMatrix: PermissionMatrix = {
   },
   associate_member: {
     generation: { ...readOnly },
-    activity: { ...readOnly },
+    activity: { create: true, read: true, update: true, delete: false },
     notice: { ...readOnly },
     supporter: { ...readOnly },
     exhibition: { ...readOnly },
@@ -118,7 +118,7 @@ const permissionMatrix: PermissionMatrix = {
   },
   regular_member: {
     generation: { ...readOnly },
-    activity: { ...readOnly },
+    activity: { create: true, read: true, update: true, delete: false },
     notice: { ...readOnly },
     supporter: { ...readOnly },
     exhibition: { ...readOnly },

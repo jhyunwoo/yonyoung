@@ -1,0 +1,501 @@
+"use client";
+
+import {
+  type ChangeEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { adminResourceApi } from "../../../lib/admin-api/resources";
+import { PRESIGN_PATHS, uploadWithPresign } from "../../../lib/admin-api/upload";
+import { AdminApiError } from "../../../lib/admin-api/types";
+import { formatKoreanDate } from "../../../lib/date-formatters";
+import { shouldUseUnoptimizedImage } from "../../../lib/image-utils";
+import { hasMeaningfulRichTextHtml } from "../../../lib/rich-text";
+import { RichTextContent } from "../../../lib/rich-text-content";
+import AuditHistoryPanel from "./audit-history-panel";
+import LastUpdatedMeta from "./last-updated-meta";
+import RichTextEditor from "./rich-text-editor";
+import SortableImageGrid from "./sortable-image-grid";
+import {
+  NOTICE_MAX_IMAGES,
+  buildRoleLabel,
+  isValidImageUrl,
+  normalizeNoticeImageUrls,
+  readNoticeErrorMessage,
+  toNoticeItem,
+  type NoticeItem,
+  type NoticeScope,
+} from "./notice-shared";
+
+type NoticeDetailProps = {
+  scope: NoticeScope;
+  generationId?: string;
+  noticeId: string;
+  canWrite: boolean;
+  listPath: string;
+  heading: string;
+  description: string;
+  editPath?: string;
+  allowInlineEdit?: boolean;
+};
+
+export default function NoticeDetail({
+  scope,
+  generationId,
+  noticeId,
+  canWrite,
+  listPath,
+  heading,
+  description,
+  editPath,
+  allowInlineEdit = true,
+}: NoticeDetailProps) {
+  const router = useRouter();
+  const canInlineEdit = canWrite && allowInlineEdit;
+
+  const [notice, setNotice] = useState<NoticeItem | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isNotFound, setIsNotFound] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingTitle, setEditingTitle] = useState("");
+  const [editingContent, setEditingContent] = useState("");
+  const [editingImageUrlInput, setEditingImageUrlInput] = useState("");
+  const [editingImageUrls, setEditingImageUrls] = useState<string[]>([]);
+
+  const loadNotice = useCallback(async () => {
+    setIsLoading(true);
+    setIsNotFound(false);
+    setErrorMessage(null);
+
+    try {
+      let noticeEntity;
+      if (scope === "generation") {
+        if (!generationId) {
+          throw new Error("기수 정보가 없습니다.");
+        }
+
+        noticeEntity = await adminResourceApi.getGenerationNoticeById(generationId, noticeId);
+      } else {
+        noticeEntity = await adminResourceApi.getGlobalNoticeById(noticeId);
+      }
+
+      const mapped = toNoticeItem(noticeEntity);
+      setNotice(mapped);
+      if (!isEditing) {
+        setEditingTitle(mapped.title);
+        setEditingContent(mapped.content);
+        setEditingImageUrls(mapped.imageUrls);
+      }
+    } catch (error) {
+      if (error instanceof AdminApiError && error.status === 404) {
+        setIsNotFound(true);
+        setNotice(null);
+      } else {
+        setErrorMessage(readNoticeErrorMessage(error));
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [generationId, isEditing, noticeId, scope]);
+
+  useEffect(() => {
+    void loadNotice();
+  }, [loadNotice]);
+
+  const startEditing = () => {
+    if (!notice || !canInlineEdit) {
+      return;
+    }
+
+    setEditingTitle(notice.title);
+    setEditingContent(notice.content);
+    setEditingImageUrls(notice.imageUrls);
+    setEditingImageUrlInput("");
+    setIsEditing(true);
+    setErrorMessage(null);
+  };
+
+  const cancelEditing = () => {
+    if (!notice) {
+      return;
+    }
+
+    setIsEditing(false);
+    setEditingTitle(notice.title);
+    setEditingContent(notice.content);
+    setEditingImageUrls(notice.imageUrls);
+    setEditingImageUrlInput("");
+  };
+
+  const appendEditingImageUrl = (rawUrl: string) => {
+    const trimmed = rawUrl.trim();
+    if (!trimmed) {
+      setErrorMessage("이미지 URL을 입력해 주세요.");
+      return;
+    }
+
+    if (!isValidImageUrl(trimmed)) {
+      setErrorMessage("유효한 이미지 URL(http/https)을 입력해 주세요.");
+      return;
+    }
+
+    if (editingImageUrls.includes(trimmed)) {
+      setErrorMessage("이미 추가된 이미지 URL입니다.");
+      return;
+    }
+
+    if (editingImageUrls.length >= NOTICE_MAX_IMAGES) {
+      setErrorMessage(`이미지는 최대 ${NOTICE_MAX_IMAGES}장까지 등록할 수 있습니다.`);
+      return;
+    }
+
+    setEditingImageUrls((previous) => [...previous, trimmed]);
+    setEditingImageUrlInput("");
+    setErrorMessage(null);
+  };
+
+  const removeEditingImageUrl = (targetUrl: string) => {
+    setEditingImageUrls((previous) => previous.filter((url) => url !== targetUrl));
+  };
+
+  const handleUploadEditingImage = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    if (editingImageUrls.length >= NOTICE_MAX_IMAGES) {
+      setErrorMessage(`이미지는 최대 ${NOTICE_MAX_IMAGES}장까지 등록할 수 있습니다.`);
+      return;
+    }
+
+    setIsUploadingImage(true);
+    setErrorMessage(null);
+
+    try {
+      const uploadedUrl = await uploadWithPresign({
+        presignPath: PRESIGN_PATHS.noticeImage,
+        file,
+      });
+      appendEditingImageUrl(uploadedUrl);
+    } catch (error) {
+      setErrorMessage(readNoticeErrorMessage(error));
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleUpdateNotice = async () => {
+    const nextTitle = editingTitle.trim();
+
+    if (!nextTitle || !hasMeaningfulRichTextHtml(editingContent)) {
+      setErrorMessage("제목과 본문을 모두 입력해 주세요.");
+      return;
+    }
+
+    const normalizedImageUrls = normalizeNoticeImageUrls(editingImageUrls);
+    setEditingImageUrls(normalizedImageUrls);
+
+    setIsSaving(true);
+    setErrorMessage(null);
+
+    try {
+      let updatedNotice;
+      if (scope === "generation") {
+        if (!generationId) {
+          throw new Error("기수 정보가 없습니다.");
+        }
+
+        updatedNotice = await adminResourceApi.updateGenerationNotice(generationId, noticeId, {
+          title: nextTitle,
+          content: editingContent,
+          imageUrls: normalizedImageUrls,
+        });
+      } else {
+        updatedNotice = await adminResourceApi.updateGlobalNotice(noticeId, {
+          title: nextTitle,
+          content: editingContent,
+          imageUrls: normalizedImageUrls,
+        });
+      }
+
+      const mapped = toNoticeItem(updatedNotice);
+      setNotice(mapped);
+      setEditingTitle(mapped.title);
+      setEditingContent(mapped.content);
+      setEditingImageUrls(mapped.imageUrls);
+      setIsEditing(false);
+      router.refresh();
+    } catch (error) {
+      setErrorMessage(readNoticeErrorMessage(error));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteNotice = async () => {
+    const shouldDelete = window.confirm("공지를 삭제하시겠습니까?");
+    if (!shouldDelete) {
+      return;
+    }
+
+    setIsSaving(true);
+    setErrorMessage(null);
+
+    try {
+      if (scope === "generation") {
+        if (!generationId) {
+          throw new Error("기수 정보가 없습니다.");
+        }
+
+        await adminResourceApi.deleteGenerationNotice(generationId, noticeId);
+      } else {
+        await adminResourceApi.deleteGlobalNotice(noticeId);
+      }
+
+      router.replace(listPath);
+      router.refresh();
+    } catch (error) {
+      setErrorMessage(readNoticeErrorMessage(error));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const renderedImageUrls = useMemo(() => {
+    if (isEditing) {
+      return editingImageUrls;
+    }
+
+    return notice?.imageUrls ?? [];
+  }, [editingImageUrls, isEditing, notice?.imageUrls]);
+
+  if (isLoading) {
+    return (
+      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+        <p className="text-sm text-slate-500">공지 내용을 불러오는 중입니다...</p>
+      </section>
+    );
+  }
+
+  if (isNotFound) {
+    return (
+      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+        <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">{heading}</h1>
+        <p className="mt-3 text-sm text-slate-600">존재하지 않는 공지이거나 접근할 수 없습니다.</p>
+        <Link
+          href={listPath}
+          className="mt-6 inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+        >
+          목록으로 이동
+        </Link>
+      </section>
+    );
+  }
+
+  if (!notice) {
+    return (
+      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+        <p className="text-sm text-slate-500">공지 데이터를 불러올 수 없습니다.</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Notices</p>
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">{heading}</h1>
+      <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">{description}</p>
+
+      {errorMessage ? (
+        <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {errorMessage}
+        </p>
+      ) : null}
+
+      <div className="mt-6 rounded-xl border border-slate-200 p-4">
+        {isEditing ? (
+          <div className="space-y-3">
+            <input
+              value={editingTitle}
+              onChange={(event) => setEditingTitle(event.target.value)}
+              disabled={isSaving || isUploadingImage}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            />
+            <RichTextEditor
+              value={editingContent}
+              onChange={setEditingContent}
+              disabled={isSaving || isUploadingImage}
+            />
+          </div>
+        ) : (
+          <>
+            <h2 className="text-xl font-semibold text-slate-900">{notice.title}</h2>
+            <p className="mt-2 text-xs text-slate-500">
+              작성자: {notice.author.name} ({buildRoleLabel(notice.author.role)}) · 작성일: {formatKoreanDate(notice.createdAt)}
+            </p>
+            <LastUpdatedMeta
+              updatedAt={notice.updatedAt}
+              updatedBy={notice.updatedBy}
+              className="mt-2 text-xs text-slate-500"
+            />
+            <div className="mt-3">
+              <RichTextContent html={notice.content} />
+            </div>
+          </>
+        )}
+      </div>
+
+      {isEditing ? (
+        <div className="mt-4 rounded-xl border border-slate-200 p-4">
+          <p className="text-sm font-semibold text-slate-900">첨부 이미지</p>
+          <p className="mt-1 text-xs text-slate-500">최대 {NOTICE_MAX_IMAGES}장</p>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <input
+              value={editingImageUrlInput}
+              onChange={(event) => setEditingImageUrlInput(event.target.value)}
+              disabled={isSaving || isUploadingImage || editingImageUrls.length >= NOTICE_MAX_IMAGES}
+              placeholder="https://..."
+              className="min-w-[220px] flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            />
+            <button
+              type="button"
+              onClick={() => appendEditingImageUrl(editingImageUrlInput)}
+              disabled={isSaving || isUploadingImage || editingImageUrls.length >= NOTICE_MAX_IMAGES}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              URL 추가
+            </button>
+          </div>
+
+          <label className="mt-2 inline-flex cursor-pointer rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+            파일 업로드
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleUploadEditingImage}
+              disabled={isSaving || isUploadingImage || editingImageUrls.length >= NOTICE_MAX_IMAGES}
+              className="hidden"
+            />
+          </label>
+
+          {isUploadingImage ? (
+            <p className="mt-2 text-xs text-slate-500">이미지 업로드 중...</p>
+          ) : null}
+
+          <div className="mt-3 space-y-2">
+            <p className="text-xs text-slate-500">드래그하여 이미지 순서를 변경할 수 있습니다.</p>
+            <SortableImageGrid
+              items={editingImageUrls.map((imageUrl, index) => ({
+                id: imageUrl,
+                imageUrl,
+                label: `첨부 이미지 ${index + 1}`,
+                alt: "공지 첨부 이미지",
+              }))}
+              onReorder={(nextItems) => setEditingImageUrls(nextItems.map((item) => item.imageUrl))}
+              onRemoveItem={(itemId) => removeEditingImageUrl(itemId)}
+              disabled={isSaving || isUploadingImage}
+              emptyMessage="첨부된 이미지가 없습니다."
+            />
+          </div>
+        </div>
+      ) : renderedImageUrls.length > 0 ? (
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-slate-900">첨부 이미지</p>
+          <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {renderedImageUrls.map((imageUrl, index) => (
+              <div
+                key={`${notice.id}-${imageUrl}-${index}`}
+                className="relative aspect-[4/3] overflow-hidden rounded-xl border border-slate-200 bg-slate-100"
+              >
+                <Image
+                  src={imageUrl}
+                  alt={`공지 첨부 이미지 ${index + 1}`}
+                  fill
+                  className="object-cover"
+                  unoptimized={shouldUseUnoptimizedImage(imageUrl)}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="mt-6 flex flex-wrap gap-2">
+        <Link
+          href={listPath}
+          className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+        >
+          목록으로
+        </Link>
+
+        {canInlineEdit ? (
+          isEditing ? (
+            <>
+              <button
+                type="button"
+                onClick={() => void handleUpdateNotice()}
+                disabled={isSaving || isUploadingImage}
+                className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSaving ? "저장 중..." : "저장"}
+              </button>
+              <button
+                type="button"
+                onClick={cancelEditing}
+                disabled={isSaving || isUploadingImage}
+                className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700"
+              >
+                취소
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={startEditing}
+                className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
+              >
+                인라인 수정
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleDeleteNotice()}
+                disabled={isSaving}
+                className="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                삭제
+              </button>
+            </>
+          )
+        ) : editPath ? (
+          <Link
+            href={editPath}
+            className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
+          >
+            수정 페이지로 이동
+          </Link>
+        ) : null}
+      </div>
+
+      <div className="mt-6">
+        <AuditHistoryPanel
+          resourceType={scope === "generation" ? "generation_notice" : "global_notice"}
+          resourceId={noticeId}
+        />
+      </div>
+    </section>
+  );
+}

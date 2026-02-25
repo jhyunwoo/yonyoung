@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { getPublicExhibitionById } from "../../../../../lib/public-api";
 import { formatKoreanDateCompact } from "../../../../../lib/date-formatters";
 import { shouldUseUnoptimizedImage } from "../../../../../lib/image-utils";
+import { RichTextContent } from "../../../../../lib/rich-text-content";
 import { createPageMetadata } from "../../../../../lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
@@ -55,7 +56,10 @@ export default async function ExhibitionDetailPage({
             {formatKoreanDateCompact(exhibition.endDate)}
           </p>
           <p className="mb-0 mt-[0.4rem] text-[#555555]">{exhibition.place}</p>
-          <p className="mb-0 mt-3 leading-[1.6] text-[#4a4a4a]">{exhibition.description}</p>
+          <RichTextContent
+            html={exhibition.description}
+            className="mb-0 mt-3 leading-[1.6] text-[#4a4a4a]"
+          />
         </header>
 
         <section

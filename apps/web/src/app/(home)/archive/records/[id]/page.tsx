@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { getPublicActivityById } from "../../../../../lib/public-api";
 import { formatKoreanDateRange } from "../../../../../lib/date-formatters";
 import { shouldUseUnoptimizedImage } from "../../../../../lib/image-utils";
+import { RichTextContent } from "../../../../../lib/rich-text-content";
 import { createPageMetadata } from "../../../../../lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
@@ -51,7 +52,9 @@ export default async function RecordDetailPage({ params }: RecordDetailPageProps
           <p className="mb-0 mt-3 text-[0.95rem] text-[#666666]">
             {formatKoreanDateRange(activity.startDate, activity.endDate)}
           </p>
-          <p className="mb-0 mt-3 leading-[1.6] text-[#4a4a4a]">{activity.description}</p>
+          <div className="mb-0 mt-3 leading-[1.6] text-[#4a4a4a]">
+            <RichTextContent html={activity.description} />
+          </div>
         </header>
 
         <section

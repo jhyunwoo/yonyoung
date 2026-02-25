@@ -7,19 +7,20 @@ import {
   useRef,
   useState,
 } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowLeft,
+  Camera,
   ChevronDown,
   FolderKanban,
-  Link2,
+  Image as ImageIcon,
   LogOut,
   Megaphone,
   Menu,
   Settings,
-  StickyNote,
   UserCircle2,
   Users,
   X,
@@ -136,21 +137,21 @@ const SidebarContent = (input: {
           key: "generation-notices",
           href: `${input.selectedGeneration.path}/notices`,
           label: "공지",
-          Icon: StickyNote,
+          Icon: Megaphone,
           active: input.selectedGenerationScopedPath?.startsWith("/notices") === true,
         },
         {
           key: "generation-activities",
           href: `${input.selectedGeneration.path}/activities`,
           label: "활동",
-          Icon: Megaphone,
+          Icon: ImageIcon,
           active: input.selectedGenerationScopedPath?.startsWith("/activities") === true,
         },
         {
           key: "generation-exhibitions",
           href: `${input.selectedGeneration.path}/exhibitions`,
           label: "전시",
-          Icon: Link2,
+          Icon: Camera,
           active:
             input.selectedGenerationScopedPath?.startsWith("/exhibitions") === true,
         },
@@ -174,9 +175,7 @@ const SidebarContent = (input: {
         })),
       ];
 
-  const titleLabel = input.selectedGeneration
-    ? `${input.selectedGeneration.name} 관리`
-    : "기수 선택";
+  const currentGeneration = input.selectedGeneration;
 
   const viewerName = input.viewer?.displayName ?? "사용자";
   const viewerEmail = input.viewer?.email ?? "";
@@ -200,15 +199,27 @@ const SidebarContent = (input: {
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-slate-200 px-5 py-5">
-        <Link href="/dashboard" onClick={input.onNavigate} className="block">
-          <p className="text-xs font-semibold tracking-[0.14em] text-slate-500 uppercase">
-            YONYOUNG
-          </p>
-          <p className="mt-2 text-lg font-bold text-slate-900">내부 Dashboard</p>
+        <Link href="/dashboard" onClick={input.onNavigate} className="flex items-center gap-3">
+          <span className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
+            <Image
+              src="/yonyoung-logo-black.png"
+              alt="연영회 로고"
+              width={32}
+              height={32}
+              className="h-8 w-8 object-contain"
+            />
+          </span>
+          <div className="min-w-0">
+            <p className="text-lg font-bold text-slate-900">연영회 대시보드</p>
+            {currentGeneration ? (
+              <p className="mt-1 text-xs font-semibold text-slate-500">
+                현재 기수: {currentGeneration.name}
+              </p>
+            ) : null}
+          </div>
         </Link>
 
-        <p className="mt-4 text-xs font-semibold text-slate-500">{titleLabel}</p>
-        {!input.selectedGeneration && input.generationOptions.length === 0 ? (
+        {!currentGeneration && input.generationOptions.length === 0 ? (
           <p className="mt-2 text-xs leading-relaxed text-slate-500">
             현재 소속된 기수 정보가 없습니다.
           </p>

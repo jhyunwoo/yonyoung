@@ -5,6 +5,11 @@ import { parseBody, parseParams } from "../lib/validation/request";
 import { AppDependencies } from "../lib/services/dependencies";
 import { requireActor, requirePermission } from "../lib/http/authz";
 import {
+  recordAuditLog,
+  readChangedFields,
+  withUpdatedByActor,
+} from "../lib/audit";
+import {
   createdResponse,
   dataResponse,
   errorResponses,
@@ -205,8 +210,17 @@ export const registerLinktreeRoutes = (
       return badRequest(c, body.message);
     }
 
-    const data = await dependencies.getDataService(c).createLinktree(body.data);
-    return ok(c, data, 201);
+    const dataService = dependencies.getDataService(c);
+    const data = await dataService.createLinktree(body.data);
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "linktree",
+      resourceId: data.id,
+      action: "create",
+      changedFields: readChangedFields(body.data, ["name"]),
+    });
+    return ok(c, withUpdatedByActor(data, actorResult.actor), 201);
   });
 
   app.openapi(getLinktreeByIdRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
@@ -253,13 +267,20 @@ export const registerLinktreeRoutes = (
       return badRequest(c, "수정할 필드를 하나 이상 전달해야 합니다.");
     }
 
-    const data = await dependencies
-      .getDataService(c)
-      .updateLinktree(params.data.id, body.data);
+    const dataService = dependencies.getDataService(c);
+    const data = await dataService.updateLinktree(params.data.id, body.data);
     if (!data) {
       return notFound(c);
     }
-    return ok(c, data);
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "linktree",
+      resourceId: data.id,
+      action: "update",
+      changedFields: readChangedFields(body.data, ["updatedAt"]),
+    });
+    return ok(c, withUpdatedByActor(data, actorResult.actor));
   });
 
   app.openapi(deleteLinktreeRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
@@ -277,12 +298,19 @@ export const registerLinktreeRoutes = (
       return badRequest(c, params.message);
     }
 
-    const deleted = await dependencies
-      .getDataService(c)
-      .deleteLinktree(params.data.id);
+    const dataService = dependencies.getDataService(c);
+    const deleted = await dataService.deleteLinktree(params.data.id);
     if (!deleted) {
       return notFound(c);
     }
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "linktree",
+      resourceId: params.data.id,
+      action: "delete",
+      changedFields: ["deletedAt"],
+    });
     return noContent(c);
   });
 
@@ -305,13 +333,20 @@ export const registerLinktreeRoutes = (
       return badRequest(c, body.message);
     }
 
-    const data = await dependencies
-      .getDataService(c)
-      .addLinktreeItem(params.data.id, body.data);
+    const dataService = dependencies.getDataService(c);
+    const data = await dataService.addLinktreeItem(params.data.id, body.data);
     if (!data) {
       return notFound(c, "링크트리를 찾을 수 없습니다.");
     }
-    return ok(c, data, 201);
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "linktree_item",
+      resourceId: data.id,
+      action: "create",
+      changedFields: readChangedFields(body.data, ["name", "link"]),
+    });
+    return ok(c, withUpdatedByActor(data, actorResult.actor), 201);
   });
 
   app.openapi(updateLinktreeItemRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
@@ -336,13 +371,24 @@ export const registerLinktreeRoutes = (
       return badRequest(c, "수정할 필드를 하나 이상 전달해야 합니다.");
     }
 
-    const data = await dependencies
-      .getDataService(c)
-      .updateLinktreeItem(params.data.id, params.data.itemId, body.data);
+    const dataService = dependencies.getDataService(c);
+    const data = await dataService.updateLinktreeItem(
+      params.data.id,
+      params.data.itemId,
+      body.data,
+    );
     if (!data) {
       return notFound(c, "링크 아이템을 찾을 수 없습니다.");
     }
-    return ok(c, data);
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "linktree_item",
+      resourceId: data.id,
+      action: "update",
+      changedFields: readChangedFields(body.data, ["updatedAt"]),
+    });
+    return ok(c, withUpdatedByActor(data, actorResult.actor));
   });
 
   app.openapi(deleteLinktreeItemRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
@@ -360,12 +406,22 @@ export const registerLinktreeRoutes = (
       return badRequest(c, params.message);
     }
 
-    const deleted = await dependencies
-      .getDataService(c)
-      .deleteLinktreeItem(params.data.id, params.data.itemId);
+    const dataService = dependencies.getDataService(c);
+    const deleted = await dataService.deleteLinktreeItem(
+      params.data.id,
+      params.data.itemId,
+    );
     if (!deleted) {
       return notFound(c, "링크 아이템을 찾을 수 없습니다.");
     }
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "linktree_item",
+      resourceId: params.data.itemId,
+      action: "delete",
+      changedFields: ["deletedAt"],
+    });
     return noContent(c);
   });
 };

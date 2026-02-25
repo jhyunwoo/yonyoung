@@ -12,6 +12,7 @@ export default async function GenerationNoticesPage({
     requireDashboardGeneration(params),
     serverAuthTool.requireSession(),
   ]);
+  const noticesBasePath = `${generation.path}/notices`;
 
   return (
     <main className="px-4 py-6 md:px-8 md:py-8">
@@ -19,9 +20,11 @@ export default async function GenerationNoticesPage({
         scope="generation"
         generationId={generation.id}
         canWrite={isAdminRole(session.user.role)}
-        heading={`${generation.name} 공지 관리`}
-        description="해당 기수 전용 공지를 작성하고 수정할 수 있습니다."
+        heading={`${generation.name} 공지`}
+        description="최근 공지를 확인하고 항목을 클릭해 상세 내용을 볼 수 있습니다."
         emptyMessage="등록된 기수 공지가 없습니다."
+        basePath={noticesBasePath}
+        createPath={`${noticesBasePath}/new`}
       />
     </main>
   );

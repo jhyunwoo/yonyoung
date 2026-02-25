@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buildOpenGraphImagePath } from "./opengraph-image";
 
 const DEFAULT_PROD_SITE_URL = "https://yonyoung.moveto.kr";
 
@@ -19,6 +20,14 @@ export const createPageMetadata = (input: {
 }): Metadata => {
   const siteUrl = resolveSiteUrl();
   const canonicalUrl = new URL(input.path, siteUrl);
+  const openGraphImageUrl = new URL(
+    buildOpenGraphImagePath({
+      title: input.title,
+      description: input.description,
+      path: input.path,
+    }),
+    siteUrl,
+  );
 
   return {
     title: input.title,
@@ -35,11 +44,20 @@ export const createPageMetadata = (input: {
       title: input.title,
       description: input.description,
       siteName: "연영회",
+      images: [
+        {
+          url: openGraphImageUrl.toString(),
+          width: 1200,
+          height: 630,
+          alt: `${input.title} | 연영회`,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: input.title,
       description: input.description,
+      images: [openGraphImageUrl.toString()],
     },
   };
 };

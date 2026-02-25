@@ -16,6 +16,7 @@ const EXAMPLE_ITEM_ID = "44444444-4444-4444-8444-444444444444";
 const EXAMPLE_GENERATION_ID = "55555555-5555-4555-8555-555555555555";
 const EXAMPLE_NOTICE_ID = "66666666-6666-4666-8666-666666666666";
 const EXAMPLE_USER_ID = "OrYuGkpIFldOIkcrxLrwgzEegsLSJbrh";
+const EXAMPLE_AUDIT_ID = "77777777-7777-4777-8777-777777777777";
 const EXAMPLE_TIMESTAMP_MS = 1735689600000;
 const EXAMPLE_TIMESTAMP_MS_END = 1738368000000;
 
@@ -156,6 +157,88 @@ export const ApiNoticeIdParamSchema = z
   })
   .openapi("ApiNoticeIdParam");
 
+export const ApiAuditResourceTypeSchema = z
+  .enum([
+    "generation",
+    "activity",
+    "exhibition",
+    "generation_notice",
+    "global_notice",
+    "supporter",
+    "linktree",
+    "linktree_item",
+    "user",
+  ])
+  .openapi("ApiAuditResourceType");
+
+export const ApiAuditParamSchema = z
+  .object({
+    resourceType: ApiAuditResourceTypeSchema.openapi({
+      description: "감사 로그 조회 대상 리소스 타입",
+      example: "activity",
+    }),
+    resourceId: z.string().min(1).openapi({
+      description: "감사 로그 조회 대상 리소스 ID",
+      example: EXAMPLE_PARENT_ID,
+    }),
+  })
+  .openapi("ApiAuditParam");
+
+export const ApiAuditQuerySchema = z
+  .object({
+    limit: z.coerce.number().int().min(1).max(100).default(20).openapi({
+      description: "조회할 최대 로그 수 (기본 20, 최대 100)",
+      example: 20,
+    }),
+  })
+  .openapi("ApiAuditQuery");
+
+export const ApiAuditActorSchema = z
+  .object({
+    id: z.string().openapi({
+      description: "수정자 식별자 (better-auth user.id)",
+      example: EXAMPLE_USER_ID,
+    }),
+    name: z.string().openapi({
+      description: "수정자 이름",
+      example: "홍길동",
+    }),
+    role: z.string().nullable().openapi({
+      description: "수정자 역할 문자열",
+      example: "manager",
+    }),
+  })
+  .openapi("ApiAuditActor");
+
+export const ApiAuditLogSchema = z
+  .object({
+    id: z.string().uuid().openapi({
+      description: "감사 로그 UUID",
+      example: EXAMPLE_AUDIT_ID,
+    }),
+    resourceType: ApiAuditResourceTypeSchema.openapi({
+      description: "변경 대상 리소스 타입",
+      example: "activity",
+    }),
+    resourceId: z.string().openapi({
+      description: "변경 대상 리소스 ID",
+      example: EXAMPLE_PARENT_ID,
+    }),
+    action: z.enum(["create", "update", "delete"]).openapi({
+      description: "수행된 변경 액션",
+      example: "update",
+    }),
+    actor: ApiAuditActorSchema.nullable().openapi({
+      description: "수정자 정보",
+    }),
+    changedFields: z.array(z.string()).openapi({
+      description: "변경된 필드 목록",
+      example: ["title", "description", "updatedAt"],
+    }),
+    createdAt: timestampField("변경 시각", EXAMPLE_TIMESTAMP_MS),
+  })
+  .openapi("ApiAuditLog");
+
 export const ApiGenerationSchema = z
   .object({
     id: z.string().uuid().openapi({
@@ -174,6 +257,9 @@ export const ApiGenerationSchema = z
     endDate: timestampField("기수 종료일시", EXAMPLE_TIMESTAMP_MS_END),
     createdAt: timestampField("생성 시각", EXAMPLE_TIMESTAMP_MS),
     updatedAt: timestampField("수정 시각", EXAMPLE_TIMESTAMP_MS),
+    updatedBy: ApiAuditActorSchema.nullable().openapi({
+      description: "마지막 수정자 정보 (로그가 없으면 null)",
+    }),
   })
   .openapi("ApiGeneration");
 
@@ -238,8 +324,8 @@ export const ApiActivitySchema = z
       example: "겨울 정기 워크숍",
     }),
     description: z.string().openapi({
-      description: "활동 상세 설명",
-      example: "동아리 구성원 대상 촬영/편집 워크숍을 진행했습니다.",
+      description: "활동 상세 설명 리치텍스트 HTML 본문",
+      example: "<p>동아리 구성원 대상 <strong>촬영/편집</strong> 워크숍을 진행했습니다.</p>",
     }),
     startDate: timestampField("활동 시작 시각", EXAMPLE_TIMESTAMP_MS),
     endDate: timestampField("활동 종료 시각", EXAMPLE_TIMESTAMP_MS_END),
@@ -253,6 +339,9 @@ export const ApiActivitySchema = z
     }),
     createdAt: timestampField("활동 생성 시각", EXAMPLE_TIMESTAMP_MS),
     updatedAt: timestampField("활동 수정 시각", EXAMPLE_TIMESTAMP_MS),
+    updatedBy: ApiAuditActorSchema.nullable().openapi({
+      description: "마지막 수정자 정보 (로그가 없으면 null)",
+    }),
     detailImages: z.array(ApiActivityImageSchema).openapi({
       description: "활동 세부 이미지 목록",
     }),
@@ -266,8 +355,8 @@ export const ApiCreateActivitySchema = z
       example: "봄 정기전 준비 모임",
     }),
     description: z.string().min(1).openapi({
-      description: "활동 설명",
-      example: "정기전 작품 선정 및 역할 분담을 진행했습니다.",
+      description: "활동 설명 리치텍스트 HTML 본문",
+      example: "<p>정기전 작품 선정 및 역할 분담을 진행했습니다.</p>",
     }),
     startDate: z.number().int().positive().openapi({
       description: "활동 시작 시각 (Unix timestamp(ms))",
@@ -299,8 +388,8 @@ export const ApiUpdateActivitySchema = z
       example: "봄 정기전 준비 모임",
     }),
     description: z.string().min(1).optional().openapi({
-      description: "활동 설명",
-      example: "정기전 작품 선정 및 역할 분담을 진행했습니다.",
+      description: "활동 설명 리치텍스트 HTML 본문",
+      example: "<p>정기전 작품 선정 및 역할 분담을 진행했습니다.</p>",
     }),
     startDate: z.number().int().positive().optional().openapi({
       description: "활동 시작 시각 (Unix timestamp(ms))",
@@ -417,6 +506,9 @@ export const ApiSupporterSchema = z
     expiresAt: timestampField("후원 노출 만료 시각", EXAMPLE_TIMESTAMP_MS_END),
     createdAt: timestampField("후원사 생성 시각", EXAMPLE_TIMESTAMP_MS),
     updatedAt: timestampField("후원사 수정 시각", EXAMPLE_TIMESTAMP_MS),
+    updatedBy: ApiAuditActorSchema.nullable().openapi({
+      description: "마지막 수정자 정보 (로그가 없으면 null)",
+    }),
   })
   .openapi("ApiSupporter");
 
@@ -491,11 +583,14 @@ export const ApiExhibitionSchema = z
       "https://cdn.yonyoung.example/exhibitions/cover/cover-1.jpg",
     ),
     description: z.string().openapi({
-      description: "전시 소개 설명",
-      example: "도시의 밤을 주제로 한 동아리 정기전입니다.",
+      description: "전시 소개 리치텍스트 HTML 본문",
+      example: "<p>도시의 밤을 주제로 한 동아리 정기전입니다.</p>",
     }),
     createdAt: timestampField("전시 생성 시각", EXAMPLE_TIMESTAMP_MS),
     updatedAt: timestampField("전시 수정 시각", EXAMPLE_TIMESTAMP_MS),
+    updatedBy: ApiAuditActorSchema.nullable().openapi({
+      description: "마지막 수정자 정보 (로그가 없으면 null)",
+    }),
     detailImages: z.array(ApiExhibitionImageSchema).openapi({
       description: "전시 세부 이미지 목록",
     }),
@@ -529,8 +624,8 @@ export const ApiCreateExhibitionSchema = z
       "https://cdn.yonyoung.example/exhibitions/cover/new-cover.jpg",
     ),
     description: z.string().min(1).openapi({
-      description: "전시 설명",
-      example: "도시의 밤 풍경을 기록한 작품들을 전시합니다.",
+      description: "전시 설명 리치텍스트 HTML 본문",
+      example: "<p>도시의 밤 풍경을 기록한 작품들을 전시합니다.</p>",
     }),
   })
   .openapi("ApiCreateExhibitionInput");
@@ -606,6 +701,21 @@ export const ApiUpdateExhibitionImageBatchSchema = z
   )
   .openapi("ApiUpdateExhibitionImageBatchInput");
 
+const ApiNoticeImageUrlsSchema = z
+  .array(
+    urlField(
+      "공지 첨부 이미지 URL",
+      "https://cdn.yonyoung.example/notices/image/notice-image.jpg",
+    ),
+  )
+  .max(10, "공지 첨부 이미지는 최대 10장까지 등록할 수 있습니다.")
+  .refine(
+    (items) => new Set(items).size === items.length,
+    {
+      message: "중복된 imageUrls를 전달할 수 없습니다.",
+    },
+  );
+
 export const ApiNoticeAuthorSchema = z
   .object({
     id: z.string().openapi({
@@ -642,14 +752,24 @@ export const ApiGenerationNoticeSchema = z
       example: "60기 정기 회의 안내",
     }),
     content: z.string().openapi({
-      description: "공지 본문",
-      example: "이번 주 토요일 14시에 회의를 진행합니다.",
+      description: "공지 리치텍스트 HTML 본문",
+      example: "<p>이번 주 토요일 14시에 회의를 진행합니다.</p>",
+    }),
+    imageUrls: ApiNoticeImageUrlsSchema.openapi({
+      description: "공지 첨부 이미지 URL 목록",
+      example: [
+        "https://cdn.yonyoung.example/notices/image/notice-1.jpg",
+        "https://cdn.yonyoung.example/notices/image/notice-2.jpg",
+      ],
     }),
     author: ApiNoticeAuthorSchema.openapi({
       description: "공지 작성자 정보",
     }),
     createdAt: timestampField("공지 생성 시각", EXAMPLE_TIMESTAMP_MS),
     updatedAt: timestampField("공지 수정 시각", EXAMPLE_TIMESTAMP_MS),
+    updatedBy: ApiAuditActorSchema.nullable().openapi({
+      description: "마지막 수정자 정보 (로그가 없으면 null)",
+    }),
   })
   .openapi("ApiGenerationNotice");
 
@@ -660,8 +780,12 @@ export const ApiCreateGenerationNoticeSchema = z
       example: "60기 정기 회의 안내",
     }),
     content: z.string().trim().min(1, "공지 본문은 비워둘 수 없습니다.").openapi({
-      description: "공지 본문",
-      example: "이번 주 토요일 14시에 회의를 진행합니다.",
+      description: "공지 리치텍스트 HTML 본문",
+      example: "<p>이번 주 토요일 14시에 회의를 진행합니다.</p>",
+    }),
+    imageUrls: ApiNoticeImageUrlsSchema.optional().default([]).openapi({
+      description: "공지 첨부 이미지 URL 목록 (미전달 시 빈 배열)",
+      example: ["https://cdn.yonyoung.example/notices/image/notice-1.jpg"],
     }),
   })
   .openapi("ApiCreateGenerationNoticeInput");
@@ -683,9 +807,13 @@ export const ApiUpdateGenerationNoticeSchema = z
       .min(1, "공지 본문은 비워둘 수 없습니다.")
       .optional()
       .openapi({
-        description: "공지 본문",
-        example: "회의 장소가 소회의실로 변경되었습니다.",
+        description: "공지 리치텍스트 HTML 본문",
+        example: "<p>회의 장소가 소회의실로 변경되었습니다.</p>",
       }),
+    imageUrls: ApiNoticeImageUrlsSchema.optional().openapi({
+      description: "공지 첨부 이미지 URL 목록",
+      example: ["https://cdn.yonyoung.example/notices/image/updated-notice.jpg"],
+    }),
   })
   .strict()
   .openapi("ApiUpdateGenerationNoticeInput");
@@ -701,14 +829,21 @@ export const ApiGlobalNoticeSchema = z
       example: "연영회 정기 총회 안내",
     }),
     content: z.string().openapi({
-      description: "공지 본문",
-      example: "다음 주 금요일 19시 정기 총회가 진행됩니다.",
+      description: "공지 리치텍스트 HTML 본문",
+      example: "<p>다음 주 금요일 19시 정기 총회가 진행됩니다.</p>",
+    }),
+    imageUrls: ApiNoticeImageUrlsSchema.openapi({
+      description: "공지 첨부 이미지 URL 목록",
+      example: ["https://cdn.yonyoung.example/notices/image/global-notice.jpg"],
     }),
     author: ApiNoticeAuthorSchema.openapi({
       description: "공지 작성자 정보",
     }),
     createdAt: timestampField("공지 생성 시각", EXAMPLE_TIMESTAMP_MS),
     updatedAt: timestampField("공지 수정 시각", EXAMPLE_TIMESTAMP_MS),
+    updatedBy: ApiAuditActorSchema.nullable().openapi({
+      description: "마지막 수정자 정보 (로그가 없으면 null)",
+    }),
   })
   .openapi("ApiGlobalNotice");
 
@@ -719,8 +854,12 @@ export const ApiCreateGlobalNoticeSchema = z
       example: "연영회 정기 총회 안내",
     }),
     content: z.string().trim().min(1, "공지 본문은 비워둘 수 없습니다.").openapi({
-      description: "공지 본문",
-      example: "다음 주 금요일 19시 정기 총회가 진행됩니다.",
+      description: "공지 리치텍스트 HTML 본문",
+      example: "<p>다음 주 금요일 19시 정기 총회가 진행됩니다.</p>",
+    }),
+    imageUrls: ApiNoticeImageUrlsSchema.optional().default([]).openapi({
+      description: "공지 첨부 이미지 URL 목록 (미전달 시 빈 배열)",
+      example: ["https://cdn.yonyoung.example/notices/image/global-notice.jpg"],
     }),
   })
   .openapi("ApiCreateGlobalNoticeInput");
@@ -742,9 +881,13 @@ export const ApiUpdateGlobalNoticeSchema = z
       .min(1, "공지 본문은 비워둘 수 없습니다.")
       .optional()
       .openapi({
-        description: "공지 본문",
-        example: "일정이 변경되어 토요일 19시로 진행됩니다.",
+        description: "공지 리치텍스트 HTML 본문",
+        example: "<p>일정이 변경되어 토요일 19시로 진행됩니다.</p>",
       }),
+    imageUrls: ApiNoticeImageUrlsSchema.optional().openapi({
+      description: "공지 첨부 이미지 URL 목록",
+      example: ["https://cdn.yonyoung.example/notices/image/global-notice-updated.jpg"],
+    }),
   })
   .strict()
   .openapi("ApiUpdateGlobalNoticeInput");
@@ -764,6 +907,11 @@ export const ApiLinktreeItemSchema = z
       example: "인스타그램",
     }),
     link: urlField("실제 이동 URL", "https://instagram.com/yonyoung"),
+    createdAt: timestampField("링크 아이템 생성 시각", EXAMPLE_TIMESTAMP_MS),
+    updatedAt: timestampField("링크 아이템 수정 시각", EXAMPLE_TIMESTAMP_MS),
+    updatedBy: ApiAuditActorSchema.nullable().openapi({
+      description: "마지막 수정자 정보 (로그가 없으면 null)",
+    }),
   })
   .openapi("ApiLinktreeItem");
 
@@ -776,6 +924,11 @@ export const ApiLinktreeSchema = z
     name: z.string().openapi({
       description: "링크트리 이름",
       example: "공식 채널",
+    }),
+    createdAt: timestampField("링크트리 생성 시각", EXAMPLE_TIMESTAMP_MS),
+    updatedAt: timestampField("링크트리 수정 시각", EXAMPLE_TIMESTAMP_MS),
+    updatedBy: ApiAuditActorSchema.nullable().openapi({
+      description: "마지막 수정자 정보 (로그가 없으면 null)",
     }),
     items: z.array(ApiLinktreeItemSchema).openapi({
       description: "하위 링크 아이템 목록",
@@ -869,6 +1022,9 @@ export const ApiUserSchema = z
     }),
     createdAt: timestampField("사용자 생성 시각", EXAMPLE_TIMESTAMP_MS),
     updatedAt: timestampField("사용자 수정 시각", EXAMPLE_TIMESTAMP_MS),
+    updatedBy: ApiAuditActorSchema.nullable().openapi({
+      description: "마지막 수정자 정보 (로그가 없으면 null)",
+    }),
   })
   .openapi("ApiUser");
 
@@ -904,6 +1060,43 @@ const ApiPublicGenerationMemberSchema = z
     }),
   })
   .openapi("ApiPublicGenerationMember");
+
+export const ApiGenerationMemberSummarySchema = z
+  .object({
+    id: z.string().openapi({
+      description: "사용자 식별자 (better-auth user.id)",
+      example: EXAMPLE_USER_ID,
+    }),
+    generationId: z.string().uuid().openapi({
+      description: "조회 기준 기수 UUID",
+      example: EXAMPLE_GENERATION_ID,
+    }),
+    name: z.string().openapi({
+      description: "레거시 표시 이름",
+      example: "홍길동",
+    }),
+    image: z.string().url().nullable().openapi({
+      description: "프로필 이미지 URL (없으면 null)",
+      example: "https://cdn.yonyoung.example/users/profile/member.png",
+    }),
+    familyName: z.string().nullable().openapi({
+      description: "성 (없으면 null)",
+      example: "김",
+    }),
+    givenName: z.string().nullable().openapi({
+      description: "이름 (없으면 null)",
+      example: "민수",
+    }),
+    department: z.string().nullable().openapi({
+      description: "학과명 (없으면 null)",
+      example: "컴퓨터과학과",
+    }),
+    role: z.string().nullable().openapi({
+      description: "역할 문자열 (없으면 null)",
+      example: "regular_member",
+    }),
+  })
+  .openapi("ApiGenerationMemberSummary");
 
 export const ApiPublicGenerationWithMembersSchema = z
   .object({

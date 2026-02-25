@@ -3,6 +3,7 @@ import createDB from "../db";
 import {
   activities,
   activityImages,
+  auditLogs,
   exhibitions,
   exhibitionImages,
   generationNotices,
@@ -17,6 +18,9 @@ import {
 import {
   ActivityEntity,
   ActivityImageEntity,
+  AuditActorEntity,
+  AuditLogEntity,
+  AuditResourceType,
   DataService,
   ExhibitionEntity,
   ExhibitionImageEntity,
@@ -49,6 +53,18 @@ const isMissingActivityDateRangeColumnsError = (error: unknown): boolean => {
   );
 };
 
+const isMissingNoticeImageUrlsColumnsError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  return (
+    error.message.includes("no such column: generation_notices.image_urls") ||
+    error.message.includes("no such column: global_notices.image_urls") ||
+    error.message.includes("no such column: image_urls")
+  );
+};
+
 const toTimestampDate = (value: unknown): Date => {
   if (value instanceof Date) {
     return value;
@@ -76,6 +92,81 @@ const toTimestampDate = (value: unknown): Date => {
   }
 
   return new Date(0);
+};
+
+const parseChangedFields = (value: string | null | undefined): string[] => {
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.filter((item): item is string => typeof item === "string");
+  } catch {
+    return [];
+  }
+};
+
+const toAuditActor = (input: {
+  actorId: string | null;
+  actorName: string;
+  actorRole: string | null;
+}): AuditActorEntity | null => {
+  if (!input.actorId) {
+    return null;
+  }
+
+  return {
+    id: input.actorId,
+    name: input.actorName,
+    role: input.actorRole,
+  };
+};
+
+const listLatestAuditActorsByResourceId = async (
+  db: ReturnType<typeof createDB>,
+  resourceType: AuditResourceType,
+  resourceIds: string[],
+): Promise<Record<string, AuditActorEntity | null>> => {
+  if (resourceIds.length === 0) {
+    return {};
+  }
+
+  const rows = await db
+    .select({
+      resourceId: auditLogs.resourceId,
+      actorId: auditLogs.actorId,
+      actorName: auditLogs.actorName,
+      actorRole: auditLogs.actorRole,
+    })
+    .from(auditLogs)
+    .where(
+      and(
+        eq(auditLogs.resourceType, resourceType),
+        inArray(auditLogs.resourceId, resourceIds),
+      ),
+    )
+    .orderBy(desc(auditLogs.createdAt));
+
+  const result: Record<string, AuditActorEntity | null> = {};
+  for (const resourceId of resourceIds) {
+    result[resourceId] = null;
+  }
+
+  for (const row of rows) {
+    if (result[row.resourceId] !== null) {
+      continue;
+    }
+    if (Object.prototype.hasOwnProperty.call(result, row.resourceId)) {
+      result[row.resourceId] = toAuditActor(row);
+    }
+  }
+
+  return result;
 };
 
 type LegacyActivityRow = {
@@ -171,8 +262,15 @@ const mapActivitiesWithImages = async (
     imageMap.set(imageRow.activityId, current);
   }
 
+  const updatedByMap = await listLatestAuditActorsByResourceId(
+    db,
+    "activity",
+    ids,
+  );
+
   return rows.map(/** rows.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param row 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (row) => ({
     ...row,
+    updatedBy: updatedByMap[row.id] ?? null,
     detailImages: imageMap.get(row.id) ?? [],
   }));
 };
@@ -211,8 +309,15 @@ const mapExhibitionsWithImages = async (
     imageMap.set(imageRow.exhibitionId, current);
   }
 
+  const updatedByMap = await listLatestAuditActorsByResourceId(
+    db,
+    "exhibition",
+    ids,
+  );
+
   return rows.map(/** rows.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param row 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (row) => ({
     ...row,
+    updatedBy: updatedByMap[row.id] ?? null,
     detailImages: imageMap.get(row.id) ?? [],
   }));
 };
@@ -240,16 +345,29 @@ const mapLinktreesWithItems = async (
       and(inArray(linktreeItems.linktreeId, ids), isNull(linktreeItems.deletedAt)),
     );
 
-  const itemMap = new Map<string, LinktreeItemEntity[]>();
+  const itemMap = new Map<string, (typeof linktreeItems.$inferSelect)[]>();
   for (const item of itemRows) {
     const current = itemMap.get(item.linktreeId) ?? [];
     current.push(item);
     itemMap.set(item.linktreeId, current);
   }
 
+  const [linktreeUpdatedByMap, itemUpdatedByMap] = await Promise.all([
+    listLatestAuditActorsByResourceId(db, "linktree", ids),
+    listLatestAuditActorsByResourceId(
+      db,
+      "linktree_item",
+      itemRows.map((item) => item.id),
+    ),
+  ]);
+
   return rows.map(/** rows.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param row 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (row) => ({
     ...row,
-    items: itemMap.get(row.id) ?? [],
+    updatedBy: linktreeUpdatedByMap[row.id] ?? null,
+    items: (itemMap.get(row.id) ?? []).map((item) => ({
+      ...item,
+      updatedBy: itemUpdatedByMap[item.id] ?? null,
+    })),
   }));
 };
 
@@ -258,6 +376,7 @@ type NoticeListRow = {
   generationId?: string;
   title: string;
   content: string;
+  imageUrls: string;
   createdAt: Date;
   updatedAt: Date;
   authorId: string;
@@ -265,6 +384,26 @@ type NoticeListRow = {
   authorImage: string | null;
   authorRole: string | null;
 };
+
+const parseNoticeImageUrls = (value: string | null | undefined): string[] => {
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.filter((item): item is string => typeof item === "string");
+  } catch {
+    return [];
+  }
+};
+
+const serializeNoticeImageUrls = (value: string[] | undefined): string =>
+  JSON.stringify(value ?? []);
 
 const toNoticeAuthor = (row: NoticeListRow): NoticeAuthorEntity => ({
   id: row.authorId,
@@ -275,23 +414,31 @@ const toNoticeAuthor = (row: NoticeListRow): NoticeAuthorEntity => ({
 
 const toGenerationNoticeEntity = (
   row: NoticeListRow,
+  updatedBy: AuditActorEntity | null,
 ): GenerationNoticeEntity => ({
   id: row.id,
   generationId: row.generationId!,
   title: row.title,
   content: row.content,
+  imageUrls: parseNoticeImageUrls(row.imageUrls),
   author: toNoticeAuthor(row),
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
+  updatedBy,
 });
 
-const toGlobalNoticeEntity = (row: NoticeListRow): GlobalNoticeEntity => ({
+const toGlobalNoticeEntity = (
+  row: NoticeListRow,
+  updatedBy: AuditActorEntity | null,
+): GlobalNoticeEntity => ({
   id: row.id,
   title: row.title,
   content: row.content,
+  imageUrls: parseNoticeImageUrls(row.imageUrls),
   author: toNoticeAuthor(row),
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
+  updatedBy,
 });
 
 const dedupeGenerationIds = (generationIds: string[]): string[] => {
@@ -342,6 +489,12 @@ const mapUsersWithGenerations = async (
     generationIdsByUserId.set(row.userId, current);
   }
 
+  const updatedByMap = await listLatestAuditActorsByResourceId(
+    db,
+    "user",
+    userIds,
+  );
+
   return rows.map((row) => {
     const generationIds = dedupeGenerationIds(
       generationIdsByUserId.get(row.id) ??
@@ -355,6 +508,7 @@ const mapUsersWithGenerations = async (
       ...row,
       generationId: primaryGenerationId,
       generationIds,
+      updatedBy: updatedByMap[row.id] ?? null,
     };
   });
 };
@@ -453,17 +607,82 @@ export const createDbDataService = (database: D1Database): DataService => {
   };
 
   return {
+    async createAuditLog(input) {
+      await db.insert(auditLogs).values({
+        id: crypto.randomUUID(),
+        resourceType: input.resourceType,
+        resourceId: input.resourceId,
+        action: input.action,
+        actorId: input.actorId,
+        actorName: input.actorName,
+        actorRole: input.actorRole,
+        changedFields: JSON.stringify(input.changedFields),
+      });
+    },
+
+    async listAuditLogs(resourceType, resourceId, limit) {
+      const safeLimit = Math.max(1, Math.min(100, Math.floor(limit)));
+      const rows = await db
+        .select()
+        .from(auditLogs)
+        .where(
+          and(
+            eq(auditLogs.resourceType, resourceType),
+            eq(auditLogs.resourceId, resourceId),
+          ),
+        )
+        .orderBy(desc(auditLogs.createdAt))
+        .limit(safeLimit);
+
+      return rows.map(
+        (row): AuditLogEntity => ({
+          id: row.id,
+          resourceType: row.resourceType as AuditResourceType,
+          resourceId: row.resourceId,
+          action: row.action as AuditLogEntity["action"],
+          actor: toAuditActor({
+            actorId: row.actorId,
+            actorName: row.actorName,
+            actorRole: row.actorRole,
+          }),
+          changedFields: parseChangedFields(row.changedFields),
+          createdAt: row.createdAt,
+        }),
+      );
+    },
+
+    async getLatestAuditActor(resourceType, resourceId) {
+      const actorMap = await listLatestAuditActorsByResourceId(db, resourceType, [
+        resourceId,
+      ]);
+      return actorMap[resourceId] ?? null;
+    },
+
+    async listLatestAuditActors(resourceType, resourceIds) {
+      return listLatestAuditActorsByResourceId(db, resourceType, resourceIds);
+    },
         /**
      * listGenerations의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
      * @returns 비동기 처리 결과를 Promise로 반환합니다.
      * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
      */
     async listGenerations() {
-      return db
+      const rows = await db
         .select()
         .from(generations)
         .where(isNull(generations.deletedAt))
         .orderBy(asc(generations.sortOrder));
+
+      const updatedByMap = await listLatestAuditActorsByResourceId(
+        db,
+        "generation",
+        rows.map((row) => row.id),
+      );
+
+      return rows.map((row) => ({
+        ...row,
+        updatedBy: updatedByMap[row.id] ?? null,
+      }));
     },
         /**
      * createGeneration 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
@@ -487,9 +706,7 @@ export const createDbDataService = (database: D1Database): DataService => {
         startDate: new Date(input.startDate),
         endDate: new Date(input.endDate),
       });
-      return (await db.query.generations.findFirst({
-        where: and(eq(generations.id, id), isNull(generations.deletedAt)),
-      }))!;
+      return (await this.getGenerationById(id))!;
     },
         /**
      * getGenerationById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
@@ -498,11 +715,19 @@ export const createDbDataService = (database: D1Database): DataService => {
      * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
      */
     async getGenerationById(id) {
-      return (
+      const row =
         (await db.query.generations.findFirst({
           where: and(eq(generations.id, id), isNull(generations.deletedAt)),
-        })) ?? null
-      );
+        })) ?? null;
+      if (!row) {
+        return null;
+      }
+
+      const updatedBy = await this.getLatestAuditActor("generation", row.id);
+      return {
+        ...row,
+        updatedBy,
+      };
     },
         /**
      * updateGeneration 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
@@ -545,11 +770,7 @@ export const createDbDataService = (database: D1Database): DataService => {
         })
         .where(and(eq(generations.id, id), isNull(generations.deletedAt)));
 
-      return (
-        (await db.query.generations.findFirst({
-          where: and(eq(generations.id, id), isNull(generations.deletedAt)),
-        })) ?? null
-      );
+      return this.getGenerationById(id);
     },
         /**
      * deleteGeneration 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
@@ -650,20 +871,7 @@ export const createDbDataService = (database: D1Database): DataService => {
       if (!row) {
         return null;
       }
-      const images = await db
-        .select()
-        .from(activityImages)
-        .where(
-          and(
-            eq(activityImages.activityId, id),
-            isNull(activityImages.deletedAt),
-          ),
-        )
-        .orderBy(asc(activityImages.sortOrder));
-      return {
-        ...row,
-        detailImages: images,
-      };
+      return (await mapActivitiesWithImages(db, [row]))[0] ?? null;
     },
         /**
      * updateActivity 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
@@ -764,6 +972,10 @@ export const createDbDataService = (database: D1Database): DataService => {
         imageUrl: input.imageUrl,
         sortOrder: input.sortOrder,
       });
+      await db
+        .update(activities)
+        .set({ updatedAt: new Date() })
+        .where(and(eq(activities.id, activityId), isNull(activities.deletedAt)));
       return (
         (await db.query.activityImages.findFirst({
           where: and(eq(activityImages.id, id), isNull(activityImages.deletedAt)),
@@ -798,6 +1010,10 @@ export const createDbDataService = (database: D1Database): DataService => {
 
       if (statements.length > 0) {
         await database.batch(statements);
+        await db
+          .update(activities)
+          .set({ updatedAt: new Date() })
+          .where(and(eq(activities.id, activityId), isNull(activities.deletedAt)));
       }
 
       if (createdIds.length === 0) {
@@ -851,6 +1067,10 @@ export const createDbDataService = (database: D1Database): DataService => {
             isNull(activityImages.deletedAt),
           ),
         );
+      await db
+        .update(activities)
+        .set({ updatedAt: new Date() })
+        .where(and(eq(activities.id, activityId), isNull(activities.deletedAt)));
 
       return (
         (await db.query.activityImages.findFirst({
@@ -911,6 +1131,10 @@ export const createDbDataService = (database: D1Database): DataService => {
             ),
           );
       }
+      await db
+        .update(activities)
+        .set({ updatedAt: new Date() })
+        .where(and(eq(activities.id, activityId), isNull(activities.deletedAt)));
 
       return db
         .select()
@@ -954,6 +1178,10 @@ export const createDbDataService = (database: D1Database): DataService => {
             isNull(activityImages.deletedAt),
           ),
         );
+      await db
+        .update(activities)
+        .set({ updatedAt: new Date() })
+        .where(and(eq(activities.id, activityId), isNull(activities.deletedAt)));
       return true;
     },
 
@@ -963,11 +1191,22 @@ export const createDbDataService = (database: D1Database): DataService => {
      * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
      */
     async listSupporters() {
-      return db
+      const rows = await db
         .select()
         .from(supporters)
         .where(isNull(supporters.deletedAt))
         .orderBy(asc(supporters.expiresAt));
+
+      const updatedByMap = await listLatestAuditActorsByResourceId(
+        db,
+        "supporter",
+        rows.map((row) => row.id),
+      );
+
+      return rows.map((row) => ({
+        ...row,
+        updatedBy: updatedByMap[row.id] ?? null,
+      }));
     },
         /**
      * listPublicSupporters의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
@@ -977,11 +1216,22 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async listPublicSupporters(nowMs) {
       const activePriority = sql<number>`case when ${supporters.expiresAt} >= ${nowMs} then 1 else 0 end`;
-      return db
+      const rows = await db
         .select()
         .from(supporters)
         .where(isNull(supporters.deletedAt))
         .orderBy(desc(activePriority), asc(supporters.expiresAt));
+
+      const updatedByMap = await listLatestAuditActorsByResourceId(
+        db,
+        "supporter",
+        rows.map((row) => row.id),
+      );
+
+      return rows.map((row) => ({
+        ...row,
+        updatedBy: updatedByMap[row.id] ?? null,
+      }));
     },
         /**
      * createSupporter 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
@@ -998,9 +1248,7 @@ export const createDbDataService = (database: D1Database): DataService => {
         logoUrl: input.logoUrl,
         expiresAt: new Date(input.expiresAt),
       });
-      return (await db.query.supporters.findFirst({
-        where: and(eq(supporters.id, id), isNull(supporters.deletedAt)),
-      }))!;
+      return (await this.getSupporterById(id))!;
     },
         /**
      * getSupporterById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
@@ -1009,11 +1257,19 @@ export const createDbDataService = (database: D1Database): DataService => {
      * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
      */
     async getSupporterById(id) {
-      return (
+      const row =
         (await db.query.supporters.findFirst({
           where: and(eq(supporters.id, id), isNull(supporters.deletedAt)),
-        })) ?? null
-      );
+        })) ?? null;
+      if (!row) {
+        return null;
+      }
+
+      const updatedBy = await this.getLatestAuditActor("supporter", id);
+      return {
+        ...row,
+        updatedBy,
+      };
     },
         /**
      * updateSupporter 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
@@ -1043,11 +1299,7 @@ export const createDbDataService = (database: D1Database): DataService => {
         })
         .where(and(eq(supporters.id, id), isNull(supporters.deletedAt)));
 
-      return (
-        (await db.query.supporters.findFirst({
-          where: and(eq(supporters.id, id), isNull(supporters.deletedAt)),
-        })) ?? null
-      );
+      return this.getSupporterById(id);
     },
         /**
      * deleteSupporter 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
@@ -1131,20 +1383,7 @@ export const createDbDataService = (database: D1Database): DataService => {
       if (!row) {
         return null;
       }
-      const images = await db
-        .select()
-        .from(exhibitionImages)
-        .where(
-          and(
-            eq(exhibitionImages.exhibitionId, id),
-            isNull(exhibitionImages.deletedAt),
-          ),
-        )
-        .orderBy(asc(exhibitionImages.sortOrder));
-      return {
-        ...row,
-        detailImages: images,
-      };
+      return (await mapExhibitionsWithImages(db, [row]))[0] ?? null;
     },
         /**
      * updateExhibition 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
@@ -1246,6 +1485,10 @@ export const createDbDataService = (database: D1Database): DataService => {
         imageUrl: input.imageUrl,
         sortOrder: input.sortOrder,
       });
+      await db
+        .update(exhibitions)
+        .set({ updatedAt: new Date() })
+        .where(and(eq(exhibitions.id, exhibitionId), isNull(exhibitions.deletedAt)));
       return (
         (await db.query.exhibitionImages.findFirst({
           where: and(
@@ -1286,6 +1529,10 @@ export const createDbDataService = (database: D1Database): DataService => {
 
       if (statements.length > 0) {
         await database.batch(statements);
+        await db
+          .update(exhibitions)
+          .set({ updatedAt: new Date() })
+          .where(and(eq(exhibitions.id, exhibitionId), isNull(exhibitions.deletedAt)));
       }
 
       if (createdIds.length === 0) {
@@ -1339,6 +1586,10 @@ export const createDbDataService = (database: D1Database): DataService => {
             isNull(exhibitionImages.deletedAt),
           ),
         );
+      await db
+        .update(exhibitions)
+        .set({ updatedAt: new Date() })
+        .where(and(eq(exhibitions.id, exhibitionId), isNull(exhibitions.deletedAt)));
 
       return (
         (await db.query.exhibitionImages.findFirst({
@@ -1402,6 +1653,10 @@ export const createDbDataService = (database: D1Database): DataService => {
             ),
           );
       }
+      await db
+        .update(exhibitions)
+        .set({ updatedAt: new Date() })
+        .where(and(eq(exhibitions.id, exhibitionId), isNull(exhibitions.deletedAt)));
 
       return db
         .select()
@@ -1445,6 +1700,10 @@ export const createDbDataService = (database: D1Database): DataService => {
             isNull(exhibitionImages.deletedAt),
           ),
         );
+      await db
+        .update(exhibitions)
+        .set({ updatedAt: new Date() })
+        .where(and(eq(exhibitions.id, exhibitionId), isNull(exhibitions.deletedAt)));
       return true;
     },
 
@@ -1468,9 +1727,12 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async createLinktree(input) {
       const id = crypto.randomUUID();
+      const now = new Date();
       await db.insert(linktree).values({
         id,
         name: input.name,
+        createdAt: now,
+        updatedAt: now,
       });
       return (await this.getLinktreeById(id))!;
     },
@@ -1487,16 +1749,7 @@ export const createDbDataService = (database: D1Database): DataService => {
       if (!row) {
         return null;
       }
-      const items = await db
-        .select()
-        .from(linktreeItems)
-        .where(
-          and(eq(linktreeItems.linktreeId, id), isNull(linktreeItems.deletedAt)),
-        );
-      return {
-        ...row,
-        items,
-      };
+      return (await mapLinktreesWithItems(db, [row]))[0] ?? null;
     },
         /**
      * updateLinktree 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
@@ -1516,6 +1769,7 @@ export const createDbDataService = (database: D1Database): DataService => {
         .update(linktree)
         .set({
           ...(input.name !== undefined ? { name: input.name } : {}),
+          updatedAt: new Date(),
         })
         .where(and(eq(linktree.id, id), isNull(linktree.deletedAt)));
       return this.getLinktreeById(id);
@@ -1537,12 +1791,14 @@ export const createDbDataService = (database: D1Database): DataService => {
         .update(linktree)
         .set({
           deletedAt: new Date(),
+          updatedAt: new Date(),
         })
         .where(and(eq(linktree.id, id), isNull(linktree.deletedAt)));
       await db
         .update(linktreeItems)
         .set({
           deletedAt: new Date(),
+          updatedAt: new Date(),
         })
         .where(
           and(eq(linktreeItems.linktreeId, id), isNull(linktreeItems.deletedAt)),
@@ -1564,17 +1820,32 @@ export const createDbDataService = (database: D1Database): DataService => {
         return null;
       }
       const id = crypto.randomUUID();
+      const now = new Date();
       await db.insert(linktreeItems).values({
         id,
         linktreeId,
         name: input.name,
         link: input.link,
+        createdAt: now,
+        updatedAt: now,
       });
-      return (
+      await db
+        .update(linktree)
+        .set({ updatedAt: new Date() })
+        .where(and(eq(linktree.id, linktreeId), isNull(linktree.deletedAt)));
+      const row =
         (await db.query.linktreeItems.findFirst({
           where: and(eq(linktreeItems.id, id), isNull(linktreeItems.deletedAt)),
-        })) ?? null
-      );
+        })) ?? null;
+      if (!row) {
+        return null;
+      }
+
+      const updatedBy = await this.getLatestAuditActor("linktree_item", row.id);
+      return {
+        ...row,
+        updatedBy,
+      };
     },
         /**
      * updateLinktreeItem 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
@@ -1600,6 +1871,7 @@ export const createDbDataService = (database: D1Database): DataService => {
         .set({
           ...(input.name !== undefined ? { name: input.name } : {}),
           ...(input.link !== undefined ? { link: input.link } : {}),
+          updatedAt: new Date(),
         })
         .where(
           and(
@@ -1608,14 +1880,26 @@ export const createDbDataService = (database: D1Database): DataService => {
             isNull(linktreeItems.deletedAt),
           ),
         );
-      return (
+      await db
+        .update(linktree)
+        .set({ updatedAt: new Date() })
+        .where(and(eq(linktree.id, linktreeId), isNull(linktree.deletedAt)));
+      const row =
         (await db.query.linktreeItems.findFirst({
           where: and(
             eq(linktreeItems.id, itemId),
             isNull(linktreeItems.deletedAt),
           ),
-        })) ?? null
-      );
+        })) ?? null;
+      if (!row) {
+        return null;
+      }
+
+      const updatedBy = await this.getLatestAuditActor("linktree_item", row.id);
+      return {
+        ...row,
+        updatedBy,
+      };
     },
         /**
      * deleteLinktreeItem 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
@@ -1639,6 +1923,7 @@ export const createDbDataService = (database: D1Database): DataService => {
         .update(linktreeItems)
         .set({
           deletedAt: new Date(),
+          updatedAt: new Date(),
         })
         .where(
           and(
@@ -1647,35 +1932,78 @@ export const createDbDataService = (database: D1Database): DataService => {
             isNull(linktreeItems.deletedAt),
           ),
         );
+      await db
+        .update(linktree)
+        .set({ updatedAt: new Date() })
+        .where(and(eq(linktree.id, linktreeId), isNull(linktree.deletedAt)));
       return true;
     },
 
     async listGenerationNotices(generationId) {
-      const rows = await db
-        .select({
-          id: generationNotices.id,
-          generationId: generationNotices.generationId,
-          title: generationNotices.title,
-          content: generationNotices.content,
-          createdAt: generationNotices.createdAt,
-          updatedAt: generationNotices.updatedAt,
-          authorId: user.id,
-          authorName: user.name,
-          authorImage: user.image,
-          authorRole: user.role,
-        })
-        .from(generationNotices)
-        .innerJoin(user, eq(generationNotices.authorId, user.id))
-        .where(
-          and(
-            eq(generationNotices.generationId, generationId),
-            isNull(generationNotices.deletedAt),
-            isNull(user.deletedAt),
-          ),
-        )
-        .orderBy(desc(generationNotices.createdAt));
+      const rows = await (async () => {
+        try {
+          return await db
+            .select({
+              id: generationNotices.id,
+              generationId: generationNotices.generationId,
+              title: generationNotices.title,
+              content: generationNotices.content,
+              imageUrls: generationNotices.imageUrls,
+              createdAt: generationNotices.createdAt,
+              updatedAt: generationNotices.updatedAt,
+              authorId: user.id,
+              authorName: user.name,
+              authorImage: user.image,
+              authorRole: user.role,
+            })
+            .from(generationNotices)
+            .innerJoin(user, eq(generationNotices.authorId, user.id))
+            .where(
+              and(
+                eq(generationNotices.generationId, generationId),
+                isNull(generationNotices.deletedAt),
+                isNull(user.deletedAt),
+              ),
+            )
+            .orderBy(desc(generationNotices.createdAt));
+        } catch (error) {
+          if (!isMissingNoticeImageUrlsColumnsError(error)) {
+            throw error;
+          }
 
-      return rows.map(toGenerationNoticeEntity);
+          return db
+            .select({
+              id: generationNotices.id,
+              generationId: generationNotices.generationId,
+              title: generationNotices.title,
+              content: generationNotices.content,
+              imageUrls: sql<string>`'[]'`,
+              createdAt: generationNotices.createdAt,
+              updatedAt: generationNotices.updatedAt,
+              authorId: user.id,
+              authorName: user.name,
+              authorImage: user.image,
+              authorRole: user.role,
+            })
+            .from(generationNotices)
+            .innerJoin(user, eq(generationNotices.authorId, user.id))
+            .where(
+              and(
+                eq(generationNotices.generationId, generationId),
+                isNull(generationNotices.deletedAt),
+                isNull(user.deletedAt),
+              ),
+            )
+            .orderBy(desc(generationNotices.createdAt));
+        }
+      })();
+
+      const updatedByMap = await listLatestAuditActorsByResourceId(
+        db,
+        "generation_notice",
+        rows.map((row) => row.id),
+      );
+      return rows.map((row) => toGenerationNoticeEntity(row, updatedByMap[row.id] ?? null));
     },
 
     async createGenerationNotice(generationId, input) {
@@ -1700,6 +2028,7 @@ export const createDbDataService = (database: D1Database): DataService => {
         generationId,
         title: input.title,
         content: input.content,
+        imageUrls: serializeNoticeImageUrls(input.imageUrls),
         authorId: input.authorId,
       });
 
@@ -1707,32 +2036,72 @@ export const createDbDataService = (database: D1Database): DataService => {
     },
 
     async getGenerationNoticeById(generationId, noticeId) {
-      const row = await db
-        .select({
-          id: generationNotices.id,
-          generationId: generationNotices.generationId,
-          title: generationNotices.title,
-          content: generationNotices.content,
-          createdAt: generationNotices.createdAt,
-          updatedAt: generationNotices.updatedAt,
-          authorId: user.id,
-          authorName: user.name,
-          authorImage: user.image,
-          authorRole: user.role,
-        })
-        .from(generationNotices)
-        .innerJoin(user, eq(generationNotices.authorId, user.id))
-        .where(
-          and(
-            eq(generationNotices.id, noticeId),
-            eq(generationNotices.generationId, generationId),
-            isNull(generationNotices.deletedAt),
-            isNull(user.deletedAt),
-          ),
-        )
-        .limit(1);
+      const row = await (async () => {
+        try {
+          return await db
+            .select({
+              id: generationNotices.id,
+              generationId: generationNotices.generationId,
+              title: generationNotices.title,
+              content: generationNotices.content,
+              imageUrls: generationNotices.imageUrls,
+              createdAt: generationNotices.createdAt,
+              updatedAt: generationNotices.updatedAt,
+              authorId: user.id,
+              authorName: user.name,
+              authorImage: user.image,
+              authorRole: user.role,
+            })
+            .from(generationNotices)
+            .innerJoin(user, eq(generationNotices.authorId, user.id))
+            .where(
+              and(
+                eq(generationNotices.id, noticeId),
+                eq(generationNotices.generationId, generationId),
+                isNull(generationNotices.deletedAt),
+                isNull(user.deletedAt),
+              ),
+            )
+            .limit(1);
+        } catch (error) {
+          if (!isMissingNoticeImageUrlsColumnsError(error)) {
+            throw error;
+          }
 
-      return row[0] ? toGenerationNoticeEntity(row[0]) : null;
+          return db
+            .select({
+              id: generationNotices.id,
+              generationId: generationNotices.generationId,
+              title: generationNotices.title,
+              content: generationNotices.content,
+              imageUrls: sql<string>`'[]'`,
+              createdAt: generationNotices.createdAt,
+              updatedAt: generationNotices.updatedAt,
+              authorId: user.id,
+              authorName: user.name,
+              authorImage: user.image,
+              authorRole: user.role,
+            })
+            .from(generationNotices)
+            .innerJoin(user, eq(generationNotices.authorId, user.id))
+            .where(
+              and(
+                eq(generationNotices.id, noticeId),
+                eq(generationNotices.generationId, generationId),
+                isNull(generationNotices.deletedAt),
+                isNull(user.deletedAt),
+              ),
+            )
+            .limit(1);
+        }
+      })();
+
+      if (!row[0]) {
+        return null;
+      }
+
+      const updatedBy = await this.getLatestAuditActor("generation_notice", noticeId);
+      return toGenerationNoticeEntity(row[0], updatedBy);
     },
 
     async updateGenerationNotice(generationId, noticeId, input) {
@@ -1754,6 +2123,9 @@ export const createDbDataService = (database: D1Database): DataService => {
         .set({
           ...(input.title !== undefined ? { title: input.title } : {}),
           ...(input.content !== undefined ? { content: input.content } : {}),
+          ...(input.imageUrls !== undefined
+            ? { imageUrls: serializeNoticeImageUrls(input.imageUrls) }
+            : {}),
           updatedAt: new Date(),
         })
         .where(
@@ -1799,24 +2171,56 @@ export const createDbDataService = (database: D1Database): DataService => {
     },
 
     async listGlobalNotices() {
-      const rows = await db
-        .select({
-          id: globalNotices.id,
-          title: globalNotices.title,
-          content: globalNotices.content,
-          createdAt: globalNotices.createdAt,
-          updatedAt: globalNotices.updatedAt,
-          authorId: user.id,
-          authorName: user.name,
-          authorImage: user.image,
-          authorRole: user.role,
-        })
-        .from(globalNotices)
-        .innerJoin(user, eq(globalNotices.authorId, user.id))
-        .where(and(isNull(globalNotices.deletedAt), isNull(user.deletedAt)))
-        .orderBy(desc(globalNotices.createdAt));
+      const rows = await (async () => {
+        try {
+          return await db
+            .select({
+              id: globalNotices.id,
+              title: globalNotices.title,
+              content: globalNotices.content,
+              imageUrls: globalNotices.imageUrls,
+              createdAt: globalNotices.createdAt,
+              updatedAt: globalNotices.updatedAt,
+              authorId: user.id,
+              authorName: user.name,
+              authorImage: user.image,
+              authorRole: user.role,
+            })
+            .from(globalNotices)
+            .innerJoin(user, eq(globalNotices.authorId, user.id))
+            .where(and(isNull(globalNotices.deletedAt), isNull(user.deletedAt)))
+            .orderBy(desc(globalNotices.createdAt));
+        } catch (error) {
+          if (!isMissingNoticeImageUrlsColumnsError(error)) {
+            throw error;
+          }
 
-      return rows.map(toGlobalNoticeEntity);
+          return db
+            .select({
+              id: globalNotices.id,
+              title: globalNotices.title,
+              content: globalNotices.content,
+              imageUrls: sql<string>`'[]'`,
+              createdAt: globalNotices.createdAt,
+              updatedAt: globalNotices.updatedAt,
+              authorId: user.id,
+              authorName: user.name,
+              authorImage: user.image,
+              authorRole: user.role,
+            })
+            .from(globalNotices)
+            .innerJoin(user, eq(globalNotices.authorId, user.id))
+            .where(and(isNull(globalNotices.deletedAt), isNull(user.deletedAt)))
+            .orderBy(desc(globalNotices.createdAt));
+        }
+      })();
+
+      const updatedByMap = await listLatestAuditActorsByResourceId(
+        db,
+        "global_notice",
+        rows.map((row) => row.id),
+      );
+      return rows.map((row) => toGlobalNoticeEntity(row, updatedByMap[row.id] ?? null));
     },
 
     async createGlobalNotice(input) {
@@ -1834,6 +2238,7 @@ export const createDbDataService = (database: D1Database): DataService => {
         id,
         title: input.title,
         content: input.content,
+        imageUrls: serializeNoticeImageUrls(input.imageUrls),
         authorId: input.authorId,
       });
 
@@ -1841,30 +2246,68 @@ export const createDbDataService = (database: D1Database): DataService => {
     },
 
     async getGlobalNoticeById(noticeId) {
-      const row = await db
-        .select({
-          id: globalNotices.id,
-          title: globalNotices.title,
-          content: globalNotices.content,
-          createdAt: globalNotices.createdAt,
-          updatedAt: globalNotices.updatedAt,
-          authorId: user.id,
-          authorName: user.name,
-          authorImage: user.image,
-          authorRole: user.role,
-        })
-        .from(globalNotices)
-        .innerJoin(user, eq(globalNotices.authorId, user.id))
-        .where(
-          and(
-            eq(globalNotices.id, noticeId),
-            isNull(globalNotices.deletedAt),
-            isNull(user.deletedAt),
-          ),
-        )
-        .limit(1);
+      const row = await (async () => {
+        try {
+          return await db
+            .select({
+              id: globalNotices.id,
+              title: globalNotices.title,
+              content: globalNotices.content,
+              imageUrls: globalNotices.imageUrls,
+              createdAt: globalNotices.createdAt,
+              updatedAt: globalNotices.updatedAt,
+              authorId: user.id,
+              authorName: user.name,
+              authorImage: user.image,
+              authorRole: user.role,
+            })
+            .from(globalNotices)
+            .innerJoin(user, eq(globalNotices.authorId, user.id))
+            .where(
+              and(
+                eq(globalNotices.id, noticeId),
+                isNull(globalNotices.deletedAt),
+                isNull(user.deletedAt),
+              ),
+            )
+            .limit(1);
+        } catch (error) {
+          if (!isMissingNoticeImageUrlsColumnsError(error)) {
+            throw error;
+          }
 
-      return row[0] ? toGlobalNoticeEntity(row[0]) : null;
+          return db
+            .select({
+              id: globalNotices.id,
+              title: globalNotices.title,
+              content: globalNotices.content,
+              imageUrls: sql<string>`'[]'`,
+              createdAt: globalNotices.createdAt,
+              updatedAt: globalNotices.updatedAt,
+              authorId: user.id,
+              authorName: user.name,
+              authorImage: user.image,
+              authorRole: user.role,
+            })
+            .from(globalNotices)
+            .innerJoin(user, eq(globalNotices.authorId, user.id))
+            .where(
+              and(
+                eq(globalNotices.id, noticeId),
+                isNull(globalNotices.deletedAt),
+                isNull(user.deletedAt),
+              ),
+            )
+            .limit(1);
+        }
+      })();
+
+      if (!row[0]) {
+        return null;
+      }
+
+      const updatedBy = await this.getLatestAuditActor("global_notice", noticeId);
+      return toGlobalNoticeEntity(row[0], updatedBy);
     },
 
     async updateGlobalNotice(noticeId, input) {
@@ -1882,6 +2325,9 @@ export const createDbDataService = (database: D1Database): DataService => {
         .set({
           ...(input.title !== undefined ? { title: input.title } : {}),
           ...(input.content !== undefined ? { content: input.content } : {}),
+          ...(input.imageUrls !== undefined
+            ? { imageUrls: serializeNoticeImageUrls(input.imageUrls) }
+            : {}),
           updatedAt: new Date(),
         })
         .where(and(eq(globalNotices.id, noticeId), isNull(globalNotices.deletedAt)));

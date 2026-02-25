@@ -17,7 +17,15 @@ export const requireActor = async (
   dependencies: AppDependencies,
 ): Promise<{ actor: Actor } | { response: Response }> => {
   const existingActor = c.get("actor");
-  const actor = existingActor ?? (await dependencies.resolveActor(c));
+  let actor = existingActor;
+  if (!actor) {
+    try {
+      actor = await dependencies.resolveActor(c);
+    } catch {
+      actor = null;
+    }
+  }
+
   if (!actor) {
     return { response: unauthorized(c) };
   }

@@ -72,6 +72,7 @@ export const createGeneration = (
   endDate: new Date("2030-12-31T00:00:00.000Z"),
   createdAt: BASE_DATE,
   updatedAt: BASE_DATE,
+  updatedBy: null,
   ...overrides,
 });
 
@@ -111,6 +112,7 @@ export const createActivity = (
   generationId: IDs.generation,
   createdAt: BASE_DATE,
   updatedAt: BASE_DATE,
+  updatedBy: null,
   detailImages: [],
   ...overrides,
 });
@@ -131,6 +133,7 @@ export const createSupporter = (
   expiresAt: new Date("2031-01-01T00:00:00.000Z"),
   createdAt: BASE_DATE,
   updatedAt: BASE_DATE,
+  updatedBy: null,
   ...overrides,
 });
 
@@ -171,6 +174,7 @@ export const createExhibition = (
   description: "전시 설명",
   createdAt: BASE_DATE,
   updatedAt: BASE_DATE,
+  updatedBy: null,
   detailImages: [],
   ...overrides,
 });
@@ -188,6 +192,9 @@ export const createLinktreeItem = (
   linktreeId: IDs.linktree,
   name: "Instagram",
   link: "https://instagram.com/yonyoung",
+  createdAt: BASE_DATE,
+  updatedAt: BASE_DATE,
+  updatedBy: null,
   ...overrides,
 });
 
@@ -202,6 +209,9 @@ export const createLinktree = (
 ): LinktreeEntity => ({
   id: IDs.linktree,
   name: "Yonyoung",
+  createdAt: BASE_DATE,
+  updatedAt: BASE_DATE,
+  updatedBy: null,
   items: [],
   ...overrides,
 });
@@ -213,6 +223,7 @@ export const createGenerationNotice = (
   generationId: IDs.generation,
   title: "기수 공지 제목",
   content: "기수 공지 본문",
+  imageUrls: [],
   author: {
     id: IDs.manager,
     name: "manager-name",
@@ -221,6 +232,7 @@ export const createGenerationNotice = (
   },
   createdAt: BASE_DATE,
   updatedAt: BASE_DATE,
+  updatedBy: null,
   ...overrides,
 });
 
@@ -230,6 +242,7 @@ export const createGlobalNotice = (
   id: IDs.globalNotice,
   title: "전체 공지 제목",
   content: "전체 공지 본문",
+  imageUrls: [],
   author: {
     id: IDs.vicePresident,
     name: "vice-name",
@@ -238,6 +251,7 @@ export const createGlobalNotice = (
   },
   createdAt: BASE_DATE,
   updatedAt: BASE_DATE,
+  updatedBy: null,
   ...overrides,
 });
 
@@ -264,6 +278,7 @@ export const createUser = (
   generationId: null,
   createdAt: BASE_DATE,
   updatedAt: BASE_DATE,
+  updatedBy: null,
   ...overrides,
 });
 
@@ -276,8 +291,17 @@ export const createUser = (
 export const createDataServiceMock = (
   overrides: Partial<DataService> = {},
 ): DataService => {
-  return new Proxy(overrides as DataService, {
-        /**
+  const base: Partial<DataService> = {
+    createAuditLog: async () => undefined,
+    listAuditLogs: async () => [],
+    getLatestAuditActor: async () => null,
+    listLatestAuditActors: async () => ({}),
+  };
+
+  const merged = { ...base, ...overrides } as DataService;
+
+  return new Proxy(merged, {
+    /**
      * get 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
      * @param target 함수 로직에서 사용하는 입력값입니다.
      * @param prop 함수 로직에서 사용하는 입력값입니다.
@@ -305,7 +329,7 @@ export const createPresignServiceMock = (
   overrides: Partial<PresignService> = {},
 ): PresignService => {
   return new Proxy(overrides as PresignService, {
-        /**
+    /**
      * get 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
      * @param target 함수 로직에서 사용하는 입력값입니다.
      * @param prop 함수 로직에서 사용하는 입력값입니다.
@@ -337,33 +361,38 @@ const defaultAuthOpenApiSchema: OpenAPIDocument = {
  */
 export const createTestApp = (input: {
   actor: Actor | null;
+  resolveActor?: () => Promise<Actor | null>;
   dataService?: DataService;
   presignService?: PresignService;
   getAuthOpenApiSchema?: () => Promise<OpenAPIDocument>;
   shouldRequireDocsAuth?: boolean;
 }) => {
   return createApp({
-        /**
+    /**
      * resolveActor 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
      * @returns 조회/계산된 결과 값을 반환합니다.
      * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
      */
-    resolveActor: async () => input.actor,
-        /**
+    resolveActor: input.resolveActor ?? (async () => input.actor),
+    /**
      * getDataService 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
      * @returns 조회/계산된 결과 값을 반환합니다.
      * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
      */
     getDataService: () => input.dataService ?? createDataServiceMock(),
-        /**
+    /**
      * getPresignService 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
      * @returns 조회/계산된 결과 값을 반환합니다.
      * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
      */
     getPresignService: () => input.presignService ?? createPresignServiceMock(),
-    getAuthOpenApiSchema: input.getAuthOpenApiSchema ?? (/** createApp 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => defaultAuthOpenApiSchema),
+    getAuthOpenApiSchema:
+      input.getAuthOpenApiSchema ??
+      /** createApp 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (async () =>
+        defaultAuthOpenApiSchema),
     shouldRequireDocsAuth:
-      (/** createApp 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => input.shouldRequireDocsAuth ?? false),
+      /** createApp 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () =>
+        input.shouldRequireDocsAuth ?? false,
   });
 };
 
@@ -394,7 +423,9 @@ export const expectErrorCode = async (
     | "CONFLICT"
     | "INTERNAL_ERROR",
 ) => {
-  const body = await readJson<{ error: { code: string; message: string } }>(response);
+  const body = await readJson<{ error: { code: string; message: string } }>(
+    response,
+  );
   expect(body.error.code).toBe(code);
   expect(typeof body.error.message).toBe("string");
   expect(body.error.message.length).toBeGreaterThan(0);

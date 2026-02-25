@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
 import type { ApiGenerationNotice, ApiGlobalNotice } from "../../../../lib/admin-api/types";
+import { formatAuditActor } from "../../../../lib/audit-display";
 import { formatKoreanDate } from "../../../../lib/date-formatters";
+import { summarizeRichTextHtml } from "../../../../lib/rich-text";
 
 type GenerationNoticeOverviewProps = {
   generationId: string;
@@ -84,9 +86,9 @@ export default function GenerationNoticeOverview({
                 {generationNotices.map((notice) => (
                   <li key={notice.id} className="rounded-lg border border-slate-200 px-3 py-2">
                     <p className="text-sm font-medium text-slate-900">{notice.title}</p>
-                    <p className="mt-1 text-xs text-slate-600">{notice.content}</p>
+                    <p className="mt-1 text-xs text-slate-600">{summarizeRichTextHtml(notice.content, 100)}</p>
                     <p className="mt-1 text-xs text-slate-500">
-                      {readNoticeAuthor(notice)} · {formatKoreanDate(notice.createdAt)}
+                      {readNoticeAuthor(notice)} · {formatKoreanDate(notice.createdAt)} · 최근 수정자: {formatAuditActor(notice.updatedBy)}
                     </p>
                   </li>
                 ))}
@@ -105,9 +107,9 @@ export default function GenerationNoticeOverview({
                 {globalNotices.map((notice) => (
                   <li key={notice.id} className="rounded-lg border border-slate-200 px-3 py-2">
                     <p className="text-sm font-medium text-slate-900">{notice.title}</p>
-                    <p className="mt-1 text-xs text-slate-600">{notice.content}</p>
+                    <p className="mt-1 text-xs text-slate-600">{summarizeRichTextHtml(notice.content, 100)}</p>
                     <p className="mt-1 text-xs text-slate-500">
-                      {readNoticeAuthor(notice)} · {formatKoreanDate(notice.createdAt)}
+                      {readNoticeAuthor(notice)} · {formatKoreanDate(notice.createdAt)} · 최근 수정자: {formatAuditActor(notice.updatedBy)}
                     </p>
                   </li>
                 ))}

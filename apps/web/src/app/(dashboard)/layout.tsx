@@ -3,7 +3,9 @@ import "./globals.css";
 import { ReactNode } from "react";
 
 import { createPageMetadata } from "../../lib/seo";
-import DashboardShell, { type DashboardViewer } from "./_components/dashboard-shell";
+import DashboardShell, {
+  type DashboardViewer,
+} from "./_components/dashboard-shell";
 import { serverAuthTool } from "../../lib/auth-server-tool";
 import { getAccessibleDashboardGenerationOptions } from "../../lib/dashboard-generation-server";
 import { buildDashboardViewerProfile } from "../../lib/user-profile";
@@ -21,7 +23,9 @@ export default async function RootLayout({
 }>) {
   const session = await serverAuthTool.getSession();
 
-  let generationOptions: Awaited<ReturnType<typeof getAccessibleDashboardGenerationOptions>> = [];
+  let generationOptions: Awaited<
+    ReturnType<typeof getAccessibleDashboardGenerationOptions>
+  > = [];
   let viewer: DashboardViewer | null = null;
 
   if (session) {
@@ -34,9 +38,6 @@ export default async function RootLayout({
 
   return (
     <html lang="ko" suppressHydrationWarning>
-      <head>
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-      </head>
       <body>
         <DashboardShell generationOptions={generationOptions} viewer={viewer}>
           {children}

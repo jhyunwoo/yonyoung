@@ -275,7 +275,7 @@ export default function AuthProfileForm({
             </p>
 
             <div className="mt-3 flex items-center gap-4">
-              <div className="h-16 w-16 overflow-hidden rounded-full border border-slate-200 bg-slate-50">
+              <div className="h-16 w-16 shrink-0 aspect-square overflow-hidden rounded-full border border-slate-200 bg-slate-50">
                 {imagePreviewUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img

@@ -1,9 +1,24 @@
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import HonoAppType from "../types/honoAppType";
-import { badRequest, noContent, notFound, ok } from "../lib/http/response";
+import {
+  badRequest,
+  forbidden,
+  noContent,
+  notFound,
+  ok,
+} from "../lib/http/response";
 import { parseBody, parseParams } from "../lib/validation/request";
 import { AppDependencies } from "../lib/services/dependencies";
 import { requireActor, requirePermission } from "../lib/http/authz";
+import {
+  recordAuditLog,
+  readChangedFields,
+  withUpdatedByActor,
+} from "../lib/audit";
+import {
+  hasMeaningfulRichTextHtml,
+  sanitizeRichTextHtml,
+} from "../lib/content/rich-text";
 import {
   createdResponse,
   dataResponse,
@@ -23,6 +38,12 @@ import {
 } from "../lib/openapi/schemas";
 
 type App = OpenAPIHono<HonoAppType>;
+const isPresidentActor = (role: string): boolean => role === "president";
+
+const sanitizeNoticeContentField = <T extends { content: string }>(notice: T): T => ({
+  ...notice,
+  content: sanitizeRichTextHtml(notice.content),
+});
 
 const listGenerationNoticesRoute = createRoute({
   method: "get",
@@ -222,7 +243,7 @@ export const registerNoticeRoutes = (app: App, dependencies: AppDependencies) =>
       .getDataService(c)
       .listGenerationNotices(params.data.id);
 
-    return ok(c, data);
+    return ok(c, data.map(sanitizeNoticeContentField));
   });
 
   app.openapi(createGenerationNoticeRoute, async (c): Promise<any> => {
@@ -246,8 +267,17 @@ export const registerNoticeRoutes = (app: App, dependencies: AppDependencies) =>
       return badRequest(c, body.message);
     }
 
-    const data = await dependencies.getDataService(c).createGenerationNotice(params.data.id, {
+    const sanitizedContent = sanitizeRichTextHtml(body.data.content);
+    if (!hasMeaningfulRichTextHtml(sanitizedContent)) {
+      return badRequest(c, "공지 본문은 비워둘 수 없습니다.");
+    }
+
+    const dataService = dependencies.getDataService(c);
+
+    const data = await dataService.createGenerationNotice(params.data.id, {
       ...body.data,
+      content: sanitizedContent,
+      imageUrls: body.data.imageUrls ?? [],
       authorId: actorResult.actor.id,
     });
 
@@ -255,7 +285,16 @@ export const registerNoticeRoutes = (app: App, dependencies: AppDependencies) =>
       return notFound(c);
     }
 
-    return ok(c, data, 201);
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "generation_notice",
+      resourceId: data.id,
+      action: "create",
+      changedFields: readChangedFields(body.data, ["title", "content", "imageUrls"]),
+    });
+
+    return ok(c, withUpdatedByActor(sanitizeNoticeContentField(data), actorResult.actor), 201);
   });
 
   app.openapi(getGenerationNoticeByIdRoute, async (c): Promise<any> => {
@@ -282,7 +321,7 @@ export const registerNoticeRoutes = (app: App, dependencies: AppDependencies) =>
       return notFound(c);
     }
 
-    return ok(c, data);
+    return ok(c, sanitizeNoticeContentField(data));
   });
 
   app.openapi(updateGenerationNoticeRoute, async (c): Promise<any> => {
@@ -306,19 +345,40 @@ export const registerNoticeRoutes = (app: App, dependencies: AppDependencies) =>
       return badRequest(c, body.message);
     }
 
-    if (Object.keys(body.data).length === 0) {
+    const nextBody = { ...body.data };
+    if (nextBody.content !== undefined) {
+      const sanitizedContent = sanitizeRichTextHtml(nextBody.content);
+      if (!hasMeaningfulRichTextHtml(sanitizedContent)) {
+        return badRequest(c, "공지 본문은 비워둘 수 없습니다.");
+      }
+      nextBody.content = sanitizedContent;
+    }
+
+    if (Object.keys(nextBody).length === 0) {
       return badRequest(c, "수정할 필드를 하나 이상 전달해야 합니다.");
     }
 
-    const data = await dependencies
-      .getDataService(c)
-      .updateGenerationNotice(params.data.id, params.data.noticeId, body.data);
+    const dataService = dependencies.getDataService(c);
+    const data = await dataService.updateGenerationNotice(
+      params.data.id,
+      params.data.noticeId,
+      nextBody,
+    );
 
     if (!data) {
       return notFound(c);
     }
 
-    return ok(c, data);
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "generation_notice",
+      resourceId: data.id,
+      action: "update",
+      changedFields: readChangedFields(nextBody, ["updatedAt"]),
+    });
+
+    return ok(c, withUpdatedByActor(sanitizeNoticeContentField(data), actorResult.actor));
   });
 
   app.openapi(deleteGenerationNoticeRoute, async (c): Promise<any> => {
@@ -337,13 +397,24 @@ export const registerNoticeRoutes = (app: App, dependencies: AppDependencies) =>
       return badRequest(c, params.message);
     }
 
-    const deleted = await dependencies
-      .getDataService(c)
-      .deleteGenerationNotice(params.data.id, params.data.noticeId);
+    const dataService = dependencies.getDataService(c);
+    const deleted = await dataService.deleteGenerationNotice(
+      params.data.id,
+      params.data.noticeId,
+    );
 
     if (!deleted) {
       return notFound(c);
     }
+
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "generation_notice",
+      resourceId: params.data.noticeId,
+      action: "delete",
+      changedFields: ["deletedAt"],
+    });
 
     return noContent(c);
   });
@@ -360,13 +431,17 @@ export const registerNoticeRoutes = (app: App, dependencies: AppDependencies) =>
     }
 
     const data = await dependencies.getDataService(c).listGlobalNotices();
-    return ok(c, data);
+    return ok(c, data.map(sanitizeNoticeContentField));
   });
 
   app.openapi(createGlobalNoticeRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
+    }
+
+    if (!isPresidentActor(actorResult.actor.role)) {
+      return forbidden(c);
     }
 
     const denied = requirePermission(c, actorResult.actor, "notice", "create");
@@ -379,8 +454,17 @@ export const registerNoticeRoutes = (app: App, dependencies: AppDependencies) =>
       return badRequest(c, body.message);
     }
 
-    const data = await dependencies.getDataService(c).createGlobalNotice({
+    const sanitizedContent = sanitizeRichTextHtml(body.data.content);
+    if (!hasMeaningfulRichTextHtml(sanitizedContent)) {
+      return badRequest(c, "공지 본문은 비워둘 수 없습니다.");
+    }
+
+    const dataService = dependencies.getDataService(c);
+
+    const data = await dataService.createGlobalNotice({
       ...body.data,
+      content: sanitizedContent,
+      imageUrls: body.data.imageUrls ?? [],
       authorId: actorResult.actor.id,
     });
 
@@ -388,7 +472,16 @@ export const registerNoticeRoutes = (app: App, dependencies: AppDependencies) =>
       return notFound(c);
     }
 
-    return ok(c, data, 201);
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "global_notice",
+      resourceId: data.id,
+      action: "create",
+      changedFields: readChangedFields(body.data, ["title", "content", "imageUrls"]),
+    });
+
+    return ok(c, withUpdatedByActor(sanitizeNoticeContentField(data), actorResult.actor), 201);
   });
 
   app.openapi(getGlobalNoticeByIdRoute, async (c): Promise<any> => {
@@ -415,13 +508,17 @@ export const registerNoticeRoutes = (app: App, dependencies: AppDependencies) =>
       return notFound(c);
     }
 
-    return ok(c, data);
+    return ok(c, sanitizeNoticeContentField(data));
   });
 
   app.openapi(updateGlobalNoticeRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
+    }
+
+    if (!isPresidentActor(actorResult.actor.role)) {
+      return forbidden(c);
     }
 
     const denied = requirePermission(c, actorResult.actor, "notice", "update");
@@ -439,25 +536,46 @@ export const registerNoticeRoutes = (app: App, dependencies: AppDependencies) =>
       return badRequest(c, body.message);
     }
 
-    if (Object.keys(body.data).length === 0) {
+    const nextBody = { ...body.data };
+    if (nextBody.content !== undefined) {
+      const sanitizedContent = sanitizeRichTextHtml(nextBody.content);
+      if (!hasMeaningfulRichTextHtml(sanitizedContent)) {
+        return badRequest(c, "공지 본문은 비워둘 수 없습니다.");
+      }
+      nextBody.content = sanitizedContent;
+    }
+
+    if (Object.keys(nextBody).length === 0) {
       return badRequest(c, "수정할 필드를 하나 이상 전달해야 합니다.");
     }
 
-    const data = await dependencies
-      .getDataService(c)
-      .updateGlobalNotice(params.data.id, body.data);
+    const dataService = dependencies.getDataService(c);
+    const data = await dataService.updateGlobalNotice(params.data.id, nextBody);
 
     if (!data) {
       return notFound(c);
     }
 
-    return ok(c, data);
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "global_notice",
+      resourceId: data.id,
+      action: "update",
+      changedFields: readChangedFields(nextBody, ["updatedAt"]),
+    });
+
+    return ok(c, withUpdatedByActor(sanitizeNoticeContentField(data), actorResult.actor));
   });
 
   app.openapi(deleteGlobalNoticeRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
+    }
+
+    if (!isPresidentActor(actorResult.actor.role)) {
+      return forbidden(c);
     }
 
     const denied = requirePermission(c, actorResult.actor, "notice", "delete");
@@ -470,13 +588,21 @@ export const registerNoticeRoutes = (app: App, dependencies: AppDependencies) =>
       return badRequest(c, params.message);
     }
 
-    const deleted = await dependencies
-      .getDataService(c)
-      .deleteGlobalNotice(params.data.id);
+    const dataService = dependencies.getDataService(c);
+    const deleted = await dataService.deleteGlobalNotice(params.data.id);
 
     if (!deleted) {
       return notFound(c);
     }
+
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "global_notice",
+      resourceId: params.data.id,
+      action: "delete",
+      changedFields: ["deletedAt"],
+    });
 
     return noContent(c);
   });

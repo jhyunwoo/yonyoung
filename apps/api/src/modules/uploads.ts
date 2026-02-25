@@ -40,9 +40,9 @@ import {
 } from "../lib/storage/presign";
 
 type App = OpenAPIHono<HonoAppType>;
-type ManagedResource = Extract<Resource, "activity" | "exhibition" | "supporter">;
-type UploadResourcePath = "activities" | "exhibitions" | "supporters" | "users";
-type UploadSlot = "cover" | "detail" | "logo" | "profile";
+type ManagedResource = Extract<Resource, "activity" | "exhibition" | "supporter" | "notice">;
+type UploadResourcePath = "activities" | "exhibitions" | "supporters" | "users" | "notices";
+type UploadSlot = "cover" | "detail" | "logo" | "profile" | "image";
 
 const canCreateOrUpdate = (role: Role, resource: Resource) => {
   return can(role, resource, "create") || can(role, resource, "update");
@@ -52,6 +52,7 @@ const resourceUploadPathMap: Record<ManagedResource, UploadResourcePath> = {
   activity: "activities",
   exhibition: "exhibitions",
   supporter: "supporters",
+  notice: "notices",
 };
 
 const resourceByPath: Record<UploadResourcePath, Resource | "user"> = {
@@ -59,6 +60,7 @@ const resourceByPath: Record<UploadResourcePath, Resource | "user"> = {
   exhibitions: "exhibition",
   supporters: "supporter",
   users: "user",
+  notices: "notice",
 };
 
 const slotAllowlistByPath: Record<UploadResourcePath, UploadSlot[]> = {
@@ -66,6 +68,7 @@ const slotAllowlistByPath: Record<UploadResourcePath, UploadSlot[]> = {
   exhibitions: ["cover", "detail"],
   supporters: ["logo"],
   users: ["profile"],
+  notices: ["image"],
 };
 
 const isAllowedContentType = (contentType: string): boolean =>
@@ -494,6 +497,14 @@ export const registerUploadRoutes = (
     "supporter",
     "logo",
   );
+  registerResourcePresignRoute(
+    app,
+    dependencies,
+    "/api/notices/presign/image",
+    "issueNoticeImagePresign",
+    "notice",
+    "image",
+  );
 
   registerResourceMultipartInitRoute(
     app,
@@ -534,6 +545,14 @@ export const registerUploadRoutes = (
     "initSupporterLogoMultipartUpload",
     "supporter",
     "logo",
+  );
+  registerResourceMultipartInitRoute(
+    app,
+    dependencies,
+    "/api/notices/multipart/image/init",
+    "initNoticeImageMultipartUpload",
+    "notice",
+    "image",
   );
 
   app.openapi(userProfilePresignRoute, async (c): Promise<any> => {

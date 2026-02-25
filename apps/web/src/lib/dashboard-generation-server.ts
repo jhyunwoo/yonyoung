@@ -10,7 +10,7 @@ import {
 
 export type DashboardGenerationOption = Pick<
   ApiGeneration,
-  "id" | "name" | "sortOrder" | "startDate" | "endDate"
+  "id" | "name" | "sortOrder" | "startDate" | "endDate" | "updatedAt" | "updatedBy"
 > & {
   path: string;
 };
@@ -26,7 +26,7 @@ const asRecord = (value: unknown): Record<string, unknown> | null => {
 const toGenerationOption = (
   generation: Pick<
     ApiGeneration,
-    "id" | "name" | "sortOrder" | "startDate" | "endDate"
+    "id" | "name" | "sortOrder" | "startDate" | "endDate" | "updatedAt" | "updatedBy"
   >,
 ): DashboardGenerationOption => ({
   id: generation.id,
@@ -34,6 +34,8 @@ const toGenerationOption = (
   sortOrder: generation.sortOrder,
   startDate: generation.startDate,
   endDate: generation.endDate,
+  updatedAt: generation.updatedAt,
+  updatedBy: generation.updatedBy,
   path: buildDashboardGenerationPath(generation),
 });
 

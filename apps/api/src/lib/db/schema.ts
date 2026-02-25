@@ -373,6 +373,7 @@ export const generationNotices = sqliteTable(
       .references(() => generations.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     content: text("content").notNull(),
+    imageUrls: text("image_urls").default("[]").notNull(),
     authorId: text("author_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -398,6 +399,7 @@ export const globalNotices = sqliteTable(
     id: text("id").primaryKey(),
     title: text("title").notNull(),
     content: text("content").notNull(),
+    imageUrls: text("image_urls").default("[]").notNull(),
     authorId: text("author_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -419,6 +421,13 @@ export const globalNotices = sqliteTable(
 export const linktree = sqliteTable("linktree", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .default(nowTimestamp)
+    .notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .default(nowTimestamp)
+    .$onUpdate(() => new Date())
+    .notNull(),
   deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
 });
 
@@ -433,6 +442,13 @@ export const linktreeItems = sqliteTable(
       .references 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => linktree.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     link: text("link").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .$onUpdate(() => new Date())
+      .notNull(),
     deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
   },
     /**
@@ -442,6 +458,28 @@ export const linktreeItems = sqliteTable(
    * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
    */
   (table) => [index("linktree_items_linktree_id_idx").on(table.linktreeId)],
+);
+
+export const auditLogs = sqliteTable(
+  "audit_logs",
+  {
+    id: text("id").primaryKey(),
+    resourceType: text("resource_type").notNull(),
+    resourceId: text("resource_id").notNull(),
+    action: text("action").notNull(),
+    actorId: text("actor_id"),
+    actorName: text("actor_name").notNull(),
+    actorRole: text("actor_role"),
+    changedFields: text("changed_fields").default("[]").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .notNull(),
+  },
+  (table) => [
+    index("audit_logs_resource_idx").on(table.resourceType, table.resourceId, table.createdAt),
+    index("audit_logs_actor_id_idx").on(table.actorId),
+    index("audit_logs_created_at_idx").on(table.createdAt),
+  ],
 );
 
 export const generationsRelations = relations(generations, /** relations 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param { many } 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ ({ many }) => ({

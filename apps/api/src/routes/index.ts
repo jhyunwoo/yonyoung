@@ -1,5 +1,6 @@
 import { OpenAPIHono, type OpenAPIHonoOptions } from "@hono/zod-openapi";
 import { registerActivityRoutes } from "../modules/activities";
+import { registerAuditRoutes } from "../modules/audit";
 import { registerAuthRoutes } from "../modules/auth";
 import { registerDashboardRoutes } from "../modules/dashboard";
 import { registerDocsRoutes } from "../modules/docs";
@@ -54,6 +55,7 @@ export const mountDomainRouters = (
       registerLinktreeRoutes(router, dependencies);
       registerUserRoutes(router, dependencies);
       registerDashboardRoutes(router, dependencies);
+      registerAuditRoutes(router, dependencies);
     }, defaultHook),
   );
 

@@ -122,6 +122,34 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
       "부원도 읽기 권한 범위에서 조회 가능합니다.",
     ],
   }),
+  listGenerationMembers: mkSpec({
+    summary: "기수 멤버 목록 조회",
+    overview:
+      "특정 기수에 소속된 멤버 요약 목록을 조회합니다. 응답은 이름/학과/회원구분 중심의 summary 필드만 반환합니다.",
+    parameters: ["`id` (path, UUID): 조회할 기수 식별자"],
+    requestBody: ["요청 본문은 사용하지 않습니다."],
+    internalFlow: [
+      "세션 및 `generation:read` 권한을 확인합니다.",
+      "기수 존재 여부를 먼저 확인해 없으면 `404`를 반환합니다.",
+      "회장/부회장은 모든 기수 접근 가능, 그 외 역할은 본인 소속 기수 ID에 한해 접근합니다.",
+      "기수 멤버를 필터링한 뒤 한글 이름 기준 정렬하여 summary 배열로 반환합니다.",
+    ],
+    responseGuide: [
+      "`200`: `ApiGenerationMemberSummary[]` 반환",
+      "응답에는 이메일/학번/전화번호 등 민감 프로필 필드를 포함하지 않습니다.",
+    ],
+    errorGuide: [
+      "`400`: UUID 형식 오류",
+      "`401`: 인증 없음",
+      "`403`: 소속 기수 접근 권한 없음 또는 unverified 접근",
+      "`404`: 기수 없음",
+    ],
+    permission: [
+      "회장/부회장: 모든 기수 멤버 조회 가능",
+      "부장/member 계열: 본인 소속 기수 멤버 조회만 허용",
+      "unverified: 조회 불가",
+    ],
+  }),
   updateGeneration: mkSpec({
     summary: "기수 수정",
     overview:
@@ -185,7 +213,7 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     errorGuide: [...readOnlyErrorGuide],
     permission: [
       "`activity:read` 권한이 필요합니다.",
-      "모든 역할이 읽기 가능하도록 정책이 구성되어 있습니다.",
+      "미승인(unverified)을 제외한 모든 역할이 읽기 가능합니다.",
     ],
   }),
   createActivity: mkSpec({
@@ -207,8 +235,8 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     responseGuide: ["`201`: 생성된 `ApiActivity` 객체를 반환합니다."],
     errorGuide: [...commonErrorGuide],
     permission: [
-      "`activity:create` 권한 필요(회장/부회장/부장).",
-      "부원은 생성할 수 없습니다.",
+      "`activity:create` 권한이 필요합니다.",
+      "미승인(unverified)을 제외한 모든 역할이 생성할 수 있습니다.",
     ],
   }),
   getActivityById: mkSpec({
@@ -243,7 +271,10 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     ],
     responseGuide: ["`200`: 수정된 `ApiActivity` 반환"],
     errorGuide: [...commonErrorGuide],
-    permission: ["`activity:update` 권한 필요"],
+    permission: [
+      "`activity:update` 권한 필요",
+      "미승인(unverified)을 제외한 모든 역할이 수정할 수 있습니다.",
+    ],
   }),
   deleteActivity: mkSpec({
     summary: "활동 삭제",
@@ -475,7 +506,7 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     ],
     responseGuide: ["`204`: 본문 없이 삭제 완료"],
     errorGuide: [...readOnlyErrorGuide],
-    permission: ["`exhibition:delete` 권한 필요(부장은 삭제 불가)"],
+    permission: ["`exhibition:delete` 권한 필요(회장만 삭제 가능)"],
   }),
   addExhibitionImage: mkSpec({
     summary: "전시 세부 이미지 추가",
@@ -523,13 +554,13 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     ],
     requestBody: ["요청 본문은 사용하지 않습니다."],
     internalFlow: [
-      "세션 + `exhibition:delete` 권한 확인",
+      "세션 + `exhibition:update` 권한 확인",
       "복합 파라미터 검증 후 삭제",
       "삭제 성공 시 `204`",
     ],
     responseGuide: ["`204`: 본문 없는 성공 응답"],
     errorGuide: [...readOnlyErrorGuide],
-    permission: ["`exhibition:delete` 권한 필요"],
+    permission: ["`exhibition:update` 권한 필요"],
   }),
   listLinktrees: mkSpec({
     summary: "링크트리 목록 조회",
@@ -804,7 +835,7 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
       "클라이언트는 `uploadUrl`로 PUT 업로드 후 `publicUrl`을 본문 API에 저장합니다.",
     ],
     errorGuide: [...commonErrorGuide],
-    permission: ["활동 생성 또는 수정 권한이 있는 역할만 발급 가능"],
+    permission: ["미승인(unverified)을 제외한 활동 생성/수정 권한 역할만 발급 가능"],
   }),
   issueActivityDetailPresign: mkSpec({
     summary: "활동 세부 이미지 업로드 URL 발급",
@@ -819,7 +850,7 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     ],
     responseGuide: ["`201`: presign 발급 정보 반환"],
     errorGuide: [...commonErrorGuide],
-    permission: ["활동 생성/수정 권한 필요"],
+    permission: ["미승인(unverified)을 제외한 활동 생성/수정 권한 필요"],
   }),
   issueExhibitionCoverPresign: mkSpec({
     summary: "전시 대표 이미지 업로드 URL 발급",

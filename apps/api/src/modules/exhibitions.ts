@@ -5,6 +5,11 @@ import { parseBody, parseParams } from "../lib/validation/request";
 import { AppDependencies } from "../lib/services/dependencies";
 import { requireActor, requirePermission } from "../lib/http/authz";
 import {
+  recordAuditLog,
+  readChangedFields,
+  withUpdatedByActor,
+} from "../lib/audit";
+import {
   createdResponse,
   dataResponse,
   errorResponses,
@@ -23,8 +28,19 @@ import {
   ApiUpdateExhibitionImageSchema,
   ApiUpdateExhibitionSchema,
 } from "../lib/openapi/schemas";
+import {
+  hasMeaningfulExhibitionRichText,
+  sanitizeExhibitionRichText,
+} from "../lib/content/exhibition-rich-text";
 
 type App = OpenAPIHono<HonoAppType>;
+
+const sanitizeExhibitionDescriptionField = <T extends { description: string }>(
+  exhibition: T,
+): T => ({
+  ...exhibition,
+  description: sanitizeExhibitionRichText(exhibition.description),
+});
 
 const listExhibitionsRoute = createRoute({
   method: "get",
@@ -227,7 +243,7 @@ export const registerExhibitionRoutes = (
     }
 
     const data = await dependencies.getDataService(c).listExhibitions();
-    return ok(c, data);
+    return ok(c, data.map(sanitizeExhibitionDescriptionField));
   });
 
   app.openapi(createExhibitionRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
@@ -245,8 +261,39 @@ export const registerExhibitionRoutes = (
       return badRequest(c, body.message);
     }
 
-    const data = await dependencies.getDataService(c).createExhibition(body.data);
-    return ok(c, data, 201);
+    const sanitizedDescription = sanitizeExhibitionRichText(body.data.description);
+    if (!hasMeaningfulExhibitionRichText(sanitizedDescription)) {
+      return badRequest(c, "전시 설명은 비워둘 수 없습니다.");
+    }
+
+    const data = await dependencies.getDataService(c).createExhibition({
+      ...body.data,
+      description: sanitizedDescription,
+    });
+
+    const dataService = dependencies.getDataService(c);
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "exhibition",
+      resourceId: data.id,
+      action: "create",
+      changedFields: readChangedFields(body.data, [
+        "title",
+        "startDate",
+        "endDate",
+        "generationId",
+        "place",
+        "coverImageUrl",
+        "description",
+      ]),
+    });
+
+    return ok(
+      c,
+      withUpdatedByActor(sanitizeExhibitionDescriptionField(data), actorResult.actor),
+      201,
+    );
   });
 
   app.openapi(getExhibitionByIdRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
@@ -270,7 +317,7 @@ export const registerExhibitionRoutes = (
     if (!data) {
       return notFound(c);
     }
-    return ok(c, data);
+    return ok(c, sanitizeExhibitionDescriptionField(data));
   });
 
   app.openapi(updateExhibitionRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
@@ -292,17 +339,38 @@ export const registerExhibitionRoutes = (
     if (!body.success) {
       return badRequest(c, body.message);
     }
-    if (Object.keys(body.data).length === 0) {
+    const nextBody = { ...body.data };
+    if (nextBody.description !== undefined) {
+      const sanitizedDescription = sanitizeExhibitionRichText(nextBody.description);
+      if (!hasMeaningfulExhibitionRichText(sanitizedDescription)) {
+        return badRequest(c, "전시 설명은 비워둘 수 없습니다.");
+      }
+      nextBody.description = sanitizedDescription;
+    }
+
+    if (Object.keys(nextBody).length === 0) {
       return badRequest(c, "수정할 필드를 하나 이상 전달해야 합니다.");
     }
 
-    const data = await dependencies
-      .getDataService(c)
-      .updateExhibition(params.data.id, body.data);
+    const dataService = dependencies.getDataService(c);
+    const data = await dataService.updateExhibition(params.data.id, nextBody);
     if (!data) {
       return notFound(c);
     }
-    return ok(c, data);
+
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "exhibition",
+      resourceId: data.id,
+      action: "update",
+      changedFields: readChangedFields(nextBody, ["updatedAt"]),
+    });
+
+    return ok(
+      c,
+      withUpdatedByActor(sanitizeExhibitionDescriptionField(data), actorResult.actor),
+    );
   });
 
   app.openapi(deleteExhibitionRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
@@ -320,12 +388,21 @@ export const registerExhibitionRoutes = (
       return badRequest(c, params.message);
     }
 
-    const deleted = await dependencies
-      .getDataService(c)
-      .deleteExhibition(params.data.id);
+    const dataService = dependencies.getDataService(c);
+    const deleted = await dataService.deleteExhibition(params.data.id);
     if (!deleted) {
       return notFound(c);
     }
+
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "exhibition",
+      resourceId: params.data.id,
+      action: "delete",
+      changedFields: ["deletedAt"],
+    });
+
     return noContent(c);
   });
 
@@ -349,12 +426,21 @@ export const registerExhibitionRoutes = (
       return badRequest(c, body.message);
     }
 
-    const data = await dependencies
-      .getDataService(c)
-      .addExhibitionImage(params.data.id, body.data);
+    const dataService = dependencies.getDataService(c);
+    const data = await dataService.addExhibitionImage(params.data.id, body.data);
     if (!data) {
       return notFound(c, "전시를 찾을 수 없습니다.");
     }
+
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "exhibition",
+      resourceId: params.data.id,
+      action: "update",
+      changedFields: ["detailImages"],
+    });
+
     return ok(c, data, 201);
   });
 
@@ -377,12 +463,21 @@ export const registerExhibitionRoutes = (
       return badRequest(c, body.message);
     }
 
-    const data = await dependencies
-      .getDataService(c)
-      .addExhibitionImages(params.data.id, body.data);
+    const dataService = dependencies.getDataService(c);
+    const data = await dataService.addExhibitionImages(params.data.id, body.data);
     if (!data) {
       return notFound(c, "전시를 찾을 수 없습니다.");
     }
+
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "exhibition",
+      resourceId: params.data.id,
+      action: "update",
+      changedFields: ["detailImages"],
+    });
+
     return ok(c, data, 201);
   });
 
@@ -405,12 +500,21 @@ export const registerExhibitionRoutes = (
       return badRequest(c, body.message);
     }
 
-    const data = await dependencies
-      .getDataService(c)
-      .updateExhibitionImages(params.data.id, body.data);
+    const dataService = dependencies.getDataService(c);
+    const data = await dataService.updateExhibitionImages(params.data.id, body.data);
     if (!data) {
       return notFound(c, "세부 이미지를 찾을 수 없습니다.");
     }
+
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "exhibition",
+      resourceId: params.data.id,
+      action: "update",
+      changedFields: ["detailImages"],
+    });
+
     return ok(c, data);
   });
 
@@ -436,12 +540,25 @@ export const registerExhibitionRoutes = (
       return badRequest(c, "수정할 필드를 하나 이상 전달해야 합니다.");
     }
 
-    const data = await dependencies
-      .getDataService(c)
-      .updateExhibitionImage(params.data.id, params.data.imageId, body.data);
+    const dataService = dependencies.getDataService(c);
+    const data = await dataService.updateExhibitionImage(
+      params.data.id,
+      params.data.imageId,
+      body.data,
+    );
     if (!data) {
       return notFound(c, "세부 이미지를 찾을 수 없습니다.");
     }
+
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "exhibition",
+      resourceId: params.data.id,
+      action: "update",
+      changedFields: ["detailImages"],
+    });
+
     return ok(c, data);
   });
 
@@ -450,7 +567,7 @@ export const registerExhibitionRoutes = (
     if ("response" in actorResult) {
       return actorResult.response;
     }
-    const denied = requirePermission(c, actorResult.actor, "exhibition", "delete");
+    const denied = requirePermission(c, actorResult.actor, "exhibition", "update");
     if (denied) {
       return denied;
     }
@@ -460,12 +577,24 @@ export const registerExhibitionRoutes = (
       return badRequest(c, params.message);
     }
 
-    const deleted = await dependencies
-      .getDataService(c)
-      .deleteExhibitionImage(params.data.id, params.data.imageId);
+    const dataService = dependencies.getDataService(c);
+    const deleted = await dataService.deleteExhibitionImage(
+      params.data.id,
+      params.data.imageId,
+    );
     if (!deleted) {
       return notFound(c, "세부 이미지를 찾을 수 없습니다.");
     }
+
+    await recordAuditLog({
+      dataService,
+      actor: actorResult.actor,
+      resourceType: "exhibition",
+      resourceId: params.data.id,
+      action: "update",
+      changedFields: ["detailImages"],
+    });
+
     return noContent(c);
   });
 };
