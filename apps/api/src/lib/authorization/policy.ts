@@ -74,6 +74,7 @@ const permissionMatrix: PermissionMatrix = {
   president: {
     generation: { ...allTrue },
     activity: { ...allTrue },
+    notice: { ...allTrue },
     supporter: { ...allTrue },
     exhibition: { ...allTrue },
     linktree: { ...allTrue },
@@ -82,6 +83,7 @@ const permissionMatrix: PermissionMatrix = {
   vice_president: {
     generation: { ...allTrue, delete: false },
     activity: { ...allTrue },
+    notice: { ...allTrue },
     supporter: { ...allTrue },
     exhibition: { ...allTrue },
     linktree: { ...allTrue },
@@ -90,6 +92,7 @@ const permissionMatrix: PermissionMatrix = {
   manager: {
     generation: { ...readOnly },
     activity: { create: true, read: true, update: true, delete: true },
+    notice: { create: true, read: true, update: true, delete: true },
     supporter: { create: true, read: true, update: true, delete: true },
     exhibition: { create: true, read: true, update: true, delete: false },
     linktree: { create: true, read: true, update: true, delete: true },
@@ -98,6 +101,7 @@ const permissionMatrix: PermissionMatrix = {
   new_member: {
     generation: { ...readOnly },
     activity: { ...readOnly },
+    notice: { ...readOnly },
     supporter: { ...readOnly },
     exhibition: { ...readOnly },
     linktree: { ...readOnly },
@@ -106,6 +110,7 @@ const permissionMatrix: PermissionMatrix = {
   associate_member: {
     generation: { ...readOnly },
     activity: { ...readOnly },
+    notice: { ...readOnly },
     supporter: { ...readOnly },
     exhibition: { ...readOnly },
     linktree: { ...readOnly },
@@ -114,6 +119,7 @@ const permissionMatrix: PermissionMatrix = {
   regular_member: {
     generation: { ...readOnly },
     activity: { ...readOnly },
+    notice: { ...readOnly },
     supporter: { ...readOnly },
     exhibition: { ...readOnly },
     linktree: { ...readOnly },
@@ -122,6 +128,7 @@ const permissionMatrix: PermissionMatrix = {
   unverified: {
     generation: { ...noAccess },
     activity: { ...noAccess },
+    notice: { ...noAccess },
     supporter: { ...noAccess },
     exhibition: { ...noAccess },
     linktree: { ...noAccess },

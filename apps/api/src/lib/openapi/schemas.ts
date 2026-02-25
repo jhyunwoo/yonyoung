@@ -14,6 +14,7 @@ const EXAMPLE_PARENT_ID = "22222222-2222-4222-8222-222222222222";
 const EXAMPLE_IMAGE_ID = "33333333-3333-4333-8333-333333333333";
 const EXAMPLE_ITEM_ID = "44444444-4444-4444-8444-444444444444";
 const EXAMPLE_GENERATION_ID = "55555555-5555-4555-8555-555555555555";
+const EXAMPLE_NOTICE_ID = "66666666-6666-4666-8666-666666666666";
 const EXAMPLE_USER_ID = "OrYuGkpIFldOIkcrxLrwgzEegsLSJbrh";
 const EXAMPLE_TIMESTAMP_MS = 1735689600000;
 const EXAMPLE_TIMESTAMP_MS_END = 1738368000000;
@@ -142,6 +143,19 @@ export const ApiItemIdParamSchema = z
   })
   .openapi("ApiItemIdParam");
 
+export const ApiNoticeIdParamSchema = z
+  .object({
+    id: z.string().uuid().openapi({
+      description: "상위 리소스 UUID (기수)",
+      example: EXAMPLE_GENERATION_ID,
+    }),
+    noticeId: z.string().uuid().openapi({
+      description: "공지 UUID",
+      example: EXAMPLE_NOTICE_ID,
+    }),
+  })
+  .openapi("ApiNoticeIdParam");
+
 export const ApiGenerationSchema = z
   .object({
     id: z.string().uuid().openapi({
@@ -165,7 +179,7 @@ export const ApiGenerationSchema = z
 
 export const ApiCreateGenerationSchema = z
   .object({
-    name: z.string().min(1, "name은 필수입니다.").openapi({
+    name: z.string().trim().min(1, "name은 필수입니다.").openapi({
       description: "생성할 기수 이름",
       example: "12기",
     }),
@@ -591,6 +605,149 @@ export const ApiUpdateExhibitionImageBatchSchema = z
     },
   )
   .openapi("ApiUpdateExhibitionImageBatchInput");
+
+export const ApiNoticeAuthorSchema = z
+  .object({
+    id: z.string().openapi({
+      description: "작성자 식별자 (better-auth user.id)",
+      example: EXAMPLE_USER_ID,
+    }),
+    name: z.string().openapi({
+      description: "작성자 이름",
+      example: "홍길동",
+    }),
+    image: z.string().url().nullable().openapi({
+      description: "작성자 프로필 이미지 URL (없으면 null)",
+      example: "https://cdn.yonyoung.example/users/profile/member.png",
+    }),
+    role: z.string().nullable().openapi({
+      description: "작성자 역할 문자열",
+      example: "manager",
+    }),
+  })
+  .openapi("ApiNoticeAuthor");
+
+export const ApiGenerationNoticeSchema = z
+  .object({
+    id: z.string().uuid().openapi({
+      description: "기수 공지 UUID",
+      example: EXAMPLE_NOTICE_ID,
+    }),
+    generationId: z.string().uuid().openapi({
+      description: "소속 기수 UUID",
+      example: EXAMPLE_GENERATION_ID,
+    }),
+    title: z.string().openapi({
+      description: "공지 제목",
+      example: "60기 정기 회의 안내",
+    }),
+    content: z.string().openapi({
+      description: "공지 본문",
+      example: "이번 주 토요일 14시에 회의를 진행합니다.",
+    }),
+    author: ApiNoticeAuthorSchema.openapi({
+      description: "공지 작성자 정보",
+    }),
+    createdAt: timestampField("공지 생성 시각", EXAMPLE_TIMESTAMP_MS),
+    updatedAt: timestampField("공지 수정 시각", EXAMPLE_TIMESTAMP_MS),
+  })
+  .openapi("ApiGenerationNotice");
+
+export const ApiCreateGenerationNoticeSchema = z
+  .object({
+    title: z.string().trim().min(1, "공지 제목은 비워둘 수 없습니다.").openapi({
+      description: "공지 제목",
+      example: "60기 정기 회의 안내",
+    }),
+    content: z.string().trim().min(1, "공지 본문은 비워둘 수 없습니다.").openapi({
+      description: "공지 본문",
+      example: "이번 주 토요일 14시에 회의를 진행합니다.",
+    }),
+  })
+  .openapi("ApiCreateGenerationNoticeInput");
+
+export const ApiUpdateGenerationNoticeSchema = z
+  .object({
+    title: z
+      .string()
+      .trim()
+      .min(1, "공지 제목은 비워둘 수 없습니다.")
+      .optional()
+      .openapi({
+        description: "공지 제목",
+        example: "60기 정기 회의 안내",
+      }),
+    content: z
+      .string()
+      .trim()
+      .min(1, "공지 본문은 비워둘 수 없습니다.")
+      .optional()
+      .openapi({
+        description: "공지 본문",
+        example: "회의 장소가 소회의실로 변경되었습니다.",
+      }),
+  })
+  .strict()
+  .openapi("ApiUpdateGenerationNoticeInput");
+
+export const ApiGlobalNoticeSchema = z
+  .object({
+    id: z.string().uuid().openapi({
+      description: "전체 공지 UUID",
+      example: EXAMPLE_NOTICE_ID,
+    }),
+    title: z.string().openapi({
+      description: "공지 제목",
+      example: "연영회 정기 총회 안내",
+    }),
+    content: z.string().openapi({
+      description: "공지 본문",
+      example: "다음 주 금요일 19시 정기 총회가 진행됩니다.",
+    }),
+    author: ApiNoticeAuthorSchema.openapi({
+      description: "공지 작성자 정보",
+    }),
+    createdAt: timestampField("공지 생성 시각", EXAMPLE_TIMESTAMP_MS),
+    updatedAt: timestampField("공지 수정 시각", EXAMPLE_TIMESTAMP_MS),
+  })
+  .openapi("ApiGlobalNotice");
+
+export const ApiCreateGlobalNoticeSchema = z
+  .object({
+    title: z.string().trim().min(1, "공지 제목은 비워둘 수 없습니다.").openapi({
+      description: "공지 제목",
+      example: "연영회 정기 총회 안내",
+    }),
+    content: z.string().trim().min(1, "공지 본문은 비워둘 수 없습니다.").openapi({
+      description: "공지 본문",
+      example: "다음 주 금요일 19시 정기 총회가 진행됩니다.",
+    }),
+  })
+  .openapi("ApiCreateGlobalNoticeInput");
+
+export const ApiUpdateGlobalNoticeSchema = z
+  .object({
+    title: z
+      .string()
+      .trim()
+      .min(1, "공지 제목은 비워둘 수 없습니다.")
+      .optional()
+      .openapi({
+        description: "공지 제목",
+        example: "연영회 정기 총회 안내",
+      }),
+    content: z
+      .string()
+      .trim()
+      .min(1, "공지 본문은 비워둘 수 없습니다.")
+      .optional()
+      .openapi({
+        description: "공지 본문",
+        example: "일정이 변경되어 토요일 19시로 진행됩니다.",
+      }),
+  })
+  .strict()
+  .openapi("ApiUpdateGlobalNoticeInput");
 
 export const ApiLinktreeItemSchema = z
   .object({

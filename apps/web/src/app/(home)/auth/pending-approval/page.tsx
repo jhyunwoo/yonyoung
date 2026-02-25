@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { serverAuthTool } from "../../../../lib/auth-server-tool";
-import { canAccessAdminPage, hasCompletedRequiredProfile } from "../../../../lib/auth-shared";
+import { hasCompletedRequiredProfile, isUnverifiedRole } from "../../../../lib/auth-shared";
 
 export default async function PendingApprovalPage() {
   const session = await serverAuthTool.requireSession();
-  const isProfileComplete = hasCompletedRequiredProfile(session.user);
+  const profile = await serverAuthTool.getCurrentUserProfile(session);
+  const profileLike = (profile ?? session.user) as Record<string, unknown>;
+  const isProfileComplete = hasCompletedRequiredProfile(profileLike);
 
-  if (canAccessAdminPage(session)) {
-    redirect(isProfileComplete ? "/admin" : "/auth/profile");
+  if (!isUnverifiedRole(session.user.role)) {
+    redirect(isProfileComplete ? "/dashboard" : "/auth/profile");
   }
 
   if (!isProfileComplete) {
@@ -25,7 +27,7 @@ export default async function PendingApprovalPage() {
           기본 정보 입력이 완료되었습니다.
         </h1>
         <p className="mt-4 text-sm leading-relaxed text-(--text-muted) md:text-base">
-          관리자가 권한을 부여하기 전까지 기다려주세요. 권한이 부여되면 관리자 페이지에 접근할 수
+          기본 정보 입력이 완료되었습니다. 관리자가 계정 권한을 변경하면 Dashboard에 접근할 수
           있습니다.
         </p>
 

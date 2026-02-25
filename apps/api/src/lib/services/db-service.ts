@@ -5,7 +5,9 @@ import {
   activityImages,
   exhibitions,
   exhibitionImages,
+  generationNotices,
   generations,
+  globalNotices,
   linktree,
   linktreeItems,
   supporters,
@@ -18,8 +20,11 @@ import {
   DataService,
   ExhibitionEntity,
   ExhibitionImageEntity,
+  GenerationNoticeEntity,
+  GlobalNoticeEntity,
   LinktreeEntity,
   LinktreeItemEntity,
+  NoticeAuthorEntity,
   UserEntity,
 } from "./types";
 
@@ -248,6 +253,47 @@ const mapLinktreesWithItems = async (
   }));
 };
 
+type NoticeListRow = {
+  id: string;
+  generationId?: string;
+  title: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  authorId: string;
+  authorName: string;
+  authorImage: string | null;
+  authorRole: string | null;
+};
+
+const toNoticeAuthor = (row: NoticeListRow): NoticeAuthorEntity => ({
+  id: row.authorId,
+  name: row.authorName,
+  image: row.authorImage,
+  role: row.authorRole,
+});
+
+const toGenerationNoticeEntity = (
+  row: NoticeListRow,
+): GenerationNoticeEntity => ({
+  id: row.id,
+  generationId: row.generationId!,
+  title: row.title,
+  content: row.content,
+  author: toNoticeAuthor(row),
+  createdAt: row.createdAt,
+  updatedAt: row.updatedAt,
+});
+
+const toGlobalNoticeEntity = (row: NoticeListRow): GlobalNoticeEntity => ({
+  id: row.id,
+  title: row.title,
+  content: row.content,
+  author: toNoticeAuthor(row),
+  createdAt: row.createdAt,
+  updatedAt: row.updatedAt,
+});
+
 const dedupeGenerationIds = (generationIds: string[]): string[] => {
   return Array.from(
     new Set(
@@ -400,6 +446,11 @@ const replaceUserGenerations = async (
  */
 export const createDbDataService = (database: D1Database): DataService => {
   const db = createDB(database);
+  const findActiveGenerationByName = async (name: string) => {
+    return db.query.generations.findFirst({
+      where: and(eq(generations.name, name), isNull(generations.deletedAt)),
+    });
+  };
 
   return {
         /**
@@ -422,9 +473,16 @@ export const createDbDataService = (database: D1Database): DataService => {
      */
     async createGeneration(input) {
       const id = crypto.randomUUID();
+      const generationName = input.name.trim();
+      const existingGenerationWithSameName =
+        await findActiveGenerationByName(generationName);
+      if (existingGenerationWithSameName) {
+        throw new Error("UNIQUE constraint failed: generations.name");
+      }
+
       await db.insert(generations).values({
         id,
-        name: input.name,
+        name: generationName,
         sortOrder: input.sortOrder,
         startDate: new Date(input.startDate),
         endDate: new Date(input.endDate),
@@ -461,10 +519,19 @@ export const createDbDataService = (database: D1Database): DataService => {
         return null;
       }
 
+      const generationName = input.name?.trim();
+      if (generationName !== undefined) {
+        const existingGenerationWithSameName =
+          await findActiveGenerationByName(generationName);
+        if (existingGenerationWithSameName && existingGenerationWithSameName.id !== id) {
+          throw new Error("UNIQUE constraint failed: generations.name");
+        }
+      }
+
       await db
         .update(generations)
         .set({
-          ...(input.name !== undefined ? { name: input.name } : {}),
+          ...(generationName !== undefined ? { name: generationName } : {}),
           ...(input.sortOrder !== undefined
             ? { sortOrder: input.sortOrder }
             : {}),
@@ -1580,6 +1647,266 @@ export const createDbDataService = (database: D1Database): DataService => {
             isNull(linktreeItems.deletedAt),
           ),
         );
+      return true;
+    },
+
+    async listGenerationNotices(generationId) {
+      const rows = await db
+        .select({
+          id: generationNotices.id,
+          generationId: generationNotices.generationId,
+          title: generationNotices.title,
+          content: generationNotices.content,
+          createdAt: generationNotices.createdAt,
+          updatedAt: generationNotices.updatedAt,
+          authorId: user.id,
+          authorName: user.name,
+          authorImage: user.image,
+          authorRole: user.role,
+        })
+        .from(generationNotices)
+        .innerJoin(user, eq(generationNotices.authorId, user.id))
+        .where(
+          and(
+            eq(generationNotices.generationId, generationId),
+            isNull(generationNotices.deletedAt),
+            isNull(user.deletedAt),
+          ),
+        )
+        .orderBy(desc(generationNotices.createdAt));
+
+      return rows.map(toGenerationNoticeEntity);
+    },
+
+    async createGenerationNotice(generationId, input) {
+      const [generationExists, authorExists] = await Promise.all([
+        db.query.generations.findFirst({
+          where: and(eq(generations.id, generationId), isNull(generations.deletedAt)),
+          columns: { id: true },
+        }),
+        db.query.user.findFirst({
+          where: and(eq(user.id, input.authorId), isNull(user.deletedAt)),
+          columns: { id: true },
+        }),
+      ]);
+
+      if (!generationExists || !authorExists) {
+        return null;
+      }
+
+      const id = crypto.randomUUID();
+      await db.insert(generationNotices).values({
+        id,
+        generationId,
+        title: input.title,
+        content: input.content,
+        authorId: input.authorId,
+      });
+
+      return this.getGenerationNoticeById(generationId, id);
+    },
+
+    async getGenerationNoticeById(generationId, noticeId) {
+      const row = await db
+        .select({
+          id: generationNotices.id,
+          generationId: generationNotices.generationId,
+          title: generationNotices.title,
+          content: generationNotices.content,
+          createdAt: generationNotices.createdAt,
+          updatedAt: generationNotices.updatedAt,
+          authorId: user.id,
+          authorName: user.name,
+          authorImage: user.image,
+          authorRole: user.role,
+        })
+        .from(generationNotices)
+        .innerJoin(user, eq(generationNotices.authorId, user.id))
+        .where(
+          and(
+            eq(generationNotices.id, noticeId),
+            eq(generationNotices.generationId, generationId),
+            isNull(generationNotices.deletedAt),
+            isNull(user.deletedAt),
+          ),
+        )
+        .limit(1);
+
+      return row[0] ? toGenerationNoticeEntity(row[0]) : null;
+    },
+
+    async updateGenerationNotice(generationId, noticeId, input) {
+      const exists = await db.query.generationNotices.findFirst({
+        where: and(
+          eq(generationNotices.id, noticeId),
+          eq(generationNotices.generationId, generationId),
+          isNull(generationNotices.deletedAt),
+        ),
+        columns: { id: true },
+      });
+
+      if (!exists) {
+        return null;
+      }
+
+      await db
+        .update(generationNotices)
+        .set({
+          ...(input.title !== undefined ? { title: input.title } : {}),
+          ...(input.content !== undefined ? { content: input.content } : {}),
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(generationNotices.id, noticeId),
+            eq(generationNotices.generationId, generationId),
+            isNull(generationNotices.deletedAt),
+          ),
+        );
+
+      return this.getGenerationNoticeById(generationId, noticeId);
+    },
+
+    async deleteGenerationNotice(generationId, noticeId) {
+      const exists = await db.query.generationNotices.findFirst({
+        where: and(
+          eq(generationNotices.id, noticeId),
+          eq(generationNotices.generationId, generationId),
+          isNull(generationNotices.deletedAt),
+        ),
+        columns: { id: true },
+      });
+
+      if (!exists) {
+        return false;
+      }
+
+      await db
+        .update(generationNotices)
+        .set({
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(generationNotices.id, noticeId),
+            eq(generationNotices.generationId, generationId),
+            isNull(generationNotices.deletedAt),
+          ),
+        );
+
+      return true;
+    },
+
+    async listGlobalNotices() {
+      const rows = await db
+        .select({
+          id: globalNotices.id,
+          title: globalNotices.title,
+          content: globalNotices.content,
+          createdAt: globalNotices.createdAt,
+          updatedAt: globalNotices.updatedAt,
+          authorId: user.id,
+          authorName: user.name,
+          authorImage: user.image,
+          authorRole: user.role,
+        })
+        .from(globalNotices)
+        .innerJoin(user, eq(globalNotices.authorId, user.id))
+        .where(and(isNull(globalNotices.deletedAt), isNull(user.deletedAt)))
+        .orderBy(desc(globalNotices.createdAt));
+
+      return rows.map(toGlobalNoticeEntity);
+    },
+
+    async createGlobalNotice(input) {
+      const authorExists = await db.query.user.findFirst({
+        where: and(eq(user.id, input.authorId), isNull(user.deletedAt)),
+        columns: { id: true },
+      });
+
+      if (!authorExists) {
+        return null;
+      }
+
+      const id = crypto.randomUUID();
+      await db.insert(globalNotices).values({
+        id,
+        title: input.title,
+        content: input.content,
+        authorId: input.authorId,
+      });
+
+      return this.getGlobalNoticeById(id);
+    },
+
+    async getGlobalNoticeById(noticeId) {
+      const row = await db
+        .select({
+          id: globalNotices.id,
+          title: globalNotices.title,
+          content: globalNotices.content,
+          createdAt: globalNotices.createdAt,
+          updatedAt: globalNotices.updatedAt,
+          authorId: user.id,
+          authorName: user.name,
+          authorImage: user.image,
+          authorRole: user.role,
+        })
+        .from(globalNotices)
+        .innerJoin(user, eq(globalNotices.authorId, user.id))
+        .where(
+          and(
+            eq(globalNotices.id, noticeId),
+            isNull(globalNotices.deletedAt),
+            isNull(user.deletedAt),
+          ),
+        )
+        .limit(1);
+
+      return row[0] ? toGlobalNoticeEntity(row[0]) : null;
+    },
+
+    async updateGlobalNotice(noticeId, input) {
+      const exists = await db.query.globalNotices.findFirst({
+        where: and(eq(globalNotices.id, noticeId), isNull(globalNotices.deletedAt)),
+        columns: { id: true },
+      });
+
+      if (!exists) {
+        return null;
+      }
+
+      await db
+        .update(globalNotices)
+        .set({
+          ...(input.title !== undefined ? { title: input.title } : {}),
+          ...(input.content !== undefined ? { content: input.content } : {}),
+          updatedAt: new Date(),
+        })
+        .where(and(eq(globalNotices.id, noticeId), isNull(globalNotices.deletedAt)));
+
+      return this.getGlobalNoticeById(noticeId);
+    },
+
+    async deleteGlobalNotice(noticeId) {
+      const exists = await db.query.globalNotices.findFirst({
+        where: and(eq(globalNotices.id, noticeId), isNull(globalNotices.deletedAt)),
+        columns: { id: true },
+      });
+
+      if (!exists) {
+        return false;
+      }
+
+      await db
+        .update(globalNotices)
+        .set({
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(and(eq(globalNotices.id, noticeId), isNull(globalNotices.deletedAt)));
+
       return true;
     },
 

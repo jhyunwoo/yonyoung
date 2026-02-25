@@ -364,6 +364,58 @@ export const exhibitionImages = sqliteTable(
   ],
 );
 
+export const generationNotices = sqliteTable(
+  "generation_notices",
+  {
+    id: text("id").primaryKey(),
+    generationId: text("generation_id")
+      .notNull()
+      .references(() => generations.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    content: text("content").notNull(),
+    authorId: text("author_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .$onUpdate(() => new Date())
+      .notNull(),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
+  },
+  (table) => [
+    index("generation_notices_generation_id_idx").on(table.generationId),
+    index("generation_notices_author_id_idx").on(table.authorId),
+    index("generation_notices_created_at_idx").on(table.createdAt),
+  ],
+);
+
+export const globalNotices = sqliteTable(
+  "global_notices",
+  {
+    id: text("id").primaryKey(),
+    title: text("title").notNull(),
+    content: text("content").notNull(),
+    authorId: text("author_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .$onUpdate(() => new Date())
+      .notNull(),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
+  },
+  (table) => [
+    index("global_notices_author_id_idx").on(table.authorId),
+    index("global_notices_created_at_idx").on(table.createdAt),
+  ],
+);
+
 export const linktree = sqliteTable("linktree", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -397,6 +449,7 @@ export const generationsRelations = relations(generations, /** relations 실행 
   userGenerations: many(userGenerations),
   activities: many(activities),
   exhibitions: many(exhibitions),
+  notices: many(generationNotices),
 }));
 
 export const userRelations = relations(user, /** relations 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param { many, one } 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ ({ many, one }) => ({
@@ -407,6 +460,8 @@ export const userRelations = relations(user, /** relations 실행 과정에서 �
   generationLinks: many(userGenerations),
   sessions: many(session),
   accounts: many(account),
+  generationNotices: many(generationNotices),
+  globalNotices: many(globalNotices),
 }));
 
 export const userGenerationsRelations = relations(
@@ -481,6 +536,27 @@ export const exhibitionImagesRelations = relations(
     }),
   }),
 );
+
+export const generationNoticesRelations = relations(
+  generationNotices,
+  ({ one }) => ({
+    generation: one(generations, {
+      fields: [generationNotices.generationId],
+      references: [generations.id],
+    }),
+    author: one(user, {
+      fields: [generationNotices.authorId],
+      references: [user.id],
+    }),
+  }),
+);
+
+export const globalNoticesRelations = relations(globalNotices, ({ one }) => ({
+  author: one(user, {
+    fields: [globalNotices.authorId],
+    references: [user.id],
+  }),
+}));
 
 export const linktreeRelations = relations(linktree, /** relations 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param { many } 함수 로직에서 사용하는 입력값입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ ({ many }) => ({
   items: many(linktreeItems),

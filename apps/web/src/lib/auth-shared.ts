@@ -40,6 +40,10 @@ export type AuthSession = {
   user: AuthUser;
 };
 
+export const DASHBOARD_PATH = "/dashboard";
+export const AUTH_PROFILE_PATH = "/auth/profile";
+export const AUTH_PENDING_APPROVAL_PATH = "/auth/pending-approval";
+
 export const hasCompletedRequiredProfile = (
   user: Record<string, unknown> | null | undefined,
 ): boolean => hasCompletedRequiredProfileFields(user);
@@ -146,4 +150,18 @@ export const canManageGlobalUsers = (session: SessionWithRole): boolean => {
 
   const role = getRoleFromSession(session);
   return role === "president" || role === "vice_president";
+};
+
+export const resolvePostSignInPath = (input: {
+  role: unknown;
+  isProfileComplete: boolean;
+}):
+  | typeof DASHBOARD_PATH
+  | typeof AUTH_PROFILE_PATH
+  | typeof AUTH_PENDING_APPROVAL_PATH => {
+  if (isUnverifiedRole(input.role)) {
+    return input.isProfileComplete ? AUTH_PENDING_APPROVAL_PATH : AUTH_PROFILE_PATH;
+  }
+
+  return input.isProfileComplete ? DASHBOARD_PATH : AUTH_PROFILE_PATH;
 };

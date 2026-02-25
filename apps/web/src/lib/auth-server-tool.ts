@@ -2,16 +2,17 @@ import { cookies } from "next/headers";
 import { forbidden, redirect } from "next/navigation";
 import { fetchSessionFromApi, resolveAuthApiUrl } from "./auth-server";
 import {
+  AUTH_PROFILE_PATH,
+  DASHBOARD_PATH,
   canAccessAdminPage,
   canManageGenerations,
   canManageGlobalUsers,
   hasCompletedRequiredProfile,
+  resolvePostSignInPath,
 } from "./auth-shared";
 import type { AuthSession } from "./auth-shared";
 
 const SIGN_IN_PATH = "/auth/sign-in";
-const ADMIN_PATH = "/admin";
-const AUTH_PROFILE_PATH = "/auth/profile";
 const USER_PATH_PREFIX = "/api/users";
 
 /**
@@ -145,11 +146,7 @@ const redirectIfProfileIncomplete = async (
   session: AuthSession,
   redirectTo = AUTH_PROFILE_PATH,
 ): Promise<void> => {
-  const profile = await getCurrentUserProfile(session);
-  if (!profile) {
-    return;
-  }
-
+  const profile = (await getCurrentUserProfile(session)) ?? asRecord(session.user);
   if (!hasCompletedRequiredProfile(profile)) {
     redirect(redirectTo);
   }
@@ -158,11 +155,13 @@ const redirectIfProfileIncomplete = async (
 const resolveAdminLandingPath = async (
   session: AuthSession,
 ): Promise<string> => {
-  const profile = await getCurrentUserProfile(session);
-  if (profile && !hasCompletedRequiredProfile(profile)) {
-    return AUTH_PROFILE_PATH;
-  }
-  return ADMIN_PATH;
+  const profile = (await getCurrentUserProfile(session)) ?? asRecord(session.user);
+  const isProfileComplete = hasCompletedRequiredProfile(profile);
+
+  return resolvePostSignInPath({
+    role: session.user.role,
+    isProfileComplete,
+  });
 };
 
 /**
@@ -172,7 +171,7 @@ const resolveAdminLandingPath = async (
  * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
  */
 const requirePresidentAccess = async (
-  redirectTo = ADMIN_PATH,
+  redirectTo = DASHBOARD_PATH,
 ): Promise<AuthSession> => {
   const session = await requireAccess(canManageGenerations, redirectTo);
   await redirectIfProfileIncomplete(session);

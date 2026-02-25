@@ -5,6 +5,7 @@ export type Role = CoreRole;
 export type Resource =
   | "generation"
   | "activity"
+  | "notice"
   | "supporter"
   | "exhibition"
   | "linktree"

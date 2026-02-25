@@ -4,9 +4,13 @@ import {
   isKoreanMobilePhoneNumber,
 } from "@repo/shared-auth/profile";
 import {
+  AUTH_PENDING_APPROVAL_PATH,
+  AUTH_PROFILE_PATH,
+  DASHBOARD_PATH,
   getRoleFromSession,
   hasCompletedRequiredProfile,
   isUnverifiedRole,
+  resolvePostSignInPath,
 } from "./auth-shared";
 
 describe("auth-shared helpers", /** describe 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
@@ -61,5 +65,38 @@ describe("auth-shared helpers", /** describe 실행 과정에서 필요한 연�
     expect(isKoreanMobilePhoneNumber("010-9260-2402")).toBe(true);
     expect(isKoreanMobilePhoneNumber("01092602402")).toBe(false);
     expect(isKoreanMobilePhoneNumber("011-9260-2402")).toBe(false);
+  });
+
+  it("resolvePostSignInPath는 unverified + 미완성을 프로필 입력으로 보낸다", () => {
+    expect(
+      resolvePostSignInPath({
+        role: "unverified",
+        isProfileComplete: false,
+      }),
+    ).toBe(AUTH_PROFILE_PATH);
+  });
+
+  it("resolvePostSignInPath는 unverified + 완성을 승인 대기 페이지로 보낸다", () => {
+    expect(
+      resolvePostSignInPath({
+        role: "unverified",
+        isProfileComplete: true,
+      }),
+    ).toBe(AUTH_PENDING_APPROVAL_PATH);
+  });
+
+  it("resolvePostSignInPath는 승인 사용자의 프로필 완성 여부를 반영한다", () => {
+    expect(
+      resolvePostSignInPath({
+        role: "regular_member",
+        isProfileComplete: true,
+      }),
+    ).toBe(DASHBOARD_PATH);
+    expect(
+      resolvePostSignInPath({
+        role: "regular_member",
+        isProfileComplete: false,
+      }),
+    ).toBe(AUTH_PROFILE_PATH);
   });
 });

@@ -76,6 +76,32 @@ export type LinktreeEntity = {
   items: LinktreeItemEntity[];
 };
 
+export type NoticeAuthorEntity = {
+  id: string;
+  name: string;
+  image: string | null;
+  role: string | null;
+};
+
+export type GenerationNoticeEntity = {
+  id: string;
+  generationId: string;
+  title: string;
+  content: string;
+  author: NoticeAuthorEntity;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type GlobalNoticeEntity = {
+  id: string;
+  title: string;
+  content: string;
+  author: NoticeAuthorEntity;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 export type UserEntity = {
   id: string;
   name: string;
@@ -260,6 +286,45 @@ export type DataService = {
     input: Partial<{ name: string; link: string }>,
   ) => Promise<LinktreeItemEntity | null>;
   deleteLinktreeItem: (linktreeId: string, itemId: string) => Promise<boolean>;
+
+  listGenerationNotices: (generationId: string) => Promise<GenerationNoticeEntity[]>;
+  createGenerationNotice: (
+    generationId: string,
+    input: {
+      title: string;
+      content: string;
+      authorId: string;
+    },
+  ) => Promise<GenerationNoticeEntity | null>;
+  getGenerationNoticeById: (
+    generationId: string,
+    noticeId: string,
+  ) => Promise<GenerationNoticeEntity | null>;
+  updateGenerationNotice: (
+    generationId: string,
+    noticeId: string,
+    input: Partial<{
+      title: string;
+      content: string;
+    }>,
+  ) => Promise<GenerationNoticeEntity | null>;
+  deleteGenerationNotice: (generationId: string, noticeId: string) => Promise<boolean>;
+
+  listGlobalNotices: () => Promise<GlobalNoticeEntity[]>;
+  createGlobalNotice: (input: {
+    title: string;
+    content: string;
+    authorId: string;
+  }) => Promise<GlobalNoticeEntity | null>;
+  getGlobalNoticeById: (noticeId: string) => Promise<GlobalNoticeEntity | null>;
+  updateGlobalNotice: (
+    noticeId: string,
+    input: Partial<{
+      title: string;
+      content: string;
+    }>,
+  ) => Promise<GlobalNoticeEntity | null>;
+  deleteGlobalNotice: (noticeId: string) => Promise<boolean>;
 
   listUsers: () => Promise<UserEntity[]>;
   getUserById: (id: string) => Promise<UserEntity | null>;

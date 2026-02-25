@@ -157,6 +157,46 @@ export type ApiUpdateExhibitionImageBatchItemInput = {
   sortOrder?: number;
 };
 
+export type ApiNoticeAuthor = {
+  id: string;
+  name: string;
+  image: string | null;
+  role: ApiRole | null;
+};
+
+export type ApiGenerationNotice = {
+  id: string;
+  generationId: string;
+  title: string;
+  content: string;
+  author: ApiNoticeAuthor;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type ApiCreateGenerationNoticeInput = {
+  title: string;
+  content: string;
+};
+
+export type ApiUpdateGenerationNoticeInput = Partial<ApiCreateGenerationNoticeInput>;
+
+export type ApiGlobalNotice = {
+  id: string;
+  title: string;
+  content: string;
+  author: ApiNoticeAuthor;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type ApiCreateGlobalNoticeInput = {
+  title: string;
+  content: string;
+};
+
+export type ApiUpdateGlobalNoticeInput = Partial<ApiCreateGlobalNoticeInput>;
+
 export type ApiLinktreeItem = {
   id: string;
   linktreeId: string;

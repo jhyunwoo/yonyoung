@@ -6,6 +6,7 @@ import { registerDocsRoutes } from "../modules/docs";
 import { registerExhibitionRoutes } from "../modules/exhibitions";
 import { registerGenerationRoutes } from "../modules/generations";
 import { registerLinktreeRoutes } from "../modules/linktree";
+import { registerNoticeRoutes } from "../modules/notices";
 import { registerPublicRoutes } from "../modules/public";
 import { registerSupporterRoutes } from "../modules/supporters";
 import { registerUploadRoutes } from "../modules/uploads";
@@ -46,6 +47,7 @@ export const mountDomainRouters = (
     app,
     createDomainRouter((router) => {
       registerGenerationRoutes(router, dependencies);
+      registerNoticeRoutes(router, dependencies);
       registerActivityRoutes(router, dependencies);
       registerSupporterRoutes(router, dependencies);
       registerExhibitionRoutes(router, dependencies);

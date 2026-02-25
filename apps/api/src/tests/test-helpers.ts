@@ -7,6 +7,8 @@ import type {
   DataService,
   ExhibitionEntity,
   ExhibitionImageEntity,
+  GenerationNoticeEntity,
+  GlobalNoticeEntity,
   GenerationEntity,
   LinktreeEntity,
   LinktreeItemEntity,
@@ -24,6 +26,8 @@ export const IDs = {
   supporter: "30000000-0000-4000-8000-000000000001",
   exhibition: "40000000-0000-4000-8000-000000000001",
   exhibitionImage: "41000000-0000-4000-8000-000000000001",
+  generationNotice: "42000000-0000-4000-8000-000000000001",
+  globalNotice: "43000000-0000-4000-8000-000000000001",
   linktree: "50000000-0000-4000-8000-000000000001",
   linktreeItem: "51000000-0000-4000-8000-000000000001",
   otherUuid: "90000000-0000-4000-8000-000000000001",
@@ -199,6 +203,41 @@ export const createLinktree = (
   id: IDs.linktree,
   name: "Yonyoung",
   items: [],
+  ...overrides,
+});
+
+export const createGenerationNotice = (
+  overrides: Partial<GenerationNoticeEntity> = {},
+): GenerationNoticeEntity => ({
+  id: IDs.generationNotice,
+  generationId: IDs.generation,
+  title: "기수 공지 제목",
+  content: "기수 공지 본문",
+  author: {
+    id: IDs.manager,
+    name: "manager-name",
+    image: null,
+    role: "manager",
+  },
+  createdAt: BASE_DATE,
+  updatedAt: BASE_DATE,
+  ...overrides,
+});
+
+export const createGlobalNotice = (
+  overrides: Partial<GlobalNoticeEntity> = {},
+): GlobalNoticeEntity => ({
+  id: IDs.globalNotice,
+  title: "전체 공지 제목",
+  content: "전체 공지 본문",
+  author: {
+    id: IDs.vicePresident,
+    name: "vice-name",
+    image: null,
+    role: "vice_president",
+  },
+  createdAt: BASE_DATE,
+  updatedAt: BASE_DATE,
   ...overrides,
 });
 

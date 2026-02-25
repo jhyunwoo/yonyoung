@@ -9,6 +9,8 @@ import type {
   ApiCreateActivityInput,
   ApiCreateExhibitionImageInput,
   ApiCreateExhibitionInput,
+  ApiCreateGenerationNoticeInput,
+  ApiCreateGlobalNoticeInput,
   ApiCreateGenerationInput,
   ApiCreateLinktreeInput,
   ApiCreateLinktreeItemInput,
@@ -16,6 +18,8 @@ import type {
   ApiExhibition,
   ApiExhibitionImage,
   ApiGeneration,
+  ApiGenerationNotice,
+  ApiGlobalNotice,
   ApiLinktree,
   ApiLinktreeItem,
   ApiSupporter,
@@ -26,6 +30,8 @@ import type {
   ApiUpdateExhibitionImageBatchItemInput,
   ApiUpdateExhibitionInput,
   ApiUpdateGenerationInput,
+  ApiUpdateGenerationNoticeInput,
+  ApiUpdateGlobalNoticeInput,
   ApiUpdateLinktreeInput,
   ApiUpdateLinktreeItemInput,
   ApiUpdateSupporterInput,
@@ -480,6 +486,69 @@ export const adminResourceApi = {
     withAdminCacheRevalidation(
       () => adminRequest<void>(`/linktree/${id}/items/${itemId}`, "DELETE"),
       [ADMIN_CACHE_TAGS.linktree],
+    ),
+
+  listGenerationNotices: (generationId: string) =>
+    adminRequest<ApiGenerationNotice[]>(`/generations/${generationId}/notices`, "GET"),
+  createGenerationNotice: (
+    generationId: string,
+    input: ApiCreateGenerationNoticeInput,
+  ) =>
+    withAdminCacheRevalidation(
+      () =>
+        adminRequest<ApiGenerationNotice>(
+          `/generations/${generationId}/notices`,
+          "POST",
+          input,
+        ),
+      [ADMIN_CACHE_TAGS.notices],
+    ),
+  getGenerationNoticeById: (generationId: string, noticeId: string) =>
+    adminRequest<ApiGenerationNotice>(
+      `/generations/${generationId}/notices/${noticeId}`,
+      "GET",
+    ),
+  updateGenerationNotice: (
+    generationId: string,
+    noticeId: string,
+    input: ApiUpdateGenerationNoticeInput,
+  ) =>
+    withAdminCacheRevalidation(
+      () =>
+        adminRequest<ApiGenerationNotice>(
+          `/generations/${generationId}/notices/${noticeId}`,
+          "PATCH",
+          input,
+        ),
+      [ADMIN_CACHE_TAGS.notices],
+    ),
+  deleteGenerationNotice: (generationId: string, noticeId: string) =>
+    withAdminCacheRevalidation(
+      () =>
+        adminRequest<void>(
+          `/generations/${generationId}/notices/${noticeId}`,
+          "DELETE",
+        ),
+      [ADMIN_CACHE_TAGS.notices],
+    ),
+
+  listGlobalNotices: () => adminRequest<ApiGlobalNotice[]>("/global-notices", "GET"),
+  createGlobalNotice: (input: ApiCreateGlobalNoticeInput) =>
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiGlobalNotice>("/global-notices", "POST", input),
+      [ADMIN_CACHE_TAGS.notices],
+    ),
+  getGlobalNoticeById: (id: string) =>
+    adminRequest<ApiGlobalNotice>(`/global-notices/${id}`, "GET"),
+  updateGlobalNotice: (id: string, input: ApiUpdateGlobalNoticeInput) =>
+    withAdminCacheRevalidation(
+      () => adminRequest<ApiGlobalNotice>(`/global-notices/${id}`, "PATCH", input),
+      [ADMIN_CACHE_TAGS.notices],
+    ),
+  deleteGlobalNotice: (id: string) =>
+    withAdminCacheRevalidation(
+      () => adminRequest<void>(`/global-notices/${id}`, "DELETE"),
+      [ADMIN_CACHE_TAGS.notices],
     ),
 
     /**

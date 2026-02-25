@@ -13,7 +13,7 @@ const STATIC_SECURITY_HEADERS = {
 const PRIVATE_CACHE_CONTROL = "private, no-store, max-age=0";
 const PUBLIC_CACHE_CONTROL = "public, s-maxage=120, stale-while-revalidate=300";
 
-const PRIVATE_PATH_PREFIXES = ["/admin", "/auth", "/api/admin", "/api/internal"];
+const PRIVATE_PATH_PREFIXES = ["/dashboard", "/admin", "/auth", "/api/admin", "/api/internal"];
 const PUBLIC_CACHEABLE_PREFIXES = ["/archive", "/about", "/donate", "/linktree"];
 
 const resolveOriginFromUrl = (input: string | undefined): string | null => {

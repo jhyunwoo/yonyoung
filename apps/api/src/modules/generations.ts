@@ -129,6 +129,22 @@ const isUniqueError = (error: unknown): boolean => {
   );
 };
 
+const readUniqueConflictMessage = (error: unknown): string => {
+  if (!(error instanceof Error)) {
+    return "중복된 값이 이미 존재합니다.";
+  }
+
+  if (error.message.includes("generations.name")) {
+    return "name 값이 이미 존재합니다.";
+  }
+
+  if (error.message.includes("generations.sort_order")) {
+    return "sortOrder 값이 이미 존재합니다.";
+  }
+
+  return "중복된 값이 이미 존재합니다.";
+};
+
 /**
  * registerGenerationRoutes 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
  * @param app 함수 로직에서 사용하는 입력값입니다.
@@ -176,7 +192,7 @@ export const registerGenerationRoutes = (
       return ok(c, data, 201);
     } catch (error) {
       if (isUniqueError(error)) {
-        return conflict(c, "sortOrder 값이 이미 존재합니다.");
+        return conflict(c, readUniqueConflictMessage(error));
       }
       return internalError(c);
     }
@@ -242,7 +258,7 @@ export const registerGenerationRoutes = (
       return ok(c, data);
     } catch (error) {
       if (isUniqueError(error)) {
-        return conflict(c, "sortOrder 값이 이미 존재합니다.");
+        return conflict(c, readUniqueConflictMessage(error));
       }
       return internalError(c);
     }

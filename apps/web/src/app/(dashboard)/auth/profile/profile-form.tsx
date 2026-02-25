@@ -1,0 +1,417 @@
+"use client";
+
+import { type ChangeEvent, type FormEvent, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  STUDENT_NUMBER_REGEX,
+  formatKoreanMobilePhoneNumber,
+  isKoreanMobilePhoneNumber,
+} from "@repo/shared-auth/profile";
+import { adminResourceApi } from "../../../../lib/admin-api/resources";
+import { PRESIGN_PATHS, uploadWithPresign } from "../../../../lib/admin-api/upload";
+import { AdminApiError, type ApiMemberProfileUpdateInput } from "../../../../lib/admin-api/types";
+import {
+  AUTH_PROFILE_PATH,
+  hasCompletedRequiredProfile,
+  isUnverifiedRole,
+  resolvePostSignInPath,
+} from "../../../../lib/auth-shared";
+
+type ProfileFormMode = "auth" | "dashboard";
+
+type ProfileFormProps = {
+  userId: string;
+  role: string | null;
+  mode?: ProfileFormMode;
+  initialProfile: {
+    image: string;
+    familyName: string;
+    givenName: string;
+    college: string;
+    department: string;
+    studentNumber: string;
+    phoneNumber: string;
+  };
+};
+
+type FieldErrors = Partial<
+  Record<
+    "familyName" | "givenName" | "college" | "department" | "studentNumber" | "phoneNumber",
+    string
+  >
+>;
+
+const DEFAULT_SAVE_ERROR_MESSAGE = "기본 정보 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+
+const readErrorMessage = (error: unknown): string => {
+  if (error instanceof AdminApiError) {
+    return error.message;
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return DEFAULT_SAVE_ERROR_MESSAGE;
+};
+
+const validateForm = (input: {
+  familyName: string;
+  givenName: string;
+  college: string;
+  department: string;
+  studentNumber: string;
+  phoneNumber: string;
+}): FieldErrors => {
+  const errors: FieldErrors = {};
+
+  if (!input.familyName.trim()) {
+    errors.familyName = "성을 입력해 주세요.";
+  }
+  if (!input.givenName.trim()) {
+    errors.givenName = "이름을 입력해 주세요.";
+  }
+  if (!input.college.trim()) {
+    errors.college = "대학명을 입력해 주세요.";
+  }
+  if (!input.department.trim()) {
+    errors.department = "학과명을 입력해 주세요.";
+  }
+  if (!STUDENT_NUMBER_REGEX.test(input.studentNumber.trim())) {
+    errors.studentNumber = "학번은 숫자 10자리여야 합니다.";
+  }
+  if (!isKoreanMobilePhoneNumber(input.phoneNumber.trim())) {
+    errors.phoneNumber = "핸드폰 번호는 010-0000-0000 형식이어야 합니다.";
+  }
+
+  return errors;
+};
+
+export default function AuthProfileForm({
+  userId,
+  role,
+  mode = "auth",
+  initialProfile,
+}: ProfileFormProps) {
+  const router = useRouter();
+  const canEditProfileImage = useMemo(
+    () => role !== null && !isUnverifiedRole(role),
+    [role],
+  );
+
+  const [profileImage, setProfileImage] = useState(initialProfile.image);
+  const [familyName, setFamilyName] = useState(initialProfile.familyName);
+  const [givenName, setGivenName] = useState(initialProfile.givenName);
+  const [college, setCollege] = useState(initialProfile.college);
+  const [department, setDepartment] = useState(initialProfile.department);
+  const [studentNumber, setStudentNumber] = useState(initialProfile.studentNumber);
+  const [phoneNumber, setPhoneNumber] = useState(initialProfile.phoneNumber);
+
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [selectedImageObjectUrl, setSelectedImageObjectUrl] = useState<string | null>(null);
+  const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
+
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const isDashboardMode = mode === "dashboard";
+
+  useEffect(() => {
+    return () => {
+      if (selectedImageObjectUrl) {
+        URL.revokeObjectURL(selectedImageObjectUrl);
+      }
+    };
+  }, [selectedImageObjectUrl]);
+
+  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const nextFile = event.target.files?.[0] ?? null;
+
+    if (selectedImageObjectUrl) {
+      URL.revokeObjectURL(selectedImageObjectUrl);
+      setSelectedImageObjectUrl(null);
+    }
+
+    setSelectedImageFile(nextFile);
+    if (!nextFile) {
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(nextFile);
+    setSelectedImageObjectUrl(objectUrl);
+  };
+
+  const handlePhoneNumberChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setPhoneNumber(formatKoreanMobilePhoneNumber(event.target.value));
+  };
+
+  const handleStudentNumberChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setStudentNumber(event.target.value.replace(/\D/g, "").slice(0, 10));
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const validationErrors = validateForm({
+      familyName,
+      givenName,
+      college,
+      department,
+      studentNumber,
+      phoneNumber,
+    });
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors);
+      setSubmitError(null);
+      setSubmitSuccess(null);
+      return;
+    }
+
+    setFieldErrors({});
+    setSubmitError(null);
+    setSubmitSuccess(null);
+    setIsSaving(true);
+
+    try {
+      let nextImageValue = profileImage.trim();
+
+      if (canEditProfileImage && selectedImageFile) {
+        setUploadProgressPercent(0);
+        nextImageValue = await uploadWithPresign({
+          presignPath: PRESIGN_PATHS.userProfile,
+          file: selectedImageFile,
+          onProgress: setUploadProgressPercent,
+        });
+      }
+
+      const payload: ApiMemberProfileUpdateInput = {
+        familyName: familyName.trim(),
+        givenName: givenName.trim(),
+        college: college.trim(),
+        department: department.trim(),
+        studentNumber: studentNumber.trim(),
+        phoneNumber: phoneNumber.trim(),
+      };
+
+      if (canEditProfileImage) {
+        payload.image = nextImageValue.length > 0 ? nextImageValue : null;
+      }
+
+      const updatedUser = await adminResourceApi.updateUser(userId, payload);
+
+      setProfileImage(updatedUser.image ?? "");
+      if (selectedImageObjectUrl) {
+        URL.revokeObjectURL(selectedImageObjectUrl);
+      }
+      setSelectedImageObjectUrl(null);
+      setSelectedImageFile(null);
+      setUploadProgressPercent(null);
+
+      if (!isDashboardMode) {
+        const redirectPath = resolvePostSignInPath({
+          role: updatedUser.role ?? role,
+          isProfileComplete: hasCompletedRequiredProfile(
+            updatedUser as unknown as Record<string, unknown>,
+          ),
+        });
+
+        if (redirectPath !== AUTH_PROFILE_PATH) {
+          router.replace(redirectPath);
+          router.refresh();
+          return;
+        }
+      }
+
+      setSubmitSuccess(
+        isDashboardMode ? "개인 프로필이 저장되었습니다." : "기본 정보가 저장되었습니다.",
+      );
+      router.refresh();
+    } catch (error) {
+      setUploadProgressPercent(null);
+      setSubmitError(readErrorMessage(error));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const imagePreviewUrl = selectedImageObjectUrl ?? profileImage;
+
+  return (
+    <main
+      className={
+        isDashboardMode
+          ? "px-4 py-6 md:px-8 md:py-8"
+          : "flex min-h-screen w-full items-center justify-center bg-white px-4 py-12 text-slate-900"
+      }
+    >
+      <section
+        className={
+          isDashboardMode
+            ? "mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8"
+            : "w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8"
+        }
+      >
+        <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+          {isDashboardMode ? "My Profile" : "Profile Setup"}
+        </p>
+        <h1 className="mt-2 text-2xl font-bold">
+          {isDashboardMode ? "개인 프로필" : "기본 정보 입력"}
+        </h1>
+        <p className="mt-3 text-sm leading-relaxed text-slate-600">
+          {isDashboardMode
+            ? "개인 정보와 프로필 이미지를 수정할 수 있습니다."
+            : "Dashboard 이용을 위해 기본 정보를 입력해 주세요."}
+        </p>
+
+        <form className="mt-7 space-y-5" onSubmit={handleSubmit} noValidate>
+          <div className="rounded-xl border border-slate-200 p-4">
+            <p className="text-sm font-semibold text-slate-900">프로필 이미지</p>
+            <p className="mt-1 text-xs text-slate-500">
+              {canEditProfileImage
+                ? "프로필 이미지를 수정할 수 있습니다."
+                : "현재 role에서는 프로필 이미지를 수정할 수 없습니다."}
+            </p>
+
+            <div className="mt-3 flex items-center gap-4">
+              <div className="h-16 w-16 overflow-hidden rounded-full border border-slate-200 bg-slate-50">
+                {imagePreviewUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={imagePreviewUrl}
+                    alt="프로필 이미지 미리보기"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+                    없음
+                  </div>
+                )}
+              </div>
+
+              <input
+                type="file"
+                accept="image/*"
+                disabled={!canEditProfileImage || isSaving}
+                onChange={handleImageChange}
+                className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-md file:border file:border-slate-300 file:bg-white file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+              />
+            </div>
+
+            {uploadProgressPercent !== null ? (
+              <p className="mt-2 text-xs text-slate-500">
+                이미지 업로드 진행률: {uploadProgressPercent}%
+              </p>
+            ) : null}
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="font-medium">성</span>
+              <input
+                value={familyName}
+                onChange={(event) => setFamilyName(event.target.value)}
+                disabled={isSaving}
+                className="rounded-lg border border-slate-300 px-3 py-2"
+                autoComplete="family-name"
+              />
+              {fieldErrors.familyName ? (
+                <span className="text-xs text-red-600">{fieldErrors.familyName}</span>
+              ) : null}
+            </label>
+
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="font-medium">이름</span>
+              <input
+                value={givenName}
+                onChange={(event) => setGivenName(event.target.value)}
+                disabled={isSaving}
+                className="rounded-lg border border-slate-300 px-3 py-2"
+                autoComplete="given-name"
+              />
+              {fieldErrors.givenName ? (
+                <span className="text-xs text-red-600">{fieldErrors.givenName}</span>
+              ) : null}
+            </label>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="font-medium">대학명</span>
+              <input
+                value={college}
+                onChange={(event) => setCollege(event.target.value)}
+                disabled={isSaving}
+                className="rounded-lg border border-slate-300 px-3 py-2"
+              />
+              {fieldErrors.college ? (
+                <span className="text-xs text-red-600">{fieldErrors.college}</span>
+              ) : null}
+            </label>
+
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="font-medium">학과명</span>
+              <input
+                value={department}
+                onChange={(event) => setDepartment(event.target.value)}
+                disabled={isSaving}
+                className="rounded-lg border border-slate-300 px-3 py-2"
+              />
+              {fieldErrors.department ? (
+                <span className="text-xs text-red-600">{fieldErrors.department}</span>
+              ) : null}
+            </label>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="font-medium">학번 (10자리)</span>
+              <input
+                value={studentNumber}
+                onChange={handleStudentNumberChange}
+                inputMode="numeric"
+                disabled={isSaving}
+                className="rounded-lg border border-slate-300 px-3 py-2"
+                placeholder="2026000123"
+              />
+              {fieldErrors.studentNumber ? (
+                <span className="text-xs text-red-600">{fieldErrors.studentNumber}</span>
+              ) : null}
+            </label>
+
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="font-medium">핸드폰 번호</span>
+              <input
+                value={phoneNumber}
+                onChange={handlePhoneNumberChange}
+                inputMode="tel"
+                disabled={isSaving}
+                className="rounded-lg border border-slate-300 px-3 py-2"
+                placeholder="010-0000-0000"
+              />
+              {fieldErrors.phoneNumber ? (
+                <span className="text-xs text-red-600">{fieldErrors.phoneNumber}</span>
+              ) : null}
+            </label>
+          </div>
+
+          {submitError ? <p className="text-sm text-red-600">{submitError}</p> : null}
+          {submitSuccess ? <p className="text-sm text-emerald-700">{submitSuccess}</p> : null}
+
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="inline-flex w-full items-center justify-center rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSaving
+              ? "저장 중..."
+              : isDashboardMode
+                ? "프로필 저장"
+                : "기본 정보 저장"}
+          </button>
+        </form>
+      </section>
+    </main>
+  );
+}
