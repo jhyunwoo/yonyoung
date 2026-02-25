@@ -25,6 +25,8 @@ export {
   type ApiGlobalNotice,
   type ApiLinktree,
   type ApiLinktreeItem,
+  type ApiListActivitiesQuery,
+  type ApiListExhibitionsQuery,
   type ApiMemberProfileUpdateInput,
   type ApiPresignResponse,
   type ApiSupporter,

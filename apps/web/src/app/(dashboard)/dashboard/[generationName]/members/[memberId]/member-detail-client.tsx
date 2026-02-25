@@ -154,7 +154,7 @@ export default function MemberDetailClient({
     return () => {
       isMounted = false;
     };
-  }, [canReadFullDetail, generation.id, memberId]);
+  }, [canReadFullDetail, generation.id, generation.name, memberId]);
 
   const currentUserLike = useMemo(() => {
     if (fullUser) {

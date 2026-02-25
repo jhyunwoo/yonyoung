@@ -44,7 +44,7 @@
     "api:db:studio": "turbo run db:studio --filter=api",
     "quality:deadcode": "knip --reporter compact",
     "quality:deps": "depcruise --config .dependency-cruiser.cjs apps/api/src apps/web/src packages --output-type err",
-    "quality:ci": "pnpm lint && pnpm check-types && pnpm api:test && pnpm api:test:integration && pnpm web:test:unit && pnpm web:test:e2e:smoke && pnpm web:build && pnpm web:perf:budget && pnpm quality:deadcode && pnpm quality:deps",
+    "quality:ci": "pnpm lint && pnpm check-types && pnpm api:test:coverage && pnpm web:test:unit:coverage && E2E_UPLOAD_MODE=real E2E_SUITE_MODE=full E2E_ROLE_MATRIX=all pnpm web:test:e2e:full && pnpm web:build && pnpm web:perf:budget && pnpm quality:deadcode && pnpm quality:deps && pnpm tdd:guard",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
     "web:check-types": "turbo run check-types --filter=web",
@@ -52,7 +52,8 @@
     "verify:cache": "node scripts/cache-verify.mjs",
     "verify:api-load": "node scripts/api-load-test.mjs",
     "verify:lighthouse": "node scripts/lighthouse-runner.mjs",
-    "test:all": "pnpm lint && pnpm check-types && pnpm api:test:coverage && pnpm web:test:unit:coverage && pnpm web:test:e2e:smoke && pnpm web:test:e2e:full"
+    "test:all": "pnpm lint && pnpm check-types && pnpm api:test:coverage && pnpm web:test:unit:coverage && pnpm web:test:e2e:smoke && pnpm web:test:e2e:full",
+    "tdd:guard": "node scripts/tdd-guard.mjs"
   },
   "devDependencies": {
     "dependency-cruiser": "^16.10.4",

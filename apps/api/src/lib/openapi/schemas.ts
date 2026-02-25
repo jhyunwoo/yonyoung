@@ -177,10 +177,24 @@ export const ApiAuditParamSchema = z
       description: "감사 로그 조회 대상 리소스 타입",
       example: "activity",
     }),
-    resourceId: z.string().min(1).openapi({
+    resourceId: z.string().min(1, "resourceId를 입력해 주세요.").openapi({
       description: "감사 로그 조회 대상 리소스 ID",
       example: EXAMPLE_PARENT_ID,
     }),
+  })
+  .superRefine((value, context) => {
+    if (value.resourceType === "user") {
+      return;
+    }
+
+    const uuidResult = z.string().uuid().safeParse(value.resourceId);
+    if (!uuidResult.success) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["resourceId"],
+        message: "resourceId 형식이 올바르지 않습니다.",
+      });
+    }
   })
   .openapi("ApiAuditParam");
 
@@ -421,6 +435,19 @@ export const ApiUpdateActivitySchema = z
   )
   .openapi("ApiUpdateActivityInput");
 
+export const ApiListActivitiesQuerySchema = z
+  .object({
+    generationId: z
+      .string()
+      .uuid("generationId 형식이 올바르지 않습니다.")
+      .optional()
+      .openapi({
+        description: "특정 기수 활동 목록을 조회할 때 사용하는 기수 UUID 필터",
+        example: EXAMPLE_GENERATION_ID,
+      }),
+  })
+  .openapi("ApiListActivitiesQuery");
+
 export const ApiCreateActivityImageSchema = z
   .object({
     imageUrl: urlField(
@@ -633,6 +660,19 @@ export const ApiCreateExhibitionSchema = z
 export const ApiUpdateExhibitionSchema = ApiCreateExhibitionSchema.partial().openapi(
   "ApiUpdateExhibitionInput",
 );
+
+export const ApiListExhibitionsQuerySchema = z
+  .object({
+    generationId: z
+      .string()
+      .uuid("generationId 형식이 올바르지 않습니다.")
+      .optional()
+      .openapi({
+        description: "특정 기수 전시 목록을 조회할 때 사용하는 기수 UUID 필터",
+        example: EXAMPLE_GENERATION_ID,
+      }),
+  })
+  .openapi("ApiListExhibitionsQuery");
 
 export const ApiCreateExhibitionImageSchema = z
   .object({

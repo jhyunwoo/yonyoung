@@ -28,6 +28,36 @@ describe("exhibition routes", /** describe 실행 과정에서 필요한 연산�
     expect(body.data).toHaveLength(1);
     expect(body.data[0]?.id).toBe(IDs.exhibition);
     expect(typeof body.data[0]?.startDate).toBe("number");
+    expect(listExhibitions).toHaveBeenCalledWith(undefined);
+  });
+
+  it("전시 목록은 generationId 쿼리를 전달해 서버 필터링할 수 있다", async () => {
+    const listExhibitions = fn(async () => [createExhibition()]);
+    const app = createTestApp({
+      actor: createActor("new_member"),
+      dataService: createDataServiceMock({ listExhibitions }),
+    });
+
+    const response = await app.request(
+      `/api/exhibitions?generationId=${encodeURIComponent(IDs.generation)}`,
+    );
+
+    expect(response.status).toBe(200);
+    expect(listExhibitions).toHaveBeenCalledWith(IDs.generation);
+  });
+
+  it("전시 목록 generationId 쿼리가 UUID 형식이 아니면 400을 반환한다", async () => {
+    const listExhibitions = fn(async () => [createExhibition()]);
+    const app = createTestApp({
+      actor: createActor("new_member"),
+      dataService: createDataServiceMock({ listExhibitions }),
+    });
+
+    const response = await app.request("/api/exhibitions?generationId=invalid");
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+    expect(listExhibitions).not.toHaveBeenCalled();
   });
 
   it("전시 목록 응답의 설명 HTML은 sanitize 된다", async () => {

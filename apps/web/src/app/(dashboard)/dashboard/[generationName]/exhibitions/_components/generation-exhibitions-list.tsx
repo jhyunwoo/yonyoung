@@ -39,9 +39,8 @@ export default function GenerationExhibitionsList({
     setErrorMessage(null);
 
     try {
-      const rows = await adminResourceApi.listExhibitions();
-      const filtered = rows.filter((exhibition) => exhibition.generationId === generationId);
-      setExhibitions(sortExhibitionsByStartDateDesc(filtered));
+      const rows = await adminResourceApi.listExhibitions({ generationId });
+      setExhibitions(sortExhibitionsByStartDateDesc(rows));
     } catch (error) {
       setErrorMessage(readExhibitionErrorMessage(error));
       setExhibitions([]);

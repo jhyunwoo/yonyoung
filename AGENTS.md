@@ -30,6 +30,13 @@ Use `pnpm` from the repository root (Node `>=18`; CI uses Node 20).
 - Web E2E uses Playwright (`apps/web/tests/e2e/**/*.spec.ts`); bootstrap env with `cp tests/e2e/.env.e2e.example tests/e2e/.env.e2e`.
 - Add or update tests for behavior changes, especially auth, RBAC, uploads, and caching paths.
 
+## TDD Policy
+- Default workflow is `RED -> GREEN -> REFACTOR`.
+- Write failing tests before implementation for all behavior changes.
+- Keep commits split by TDD phase when possible.
+- `pnpm tdd:guard` is enforced in CI: source code changes must include test changes.
+- Use `/Users/jhyunwoo/projects/yonyoung/TDD_GUIDE.md` as the canonical process reference.
+
 ## Commit & Pull Request Guidelines
 - Current history favors short, imperative, single-topic commit messages (Korean or English both used).
 - Keep commit subjects concise and scoped (example: `fix upload ownership check`).

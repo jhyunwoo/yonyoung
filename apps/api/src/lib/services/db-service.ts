@@ -27,7 +27,6 @@ import {
   GenerationNoticeEntity,
   GlobalNoticeEntity,
   LinktreeEntity,
-  LinktreeItemEntity,
   NoticeAuthorEntity,
   UserEntity,
 } from "./types";
@@ -204,26 +203,32 @@ const mapLegacyActivityRow = (
 const listLegacyActivities = async (
   database: D1Database,
   orderByDirection: "ASC" | "DESC",
+  generationId?: string,
 ): Promise<(typeof activities.$inferSelect)[]> => {
-  const { results } = await database
-    .prepare(
-      `
-        select
-          "id",
-          "title",
-          "description",
-          "activity_date",
-          "cover_image_url",
-          "generation_id",
-          "created_at",
-          "updated_at",
-          "deleted_at"
-        from "activities"
-        where "activities"."deleted_at" is null
-        order by "activities"."activity_date" ${orderByDirection}
-      `,
-    )
-    .all<LegacyActivityRow>();
+  const generationWhereClause = generationId
+    ? ` and "activities"."generation_id" = ?`
+    : "";
+  const statement = database.prepare(
+    `
+      select
+        "id",
+        "title",
+        "description",
+        "activity_date",
+        "cover_image_url",
+        "generation_id",
+        "created_at",
+        "updated_at",
+        "deleted_at"
+      from "activities"
+      where "activities"."deleted_at" is null${generationWhereClause}
+      order by "activities"."activity_date" ${orderByDirection}
+    `,
+  );
+  const executed = generationId
+    ? statement.bind(generationId).all<LegacyActivityRow>()
+    : statement.all<LegacyActivityRow>();
+  const { results } = await executed;
 
   return (results ?? []).map(mapLegacyActivityRow);
 };
@@ -800,19 +805,23 @@ export const createDbDataService = (database: D1Database): DataService => {
      * @returns 비동기 처리 결과를 Promise로 반환합니다.
      * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
      */
-    async listActivities() {
+    async listActivities(generationId) {
       const rows = await (async () => {
         try {
+          const conditions = [isNull(activities.deletedAt)];
+          if (generationId) {
+            conditions.push(eq(activities.generationId, generationId));
+          }
           return await db
             .select()
             .from(activities)
-            .where(isNull(activities.deletedAt))
+            .where(and(...conditions))
             .orderBy(asc(activities.startDate));
         } catch (error) {
           if (!isMissingActivityDateRangeColumnsError(error)) {
             throw error;
           }
-          return listLegacyActivities(database, "ASC");
+          return listLegacyActivities(database, "ASC", generationId);
         }
       })();
       return mapActivitiesWithImages(db, rows);
@@ -1329,11 +1338,16 @@ export const createDbDataService = (database: D1Database): DataService => {
      * @returns 비동기 처리 결과를 Promise로 반환합니다.
      * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
      */
-    async listExhibitions() {
+    async listExhibitions(generationId) {
+      const conditions = [isNull(exhibitions.deletedAt)];
+      if (generationId) {
+        conditions.push(eq(exhibitions.generationId, generationId));
+      }
+
       const rows = await db
         .select()
         .from(exhibitions)
-        .where(isNull(exhibitions.deletedAt))
+        .where(and(...conditions))
         .orderBy(asc(exhibitions.startDate));
       return mapExhibitionsWithImages(db, rows);
     },

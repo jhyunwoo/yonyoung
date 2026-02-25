@@ -108,6 +108,10 @@ export type ApiCreateActivityInput = {
 
 export type ApiUpdateActivityInput = Partial<ApiCreateActivityInput>;
 
+export type ApiListActivitiesQuery = {
+  generationId?: string;
+};
+
 export type ApiCreateActivityImageInput = {
   imageUrl: string;
   sortOrder: number;
@@ -176,6 +180,10 @@ export type ApiCreateExhibitionInput = {
 };
 
 export type ApiUpdateExhibitionInput = Partial<ApiCreateExhibitionInput>;
+
+export type ApiListExhibitionsQuery = {
+  generationId?: string;
+};
 
 export type ApiCreateExhibitionImageInput = {
   imageUrl: string;

@@ -22,6 +22,7 @@ import {
 } from "../lib/openapi/responses";
 import {
   ApiActivityImageSchema,
+  ApiListActivitiesQuerySchema,
   ApiActivitySchema,
   ApiCreateActivityImageBatchSchema,
   ApiCreateActivityImageSchema,
@@ -48,6 +49,9 @@ const listActivitiesRoute = createRoute({
   tags: ["Activities"],
   operationId: "listActivities",
   security: [{ cookieAuth: [] }],
+  request: {
+    query: ApiListActivitiesQuerySchema,
+  },
   responses: {
     200: dataResponse(ApiActivitySchema.array(), "활동 목록 조회 성공"),
     401: errorResponses[401],
@@ -217,18 +221,11 @@ const deleteActivityImageRoute = createRoute({
   },
 });
 
-/**
- * registerActivityRoutes 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
- * @param app 함수 로직에서 사용하는 입력값입니다.
- * @param dependencies 함수 로직에서 사용하는 입력값입니다.
- * @returns 처리 결과 값을 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 export const registerActivityRoutes = (
   app: App,
   dependencies: AppDependencies,
 ) => {
-  app.openapi(listActivitiesRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
+  app.openapi(listActivitiesRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -238,11 +235,16 @@ export const registerActivityRoutes = (
       return denied;
     }
 
-    const data = await dependencies.getDataService(c).listActivities();
+    const query = ApiListActivitiesQuerySchema.safeParse(c.req.query());
+    if (!query.success) {
+      return badRequest(c, query.error.issues.map((issue) => issue.message).join(", "));
+    }
+
+    const data = await dependencies.getDataService(c).listActivities(query.data.generationId);
     return ok(c, data.map(sanitizeActivityDescriptionField));
   });
 
-  app.openapi(createActivityRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
+  app.openapi(createActivityRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -291,7 +293,7 @@ export const registerActivityRoutes = (
     );
   });
 
-  app.openapi(getActivityByIdRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
+  app.openapi(getActivityByIdRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -313,7 +315,7 @@ export const registerActivityRoutes = (
     return ok(c, sanitizeActivityDescriptionField(data));
   });
 
-  app.openapi(updateActivityRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
+  app.openapi(updateActivityRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -366,7 +368,7 @@ export const registerActivityRoutes = (
     );
   });
 
-  app.openapi(deleteActivityRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
+  app.openapi(deleteActivityRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -400,7 +402,7 @@ export const registerActivityRoutes = (
   });
 
   // 세부 이미지는 활동 본문 수정과 동일 권한으로 분리 관리한다.
-  app.openapi(addActivityImageRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
+  app.openapi(addActivityImageRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -511,7 +513,7 @@ export const registerActivityRoutes = (
     return ok(c, data);
   });
 
-  app.openapi(updateActivityImageRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
+  app.openapi(updateActivityImageRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;
@@ -555,7 +557,7 @@ export const registerActivityRoutes = (
     return ok(c, data);
   });
 
-  app.openapi(deleteActivityImageRoute, /** app.openapi 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param c 요청/실행 컨텍스트 객체입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async (c): Promise<any> => {
+  app.openapi(deleteActivityImageRoute, async (c): Promise<any> => {
     const actorResult = await requireActor(c, dependencies);
     if ("response" in actorResult) {
       return actorResult.response;

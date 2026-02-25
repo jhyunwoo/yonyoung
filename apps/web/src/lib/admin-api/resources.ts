@@ -11,9 +11,9 @@ import type {
   ApiCreateActivityInput,
   ApiCreateExhibitionImageInput,
   ApiCreateExhibitionInput,
+  ApiCreateGenerationInput,
   ApiCreateGenerationNoticeInput,
   ApiCreateGlobalNoticeInput,
-  ApiCreateGenerationInput,
   ApiCreateLinktreeInput,
   ApiCreateLinktreeItemInput,
   ApiCreateSupporterInput,
@@ -25,12 +25,14 @@ import type {
   ApiGlobalNotice,
   ApiLinktree,
   ApiLinktreeItem,
+  ApiListActivitiesQuery,
+  ApiListExhibitionsQuery,
   ApiSupporter,
-  ApiUpdateActivityImageInput,
   ApiUpdateActivityImageBatchItemInput,
+  ApiUpdateActivityImageInput,
   ApiUpdateActivityInput,
-  ApiUpdateExhibitionImageInput,
   ApiUpdateExhibitionImageBatchItemInput,
+  ApiUpdateExhibitionImageInput,
   ApiUpdateExhibitionInput,
   ApiUpdateGenerationInput,
   ApiUpdateGenerationNoticeInput,
@@ -44,7 +46,9 @@ import type {
 
 const ADMIN_REVALIDATE_ENDPOINT = "/api/admin/revalidate";
 
-const revalidateAdminCache = async (tags: readonly AdminCacheTag[]): Promise<void> => {
+const revalidateAdminCache = async (
+  tags: readonly AdminCacheTag[],
+): Promise<void> => {
   if (typeof window === "undefined") {
     return;
   }
@@ -61,7 +65,7 @@ const revalidateAdminCache = async (tags: readonly AdminCacheTag[]): Promise<voi
       body: JSON.stringify({ tags }),
     });
   } catch {
-    // 재검증 호출 실패는 변이 성공을 막지 않는다.
+    // 재검증 실패는 변이 결과를 무효화하지 않는다.
   }
 };
 
@@ -74,6 +78,55 @@ const withAdminCacheRevalidation = async <T>(
   return result;
 };
 
+const withOptionalQuery = (
+  path: string,
+  query: Record<string, string | undefined>,
+): string => {
+  const params = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(query)) {
+    if (!value) {
+      continue;
+    }
+    params.set(key, value);
+  }
+
+  const queryString = params.toString();
+  return queryString.length === 0 ? path : `${path}?${queryString}`;
+};
+
+const apiRequest = {
+  get: <T>(path: string) => adminRequest<T>(path, "GET"),
+  post: <T>(path: string, body: unknown) => adminRequest<T>(path, "POST", body),
+  patch: <T>(path: string, body: unknown) => adminRequest<T>(path, "PATCH", body),
+  delete: <T>(path: string) => adminRequest<T>(path, "DELETE"),
+};
+
+const mutateWithRevalidation = <T>(
+  tags: readonly AdminCacheTag[],
+  operation: () => Promise<T>,
+): Promise<T> => withAdminCacheRevalidation(operation, tags);
+
+const postWithRevalidation = <T>(
+  path: string,
+  body: unknown,
+  tags: readonly AdminCacheTag[],
+): Promise<T> =>
+  mutateWithRevalidation(tags, () => apiRequest.post<T>(path, body));
+
+const patchWithRevalidation = <T>(
+  path: string,
+  body: unknown,
+  tags: readonly AdminCacheTag[],
+): Promise<T> =>
+  mutateWithRevalidation(tags, () => apiRequest.patch<T>(path, body));
+
+const deleteWithRevalidation = (
+  path: string,
+  tags: readonly AdminCacheTag[],
+): Promise<void> =>
+  mutateWithRevalidation(tags, () => apiRequest.delete<void>(path));
+
 export const adminResourceApi = {
   listAuditLogs: (
     resourceType: ApiAuditResourceType,
@@ -82,555 +135,196 @@ export const adminResourceApi = {
   ) => {
     const safeLimit = Math.max(1, Math.min(100, Math.floor(limit)));
     const encodedResourceId = encodeURIComponent(resourceId);
-    return adminRequest<ApiAuditLog[]>(
+    return apiRequest.get<ApiAuditLog[]>(
       `/audit/${resourceType}/${encodedResourceId}?limit=${safeLimit}`,
-      "GET",
     );
   },
 
-    /**
-   * listGenerations의 핵심 비즈니스 로직을 수행합니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
-  listGenerations: () => adminRequest<ApiGeneration[]>("/generations", "GET"),
-    /**
-   * createGeneration 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
-   * @param input 함수 로직에서 사용하는 입력값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+  listGenerations: () => apiRequest.get<ApiGeneration[]>("/generations"),
   createGeneration: (input: ApiCreateGenerationInput) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiGeneration>("/generations", "POST", input),
-      [ADMIN_CACHE_TAGS.generations, ADMIN_CACHE_TAGS.users],
-    ),
-    /**
-   * getGenerationById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @returns 조회/계산된 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
-  getGenerationById: (id: string) =>
-    adminRequest<ApiGeneration>(`/generations/${id}`, "GET"),
+    postWithRevalidation<ApiGeneration>("/generations", input, [
+      ADMIN_CACHE_TAGS.generations,
+      ADMIN_CACHE_TAGS.users,
+    ]),
+  getGenerationById: (id: string) => apiRequest.get<ApiGeneration>(`/generations/${id}`),
   listGenerationMembers: (generationId: string) =>
-    adminRequest<ApiGenerationMemberSummary[]>(
-      `/generations/${generationId}/members`,
-      "GET",
-    ),
-    /**
-   * updateGeneration 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @param input 함수 로직에서 사용하는 입력값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    apiRequest.get<ApiGenerationMemberSummary[]>(`/generations/${generationId}/members`),
   updateGeneration: (id: string, input: ApiUpdateGenerationInput) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiGeneration>(`/generations/${id}`, "PATCH", input),
-      [ADMIN_CACHE_TAGS.generations, ADMIN_CACHE_TAGS.users],
-    ),
-    /**
-   * deleteGeneration 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    patchWithRevalidation<ApiGeneration>(`/generations/${id}`, input, [
+      ADMIN_CACHE_TAGS.generations,
+      ADMIN_CACHE_TAGS.users,
+    ]),
   deleteGeneration: (id: string) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<void>(`/generations/${id}`, "DELETE"),
-      [ADMIN_CACHE_TAGS.generations, ADMIN_CACHE_TAGS.users],
-    ),
+    deleteWithRevalidation(`/generations/${id}`, [
+      ADMIN_CACHE_TAGS.generations,
+      ADMIN_CACHE_TAGS.users,
+    ]),
 
-    /**
-   * listActivities의 핵심 비즈니스 로직을 수행합니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
-  listActivities: () => adminRequest<ApiActivity[]>("/activities", "GET"),
-    /**
-   * createActivity 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
-   * @param input 함수 로직에서 사용하는 입력값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+  listActivities: (input: ApiListActivitiesQuery = {}) =>
+    apiRequest.get<ApiActivity[]>(
+      withOptionalQuery("/activities", { generationId: input.generationId }),
+    ),
   createActivity: (input: ApiCreateActivityInput) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiActivity>("/activities", "POST", input),
-      [ADMIN_CACHE_TAGS.activities],
-    ),
-    /**
-   * getActivityById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @returns 조회/계산된 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
-  getActivityById: (id: string) => adminRequest<ApiActivity>(`/activities/${id}`, "GET"),
-    /**
-   * updateActivity 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @param input 함수 로직에서 사용하는 입력값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    postWithRevalidation<ApiActivity>("/activities", input, [ADMIN_CACHE_TAGS.activities]),
+  getActivityById: (id: string) => apiRequest.get<ApiActivity>(`/activities/${id}`),
   updateActivity: (id: string, input: ApiUpdateActivityInput) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiActivity>(`/activities/${id}`, "PATCH", input),
-      [ADMIN_CACHE_TAGS.activities],
-    ),
-    /**
-   * deleteActivity 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    patchWithRevalidation<ApiActivity>(`/activities/${id}`, input, [ADMIN_CACHE_TAGS.activities]),
   deleteActivity: (id: string) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<void>(`/activities/${id}`, "DELETE"),
-      [ADMIN_CACHE_TAGS.activities],
-    ),
-    /**
-   * addActivityImage의 핵심 비즈니스 로직을 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @param input 함수 로직에서 사용하는 입력값입니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    deleteWithRevalidation(`/activities/${id}`, [ADMIN_CACHE_TAGS.activities]),
   addActivityImage: (id: string, input: ApiCreateActivityImageInput) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiActivityImage>(`/activities/${id}/images`, "POST", input),
-      [ADMIN_CACHE_TAGS.activities],
-    ),
-    /**
-   * addActivityImages의 핵심 비즈니스 로직을 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @param inputs 함수 로직에서 사용하는 입력값입니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    postWithRevalidation<ApiActivityImage>(`/activities/${id}/images`, input, [ADMIN_CACHE_TAGS.activities]),
   addActivityImages: (id: string, inputs: ApiCreateActivityImageInput[]) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiActivityImage[]>(`/activities/${id}/images/batch`, "POST", inputs),
-      [ADMIN_CACHE_TAGS.activities],
-    ),
-    /**
-   * updateActivityImage 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @param imageId 대상을 식별하기 위한 ID 값입니다.
-   * @param input 함수 로직에서 사용하는 입력값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    postWithRevalidation<ApiActivityImage[]>(`/activities/${id}/images/batch`, inputs, [
+      ADMIN_CACHE_TAGS.activities,
+    ]),
   updateActivityImage: (
     id: string,
     imageId: string,
     input: ApiUpdateActivityImageInput,
   ) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiActivityImage>(`/activities/${id}/images/${imageId}`, "PATCH", input),
-      [ADMIN_CACHE_TAGS.activities],
-    ),
-    /**
-   * updateActivityImages 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @param inputs 함수 로직에서 사용하는 입력값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    patchWithRevalidation<ApiActivityImage>(`/activities/${id}/images/${imageId}`, input, [
+      ADMIN_CACHE_TAGS.activities,
+    ]),
   updateActivityImages: (
     id: string,
     inputs: ApiUpdateActivityImageBatchItemInput[],
   ) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiActivityImage[]>(`/activities/${id}/images/batch`, "PATCH", inputs),
-      [ADMIN_CACHE_TAGS.activities],
-    ),
-    /**
-   * deleteActivityImage 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @param imageId 대상을 식별하기 위한 ID 값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    patchWithRevalidation<ApiActivityImage[]>(`/activities/${id}/images/batch`, inputs, [
+      ADMIN_CACHE_TAGS.activities,
+    ]),
   deleteActivityImage: (id: string, imageId: string) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<void>(`/activities/${id}/images/${imageId}`, "DELETE"),
-      [ADMIN_CACHE_TAGS.activities],
-    ),
+    deleteWithRevalidation(`/activities/${id}/images/${imageId}`, [
+      ADMIN_CACHE_TAGS.activities,
+    ]),
 
-    /**
-   * listSupporters의 핵심 비즈니스 로직을 수행합니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
-  listSupporters: () => adminRequest<ApiSupporter[]>("/supporters", "GET"),
-    /**
-   * createSupporter 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
-   * @param input 함수 로직에서 사용하는 입력값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+  listSupporters: () => apiRequest.get<ApiSupporter[]>("/supporters"),
   createSupporter: (input: ApiCreateSupporterInput) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiSupporter>("/supporters", "POST", input),
-      [ADMIN_CACHE_TAGS.supporters],
-    ),
-    /**
-   * getSupporterById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @returns 조회/계산된 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
-  getSupporterById: (id: string) =>
-    adminRequest<ApiSupporter>(`/supporters/${id}`, "GET"),
-    /**
-   * updateSupporter 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @param input 함수 로직에서 사용하는 입력값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    postWithRevalidation<ApiSupporter>("/supporters", input, [ADMIN_CACHE_TAGS.supporters]),
+  getSupporterById: (id: string) => apiRequest.get<ApiSupporter>(`/supporters/${id}`),
   updateSupporter: (id: string, input: ApiUpdateSupporterInput) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiSupporter>(`/supporters/${id}`, "PATCH", input),
-      [ADMIN_CACHE_TAGS.supporters],
-    ),
-    /**
-   * deleteSupporter 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    patchWithRevalidation<ApiSupporter>(`/supporters/${id}`, input, [ADMIN_CACHE_TAGS.supporters]),
   deleteSupporter: (id: string) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<void>(`/supporters/${id}`, "DELETE"),
-      [ADMIN_CACHE_TAGS.supporters],
-    ),
+    deleteWithRevalidation(`/supporters/${id}`, [ADMIN_CACHE_TAGS.supporters]),
 
-    /**
-   * listExhibitions의 핵심 비즈니스 로직을 수행합니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
-  listExhibitions: () => adminRequest<ApiExhibition[]>("/exhibitions", "GET"),
-    /**
-   * createExhibition 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
-   * @param input 함수 로직에서 사용하는 입력값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+  listExhibitions: (input: ApiListExhibitionsQuery = {}) =>
+    apiRequest.get<ApiExhibition[]>(
+      withOptionalQuery("/exhibitions", { generationId: input.generationId }),
+    ),
   createExhibition: (input: ApiCreateExhibitionInput) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiExhibition>("/exhibitions", "POST", input),
-      [ADMIN_CACHE_TAGS.exhibitions],
-    ),
-    /**
-   * getExhibitionById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @returns 조회/계산된 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    postWithRevalidation<ApiExhibition>("/exhibitions", input, [ADMIN_CACHE_TAGS.exhibitions]),
   getExhibitionById: (id: string) =>
-    adminRequest<ApiExhibition>(`/exhibitions/${id}`, "GET"),
-    /**
-   * updateExhibition 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @param input 함수 로직에서 사용하는 입력값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    apiRequest.get<ApiExhibition>(`/exhibitions/${id}`),
   updateExhibition: (id: string, input: ApiUpdateExhibitionInput) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiExhibition>(`/exhibitions/${id}`, "PATCH", input),
-      [ADMIN_CACHE_TAGS.exhibitions],
-    ),
-    /**
-   * deleteExhibition 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    patchWithRevalidation<ApiExhibition>(`/exhibitions/${id}`, input, [ADMIN_CACHE_TAGS.exhibitions]),
   deleteExhibition: (id: string) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<void>(`/exhibitions/${id}`, "DELETE"),
-      [ADMIN_CACHE_TAGS.exhibitions],
-    ),
-    /**
-   * addExhibitionImage의 핵심 비즈니스 로직을 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @param input 함수 로직에서 사용하는 입력값입니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    deleteWithRevalidation(`/exhibitions/${id}`, [ADMIN_CACHE_TAGS.exhibitions]),
   addExhibitionImage: (id: string, input: ApiCreateExhibitionImageInput) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiExhibitionImage>(`/exhibitions/${id}/images`, "POST", input),
-      [ADMIN_CACHE_TAGS.exhibitions],
-    ),
-    /**
-   * addExhibitionImages의 핵심 비즈니스 로직을 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @param inputs 함수 로직에서 사용하는 입력값입니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    postWithRevalidation<ApiExhibitionImage>(`/exhibitions/${id}/images`, input, [
+      ADMIN_CACHE_TAGS.exhibitions,
+    ]),
   addExhibitionImages: (id: string, inputs: ApiCreateExhibitionImageInput[]) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiExhibitionImage[]>(`/exhibitions/${id}/images/batch`, "POST", inputs),
-      [ADMIN_CACHE_TAGS.exhibitions],
-    ),
-    /**
-   * updateExhibitionImage 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @param imageId 대상을 식별하기 위한 ID 값입니다.
-   * @param input 함수 로직에서 사용하는 입력값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    postWithRevalidation<ApiExhibitionImage[]>(`/exhibitions/${id}/images/batch`, inputs, [
+      ADMIN_CACHE_TAGS.exhibitions,
+    ]),
   updateExhibitionImage: (
     id: string,
     imageId: string,
     input: ApiUpdateExhibitionImageInput,
   ) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiExhibitionImage>(`/exhibitions/${id}/images/${imageId}`, "PATCH", input),
-      [ADMIN_CACHE_TAGS.exhibitions],
-    ),
-    /**
-   * updateExhibitionImages 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @param inputs 함수 로직에서 사용하는 입력값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    patchWithRevalidation<ApiExhibitionImage>(`/exhibitions/${id}/images/${imageId}`, input, [
+      ADMIN_CACHE_TAGS.exhibitions,
+    ]),
   updateExhibitionImages: (
     id: string,
     inputs: ApiUpdateExhibitionImageBatchItemInput[],
   ) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiExhibitionImage[]>(`/exhibitions/${id}/images/batch`, "PATCH", inputs),
-      [ADMIN_CACHE_TAGS.exhibitions],
-    ),
-    /**
-   * deleteExhibitionImage 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @param imageId 대상을 식별하기 위한 ID 값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    patchWithRevalidation<ApiExhibitionImage[]>(`/exhibitions/${id}/images/batch`, inputs, [
+      ADMIN_CACHE_TAGS.exhibitions,
+    ]),
   deleteExhibitionImage: (id: string, imageId: string) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<void>(`/exhibitions/${id}/images/${imageId}`, "DELETE"),
-      [ADMIN_CACHE_TAGS.exhibitions],
-    ),
+    deleteWithRevalidation(`/exhibitions/${id}/images/${imageId}`, [
+      ADMIN_CACHE_TAGS.exhibitions,
+    ]),
 
-    /**
-   * listLinktrees의 핵심 비즈니스 로직을 수행합니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
-  listLinktrees: () => adminRequest<ApiLinktree[]>("/linktree", "GET"),
-    /**
-   * createLinktree 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
-   * @param input 함수 로직에서 사용하는 입력값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+  listLinktrees: () => apiRequest.get<ApiLinktree[]>("/linktree"),
   createLinktree: (input: ApiCreateLinktreeInput) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiLinktree>("/linktree", "POST", input),
-      [ADMIN_CACHE_TAGS.linktree],
-    ),
-    /**
-   * getLinktreeById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @returns 조회/계산된 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
-  getLinktreeById: (id: string) => adminRequest<ApiLinktree>(`/linktree/${id}`, "GET"),
-    /**
-   * updateLinktree 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @param input 함수 로직에서 사용하는 입력값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    postWithRevalidation<ApiLinktree>("/linktree", input, [ADMIN_CACHE_TAGS.linktree]),
+  getLinktreeById: (id: string) => apiRequest.get<ApiLinktree>(`/linktree/${id}`),
   updateLinktree: (id: string, input: ApiUpdateLinktreeInput) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiLinktree>(`/linktree/${id}`, "PATCH", input),
-      [ADMIN_CACHE_TAGS.linktree],
-    ),
-    /**
-   * deleteLinktree 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    patchWithRevalidation<ApiLinktree>(`/linktree/${id}`, input, [ADMIN_CACHE_TAGS.linktree]),
   deleteLinktree: (id: string) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<void>(`/linktree/${id}`, "DELETE"),
-      [ADMIN_CACHE_TAGS.linktree],
-    ),
-    /**
-   * addLinktreeItem의 핵심 비즈니스 로직을 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @param input 함수 로직에서 사용하는 입력값입니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    deleteWithRevalidation(`/linktree/${id}`, [ADMIN_CACHE_TAGS.linktree]),
   addLinktreeItem: (id: string, input: ApiCreateLinktreeItemInput) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiLinktreeItem>(`/linktree/${id}/items`, "POST", input),
-      [ADMIN_CACHE_TAGS.linktree],
-    ),
-    /**
-   * updateLinktreeItem 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @param itemId 대상을 식별하기 위한 ID 값입니다.
-   * @param input 함수 로직에서 사용하는 입력값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
-  updateLinktreeItem: (id: string, itemId: string, input: ApiUpdateLinktreeItemInput) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiLinktreeItem>(`/linktree/${id}/items/${itemId}`, "PATCH", input),
-      [ADMIN_CACHE_TAGS.linktree],
-    ),
-    /**
-   * deleteLinktreeItem 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @param itemId 대상을 식별하기 위한 ID 값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    postWithRevalidation<ApiLinktreeItem>(`/linktree/${id}/items`, input, [ADMIN_CACHE_TAGS.linktree]),
+  updateLinktreeItem: (
+    id: string,
+    itemId: string,
+    input: ApiUpdateLinktreeItemInput,
+  ) =>
+    patchWithRevalidation<ApiLinktreeItem>(`/linktree/${id}/items/${itemId}`, input, [
+      ADMIN_CACHE_TAGS.linktree,
+    ]),
   deleteLinktreeItem: (id: string, itemId: string) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<void>(`/linktree/${id}/items/${itemId}`, "DELETE"),
-      [ADMIN_CACHE_TAGS.linktree],
-    ),
+    deleteWithRevalidation(`/linktree/${id}/items/${itemId}`, [ADMIN_CACHE_TAGS.linktree]),
 
   listGenerationNotices: (generationId: string) =>
-    adminRequest<ApiGenerationNotice[]>(`/generations/${generationId}/notices`, "GET"),
+    apiRequest.get<ApiGenerationNotice[]>(`/generations/${generationId}/notices`),
   createGenerationNotice: (
     generationId: string,
     input: ApiCreateGenerationNoticeInput,
   ) =>
-    withAdminCacheRevalidation(
-      () =>
-        adminRequest<ApiGenerationNotice>(
-          `/generations/${generationId}/notices`,
-          "POST",
-          input,
-        ),
-      [ADMIN_CACHE_TAGS.notices],
-    ),
+    postWithRevalidation<ApiGenerationNotice>(`/generations/${generationId}/notices`, input, [
+      ADMIN_CACHE_TAGS.notices,
+    ]),
   getGenerationNoticeById: (generationId: string, noticeId: string) =>
-    adminRequest<ApiGenerationNotice>(
-      `/generations/${generationId}/notices/${noticeId}`,
-      "GET",
-    ),
+    apiRequest.get<ApiGenerationNotice>(`/generations/${generationId}/notices/${noticeId}`),
   updateGenerationNotice: (
     generationId: string,
     noticeId: string,
     input: ApiUpdateGenerationNoticeInput,
   ) =>
-    withAdminCacheRevalidation(
-      () =>
-        adminRequest<ApiGenerationNotice>(
-          `/generations/${generationId}/notices/${noticeId}`,
-          "PATCH",
-          input,
-        ),
-      [ADMIN_CACHE_TAGS.notices],
-    ),
+    patchWithRevalidation<ApiGenerationNotice>(`/generations/${generationId}/notices/${noticeId}`, input, [
+      ADMIN_CACHE_TAGS.notices,
+    ]),
   deleteGenerationNotice: (generationId: string, noticeId: string) =>
-    withAdminCacheRevalidation(
-      () =>
-        adminRequest<void>(
-          `/generations/${generationId}/notices/${noticeId}`,
-          "DELETE",
-        ),
-      [ADMIN_CACHE_TAGS.notices],
-    ),
+    deleteWithRevalidation(`/generations/${generationId}/notices/${noticeId}`, [
+      ADMIN_CACHE_TAGS.notices,
+    ]),
 
-  listGlobalNotices: () => adminRequest<ApiGlobalNotice[]>("/global-notices", "GET"),
+  listGlobalNotices: () => apiRequest.get<ApiGlobalNotice[]>("/global-notices"),
   createGlobalNotice: (input: ApiCreateGlobalNoticeInput) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiGlobalNotice>("/global-notices", "POST", input),
-      [ADMIN_CACHE_TAGS.notices],
-    ),
+    postWithRevalidation<ApiGlobalNotice>("/global-notices", input, [ADMIN_CACHE_TAGS.notices]),
   getGlobalNoticeById: (id: string) =>
-    adminRequest<ApiGlobalNotice>(`/global-notices/${id}`, "GET"),
+    apiRequest.get<ApiGlobalNotice>(`/global-notices/${id}`),
   updateGlobalNotice: (id: string, input: ApiUpdateGlobalNoticeInput) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiGlobalNotice>(`/global-notices/${id}`, "PATCH", input),
-      [ADMIN_CACHE_TAGS.notices],
-    ),
+    patchWithRevalidation<ApiGlobalNotice>(`/global-notices/${id}`, input, [ADMIN_CACHE_TAGS.notices]),
   deleteGlobalNotice: (id: string) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<void>(`/global-notices/${id}`, "DELETE"),
-      [ADMIN_CACHE_TAGS.notices],
-    ),
+    deleteWithRevalidation(`/global-notices/${id}`, [ADMIN_CACHE_TAGS.notices]),
 
-    /**
-   * listUsers의 핵심 비즈니스 로직을 수행합니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
-  listUsers: () => adminRequest<ApiUser[]>("/users", "GET"),
-    /**
-   * getUserById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @returns 조회/계산된 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
-  getUserById: (id: string) => adminRequest<ApiUser>(`/users/${id}`, "GET"),
-    /**
-   * updateUser 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @param input 함수 로직에서 사용하는 입력값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+  listUsers: () => apiRequest.get<ApiUser[]>("/users"),
+  getUserById: (id: string) => apiRequest.get<ApiUser>(`/users/${id}`),
   updateUser: (id: string, input: ApiUpdateUserInput) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiUser>(`/users/${id}`, "PATCH", input),
-      [ADMIN_CACHE_TAGS.users, ADMIN_CACHE_TAGS.generations],
-    ),
-    /**
-   * bulkUpdateUsersRole의 핵심 비즈니스 로직을 수행합니다.
-   * @param input 함수 로직에서 사용하는 입력값입니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    patchWithRevalidation<ApiUser>(`/users/${id}`, input, [
+      ADMIN_CACHE_TAGS.users,
+      ADMIN_CACHE_TAGS.generations,
+    ]),
   bulkUpdateUsersRole: (input: ApiBulkUpdateUserRoleInput) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<ApiUser[]>("/users/bulk-role", "PATCH", input),
-      [ADMIN_CACHE_TAGS.users, ADMIN_CACHE_TAGS.generations],
-    ),
-    /**
-   * getAdminDashboardStats 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
-   * @param generationSortOrder 함수 로직에서 사용하는 입력값입니다.
-   * @returns 조회/계산된 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
+    patchWithRevalidation<ApiUser[]>("/users/bulk-role", input, [
+      ADMIN_CACHE_TAGS.users,
+      ADMIN_CACHE_TAGS.generations,
+    ]),
   getAdminDashboardStats: (generationSortOrder: number | null = null) => {
     const search = new URLSearchParams();
     if (typeof generationSortOrder === "number" && Number.isFinite(generationSortOrder)) {
       search.set("generationSortOrder", String(generationSortOrder));
     }
+
     const suffix = search.size > 0 ? `?${search.toString()}` : "";
-    return adminRequest<ApiAdminDashboardStats>(`/admin/dashboard${suffix}`, "GET");
+    return apiRequest.get<ApiAdminDashboardStats>(`/admin/dashboard${suffix}`);
   },
-    /**
-   * deleteUser 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
-   * @param id 대상을 식별하기 위한 ID 값입니다.
-   * @returns 처리 결과 값을 반환합니다.
-   * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-   */
   deleteUser: (id: string) =>
-    withAdminCacheRevalidation(
-      () => adminRequest<void>(`/users/${id}`, "DELETE"),
-      [ADMIN_CACHE_TAGS.users, ADMIN_CACHE_TAGS.generations],
-    ),
+    deleteWithRevalidation(`/users/${id}`, [
+      ADMIN_CACHE_TAGS.users,
+      ADMIN_CACHE_TAGS.generations,
+    ]),
 } as const;

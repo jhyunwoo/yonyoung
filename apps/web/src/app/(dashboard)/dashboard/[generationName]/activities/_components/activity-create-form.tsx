@@ -1,11 +1,16 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "../../../../../../lib/admin-api/resources";
+import {
+  readFileList,
+  type UploadImageItem,
+} from "../../../../../../lib/image-upload-state";
 import { PRESIGN_PATHS, uploadWithPresign } from "../../../../../../lib/admin-api/upload";
 import { hasMeaningfulRichTextHtml } from "../../../../../../lib/rich-text";
+import { useImageUploadState } from "../../../../../../lib/use-image-upload-state";
 import RichTextEditor, { EMPTY_RICH_TEXT_HTML } from "../../../../_components/rich-text-editor";
 import SortableImageGrid from "../../../../_components/sortable-image-grid";
 import {
@@ -18,20 +23,6 @@ type ActivityCreateFormProps = {
   generationPath: string;
   generationName: string;
 };
-
-type NewDetailImage = {
-  id: string;
-  file: File;
-  previewUrl: string;
-};
-
-const readFileList = (files: FileList | null): File[] => (files ? Array.from(files) : []);
-
-const createDetailImage = (file: File): NewDetailImage => ({
-  id: `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`,
-  file,
-  previewUrl: URL.createObjectURL(file),
-});
 
 export default function ActivityCreateForm({
   generationId,
@@ -46,24 +37,14 @@ export default function ActivityCreateForm({
   const [endDateInput, setEndDateInput] = useState("");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
-  const [detailImages, setDetailImages] = useState<NewDetailImage[]>([]);
+  const { items: detailImages, appendFiles, removeItemById, reorderByIds } = useImageUploadState();
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const detailImagesRef = useRef<NewDetailImage[]>([]);
-
-  useEffect(() => {
-    detailImagesRef.current = detailImages;
-  }, [detailImages]);
 
   useEffect(() => {
     return () => {
       if (coverPreviewUrl) {
         URL.revokeObjectURL(coverPreviewUrl);
-      }
-
-      for (const image of detailImagesRef.current) {
-        URL.revokeObjectURL(image.previewUrl);
       }
     };
   }, [coverPreviewUrl]);
@@ -98,22 +79,11 @@ export default function ActivityCreateForm({
   const handleDetailFilesChange = (event: ChangeEvent<HTMLInputElement>) => {
     const nextFiles = readFileList(event.target.files);
     event.target.value = "";
-    if (nextFiles.length === 0) {
-      return;
-    }
-
-    const nextImages = nextFiles.map(createDetailImage);
-    setDetailImages((previous) => [...previous, ...nextImages]);
+    appendFiles(nextFiles);
   };
 
   const handleRemoveDetailImage = (imageId: string) => {
-    setDetailImages((previous) => {
-      const target = previous.find((image) => image.id === imageId);
-      if (target) {
-        URL.revokeObjectURL(target.previewUrl);
-      }
-      return previous.filter((image) => image.id !== imageId);
-    });
+    removeItemById(imageId);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -160,8 +130,12 @@ export default function ActivityCreateForm({
 
       if (detailImages.length > 0) {
         try {
+          const newDetailImages = detailImages.filter(
+            (image): image is UploadImageItem & { file: File } => image.file !== null,
+          );
+
           const uploadedDetailUrls = await Promise.all(
-            detailImages.map((image) =>
+            newDetailImages.map((image) =>
               uploadWithPresign({
                 presignPath: PRESIGN_PATHS.activityDetail,
                 file: image.file,
@@ -285,18 +259,11 @@ export default function ActivityCreateForm({
           <SortableImageGrid
             items={detailImages.map((image, index) => ({
               id: image.id,
-              imageUrl: image.previewUrl,
-              label: image.file.name,
+              imageUrl: image.imageUrl,
+              label: image.file?.name ?? `세부 이미지 ${index + 1}`,
               subtitle: `순서 ${index + 1}`,
             }))}
-            onReorder={(nextItems) => {
-              const imageMap = new Map(detailImages.map((image) => [image.id, image]));
-              setDetailImages(
-                nextItems
-                  .map((item) => imageMap.get(item.id))
-                  .filter((item): item is NewDetailImage => item !== undefined),
-              );
-            }}
+            onReorder={(nextItems) => reorderByIds(nextItems.map((item) => item.id))}
             onRemoveItem={handleRemoveDetailImage}
             disabled={isSaving}
             emptyMessage="추가할 세부 이미지가 없으면 비워 두세요."

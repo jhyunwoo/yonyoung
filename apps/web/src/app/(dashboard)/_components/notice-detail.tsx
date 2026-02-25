@@ -14,9 +14,11 @@ import { adminResourceApi } from "../../../lib/admin-api/resources";
 import { PRESIGN_PATHS, uploadWithPresign } from "../../../lib/admin-api/upload";
 import { AdminApiError } from "../../../lib/admin-api/types";
 import { formatKoreanDate } from "../../../lib/date-formatters";
+import { createExistingUploadImageItem } from "../../../lib/image-upload-state";
 import { shouldUseUnoptimizedImage } from "../../../lib/image-utils";
 import { hasMeaningfulRichTextHtml } from "../../../lib/rich-text";
 import { RichTextContent } from "../../../lib/rich-text-content";
+import { useImageUploadState } from "../../../lib/use-image-upload-state";
 import AuditHistoryPanel from "./audit-history-panel";
 import LastUpdatedMeta from "./last-updated-meta";
 import RichTextEditor from "./rich-text-editor";
@@ -24,7 +26,6 @@ import SortableImageGrid from "./sortable-image-grid";
 import {
   NOTICE_MAX_IMAGES,
   buildRoleLabel,
-  isValidImageUrl,
   normalizeNoticeImageUrls,
   readNoticeErrorMessage,
   toNoticeItem,
@@ -67,8 +68,17 @@ export default function NoticeDetail({
   const [isEditing, setIsEditing] = useState(false);
   const [editingTitle, setEditingTitle] = useState("");
   const [editingContent, setEditingContent] = useState("");
-  const [editingImageUrlInput, setEditingImageUrlInput] = useState("");
-  const [editingImageUrls, setEditingImageUrls] = useState<string[]>([]);
+  const {
+    items: editingImageItems,
+    replaceItems: replaceEditingImageItems,
+    appendExistingUrls: appendEditingImageUrls,
+    removeItemById: removeEditingImageById,
+    reorderByIds: reorderEditingImageByIds,
+  } = useImageUploadState({ maxItems: NOTICE_MAX_IMAGES });
+  const editingImageUrls = useMemo(
+    () => editingImageItems.map((item) => item.imageUrl),
+    [editingImageItems],
+  );
 
   const loadNotice = useCallback(async () => {
     setIsLoading(true);
@@ -92,7 +102,14 @@ export default function NoticeDetail({
       if (!isEditing) {
         setEditingTitle(mapped.title);
         setEditingContent(mapped.content);
-        setEditingImageUrls(mapped.imageUrls);
+        replaceEditingImageItems(
+          mapped.imageUrls.map((imageUrl, index) =>
+            createExistingUploadImageItem({
+              id: `existing-${index}-${imageUrl}`,
+              imageUrl,
+            }),
+          ),
+        );
       }
     } catch (error) {
       if (error instanceof AdminApiError && error.status === 404) {
@@ -104,7 +121,7 @@ export default function NoticeDetail({
     } finally {
       setIsLoading(false);
     }
-  }, [generationId, isEditing, noticeId, scope]);
+  }, [generationId, isEditing, noticeId, replaceEditingImageItems, scope]);
 
   useEffect(() => {
     void loadNotice();
@@ -117,8 +134,14 @@ export default function NoticeDetail({
 
     setEditingTitle(notice.title);
     setEditingContent(notice.content);
-    setEditingImageUrls(notice.imageUrls);
-    setEditingImageUrlInput("");
+    replaceEditingImageItems(
+      notice.imageUrls.map((imageUrl, index) =>
+        createExistingUploadImageItem({
+          id: `existing-${index}-${imageUrl}`,
+          imageUrl,
+        }),
+      ),
+    );
     setIsEditing(true);
     setErrorMessage(null);
   };
@@ -131,39 +154,14 @@ export default function NoticeDetail({
     setIsEditing(false);
     setEditingTitle(notice.title);
     setEditingContent(notice.content);
-    setEditingImageUrls(notice.imageUrls);
-    setEditingImageUrlInput("");
-  };
-
-  const appendEditingImageUrl = (rawUrl: string) => {
-    const trimmed = rawUrl.trim();
-    if (!trimmed) {
-      setErrorMessage("이미지 URL을 입력해 주세요.");
-      return;
-    }
-
-    if (!isValidImageUrl(trimmed)) {
-      setErrorMessage("유효한 이미지 URL(http/https)을 입력해 주세요.");
-      return;
-    }
-
-    if (editingImageUrls.includes(trimmed)) {
-      setErrorMessage("이미 추가된 이미지 URL입니다.");
-      return;
-    }
-
-    if (editingImageUrls.length >= NOTICE_MAX_IMAGES) {
-      setErrorMessage(`이미지는 최대 ${NOTICE_MAX_IMAGES}장까지 등록할 수 있습니다.`);
-      return;
-    }
-
-    setEditingImageUrls((previous) => [...previous, trimmed]);
-    setEditingImageUrlInput("");
-    setErrorMessage(null);
-  };
-
-  const removeEditingImageUrl = (targetUrl: string) => {
-    setEditingImageUrls((previous) => previous.filter((url) => url !== targetUrl));
+    replaceEditingImageItems(
+      notice.imageUrls.map((imageUrl, index) =>
+        createExistingUploadImageItem({
+          id: `existing-${index}-${imageUrl}`,
+          imageUrl,
+        }),
+      ),
+    );
   };
 
   const handleUploadEditingImage = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -187,7 +185,8 @@ export default function NoticeDetail({
         presignPath: PRESIGN_PATHS.noticeImage,
         file,
       });
-      appendEditingImageUrl(uploadedUrl);
+      appendEditingImageUrls([uploadedUrl]);
+      setErrorMessage(null);
     } catch (error) {
       setErrorMessage(readNoticeErrorMessage(error));
     } finally {
@@ -204,7 +203,6 @@ export default function NoticeDetail({
     }
 
     const normalizedImageUrls = normalizeNoticeImageUrls(editingImageUrls);
-    setEditingImageUrls(normalizedImageUrls);
 
     setIsSaving(true);
     setErrorMessage(null);
@@ -233,7 +231,14 @@ export default function NoticeDetail({
       setNotice(mapped);
       setEditingTitle(mapped.title);
       setEditingContent(mapped.content);
-      setEditingImageUrls(mapped.imageUrls);
+      replaceEditingImageItems(
+        mapped.imageUrls.map((imageUrl, index) =>
+          createExistingUploadImageItem({
+            id: `existing-${index}-${imageUrl}`,
+            imageUrl,
+          }),
+        ),
+      );
       setIsEditing(false);
       router.refresh();
     } catch (error) {
@@ -361,25 +366,7 @@ export default function NoticeDetail({
           <p className="text-sm font-semibold text-slate-900">첨부 이미지</p>
           <p className="mt-1 text-xs text-slate-500">최대 {NOTICE_MAX_IMAGES}장</p>
 
-          <div className="mt-3 flex flex-wrap gap-2">
-            <input
-              value={editingImageUrlInput}
-              onChange={(event) => setEditingImageUrlInput(event.target.value)}
-              disabled={isSaving || isUploadingImage || editingImageUrls.length >= NOTICE_MAX_IMAGES}
-              placeholder="https://..."
-              className="min-w-[220px] flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            />
-            <button
-              type="button"
-              onClick={() => appendEditingImageUrl(editingImageUrlInput)}
-              disabled={isSaving || isUploadingImage || editingImageUrls.length >= NOTICE_MAX_IMAGES}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              URL 추가
-            </button>
-          </div>
-
-          <label className="mt-2 inline-flex cursor-pointer rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+          <label className="mt-3 inline-flex cursor-pointer rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
             파일 업로드
             <input
               type="file"
@@ -397,14 +384,14 @@ export default function NoticeDetail({
           <div className="mt-3 space-y-2">
             <p className="text-xs text-slate-500">드래그하여 이미지 순서를 변경할 수 있습니다.</p>
             <SortableImageGrid
-              items={editingImageUrls.map((imageUrl, index) => ({
-                id: imageUrl,
-                imageUrl,
+              items={editingImageItems.map((image, index) => ({
+                id: image.id,
+                imageUrl: image.imageUrl,
                 label: `첨부 이미지 ${index + 1}`,
                 alt: "공지 첨부 이미지",
               }))}
-              onReorder={(nextItems) => setEditingImageUrls(nextItems.map((item) => item.imageUrl))}
-              onRemoveItem={(itemId) => removeEditingImageUrl(itemId)}
+              onReorder={(nextItems) => reorderEditingImageByIds(nextItems.map((item) => item.id))}
+              onRemoveItem={removeEditingImageById}
               disabled={isSaving || isUploadingImage}
               emptyMessage="첨부된 이미지가 없습니다."
             />

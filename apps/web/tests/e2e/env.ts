@@ -130,7 +130,7 @@ export const readE2eUploadMode = (): E2EUploadMode => {
   if (rawValue === "real") {
     return "real";
   }
-  return "hybrid";
+  return "real";
 };
 
 export const requireE2eEnv = (keys: string[]): Record<string, string> => {

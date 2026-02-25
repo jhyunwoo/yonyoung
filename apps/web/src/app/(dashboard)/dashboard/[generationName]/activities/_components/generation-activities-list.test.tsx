@@ -49,7 +49,7 @@ describe("GenerationActivitiesList", () => {
     container.remove();
   });
 
-  it("현재 기수 활동만 필터링해서 렌더링한다", async () => {
+  it("현재 기수 ID를 포함해 활동 목록을 조회한다", async () => {
     listActivities.mockResolvedValue([
       {
         id: "activity-1",
@@ -61,18 +61,6 @@ describe("GenerationActivitiesList", () => {
         generationId: "generation-60",
         createdAt: Date.parse("2030-03-01T00:00:00.000Z"),
         updatedAt: Date.parse("2030-03-01T00:00:00.000Z"),
-        detailImages: [],
-      },
-      {
-        id: "activity-2",
-        title: "61기 워크숍",
-        description: "설명",
-        startDate: Date.parse("2030-04-01T00:00:00.000Z"),
-        endDate: Date.parse("2030-04-02T00:00:00.000Z"),
-        coverImageUrl: "https://example.com/cover-2.jpg",
-        generationId: "generation-61",
-        createdAt: Date.parse("2030-04-01T00:00:00.000Z"),
-        updatedAt: Date.parse("2030-04-01T00:00:00.000Z"),
         detailImages: [],
       },
     ]);
@@ -92,12 +80,10 @@ describe("GenerationActivitiesList", () => {
     });
 
     expect(listActivities).toHaveBeenCalledTimes(1);
+    expect(listActivities).toHaveBeenCalledWith({ generationId: "generation-60" });
     expect(
       container.querySelector("[data-testid='generation-activity-card-activity-1']"),
     ).toBeInTheDocument();
-    expect(
-      container.querySelector("[data-testid='generation-activity-card-activity-2']"),
-    ).not.toBeInTheDocument();
   });
 
   it("권한이 없으면 활동 추가 버튼을 노출하지 않는다", async () => {
@@ -118,6 +104,7 @@ describe("GenerationActivitiesList", () => {
     });
 
     expect(listActivities).toHaveBeenCalledTimes(1);
+    expect(listActivities).toHaveBeenCalledWith({ generationId: "generation-60" });
     expect(container.textContent).toContain("활동 생성/수정 권한이 없습니다.");
     expect(container.textContent).not.toContain("활동 추가");
   });

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -10,7 +10,13 @@ import {
   PRESIGN_PATHS,
   uploadWithPresign,
 } from "../../../../../../lib/admin-api/upload";
+import {
+  createExistingUploadImageItem,
+  readFileList,
+  type UploadImageItem,
+} from "../../../../../../lib/image-upload-state";
 import { shouldUseUnoptimizedImage } from "../../../../../../lib/image-utils";
+import { useImageUploadState } from "../../../../../../lib/use-image-upload-state";
 import AuditHistoryPanel from "../../../../_components/audit-history-panel";
 import LastUpdatedMeta from "../../../../_components/last-updated-meta";
 import SortableImageGrid from "../../../../_components/sortable-image-grid";
@@ -29,22 +35,6 @@ type ExhibitionEditFormProps = {
   generationPath: string;
   initialMessage: string | null;
 };
-
-type EditableDetailImage = {
-  id: string;
-  imageUrl: string;
-  kind: "existing" | "new";
-  file?: File;
-};
-
-const readFileList = (files: FileList | null): File[] => (files ? Array.from(files) : []);
-
-const createNewDetailImage = (file: File): EditableDetailImage => ({
-  id: `new-${crypto.randomUUID()}`,
-  imageUrl: URL.createObjectURL(file),
-  kind: "new",
-  file,
-});
 
 const EMPTY_DESCRIPTION_HTML = "<p></p>";
 
@@ -70,25 +60,19 @@ export default function ExhibitionEditForm({
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
 
-  const [detailImages, setDetailImages] = useState<EditableDetailImage[]>([]);
+  const {
+    items: detailImages,
+    replaceItems,
+    appendFiles,
+    removeItemById,
+    reorderByIds,
+  } = useImageUploadState();
   const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]);
-
-  const detailImagesRef = useRef<EditableDetailImage[]>([]);
-
-  useEffect(() => {
-    detailImagesRef.current = detailImages;
-  }, [detailImages]);
 
   useEffect(() => {
     return () => {
       if (coverPreviewUrl) {
         URL.revokeObjectURL(coverPreviewUrl);
-      }
-
-      for (const image of detailImagesRef.current) {
-        if (image.kind === "new") {
-          URL.revokeObjectURL(image.imageUrl);
-        }
       }
     };
   }, [coverPreviewUrl]);
@@ -114,11 +98,12 @@ export default function ExhibitionEditForm({
         const sortedImages = row.detailImages
           .slice()
           .sort((left, right) => left.sortOrder - right.sortOrder)
-          .map((image) => ({
-            id: image.id,
-            imageUrl: image.imageUrl,
-            kind: "existing" as const,
-          }));
+          .map((image) =>
+            createExistingUploadImageItem({
+              id: image.id,
+              imageUrl: image.imageUrl,
+            }),
+          );
 
         setExhibition(row);
         setTitle(row.title);
@@ -126,7 +111,7 @@ export default function ExhibitionEditForm({
         setDescriptionHtml(row.description.length > 0 ? row.description : EMPTY_DESCRIPTION_HTML);
         setStartDateInput(formatTimestampToDateInput(row.startDate));
         setEndDateInput(formatTimestampToDateInput(row.endDate));
-        setDetailImages(sortedImages);
+        replaceItems(sortedImages);
         setDeletedImageIds([]);
       } catch (error) {
         if (!mounted) {
@@ -144,7 +129,7 @@ export default function ExhibitionEditForm({
     return () => {
       mounted = false;
     };
-  }, [exhibitionId, generationId, generationPath, router]);
+  }, [exhibitionId, generationId, generationPath, replaceItems, router]);
 
   const isSubmitDisabled = useMemo(() => {
     return (
@@ -182,21 +167,20 @@ export default function ExhibitionEditForm({
       return;
     }
 
-    setDetailImages((previous) => [...previous, ...files.map(createNewDetailImage)]);
+    appendFiles(files);
   };
 
   const handleRemoveDetailImage = (imageId: string) => {
-    setDetailImages((previous) => {
-      const target = previous.find((image) => image.id === imageId);
-      if (target?.kind === "new") {
-        URL.revokeObjectURL(target.imageUrl);
-      }
-      return previous.filter((image) => image.id !== imageId);
-    });
-
-    const targetExistingId = detailImages.find((image) => image.id === imageId && image.kind === "existing")?.id;
+    const targetExistingId = detailImages.find(
+      (image) => image.id === imageId && image.source === "existing",
+    )?.id;
+    removeItemById(imageId);
     if (targetExistingId) {
-      setDeletedImageIds((previous) => (previous.includes(targetExistingId) ? previous : [...previous, targetExistingId]));
+      setDeletedImageIds((previous) =>
+        previous.includes(targetExistingId)
+          ? previous
+          : [...previous, targetExistingId],
+      );
     }
   };
 
@@ -258,8 +242,13 @@ export default function ExhibitionEditForm({
         );
       }
 
-      const existingOrder = detailImages.filter((image) => image.kind === "existing");
-      const newOrder = detailImages.filter((image) => image.kind === "new" && image.file);
+      const existingOrder = detailImages.filter(
+        (image) => image.source === "existing",
+      );
+      const newOrder = detailImages.filter(
+        (image): image is UploadImageItem & { file: File } =>
+          image.source === "new" && image.file !== null,
+      );
 
       const createdMap = new Map<string, string>();
       if (newOrder.length > 0) {
@@ -267,7 +256,7 @@ export default function ExhibitionEditForm({
           newOrder.map((image) =>
             uploadWithPresign({
               presignPath: PRESIGN_PATHS.exhibitionDetail,
-              file: image.file!,
+              file: image.file,
             }),
           ),
         );
@@ -290,7 +279,7 @@ export default function ExhibitionEditForm({
 
       const finalOrder = detailImages
         .map((image) => {
-          if (image.kind === "existing") {
+          if (image.source === "existing") {
             return image.id;
           }
 
@@ -298,7 +287,9 @@ export default function ExhibitionEditForm({
         })
         .filter((id): id is string => Boolean(id));
 
-      if (finalOrder.length > 0) {
+      // If only newly uploaded images remain, sortOrder is already assigned in addExhibitionImages.
+      // Reordering batch is only required when existing persisted images are still present.
+      if (existingOrder.length > 0 && finalOrder.length > 0) {
         await adminResourceApi.updateExhibitionImages(
           exhibition.id,
           finalOrder.map((imageId, sortOrder) => ({
@@ -440,17 +431,10 @@ export default function ExhibitionEditForm({
               items={detailImages.map((image, index) => ({
                 id: image.id,
                 imageUrl: image.imageUrl,
-                label: image.kind === "existing" ? `기존 이미지 ${index + 1}` : image.file?.name ?? `새 이미지 ${index + 1}`,
-                subtitle: image.kind === "existing" ? "기존" : "새 업로드",
+                label: image.source === "existing" ? `기존 이미지 ${index + 1}` : image.file?.name ?? `새 이미지 ${index + 1}`,
+                subtitle: image.source === "existing" ? "기존" : "새 업로드",
               }))}
-              onReorder={(nextItems) => {
-                const imageMap = new Map(detailImages.map((image) => [image.id, image]));
-                setDetailImages(
-                  nextItems
-                    .map((item) => imageMap.get(item.id))
-                    .filter((item): item is EditableDetailImage => item !== undefined),
-                );
-              }}
+              onReorder={(nextItems) => reorderByIds(nextItems.map((item) => item.id))}
               onRemoveItem={handleRemoveDetailImage}
               disabled={isSaving}
               emptyMessage="등록된 세부 이미지가 없습니다."

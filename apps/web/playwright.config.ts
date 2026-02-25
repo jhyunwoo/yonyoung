@@ -2,10 +2,22 @@ import { defineConfig } from "@playwright/test";
 import {
   loadE2eEnv,
   readE2eEnv,
+  readE2eUploadMode,
   readE2eSuiteMode,
 } from "./tests/e2e/env";
 
 loadE2eEnv();
+if (!process.env.E2E_UPLOAD_MODE) {
+  process.env.E2E_UPLOAD_MODE = "real";
+}
+
+const uploadMode = readE2eUploadMode();
+if (uploadMode !== "real") {
+  throw new Error(
+    "E2E_UPLOAD_MODE=real 설정이 필요합니다. 파일 업로드 E2E는 real 모드만 지원합니다.",
+  );
+}
+
 const baseURL = readE2eEnv("E2E_BASE_URL", "http://localhost:3000");
 const apiURL = readE2eEnv("E2E_API_URL", "http://localhost:8787");
 

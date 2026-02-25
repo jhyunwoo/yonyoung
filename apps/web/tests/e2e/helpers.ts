@@ -822,6 +822,23 @@ export const ensureGeneration = async (
   throw lastError;
 };
 
+export const pickExistingGeneration = async (
+  request: APIRequestContext,
+): Promise<{ id: string; name: string; sortOrder: number }> => {
+  const generations = await adminApiRequest<
+    Array<{ id: string; name: string; sortOrder: number }>
+  >(request, {
+    method: "GET",
+    path: "/generations",
+  });
+
+  if (generations.length === 0) {
+    throw new Error("No existing generation found for E2E scenario.");
+  }
+
+  return generations[0] as { id: string; name: string; sortOrder: number };
+};
+
 export const seedPublicGeneration = async (
   request: APIRequestContext,
   input: {

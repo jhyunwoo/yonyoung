@@ -5,6 +5,7 @@ import {
   type FormEvent,
   useCallback,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import Link from "next/link";
@@ -21,8 +22,11 @@ import LastUpdatedMeta from "./last-updated-meta";
 import RichTextEditor from "./rich-text-editor";
 import SortableImageGrid from "./sortable-image-grid";
 import {
+  createExistingUploadImageItem,
+} from "../../../lib/image-upload-state";
+import { useImageUploadState } from "../../../lib/use-image-upload-state";
+import {
   NOTICE_MAX_IMAGES,
-  isValidImageUrl,
   normalizeNoticeImageUrls,
   readNoticeErrorMessage,
   toNoticeItem,
@@ -53,8 +57,17 @@ export default function NoticeEditForm({
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [imageUrlInput, setImageUrlInput] = useState("");
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const {
+    items: imageItems,
+    replaceItems,
+    appendExistingUrls,
+    removeItemById,
+    reorderByIds,
+  } = useImageUploadState({ maxItems: NOTICE_MAX_IMAGES });
+  const imageUrls = useMemo(
+    () => imageItems.map((item) => item.imageUrl),
+    [imageItems],
+  );
   const [noticeMeta, setNoticeMeta] = useState<{ updatedAt: number; updatedBy: ReturnType<typeof toNoticeItem>["updatedBy"] } | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -94,7 +107,14 @@ export default function NoticeEditForm({
       const mapped = toNoticeItem(noticeEntity);
       setTitle(mapped.title);
       setContent(mapped.content);
-      setImageUrls(mapped.imageUrls);
+      replaceItems(
+        mapped.imageUrls.map((imageUrl, index) =>
+          createExistingUploadImageItem({
+            id: `existing-${index}-${imageUrl}`,
+            imageUrl,
+          }),
+        ),
+      );
       setNoticeMeta({
         updatedAt: mapped.updatedAt,
         updatedBy: mapped.updatedBy,
@@ -108,7 +128,7 @@ export default function NoticeEditForm({
     } finally {
       setIsLoading(false);
     }
-  }, [generationId, noticeId, scope]);
+  }, [generationId, noticeId, replaceItems, scope]);
 
   useEffect(() => {
     if (!canWrite) {
@@ -117,35 +137,6 @@ export default function NoticeEditForm({
 
     void loadNotice();
   }, [canWrite, loadNotice]);
-
-  const appendImageUrl = (url: string) => {
-    const trimmed = url.trim();
-    if (!trimmed) {
-      setErrorMessage("이미지 URL을 입력해 주세요.");
-      return;
-    }
-
-    if (!isValidImageUrl(trimmed)) {
-      setErrorMessage("유효한 이미지 URL(http/https)을 입력해 주세요.");
-      return;
-    }
-
-    if (imageUrls.includes(trimmed)) {
-      setErrorMessage("이미 추가된 이미지 URL입니다.");
-      return;
-    }
-
-    if (imageUrls.length >= NOTICE_MAX_IMAGES) {
-      setErrorMessage(
-        `이미지는 최대 ${NOTICE_MAX_IMAGES}장까지 등록할 수 있습니다.`,
-      );
-      return;
-    }
-
-    setImageUrls((previous) => [...previous, trimmed]);
-    setImageUrlInput("");
-    setErrorMessage(null);
-  };
 
   const handleUploadImage = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
@@ -170,7 +161,8 @@ export default function NoticeEditForm({
         presignPath: PRESIGN_PATHS.noticeImage,
         file,
       });
-      appendImageUrl(uploadedUrl);
+      appendExistingUrls([uploadedUrl]);
+      setErrorMessage(null);
     } catch (error) {
       setErrorMessage(readNoticeErrorMessage(error));
     } finally {
@@ -178,8 +170,8 @@ export default function NoticeEditForm({
     }
   };
 
-  const removeImageUrl = (targetUrl: string) => {
-    setImageUrls((previous) => previous.filter((url) => url !== targetUrl));
+  const removeImageUrl = (targetId: string) => {
+    removeItemById(targetId);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -192,7 +184,6 @@ export default function NoticeEditForm({
     }
 
     const normalizedImageUrls = normalizeNoticeImageUrls(imageUrls);
-    setImageUrls(normalizedImageUrls);
 
     setIsSaving(true);
     setErrorMessage(null);
@@ -315,33 +306,7 @@ export default function NoticeEditForm({
             최대 {NOTICE_MAX_IMAGES}장
           </p>
 
-          <div className="mt-3 flex flex-wrap gap-2">
-            <input
-              value={imageUrlInput}
-              onChange={(event) => setImageUrlInput(event.target.value)}
-              disabled={
-                isSaving ||
-                isUploadingImage ||
-                imageUrls.length >= NOTICE_MAX_IMAGES
-              }
-              placeholder="https://..."
-              className="min-w-[220px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-            />
-            <button
-              type="button"
-              onClick={() => appendImageUrl(imageUrlInput)}
-              disabled={
-                isSaving ||
-                isUploadingImage ||
-                imageUrls.length >= NOTICE_MAX_IMAGES
-              }
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              URL 추가
-            </button>
-          </div>
-
-          <label className="mt-2 inline-flex cursor-pointer rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+          <label className="mt-3 inline-flex cursor-pointer rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
             파일 업로드
             <input
               type="file"
@@ -363,13 +328,13 @@ export default function NoticeEditForm({
           <div className="mt-3 space-y-2">
             <p className="text-xs text-slate-500">드래그하여 이미지 순서를 변경할 수 있습니다.</p>
             <SortableImageGrid
-              items={imageUrls.map((imageUrl, index) => ({
-                id: imageUrl,
-                imageUrl,
+              items={imageItems.map((image, index) => ({
+                id: image.id,
+                imageUrl: image.imageUrl,
                 label: `첨부 이미지 ${index + 1}`,
                 alt: "공지 첨부 이미지",
               }))}
-              onReorder={(nextItems) => setImageUrls(nextItems.map((item) => item.imageUrl))}
+              onReorder={(nextItems) => reorderByIds(nextItems.map((item) => item.id))}
               onRemoveItem={removeImageUrl}
               disabled={isSaving || isUploadingImage}
               emptyMessage="첨부된 이미지가 없습니다."

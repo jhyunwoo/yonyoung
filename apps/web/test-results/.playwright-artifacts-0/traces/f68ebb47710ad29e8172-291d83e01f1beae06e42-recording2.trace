@@ -1,0 +1,29 @@
+{"version":8,"type":"context-options","origin":"library","browserName":"","playwrightVersion":"1.58.2","options":{},"platform":"darwin","wallTime":1772022685349,"monotonicTime":57130.456,"sdkLanguage":"javascript","contextId":"request-context@f75248b299abf9b20b2fa5c7e02e440f","title":"members-role-profile.spec.ts:16 › members role profile › 프로필 이미지 업로드와 역할 기반 UI 제한이 동작한다"}
+{"type":"before","callId":"call@38","startTime":57131.263,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/auth/sign-up/email","method":"POST","jsonData":"{\"name\":\"e2e-1772022653721-0-hivzwh-name-ih8zn3\",\"email\":\"e2e-1772022653721-0-hivzwh-user-i7yx6q@example.com\",\"password\":\"Test!1772022685347aA\"}","timeout":0},"stepId":"pw:api@49"}
+{"type":"log","callId":"call@38","time":57131.607,"message":"→ POST http://localhost:8787/api/auth/sign-up/email"}
+{"type":"log","callId":"call@38","time":57131.612,"message":"  user-agent: Playwright/1.58.2 (arm64; macOS 26.3) node/25.6"}
+{"type":"log","callId":"call@38","time":57131.613,"message":"  accept: application/json"}
+{"type":"log","callId":"call@38","time":57131.614,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@38","time":57131.616,"message":"  Origin: http://localhost:3000"}
+{"type":"log","callId":"call@38","time":57131.617,"message":"  Referer: http://localhost:3000/"}
+{"type":"log","callId":"call@38","time":57131.62,"message":"  Content-Type: application/json"}
+{"type":"log","callId":"call@38","time":57131.622,"message":"  content-length: 144"}
+{"type":"log","callId":"call@38","time":57131.623,"message":"  cookie: better-auth.session_token=LYYDC85JoKMulrkKYv3Dkxw1QrUCCe0Y.1hM9GeTFArxM1YuvuQLF%2BAYXiFfCOCh62hZV7FkYaxM%3D"}
+{"type":"log","callId":"call@38","time":59907.932,"message":"← 200 OK"}
+{"type":"log","callId":"call@38","time":59907.958,"message":"  transfer-encoding: chunked"}
+{"type":"log","callId":"call@38","time":59907.967,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@38","time":59907.97,"message":"  access-control-allow-origin: http://localhost:3000"}
+{"type":"log","callId":"call@38","time":59907.974,"message":"  content-encoding: gzip"}
+{"type":"log","callId":"call@38","time":59907.988,"message":"  set-cookie: better-auth.session_token=sPvyIEs8u7jgYFVwAHpfTlOjEg8i6Tt5.3oHWvpnu09QXURMjjGDkVaf5XLKpNzF6JE496uoVP0I%3D; Max-Age=604800; Path=/; HttpOnly; SameSite=Lax"}
+{"type":"log","callId":"call@38","time":59907.991,"message":"  vary: Origin"}
+{"type":"log","callId":"call@38","time":59907.994,"message":"  content-security-policy: default-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"}
+{"type":"log","callId":"call@38","time":59907.997,"message":"  cross-origin-resource-policy: cross-origin"}
+{"type":"log","callId":"call@38","time":59908,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@38","time":59908.003,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@38","time":59908.006,"message":"  server-timing: total;dur=2773.00"}
+{"type":"log","callId":"call@38","time":59908.008,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@38","time":59908.011,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@38","time":59908.019,"message":"  x-request-id: 1fd54875-4fa3-4c08-b14e-eb31e55a843a"}
+{"type":"log","callId":"call@38","time":59908.022,"message":"  x-response-time: 2773.00ms"}
+{"type":"log","callId":"call@38","time":59908.025,"message":"  access-control-allow-credentials: true"}
+{"type":"after","callId":"call@38","endTime":59909.607,"result":{"response":{"url":"http://localhost:8787/api/auth/sign-up/email","status":200,"statusText":"OK","headers":[{"name":"Transfer-Encoding","value":"chunked"},{"name":"Content-Type","value":"application/json"},{"name":"Access-Control-Allow-Origin","value":"http://localhost:3000"},{"name":"Content-Encoding","value":"gzip"},{"name":"Set-Cookie","value":"better-auth.session_token=sPvyIEs8u7jgYFVwAHpfTlOjEg8i6Tt5.3oHWvpnu09QXURMjjGDkVaf5XLKpNzF6JE496uoVP0I%3D; Max-Age=604800; Path=/; HttpOnly; SameSite=Lax"},{"name":"Vary","value":"Origin"},{"name":"Content-Security-Policy","value":"default-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"},{"name":"Cross-Origin-Resource-Policy","value":"cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Referrer-Policy","value":"strict-origin-when-cross-origin"},{"name":"Server-Timing","value":"total;dur=2773.00"},{"name":"X-Content-Type-Options","value":"nosniff"},{"name":"X-Frame-Options","value":"DENY"},{"name":"X-Request-Id","value":"1fd54875-4fa3-4c08-b14e-eb31e55a843a"},{"name":"X-Response-Time","value":"2773.00ms"},{"name":"access-control-allow-credentials","value":"true"}],"fetchUid":"8ab0f41d55aa6b5fb977ebac81bfc116"}}}

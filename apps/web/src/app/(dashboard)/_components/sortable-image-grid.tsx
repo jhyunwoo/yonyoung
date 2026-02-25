@@ -109,6 +109,7 @@ const SortableImageCard = ({ item, disabled, onRemoveItem }: SortableCardProps) 
               type="button"
               onClick={() => onRemoveItem(item.id)}
               disabled={disabled}
+              aria-label="이미지 삭제"
               className="rounded border border-red-200 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
               삭제

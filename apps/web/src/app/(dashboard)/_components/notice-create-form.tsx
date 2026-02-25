@@ -1,16 +1,22 @@
 "use client";
 
-import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
+import {
+  type ChangeEvent,
+  type FormEvent,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "../../../lib/admin-api/resources";
 import { PRESIGN_PATHS, uploadWithPresign } from "../../../lib/admin-api/upload";
 import { hasMeaningfulRichTextHtml } from "../../../lib/rich-text";
+import { useImageUploadState } from "../../../lib/use-image-upload-state";
 import RichTextEditor, { EMPTY_RICH_TEXT_HTML } from "./rich-text-editor";
 import SortableImageGrid from "./sortable-image-grid";
 import {
   NOTICE_MAX_IMAGES,
-  isValidImageUrl,
   normalizeNoticeImageUrls,
   readNoticeErrorMessage,
   type NoticeScope,
@@ -38,8 +44,16 @@ export default function NoticeCreateForm({
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState(EMPTY_RICH_TEXT_HTML);
-  const [imageUrlInput, setImageUrlInput] = useState("");
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const {
+    items: imageItems,
+    appendExistingUrls,
+    removeItemById,
+    reorderByIds,
+  } = useImageUploadState({ maxItems: NOTICE_MAX_IMAGES });
+  const imageUrls = useMemo(
+    () => imageItems.map((item) => item.imageUrl),
+    [imageItems],
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -51,37 +65,6 @@ export default function NoticeCreateForm({
 
     router.replace(listPath);
   }, [canWrite, listPath, router]);
-
-  const appendImageUrl = (url: string) => {
-    const trimmed = url.trim();
-    if (!trimmed) {
-      setErrorMessage("이미지 URL을 입력해 주세요.");
-      return;
-    }
-
-    if (!isValidImageUrl(trimmed)) {
-      setErrorMessage("유효한 이미지 URL(http/https)을 입력해 주세요.");
-      return;
-    }
-
-    if (imageUrls.includes(trimmed)) {
-      setErrorMessage("이미 추가된 이미지 URL입니다.");
-      return;
-    }
-
-    if (imageUrls.length >= NOTICE_MAX_IMAGES) {
-      setErrorMessage(`이미지는 최대 ${NOTICE_MAX_IMAGES}장까지 등록할 수 있습니다.`);
-      return;
-    }
-
-    setImageUrls((previous) => [...previous, trimmed]);
-    setImageUrlInput("");
-    setErrorMessage(null);
-  };
-
-  const handleAddImageUrl = () => {
-    appendImageUrl(imageUrlInput);
-  };
 
   const handleUploadImage = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
@@ -104,7 +87,8 @@ export default function NoticeCreateForm({
         presignPath: PRESIGN_PATHS.noticeImage,
         file,
       });
-      appendImageUrl(uploadedUrl);
+      appendExistingUrls([uploadedUrl]);
+      setErrorMessage(null);
     } catch (error) {
       setErrorMessage(readNoticeErrorMessage(error));
     } finally {
@@ -112,8 +96,8 @@ export default function NoticeCreateForm({
     }
   };
 
-  const removeImageUrl = (targetUrl: string) => {
-    setImageUrls((previous) => previous.filter((url) => url !== targetUrl));
+  const removeImageUrl = (targetId: string) => {
+    removeItemById(targetId);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -126,7 +110,6 @@ export default function NoticeCreateForm({
     }
 
     const normalizedImageUrls = normalizeNoticeImageUrls(imageUrls);
-    setImageUrls(normalizedImageUrls);
 
     setIsSaving(true);
     setErrorMessage(null);
@@ -199,25 +182,7 @@ export default function NoticeCreateForm({
           <p className="text-sm font-semibold text-slate-900">첨부 이미지</p>
           <p className="mt-1 text-xs text-slate-500">최대 {NOTICE_MAX_IMAGES}장</p>
 
-          <div className="mt-3 flex flex-wrap gap-2">
-            <input
-              value={imageUrlInput}
-              onChange={(event) => setImageUrlInput(event.target.value)}
-              disabled={isSaving || isUploadingImage || imageUrls.length >= NOTICE_MAX_IMAGES}
-              placeholder="https://..."
-              className="min-w-[220px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-            />
-            <button
-              type="button"
-              onClick={handleAddImageUrl}
-              disabled={isSaving || isUploadingImage || imageUrls.length >= NOTICE_MAX_IMAGES}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              URL 추가
-            </button>
-          </div>
-
-          <label className="mt-2 inline-flex cursor-pointer rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+          <label className="mt-3 inline-flex cursor-pointer rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
             파일 업로드
             <input
               type="file"
@@ -235,13 +200,13 @@ export default function NoticeCreateForm({
           <div className="mt-3 space-y-2">
             <p className="text-xs text-slate-500">드래그하여 이미지 순서를 변경할 수 있습니다.</p>
             <SortableImageGrid
-              items={imageUrls.map((imageUrl, index) => ({
-                id: imageUrl,
-                imageUrl,
+              items={imageItems.map((image, index) => ({
+                id: image.id,
+                imageUrl: image.imageUrl,
                 label: `첨부 이미지 ${index + 1}`,
                 alt: "공지 첨부 이미지",
               }))}
-              onReorder={(nextItems) => setImageUrls(nextItems.map((item) => item.imageUrl))}
+              onReorder={(nextItems) => reorderByIds(nextItems.map((item) => item.id))}
               onRemoveItem={removeImageUrl}
               disabled={isSaving || isUploadingImage}
               emptyMessage="첨부된 이미지가 없습니다."

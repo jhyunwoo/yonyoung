@@ -29,6 +29,112 @@ describe("activity routes", /** describe 실행 과정에서 필요한 연산을
     expect(body.data[0]?.id).toBe(IDs.activity);
     expect(typeof body.data[0]?.startDate).toBe("number");
     expect(typeof body.data[0]?.endDate).toBe("number");
+    expect(listActivities).toHaveBeenCalledWith(undefined);
+  });
+
+  it("활동 목록은 generationId 쿼리를 전달해 서버 필터링할 수 있다", async () => {
+    const listActivities = fn(async () => [createActivity()]);
+    const app = createTestApp({
+      actor: createActor("regular_member"),
+      dataService: createDataServiceMock({ listActivities }),
+    });
+
+    const response = await app.request(
+      `/api/activities?generationId=${encodeURIComponent(IDs.generation)}`,
+    );
+
+    expect(response.status).toBe(200);
+    expect(listActivities).toHaveBeenCalledWith(IDs.generation);
+  });
+
+  it("활동 목록 generationId 쿼리가 UUID 형식이 아니면 400을 반환한다", async () => {
+    const listActivities = fn(async () => [createActivity()]);
+    const app = createTestApp({
+      actor: createActor("regular_member"),
+      dataService: createDataServiceMock({ listActivities }),
+    });
+
+    const response = await app.request("/api/activities?generationId=invalid");
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+    expect(listActivities).not.toHaveBeenCalled();
+  });
+
+  it("활동 목록 응답의 설명 HTML은 sanitize 된다", async () => {
+    const listActivities = fn(async () => [
+      createActivity({
+        description:
+          '<h2>정상</h2><script>alert("xss")</script><p onclick="evil()">본문</p>',
+      }),
+    ]);
+    const app = createTestApp({
+      actor: createActor("regular_member"),
+      dataService: createDataServiceMock({ listActivities }),
+    });
+
+    const response = await app.request("/api/activities");
+    expect(response.status).toBe(200);
+
+    const body = await readJson<{ data: Array<{ description: string }> }>(response);
+    const description = body.data[0]?.description ?? "";
+
+    expect(description).toContain("<h2>정상</h2>");
+    expect(description).toContain("<p>본문</p>");
+    expect(description).not.toContain("<script");
+    expect(description).not.toContain("onclick=");
+  });
+
+  it("활동 생성 시 설명 HTML을 sanitize 하고 빈 본문을 차단한다", async () => {
+    const createActivityMock = fn(async (input: { description: string }) =>
+      createActivity({ description: input.description }),
+    );
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ createActivity: createActivityMock }),
+    });
+
+    const response = await app.request("/api/activities", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        title: "sanitize-test",
+        description:
+          '<h2>섹션</h2><script>alert(1)</script><p onclick="evil()">본문</p><a href="javascript:alert(1)">bad</a>',
+        startDate: Date.parse("2030-03-01T00:00:00.000Z"),
+        endDate: Date.parse("2030-03-03T00:00:00.000Z"),
+        coverImageUrl: "https://example.com/cover.jpg",
+        generationId: IDs.generation,
+      }),
+    });
+
+    expect(response.status).toBe(201);
+    const body = await readJson<{ data: { description: string } }>(response);
+    const description = body.data.description;
+    expect(description).toContain("<h2>섹션</h2>");
+    expect(description).toContain("<p>본문</p>");
+    expect(description).not.toContain("<script");
+    expect(description).not.toContain("onclick=");
+    expect(description).not.toContain("javascript:");
+    expect(createActivityMock).toHaveBeenCalledWith(
+      expect.objectContaining({ description }),
+    );
+
+    const emptyDescriptionResponse = await app.request("/api/activities", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        title: "empty-description",
+        description: "<p><br></p>",
+        startDate: Date.parse("2030-03-01T00:00:00.000Z"),
+        endDate: Date.parse("2030-03-03T00:00:00.000Z"),
+        coverImageUrl: "https://example.com/cover.jpg",
+        generationId: IDs.generation,
+      }),
+    });
+
+    expect(emptyDescriptionResponse.status).toBe(400);
+    await expectErrorCode(emptyDescriptionResponse, "BAD_REQUEST");
   });
 
   it("member 계열 사용자는 활동 생성이 가능하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
@@ -147,6 +253,52 @@ describe("activity routes", /** describe 실행 과정에서 필요한 연산을
 
     expect(response.status).toBe(400);
     await expectErrorCode(response, "BAD_REQUEST");
+  });
+
+  it("활동 수정 시 설명 HTML을 sanitize 하고 빈 본문은 차단한다", async () => {
+    const updateActivity = fn(
+      async (
+        id: string,
+        input: Partial<{
+          title: string;
+          description: string;
+          startDate: number;
+          endDate: number;
+          coverImageUrl: string;
+          generationId: string;
+        }>,
+      ) => createActivity({ id, description: input.description ?? "기본 설명" }),
+    );
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ updateActivity }),
+    });
+
+    const response = await app.request(`/api/activities/${IDs.activity}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        description:
+          '<h2>섹션</h2><script>alert(1)</script><p onclick="evil()">본문</p><a href="javascript:alert(1)">bad</a>',
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    const body = await readJson<{ data: { description: string } }>(response);
+    expect(body.data.description).toContain("<h2>섹션</h2>");
+    expect(body.data.description).toContain("<p>본문</p>");
+    expect(body.data.description).not.toContain("<script");
+    expect(body.data.description).not.toContain("onclick=");
+    expect(body.data.description).not.toContain("javascript:");
+
+    const emptyDescriptionResponse = await app.request(`/api/activities/${IDs.activity}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ description: "<p><br></p>" }),
+    });
+
+    expect(emptyDescriptionResponse.status).toBe(400);
+    await expectErrorCode(emptyDescriptionResponse, "BAD_REQUEST");
   });
 
   it("존재하지 않는 활동 수정은 404를 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {

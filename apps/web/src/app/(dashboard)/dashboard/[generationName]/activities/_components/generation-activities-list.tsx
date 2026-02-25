@@ -36,9 +36,8 @@ export default function GenerationActivitiesList({
     setErrorMessage(null);
 
     try {
-      const rows = await adminResourceApi.listActivities();
-      const filtered = rows.filter((activity) => activity.generationId === generationId);
-      setActivities(sortActivitiesByStartDateDesc(filtered));
+      const rows = await adminResourceApi.listActivities({ generationId });
+      setActivities(sortActivitiesByStartDateDesc(rows));
     } catch (error) {
       setErrorMessage(readActivityErrorMessage(error));
       setActivities([]);
