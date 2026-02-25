@@ -1,0 +1,29 @@
+{"version":8,"type":"context-options","origin":"library","browserName":"","playwrightVersion":"1.58.2","options":{},"platform":"darwin","wallTime":1772034315880,"monotonicTime":406928.659,"sdkLanguage":"javascript","contextId":"request-context@087df37ea60d1565d90c16453b0c2097","title":"auth-flow.spec.ts:28 › auth flow › 세션 복구 및 unverified 권한 제한이 동작한다"}
+{"type":"before","callId":"call@267","startTime":406929.352,"class":"APIRequestContext","method":"fetch","params":{"url":"/api/auth/sign-up/email","method":"POST","jsonData":"{\"name\":\"e2e-1772034290237-0-m35h1m-name-mmc78d\",\"email\":\"e2e-1772034290237-0-m35h1m-user-ayy3jj@example.com\",\"password\":\"Test!1772034315857aA\"}","timeout":0},"stepId":"pw:api@37"}
+{"type":"log","callId":"call@267","time":406929.748,"message":"→ POST http://localhost:8787/api/auth/sign-up/email"}
+{"type":"log","callId":"call@267","time":406929.755,"message":"  user-agent: Playwright/1.58.2 (arm64; macOS 26.3) node/24.13"}
+{"type":"log","callId":"call@267","time":406929.757,"message":"  accept: application/json"}
+{"type":"log","callId":"call@267","time":406929.759,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@267","time":406929.76,"message":"  Origin: http://localhost:3000"}
+{"type":"log","callId":"call@267","time":406929.762,"message":"  Referer: http://localhost:3000/"}
+{"type":"log","callId":"call@267","time":406929.763,"message":"  Content-Type: application/json"}
+{"type":"log","callId":"call@267","time":406929.765,"message":"  content-length: 144"}
+{"type":"log","callId":"call@267","time":406929.766,"message":"  cookie: better-auth.session_token=N9Bgu3bJhyroGFiJpNNZnl1yLCEZBccy.o%2FpMru0vLIznGzgLWM3E%2FKffHJz08x%2FhUocv8T4as6s%3D"}
+{"type":"log","callId":"call@267","time":409684.305,"message":"← 200 OK"}
+{"type":"log","callId":"call@267","time":409684.332,"message":"  transfer-encoding: chunked"}
+{"type":"log","callId":"call@267","time":409684.337,"message":"  content-type: application/json"}
+{"type":"log","callId":"call@267","time":409684.34,"message":"  access-control-allow-origin: http://localhost:3000"}
+{"type":"log","callId":"call@267","time":409684.343,"message":"  content-encoding: gzip"}
+{"type":"log","callId":"call@267","time":409684.345,"message":"  set-cookie: better-auth.session_token=fzHGx2Lxhyum4flmPQqfahbCGQ34uPZK.hIj5Ahb%2FvVTDZo%2Bd6tlOIenQq4UCD9m%2FVT0fRUTzWnU%3D; Max-Age=604800; Path=/; HttpOnly; SameSite=Lax"}
+{"type":"log","callId":"call@267","time":409684.348,"message":"  vary: Origin"}
+{"type":"log","callId":"call@267","time":409684.351,"message":"  content-security-policy: default-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"}
+{"type":"log","callId":"call@267","time":409684.354,"message":"  cross-origin-resource-policy: cross-origin"}
+{"type":"log","callId":"call@267","time":409684.357,"message":"  permissions-policy: camera=(), microphone=(), geolocation=()"}
+{"type":"log","callId":"call@267","time":409684.359,"message":"  referrer-policy: strict-origin-when-cross-origin"}
+{"type":"log","callId":"call@267","time":409684.362,"message":"  server-timing: total;dur=2749.00"}
+{"type":"log","callId":"call@267","time":409684.365,"message":"  x-content-type-options: nosniff"}
+{"type":"log","callId":"call@267","time":409684.367,"message":"  x-frame-options: DENY"}
+{"type":"log","callId":"call@267","time":409684.37,"message":"  x-request-id: 65cff61d-606c-45b7-93d4-47b19931a62b"}
+{"type":"log","callId":"call@267","time":409684.373,"message":"  x-response-time: 2749.00ms"}
+{"type":"log","callId":"call@267","time":409684.375,"message":"  access-control-allow-credentials: true"}
+{"type":"after","callId":"call@267","endTime":409685.521,"result":{"response":{"url":"http://localhost:8787/api/auth/sign-up/email","status":200,"statusText":"OK","headers":[{"name":"Transfer-Encoding","value":"chunked"},{"name":"Content-Type","value":"application/json"},{"name":"Access-Control-Allow-Origin","value":"http://localhost:3000"},{"name":"Content-Encoding","value":"gzip"},{"name":"Set-Cookie","value":"better-auth.session_token=fzHGx2Lxhyum4flmPQqfahbCGQ34uPZK.hIj5Ahb%2FvVTDZo%2Bd6tlOIenQq4UCD9m%2FVT0fRUTzWnU%3D; Max-Age=604800; Path=/; HttpOnly; SameSite=Lax"},{"name":"Vary","value":"Origin"},{"name":"Content-Security-Policy","value":"default-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"},{"name":"Cross-Origin-Resource-Policy","value":"cross-origin"},{"name":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"},{"name":"Referrer-Policy","value":"strict-origin-when-cross-origin"},{"name":"Server-Timing","value":"total;dur=2749.00"},{"name":"X-Content-Type-Options","value":"nosniff"},{"name":"X-Frame-Options","value":"DENY"},{"name":"X-Request-Id","value":"65cff61d-606c-45b7-93d4-47b19931a62b"},{"name":"X-Response-Time","value":"2749.00ms"},{"name":"access-control-allow-credentials","value":"true"}],"fetchUid":"e5be217e6a665f7cbe0f124eca677078"}}}
