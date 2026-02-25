@@ -21,10 +21,14 @@ test.describe("admin shell", () => {
     await expect(page).toHaveURL(/\/dashboard\/settings\/linktree$/);
     await expect(page.getByRole("heading", { name: "Linktree 관리" })).toBeVisible();
 
-    await page
-      .getByRole("button", { name: /e2e-admin@example\.com/i })
-      .click();
-    await page.getByRole("link", { name: "개인 프로필" }).click();
+    const profileMenuTrigger = page.locator("button[aria-haspopup='menu']").first();
+    await expect(profileMenuTrigger).toBeVisible();
+    await profileMenuTrigger.click();
+    await expect(profileMenuTrigger).toHaveAttribute("aria-expanded", "true");
+
+    const profileLink = page.getByRole("link", { name: "개인 프로필" });
+    await expect(profileLink).toBeVisible();
+    await profileLink.click();
     await expect(page).toHaveURL(/\/dashboard\/profile$/);
     await expect(page.getByRole("heading", { name: "개인 프로필" })).toBeVisible();
   });

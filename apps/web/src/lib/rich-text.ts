@@ -2,7 +2,7 @@ const RICH_TEXT_TAG_PATTERN = /<[^>]*>/g;
 const NON_BREAKING_SPACE_PATTERN = /(?:\u00a0|&nbsp;|&#160;)/gi;
 const MULTI_WHITESPACE_PATTERN = /\s+/g;
 
-export const stripRichTextHtml = (html: string): string => {
+const stripRichTextHtml = (html: string): string => {
   return html
     .replace(NON_BREAKING_SPACE_PATTERN, " ")
     .replace(RICH_TEXT_TAG_PATTERN, " ")

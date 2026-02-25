@@ -23,7 +23,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { shouldUseUnoptimizedImage } from "../../../lib/image-utils";
 
-export type SortableImageGridItem = {
+type SortableImageGridItem = {
   id: string;
   imageUrl: string;
   label?: string;

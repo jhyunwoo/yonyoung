@@ -17,6 +17,8 @@
     "apps/web/public/theme-init.js",
     "apps/api/worker-configuration.d.ts",
     "apps/web/tests/e2e/**",
+    "apps/web/playwright-report/**",
+    "apps/web/test-results/**",
     "apps/web/open-next.config.ts",
     "apps/api/src/lib/auth.ts"
   ],

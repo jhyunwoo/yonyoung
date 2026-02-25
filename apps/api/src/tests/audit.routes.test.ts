@@ -62,6 +62,35 @@ describe("audit routes", () => {
     );
   });
 
+  it("resourceType별 권한 리소스를 매핑해 감사 로그를 조회한다", async () => {
+    const listAuditLogs = fn(async () => []);
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ listAuditLogs }),
+    });
+
+    const samples = [
+      { resourceType: "generation", resourceId: IDs.generation },
+      { resourceType: "exhibition", resourceId: IDs.exhibition },
+      { resourceType: "supporter", resourceId: IDs.supporter },
+      { resourceType: "linktree", resourceId: IDs.linktree },
+      { resourceType: "linktree_item", resourceId: IDs.linktreeItem },
+      { resourceType: "global_notice", resourceId: IDs.globalNotice },
+    ] as const;
+
+    for (const sample of samples) {
+      const response = await app.request(
+        `/api/audit/${sample.resourceType}/${sample.resourceId}?limit=7`,
+      );
+      expect(response.status).toBe(200);
+      expect(listAuditLogs).toHaveBeenCalledWith(
+        sample.resourceType,
+        sample.resourceId,
+        7,
+      );
+    }
+  });
+
   it("잘못된 limit 파라미터는 400을 반환한다", async () => {
     const listAuditLogs = fn(async () => []);
     const app = createTestApp({
@@ -71,6 +100,22 @@ describe("audit routes", () => {
 
     const response = await app.request(
       `/api/audit/activity/${IDs.activity}?limit=0`,
+    );
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+    expect(listAuditLogs).not.toHaveBeenCalled();
+  });
+
+  it("limit 타입이 잘못되면 400을 반환한다", async () => {
+    const listAuditLogs = fn(async () => []);
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ listAuditLogs }),
+    });
+
+    const response = await app.request(
+      `/api/audit/activity/${IDs.activity}?limit=not-a-number`,
     );
 
     expect(response.status).toBe(400);

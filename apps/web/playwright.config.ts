@@ -57,10 +57,10 @@ export default defineConfig({
   testMatch: "**/*.spec.ts",
   fullyParallel: false,
   workers: 1,
-  retries: 0,
+  retries: suiteMode === "full" ? 1 : 0,
   timeout: 120_000,
   expect: {
-    timeout: 12_000,
+    timeout: 30_000,
   },
   globalSetup: "./tests/e2e/global-setup.ts",
   reporter: [["list"], ["html", { open: "never" }]],

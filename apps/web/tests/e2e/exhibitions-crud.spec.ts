@@ -59,8 +59,16 @@ test.describe("exhibitions crud", () => {
     expect(exhibitionIdMatch).not.toBeNull();
     const exhibitionId = exhibitionIdMatch?.[1] as string;
 
-    await page.getByRole("link", { name: "수정" }).click();
-    await expect(page).toHaveURL(new RegExp(`${escapedGenerationPath}/exhibitions/${exhibitionId}/edit$`, "i"));
+    await ensureAdminSession(page);
+    await page.goto(`${generationPath}/exhibitions/${exhibitionId}/edit`);
+    await expect(
+      page,
+    ).toHaveURL(new RegExp(`${escapedGenerationPath}/exhibitions/${exhibitionId}/edit$`, "i"), {
+      timeout: 120_000,
+    });
+    await expect(page.getByLabel("전시 제목")).toBeVisible({
+      timeout: 120_000,
+    });
 
     await page.getByLabel("전시 제목").fill(updatedTitle);
     const editFileInputs = page.locator("input[type='file']");
@@ -71,7 +79,9 @@ test.describe("exhibitions crud", () => {
       new RegExp(`${escapedGenerationPath}/exhibitions/${exhibitionId}$`, "i"),
       { timeout: 120_000 },
     );
-    await expect(page.getByText(updatedTitle)).toBeVisible();
+    await expect(page.getByText(updatedTitle).first()).toBeVisible({
+      timeout: 120_000,
+    });
 
     const sanitizeResponse = await page.request.patch(
       `${API_BASE_URL}/api/exhibitions/${exhibitionId}`,

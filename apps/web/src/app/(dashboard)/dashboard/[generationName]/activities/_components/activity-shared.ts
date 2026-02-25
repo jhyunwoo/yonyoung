@@ -40,7 +40,7 @@ export const summarizeActivityDescription = (descriptionHtml: string, maxLength 
   return summarizeRichTextHtml(descriptionHtml, maxLength);
 };
 
-export const sortActivityImageInputsBySortOrder = (
+const sortActivityImageInputsBySortOrder = (
   images: ActivityImageSortInput[],
 ): ActivityImageSortInput[] => {
   return [...images].sort((left, right) => {

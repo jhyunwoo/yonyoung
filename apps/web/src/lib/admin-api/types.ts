@@ -44,6 +44,5 @@ export {
   type ApiUpdateSupporterInput,
   type ApiUpdateUserInput,
   type ApiUser,
-  type DataEnvelope,
 } from "@repo/shared-api-contracts";
 export { AdminApiError } from "@repo/shared-http";

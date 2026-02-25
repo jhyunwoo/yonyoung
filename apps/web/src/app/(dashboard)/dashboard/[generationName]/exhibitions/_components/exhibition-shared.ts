@@ -50,7 +50,7 @@ export const sortExhibitionsByStartDateDesc = (
   return [...exhibitions].sort((left, right) => right.startDate - left.startDate);
 };
 
-export const sortExhibitionImageInputsBySortOrder = (
+const sortExhibitionImageInputsBySortOrder = (
   images: ExhibitionImageSortInput[],
 ): ExhibitionImageSortInput[] => {
   return [...images].sort((left, right) => {
@@ -125,14 +125,6 @@ export const summarizeExhibitionDescription = (
   maxLength = 120,
 ): string => {
   return summarizeRichTextHtml(html, maxLength);
-};
-
-export const readBaseSortOrder = (images: ExhibitionImageSortInput[]): number => {
-  if (images.length === 0) {
-    return 0;
-  }
-
-  return Math.max(...images.map((image) => image.sortOrder)) + 1;
 };
 
 export const buildExhibitionImageSortPayload = (

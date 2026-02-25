@@ -6,7 +6,7 @@ const DASHBOARD_PATH_PREFIX = "/dashboard";
 
 const normalizeGenerationName = (name: string): string => name.trim();
 
-export const toDashboardGenerationRouteName = (generation: GenerationLike): string => {
+const toDashboardGenerationRouteName = (generation: GenerationLike): string => {
   const normalizedName = normalizeGenerationName(generation.name);
   return encodeURIComponent(normalizedName);
 };
@@ -15,7 +15,7 @@ export const buildDashboardGenerationPath = (generation: GenerationLike): string
   return `${DASHBOARD_PATH_PREFIX}/${toDashboardGenerationRouteName(generation)}`;
 };
 
-export const decodeDashboardGenerationRouteName = (routeName: string): string => {
+const decodeDashboardGenerationRouteName = (routeName: string): string => {
   const trimmedRouteName = routeName.trim();
   if (trimmedRouteName.length === 0) {
     return "";

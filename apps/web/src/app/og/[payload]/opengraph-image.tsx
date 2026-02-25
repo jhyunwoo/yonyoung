@@ -13,7 +13,7 @@ export const size = {
 
 export const contentType = "image/png";
 export const alt = "연영회 페이지 미리보기 이미지";
-export const revalidate = 60 * 60 * 24;
+export const revalidate = 86_400;
 
 type OpenGraphImageProps = {
   params: Promise<{

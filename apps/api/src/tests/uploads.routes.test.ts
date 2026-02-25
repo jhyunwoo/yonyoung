@@ -9,6 +9,7 @@ import {
   readJson,
 } from "./test-helpers";
 import { MissingStorageConfigError } from "../lib/storage/presign";
+import { UPLOAD_LIMITS } from "../lib/storage/presign";
 
 describe("upload presign routes", /** describe 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
   const resourceRoutes = [
@@ -654,5 +655,522 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     expect(response.status).toBe(403);
     await expectErrorCode(response, "FORBIDDEN");
     expect(issueMultipartUploadPartUrl).not.toHaveBeenCalled();
+  });
+
+  it("멀티파트 part 요청에서 objectKey 형식이 잘못되면 400을 반환한다", async () => {
+    const issueMultipartUploadPartUrl = fn(async () => ({
+      uploadUrl: "https://upload.example.com/multipart/part-1",
+      requiredHeaders: {},
+    }));
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      presignService: createPresignServiceMock({ issueMultipartUploadPartUrl }),
+    });
+
+    const response = await app.request("/api/uploads/multipart/part", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        uploadId: "upload-id-1",
+        objectKey: "invalid-object-key",
+        partNumber: 1,
+      }),
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+    expect(issueMultipartUploadPartUrl).not.toHaveBeenCalled();
+  });
+
+  it("멀티파트 part 요청은 user profile objectKey에서 manager 권한을 거부한다", async () => {
+    const issueMultipartUploadPartUrl = fn(async () => ({
+      uploadUrl: "https://upload.example.com/multipart/part-1",
+      requiredHeaders: {},
+    }));
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      presignService: createPresignServiceMock({ issueMultipartUploadPartUrl }),
+    });
+
+    const response = await app.request("/api/uploads/multipart/part", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        uploadId: "upload-id-1",
+        objectKey: `users/${IDs.manager}/profile/multipart-key`,
+        partNumber: 1,
+      }),
+    });
+
+    expect(response.status).toBe(403);
+    await expectErrorCode(response, "FORBIDDEN");
+    expect(issueMultipartUploadPartUrl).not.toHaveBeenCalled();
+  });
+
+  it("멀티파트 part 요청은 user profile objectKey에서 member 계열 사용자를 허용한다", async () => {
+    const issueMultipartUploadPartUrl = fn(async () => ({
+      uploadUrl: "https://upload.example.com/multipart/part-1",
+      requiredHeaders: {},
+    }));
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      presignService: createPresignServiceMock({ issueMultipartUploadPartUrl }),
+    });
+
+    const response = await app.request("/api/uploads/multipart/part", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        uploadId: "upload-id-1",
+        objectKey: `users/${IDs.member}/profile/multipart-key`,
+        partNumber: 1,
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(issueMultipartUploadPartUrl).toHaveBeenCalledWith({
+      uploadId: "upload-id-1",
+      objectKey: `users/${IDs.member}/profile/multipart-key`,
+      partNumber: 1,
+    });
+  });
+
+  it("멀티파트 part 서비스 예외 시 500을 반환한다", async () => {
+    const issueMultipartUploadPartUrl = fn(async () => {
+      throw new Error("part failed");
+    });
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      presignService: createPresignServiceMock({ issueMultipartUploadPartUrl }),
+    });
+
+    const response = await app.request("/api/uploads/multipart/part", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        uploadId: "upload-id-1",
+        objectKey: `activities/${IDs.manager}/detail/multipart-key`,
+        partNumber: 1,
+      }),
+    });
+
+    expect(response.status).toBe(500);
+    await expectErrorCode(response, "INTERNAL_ERROR");
+  });
+
+  it("멀티파트 complete 요청에서 중복 partNumber가 있으면 422를 반환한다", async () => {
+    const completeMultipartUpload = fn(async () => ({
+      objectKey: `activities/${IDs.manager}/detail/multipart-key`,
+      publicUrl: "https://cdn.example.com/multipart-key",
+    }));
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      presignService: createPresignServiceMock({ completeMultipartUpload }),
+    });
+
+    const response = await app.request("/api/uploads/multipart/complete", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        uploadId: "upload-id-1",
+        objectKey: `activities/${IDs.manager}/detail/multipart-key`,
+        parts: [
+          { partNumber: 1, etag: '"etag-1"' },
+          { partNumber: 1, etag: '"etag-1-dup"' },
+        ],
+      }),
+    });
+
+    expect(response.status).toBe(422);
+    await expectErrorCode(response, "BAD_REQUEST");
+    expect(completeMultipartUpload).not.toHaveBeenCalled();
+  });
+
+  it("멀티파트 complete 본문이 유효하지 않으면 400을 반환한다", async () => {
+    const completeMultipartUpload = fn(async () => ({
+      objectKey: `activities/${IDs.manager}/detail/multipart-key`,
+      publicUrl: "https://cdn.example.com/multipart-key",
+    }));
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      presignService: createPresignServiceMock({ completeMultipartUpload }),
+    });
+
+    const response = await app.request("/api/uploads/multipart/complete", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({}),
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+    expect(completeMultipartUpload).not.toHaveBeenCalled();
+  });
+
+  it("멀티파트 complete 서비스 예외 시 500을 반환한다", async () => {
+    const completeMultipartUpload = fn(async () => {
+      throw new Error("complete failed");
+    });
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      presignService: createPresignServiceMock({ completeMultipartUpload }),
+    });
+
+    const response = await app.request("/api/uploads/multipart/complete", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        uploadId: "upload-id-1",
+        objectKey: `activities/${IDs.manager}/detail/multipart-key`,
+        parts: [{ partNumber: 1, etag: '"etag-1"' }],
+      }),
+    });
+
+    expect(response.status).toBe(500);
+    await expectErrorCode(response, "INTERNAL_ERROR");
+  });
+
+  it("멀티파트 abort 본문이 유효하지 않으면 400을 반환한다", async () => {
+    const abortMultipartUpload = fn(async () => undefined);
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      presignService: createPresignServiceMock({ abortMultipartUpload }),
+    });
+
+    const response = await app.request("/api/uploads/multipart/abort", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({}),
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+    expect(abortMultipartUpload).not.toHaveBeenCalled();
+  });
+
+  it("멀티파트 abort 본인 소유가 아니면 403을 반환한다", async () => {
+    const abortMultipartUpload = fn(async () => undefined);
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      presignService: createPresignServiceMock({ abortMultipartUpload }),
+    });
+
+    const response = await app.request("/api/uploads/multipart/abort", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        uploadId: "upload-id-1",
+        objectKey: `activities/${IDs.otherUser}/detail/multipart-key`,
+      }),
+    });
+
+    expect(response.status).toBe(403);
+    await expectErrorCode(response, "FORBIDDEN");
+    expect(abortMultipartUpload).not.toHaveBeenCalled();
+  });
+
+  it("멀티파트 abort 요청에서 objectKey 형식이 잘못되면 400을 반환한다", async () => {
+    const abortMultipartUpload = fn(async () => undefined);
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      presignService: createPresignServiceMock({ abortMultipartUpload }),
+    });
+
+    const response = await app.request("/api/uploads/multipart/abort", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        uploadId: "upload-id-1",
+        objectKey: "invalid-object-key",
+      }),
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+    expect(abortMultipartUpload).not.toHaveBeenCalled();
+  });
+
+  it("멀티파트 abort 서비스 예외 시 500을 반환한다", async () => {
+    const abortMultipartUpload = fn(async () => {
+      throw new Error("abort failed");
+    });
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      presignService: createPresignServiceMock({ abortMultipartUpload }),
+    });
+
+    const response = await app.request("/api/uploads/multipart/abort", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        uploadId: "upload-id-1",
+        objectKey: `activities/${IDs.manager}/detail/multipart-key`,
+      }),
+    });
+
+    expect(response.status).toBe(500);
+    await expectErrorCode(response, "INTERNAL_ERROR");
+  });
+
+  it("multipart part/complete/abort는 인증되지 않은 요청에 401을 반환한다", async () => {
+    const app = createTestApp({ actor: null });
+
+    const partResponse = await app.request("/api/uploads/multipart/part", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        uploadId: "upload-id-1",
+        objectKey: `activities/${IDs.manager}/detail/multipart-key`,
+        partNumber: 1,
+      }),
+    });
+    expect(partResponse.status).toBe(401);
+    await expectErrorCode(partResponse, "UNAUTHORIZED");
+
+    const completeResponse = await app.request("/api/uploads/multipart/complete", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        uploadId: "upload-id-1",
+        objectKey: `activities/${IDs.manager}/detail/multipart-key`,
+        parts: [{ partNumber: 1, etag: '"etag-1"' }],
+      }),
+    });
+    expect(completeResponse.status).toBe(401);
+    await expectErrorCode(completeResponse, "UNAUTHORIZED");
+
+    const abortResponse = await app.request("/api/uploads/multipart/abort", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        uploadId: "upload-id-1",
+        objectKey: `activities/${IDs.manager}/detail/multipart-key`,
+      }),
+    });
+    expect(abortResponse.status).toBe(401);
+    await expectErrorCode(abortResponse, "UNAUTHORIZED");
+  });
+
+  it("리소스 멀티파트 init 경로는 인증/권한/스토리지 설정 누락 분기를 처리한다", async () => {
+    const unauthorizedApp = createTestApp({ actor: null });
+    const unauthorizedResponse = await unauthorizedApp.request(
+      "/api/activities/multipart/detail/init",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          fileName: "large.png",
+          contentType: "image/png",
+          fileSize: UPLOAD_LIMITS.multipartPartSizeBytes * 2,
+        }),
+      },
+    );
+    expect(unauthorizedResponse.status).toBe(401);
+    await expectErrorCode(unauthorizedResponse, "UNAUTHORIZED");
+
+    const forbiddenInitiate = fn(async () => ({
+      uploadId: "should-not-be-called",
+      objectKey: `supporters/${IDs.member}/logo/mock`,
+      publicUrl: "https://cdn.example.com/mock",
+      partSize: UPLOAD_LIMITS.multipartPartSizeBytes,
+      maxPartNumber: 2,
+    }));
+    const forbiddenApp = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      presignService: createPresignServiceMock({ initiateMultipartUpload: forbiddenInitiate }),
+    });
+    const forbiddenResponse = await forbiddenApp.request("/api/supporters/multipart/logo/init", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "logo.png",
+        contentType: "image/png",
+        fileSize: UPLOAD_LIMITS.multipartPartSizeBytes * 2,
+      }),
+    });
+    expect(forbiddenResponse.status).toBe(403);
+    await expectErrorCode(forbiddenResponse, "FORBIDDEN");
+    expect(forbiddenInitiate).not.toHaveBeenCalled();
+
+    const missingStorage = fn(async () => {
+      throw new MissingStorageConfigError(["R2_BUCKET_NAME"]);
+    });
+    const missingStorageApp = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      presignService: createPresignServiceMock({ initiateMultipartUpload: missingStorage }),
+    });
+    const missingStorageResponse = await missingStorageApp.request(
+      "/api/activities/multipart/detail/init",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          fileName: "large.png",
+          contentType: "image/png",
+          fileSize: UPLOAD_LIMITS.multipartPartSizeBytes * 2,
+        }),
+      },
+    );
+    expect(missingStorageResponse.status).toBe(500);
+    const missingStorageBody = await readJson<{ error: { message: string } }>(
+      missingStorageResponse,
+    );
+    expect(missingStorageBody.error.message).toContain("R2_*");
+  });
+
+  it("/api/users/multipart/profile/init은 member 계열 사용자에게 허용된다", async () => {
+    const initiateMultipartUpload = fn(async () => ({
+      uploadId: "profile-upload-id",
+      objectKey: `users/${IDs.member}/profile/profile-key`,
+      publicUrl: "https://cdn.example.com/users/profile-key",
+      partSize: UPLOAD_LIMITS.multipartPartSizeBytes,
+      maxPartNumber: 5,
+    }));
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      presignService: createPresignServiceMock({ initiateMultipartUpload }),
+    });
+
+    const response = await app.request("/api/users/multipart/profile/init", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "profile-large.png",
+        contentType: "image/png",
+        fileSize: UPLOAD_LIMITS.multipartPartSizeBytes * 2,
+      }),
+    });
+
+    expect(response.status).toBe(201);
+    expect(initiateMultipartUpload).toHaveBeenCalledWith({
+      actorId: IDs.member,
+      resource: "users",
+      slot: "profile",
+      fileName: "profile-large.png",
+      contentType: "image/png",
+      fileSize: UPLOAD_LIMITS.multipartPartSizeBytes * 2,
+    });
+  });
+
+  it("/api/users/multipart/profile/init은 manager에게 403을 반환한다", async () => {
+    const initiateMultipartUpload = fn(async () => ({
+      uploadId: "profile-upload-id",
+      objectKey: `users/${IDs.manager}/profile/profile-key`,
+      publicUrl: "https://cdn.example.com/users/profile-key",
+      partSize: UPLOAD_LIMITS.multipartPartSizeBytes,
+      maxPartNumber: 5,
+    }));
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      presignService: createPresignServiceMock({ initiateMultipartUpload }),
+    });
+
+    const response = await app.request("/api/users/multipart/profile/init", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "profile-large.png",
+        contentType: "image/png",
+        fileSize: UPLOAD_LIMITS.multipartPartSizeBytes * 2,
+      }),
+    });
+
+    expect(response.status).toBe(403);
+    await expectErrorCode(response, "FORBIDDEN");
+    expect(initiateMultipartUpload).not.toHaveBeenCalled();
+  });
+
+  it("/api/users/multipart/profile/init은 인증되지 않은 요청에 401을 반환한다", async () => {
+    const app = createTestApp({ actor: null });
+    const response = await app.request("/api/users/multipart/profile/init", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "profile-large.png",
+        contentType: "image/png",
+        fileSize: UPLOAD_LIMITS.multipartPartSizeBytes * 2,
+      }),
+    });
+
+    expect(response.status).toBe(401);
+    await expectErrorCode(response, "UNAUTHORIZED");
+  });
+
+  it("/api/users/multipart/profile/init은 최대 파트 수 초과 시 413을 반환한다", async () => {
+    const initiateMultipartUpload = fn(async () => ({
+      uploadId: "profile-upload-id",
+      objectKey: `users/${IDs.member}/profile/profile-key`,
+      publicUrl: "https://cdn.example.com/users/profile-key",
+      partSize: UPLOAD_LIMITS.multipartPartSizeBytes,
+      maxPartNumber: 5,
+    }));
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      presignService: createPresignServiceMock({ initiateMultipartUpload }),
+    });
+
+    const response = await app.request("/api/users/multipart/profile/init", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "profile-huge.png",
+        contentType: "image/png",
+        fileSize:
+          UPLOAD_LIMITS.multipartPartSizeBytes *
+            (UPLOAD_LIMITS.multipartMaxParts + 1) +
+          1,
+      }),
+    });
+
+    expect(response.status).toBe(413);
+    await expectErrorCode(response, "BAD_REQUEST");
+    expect(initiateMultipartUpload).not.toHaveBeenCalled();
+  });
+
+  it("/api/users/multipart/profile/init은 스토리지 설정 누락 시 500을 반환한다", async () => {
+    const initiateMultipartUpload = fn(async () => {
+      throw new MissingStorageConfigError(["R2_BUCKET_NAME"]);
+    });
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      presignService: createPresignServiceMock({ initiateMultipartUpload }),
+    });
+
+    const response = await app.request("/api/users/multipart/profile/init", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "profile-large.png",
+        contentType: "image/png",
+        fileSize: UPLOAD_LIMITS.multipartPartSizeBytes * 2,
+      }),
+    });
+
+    expect(response.status).toBe(500);
+    const body = await readJson<{ error: { message: string } }>(response);
+    expect(body.error.message).toContain("R2_*");
+  });
+
+  it("/api/users/multipart/profile/init 서비스 예외 시 500을 반환한다", async () => {
+    const initiateMultipartUpload = fn(async () => {
+      throw new Error("init failed");
+    });
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      presignService: createPresignServiceMock({ initiateMultipartUpload }),
+    });
+
+    const response = await app.request("/api/users/multipart/profile/init", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "profile-large.png",
+        contentType: "image/png",
+        fileSize: UPLOAD_LIMITS.multipartPartSizeBytes * 2,
+      }),
+    });
+
+    expect(response.status).toBe(500);
+    await expectErrorCode(response, "INTERNAL_ERROR");
   });
 });

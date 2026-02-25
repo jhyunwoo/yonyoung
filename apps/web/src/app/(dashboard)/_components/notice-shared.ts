@@ -82,7 +82,7 @@ export const buildNoticePreview = (content: string, limit = 120): string => {
   return summarizeRichTextHtml(content, limit);
 };
 
-export const isValidImageUrl = (value: string): boolean => {
+const isValidImageUrl = (value: string): boolean => {
   try {
     const parsed = new URL(value);
     return parsed.protocol === "https:" || parsed.protocol === "http:";

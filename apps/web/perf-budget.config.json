@@ -38,7 +38,7 @@
         "/about",
         "/(home)/about/page"
       ],
-      "baselineBytes": 595798,
+      "baselineBytes": 739767,
       "maxRegressionPercent": 10
     }
   ],

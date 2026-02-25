@@ -157,7 +157,7 @@ export const ApiNoticeIdParamSchema = z
   })
   .openapi("ApiNoticeIdParam");
 
-export const ApiAuditResourceTypeSchema = z
+const ApiAuditResourceTypeSchema = z
   .enum([
     "generation",
     "activity",
@@ -207,7 +207,7 @@ export const ApiAuditQuerySchema = z
   })
   .openapi("ApiAuditQuery");
 
-export const ApiAuditActorSchema = z
+const ApiAuditActorSchema = z
   .object({
     id: z.string().openapi({
       description: "수정자 식별자 (better-auth user.id)",
@@ -756,7 +756,7 @@ const ApiNoticeImageUrlsSchema = z
     },
   );
 
-export const ApiNoticeAuthorSchema = z
+const ApiNoticeAuthorSchema = z
   .object({
     id: z.string().openapi({
       description: "작성자 식별자 (better-auth user.id)",

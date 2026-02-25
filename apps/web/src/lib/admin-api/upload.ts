@@ -12,7 +12,7 @@ export const PRESIGN_PATHS = {
   userProfile: "/users/presign/profile",
 } as const;
 
-export type PresignPath = (typeof PRESIGN_PATHS)[keyof typeof PRESIGN_PATHS];
+type PresignPath = (typeof PRESIGN_PATHS)[keyof typeof PRESIGN_PATHS];
 
 type UploadHeaders = Record<string, string>;
 

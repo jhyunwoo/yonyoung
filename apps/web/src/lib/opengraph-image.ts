@@ -4,7 +4,7 @@ const MAX_TITLE_LENGTH = 80;
 const MAX_DESCRIPTION_LENGTH = 180;
 const MAX_PATH_LENGTH = 120;
 
-export type OpenGraphImagePayload = {
+type OpenGraphImagePayload = {
   title: string;
   description: string;
   path: string;

@@ -1,7 +1,7 @@
 import type { Actor } from "./authorization/types";
 import type { AuditAction, AuditResourceType, DataService } from "./services/types";
 
-export const toAuditActor = (actor: Actor) => ({
+const toAuditActor = (actor: Actor) => ({
   id: actor.id,
   name: actor.name,
   role: actor.rawRole ?? actor.role ?? null,

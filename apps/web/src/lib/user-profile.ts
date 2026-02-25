@@ -1,7 +1,7 @@
 import type { AuthUser } from "./auth-shared";
 import { formatKoreanName } from "./user-name";
 
-export type EditableUserProfile = {
+type EditableUserProfile = {
   image: string;
   familyName: string;
   givenName: string;
@@ -64,7 +64,7 @@ export const toEditableUserProfile = (value: unknown): EditableUserProfile => {
   };
 };
 
-export type DashboardViewerProfile = {
+type DashboardViewerProfile = {
   id: string;
   email: string;
   image: string | null;

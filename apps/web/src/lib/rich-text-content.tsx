@@ -1,3 +1,5 @@
+import React from "react";
+
 type RichTextContentProps = {
   html: string;
   className?: string;

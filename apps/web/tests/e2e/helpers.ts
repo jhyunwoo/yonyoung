@@ -4,7 +4,7 @@ import { readE2eRoleMatrixMode, readE2eUploadMode } from "./env";
 
 const API_BASE_URL = process.env.E2E_API_URL ?? "http://localhost:8787";
 const ADMIN_API_BASE_PATH = "/api";
-const E2E_API_REQUEST_TIMEOUT_MS = 15_000;
+const E2E_API_REQUEST_TIMEOUT_MS = 30_000;
 const E2E_API_RETRY_COUNT = 6;
 const E2E_API_RETRY_DELAY_MS = 400;
 
@@ -704,8 +704,67 @@ export const ensureAdminSession = async (page: Page): Promise<void> => {
     console.warn(`E2E admin profile sync failed (non-fatal): ${message}`);
   };
 
+  const ensureBrowserSession = async () => {
+    const canAccessDashboard = async () => {
+      await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+      return !page.url().includes("/auth/sign-in");
+    };
+
+    if (await canAccessDashboard()) {
+      return;
+    }
+
+    let browserSignInResponse: APIResponse | null = null;
+    for (let attempt = 1; attempt <= E2E_API_RETRY_COUNT; attempt += 1) {
+      browserSignInResponse = await page.request.post(`${apiUrl}/api/auth/sign-in/email`, {
+        headers: buildAuthHeaders(),
+        data: {
+          email: adminEmail,
+          password: adminPassword,
+          rememberMe: true,
+        },
+        timeout: E2E_API_REQUEST_TIMEOUT_MS,
+        failOnStatusCode: false,
+      });
+
+      if (browserSignInResponse.ok()) {
+        break;
+      }
+
+      const shouldRetry =
+        attempt < E2E_API_RETRY_COUNT &&
+        isTransientAdminApiFailure(browserSignInResponse.status());
+      if (!shouldRetry) {
+        break;
+      }
+
+      await delay(E2E_API_RETRY_DELAY_MS * attempt);
+    }
+
+    if (!browserSignInResponse?.ok()) {
+      const payload = browserSignInResponse
+        ? await readJsonSafe(browserSignInResponse)
+        : null;
+      throw new Error(
+        readErrorMessage(
+          payload,
+          `Failed to establish browser session (${browserSignInResponse?.status() ?? "n/a"})`,
+        ),
+      );
+    }
+
+    if (!(await verifySession())) {
+      throw new Error("Admin session verification failed while establishing browser session.");
+    }
+
+    if (!(await canAccessDashboard())) {
+      throw new Error("Browser session is not established after admin sign-in.");
+    }
+  };
+
   if (await verifySession()) {
     await ensureAdminProfile();
+    await ensureBrowserSession();
     return;
   }
 
@@ -760,6 +819,7 @@ export const ensureAdminSession = async (page: Page): Promise<void> => {
   }
 
   await ensureAdminProfile();
+  await ensureBrowserSession();
 };
 
 const pickFirstSelectOption = async (
