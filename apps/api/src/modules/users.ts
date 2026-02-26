@@ -30,6 +30,8 @@ import {
 import {
   ApiAdminUpdateUserSchema,
   ApiBulkUpdateUserRoleSchema,
+  ApiUserResourceHistoryQuerySchema,
+  ApiUserResourceHistorySchema,
   ApiUserIdParamSchema,
   ApiUserSchema,
   ApiMemberProfileUpdateSchema,
@@ -69,6 +71,25 @@ const getUserByIdRoute = createRoute({
   },
   responses: {
     200: dataResponse(ApiUserSchema, "사용자 상세 조회 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+  },
+});
+
+const getUserResourceHistoryRoute = createRoute({
+  method: "get",
+  path: "/api/users/{id}/resource-history",
+  tags: ["Users"],
+  operationId: "getUserResourceHistory",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: ApiUserIdParamSchema,
+    query: ApiUserResourceHistoryQuerySchema,
+  },
+  responses: {
+    200: dataResponse(ApiUserResourceHistorySchema, "사용자 리소스 이력 조회 성공"),
     400: errorResponses[400],
     401: errorResponses[401],
     403: errorResponses[403],
@@ -242,6 +263,39 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
     }
 
     return ok(c, data);
+  });
+
+  app.openapi(getUserResourceHistoryRoute, async (c): Promise<any> => {
+    const actorResult = await requireActor(c, dependencies);
+    if ("response" in actorResult) {
+      return actorResult.response;
+    }
+
+    if (!canReadAllUsers(actorResult.actor.role)) {
+      return forbidden(c);
+    }
+
+    const params = parseParams(c, ApiUserIdParamSchema);
+    if (!params.success) {
+      return badRequest(c, params.message);
+    }
+
+    const query = ApiUserResourceHistoryQuerySchema.safeParse(c.req.query());
+    if (!query.success) {
+      return badRequest(c, query.error.issues[0]?.message ?? "잘못된 요청입니다.");
+    }
+
+    const dataService = dependencies.getDataService(c);
+    const targetUser = await dataService.getUserById(params.data.id);
+    if (!targetUser) {
+      return notFound(c);
+    }
+
+    const history = await dataService.listUserResourceHistory({
+      userId: params.data.id,
+      limit: query.data.limit,
+    });
+    return ok(c, history);
   });
 
   app.openapi(bulkUpdateUserRoleRoute, async (c): Promise<any> => {

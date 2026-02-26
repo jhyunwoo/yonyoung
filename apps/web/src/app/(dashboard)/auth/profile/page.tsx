@@ -1,4 +1,3 @@
-import { cacheLife } from "next/cache";
 import { redirect } from "next/navigation";
 import { serverAuthTool } from "../../../../lib/auth-server-tool";
 import {
@@ -11,9 +10,6 @@ import { toEditableUserProfile } from "../../../../lib/user-profile";
 import AuthProfileForm from "./profile-form";
 
 const readAuthProfileData = async () => {
-  "use cache: private";
-  cacheLife("minutes");
-
   const session = await serverAuthTool.getSession();
   if (!session) {
     return null;

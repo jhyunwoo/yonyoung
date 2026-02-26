@@ -18,6 +18,7 @@ import {
 import {
   ActivityEntity,
   ActivityImageEntity,
+  AuditAction,
   AuditActorEntity,
   AuditLogEntity,
   AuditResourceType,
@@ -29,6 +30,8 @@ import {
   LinktreeEntity,
   NoticeAuthorEntity,
   UserEntity,
+  UserResourceHistoryItemEntity,
+  UserResourceHistoryResourceType,
 } from "./types";
 
 const isMissingUserGenerationsTableError = (error: unknown): boolean => {
@@ -108,6 +111,28 @@ const parseChangedFields = (value: string | null | undefined): string[] => {
   } catch {
     return [];
   }
+};
+
+const USER_RESOURCE_HISTORY_RESOURCE_TYPES = [
+  "activity",
+  "exhibition",
+  "generation_notice",
+  "global_notice",
+  "supporter",
+  "linktree",
+  "linktree_item",
+] as const satisfies readonly UserResourceHistoryResourceType[];
+
+const isUserResourceHistoryResourceType = (
+  value: string,
+): value is UserResourceHistoryResourceType =>
+  (USER_RESOURCE_HISTORY_RESOURCE_TYPES as readonly string[]).includes(value);
+
+type UserResourceMeta = {
+  resourceTitle: string | null;
+  generationId: string | null;
+  linktreeId: string | null;
+  deletedAt: Date | null;
 };
 
 const toAuditActor = (input: {
@@ -2397,6 +2422,254 @@ export const createDbDataService = (database: D1Database): DataService => {
         return null;
       }
       return (await mapUsersWithGenerations(db, [row]))[0] ?? null;
+    },
+        /**
+     * listUserResourceHistory의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
+     * @param input 함수 로직에서 사용하는 입력값입니다.
+     * @returns 비동기 처리 결과를 Promise로 반환합니다.
+     * @remarks 감사 로그(actorId) 기반으로 사용자의 리소스 생성/수정/삭제 이력을 반환합니다.
+     */
+    async listUserResourceHistory(input) {
+      const safeLimit = Math.max(1, Math.min(100, Math.floor(input.limit)));
+      const historyRows = await db
+        .select({
+          id: auditLogs.id,
+          resourceType: auditLogs.resourceType,
+          resourceId: auditLogs.resourceId,
+          action: auditLogs.action,
+          changedFields: auditLogs.changedFields,
+          createdAt: auditLogs.createdAt,
+        })
+        .from(auditLogs)
+        .where(
+          and(
+            eq(auditLogs.actorId, input.userId),
+            inArray(auditLogs.resourceType, [...USER_RESOURCE_HISTORY_RESOURCE_TYPES]),
+          ),
+        )
+        .orderBy(desc(auditLogs.createdAt))
+        .limit(safeLimit);
+
+      if (historyRows.length === 0) {
+        return { items: [] };
+      }
+
+      const resourceIdsByType: Record<UserResourceHistoryResourceType, string[]> = {
+        activity: [],
+        exhibition: [],
+        generation_notice: [],
+        global_notice: [],
+        supporter: [],
+        linktree: [],
+        linktree_item: [],
+      };
+
+      for (const row of historyRows) {
+        if (!isUserResourceHistoryResourceType(row.resourceType)) {
+          continue;
+        }
+        resourceIdsByType[row.resourceType].push(row.resourceId);
+      }
+
+      for (const resourceType of USER_RESOURCE_HISTORY_RESOURCE_TYPES) {
+        resourceIdsByType[resourceType] = Array.from(
+          new Set(resourceIdsByType[resourceType]),
+        );
+      }
+
+      const [
+        activityRows,
+        exhibitionRows,
+        generationNoticeRows,
+        globalNoticeRows,
+        supporterRows,
+        linktreeRows,
+        linktreeItemRows,
+      ] = await Promise.all([
+        resourceIdsByType.activity.length > 0
+          ? db
+              .select({
+                id: activities.id,
+                resourceTitle: activities.title,
+                generationId: activities.generationId,
+                deletedAt: activities.deletedAt,
+              })
+              .from(activities)
+              .where(inArray(activities.id, resourceIdsByType.activity))
+          : Promise.resolve([]),
+        resourceIdsByType.exhibition.length > 0
+          ? db
+              .select({
+                id: exhibitions.id,
+                resourceTitle: exhibitions.title,
+                generationId: exhibitions.generationId,
+                deletedAt: exhibitions.deletedAt,
+              })
+              .from(exhibitions)
+              .where(inArray(exhibitions.id, resourceIdsByType.exhibition))
+          : Promise.resolve([]),
+        resourceIdsByType.generation_notice.length > 0
+          ? db
+              .select({
+                id: generationNotices.id,
+                resourceTitle: generationNotices.title,
+                generationId: generationNotices.generationId,
+                deletedAt: generationNotices.deletedAt,
+              })
+              .from(generationNotices)
+              .where(inArray(generationNotices.id, resourceIdsByType.generation_notice))
+          : Promise.resolve([]),
+        resourceIdsByType.global_notice.length > 0
+          ? db
+              .select({
+                id: globalNotices.id,
+                resourceTitle: globalNotices.title,
+                deletedAt: globalNotices.deletedAt,
+              })
+              .from(globalNotices)
+              .where(inArray(globalNotices.id, resourceIdsByType.global_notice))
+          : Promise.resolve([]),
+        resourceIdsByType.supporter.length > 0
+          ? db
+              .select({
+                id: supporters.id,
+                resourceTitle: supporters.name,
+                deletedAt: supporters.deletedAt,
+              })
+              .from(supporters)
+              .where(inArray(supporters.id, resourceIdsByType.supporter))
+          : Promise.resolve([]),
+        resourceIdsByType.linktree.length > 0
+          ? db
+              .select({
+                id: linktree.id,
+                resourceTitle: linktree.name,
+                deletedAt: linktree.deletedAt,
+              })
+              .from(linktree)
+              .where(inArray(linktree.id, resourceIdsByType.linktree))
+          : Promise.resolve([]),
+        resourceIdsByType.linktree_item.length > 0
+          ? db
+              .select({
+                id: linktreeItems.id,
+                resourceTitle: linktreeItems.name,
+                linktreeId: linktreeItems.linktreeId,
+                deletedAt: linktreeItems.deletedAt,
+              })
+              .from(linktreeItems)
+              .where(inArray(linktreeItems.id, resourceIdsByType.linktree_item))
+          : Promise.resolve([]),
+      ]);
+
+      const activityMetaById = new Map<string, UserResourceMeta>();
+      for (const row of activityRows) {
+        activityMetaById.set(row.id, {
+          resourceTitle: row.resourceTitle,
+          generationId: row.generationId,
+          linktreeId: null,
+          deletedAt: row.deletedAt,
+        });
+      }
+
+      const exhibitionMetaById = new Map<string, UserResourceMeta>();
+      for (const row of exhibitionRows) {
+        exhibitionMetaById.set(row.id, {
+          resourceTitle: row.resourceTitle,
+          generationId: row.generationId,
+          linktreeId: null,
+          deletedAt: row.deletedAt,
+        });
+      }
+
+      const generationNoticeMetaById = new Map<string, UserResourceMeta>();
+      for (const row of generationNoticeRows) {
+        generationNoticeMetaById.set(row.id, {
+          resourceTitle: row.resourceTitle,
+          generationId: row.generationId,
+          linktreeId: null,
+          deletedAt: row.deletedAt,
+        });
+      }
+
+      const globalNoticeMetaById = new Map<string, UserResourceMeta>();
+      for (const row of globalNoticeRows) {
+        globalNoticeMetaById.set(row.id, {
+          resourceTitle: row.resourceTitle,
+          generationId: null,
+          linktreeId: null,
+          deletedAt: row.deletedAt,
+        });
+      }
+
+      const supporterMetaById = new Map<string, UserResourceMeta>();
+      for (const row of supporterRows) {
+        supporterMetaById.set(row.id, {
+          resourceTitle: row.resourceTitle,
+          generationId: null,
+          linktreeId: null,
+          deletedAt: row.deletedAt,
+        });
+      }
+
+      const linktreeMetaById = new Map<string, UserResourceMeta>();
+      for (const row of linktreeRows) {
+        linktreeMetaById.set(row.id, {
+          resourceTitle: row.resourceTitle,
+          generationId: null,
+          linktreeId: null,
+          deletedAt: row.deletedAt,
+        });
+      }
+
+      const linktreeItemMetaById = new Map<string, UserResourceMeta>();
+      for (const row of linktreeItemRows) {
+        linktreeItemMetaById.set(row.id, {
+          resourceTitle: row.resourceTitle,
+          generationId: null,
+          linktreeId: row.linktreeId,
+          deletedAt: row.deletedAt,
+        });
+      }
+
+      const metaByResourceType: Record<
+        UserResourceHistoryResourceType,
+        Map<string, UserResourceMeta>
+      > = {
+        activity: activityMetaById,
+        exhibition: exhibitionMetaById,
+        generation_notice: generationNoticeMetaById,
+        global_notice: globalNoticeMetaById,
+        supporter: supporterMetaById,
+        linktree: linktreeMetaById,
+        linktree_item: linktreeItemMetaById,
+      };
+
+      const items: UserResourceHistoryItemEntity[] = [];
+      for (const row of historyRows) {
+        if (!isUserResourceHistoryResourceType(row.resourceType)) {
+          continue;
+        }
+
+        const action = row.action as AuditAction;
+        const meta = metaByResourceType[row.resourceType].get(row.resourceId) ?? null;
+        const isDeleted = meta ? meta.deletedAt !== null : action === "delete";
+
+        items.push({
+          id: row.id,
+          resourceType: row.resourceType,
+          resourceId: row.resourceId,
+          resourceTitle: meta?.resourceTitle ?? null,
+          action,
+          changedFields: parseChangedFields(row.changedFields),
+          isDeleted,
+          generationId: meta?.generationId ?? null,
+          linktreeId: meta?.linktreeId ?? null,
+          createdAt: row.createdAt,
+        });
+      }
+
+      return { items };
     },
         /**
      * updateUser 기존 데이터나 상태를 갱신하는 처리를 수행합니다.

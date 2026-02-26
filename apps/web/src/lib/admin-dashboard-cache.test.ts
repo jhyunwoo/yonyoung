@@ -1,14 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ADMIN_CACHE_TAGS } from "./admin-cache";
-
-const cacheLifeMock = vi.fn();
-const cacheTagMock = vi.fn();
 const resolveAuthApiUrlMock = vi.fn(() => "https://api.example.com");
-
-vi.mock("next/cache", () => ({
-  cacheLife: (...args: unknown[]) => cacheLifeMock(...args),
-  cacheTag: (...args: unknown[]) => cacheTagMock(...args),
-}));
 
 vi.mock("server-only", () => ({}));
 
@@ -18,8 +9,6 @@ vi.mock("./auth-server", () => ({
 
 describe("admin-dashboard-cache", () => {
   beforeEach(() => {
-    cacheLifeMock.mockReset();
-    cacheTagMock.mockReset();
     resolveAuthApiUrlMock.mockClear();
     vi.restoreAllMocks();
   });
@@ -39,12 +28,10 @@ describe("admin-dashboard-cache", () => {
     const rows = await listCachedActivities("generation-60", "a=b");
 
     expect(rows).toEqual([{ id: "activity-1" }]);
-    expect(cacheLifeMock).toHaveBeenCalledWith("max");
-    expect(cacheTagMock).toHaveBeenCalledWith(ADMIN_CACHE_TAGS.activities);
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     const [url, init] = fetchSpy.mock.calls[0] ?? [];
     expect(url).toBe("https://api.example.com/api/activities?generationId=generation-60");
-    expect(init).toMatchObject({ method: "GET" });
+    expect(init).toMatchObject({ method: "GET", cache: "no-store" });
     const headers = (init as RequestInit | undefined)?.headers as Headers | undefined;
     expect(headers?.get("Accept")).toBe("application/json");
     expect(headers?.get("cookie")).toBe("a=b");
@@ -65,12 +52,9 @@ describe("admin-dashboard-cache", () => {
     const rows = await listCachedGenerationMembers("generation-60", "a=b");
 
     expect(rows).toEqual([{ id: "member-1" }]);
-    expect(cacheLifeMock).toHaveBeenCalledWith("max");
-    expect(cacheTagMock).toHaveBeenCalledWith(ADMIN_CACHE_TAGS.generations);
-    expect(cacheTagMock).toHaveBeenCalledWith(ADMIN_CACHE_TAGS.users);
     const [url, init] = fetchSpy.mock.calls[0] ?? [];
     expect(url).toBe("https://api.example.com/api/generations/generation-60/members");
-    expect(init).toMatchObject({ method: "GET" });
+    expect(init).toMatchObject({ method: "GET", cache: "no-store" });
     const headers = (init as RequestInit | undefined)?.headers as Headers | undefined;
     expect(headers?.get("Accept")).toBe("application/json");
     expect(headers?.get("cookie")).toBe("a=b");

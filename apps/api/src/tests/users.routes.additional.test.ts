@@ -442,4 +442,102 @@ describe("user routes additional coverage", /** describe 실행 과정에서 필
     await expectErrorCode(response, "BAD_REQUEST");
     expect(bulkUpdateUsersRole).not.toHaveBeenCalled();
   });
+
+  it("resource-history 조회는 부회장에게 허용되며 기본 limit=100을 사용한다", async () => {
+    const listUserResourceHistory = fn(async () => ({ items: [] }));
+    const app = createTestApp({
+      actor: createActor("vice_president", IDs.vicePresident),
+      dataService: createDataServiceMock({
+        getUserById: fn(async () => createUser({ id: IDs.member })),
+        listUserResourceHistory,
+      }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.member}/resource-history`);
+
+    expect(response.status).toBe(200);
+    const body = await readJson<{ data: { items: unknown[] } }>(response);
+    expect(body.data.items).toEqual([]);
+    expect(listUserResourceHistory).toHaveBeenCalledWith({
+      userId: IDs.member,
+      limit: 100,
+    });
+  });
+
+  it("resource-history 조회는 회장에게 허용되며 limit 쿼리를 반영한다", async () => {
+    const listUserResourceHistory = fn(async () => ({ items: [] }));
+    const app = createTestApp({
+      actor: createActor("president", IDs.president),
+      dataService: createDataServiceMock({
+        getUserById: fn(async () => createUser({ id: IDs.member })),
+        listUserResourceHistory,
+      }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.member}/resource-history?limit=15`);
+
+    expect(response.status).toBe(200);
+    expect(listUserResourceHistory).toHaveBeenCalledWith({
+      userId: IDs.member,
+      limit: 15,
+    });
+  });
+
+  it("resource-history 조회에서 manager는 403을 반환한다", async () => {
+    const listUserResourceHistory = fn(async () => ({ items: [] }));
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({
+        listUserResourceHistory,
+      }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.member}/resource-history`);
+
+    expect(response.status).toBe(403);
+    await expectErrorCode(response, "FORBIDDEN");
+    expect(listUserResourceHistory).not.toHaveBeenCalled();
+  });
+
+  it("resource-history 조회에서 사용자 ID 형식이 잘못되면 400을 반환한다", async () => {
+    const app = createTestApp({
+      actor: createActor("vice_president", IDs.vicePresident),
+    });
+
+    const response = await app.request("/api/users/invalid%20id/resource-history");
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+
+  it("resource-history 조회에서 대상 사용자가 없으면 404를 반환한다", async () => {
+    const listUserResourceHistory = fn(async () => ({ items: [] }));
+    const app = createTestApp({
+      actor: createActor("vice_president", IDs.vicePresident),
+      dataService: createDataServiceMock({
+        getUserById: fn(async () => null),
+        listUserResourceHistory,
+      }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.member}/resource-history`);
+
+    expect(response.status).toBe(404);
+    await expectErrorCode(response, "NOT_FOUND");
+    expect(listUserResourceHistory).not.toHaveBeenCalled();
+  });
+
+  it("resource-history 조회에서 limit가 범위를 벗어나면 400을 반환한다", async () => {
+    const app = createTestApp({
+      actor: createActor("vice_president", IDs.vicePresident),
+      dataService: createDataServiceMock({
+        getUserById: fn(async () => createUser({ id: IDs.member })),
+      }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.member}/resource-history?limit=101`);
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
 });

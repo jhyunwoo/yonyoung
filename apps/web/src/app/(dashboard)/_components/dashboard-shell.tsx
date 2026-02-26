@@ -27,6 +27,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { signOut } from "../../../lib/auth-client-tool";
+import { isPresidentRole } from "../../../lib/auth-shared";
+import { buildDashboardSettingsMenuItems } from "../../../lib/dashboard-settings-menu";
 import type { DashboardGenerationOption } from "../../../lib/dashboard-generation-server";
 import { isSameGenerationRouteName } from "../../../lib/dashboard-generation-route";
 
@@ -35,6 +37,7 @@ export type DashboardViewer = {
   displayName: string;
   email: string;
   image: string | null;
+  role: string | null;
 };
 
 type DashboardShellProps = {
@@ -63,12 +66,9 @@ const SidebarContent = (input: {
 }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
-  const settingsSubItems = [
-    { key: "settings-notices", href: "/dashboard/settings/notices", label: "전체 공지 관리" },
-    { key: "settings-linktree", href: "/dashboard/settings/linktree", label: "Linktree 관리" },
-    { key: "settings-supporters", href: "/dashboard/settings/supporters", label: "후원사 관리" },
-    { key: "settings-members", href: "/dashboard/settings/members", label: "전체 멤버 관리" },
-  ] as const;
+  const settingsSubItems = buildDashboardSettingsMenuItems({
+    isPresident: isPresidentRole(input.viewer?.role),
+  });
   const isSettingsSectionActive =
     input.pathname === "/dashboard/settings" || input.pathname.startsWith("/dashboard/settings/");
   const [isSettingsExpanded, setIsSettingsExpanded] = useState(isSettingsSectionActive);

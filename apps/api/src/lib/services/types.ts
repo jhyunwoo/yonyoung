@@ -164,6 +164,32 @@ export type UserEntity = {
   updatedBy: AuditActorEntity | null;
 };
 
+export type UserResourceHistoryResourceType =
+  | "activity"
+  | "exhibition"
+  | "generation_notice"
+  | "global_notice"
+  | "supporter"
+  | "linktree"
+  | "linktree_item";
+
+export type UserResourceHistoryItemEntity = {
+  id: string;
+  resourceType: UserResourceHistoryResourceType;
+  resourceId: string;
+  resourceTitle: string | null;
+  action: AuditAction;
+  changedFields: string[];
+  isDeleted: boolean;
+  generationId: string | null;
+  linktreeId: string | null;
+  createdAt: Date;
+};
+
+export type UserResourceHistoryEntity = {
+  items: UserResourceHistoryItemEntity[];
+};
+
 export type AdminDashboardStatsEntity = {
   usersTotal: number;
   unverifiedUsersTotal: number;
@@ -399,6 +425,10 @@ export type DataService = {
 
   listUsers: () => Promise<UserEntity[]>;
   getUserById: (id: string) => Promise<UserEntity | null>;
+  listUserResourceHistory: (input: {
+    userId: string;
+    limit: number;
+  }) => Promise<UserResourceHistoryEntity>;
   updateUser: (
     id: string,
     input: Partial<{

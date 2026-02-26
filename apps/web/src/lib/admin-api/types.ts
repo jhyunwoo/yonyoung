@@ -44,5 +44,8 @@ export {
   type ApiUpdateSupporterInput,
   type ApiUpdateUserInput,
   type ApiUser,
+  type ApiUserResourceHistory,
+  type ApiUserResourceHistoryItem,
+  type ApiUserResourceHistoryResourceType,
 } from "@repo/shared-api-contracts";
 export { AdminApiError } from "@repo/shared-http";

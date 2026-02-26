@@ -1068,6 +1068,77 @@ export const ApiUserSchema = z
   })
   .openapi("ApiUser");
 
+const ApiUserResourceHistoryResourceTypeSchema = z
+  .enum([
+    "activity",
+    "exhibition",
+    "generation_notice",
+    "global_notice",
+    "supporter",
+    "linktree",
+    "linktree_item",
+  ])
+  .openapi("ApiUserResourceHistoryResourceType");
+
+export const ApiUserResourceHistoryItemSchema = z
+  .object({
+    id: z.string().uuid().openapi({
+      description: "감사 로그 UUID",
+      example: EXAMPLE_AUDIT_ID,
+    }),
+    resourceType: ApiUserResourceHistoryResourceTypeSchema.openapi({
+      description: "이력 리소스 타입",
+      example: "activity",
+    }),
+    resourceId: z.string().openapi({
+      description: "변경 대상 리소스 ID",
+      example: EXAMPLE_PARENT_ID,
+    }),
+    resourceTitle: z.string().nullable().openapi({
+      description: "리소스 표시 이름(조회 불가/삭제 등으로 없으면 null)",
+      example: "정기 워크숍",
+    }),
+    action: z.enum(["create", "update", "delete"]).openapi({
+      description: "수행된 액션",
+      example: "update",
+    }),
+    changedFields: z.array(z.string()).openapi({
+      description: "변경 필드 목록",
+      example: ["title", "updatedAt"],
+    }),
+    isDeleted: z.boolean().openapi({
+      description: "현재 리소스 삭제 여부(소프트 삭제 포함)",
+      example: false,
+    }),
+    generationId: z.string().uuid().nullable().openapi({
+      description: "기수 기반 리소스(activity/exhibition/generation_notice)의 기수 UUID",
+      example: EXAMPLE_GENERATION_ID,
+    }),
+    linktreeId: z.string().uuid().nullable().openapi({
+      description: "linktree_item 리소스일 때 상위 linktree UUID",
+      example: EXAMPLE_PARENT_ID,
+    }),
+    createdAt: timestampField("이력 기록 시각", EXAMPLE_TIMESTAMP_MS),
+  })
+  .openapi("ApiUserResourceHistoryItem");
+
+export const ApiUserResourceHistorySchema = z
+  .object({
+    items: z.array(ApiUserResourceHistoryItemSchema).openapi({
+      description: "사용자 리소스 이력 배열(최신순)",
+    }),
+  })
+  .openapi("ApiUserResourceHistory");
+
+export const ApiUserResourceHistoryQuerySchema = z
+  .object({
+    limit: z.coerce.number().int().min(1).max(100).default(100).openapi({
+      description: "조회할 최대 이력 수(기본 100, 최대 100)",
+      example: 100,
+    }),
+  })
+  .openapi("ApiUserResourceHistoryQuery");
+
 const ApiPublicGenerationMemberSchema = z
   .object({
     id: z.string().openapi({

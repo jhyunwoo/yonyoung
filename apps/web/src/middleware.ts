@@ -12,8 +12,13 @@ const STATIC_SECURITY_HEADERS = {
 
 const PRIVATE_CACHE_CONTROL = "private, no-store, max-age=0";
 const PUBLIC_CACHE_CONTROL = "public, s-maxage=120, stale-while-revalidate=300";
+const SESSION_COOKIE_NAMES = [
+  "better-auth.session_token",
+  "__Secure-better-auth.session_token",
+] as const;
 
 const PRIVATE_PATH_PREFIXES = ["/dashboard", "/admin", "/auth", "/api/admin", "/api/internal"];
+const PRIVATE_AUTH_REDIRECT_PREFIXES = ["/dashboard", "/admin"];
 const PUBLIC_CACHEABLE_PREFIXES = ["/archive", "/about", "/donate", "/linktree"];
 
 const resolveOriginFromUrl = (input: string | undefined): string | null => {
@@ -68,11 +73,20 @@ const buildCspHeader = (request: NextRequest): string =>
   ].join("; ");
 
 const hasSessionCookie = (request: NextRequest): boolean => {
-  return request.cookies.has("better-auth.session_token");
+  return request.cookies.getAll().some((cookie) =>
+    SESSION_COOKIE_NAMES.some(
+      (name) => cookie.name === name || cookie.name.startsWith(`${name}.`),
+    ),
+  );
 };
 
 const isPrivatePath = (pathname: string): boolean =>
   PRIVATE_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+
+const shouldRedirectToSignIn = (pathname: string): boolean =>
+  PRIVATE_AUTH_REDIRECT_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
 
 const isPublicCacheablePath = (pathname: string): boolean => {
   if (pathname === "/") {
@@ -84,9 +98,10 @@ const isPublicCacheablePath = (pathname: string): boolean => {
   );
 };
 
-export function middleware(request: NextRequest) {
-  const response = NextResponse.next();
-
+const applySecurityHeaders = (
+  response: NextResponse,
+  request: NextRequest,
+): void => {
   response.headers.set("Content-Security-Policy", buildCspHeader(request));
 
   for (const [header, value] of Object.entries(STATIC_SECURITY_HEADERS)) {
@@ -99,9 +114,25 @@ export function middleware(request: NextRequest) {
       "max-age=31536000; includeSubDomains",
     );
   }
+};
 
+export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const isPrivate = isPrivatePath(pathname) || hasSessionCookie(request);
+  const hasSession = hasSessionCookie(request);
+  if (shouldRedirectToSignIn(pathname) && !hasSession) {
+    const redirectUrl = new URL("/auth/sign-in", request.url);
+    redirectUrl.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
+    const redirectResponse = NextResponse.redirect(redirectUrl);
+    applySecurityHeaders(redirectResponse, request);
+    redirectResponse.headers.set("Cache-Control", PRIVATE_CACHE_CONTROL);
+    return redirectResponse;
+  }
+
+  const response = NextResponse.next();
+
+  applySecurityHeaders(response, request);
+
+  const isPrivate = isPrivatePath(pathname) || hasSession;
   if (isPrivate) {
     response.headers.set("Cache-Control", PRIVATE_CACHE_CONTROL);
   } else if (isPublicCacheablePath(pathname)) {

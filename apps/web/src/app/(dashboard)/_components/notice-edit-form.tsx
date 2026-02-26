@@ -139,29 +139,36 @@ export default function NoticeEditForm({
   }, [canWrite, loadNotice]);
 
   const handleUploadImage = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null;
+    const files = Array.from(event.target.files ?? []);
     event.target.value = "";
 
-    if (!file) {
+    if (files.length === 0) {
       return;
     }
 
-    if (imageUrls.length >= NOTICE_MAX_IMAGES) {
+    const remainingSlots = NOTICE_MAX_IMAGES - imageUrls.length;
+    if (remainingSlots <= 0) {
       setErrorMessage(
         `이미지는 최대 ${NOTICE_MAX_IMAGES}장까지 등록할 수 있습니다.`,
       );
       return;
     }
 
+    const uploadTargets = files.slice(0, remainingSlots);
+
     setIsUploadingImage(true);
     setErrorMessage(null);
 
     try {
-      const uploadedUrl = await uploadWithPresign({
-        presignPath: PRESIGN_PATHS.noticeImage,
-        file,
-      });
-      appendExistingUrls([uploadedUrl]);
+      const uploadedUrls = await Promise.all(
+        uploadTargets.map((file) =>
+          uploadWithPresign({
+            presignPath: PRESIGN_PATHS.noticeImage,
+            file,
+          }),
+        ),
+      );
+      appendExistingUrls(uploadedUrls);
       setErrorMessage(null);
     } catch (error) {
       setErrorMessage(readNoticeErrorMessage(error));
@@ -311,6 +318,7 @@ export default function NoticeEditForm({
             <input
               type="file"
               accept="image/*"
+              multiple
               onChange={handleUploadImage}
               disabled={
                 isSaving ||

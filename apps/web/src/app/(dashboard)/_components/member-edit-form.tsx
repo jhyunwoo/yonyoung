@@ -5,11 +5,11 @@ import type {
   ApiAdminUpdateUserInput,
   ApiGeneration,
   ApiUser,
-} from "../../../../../../lib/admin-api/types";
-import { AdminApiError } from "../../../../../../lib/admin-api/types";
-import { adminResourceApi } from "../../../../../../lib/admin-api/resources";
-import { PRESIGN_PATHS, uploadWithPresign } from "../../../../../../lib/admin-api/upload";
-import { buildMemberRoleLabel } from "../../../../../../lib/member-role-label";
+} from "../../../lib/admin-api/types";
+import { AdminApiError } from "../../../lib/admin-api/types";
+import { adminResourceApi } from "../../../lib/admin-api/resources";
+import { PRESIGN_PATHS, uploadWithPresign } from "../../../lib/admin-api/upload";
+import { buildMemberRoleLabel } from "../../../lib/member-role-label";
 
 type MemberEditFormProps = {
   user: ApiUser;

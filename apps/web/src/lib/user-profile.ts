@@ -69,6 +69,7 @@ type DashboardViewerProfile = {
   email: string;
   image: string | null;
   displayName: string;
+  role: string | null;
 };
 
 export const buildDashboardViewerProfile = (
@@ -95,6 +96,7 @@ export const buildDashboardViewerProfile = (
     id: sessionUser.id,
     email: sessionUser.email,
     image,
+    role: sessionUser.role ?? null,
     displayName:
       computedName === "이름 미등록" && fallbackName ? fallbackName : computedName,
   };

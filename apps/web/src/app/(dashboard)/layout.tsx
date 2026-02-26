@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ReactNode, Suspense } from "react";
-import { cacheLife, cacheTag } from "next/cache";
 
 import { createPageMetadata } from "../../lib/seo";
 import DashboardShell, {
@@ -10,7 +9,6 @@ import DashboardShell, {
 import { serverAuthTool } from "../../lib/auth-server-tool";
 import { getAccessibleDashboardGenerationOptions } from "../../lib/dashboard-generation-server";
 import { buildDashboardViewerProfile } from "../../lib/user-profile";
-import { ADMIN_CACHE_TAGS } from "../../lib/admin-cache";
 
 export const metadata: Metadata = createPageMetadata({
   title: "연영회 Dashboard",
@@ -24,11 +22,6 @@ const readDashboardLayoutData = async (): Promise<{
   >;
   viewer: DashboardViewer | null;
 }> => {
-  "use cache: private";
-  cacheLife("minutes");
-  cacheTag(ADMIN_CACHE_TAGS.generations);
-  cacheTag(ADMIN_CACHE_TAGS.users);
-
   const session = await serverAuthTool.getSession();
   if (!session) {
     return {

@@ -107,6 +107,12 @@ describe("adminResourceApi", () => {
 
     await adminResourceApi.getUserById("user-1");
     expect(adminRequestMock).toHaveBeenLastCalledWith("/users/user-1", "GET");
+
+    await adminResourceApi.getUserResourceHistory("user-1");
+    expect(adminRequestMock).toHaveBeenLastCalledWith(
+      "/users/user-1/resource-history?limit=100",
+      "GET",
+    );
   });
 
   it("감사 로그 조회는 limit를 1~100 범위로 보정하고 resourceId를 인코딩한다", async () => {
@@ -121,6 +127,22 @@ describe("adminResourceApi", () => {
     await adminResourceApi.listAuditLogs("activity", "raw", 0);
     expect(adminRequestMock).toHaveBeenCalledWith(
       "/audit/activity/raw?limit=1",
+      "GET",
+    );
+  });
+
+  it("사용자 리소스 이력 조회는 limit를 1~100 범위로 보정한다", async () => {
+    adminRequestMock.mockResolvedValue({ items: [] });
+
+    await adminResourceApi.getUserResourceHistory("user-1", 999);
+    expect(adminRequestMock).toHaveBeenCalledWith(
+      "/users/user-1/resource-history?limit=100",
+      "GET",
+    );
+
+    await adminResourceApi.getUserResourceHistory("user-1", 0);
+    expect(adminRequestMock).toHaveBeenCalledWith(
+      "/users/user-1/resource-history?limit=1",
       "GET",
     );
   });

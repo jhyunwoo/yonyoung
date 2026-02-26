@@ -296,6 +296,7 @@ export const createDataServiceMock = (
     listAuditLogs: async () => [],
     getLatestAuditActor: async () => null,
     listLatestAuditActors: async () => ({}),
+    listUserResourceHistory: async () => ({ items: [] }),
   };
 
   const merged = { ...base, ...overrides } as DataService;

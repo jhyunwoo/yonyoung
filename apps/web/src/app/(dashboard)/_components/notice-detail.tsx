@@ -165,27 +165,34 @@ export default function NoticeDetail({
   };
 
   const handleUploadEditingImage = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null;
+    const files = Array.from(event.target.files ?? []);
     event.target.value = "";
 
-    if (!file) {
+    if (files.length === 0) {
       return;
     }
 
-    if (editingImageUrls.length >= NOTICE_MAX_IMAGES) {
+    const remainingSlots = NOTICE_MAX_IMAGES - editingImageUrls.length;
+    if (remainingSlots <= 0) {
       setErrorMessage(`이미지는 최대 ${NOTICE_MAX_IMAGES}장까지 등록할 수 있습니다.`);
       return;
     }
+
+    const uploadTargets = files.slice(0, remainingSlots);
 
     setIsUploadingImage(true);
     setErrorMessage(null);
 
     try {
-      const uploadedUrl = await uploadWithPresign({
-        presignPath: PRESIGN_PATHS.noticeImage,
-        file,
-      });
-      appendEditingImageUrls([uploadedUrl]);
+      const uploadedUrls = await Promise.all(
+        uploadTargets.map((file) =>
+          uploadWithPresign({
+            presignPath: PRESIGN_PATHS.noticeImage,
+            file,
+          }),
+        ),
+      );
+      appendEditingImageUrls(uploadedUrls);
       setErrorMessage(null);
     } catch (error) {
       setErrorMessage(readNoticeErrorMessage(error));
@@ -371,6 +378,7 @@ export default function NoticeDetail({
             <input
               type="file"
               accept="image/*"
+              multiple
               onChange={handleUploadEditingImage}
               disabled={isSaving || isUploadingImage || editingImageUrls.length >= NOTICE_MAX_IMAGES}
               className="hidden"

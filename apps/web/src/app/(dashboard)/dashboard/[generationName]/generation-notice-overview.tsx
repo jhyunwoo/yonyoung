@@ -5,17 +5,12 @@ import {
   listCachedGenerationNotices,
   listCachedGlobalNotices,
 } from "../../../../lib/admin-dashboard-cache";
-import { formatAuditActor } from "../../../../lib/audit-display";
 import { formatKoreanDate } from "../../../../lib/date-formatters";
-import { summarizeRichTextHtml } from "../../../../lib/rich-text";
 
 type GenerationNoticeOverviewProps = {
   generationId: string;
   generationPath: string;
 };
-
-const readNoticeAuthor = (notice: ApiGenerationNotice | ApiGlobalNotice): string =>
-  notice.author.name;
 
 export default async function GenerationNoticeOverview({
   generationId,
@@ -50,12 +45,8 @@ export default async function GenerationNoticeOverview({
               {generationNotices.map((notice) => (
                 <li key={notice.id} className="rounded-lg border border-slate-200 px-3 py-2">
                   <p className="text-sm font-medium text-slate-900">{notice.title}</p>
-                  <p className="mt-1 text-xs text-slate-600">
-                    {summarizeRichTextHtml(notice.content, 100)}
-                  </p>
                   <p className="mt-1 text-xs text-slate-500">
-                    {readNoticeAuthor(notice)} · {formatKoreanDate(notice.createdAt)} · 최근 수정자:{" "}
-                    {formatAuditActor(notice.updatedBy)}
+                    작성일: {formatKoreanDate(notice.createdAt)}
                   </p>
                 </li>
               ))}
@@ -74,12 +65,8 @@ export default async function GenerationNoticeOverview({
               {globalNotices.map((notice) => (
                 <li key={notice.id} className="rounded-lg border border-slate-200 px-3 py-2">
                   <p className="text-sm font-medium text-slate-900">{notice.title}</p>
-                  <p className="mt-1 text-xs text-slate-600">
-                    {summarizeRichTextHtml(notice.content, 100)}
-                  </p>
                   <p className="mt-1 text-xs text-slate-500">
-                    {readNoticeAuthor(notice)} · {formatKoreanDate(notice.createdAt)} · 최근 수정자:{" "}
-                    {formatAuditActor(notice.updatedBy)}
+                    작성일: {formatKoreanDate(notice.createdAt)}
                   </p>
                 </li>
               ))}

@@ -295,6 +295,32 @@ export type ApiUser = {
   updatedBy: ApiAuditActor | null;
 };
 
+export type ApiUserResourceHistoryResourceType =
+  | "activity"
+  | "exhibition"
+  | "generation_notice"
+  | "global_notice"
+  | "supporter"
+  | "linktree"
+  | "linktree_item";
+
+export type ApiUserResourceHistoryItem = {
+  id: string;
+  resourceType: ApiUserResourceHistoryResourceType;
+  resourceId: string;
+  resourceTitle: string | null;
+  action: ApiAuditAction;
+  changedFields: string[];
+  isDeleted: boolean;
+  generationId: string | null;
+  linktreeId: string | null;
+  createdAt: number;
+};
+
+export type ApiUserResourceHistory = {
+  items: ApiUserResourceHistoryItem[];
+};
+
 export type ApiPublicGenerationMember = {
   id: string;
   name: string;

@@ -68,6 +68,9 @@
       "new_classes": ["DOQueueHandler", "DOShardedTagCache"],
     },
   ],
+  "analytics_engine_datasets": [
+    { "binding": "ANALYTICS", "dataset": "yonyoung-log" }
+  ],
   /**
    * Smart Placement
    * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

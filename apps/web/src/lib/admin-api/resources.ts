@@ -42,6 +42,7 @@ import type {
   ApiUpdateSupporterInput,
   ApiUpdateUserInput,
   ApiUser,
+  ApiUserResourceHistory,
 } from "./types";
 
 const ADMIN_REVALIDATE_ENDPOINT = "/api/admin/revalidate";
@@ -303,6 +304,12 @@ export const adminResourceApi = {
 
   listUsers: () => apiRequest.get<ApiUser[]>("/users"),
   getUserById: (id: string) => apiRequest.get<ApiUser>(`/users/${id}`),
+  getUserResourceHistory: (id: string, limit = 100) => {
+    const safeLimit = Math.max(1, Math.min(100, Math.floor(limit)));
+    return apiRequest.get<ApiUserResourceHistory>(
+      `/users/${encodeURIComponent(id)}/resource-history?limit=${safeLimit}`,
+    );
+  },
   updateUser: (id: string, input: ApiUpdateUserInput) =>
     patchWithRevalidation<ApiUser>(`/users/${id}`, input, [
       ADMIN_CACHE_TAGS.users,

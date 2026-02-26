@@ -1,10 +1,8 @@
-import { Suspense } from "react";
-import NoticeManager from "../_components/notice-manager";
+import Link from "next/link";
 import { serverAuthTool } from "../../../lib/auth-server-tool";
-import { isPresidentRole } from "../../../lib/auth-shared";
 
 export default async function DashboardPage() {
-  const session = await serverAuthTool.requireSession();
+  await serverAuthTool.requireSession();
   const noticesBasePath = "/dashboard/settings/notices";
 
   return (
@@ -22,23 +20,23 @@ export default async function DashboardPage() {
           </p>
         </aside>
 
-        <Suspense
-          fallback={
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-              <p className="text-sm text-slate-500">공지 목록을 불러오는 중입니다...</p>
-            </section>
-          }
-        >
-          <NoticeManager
-            scope="global"
-            canWrite={isPresidentRole(session.user.role)}
-            heading="전체 공지"
-            description="최근 공지를 확인하고 항목을 클릭해 상세 내용을 볼 수 있습니다."
-            emptyMessage="등록된 전체 공지가 없습니다."
-            basePath={noticesBasePath}
-            createPath={`${noticesBasePath}/new`}
-          />
-        </Suspense>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+          <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+            Notices
+          </p>
+          <h2 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">공지 관리</h2>
+          <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
+            공지 목록 확인과 작성/수정은 공지 관리 화면에서 진행할 수 있습니다.
+          </p>
+          <div className="mt-5">
+            <Link
+              href={noticesBasePath}
+              className="inline-flex items-center rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+            >
+              공지 관리 페이지로 이동
+            </Link>
+          </div>
+        </section>
       </div>
     </main>
   );

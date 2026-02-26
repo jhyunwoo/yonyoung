@@ -9,6 +9,7 @@ import NoticeEditForm from "./notice-edit-form";
 const routerReplace = vi.fn();
 const routerRefresh = vi.fn();
 const getGlobalNoticeById = vi.fn();
+const uploadWithPresign = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -74,11 +75,37 @@ vi.mock("../../../lib/admin-api/resources", () => ({
   },
 }));
 
+vi.mock("../../../lib/admin-api/upload", () => ({
+  PRESIGN_PATHS: {
+    noticeImage: "/notices/presign/image",
+  },
+  uploadWithPresign: (...args: unknown[]) => uploadWithPresign(...args),
+}));
+
 Object.assign(globalThis, { React, IS_REACT_ACT_ENVIRONMENT: true });
 
 const flushEffects = async () => {
   await Promise.resolve();
   await Promise.resolve();
+  await Promise.resolve();
+};
+
+const createFileList = (files: File[]): FileList => {
+  const fileList = {
+    length: files.length,
+    item: (index: number) => files[index] ?? null,
+    [Symbol.iterator]: function* fileIterator() {
+      for (const file of files) {
+        yield file;
+      }
+    },
+  } as FileList & Record<number, File>;
+
+  for (const [index, file] of files.entries()) {
+    fileList[index] = file;
+  }
+
+  return fileList;
 };
 
 const NOTICE = {
@@ -105,7 +132,11 @@ describe("notice image input mode", () => {
     routerReplace.mockReset();
     routerRefresh.mockReset();
     getGlobalNoticeById.mockReset();
+    uploadWithPresign.mockReset();
     getGlobalNoticeById.mockResolvedValue(NOTICE);
+    uploadWithPresign.mockImplementation(async ({ file }: { file: File }) => {
+      return `https://example.com/${file.name}`;
+    });
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
@@ -138,6 +169,10 @@ describe("notice image input mode", () => {
     expect(
       container.querySelector("input[placeholder='https://...']"),
     ).not.toBeInTheDocument();
+    const fileInput = container.querySelector(
+      "input[type='file']",
+    ) as HTMLInputElement | null;
+    expect(fileInput).toHaveAttribute("multiple");
   });
 
   it("공지 수정 폼은 URL 입력 없이 파일 업로드만 노출한다", async () => {
@@ -162,6 +197,10 @@ describe("notice image input mode", () => {
     expect(
       container.querySelector("input[placeholder='https://...']"),
     ).not.toBeInTheDocument();
+    const fileInput = container.querySelector(
+      "input[type='file']",
+    ) as HTMLInputElement | null;
+    expect(fileInput).toHaveAttribute("multiple");
   });
 
   it("공지 상세 인라인 수정에서도 URL 입력 없이 파일 업로드만 노출한다", async () => {
@@ -195,5 +234,58 @@ describe("notice image input mode", () => {
     expect(
       container.querySelector("input[placeholder='https://...']"),
     ).not.toBeInTheDocument();
+    const fileInput = container.querySelector(
+      "input[type='file']",
+    ) as HTMLInputElement | null;
+    expect(fileInput).toHaveAttribute("multiple");
+  });
+
+  it("공지 작성 폼에서 다중 파일 선택 시 선택한 이미지 수만큼 업로드를 요청한다", async () => {
+    await act(async () => {
+      root.render(
+        <NoticeCreateForm
+          scope="global"
+          canWrite
+          basePath="/dashboard/notices"
+          listPath="/dashboard/notices"
+          heading="전체 공지 작성"
+          description="테스트"
+        />,
+      );
+      await flushEffects();
+    });
+
+    const fileInput = container.querySelector(
+      "input[type='file']",
+    ) as HTMLInputElement | null;
+    expect(fileInput).toBeTruthy();
+
+    const firstFile = new File(["a"], "first.png", { type: "image/png" });
+    const secondFile = new File(["b"], "second.png", { type: "image/png" });
+    Object.defineProperty(fileInput, "files", {
+      configurable: true,
+      value: createFileList([firstFile, secondFile]),
+    });
+
+    await act(async () => {
+      fileInput?.dispatchEvent(new Event("change", { bubbles: true }));
+      await flushEffects();
+    });
+
+    expect(uploadWithPresign).toHaveBeenCalledTimes(2);
+    expect(uploadWithPresign).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        presignPath: "/notices/presign/image",
+        file: firstFile,
+      }),
+    );
+    expect(uploadWithPresign).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        presignPath: "/notices/presign/image",
+        file: secondFile,
+      }),
+    );
   });
 });

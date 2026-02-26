@@ -20,7 +20,7 @@ import {
 } from "../../../../../../lib/member-role-label";
 import AuditHistoryPanel from "../../../../_components/audit-history-panel";
 import LastUpdatedMeta from "../../../../_components/last-updated-meta";
-import MemberEditForm from "./member-edit-form";
+import MemberEditForm from "../../../../_components/member-edit-form";
 
 type MemberDetailClientProps = {
   generation: {
