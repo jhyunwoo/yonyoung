@@ -1,39 +1,33 @@
+import { Suspense } from "react";
 import Link from "next/link";
-import type { ApiActivity, ApiExhibition } from "@repo/shared-api-contracts";
 import { formatAuditActor } from "../../../../lib/audit-display";
 import { formatKoreanDate, formatKoreanDateRange } from "../../../../lib/date-formatters";
+import { readServerCookieHeader } from "../../../../lib/admin-generation-server";
 import {
-  listPublicActivities,
-  listPublicExhibitions,
-  listPublicPhotographers,
-  safeList,
-} from "../../../../lib/public-api";
+  listCachedActivities,
+  listCachedExhibitions,
+  listCachedGenerationMembers,
+} from "../../../../lib/admin-dashboard-cache";
 import { requireDashboardGeneration } from "./_lib/resolve-generation";
 import GenerationNoticeOverview from "./generation-notice-overview";
 
-const sortByStartDateDesc = <T extends { startDate: number }>(list: T[]): T[] =>
-  [...list].sort((left, right) => right.startDate - left.startDate);
+const sortByStartDateDesc = <T extends { startDate: number }>(list: T[]): T[] => {
+  return [...list].sort((left, right) => right.startDate - left.startDate);
+};
 
-export default async function GenerationDashboardPage({
-  params,
-}: Readonly<{
-  params: Promise<{ generationName: string }>;
-}>) {
-  const generation = await requireDashboardGeneration(params);
-  const [activities, exhibitions, photographerGenerations] = await Promise.all([
-    safeList(listPublicActivities, [] as ApiActivity[]),
-    safeList(listPublicExhibitions, [] as ApiExhibition[]),
-    safeList(listPublicPhotographers, []),
+const GenerationDashboardSummary = async (input: {
+  generationId: string;
+  generationPath: string;
+}) => {
+  const cookieHeader = await readServerCookieHeader();
+  const [activities, exhibitions, generationMembers] = await Promise.all([
+    listCachedActivities(input.generationId, cookieHeader),
+    listCachedExhibitions(input.generationId, cookieHeader),
+    listCachedGenerationMembers(input.generationId, cookieHeader),
   ]);
 
-  const generationActivities = sortByStartDateDesc(
-    activities.filter((activity) => activity.generationId === generation.id),
-  );
-  const generationExhibitions = sortByStartDateDesc(
-    exhibitions.filter((exhibition) => exhibition.generationId === generation.id),
-  );
-  const generationMembers =
-    photographerGenerations.find((item) => item.id === generation.id)?.members ?? [];
+  const generationActivities = sortByStartDateDesc(activities);
+  const generationExhibitions = sortByStartDateDesc(exhibitions);
   const recentActivities = generationActivities.slice(0, 4);
   const recentExhibitions = generationExhibitions.slice(0, 3);
 
@@ -41,6 +35,93 @@ export default async function GenerationDashboardPage({
     generationActivities[0]?.startDate ?? 0,
     generationExhibitions[0]?.startDate ?? 0,
   );
+
+  return (
+    <>
+      <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <li className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-semibold text-slate-500">기수 멤버</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900">{generationMembers.length}</p>
+          <p className="text-xs text-slate-500">명</p>
+        </li>
+        <li className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-semibold text-slate-500">활동</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900">{generationActivities.length}</p>
+          <p className="text-xs text-slate-500">건</p>
+        </li>
+        <li className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-semibold text-slate-500">전시</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900">{generationExhibitions.length}</p>
+          <p className="text-xs text-slate-500">건</p>
+        </li>
+        <li className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-semibold text-slate-500">최근 업데이트</p>
+          <p className="mt-1 text-base font-semibold text-slate-900">
+            {latestUpdateTimestamp > 0 ? formatKoreanDate(latestUpdateTimestamp) : "-"}
+          </p>
+        </li>
+      </ul>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+        <GenerationNoticeOverview
+          generationId={input.generationId}
+          generationPath={input.generationPath}
+        />
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+          <h2 className="text-lg font-bold text-slate-900">최근 활동</h2>
+          {recentActivities.length === 0 ? (
+            <p className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+              최근 활동 정보가 없습니다.
+            </p>
+          ) : (
+            <ul className="mt-4 space-y-3">
+              {recentActivities.map((activity) => (
+                <li
+                  key={activity.id}
+                  className="rounded-lg border border-slate-200 px-4 py-3"
+                >
+                  <p className="text-sm font-semibold text-slate-900">{activity.title}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {formatKoreanDateRange(activity.startDate, activity.endDate)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <h3 className="mt-6 text-sm font-semibold text-slate-900">최근 전시</h3>
+          {recentExhibitions.length === 0 ? (
+            <p className="mt-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+              최근 전시 정보가 없습니다.
+            </p>
+          ) : (
+            <ul className="mt-3 space-y-3">
+              {recentExhibitions.map((exhibition) => (
+                <li
+                  key={exhibition.id}
+                  className="rounded-lg border border-slate-200 px-4 py-3"
+                >
+                  <p className="text-sm font-semibold text-slate-900">{exhibition.title}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {formatKoreanDateRange(exhibition.startDate, exhibition.endDate)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
+    </>
+  );
+};
+
+export default async function GenerationDashboardPage({
+  params,
+}: Readonly<{
+  params: Promise<{ generationName: string }>;
+}>) {
+  const generation = await requireDashboardGeneration(params);
 
   const items = [
     {
@@ -80,82 +161,20 @@ export default async function GenerationDashboardPage({
           <p className="mt-2 text-xs text-slate-500">
             최근 수정: {formatKoreanDate(generation.updatedAt)} · {formatAuditActor(generation.updatedBy)}
           </p>
-
-          <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <li className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs font-semibold text-slate-500">기수 멤버</p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">{generationMembers.length}</p>
-              <p className="text-xs text-slate-500">명</p>
-            </li>
-            <li className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs font-semibold text-slate-500">활동</p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">{generationActivities.length}</p>
-              <p className="text-xs text-slate-500">건</p>
-            </li>
-            <li className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs font-semibold text-slate-500">전시</p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">{generationExhibitions.length}</p>
-              <p className="text-xs text-slate-500">건</p>
-            </li>
-            <li className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs font-semibold text-slate-500">최근 업데이트</p>
-              <p className="mt-1 text-base font-semibold text-slate-900">
-                {latestUpdateTimestamp > 0 ? formatKoreanDate(latestUpdateTimestamp) : "-"}
-              </p>
-            </li>
-          </ul>
         </section>
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-          <GenerationNoticeOverview
+        <Suspense
+          fallback={
+            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+              <p className="text-sm text-slate-500">대시보드 데이터를 불러오는 중입니다...</p>
+            </section>
+          }
+        >
+          <GenerationDashboardSummary
             generationId={generation.id}
             generationPath={generation.path}
           />
-
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-            <h2 className="text-lg font-bold text-slate-900">최근 활동</h2>
-            {recentActivities.length === 0 ? (
-              <p className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-                최근 활동 정보가 없습니다.
-              </p>
-            ) : (
-              <ul className="mt-4 space-y-3">
-                {recentActivities.map((activity) => (
-                  <li
-                    key={activity.id}
-                    className="rounded-lg border border-slate-200 px-4 py-3"
-                  >
-                    <p className="text-sm font-semibold text-slate-900">{activity.title}</p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {formatKoreanDateRange(activity.startDate, activity.endDate)}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <h3 className="mt-6 text-sm font-semibold text-slate-900">최근 전시</h3>
-            {recentExhibitions.length === 0 ? (
-              <p className="mt-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-                최근 전시 정보가 없습니다.
-              </p>
-            ) : (
-              <ul className="mt-3 space-y-3">
-                {recentExhibitions.map((exhibition) => (
-                  <li
-                    key={exhibition.id}
-                    className="rounded-lg border border-slate-200 px-4 py-3"
-                  >
-                    <p className="text-sm font-semibold text-slate-900">{exhibition.title}</p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {formatKoreanDateRange(exhibition.startDate, exhibition.endDate)}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </div>
+        </Suspense>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
           <div className="flex items-center justify-between">

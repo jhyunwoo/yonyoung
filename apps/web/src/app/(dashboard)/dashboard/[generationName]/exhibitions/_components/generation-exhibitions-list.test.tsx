@@ -3,12 +3,15 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const listExhibitions = vi.fn();
+const listCachedExhibitions = vi.fn();
+const readServerCookieHeader = vi.fn();
 
-vi.mock("../../../../../../lib/admin-api/resources", () => ({
-  adminResourceApi: {
-    listExhibitions: (...args: unknown[]) => listExhibitions(...args),
-  },
+vi.mock("../../../../../../lib/admin-dashboard-cache", () => ({
+  listCachedExhibitions: (...args: unknown[]) => listCachedExhibitions(...args),
+}));
+
+vi.mock("../../../../../../lib/admin-generation-server", () => ({
+  readServerCookieHeader: (...args: unknown[]) => readServerCookieHeader(...args),
 }));
 
 vi.mock("next/image", () => ({
@@ -23,11 +26,6 @@ vi.mock("next/image", () => ({
   },
 }));
 
-const flushEffects = async () => {
-  await Promise.resolve();
-  await Promise.resolve();
-};
-
 Object.assign(globalThis, { React, IS_REACT_ACT_ENVIRONMENT: true });
 
 describe("GenerationExhibitionsList", () => {
@@ -35,7 +33,9 @@ describe("GenerationExhibitionsList", () => {
   let root: Root;
 
   beforeEach(async () => {
-    listExhibitions.mockReset();
+    listCachedExhibitions.mockReset();
+    readServerCookieHeader.mockReset();
+    readServerCookieHeader.mockResolvedValue("session=abc");
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
@@ -49,7 +49,7 @@ describe("GenerationExhibitionsList", () => {
   });
 
   it("현재 기수 ID를 포함해 전시 목록을 조회한다", async () => {
-    listExhibitions.mockResolvedValue([
+    listCachedExhibitions.mockResolvedValue([
       {
         id: "exhibition-1",
         title: "60기 정기전",
@@ -66,45 +66,42 @@ describe("GenerationExhibitionsList", () => {
     ]);
 
     const { default: GenerationExhibitionsList } = await import("./generation-exhibitions-list");
-
-    await act(async () => {
-      root.render(
-        <GenerationExhibitionsList
-          generationId="generation-60"
-          generationName="60기"
-          generationPath="/dashboard/60%EA%B8%B0"
-          canManage
-        />,
-      );
-      await flushEffects();
+    const tree = await GenerationExhibitionsList({
+      generationId: "generation-60",
+      generationName: "60기",
+      generationPath: "/dashboard/60%EA%B8%B0",
+      canManage: true,
     });
 
-    expect(listExhibitions).toHaveBeenCalledTimes(1);
-    expect(listExhibitions).toHaveBeenCalledWith({ generationId: "generation-60" });
+    await act(async () => {
+      root.render(tree);
+    });
+
+    expect(readServerCookieHeader).toHaveBeenCalledTimes(1);
+    expect(listCachedExhibitions).toHaveBeenCalledTimes(1);
+    expect(listCachedExhibitions).toHaveBeenCalledWith("generation-60", "session=abc");
     expect(
       container.querySelector("[data-testid='generation-exhibition-card-exhibition-1']"),
     ).toBeInTheDocument();
   });
 
   it("권한이 없으면 전시 추가 버튼을 노출하지 않는다", async () => {
-    listExhibitions.mockResolvedValue([]);
+    listCachedExhibitions.mockResolvedValue([]);
 
     const { default: GenerationExhibitionsList } = await import("./generation-exhibitions-list");
-
-    await act(async () => {
-      root.render(
-        <GenerationExhibitionsList
-          generationId="generation-60"
-          generationName="60기"
-          generationPath="/dashboard/60%EA%B8%B0"
-          canManage={false}
-        />,
-      );
-      await flushEffects();
+    const tree = await GenerationExhibitionsList({
+      generationId: "generation-60",
+      generationName: "60기",
+      generationPath: "/dashboard/60%EA%B8%B0",
+      canManage: false,
     });
 
-    expect(listExhibitions).toHaveBeenCalledTimes(1);
-    expect(listExhibitions).toHaveBeenCalledWith({ generationId: "generation-60" });
+    await act(async () => {
+      root.render(tree);
+    });
+
+    expect(readServerCookieHeader).toHaveBeenCalledTimes(1);
+    expect(listCachedExhibitions).toHaveBeenCalledWith("generation-60", "session=abc");
     expect(container.textContent).toContain("전시 생성/수정 권한이 없습니다.");
     expect(container.textContent).not.toContain("전시 추가");
   });

@@ -1,44 +1,21 @@
-"use client";
-
-import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import type { ApiLinktree } from "../../../lib/admin-api/types";
-import { adminResourceApi } from "../../../lib/admin-api/resources";
 import { formatAuditActor } from "../../../lib/audit-display";
+import { readServerCookieHeader } from "../../../lib/admin-generation-server";
+import { listCachedLinktrees } from "../../../lib/admin-dashboard-cache";
 import { formatKoreanDate } from "../../../lib/date-formatters";
-import { readLinktreeErrorMessage, sortLinktreesByName } from "./linktree-shared";
+import { sortLinktreesByName } from "./linktree-shared";
 
 type LinktreeManagerProps = {
   canWrite: boolean;
   basePath: string;
 };
 
-export default function LinktreeManager({
+export default async function LinktreeManager({
   canWrite,
   basePath,
 }: LinktreeManagerProps) {
-  const [linktrees, setLinktrees] = useState<ApiLinktree[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const loadLinktrees = useCallback(async () => {
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const rows = await adminResourceApi.listLinktrees();
-      setLinktrees(sortLinktreesByName(rows));
-    } catch (error) {
-      setErrorMessage(readLinktreeErrorMessage(error));
-      setLinktrees([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadLinktrees();
-  }, [loadLinktrees]);
+  const cookieHeader = await readServerCookieHeader();
+  const linktrees = sortLinktreesByName(await listCachedLinktrees(cookieHeader));
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
@@ -48,21 +25,13 @@ export default function LinktreeManager({
         링크트리 분류와 분류별 링크를 확인할 수 있습니다. 항목을 클릭하면 상세 페이지로 이동합니다.
       </p>
 
-      {errorMessage ? (
-        <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {errorMessage}
-        </p>
-      ) : null}
-
       {!canWrite ? (
         <p className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-500">
           링크트리 수정/삭제는 회장, 부회장, 부장만 가능합니다.
         </p>
       ) : null}
 
-      {isLoading ? (
-        <p className="mt-6 text-sm text-slate-500">링크트리 목록을 불러오는 중입니다...</p>
-      ) : linktrees.length === 0 ? (
+      {linktrees.length === 0 ? (
         <p className="mt-6 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
           등록된 링크트리 분류가 없습니다.
         </p>

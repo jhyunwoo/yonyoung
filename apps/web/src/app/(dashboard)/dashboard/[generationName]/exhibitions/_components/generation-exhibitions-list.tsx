@@ -1,10 +1,7 @@
-"use client";
-
-import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import type { ApiExhibition } from "../../../../../../lib/admin-api/types";
-import { adminResourceApi } from "../../../../../../lib/admin-api/resources";
+import { readServerCookieHeader } from "../../../../../../lib/admin-generation-server";
+import { listCachedExhibitions } from "../../../../../../lib/admin-dashboard-cache";
 import { formatAuditActor } from "../../../../../../lib/audit-display";
 import {
   formatKoreanDate,
@@ -12,7 +9,6 @@ import {
 } from "../../../../../../lib/date-formatters";
 import { shouldUseUnoptimizedImage } from "../../../../../../lib/image-utils";
 import {
-  readExhibitionErrorMessage,
   sortExhibitionsByStartDateDesc,
   summarizeExhibitionDescription,
 } from "./exhibition-shared";
@@ -24,34 +20,16 @@ type GenerationExhibitionsListProps = {
   canManage: boolean;
 };
 
-export default function GenerationExhibitionsList({
+export default async function GenerationExhibitionsList({
   generationId,
   generationPath,
   generationName,
   canManage,
 }: GenerationExhibitionsListProps) {
-  const [exhibitions, setExhibitions] = useState<ApiExhibition[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const loadExhibitions = useCallback(async () => {
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const rows = await adminResourceApi.listExhibitions({ generationId });
-      setExhibitions(sortExhibitionsByStartDateDesc(rows));
-    } catch (error) {
-      setErrorMessage(readExhibitionErrorMessage(error));
-      setExhibitions([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [generationId]);
-
-  useEffect(() => {
-    void loadExhibitions();
-  }, [loadExhibitions]);
+  const cookieHeader = await readServerCookieHeader();
+  const exhibitions = sortExhibitionsByStartDateDesc(
+    await listCachedExhibitions(generationId, cookieHeader),
+  );
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
@@ -81,15 +59,7 @@ export default function GenerationExhibitionsList({
         </p>
       ) : null}
 
-      {errorMessage ? (
-        <p className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {errorMessage}
-        </p>
-      ) : null}
-
-      {isLoading ? (
-        <p className="mt-6 text-sm text-slate-500">전시 목록을 불러오는 중입니다...</p>
-      ) : exhibitions.length === 0 ? (
+      {exhibitions.length === 0 ? (
         <p className="mt-6 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
           현재 기수에 등록된 전시가 없습니다.
         </p>

@@ -1,15 +1,15 @@
-"use client";
-
-import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { adminResourceApi } from "../../../lib/admin-api/resources";
 import { formatKoreanDate } from "../../../lib/date-formatters";
 import { formatAuditActor } from "../../../lib/audit-display";
+import { readServerCookieHeader } from "../../../lib/admin-generation-server";
+import {
+  listCachedGenerationNotices,
+  listCachedGlobalNotices,
+} from "../../../lib/admin-dashboard-cache";
 import {
   buildNoticePreview,
   buildRoleLabel,
   normalizeNotices,
-  readNoticeErrorMessage,
   type NoticeItem,
   type NoticeScope,
 } from "./notice-shared";
@@ -25,7 +25,7 @@ type NoticeManagerProps = {
   createPath: string;
 };
 
-export default function NoticeManager({
+export default async function NoticeManager({
   scope,
   generationId,
   canWrite,
@@ -35,48 +35,23 @@ export default function NoticeManager({
   basePath,
   createPath,
 }: NoticeManagerProps) {
-  const [notices, setNotices] = useState<NoticeItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const cookieHeader = await readServerCookieHeader();
   const readOnlyMessage =
     scope === "global"
       ? "전체 공지 작성/수정/삭제는 회장만 가능합니다."
       : "공지 작성/수정/삭제는 회장, 부회장, 부장만 가능합니다.";
+  const generationIdOrNull = scope === "generation" ? generationId ?? null : null;
+  let notices: NoticeItem[] = [];
 
-  const generationIdOrNull = useMemo(
-    () => (scope === "generation" ? generationId ?? null : null),
-    [generationId, scope],
-  );
-
-  const loadNotices = useCallback(async () => {
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    try {
-      if (scope === "generation") {
-        if (!generationIdOrNull) {
-          setNotices([]);
-          return;
-        }
-
-        const rows = await adminResourceApi.listGenerationNotices(generationIdOrNull);
-        setNotices(normalizeNotices(rows));
-        return;
-      }
-
-      const rows = await adminResourceApi.listGlobalNotices();
-      setNotices(normalizeNotices(rows));
-    } catch (error) {
-      setErrorMessage(readNoticeErrorMessage(error));
-      setNotices([]);
-    } finally {
-      setIsLoading(false);
+  if (scope === "generation") {
+    if (generationIdOrNull) {
+      notices = normalizeNotices(
+        await listCachedGenerationNotices(generationIdOrNull, cookieHeader),
+      );
     }
-  }, [generationIdOrNull, scope]);
-
-  useEffect(() => {
-    void loadNotices();
-  }, [loadNotices]);
+  } else {
+    notices = normalizeNotices(await listCachedGlobalNotices(cookieHeader));
+  }
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
@@ -94,21 +69,13 @@ export default function NoticeManager({
       </div>
       <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">{description}</p>
 
-      {errorMessage ? (
-        <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {errorMessage}
-        </p>
-      ) : null}
-
       {!canWrite ? (
         <p className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-500">
           {readOnlyMessage}
         </p>
       ) : null}
 
-      {isLoading ? (
-        <p className="mt-6 text-sm text-slate-500">공지 목록을 불러오는 중입니다...</p>
-      ) : notices.length === 0 ? (
+      {notices.length === 0 ? (
         <p className="mt-6 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
           {emptyMessage}
         </p>

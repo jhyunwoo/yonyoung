@@ -1,15 +1,11 @@
-"use client";
-
-import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import type { ApiActivity } from "../../../../../../lib/admin-api/types";
-import { adminResourceApi } from "../../../../../../lib/admin-api/resources";
+import { readServerCookieHeader } from "../../../../../../lib/admin-generation-server";
+import { listCachedActivities } from "../../../../../../lib/admin-dashboard-cache";
 import { formatAuditActor } from "../../../../../../lib/audit-display";
 import { formatKoreanDate, formatKoreanDateRange } from "../../../../../../lib/date-formatters";
 import { shouldUseUnoptimizedImage } from "../../../../../../lib/image-utils";
 import {
-  readActivityErrorMessage,
   sortActivitiesByStartDateDesc,
   summarizeActivityDescription,
 } from "./activity-shared";
@@ -21,34 +17,16 @@ type GenerationActivitiesListProps = {
   canManage: boolean;
 };
 
-export default function GenerationActivitiesList({
+export default async function GenerationActivitiesList({
   generationId,
   generationPath,
   generationName,
   canManage,
 }: GenerationActivitiesListProps) {
-  const [activities, setActivities] = useState<ApiActivity[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const loadActivities = useCallback(async () => {
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const rows = await adminResourceApi.listActivities({ generationId });
-      setActivities(sortActivitiesByStartDateDesc(rows));
-    } catch (error) {
-      setErrorMessage(readActivityErrorMessage(error));
-      setActivities([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [generationId]);
-
-  useEffect(() => {
-    void loadActivities();
-  }, [loadActivities]);
+  const cookieHeader = await readServerCookieHeader();
+  const activities = sortActivitiesByStartDateDesc(
+    await listCachedActivities(generationId, cookieHeader),
+  );
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
@@ -78,15 +56,7 @@ export default function GenerationActivitiesList({
         </p>
       ) : null}
 
-      {errorMessage ? (
-        <p className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {errorMessage}
-        </p>
-      ) : null}
-
-      {isLoading ? (
-        <p className="mt-6 text-sm text-slate-500">활동 목록을 불러오는 중입니다...</p>
-      ) : activities.length === 0 ? (
+      {activities.length === 0 ? (
         <p className="mt-6 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
           현재 기수에 등록된 활동이 없습니다.
         </p>

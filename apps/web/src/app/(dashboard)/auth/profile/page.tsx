@@ -1,3 +1,4 @@
+import { cacheLife } from "next/cache";
 import { redirect } from "next/navigation";
 import { serverAuthTool } from "../../../../lib/auth-server-tool";
 import {
@@ -9,10 +10,30 @@ import {
 import { toEditableUserProfile } from "../../../../lib/user-profile";
 import AuthProfileForm from "./profile-form";
 
-export default async function AuthProfilePage() {
-  const session = await serverAuthTool.requireSession();
+const readAuthProfileData = async () => {
+  "use cache: private";
+  cacheLife("minutes");
+
+  const session = await serverAuthTool.getSession();
+  if (!session) {
+    return null;
+  }
+
   const profile = await serverAuthTool.getCurrentUserProfile(session);
-  const profileLike = (profile ?? session.user) as Record<string, unknown>;
+
+  return {
+    session,
+    profileLike: (profile ?? session.user) as Record<string, unknown>,
+  };
+};
+
+export default async function AuthProfilePage() {
+  const data = await readAuthProfileData();
+  if (!data) {
+    redirect("/auth/sign-in");
+  }
+
+  const { session, profileLike } = data;
   const isProfileComplete = hasCompletedRequiredProfile(profileLike);
   const unverifiedRole = isUnverifiedRole(session.user.role);
 

@@ -206,6 +206,7 @@ const SidebarContent = (input: {
               alt="연영회 로고"
               width={32}
               height={32}
+              unoptimized
               className="h-8 w-8 object-contain"
             />
           </span>

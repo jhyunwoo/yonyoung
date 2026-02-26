@@ -1,49 +1,23 @@
-"use client";
-
-import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { adminResourceApi } from "../../../lib/admin-api/resources";
 import { formatAuditActor } from "../../../lib/audit-display";
-import type { ApiSupporter } from "../../../lib/admin-api/types";
+import { readServerCookieHeader } from "../../../lib/admin-generation-server";
+import { listCachedSupporters } from "../../../lib/admin-dashboard-cache";
 import { formatKoreanDate } from "../../../lib/date-formatters";
 import { shouldUseUnoptimizedImage } from "../../../lib/image-utils";
-import {
-  readSupporterErrorMessage,
-  sortSupportersByExpiresAt,
-} from "./supporter-shared";
+import { sortSupportersByExpiresAt } from "./supporter-shared";
 
 type SupporterManagerProps = {
   canWrite: boolean;
   basePath: string;
 };
 
-export default function SupporterManager({
+export default async function SupporterManager({
   canWrite,
   basePath,
 }: SupporterManagerProps) {
-  const [supporters, setSupporters] = useState<ApiSupporter[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const loadSupporters = useCallback(async () => {
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const rows = await adminResourceApi.listSupporters();
-      setSupporters(sortSupportersByExpiresAt(rows));
-    } catch (error) {
-      setErrorMessage(readSupporterErrorMessage(error));
-      setSupporters([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadSupporters();
-  }, [loadSupporters]);
+  const cookieHeader = await readServerCookieHeader();
+  const supporters = sortSupportersByExpiresAt(await listCachedSupporters(cookieHeader));
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
@@ -59,15 +33,7 @@ export default function SupporterManager({
         </p>
       ) : null}
 
-      {errorMessage ? (
-        <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {errorMessage}
-        </p>
-      ) : null}
-
-      {isLoading ? (
-        <p className="mt-6 text-sm text-slate-500">후원사 목록을 불러오는 중입니다...</p>
-      ) : supporters.length === 0 ? (
+      {supporters.length === 0 ? (
         <p className="mt-6 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
           등록된 후원사가 없습니다.
         </p>
