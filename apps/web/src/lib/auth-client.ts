@@ -2,11 +2,14 @@ import { createAuthClient } from "better-auth/react";
 import { resolveBaseUrl } from "@repo/shared-http";
 
 const DEFAULT_AUTH_API_URL = "http://localhost:8787";
-const DEFAULT_PRODUCTION_AUTH_API_URL = "https://api.moveto.workers.dev";
+const DEFAULT_PRODUCTION_AUTH_API_URL = "https://api.yonyoung.moveto.kr";
 
 const resolveAuthBaseUrl = (): string => {
   if (process.env.NODE_ENV !== "production") {
-    return resolveBaseUrl([process.env.NEXT_PUBLIC_AUTH_API_URL], DEFAULT_AUTH_API_URL);
+    return resolveBaseUrl(
+      [process.env.NEXT_PUBLIC_AUTH_API_URL],
+      DEFAULT_AUTH_API_URL,
+    );
   }
 
   return resolveBaseUrl(

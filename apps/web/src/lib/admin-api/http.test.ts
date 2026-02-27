@@ -105,7 +105,7 @@ describe("adminRequest", () => {
     await adminRequest("/health", "GET");
 
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://api.moveto.workers.dev/api/health",
+      "https://api.yonyoung.moveto.kr/api/health",
       expect.any(Object),
     );
   });

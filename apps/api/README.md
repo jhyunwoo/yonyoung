@@ -133,7 +133,12 @@ Apply migrations:
 pnpm run db:migrate
 ```
 
-`db:migrate`와 `db:push`는 이 프로젝트에서 기본적으로 원격 D1(`--remote`)에만 적용됩니다.
+`db:migrate`와 `db:push`는 로컬 D1(`--local`)에 기본 적용됩니다. 원격(배포) D1에 적용할 때는 명시적으로 아래 명령을 사용하세요.
+
+```txt
+pnpm run db:migrate:remote
+pnpm run db:push:remote
+```
 
 ## Type Generation
 

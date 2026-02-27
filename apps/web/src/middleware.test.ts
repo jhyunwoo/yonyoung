@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 import { middleware } from "./middleware";
 
 const createRequest = (path: string, cookieHeader?: string): NextRequest => {
-  return new NextRequest(`https://web.moveto.workers.dev${path}`, {
+  return new NextRequest(`https://yonyoung.moveto.kr${path}`, {
     headers: cookieHeader
       ? {
           cookie: cookieHeader,
@@ -18,7 +18,7 @@ describe("middleware auth redirects", () => {
 
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe(
-      "https://web.moveto.workers.dev/auth/sign-in?next=%2Fdashboard",
+      "https://yonyoung.moveto.kr/auth/sign-in?next=%2Fdashboard",
     );
     expect(response.headers.get("cache-control")).toBe("private, no-store, max-age=0");
   });
@@ -37,5 +37,13 @@ describe("middleware auth redirects", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("location")).toBeNull();
+  });
+
+  it("allows Cloudflare Insights beacon script in CSP", () => {
+    const response = middleware(createRequest("/dashboard/settings/generations"));
+    const csp = response.headers.get("content-security-policy");
+
+    expect(csp).toContain("script-src");
+    expect(csp).toContain("https://static.cloudflareinsights.com");
   });
 });

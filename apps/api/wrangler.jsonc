@@ -24,19 +24,19 @@
       "database_name": "yonyoung-db",
       "database_id": "2b8373ca-0dd5-486f-aa2f-4847e5e2b79a",
       "migrations_dir": "drizzle",
-      "remote": true,
+      "remote": false,
     },
   ],
   "vars": {
-    "BETTER_AUTH_URL": "https://api.moveto.workers.dev",
-    "BETTER_AUTH_TRUSTED_ORIGINS": "https://web.moveto.workers.dev",
+    "BETTER_AUTH_URL": "https://api.yonyoung.moveto.kr",
+    "BETTER_AUTH_TRUSTED_ORIGINS": "https://yonyoung.moveto.kr",
     "R2_PUBLIC_BASE_URL": "https://storage.yonyoung.moveto.kr",
   },
   "r2_buckets": [
     {
       "bucket_name": "yonyoung-storage",
       "binding": "r2",
-      "remote": true,
+      "remote": false,
     },
   ],
   /**

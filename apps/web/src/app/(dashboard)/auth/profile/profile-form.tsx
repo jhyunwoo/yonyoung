@@ -42,6 +42,8 @@ type FieldErrors = Partial<
 >;
 
 const DEFAULT_SAVE_ERROR_MESSAGE = "기본 정보 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+const AUTH_COLLEGE_PLACEHOLDER = "인공지능융합대학";
+const AUTH_DEPARTMENT_PLACEHOLDER = "컴퓨터과학과";
 
 const readErrorMessage = (error: unknown): string => {
   if (error instanceof AdminApiError) {
@@ -344,6 +346,7 @@ export default function AuthProfileForm({
                 onChange={(event) => setCollege(event.target.value)}
                 disabled={isSaving}
                 className="rounded-lg border border-slate-300 px-3 py-2"
+                placeholder={isDashboardMode ? undefined : AUTH_COLLEGE_PLACEHOLDER}
               />
               {fieldErrors.college ? (
                 <span className="text-xs text-red-600">{fieldErrors.college}</span>
@@ -357,6 +360,7 @@ export default function AuthProfileForm({
                 onChange={(event) => setDepartment(event.target.value)}
                 disabled={isSaving}
                 className="rounded-lg border border-slate-300 px-3 py-2"
+                placeholder={isDashboardMode ? undefined : AUTH_DEPARTMENT_PLACEHOLDER}
               />
               {fieldErrors.department ? (
                 <span className="text-xs text-red-600">{fieldErrors.department}</span>

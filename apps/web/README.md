@@ -60,6 +60,8 @@ Optional keys:
 
 - `E2E_BASE_URL` (default: `http://localhost:3000`)
 - `E2E_API_URL` (default: `http://localhost:8787`)
+- `E2E_D1_DATABASE_NAME` (default: `yonyoung-db`)
+- `E2E_D1_ALLOW_REMOTE_FALLBACK` (default: `false`, 로컬 D1 실패 시 원격 D1 fallback 허용)
 - `E2E_WORKERS` (default: CI=`2`, local=`CPU cores / 2`)
 
 `E2E_ADMIN_*` 계정은 반드시 `president` 권한이어야 합니다.

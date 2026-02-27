@@ -13,9 +13,10 @@
     "test:coverage": "vitest run --coverage",
     "db:generation": "drizzle-kit generate",
     "db:backfill:rich-text": "node scripts/backfill-rich-text-html.mjs",
-    "db:migrate": "wrangler d1 migrations apply yonyoung-db --remote",
-    "db:migrate:remote": "pnpm run db:migrate",
-    "db:push": "drizzle-kit generate && wrangler d1 migrations apply yonyoung-db --remote",
+    "db:migrate": "wrangler d1 migrations apply yonyoung-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply yonyoung-db --remote",
+    "db:push": "drizzle-kit generate && wrangler d1 migrations apply yonyoung-db --local",
+    "db:push:remote": "drizzle-kit generate && wrangler d1 migrations apply yonyoung-db --remote",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {

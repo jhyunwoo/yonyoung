@@ -26,7 +26,10 @@ export default async function PendingApprovalPage() {
   }
 
   return (
-    <section className="px-4 pb-16 pt-10 md:px-8 md:pb-20" data-testid="auth-pending-approval-page">
+    <section
+      className="min-h-screen px-4 pb-16 pt-[72px] md:px-8 md:pb-20 md:pt-[80px]"
+      data-testid="auth-pending-approval-page"
+    >
       <div className="mx-auto w-full max-w-[1200px] border border-(--surface-border) p-7 md:p-10">
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-(--text-muted)">
           Approval Pending

@@ -11,7 +11,7 @@ import {
 } from "@repo/shared-http";
 
 const DEFAULT_AUTH_API_URL = "http://localhost:8787";
-const DEFAULT_PRODUCTION_AUTH_API_URL = "https://api.moveto.workers.dev";
+const DEFAULT_PRODUCTION_AUTH_API_URL = "https://api.yonyoung.moveto.kr";
 const ADMIN_API_BASE_PATH = "/api";
 const REQUEST_TIMEOUT_MS = 45_000;
 
@@ -21,7 +21,10 @@ type RequestBody = unknown;
 
 const resolveAdminApiBaseUrl = (): string => {
   if (process.env.NODE_ENV !== "production") {
-    return resolveBaseUrl([process.env.NEXT_PUBLIC_AUTH_API_URL], DEFAULT_AUTH_API_URL);
+    return resolveBaseUrl(
+      [process.env.NEXT_PUBLIC_AUTH_API_URL],
+      DEFAULT_AUTH_API_URL,
+    );
   }
 
   return resolveBaseUrl(
@@ -108,7 +111,10 @@ export const adminRequest = async <T>(
     throw new AdminApiError({
       status: 500,
       code: "UNKNOWN",
-      message: error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.",
+      message:
+        error instanceof Error
+          ? error.message
+          : "알 수 없는 오류가 발생했습니다.",
     });
   } finally {
     clearTimeoutController(timeoutId);

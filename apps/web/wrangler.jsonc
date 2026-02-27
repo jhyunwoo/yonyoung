@@ -20,6 +20,7 @@
     {
       "binding": "NEXT_INC_CACHE_R2_BUCKET",
       "bucket_name": "web-next-inc-cache",
+      "remote": false,
     },
   ],
   "images": {
@@ -45,6 +46,7 @@
       "database_name": "web-next-tag-cache",
       "database_id": "3903e976-24bc-491b-8f33-9ffd004c4e72",
       "preview_database_id": "3903e976-24bc-491b-8f33-9ffd004c4e72",
+      "remote": false,
     },
   ],
   "services": [
@@ -56,8 +58,8 @@
     },
   ],
   "vars": {
-    "AUTH_API_URL": "https://api.moveto.workers.dev",
-    "NEXT_PUBLIC_AUTH_API_URL": "https://api.moveto.workers.dev",
+    "AUTH_API_URL": "https://api.yonyoung.moveto.kr",
+    "NEXT_PUBLIC_AUTH_API_URL": "https://api.yonyoung.moveto.kr",
   },
   "observability": {
     "enabled": true,
@@ -69,7 +71,7 @@
     },
   ],
   "analytics_engine_datasets": [
-    { "binding": "ANALYTICS", "dataset": "yonyoung-log" }
+    { "binding": "ANALYTICS", "dataset": "yonyoung-log" },
   ],
   /**
    * Smart Placement

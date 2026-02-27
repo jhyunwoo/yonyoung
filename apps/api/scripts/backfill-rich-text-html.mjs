@@ -3,7 +3,7 @@
 import { spawnSync } from "node:child_process";
 
 const DB_NAME = process.env.D1_DB_NAME || "yonyoung-db";
-const USE_REMOTE = process.env.D1_REMOTE !== "false";
+const USE_REMOTE = process.env.D1_REMOTE === "true";
 
 const sqlEscape = (value) => value.replaceAll("'", "''");
 

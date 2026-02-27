@@ -94,6 +94,8 @@ const escapeSqlLiteral = (value: string): string => value.replace(/'/g, "''");
 
 const recoverSoftDeletedAdminUser = async (userId: string): Promise<boolean> => {
   const dbName = process.env.E2E_D1_DATABASE_NAME?.trim() || "yonyoung-db";
+  const allowRemoteFallback =
+    process.env.E2E_D1_ALLOW_REMOTE_FALLBACK?.trim().toLowerCase() === "true";
   const escapedUserId = escapeSqlLiteral(userId);
   const sql = [
     "UPDATE \"user\"",
@@ -104,7 +106,9 @@ const recoverSoftDeletedAdminUser = async (userId: string): Promise<boolean> => 
   ].join(" ");
 
   const apiDir = path.resolve(__dirname, "..", "..", "..", "api");
-  const locations: Array<"remote" | "local"> = ["remote", "local"];
+  const locations: Array<"local" | "remote"> = allowRemoteFallback
+    ? ["local", "remote"]
+    : ["local"];
   for (const location of locations) {
     try {
       await runCommand(
@@ -123,7 +127,7 @@ const recoverSoftDeletedAdminUser = async (userId: string): Promise<boolean> => 
       );
       return true;
     } catch {
-      // 다음 위치(remote/local)로 fallback 한다.
+      // 다음 위치(local/remote)로 fallback 한다.
     }
   }
 
