@@ -43,7 +43,10 @@ describe("worker runtime integration", () => {
       const response = await worker!.fetch("/api/unknown-endpoint");
 
       expect(response.status).toBe(404);
-      expect(response.headers.get("content-security-policy")).toContain("default-src 'none'");
+      expect(response.headers.get("content-security-policy-report-only")).toContain(
+        "default-src 'none'",
+      );
+      expect(response.headers.get("content-security-policy")).toBeNull();
       expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     },
     15_000,

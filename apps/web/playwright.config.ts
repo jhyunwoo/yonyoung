@@ -66,7 +66,7 @@ export default defineConfig({
   reporter: [["list"], ["html", { open: "never" }]],
   webServer: [
     {
-      command: `pnpm --filter api exec wrangler dev --port ${apiPort}`,
+      command: `pnpm --filter api run dev -- --port ${apiPort}`,
       url: `${apiURL}/message`,
       reuseExistingServer: true,
       timeout: 120_000,

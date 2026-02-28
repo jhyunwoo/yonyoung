@@ -60,10 +60,12 @@ test.describe("activities crud", () => {
 
     await page.getByRole("link", { name: "수정" }).click();
     await expect(page).toHaveURL(
-      new RegExp(`${escapedGenerationPath}/activities/${activityId}/edit$`, "i"),
+      new RegExp(`${escapedGenerationPath}/activities/${activityId}/edit(?:\\?.*)?$`, "i"),
     );
 
-    await page.getByLabel("활동 제목").fill(updatedTitle);
+    const editTitleInput = page.getByLabel("활동 제목").first();
+    await expect(editTitleInput).toBeVisible({ timeout: 120_000 });
+    await editTitleInput.fill(updatedTitle);
     const editFileInputs = page.locator("input[type='file']");
     await editFileInputs.nth(1).setInputFiles(sampleImagePath);
     await page.getByRole("button", { name: "이미지 삭제" }).first().click();

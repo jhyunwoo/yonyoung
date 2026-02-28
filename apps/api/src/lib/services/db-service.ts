@@ -11,7 +11,6 @@ import {
   globalNotices,
   linktree,
   linktreeItems,
-  supporters,
   user,
   userGenerations,
 } from "../db/schema";
@@ -118,7 +117,6 @@ const USER_RESOURCE_HISTORY_RESOURCE_TYPES = [
   "exhibition",
   "generation_notice",
   "global_notice",
-  "supporter",
   "linktree",
   "linktree_item",
 ] as const satisfies readonly UserResourceHistoryResourceType[];
@@ -230,29 +228,93 @@ const listLegacyActivities = async (
   orderByDirection: "ASC" | "DESC",
   generationId?: string,
 ): Promise<(typeof activities.$inferSelect)[]> => {
-  const generationWhereClause = generationId
-    ? ` and "activities"."generation_id" = ?`
-    : "";
-  const statement = database.prepare(
-    `
-      select
-        "id",
-        "title",
-        "description",
-        "activity_date",
-        "cover_image_url",
-        "generation_id",
-        "created_at",
-        "updated_at",
-        "deleted_at"
-      from "activities"
-      where "activities"."deleted_at" is null${generationWhereClause}
-      order by "activities"."activity_date" ${orderByDirection}
-    `,
-  );
-  const executed = generationId
-    ? statement.bind(generationId).all<LegacyActivityRow>()
-    : statement.all<LegacyActivityRow>();
+  let executed: Promise<D1Result<LegacyActivityRow>>;
+  if (generationId) {
+    if (orderByDirection === "ASC") {
+      executed = database
+        .prepare(
+          `
+            select
+              "id",
+              "title",
+              "description",
+              "activity_date",
+              "cover_image_url",
+              "generation_id",
+              "created_at",
+              "updated_at",
+              "deleted_at"
+            from "activities"
+            where "activities"."deleted_at" is null
+              and "activities"."generation_id" = ?
+            order by "activities"."activity_date" ASC`,
+        )
+        .bind(generationId)
+        .all<LegacyActivityRow>();
+    } else {
+      executed = database
+        .prepare(
+          `
+            select
+              "id",
+              "title",
+              "description",
+              "activity_date",
+              "cover_image_url",
+              "generation_id",
+              "created_at",
+              "updated_at",
+              "deleted_at"
+            from "activities"
+            where "activities"."deleted_at" is null
+              and "activities"."generation_id" = ?
+            order by "activities"."activity_date" DESC`,
+        )
+        .bind(generationId)
+        .all<LegacyActivityRow>();
+    }
+  } else if (orderByDirection === "ASC") {
+    executed = database
+      .prepare(
+        `
+          select
+            "id",
+            "title",
+            "description",
+            "activity_date",
+            "cover_image_url",
+            "generation_id",
+            "created_at",
+            "updated_at",
+            "deleted_at"
+          from "activities"
+          where "activities"."deleted_at" is null
+          order by "activities"."activity_date" ASC`,
+      )
+      .bind()
+      .all<LegacyActivityRow>();
+  } else {
+    executed = database
+      .prepare(
+        `
+          select
+            "id",
+            "title",
+            "description",
+            "activity_date",
+            "cover_image_url",
+            "generation_id",
+            "created_at",
+            "updated_at",
+            "deleted_at"
+          from "activities"
+          where "activities"."deleted_at" is null
+          order by "activities"."activity_date" DESC`,
+      )
+      .bind()
+      .all<LegacyActivityRow>();
+  }
+
   const { results } = await executed;
 
   return (results ?? []).map(mapLegacyActivityRow);
@@ -1216,145 +1278,6 @@ export const createDbDataService = (database: D1Database): DataService => {
         .update(activities)
         .set({ updatedAt: new Date() })
         .where(and(eq(activities.id, activityId), isNull(activities.deletedAt)));
-      return true;
-    },
-
-        /**
-     * listSupporters의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
-     * @returns 비동기 처리 결과를 Promise로 반환합니다.
-     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
-     */
-    async listSupporters() {
-      const rows = await db
-        .select()
-        .from(supporters)
-        .where(isNull(supporters.deletedAt))
-        .orderBy(asc(supporters.expiresAt));
-
-      const updatedByMap = await listLatestAuditActorsByResourceId(
-        db,
-        "supporter",
-        rows.map((row) => row.id),
-      );
-
-      return rows.map((row) => ({
-        ...row,
-        updatedBy: updatedByMap[row.id] ?? null,
-      }));
-    },
-        /**
-     * listPublicSupporters의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
-     * @param nowMs 기준 시각(Unix epoch ms)입니다.
-     * @returns 비동기 처리 결과를 Promise로 반환합니다.
-     * @remarks 공개 화면 노출 우선순위(유효 후원사 우선)를 DB 정렬로 처리합니다.
-     */
-    async listPublicSupporters(nowMs) {
-      const activePriority = sql<number>`case when ${supporters.expiresAt} >= ${nowMs} then 1 else 0 end`;
-      const rows = await db
-        .select()
-        .from(supporters)
-        .where(isNull(supporters.deletedAt))
-        .orderBy(desc(activePriority), asc(supporters.expiresAt));
-
-      const updatedByMap = await listLatestAuditActorsByResourceId(
-        db,
-        "supporter",
-        rows.map((row) => row.id),
-      );
-
-      return rows.map((row) => ({
-        ...row,
-        updatedBy: updatedByMap[row.id] ?? null,
-      }));
-    },
-        /**
-     * createSupporter 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
-     * @param input 함수 로직에서 사용하는 입력값입니다.
-     * @returns 처리 결과를 Promise로 반환합니다.
-     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
-     */
-    async createSupporter(input) {
-      const id = crypto.randomUUID();
-      await db.insert(supporters).values({
-        id,
-        name: input.name,
-        link: input.link,
-        logoUrl: input.logoUrl,
-        expiresAt: new Date(input.expiresAt),
-      });
-      return (await this.getSupporterById(id))!;
-    },
-        /**
-     * getSupporterById 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
-     * @param id 대상을 식별하기 위한 ID 값입니다.
-     * @returns 조회/계산된 결과 값을 반환합니다.
-     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
-     */
-    async getSupporterById(id) {
-      const row =
-        (await db.query.supporters.findFirst({
-          where: and(eq(supporters.id, id), isNull(supporters.deletedAt)),
-        })) ?? null;
-      if (!row) {
-        return null;
-      }
-
-      const updatedBy = await this.getLatestAuditActor("supporter", id);
-      return {
-        ...row,
-        updatedBy,
-      };
-    },
-        /**
-     * updateSupporter 기존 데이터나 상태를 갱신하는 처리를 수행합니다.
-     * @param id 대상을 식별하기 위한 ID 값입니다.
-     * @param input 함수 로직에서 사용하는 입력값입니다.
-     * @returns 처리 결과를 Promise로 반환합니다.
-     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
-     */
-    async updateSupporter(id, input) {
-      const exists = await db.query.supporters.findFirst({
-        where: and(eq(supporters.id, id), isNull(supporters.deletedAt)),
-      });
-      if (!exists) {
-        return null;
-      }
-
-      await db
-        .update(supporters)
-        .set({
-          ...(input.name !== undefined ? { name: input.name } : {}),
-          ...(input.link !== undefined ? { link: input.link } : {}),
-          ...(input.logoUrl !== undefined ? { logoUrl: input.logoUrl } : {}),
-          ...(input.expiresAt !== undefined
-            ? { expiresAt: new Date(input.expiresAt) }
-            : {}),
-          updatedAt: new Date(),
-        })
-        .where(and(eq(supporters.id, id), isNull(supporters.deletedAt)));
-
-      return this.getSupporterById(id);
-    },
-        /**
-     * deleteSupporter 대상 리소스를 정리하거나 제거하는 처리를 수행합니다.
-     * @param id 대상을 식별하기 위한 ID 값입니다.
-     * @returns 처리 결과를 Promise로 반환합니다.
-     * @remarks 데이터 접근 시 입력값 검증과 트랜잭션/무결성 규칙을 함께 고려해야 합니다.
-     */
-    async deleteSupporter(id) {
-      const exists = await db.query.supporters.findFirst({
-        where: and(eq(supporters.id, id), isNull(supporters.deletedAt)),
-      });
-      if (!exists) {
-        return false;
-      }
-      await db
-        .update(supporters)
-        .set({
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .where(and(eq(supporters.id, id), isNull(supporters.deletedAt)));
       return true;
     },
 
@@ -2459,7 +2382,6 @@ export const createDbDataService = (database: D1Database): DataService => {
         exhibition: [],
         generation_notice: [],
         global_notice: [],
-        supporter: [],
         linktree: [],
         linktree_item: [],
       };
@@ -2482,7 +2404,6 @@ export const createDbDataService = (database: D1Database): DataService => {
         exhibitionRows,
         generationNoticeRows,
         globalNoticeRows,
-        supporterRows,
         linktreeRows,
         linktreeItemRows,
       ] = await Promise.all([
@@ -2528,16 +2449,6 @@ export const createDbDataService = (database: D1Database): DataService => {
               })
               .from(globalNotices)
               .where(inArray(globalNotices.id, resourceIdsByType.global_notice))
-          : Promise.resolve([]),
-        resourceIdsByType.supporter.length > 0
-          ? db
-              .select({
-                id: supporters.id,
-                resourceTitle: supporters.name,
-                deletedAt: supporters.deletedAt,
-              })
-              .from(supporters)
-              .where(inArray(supporters.id, resourceIdsByType.supporter))
           : Promise.resolve([]),
         resourceIdsByType.linktree.length > 0
           ? db
@@ -2602,16 +2513,6 @@ export const createDbDataService = (database: D1Database): DataService => {
         });
       }
 
-      const supporterMetaById = new Map<string, UserResourceMeta>();
-      for (const row of supporterRows) {
-        supporterMetaById.set(row.id, {
-          resourceTitle: row.resourceTitle,
-          generationId: null,
-          linktreeId: null,
-          deletedAt: row.deletedAt,
-        });
-      }
-
       const linktreeMetaById = new Map<string, UserResourceMeta>();
       for (const row of linktreeRows) {
         linktreeMetaById.set(row.id, {
@@ -2640,7 +2541,6 @@ export const createDbDataService = (database: D1Database): DataService => {
         exhibition: exhibitionMetaById,
         generation_notice: generationNoticeMetaById,
         global_notice: globalNoticeMetaById,
-        supporter: supporterMetaById,
         linktree: linktreeMetaById,
         linktree_item: linktreeItemMetaById,
       };
@@ -2714,6 +2614,12 @@ export const createDbDataService = (database: D1Database): DataService => {
           ...(input.phoneNumber !== undefined
             ? { phoneNumber: input.phoneNumber }
             : {}),
+          ...(input.collaborationAvailable !== undefined
+            ? { collaborationAvailable: input.collaborationAvailable }
+            : {}),
+          ...(input.personalLink !== undefined
+            ? { personalLink: input.personalLink }
+            : {}),
           ...(input.role !== undefined ? { role: input.role } : {}),
           updatedAt: new Date(),
         })
@@ -2763,13 +2669,10 @@ export const createDbDataService = (database: D1Database): DataService => {
      * @remarks 대시보드 KPI 집계를 위해 단순 count 쿼리를 결합해 사용합니다.
      */
     async getAdminDashboardStats(generationSortOrder) {
-      const now = Date.now();
-
       const [
         usersCountRows,
         unverifiedUsersCountRows,
         generationsCountRows,
-        supportersCountRows,
         linktreeLinksCountRows,
       ] = await Promise.all([
         db
@@ -2784,10 +2687,6 @@ export const createDbDataService = (database: D1Database): DataService => {
           .select({ value: sql<number>`count(*)` })
           .from(generations)
           .where(isNull(generations.deletedAt)),
-        db
-          .select({ value: sql<number>`count(*)` })
-          .from(supporters)
-          .where(and(isNull(supporters.deletedAt), sql`${supporters.expiresAt} >= ${now}`)),
         db
           .select({ value: sql<number>`count(*)` })
           .from(linktreeItems)
@@ -2878,7 +2777,6 @@ export const createDbDataService = (database: D1Database): DataService => {
         selectedGenerationMembersTotal,
         selectedGenerationActivitiesTotal,
         selectedGenerationExhibitionsTotal,
-        activeSupportersTotal: supportersCountRows[0]?.value ?? 0,
         linktreeLinksTotal: linktreeLinksCountRows[0]?.value ?? 0,
       };
     },

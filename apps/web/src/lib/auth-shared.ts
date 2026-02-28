@@ -24,6 +24,8 @@ export type AuthUser = {
   department?: string | null;
   studentNumber?: string | null;
   phoneNumber?: string | null;
+  collaborationAvailable?: boolean | null;
+  personalLink?: string | null;
   role?: AuthRole | null;
   generationId?: string | null;
   generationIds?: string[];

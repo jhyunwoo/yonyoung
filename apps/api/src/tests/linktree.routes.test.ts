@@ -77,6 +77,27 @@ describe("linktree routes", /** describe 실행 과정에서 필요한 연산을
     expect(createLinktreeMock).toHaveBeenCalledWith({ name: "new-linktree" });
   });
 
+  it("vice_president는 링크트리를 생성할 수 있다", async () => {
+    const createLinktreeMock = fn(async () =>
+      createLinktree({ name: "vp-new-linktree" }),
+    );
+    const app = createTestApp({
+      actor: createActor("vice_president", IDs.vicePresident),
+      dataService: createDataServiceMock({ createLinktree: createLinktreeMock }),
+    });
+
+    const response = await app.request("/api/linktree", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "vp-new-linktree" }),
+    });
+
+    expect(response.status).toBe(201);
+    const body = await readJson<{ data: { name: string } }>(response);
+    expect(body.data.name).toBe("vp-new-linktree");
+    expect(createLinktreeMock).toHaveBeenCalledWith({ name: "vp-new-linktree" });
+  });
+
   it("링크트리 상세 조회에서 UUID가 유효하지 않으면 400을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({ actor: createActor("manager", IDs.manager) });
 
@@ -157,6 +178,27 @@ describe("linktree routes", /** describe 실행 과정에서 필요한 연산을
     expect(response.status).toBe(200);
     const body = await readJson<{ data: { name: string } }>(response);
     expect(body.data.name).toBe("updated");
+  });
+
+  it("vice_president는 링크트리를 수정할 수 있다", async () => {
+    const updateLinktree = fn(async () => createLinktree({ name: "vp-updated" }));
+    const app = createTestApp({
+      actor: createActor("vice_president", IDs.vicePresident),
+      dataService: createDataServiceMock({ updateLinktree }),
+    });
+
+    const response = await app.request(`/api/linktree/${IDs.linktree}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "vp-updated" }),
+    });
+
+    expect(response.status).toBe(200);
+    const body = await readJson<{ data: { name: string } }>(response);
+    expect(body.data.name).toBe("vp-updated");
+    expect(updateLinktree).toHaveBeenCalledWith(IDs.linktree, {
+      name: "vp-updated",
+    });
   });
 
   it("member 계열 사용자는 링크트리 삭제 권한이 없다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
@@ -284,6 +326,32 @@ describe("linktree routes", /** describe 실행 과정에서 필요한 연산을
     expect(addLinktreeItem).toHaveBeenCalledWith(IDs.linktree, payload);
   });
 
+  it("vice_president는 링크 아이템을 생성할 수 있다", async () => {
+    const addLinktreeItem = fn(async () =>
+      createLinktreeItem({ name: "vp-instagram" }),
+    );
+    const app = createTestApp({
+      actor: createActor("vice_president", IDs.vicePresident),
+      dataService: createDataServiceMock({ addLinktreeItem }),
+    });
+
+    const payload = {
+      name: "vp-instagram",
+      link: "https://instagram.com/vp",
+    };
+
+    const response = await app.request(`/api/linktree/${IDs.linktree}/items`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    expect(response.status).toBe(201);
+    const body = await readJson<{ data: { name: string } }>(response);
+    expect(body.data.name).toBe("vp-instagram");
+    expect(addLinktreeItem).toHaveBeenCalledWith(IDs.linktree, payload);
+  });
+
   it("링크 아이템 수정 본문이 비어 있으면 400을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({ actor: createActor("manager", IDs.manager) });
 
@@ -341,6 +409,35 @@ describe("linktree routes", /** describe 실행 과정에서 필요한 연산을
     expect(response.status).toBe(200);
     const body = await readJson<{ data: { name: string } }>(response);
     expect(body.data.name).toBe("updated");
+    expect(updateLinktreeItem).toHaveBeenCalledWith(
+      IDs.linktree,
+      IDs.linktreeItem,
+      payload,
+    );
+  });
+
+  it("vice_president는 링크 아이템을 수정할 수 있다", async () => {
+    const updateLinktreeItem = fn(async () =>
+      createLinktreeItem({ name: "vp-updated-item" }),
+    );
+    const app = createTestApp({
+      actor: createActor("vice_president", IDs.vicePresident),
+      dataService: createDataServiceMock({ updateLinktreeItem }),
+    });
+
+    const payload = { name: "vp-updated-item" };
+    const response = await app.request(
+      `/api/linktree/${IDs.linktree}/items/${IDs.linktreeItem}`,
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      },
+    );
+
+    expect(response.status).toBe(200);
+    const body = await readJson<{ data: { name: string } }>(response);
+    expect(body.data.name).toBe("vp-updated-item");
     expect(updateLinktreeItem).toHaveBeenCalledWith(
       IDs.linktree,
       IDs.linktreeItem,

@@ -34,7 +34,6 @@ const navItems: NavItem[] = [
     testId: "archive",
     children: [
       { href: "/archive/records", label: "활동 기록" },
-      { href: "/archive/supporters", label: "서포터즈" },
       { href: "/archive/exhibitions", label: "전시회" },
     ],
   },
@@ -77,7 +76,7 @@ export default function SiteHeader() {
   return (
     <header
       className={[
-        "fixed inset-x-0 top-0 z-[1000] border-b border-transparent bg-white backdrop-blur-[10px] transition-all duration-300",
+        "fixed inset-x-0 top-0 z-[1000] h-[var(--public-header-height-mobile)] border-b border-transparent bg-white backdrop-blur-[10px] transition-all duration-300 md:h-[var(--public-header-height-desktop)]",
         isScrolled
           ? "border-b-[#bfbfbf] shadow-[0_2px_10px_rgba(44,51,87,0.1)]"
           : "",
@@ -86,11 +85,11 @@ export default function SiteHeader() {
         .trim()}
       data-testid="public-header"
     >
-      <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-4 py-4 md:px-8">
+      <div className="mx-auto flex h-full w-full max-w-[1200px] items-center justify-between px-4 md:px-8">
         <div className="flex items-center gap-6">
           <Link
             href="/"
-            className="flex min-h-11 items-center gap-[0.6rem] py-1"
+            className="flex min-h-11 items-center gap-[0.6rem]"
             data-testid="public-logo-link"
           >
             <div className="flex h-[1.92rem] items-center justify-center">
@@ -163,7 +162,7 @@ export default function SiteHeader() {
 
       {isMobileMenuOpen ? (
         <nav
-          className="fixed inset-x-0 top-[70px] block border-b border-[#bfbfbf] bg-[rgba(255,255,255,0.98)] p-8 backdrop-blur-[10px] md:hidden"
+          className="fixed inset-x-0 top-[var(--public-header-height-mobile)] block border-b border-[#bfbfbf] bg-[rgba(255,255,255,0.98)] p-8 backdrop-blur-[10px] md:top-[var(--public-header-height-desktop)] md:hidden"
           data-testid="public-nav-mobile"
         >
           <ul className="flex list-none flex-col gap-4">

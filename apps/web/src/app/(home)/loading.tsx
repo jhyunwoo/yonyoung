@@ -7,7 +7,7 @@ export default function HomeLoading() {
         페이지를 불러오는 중입니다.
       </p>
 
-      <section className="relative border-b border-(--surface-border) bg-(--surface-elevated) px-4 pb-16 pt-32 md:px-8 md:pb-20 md:pt-36">
+      <section className="relative border-b border-(--surface-border) bg-(--surface-elevated) px-4 pb-16 pt-14 md:px-8 md:pb-20 md:pt-16">
         <div className="mx-auto grid w-full max-w-[1200px] gap-10 md:grid-cols-[1.1fr_0.9fr] md:items-end">
           <div>
             <div className={`h-4 w-52 ${pulse}`} />
@@ -68,30 +68,6 @@ export default function HomeLoading() {
                   <div className={`h-7 w-3/4 ${pulse}`} />
                   <div className={`h-4 w-full ${pulse}`} />
                 </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-(--surface-elevated) px-4 py-12 md:px-8 md:py-16">
-        <div className="mx-auto w-full max-w-[1200px]">
-          <div className="mb-10 text-center md:mb-12">
-            <div className={`mx-auto h-3 w-24 ${pulse}`} />
-            <div className={`mx-auto mt-4 h-10 w-64 md:w-96 ${pulse}`} />
-            <div className={`mx-auto mt-4 h-4 w-full max-w-lg ${pulse}`} />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <article
-                key={`home-loading-supporter-${index}`}
-                className="border border-(--surface-border) bg-(--surface-elevated) p-4"
-              >
-                <div
-                  className={`aspect-3/2 border border-(--surface-border) ${pulse}`}
-                />
-                <div className={`mt-4 h-5 w-3/4 ${pulse}`} />
               </article>
             ))}
           </div>

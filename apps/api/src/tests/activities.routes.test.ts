@@ -208,6 +208,36 @@ describe("activity routes", /** describe 실행 과정에서 필요한 연산을
     expect(createActivityMock).toHaveBeenCalledWith(payload);
   });
 
+  it("vice_president는 활동을 생성할 수 있다", async () => {
+    const createActivityMock = fn(async () =>
+      createActivity({ title: "부회장 신규 활동" }),
+    );
+    const app = createTestApp({
+      actor: createActor("vice_president", IDs.vicePresident),
+      dataService: createDataServiceMock({ createActivity: createActivityMock }),
+    });
+
+    const payload = {
+      title: "부회장 신규 활동",
+      description: "설명",
+      startDate: Date.parse("2030-03-01T00:00:00.000Z"),
+      endDate: Date.parse("2030-03-03T00:00:00.000Z"),
+      coverImageUrl: "https://example.com/cover.jpg",
+      generationId: IDs.generation,
+    };
+
+    const response = await app.request("/api/activities", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    expect(response.status).toBe(201);
+    const body = await readJson<{ data: { title: string } }>(response);
+    expect(body.data.title).toBe("부회장 신규 활동");
+    expect(createActivityMock).toHaveBeenCalledWith(payload);
+  });
+
   it("활동 상세 조회에서 UUID가 유효하지 않으면 400을 반환한다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
     const app = createTestApp({ actor: createActor("regular_member") });
 
@@ -334,6 +364,29 @@ describe("activity routes", /** describe 실행 과정에서 필요한 연산을
     expect(response.status).toBe(200);
     const body = await readJson<{ data: { title: string } }>(response);
     expect(body.data.title).toBe("수정");
+  });
+
+  it("vice_president는 활동을 수정할 수 있다", async () => {
+    const updateActivity = fn(async () =>
+      createActivity({ title: "부회장 수정" }),
+    );
+    const app = createTestApp({
+      actor: createActor("vice_president", IDs.vicePresident),
+      dataService: createDataServiceMock({ updateActivity }),
+    });
+
+    const response = await app.request(`/api/activities/${IDs.activity}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "부회장 수정" }),
+    });
+
+    expect(response.status).toBe(200);
+    const body = await readJson<{ data: { title: string } }>(response);
+    expect(body.data.title).toBe("부회장 수정");
+    expect(updateActivity).toHaveBeenCalledWith(IDs.activity, {
+      title: "부회장 수정",
+    });
   });
 
   it("member 계열 사용자는 활동 삭제가 불가하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {

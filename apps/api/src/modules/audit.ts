@@ -20,11 +20,10 @@ const readPermissionResource = (
     | "exhibition"
     | "generation_notice"
     | "global_notice"
-    | "supporter"
     | "linktree"
     | "linktree_item"
     | "user",
-): "generation" | "activity" | "exhibition" | "notice" | "supporter" | "linktree" | "user" => {
+): "generation" | "activity" | "exhibition" | "notice" | "linktree" | "user" => {
   switch (resourceType) {
     case "generation":
       return "generation";
@@ -35,8 +34,6 @@ const readPermissionResource = (
     case "generation_notice":
     case "global_notice":
       return "notice";
-    case "supporter":
-      return "supporter";
     case "linktree":
     case "linktree_item":
       return "linktree";

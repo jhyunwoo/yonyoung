@@ -29,6 +29,16 @@ const resolveCspHeader = (pathname: string) => {
   return API_CSP;
 };
 
+const isCspReportOnlyEnabled = (
+  value: string | undefined,
+): boolean => {
+  if (!value) {
+    return true;
+  }
+
+  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+};
+
 export const apiSecurityHeadersMiddleware: MiddlewareHandler<HonoAppType> = async (
   c,
   next,
@@ -36,7 +46,15 @@ export const apiSecurityHeadersMiddleware: MiddlewareHandler<HonoAppType> = asyn
   await next();
 
   const requestUrl = new URL(c.req.url);
-  c.res.headers.set("Content-Security-Policy", resolveCspHeader(requestUrl.pathname));
+  const csp = resolveCspHeader(requestUrl.pathname);
+  const cspReportOnly = c.env?.CSP_REPORT_ONLY;
+  if (isCspReportOnlyEnabled(cspReportOnly)) {
+    c.res.headers.set("Content-Security-Policy-Report-Only", csp);
+    c.res.headers.delete("Content-Security-Policy");
+  } else {
+    c.res.headers.set("Content-Security-Policy", csp);
+    c.res.headers.delete("Content-Security-Policy-Report-Only");
+  }
   c.res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   c.res.headers.set("X-Content-Type-Options", "nosniff");
   c.res.headers.set("X-Frame-Options", "DENY");

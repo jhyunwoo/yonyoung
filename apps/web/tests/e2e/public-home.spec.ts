@@ -15,7 +15,6 @@ test.describe("public home", () => {
       "Latest Exhibition",
     );
     await expect(page.getByTestId("home-activities-grid")).toBeVisible();
-    await expect(page.getByTestId("home-supporters-grid")).toBeVisible();
     await expect(page.getByTestId("home-quicklinks-grid")).toBeVisible();
 
     await page.getByTestId("home-cta-archive").click();

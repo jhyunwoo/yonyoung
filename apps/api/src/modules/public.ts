@@ -6,7 +6,6 @@ import {
   ApiIdParamSchema,
   ApiLinktreeSchema,
   ApiPublicGenerationWithMembersSchema,
-  ApiSupporterSchema,
 } from "../lib/openapi/schemas";
 import { dataResponse, errorResponses } from "../lib/openapi/responses";
 import { badRequest, notFound, ok } from "../lib/http/response";
@@ -79,16 +78,6 @@ const getPublicExhibitionByIdRoute = createRoute({
     200: dataResponse(ApiExhibitionSchema, "공개 전시 상세 조회 성공"),
     400: errorResponses[400],
     404: errorResponses[404],
-  },
-});
-
-const listPublicSupportersRoute = createRoute({
-  method: "get",
-  path: "/api/public/supporters",
-  tags: ["Public"],
-  operationId: "listPublicSupporters",
-  responses: {
-    200: dataResponse(ApiSupporterSchema.array(), "공개 후원사 목록 조회 성공"),
   },
 });
 
@@ -184,15 +173,6 @@ export const registerPublicRoutes = (
     }),
   );
 
-  app.openapi(listPublicSupportersRoute, async (c): Promise<any> =>
-    respondWithPublicCache(c, async () => {
-      const data = await dependencies
-        .getDataService(c)
-        .listPublicSupporters(Date.now());
-      return ok(c, data);
-    }),
-  );
-
   app.openapi(listPublicLinktreeRoute, async (c): Promise<any> =>
     respondWithPublicCache(c, async () => {
       const data = await dependencies.getDataService(c).listLinktrees();
@@ -249,6 +229,8 @@ export const registerPublicRoutes = (
             image: user.image,
             familyName: user.familyName,
             givenName: user.givenName,
+            collaborationAvailable: user.collaborationAvailable,
+            personalLink: user.personalLink,
             role: user.role,
             generationId: generation.id,
           }))

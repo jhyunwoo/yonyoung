@@ -45,6 +45,8 @@ describe("AuthProfileForm", () => {
             department: "",
             studentNumber: "",
             phoneNumber: "",
+            collaborationAvailable: false,
+            personalLink: "",
           }}
         />,
       );

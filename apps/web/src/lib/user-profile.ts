@@ -1,5 +1,5 @@
 import type { AuthUser } from "./auth-shared";
-import { formatKoreanName } from "./user-name";
+import { compactDisplayName, formatKoreanName } from "./user-name";
 
 type EditableUserProfile = {
   image: string;
@@ -9,6 +9,8 @@ type EditableUserProfile = {
   department: string;
   studentNumber: string;
   phoneNumber: string;
+  collaborationAvailable: boolean;
+  personalLink: string;
 };
 
 type EditableUserProfileKey = keyof EditableUserProfile;
@@ -50,6 +52,18 @@ const readTrimmedSessionString = (value: string | null | undefined): string | nu
   return trimmedValue.length > 0 ? trimmedValue : null;
 };
 
+const readBooleanByKey = (
+  source: Record<string, unknown> | null | undefined,
+  key: EditableUserProfileKey,
+): boolean => {
+  if (!source) {
+    return false;
+  }
+
+  const value = source[key];
+  return value === true;
+};
+
 export const toEditableUserProfile = (value: unknown): EditableUserProfile => {
   const source = asRecord(value);
 
@@ -61,6 +75,8 @@ export const toEditableUserProfile = (value: unknown): EditableUserProfile => {
     department: readString(source, "department"),
     studentNumber: readString(source, "studentNumber"),
     phoneNumber: readString(source, "phoneNumber"),
+    collaborationAvailable: readBooleanByKey(source, "collaborationAvailable"),
+    personalLink: readString(source, "personalLink"),
   };
 };
 
@@ -85,10 +101,12 @@ export const buildDashboardViewerProfile = (
   const image =
     readTrimmedStringByKey(profile, "image") ?? readTrimmedSessionString(sessionUser.image);
 
-  const fallbackName = readTrimmedSessionString(sessionUser.name);
+  const fallbackName = compactDisplayName(readTrimmedSessionString(sessionUser.name));
   const computedName = formatKoreanName({
     familyName,
     givenName,
+  });
+  const emailLocalPartName = formatKoreanName({
     email: sessionUser.email,
   });
 
@@ -98,6 +116,6 @@ export const buildDashboardViewerProfile = (
     image,
     role: sessionUser.role ?? null,
     displayName:
-      computedName === "이름 미등록" && fallbackName ? fallbackName : computedName,
+      computedName === "이름 미등록" ? fallbackName ?? emailLocalPartName : computedName,
   };
 };

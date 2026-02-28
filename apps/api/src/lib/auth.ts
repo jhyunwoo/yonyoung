@@ -82,6 +82,15 @@ const createAuthWithEnv = (database: D1Database, env: AuthRuntimeEnv) => {
           type: "string",
           required: false,
         },
+        collaborationAvailable: {
+          type: "boolean",
+          required: false,
+          defaultValue: false,
+        },
+        personalLink: {
+          type: "string",
+          required: false,
+        },
         role: {
           type: "string",
           required: false,

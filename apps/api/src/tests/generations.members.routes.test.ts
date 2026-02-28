@@ -67,6 +67,8 @@ describe("generation members routes", () => {
       familyName: "김",
       givenName: "연영",
       department: "컴퓨터과학과",
+      collaborationAvailable: false,
+      personalLink: null,
       role: "regular_member",
     });
 
@@ -78,6 +80,8 @@ describe("generation members routes", () => {
         "givenName",
         "id",
         "image",
+        "collaborationAvailable",
+        "personalLink",
         "name",
         "role",
       ].sort(),

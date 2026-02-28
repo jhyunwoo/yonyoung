@@ -15,7 +15,6 @@ export type AuditResourceType =
   | "exhibition"
   | "generation_notice"
   | "global_notice"
-  | "supporter"
   | "linktree"
   | "linktree_item"
   | "user";
@@ -59,17 +58,6 @@ export type ActivityEntity = {
   updatedAt: Date;
   updatedBy: AuditActorEntity | null;
   detailImages: ActivityImageEntity[];
-};
-
-export type SupporterEntity = {
-  id: string;
-  name: string;
-  link: string;
-  logoUrl: string;
-  expiresAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-  updatedBy: AuditActorEntity | null;
 };
 
 export type ExhibitionImageEntity = {
@@ -156,6 +144,8 @@ export type UserEntity = {
   department: string | null;
   studentNumber: string | null;
   phoneNumber: string | null;
+  collaborationAvailable: boolean;
+  personalLink: string | null;
   role: string | null;
   generationId: string | null;
   generationIds?: string[];
@@ -169,7 +159,6 @@ export type UserResourceHistoryResourceType =
   | "exhibition"
   | "generation_notice"
   | "global_notice"
-  | "supporter"
   | "linktree"
   | "linktree_item";
 
@@ -197,7 +186,6 @@ export type AdminDashboardStatsEntity = {
   selectedGenerationMembersTotal: number;
   selectedGenerationActivitiesTotal: number;
   selectedGenerationExhibitionsTotal: number;
-  activeSupportersTotal: number;
   linktreeLinksTotal: number;
 };
 
@@ -289,26 +277,6 @@ export type DataService = {
     }>,
   ) => Promise<ActivityImageEntity[] | null>;
   deleteActivityImage: (activityId: string, imageId: string) => Promise<boolean>;
-
-  listSupporters: () => Promise<SupporterEntity[]>;
-  listPublicSupporters: (nowMs: number) => Promise<SupporterEntity[]>;
-  createSupporter: (input: {
-    name: string;
-    link: string;
-    logoUrl: string;
-    expiresAt: number;
-  }) => Promise<SupporterEntity>;
-  getSupporterById: (id: string) => Promise<SupporterEntity | null>;
-  updateSupporter: (
-    id: string,
-    input: Partial<{
-      name: string;
-      link: string;
-      logoUrl: string;
-      expiresAt: number;
-    }>,
-  ) => Promise<SupporterEntity | null>;
-  deleteSupporter: (id: string) => Promise<boolean>;
 
   listExhibitions: (generationId?: string) => Promise<ExhibitionEntity[]>;
   listPublicExhibitions: () => Promise<ExhibitionEntity[]>;
@@ -440,6 +408,8 @@ export type DataService = {
       department: string | null;
       studentNumber: string | null;
       phoneNumber: string | null;
+      collaborationAvailable: boolean;
+      personalLink: string | null;
       role: string;
       generationIds: string[];
       generationId: string | null;
@@ -456,8 +426,8 @@ export type DataService = {
 export type PresignService = {
   issuePresignedPutUrl: (input: {
     actorId: string;
-    resource: "activities" | "exhibitions" | "supporters" | "users" | "notices";
-    slot: "cover" | "detail" | "logo" | "profile" | "image";
+    resource: "activities" | "exhibitions" | "users" | "notices";
+    slot: "cover" | "detail" | "profile" | "image";
     fileName: string;
     contentType: string;
     fileSize: number;
@@ -469,8 +439,8 @@ export type PresignService = {
   }>;
   initiateMultipartUpload: (input: {
     actorId: string;
-    resource: "activities" | "exhibitions" | "supporters" | "users" | "notices";
-    slot: "cover" | "detail" | "logo" | "profile" | "image";
+    resource: "activities" | "exhibitions" | "users" | "notices";
+    slot: "cover" | "detail" | "profile" | "image";
     fileName: string;
     contentType: string;
     fileSize: number;

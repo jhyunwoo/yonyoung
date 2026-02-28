@@ -16,7 +16,6 @@ export {
   type ApiCreateGenerationInput,
   type ApiCreateLinktreeInput,
   type ApiCreateLinktreeItemInput,
-  type ApiCreateSupporterInput,
   type ApiExhibition,
   type ApiExhibitionImage,
   type ApiGeneration,
@@ -29,7 +28,6 @@ export {
   type ApiListExhibitionsQuery,
   type ApiMemberProfileUpdateInput,
   type ApiPresignResponse,
-  type ApiSupporter,
   type ApiUpdateActivityImageInput,
   type ApiUpdateActivityImageBatchItemInput,
   type ApiUpdateActivityInput,
@@ -41,11 +39,9 @@ export {
   type ApiUpdateGlobalNoticeInput,
   type ApiUpdateLinktreeInput,
   type ApiUpdateLinktreeItemInput,
-  type ApiUpdateSupporterInput,
   type ApiUpdateUserInput,
   type ApiUser,
   type ApiUserResourceHistory,
   type ApiUserResourceHistoryItem,
-  type ApiUserResourceHistoryResourceType,
 } from "@repo/shared-api-contracts";
 export { AdminApiError } from "@repo/shared-http";

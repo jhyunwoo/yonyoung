@@ -13,7 +13,6 @@ import type {
   LinktreeEntity,
   LinktreeItemEntity,
   PresignService,
-  SupporterEntity,
   UserEntity,
 } from "../lib/services/types";
 import type { OpenAPIDocument } from "../lib/openapi/merge";
@@ -23,7 +22,6 @@ export const IDs = {
   generationAlt: "10000000-0000-4000-8000-000000000002",
   activity: "20000000-0000-4000-8000-000000000001",
   activityImage: "21000000-0000-4000-8000-000000000001",
-  supporter: "30000000-0000-4000-8000-000000000001",
   exhibition: "40000000-0000-4000-8000-000000000001",
   exhibitionImage: "41000000-0000-4000-8000-000000000001",
   generationNotice: "42000000-0000-4000-8000-000000000001",
@@ -114,26 +112,6 @@ export const createActivity = (
   updatedAt: BASE_DATE,
   updatedBy: null,
   detailImages: [],
-  ...overrides,
-});
-
-/**
- * createSupporter 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
- * @param overrides 대상을 식별하기 위한 ID 값입니다.
- * @returns 처리 결과 값을 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
-export const createSupporter = (
-  overrides: Partial<SupporterEntity> = {},
-): SupporterEntity => ({
-  id: IDs.supporter,
-  name: "Yonyoung Sponsor",
-  link: "https://example.com/sponsor",
-  logoUrl: "https://example.com/sponsor-logo.png",
-  expiresAt: new Date("2031-01-01T00:00:00.000Z"),
-  createdAt: BASE_DATE,
-  updatedAt: BASE_DATE,
-  updatedBy: null,
   ...overrides,
 });
 
@@ -274,6 +252,8 @@ export const createUser = (
   department: null,
   studentNumber: null,
   phoneNumber: null,
+  collaborationAvailable: false,
+  personalLink: null,
   role: "regular_member",
   generationId: null,
   createdAt: BASE_DATE,
@@ -424,12 +404,16 @@ export const expectErrorCode = async (
     | "CONFLICT"
     | "INTERNAL_ERROR",
 ) => {
-  const body = await readJson<{ error: { code: string; message: string } }>(
+  const body = await readJson<{
+    error: { code: string; message: string; requestId: string };
+  }>(
     response,
   );
   expect(body.error.code).toBe(code);
   expect(typeof body.error.message).toBe("string");
   expect(body.error.message.length).toBeGreaterThan(0);
+  expect(typeof body.error.requestId).toBe("string");
+  expect(body.error.requestId.length).toBeGreaterThan(0);
 };
 
 export const fn = vi.fn;

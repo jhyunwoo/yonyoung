@@ -82,6 +82,10 @@ const ApiErrorSchema = z
       description: "클라이언트 디버깅을 위한 에러 메시지",
       example: "요청 본문 또는 파라미터가 올바르지 않습니다.",
     }),
+    requestId: z.string().openapi({
+      description: "서버 로그 상관관계를 위한 요청 ID",
+      example: "8f3aa50e-f842-4ff4-9f02-08d0823d7cb1",
+    }),
   })
   .openapi("ApiError");
 
@@ -164,7 +168,6 @@ const ApiAuditResourceTypeSchema = z
     "exhibition",
     "generation_notice",
     "global_notice",
-    "supporter",
     "linktree",
     "linktree_item",
     "user",
@@ -514,53 +517,6 @@ export const ApiUpdateActivityImageBatchSchema = z
     },
   )
   .openapi("ApiUpdateActivityImageBatchInput");
-
-export const ApiSupporterSchema = z
-  .object({
-    id: z.string().uuid().openapi({
-      description: "후원사 UUID",
-      example: EXAMPLE_ID,
-    }),
-    name: z.string().openapi({
-      description: "후원사 이름",
-      example: "Yonyoung Studio",
-    }),
-    link: urlField("후원사 링크 URL", "https://sponsor.example.com"),
-    logoUrl: urlField(
-      "후원사 로고 이미지 URL (presigned 업로드 완료 후 저장)",
-      "https://cdn.yonyoung.example/supporters/logo/sponsor-logo.png",
-    ),
-    expiresAt: timestampField("후원 노출 만료 시각", EXAMPLE_TIMESTAMP_MS_END),
-    createdAt: timestampField("후원사 생성 시각", EXAMPLE_TIMESTAMP_MS),
-    updatedAt: timestampField("후원사 수정 시각", EXAMPLE_TIMESTAMP_MS),
-    updatedBy: ApiAuditActorSchema.nullable().openapi({
-      description: "마지막 수정자 정보 (로그가 없으면 null)",
-    }),
-  })
-  .openapi("ApiSupporter");
-
-export const ApiCreateSupporterSchema = z
-  .object({
-    name: z.string().min(1).openapi({
-      description: "후원사 이름",
-      example: "Yonyoung Studio",
-    }),
-    link: urlField("후원사 소개/외부 링크 URL", "https://sponsor.example.com"),
-    logoUrl: urlField(
-      "후원사 로고 이미지 공개 URL",
-      "https://cdn.yonyoung.example/supporters/logo/new-logo.png",
-    ),
-    expiresAt: z.number().int().positive().openapi({
-      description:
-        "후원 만료 시각 (Unix timestamp(ms), 클라이언트에서 연-월-일로 표시)",
-      example: EXAMPLE_TIMESTAMP_MS_END,
-    }),
-  })
-  .openapi("ApiCreateSupporterInput");
-
-export const ApiUpdateSupporterSchema = ApiCreateSupporterSchema.partial().openapi(
-  "ApiUpdateSupporterInput",
-);
 
 export const ApiExhibitionImageSchema = z
   .object({
@@ -1048,6 +1004,14 @@ export const ApiUserSchema = z
       description: "전화번호 (없으면 null)",
       example: "010-1234-5678",
     }),
+    collaborationAvailable: z.boolean().openapi({
+      description: "협업 가능 여부 (true/false)",
+      example: true,
+    }),
+    personalLink: z.string().url().nullable().openapi({
+      description: "개인 링크 URL (없으면 null)",
+      example: "https://example.com/my-portfolio",
+    }),
     role: z.string().nullable().openapi({
       description: "원본 사용자 역할 문자열 (없으면 null)",
       example: "regular_member",
@@ -1074,13 +1038,12 @@ const ApiUserResourceHistoryResourceTypeSchema = z
     "exhibition",
     "generation_notice",
     "global_notice",
-    "supporter",
     "linktree",
     "linktree_item",
   ])
   .openapi("ApiUserResourceHistoryResourceType");
 
-export const ApiUserResourceHistoryItemSchema = z
+const ApiUserResourceHistoryItemSchema = z
   .object({
     id: z.string().uuid().openapi({
       description: "감사 로그 UUID",
@@ -1161,6 +1124,14 @@ const ApiPublicGenerationMemberSchema = z
       description: "이름 (없으면 null)",
       example: "민수",
     }),
+    collaborationAvailable: z.boolean().openapi({
+      description: "협업 가능 여부 (true/false)",
+      example: true,
+    }),
+    personalLink: z.string().url().nullable().openapi({
+      description: "개인 링크 URL (없으면 null)",
+      example: "https://example.com/my-portfolio",
+    }),
     role: z.string().nullable().openapi({
       description: "역할 문자열 (없으면 null)",
       example: "regular_member",
@@ -1201,6 +1172,14 @@ export const ApiGenerationMemberSummarySchema = z
     department: z.string().nullable().openapi({
       description: "학과명 (없으면 null)",
       example: "컴퓨터과학과",
+    }),
+    collaborationAvailable: z.boolean().openapi({
+      description: "협업 가능 여부 (true/false)",
+      example: true,
+    }),
+    personalLink: z.string().url().nullable().openapi({
+      description: "개인 링크 URL (없으면 null)",
+      example: "https://example.com/my-portfolio",
     }),
     role: z.string().nullable().openapi({
       description: "역할 문자열 (없으면 null)",
@@ -1287,6 +1266,14 @@ export const ApiAdminUpdateUserSchema = z
     phoneNumber: phoneNumberField("전화번호(관리자 수정 가능)", "010-1234-5678")
       .nullable()
       .optional(),
+    collaborationAvailable: z.boolean().optional().openapi({
+      description: "협업 가능 여부(true/false, 관리자 수정 가능)",
+      example: true,
+    }),
+    personalLink: z.string().url().nullable().optional().openapi({
+      description: "개인 링크 URL(관리자 수정 가능)",
+      example: "https://example.com/my-portfolio",
+    }),
     role: z
       .enum([
         "president",
@@ -1381,6 +1368,14 @@ export const ApiMemberProfileUpdateSchema = z
         description: "본인 전화번호 수정",
         example: "010-1234-5678",
       }),
+    collaborationAvailable: z.boolean().optional().openapi({
+      description: "본인 협업 가능 여부 수정(true/false)",
+      example: true,
+    }),
+    personalLink: z.string().url().nullable().optional().openapi({
+      description: "본인 개인 링크 URL 수정",
+      example: "https://example.com/my-portfolio",
+    }),
   })
   .strict()
   .openapi("ApiMemberProfileUpdateInput");
@@ -1461,10 +1456,6 @@ export const ApiAdminDashboardStatsSchema = z
     selectedGenerationExhibitionsTotal: z.number().int().nonnegative().openapi({
       description: "선택 기수 전시 수",
       example: 2,
-    }),
-    activeSupportersTotal: z.number().int().nonnegative().openapi({
-      description: "활성 서포터즈 수",
-      example: 6,
     }),
     linktreeLinksTotal: z.number().int().nonnegative().openapi({
       description: "링크트리 전체 링크 수",

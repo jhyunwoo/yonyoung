@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { createPageMetadata } from "../../../../lib/seo";
 
 const qualificationItems = [
-  "사진에 대한 열정과 관심",
-  "정기적인 활동 참여 가능",
-  "다른 멤버들과의 협력과 소통",
+  "사진에 대한 열정과 관심이 있는 분",
+  "정기 활동 참여가 가능한 분",
+  "1년 동안 사진을 정말로 즐기실 분",
 ];
 
 const applicationSteps = [
@@ -32,8 +32,11 @@ export const metadata: Metadata = createPageMetadata({
 
 export default function RecruitingPage() {
   return (
-    <div className="px-4 pb-16 pt-10 md:px-8 md:pb-20" data-testid="about-recruiting-page">
-      <main className="mx-auto w-full max-w-[1200px] space-y-10">
+    <div
+      className="px-4 pb-16 md:px-8 md:pb-20"
+      data-testid="about-recruiting-page"
+    >
+      <main className="mx-auto w-full max-w-300 space-y-10">
         <section className="space-y-3">
           <h1 className="text-[2.6rem] leading-tight font-semibold text-(--text-primary) md:text-[3.2rem]">
             RECRUITING
@@ -42,14 +45,18 @@ export default function RecruitingPage() {
         </section>
 
         <section className="space-y-3 border border-(--surface-border) p-5">
-          <h2 className="text-[1.7rem] font-semibold text-(--text-primary)">모집 안내</h2>
+          <h2 className="text-[1.7rem] font-semibold text-(--text-primary)">
+            모집 안내
+          </h2>
           <p className="text-sm text-(--text-muted)">
             연영회는 연 1회, 3월 중 리크루팅을 실시합니다.
           </p>
         </section>
 
         <section className="space-y-3 border border-(--surface-border) p-5">
-          <h2 className="text-[1.7rem] font-semibold text-(--text-primary)">지원 자격</h2>
+          <h2 className="text-[1.7rem] font-semibold text-(--text-primary)">
+            지원 자격
+          </h2>
           <ul className="list-disc space-y-1.5 pl-5 text-sm text-(--text-muted)">
             {qualificationItems.map((item) => (
               <li key={item}>{item}</li>
@@ -58,24 +65,38 @@ export default function RecruitingPage() {
         </section>
 
         <section className="space-y-3 border border-(--surface-border) p-5">
-          <h2 className="text-[1.7rem] font-semibold text-(--text-primary)">지원 방법</h2>
+          <h2 className="text-[1.7rem] font-semibold text-(--text-primary)">
+            지원 방법
+          </h2>
           <div className="space-y-3" data-testid="about-recruiting-steps">
             {applicationSteps.map((step, index) => (
-              <article key={step.title} className="flex gap-3 border border-(--surface-border) p-3">
+              <article
+                key={step.title}
+                className="flex gap-3 border border-(--surface-border) p-3"
+              >
                 <div className="inline-flex h-7 w-7 shrink-0 items-center justify-center border border-(--surface-border) text-sm font-semibold text-(--text-primary)">
                   {index + 1}
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-(--text-primary)">{step.title}</h3>
-                  <p className="text-sm text-(--text-muted)">{step.description}</p>
+                  <h3 className="text-base font-semibold text-(--text-primary)">
+                    {step.title}
+                  </h3>
+                  <p className="text-sm text-(--text-muted)">
+                    {step.description}
+                  </p>
                 </div>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="space-y-3 border border-(--surface-border) p-5" data-testid="about-recruiting-contact">
-          <h2 className="text-[1.7rem] font-semibold text-(--text-primary)">문의</h2>
+        <section
+          className="space-y-3 border border-(--surface-border) p-5"
+          data-testid="about-recruiting-contact"
+        >
+          <h2 className="text-[1.7rem] font-semibold text-(--text-primary)">
+            문의
+          </h2>
           <p className="text-sm text-(--text-muted)">
             기타 문의사항이 있으시면 언제든지 연락주세요.
           </p>

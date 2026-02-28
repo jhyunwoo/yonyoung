@@ -41,9 +41,11 @@ describe("middleware auth redirects", () => {
 
   it("allows Cloudflare Insights beacon script in CSP", () => {
     const response = middleware(createRequest("/dashboard/settings/generations"));
-    const csp = response.headers.get("content-security-policy");
+    const csp = response.headers.get("content-security-policy-report-only");
 
     expect(csp).toContain("script-src");
     expect(csp).toContain("https://static.cloudflareinsights.com");
+    expect(response.headers.get("content-security-policy")).toBeNull();
+    expect(response.headers.get("permissions-policy")).toContain("camera=()");
   });
 });

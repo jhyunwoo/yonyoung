@@ -15,6 +15,7 @@ export type ApiErrorEnvelope = {
   error: {
     code: ApiErrorCode;
     message: string;
+    requestId: string;
   };
 };
 
@@ -31,7 +32,6 @@ export type ApiAuditResourceType =
   | "exhibition"
   | "generation_notice"
   | "global_notice"
-  | "supporter"
   | "linktree"
   | "linktree_item"
   | "user";
@@ -124,26 +124,6 @@ export type ApiUpdateActivityImageBatchItemInput = {
   imageUrl?: string;
   sortOrder?: number;
 };
-
-export type ApiSupporter = {
-  id: string;
-  name: string;
-  link: string;
-  logoUrl: string;
-  expiresAt: number;
-  createdAt: number;
-  updatedAt: number;
-  updatedBy: ApiAuditActor | null;
-};
-
-export type ApiCreateSupporterInput = {
-  name: string;
-  link: string;
-  logoUrl: string;
-  expiresAt: number;
-};
-
-export type ApiUpdateSupporterInput = Partial<ApiCreateSupporterInput>;
 
 export type ApiExhibitionImage = {
   id: string;
@@ -287,6 +267,8 @@ export type ApiUser = {
   department: string | null;
   studentNumber: string | null;
   phoneNumber: string | null;
+  collaborationAvailable: boolean;
+  personalLink: string | null;
   role: ApiRole | null;
   generationId: string | null;
   generationIds?: string[];
@@ -300,7 +282,6 @@ export type ApiUserResourceHistoryResourceType =
   | "exhibition"
   | "generation_notice"
   | "global_notice"
-  | "supporter"
   | "linktree"
   | "linktree_item";
 
@@ -327,6 +308,8 @@ export type ApiPublicGenerationMember = {
   image: string | null;
   familyName: string | null;
   givenName: string | null;
+  collaborationAvailable: boolean;
+  personalLink: string | null;
   role: ApiRole | null;
   generationId: string;
 };
@@ -339,6 +322,8 @@ export type ApiGenerationMemberSummary = {
   familyName: string | null;
   givenName: string | null;
   department: string | null;
+  collaborationAvailable: boolean;
+  personalLink: string | null;
   role: ApiRole | null;
 };
 
@@ -360,6 +345,8 @@ export type ApiAdminUpdateUserInput = {
   department?: string | null;
   studentNumber?: string | null;
   phoneNumber?: string | null;
+  collaborationAvailable?: boolean;
+  personalLink?: string | null;
   role?: CoreRole;
   generationIds?: string[];
   generationId?: string | null;
@@ -373,6 +360,8 @@ export type ApiMemberProfileUpdateInput = {
   department?: string | null;
   studentNumber?: string | null;
   phoneNumber?: string | null;
+  collaborationAvailable?: boolean;
+  personalLink?: string | null;
 };
 
 export type ApiUpdateUserInput = ApiAdminUpdateUserInput | ApiMemberProfileUpdateInput;
@@ -389,7 +378,6 @@ export type ApiAdminDashboardStats = {
   selectedGenerationMembersTotal: number;
   selectedGenerationActivitiesTotal: number;
   selectedGenerationExhibitionsTotal: number;
-  activeSupportersTotal: number;
   linktreeLinksTotal: number;
 };
 

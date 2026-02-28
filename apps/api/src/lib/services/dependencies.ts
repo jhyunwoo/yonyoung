@@ -8,6 +8,8 @@ import { createR2PresignService } from "../storage/presign";
 import type { OpenAPIDocument } from "../openapi/merge";
 import { getDbDataService } from "../db/factory";
 import { resolveDocsAuthEnabled } from "../config/runtime-env";
+import { createD1SequentialSession, resolveD1SessionMode } from "../db/d1-session";
+import { createRetryingD1Database } from "../db/d1-client";
 
 export type ResolveActor = (
   c: Context<HonoAppType>,
@@ -31,10 +33,61 @@ export type AppDependencies = {
   shouldRequireDocsAuth: ShouldRequireDocsAuth;
 };
 
+const parseBooleanString = (
+  value: string | undefined,
+  fallback: boolean,
+): boolean => {
+  if (!value) {
+    return fallback;
+  }
+
+  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+};
+
+const parseNumberString = (
+  value: string | undefined,
+  fallback: number,
+): number => {
+  if (!value) {
+    return fallback;
+  }
+
+  const parsed = Number(value.trim());
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  return parsed;
+};
+
 export const createDefaultDependencies = (): AppDependencies => ({
   resolveActor: getActorFromSession,
   shouldRequireDocsAuth: (c) => resolveDocsAuthEnabled(c.env),
-  getDataService: (c) => getDbDataService(c.env.db),
+  getDataService: (c) => {
+    const cached = c.get("dataService");
+    if (cached) {
+      return cached;
+    }
+
+    const sessionMode = resolveD1SessionMode(c.env.D1_SESSION_CONSISTENCY);
+    const session = createD1SequentialSession(c.env.db, {
+      mode: sessionMode,
+    });
+
+    const retryEnabled = parseBooleanString(c.env.D1_WRITE_RETRY_ENABLED, true);
+    const databaseWithRetry = createRetryingD1Database(session.database, {
+      enabled: retryEnabled,
+      options: {
+        maxRetries: parseNumberString(c.env.D1_WRITE_RETRY_MAX_RETRIES, 2),
+        baseDelayMs: parseNumberString(c.env.D1_WRITE_RETRY_BASE_DELAY_MS, 25),
+        maxDelayMs: parseNumberString(c.env.D1_WRITE_RETRY_MAX_DELAY_MS, 500),
+      },
+    });
+
+    const dataService = getDbDataService(databaseWithRetry as D1Database);
+    c.set("dataService", dataService);
+    return dataService;
+  },
   getPresignService: (c) => createR2PresignService(c.env),
   getAuthOpenApiSchema: async (c) => {
     const auth = createAuth(c.env.db, c.env);

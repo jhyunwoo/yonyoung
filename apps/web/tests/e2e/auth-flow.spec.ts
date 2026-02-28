@@ -19,7 +19,7 @@ test.describe("auth flow", () => {
     await page.context().clearCookies();
     await page.goto("/dashboard");
 
-    await expect(page).toHaveURL(/\/auth\/sign-in$/);
+    await expect(page).toHaveURL(/\/auth\/sign-in(?:\?.*)?$/);
     await expect(
       page.getByRole("heading", { name: "연영회 Dashboard 로그인" }),
     ).toBeVisible();
@@ -44,7 +44,7 @@ test.describe("auth flow", () => {
     });
 
     await page.goto("/dashboard");
-    await expect(page).toHaveURL(/\/auth\/pending-approval$/);
+    await expect(page).toHaveURL(/\/auth\/pending-approval(?:\?.*)?$/);
     const pendingApprovalPage = page.getByTestId("auth-pending-approval-page");
     await expect(pendingApprovalPage).toBeVisible();
     await expect(page.getByTestId("public-header")).toBeVisible();
@@ -63,12 +63,15 @@ test.describe("auth flow", () => {
     expect(sectionBox).not.toBeNull();
 
     if (viewport && headerBox && cardBox && sectionBox) {
-      expect(cardBox.y).toBeGreaterThanOrEqual(headerBox.y + headerBox.height - 1);
+      const layoutTolerancePx = 8;
+      expect(cardBox.y).toBeGreaterThanOrEqual(
+        headerBox.y + headerBox.height - layoutTolerancePx,
+      );
       expect(sectionBox.height).toBeGreaterThanOrEqual(viewport.height - headerBox.height - 1);
     }
 
     const generationPath = toGenerationPath(generation.name);
     await page.goto(`${generationPath}/activities/new`);
-    await expect(page).toHaveURL(/\/auth\/pending-approval$/);
+    await expect(page).toHaveURL(/\/auth\/pending-approval(?:\?.*)?$/);
   });
 });

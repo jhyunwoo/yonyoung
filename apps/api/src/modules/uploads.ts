@@ -40,9 +40,9 @@ import {
 } from "../lib/storage/presign";
 
 type App = OpenAPIHono<HonoAppType>;
-type ManagedResource = Extract<Resource, "activity" | "exhibition" | "supporter" | "notice">;
-type UploadResourcePath = "activities" | "exhibitions" | "supporters" | "users" | "notices";
-type UploadSlot = "cover" | "detail" | "logo" | "profile" | "image";
+type ManagedResource = Extract<Resource, "activity" | "exhibition" | "notice">;
+type UploadResourcePath = "activities" | "exhibitions" | "users" | "notices";
+type UploadSlot = "cover" | "detail" | "profile" | "image";
 
 const canCreateOrUpdate = (role: Role, resource: Resource) => {
   return can(role, resource, "create") || can(role, resource, "update");
@@ -51,14 +51,12 @@ const canCreateOrUpdate = (role: Role, resource: Resource) => {
 const resourceUploadPathMap: Record<ManagedResource, UploadResourcePath> = {
   activity: "activities",
   exhibition: "exhibitions",
-  supporter: "supporters",
   notice: "notices",
 };
 
 const resourceByPath: Record<UploadResourcePath, Resource | "user"> = {
   activities: "activity",
   exhibitions: "exhibition",
-  supporters: "supporter",
   users: "user",
   notices: "notice",
 };
@@ -66,7 +64,6 @@ const resourceByPath: Record<UploadResourcePath, Resource | "user"> = {
 const slotAllowlistByPath: Record<UploadResourcePath, UploadSlot[]> = {
   activities: ["cover", "detail"],
   exhibitions: ["cover", "detail"],
-  supporters: ["logo"],
   users: ["profile"],
   notices: ["image"],
 };
@@ -492,14 +489,6 @@ export const registerUploadRoutes = (
   registerResourcePresignRoute(
     app,
     dependencies,
-    "/api/supporters/presign/logo",
-    "issueSupporterLogoPresign",
-    "supporter",
-    "logo",
-  );
-  registerResourcePresignRoute(
-    app,
-    dependencies,
     "/api/notices/presign/image",
     "issueNoticeImagePresign",
     "notice",
@@ -537,14 +526,6 @@ export const registerUploadRoutes = (
     "initExhibitionDetailMultipartUpload",
     "exhibition",
     "detail",
-  );
-  registerResourceMultipartInitRoute(
-    app,
-    dependencies,
-    "/api/supporters/multipart/logo/init",
-    "initSupporterLogoMultipartUpload",
-    "supporter",
-    "logo",
   );
   registerResourceMultipartInitRoute(
     app,

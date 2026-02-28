@@ -75,7 +75,6 @@ Protected resources (all require auth session):
 
 - `/api/generations`
 - `/api/activities`
-- `/api/supporters`
 - `/api/exhibitions`
 - `/api/linktree`
 - `/api/users`
@@ -86,7 +85,6 @@ Presigned upload endpoints:
 - `POST /api/activities/presign/detail`
 - `POST /api/exhibitions/presign/cover`
 - `POST /api/exhibitions/presign/detail`
-- `POST /api/supporters/presign/logo`
 - `POST /api/users/presign/profile`
 
 ## API Docs

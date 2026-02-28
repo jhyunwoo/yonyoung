@@ -5,9 +5,9 @@ import type {
   ApiLinktree,
   ApiLinktreeItem,
   ApiPublicGenerationWithMembers,
-  ApiSupporter,
   DataEnvelope,
 } from "@repo/shared-api-contracts";
+import { cacheLife, cacheTag } from "next/cache";
 import {
   clearTimeoutController,
   createTimeoutController,
@@ -17,13 +17,13 @@ import {
 } from "@repo/shared-http";
 
 const DEFAULT_AUTH_API_URL = "http://localhost:8787";
+const DEFAULT_PRODUCTION_AUTH_API_URL = "https://api.yonyoung.moveto.kr";
 const REQUEST_TIMEOUT_MS = 10_000;
 const IS_E2E_MODE = Boolean(process.env.E2E_SUITE_MODE);
 
 export const PUBLIC_CACHE_TAGS = {
   activities: "public:activities",
   exhibitions: "public:exhibitions",
-  supporters: "public:supporters",
   linktree: "public:linktree",
   generations: "public:generations",
   photographers: "public:photographers",
@@ -40,16 +40,30 @@ type PublicLinkItem = ApiLinktreeItem & {
 };
 
 const resolvePublicApiBaseUrl = (): string =>
-  resolveBaseUrl(
-    IS_E2E_MODE
-      ? [
+  {
+    if (IS_E2E_MODE) {
+      return resolveBaseUrl(
+        [
           process.env.E2E_API_URL,
           process.env.AUTH_API_URL,
           process.env.NEXT_PUBLIC_AUTH_API_URL,
-        ]
-      : [process.env.AUTH_API_URL, process.env.NEXT_PUBLIC_AUTH_API_URL],
-    DEFAULT_AUTH_API_URL,
-  );
+        ],
+        DEFAULT_AUTH_API_URL,
+      );
+    }
+
+    if (process.env.NODE_ENV === "production") {
+      return resolveBaseUrl(
+        [process.env.AUTH_API_URL, process.env.NEXT_PUBLIC_AUTH_API_URL],
+        DEFAULT_PRODUCTION_AUTH_API_URL,
+      );
+    }
+
+    return resolveBaseUrl(
+      [process.env.AUTH_API_URL, process.env.NEXT_PUBLIC_AUTH_API_URL],
+      DEFAULT_AUTH_API_URL,
+    );
+  };
 
 const resolvePublicApiUrl = (path: string): string =>
   `${resolvePublicApiBaseUrl()}${normalizePath(path)}`;
@@ -102,54 +116,131 @@ const publicGet = async <T>(
 };
 
 export const listPublicActivities = async (): Promise<ApiActivity[]> =>
-  publicGet<ApiActivity[]>("/api/public/activities", {
-    revalidateSeconds: 60,
-    tags: [PUBLIC_CACHE_TAGS.activities],
-  });
+  {
+    "use cache";
+    cacheLife({
+      stale: 120,
+      revalidate: 60,
+      expire: 600,
+    });
+    cacheTag(PUBLIC_CACHE_TAGS.activities);
+    try {
+      return await publicGet<ApiActivity[]>("/api/public/activities", {
+        revalidateSeconds: 60,
+        tags: [PUBLIC_CACHE_TAGS.activities],
+      });
+    } catch {
+      return [];
+    }
+  };
 
 export const getPublicActivityById = async (id: string): Promise<ApiActivity> =>
-  publicGet<ApiActivity>(`/api/public/activities/${id}`, {
-    revalidateSeconds: 60,
-    tags: [PUBLIC_CACHE_TAGS.activities],
-  });
+  {
+    "use cache";
+    cacheLife({
+      stale: 120,
+      revalidate: 60,
+      expire: 600,
+    });
+    cacheTag(PUBLIC_CACHE_TAGS.activities);
+    return publicGet<ApiActivity>(`/api/public/activities/${id}`, {
+      revalidateSeconds: 60,
+      tags: [PUBLIC_CACHE_TAGS.activities],
+    });
+  };
 
 export const listPublicExhibitions = async (): Promise<ApiExhibition[]> =>
-  publicGet<ApiExhibition[]>("/api/public/exhibitions", {
-    revalidateSeconds: 60,
-    tags: [PUBLIC_CACHE_TAGS.exhibitions],
-  });
+  {
+    "use cache";
+    cacheLife({
+      stale: 120,
+      revalidate: 60,
+      expire: 600,
+    });
+    cacheTag(PUBLIC_CACHE_TAGS.exhibitions);
+    try {
+      return await publicGet<ApiExhibition[]>("/api/public/exhibitions", {
+        revalidateSeconds: 60,
+        tags: [PUBLIC_CACHE_TAGS.exhibitions],
+      });
+    } catch {
+      return [];
+    }
+  };
 
 export const getPublicExhibitionById = async (id: string): Promise<ApiExhibition> =>
-  publicGet<ApiExhibition>(`/api/public/exhibitions/${id}`, {
-    revalidateSeconds: 60,
-    tags: [PUBLIC_CACHE_TAGS.exhibitions],
-  });
-
-export const listPublicSupporters = async (): Promise<ApiSupporter[]> =>
-  publicGet<ApiSupporter[]>("/api/public/supporters", {
-    revalidateSeconds: 30,
-    tags: [PUBLIC_CACHE_TAGS.supporters],
-  });
+  {
+    "use cache";
+    cacheLife({
+      stale: 120,
+      revalidate: 60,
+      expire: 600,
+    });
+    cacheTag(PUBLIC_CACHE_TAGS.exhibitions);
+    return publicGet<ApiExhibition>(`/api/public/exhibitions/${id}`, {
+      revalidateSeconds: 60,
+      tags: [PUBLIC_CACHE_TAGS.exhibitions],
+    });
+  };
 
 export const listPublicLinktrees = async (): Promise<ApiLinktree[]> =>
-  publicGet<ApiLinktree[]>("/api/public/linktree", {
-    revalidateSeconds: 120,
-    tags: [PUBLIC_CACHE_TAGS.linktree],
-  });
+  {
+    "use cache";
+    cacheLife({
+      stale: 300,
+      revalidate: 120,
+      expire: 1200,
+    });
+    cacheTag(PUBLIC_CACHE_TAGS.linktree);
+    try {
+      return await publicGet<ApiLinktree[]>("/api/public/linktree", {
+        revalidateSeconds: 120,
+        tags: [PUBLIC_CACHE_TAGS.linktree],
+      });
+    } catch {
+      return [];
+    }
+  };
 
 export const listPublicGenerations = async (): Promise<ApiGeneration[]> =>
-  publicGet<ApiGeneration[]>("/api/public/generations", {
-    revalidateSeconds: 300,
-    tags: [PUBLIC_CACHE_TAGS.generations],
-  });
+  {
+    "use cache";
+    cacheLife({
+      stale: 600,
+      revalidate: 300,
+      expire: 3600,
+    });
+    cacheTag(PUBLIC_CACHE_TAGS.generations);
+    try {
+      return await publicGet<ApiGeneration[]>("/api/public/generations", {
+        revalidateSeconds: 300,
+        tags: [PUBLIC_CACHE_TAGS.generations],
+      });
+    } catch {
+      return [];
+    }
+  };
 
 export const listPublicPhotographers = async (): Promise<
   ApiPublicGenerationWithMembers[]
 > =>
-  publicGet<ApiPublicGenerationWithMembers[]>("/api/public/photographers", {
-    revalidateSeconds: 300,
-    tags: [PUBLIC_CACHE_TAGS.photographers],
-  });
+  {
+    "use cache";
+    cacheLife({
+      stale: 600,
+      revalidate: 300,
+      expire: 3600,
+    });
+    cacheTag(PUBLIC_CACHE_TAGS.photographers);
+    try {
+      return await publicGet<ApiPublicGenerationWithMembers[]>("/api/public/photographers", {
+        revalidateSeconds: 300,
+        tags: [PUBLIC_CACHE_TAGS.photographers],
+      });
+    } catch {
+      return [];
+    }
+  };
 
 export const flattenLinktreeItems = (
   linktrees: ApiLinktree[],

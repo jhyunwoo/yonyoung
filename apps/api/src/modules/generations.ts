@@ -339,6 +339,8 @@ export const registerGenerationRoutes = (
         familyName: candidate.familyName,
         givenName: candidate.givenName,
         department: candidate.department,
+        collaborationAvailable: candidate.collaborationAvailable,
+        personalLink: candidate.personalLink,
         role: candidate.role,
       }))
       .sort((left, right) =>

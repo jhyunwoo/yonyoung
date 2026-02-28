@@ -63,9 +63,9 @@ describe("admin-dashboard-cache", () => {
   it("조회 실패 시 빈 배열을 반환한다", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}", { status: 500 }));
 
-    const { listCachedSupporters } = await import("./admin-dashboard-cache");
+    const { listCachedLinktrees } = await import("./admin-dashboard-cache");
 
-    const rows = await listCachedSupporters("a=b");
+    const rows = await listCachedLinktrees("a=b");
 
     expect(rows).toEqual([]);
   });

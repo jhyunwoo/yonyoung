@@ -34,11 +34,18 @@ const errorResponse = (
   code: ApiErrorCode,
   message: string,
 ) => {
+  const requestId = (
+    c as Context & {
+      get: (key: "requestId") => string | undefined;
+    }
+  ).get?.("requestId");
+
   return c.json(
     {
       error: {
         code,
         message,
+        requestId: requestId ?? "unknown-request-id",
       },
     },
     status,

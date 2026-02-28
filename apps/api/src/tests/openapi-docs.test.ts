@@ -145,9 +145,10 @@ describe("OpenAPI docs routes", () => {
 
     const response = await app.request("/api/docs");
     expect(response.status).toBe(200);
-    const csp = response.headers.get("content-security-policy");
+    const csp = response.headers.get("content-security-policy-report-only");
     expect(csp).toContain("default-src 'self'");
     expect(csp).toContain("https://cdn.jsdelivr.net");
+    expect(response.headers.get("content-security-policy")).toBeNull();
     const html = await response.text();
     expect(html.length).toBeGreaterThan(0);
     expect(html.toLowerCase()).toContain("scalar");

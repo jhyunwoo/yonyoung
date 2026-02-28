@@ -72,7 +72,6 @@ describe("audit routes", () => {
     const samples = [
       { resourceType: "generation", resourceId: IDs.generation },
       { resourceType: "exhibition", resourceId: IDs.exhibition },
-      { resourceType: "supporter", resourceId: IDs.supporter },
       { resourceType: "linktree", resourceId: IDs.linktree },
       { resourceType: "linktree_item", resourceId: IDs.linktreeItem },
       { resourceType: "global_notice", resourceId: IDs.globalNotice },

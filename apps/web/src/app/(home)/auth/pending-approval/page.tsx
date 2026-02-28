@@ -27,7 +27,7 @@ export default async function PendingApprovalPage() {
 
   return (
     <section
-      className="min-h-screen px-4 pb-16 pt-[72px] md:px-8 md:pb-20 md:pt-[80px]"
+      className="flex min-h-[calc(100dvh-var(--public-header-height-mobile))] flex-col justify-center px-4 md:min-h-[calc(100dvh-var(--public-header-height-desktop))] md:px-8"
       data-testid="auth-pending-approval-page"
     >
       <div className="mx-auto w-full max-w-[1200px] border border-(--surface-border) p-7 md:p-10">

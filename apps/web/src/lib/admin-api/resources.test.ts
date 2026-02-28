@@ -66,12 +66,6 @@ describe("adminResourceApi", () => {
     await adminResourceApi.getActivityById("act-1");
     expect(adminRequestMock).toHaveBeenLastCalledWith("/activities/act-1", "GET");
 
-    await adminResourceApi.listSupporters();
-    expect(adminRequestMock).toHaveBeenLastCalledWith("/supporters", "GET");
-
-    await adminResourceApi.getSupporterById("sup-1");
-    expect(adminRequestMock).toHaveBeenLastCalledWith("/supporters/sup-1", "GET");
-
     await adminResourceApi.getExhibitionById("exh-1");
     expect(adminRequestMock).toHaveBeenLastCalledWith("/exhibitions/exh-1", "GET");
 
@@ -280,28 +274,6 @@ describe("adminResourceApi", () => {
         path: "/activities/act-1/images/img-1",
         method: "DELETE",
         tags: [ADMIN_CACHE_TAGS.activities],
-      },
-      {
-        invoke: () => adminResourceApi.createSupporter({ name: "스폰서" } as unknown as never),
-        path: "/supporters",
-        method: "POST",
-        tags: [ADMIN_CACHE_TAGS.supporters],
-      },
-      {
-        invoke: () =>
-          adminResourceApi.updateSupporter(
-            "sup-1",
-            { name: "스폰서 수정" } as unknown as never,
-          ),
-        path: "/supporters/sup-1",
-        method: "PATCH",
-        tags: [ADMIN_CACHE_TAGS.supporters],
-      },
-      {
-        invoke: () => adminResourceApi.deleteSupporter("sup-1"),
-        path: "/supporters/sup-1",
-        method: "DELETE",
-        tags: [ADMIN_CACHE_TAGS.supporters],
       },
       {
         invoke: () => adminResourceApi.createExhibition({ title: "전시" } as unknown as never),
@@ -521,16 +493,16 @@ describe("adminResourceApi", () => {
   });
 
   it("브라우저 환경이 아니면 재검증 요청을 생략한다", async () => {
-    adminRequestMock.mockResolvedValueOnce({ id: "supporter-1" });
+    adminRequestMock.mockResolvedValueOnce({ id: "exhibition-1" });
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     vi.stubGlobal("window", undefined);
 
-    await adminResourceApi.createSupporter({ name: "스폰서" } as unknown as never);
+    await adminResourceApi.createExhibition({ title: "전시" } as unknown as never);
 
     expect(adminRequestMock).toHaveBeenCalledWith(
-      "/supporters",
+      "/exhibitions",
       "POST",
-      expect.objectContaining({ name: "스폰서" }),
+      expect.objectContaining({ title: "전시" }),
     );
     expect(fetchSpy).not.toHaveBeenCalled();
   });

@@ -34,11 +34,6 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
       expected: { resource: "exhibitions", slot: "detail" as const },
     },
     {
-      path: "/api/supporters/presign/logo",
-      role: "manager" as const,
-      expected: { resource: "supporters", slot: "logo" as const },
-    },
-    {
       path: "/api/notices/presign/image",
       role: "manager" as const,
       expected: { resource: "notices", slot: "image" as const },
@@ -970,7 +965,7 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
 
     const forbiddenInitiate = fn(async () => ({
       uploadId: "should-not-be-called",
-      objectKey: `supporters/${IDs.member}/logo/mock`,
+      objectKey: `exhibitions/${IDs.member}/detail/mock`,
       publicUrl: "https://cdn.example.com/mock",
       partSize: UPLOAD_LIMITS.multipartPartSizeBytes,
       maxPartNumber: 2,
@@ -979,15 +974,18 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
       actor: createActor("regular_member", IDs.member),
       presignService: createPresignServiceMock({ initiateMultipartUpload: forbiddenInitiate }),
     });
-    const forbiddenResponse = await forbiddenApp.request("/api/supporters/multipart/logo/init", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        fileName: "logo.png",
-        contentType: "image/png",
-        fileSize: UPLOAD_LIMITS.multipartPartSizeBytes * 2,
-      }),
-    });
+    const forbiddenResponse = await forbiddenApp.request(
+      "/api/exhibitions/multipart/detail/init",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          fileName: "detail.png",
+          contentType: "image/png",
+          fileSize: UPLOAD_LIMITS.multipartPartSizeBytes * 2,
+        }),
+      },
+    );
     expect(forbiddenResponse.status).toBe(403);
     await expectErrorCode(forbiddenResponse, "FORBIDDEN");
     expect(forbiddenInitiate).not.toHaveBeenCalled();

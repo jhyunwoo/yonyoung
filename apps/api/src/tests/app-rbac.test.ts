@@ -59,6 +59,8 @@ const createUser = (
   department: null,
   studentNumber: null,
   phoneNumber: null,
+  collaborationAvailable: false,
+  personalLink: null,
   role,
   generationId,
   createdAt: new Date(0),

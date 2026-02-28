@@ -22,6 +22,8 @@ export const requestIdMiddleware: MiddlewareHandler<HonoAppType> = async (
   const requestId = readIncomingRequestId(c.req.raw) ?? crypto.randomUUID();
   c.set("requestId", requestId);
   c.set("startedAt", performance.now());
+  c.set("cacheStatus", null);
+  c.set("dataService", null);
 
   await next();
 

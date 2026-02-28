@@ -31,7 +31,12 @@ export const parseApiErrorEnvelope = (value: unknown): ApiErrorEnvelope | null =
 
   const code = value.error.code;
   const message = value.error.message;
-  if (typeof code !== "string" || typeof message !== "string") {
+  const requestId = value.error.requestId;
+  if (
+    typeof code !== "string" ||
+    typeof message !== "string" ||
+    typeof requestId !== "string"
+  ) {
     return null;
   }
 
@@ -39,6 +44,7 @@ export const parseApiErrorEnvelope = (value: unknown): ApiErrorEnvelope | null =
     error: {
       code,
       message,
+      requestId,
     },
   } as ApiErrorEnvelope;
 };
@@ -46,12 +52,19 @@ export const parseApiErrorEnvelope = (value: unknown): ApiErrorEnvelope | null =
 export class AdminApiError extends Error {
   readonly status: number;
   readonly code: string;
+  readonly requestId: string | null;
 
-  constructor(input: { status: number; code?: string; message: string }) {
+  constructor(input: {
+    status: number;
+    code?: string;
+    message: string;
+    requestId?: string | null;
+  }) {
     super(input.message);
     this.name = "AdminApiError";
     this.status = input.status;
     this.code = input.code ?? "UNKNOWN";
+    this.requestId = input.requestId ?? null;
   }
 }
 

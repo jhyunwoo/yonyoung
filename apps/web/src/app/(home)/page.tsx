@@ -4,13 +4,11 @@ import { Suspense } from "react";
 import MotionReveal from "./components/motion-reveal";
 import SectionShell from "./components/section-shell";
 import HeroShowcase from "./components/hero-showcase";
-import SupporterGrid from "./components/supporter-grid";
 import {
   flattenLinktreeItems,
   listPublicActivities,
   listPublicExhibitions,
   listPublicLinktrees,
-  listPublicSupporters,
   safeList,
 } from "../../lib/public-api";
 import { shouldUseUnoptimizedImage } from "../../lib/image-utils";
@@ -25,35 +23,9 @@ const getHomePrimaryData = async () => {
   ]);
 };
 
-const getHomeSupporters = async () => {
-  return safeList(listPublicSupporters, []);
-};
-
 const getHomeQuickLinks = async () => {
   const linktrees = await safeList(listPublicLinktrees, []);
   return flattenLinktreeItems(linktrees).slice(0, 6);
-};
-
-const HomeSupportersSection = async () => {
-  const supporters = await getHomeSupporters();
-  const highlightedSupporters = supporters.slice(0, 8);
-
-  return (
-    <SectionShell
-      id="sponsors"
-      eyebrow="Supporters"
-      title="연영회를 함께 만드는 후원사"
-      description="연영회의 활동과 전시를 함께 만들어주시는 파트너입니다."
-      className="bg-(--surface-elevated)"
-    >
-      <SupporterGrid
-        supporters={highlightedSupporters}
-        emptyMessage="현재 공개된 후원사 정보가 없습니다."
-        containerTestId="home-supporters-grid"
-        cardTestIdPrefix="home-supporter-card"
-      />
-    </SectionShell>
-  );
 };
 
 const HomeQuickLinksSection = async () => {
@@ -198,22 +170,6 @@ export default async function HomePage() {
           )}
         </div>
       </SectionShell>
-
-      <Suspense
-        fallback={
-          <SectionShell
-            id="sponsors"
-            eyebrow="Supporters"
-            title="연영회를 함께 만드는 후원사"
-            description="연영회의 활동과 전시를 함께 만들어주시는 파트너입니다."
-            className="bg-(--surface-elevated)"
-          >
-            <div className="h-28 animate-pulse border border-(--surface-strong-border) bg-(--surface-muted)" />
-          </SectionShell>
-        }
-      >
-        <HomeSupportersSection />
-      </Suspense>
 
       <Suspense
         fallback={

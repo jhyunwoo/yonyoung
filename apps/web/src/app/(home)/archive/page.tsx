@@ -4,7 +4,7 @@ import { createPageMetadata } from "../../../lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
   title: "아카이브 | 연영회",
-  description: "연영회의 활동 기록, 전시, 서포터즈 아카이브를 확인하세요.",
+  description: "연영회의 활동 기록과 전시 아카이브를 확인하세요.",
   path: "/archive",
 });
 

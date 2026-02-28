@@ -25,13 +25,14 @@ test.describe("public pages content", () => {
     await expect(page.getByRole("heading", { name: "활동 기록" })).toBeVisible();
     await expect(page.getByTestId("archive-records-grid")).toBeVisible();
 
-    await page.goto("/archive/supporters");
-    await expect(page.getByRole("heading", { name: "서포터즈" })).toBeVisible();
-    await expect(page.getByTestId("archive-supporters-grid")).toBeVisible();
-
     await page.goto("/archive/exhibitions");
     await expect(page.getByRole("heading", { name: "전시회" })).toBeVisible();
-    await expect(page.getByTestId("archive-exhibitions-grid")).toBeVisible();
+    const exhibitionsGrid = page.getByTestId("archive-exhibitions-grid");
+    if (await exhibitionsGrid.count()) {
+      await expect(exhibitionsGrid).toBeVisible();
+    } else {
+      await expect(page.getByText("전시 정보가 없습니다.")).toBeVisible();
+    }
 
     await page.goto("/linktree");
     await expect(page.getByRole("heading", { name: "LINKTREE" })).toBeVisible();

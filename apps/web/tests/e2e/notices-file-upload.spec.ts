@@ -36,7 +36,7 @@ test.describe("notices file upload", () => {
     await expect(page.getByText("URL 추가")).toHaveCount(0);
     await expect(page.getByPlaceholder("https://...")).toHaveCount(0);
 
-    await page.getByPlaceholder("공지 제목").fill(title);
+    await page.getByPlaceholder("공지 제목").first().fill(title);
     await fillRichTextEditor(page, `${title} 본문`);
     await page
       .locator("label:has-text('파일 업로드') input[type='file']")
@@ -54,7 +54,7 @@ test.describe("notices file upload", () => {
     await expect(page.getByText("URL 추가")).toHaveCount(0);
     await expect(page.getByPlaceholder("https://...")).toHaveCount(0);
 
-    await page.getByPlaceholder("공지 제목").fill(updatedTitle);
+    await page.getByPlaceholder("공지 제목").first().fill(updatedTitle);
     await page.getByRole("button", { name: "저장" }).click();
 
     await expect(page).toHaveURL(/\/dashboard\/settings\/notices\/[0-9a-f-]{36}$/i, {
@@ -81,7 +81,7 @@ test.describe("notices file upload", () => {
     await expect(page.getByText("URL 추가")).toHaveCount(0);
     await expect(page.getByPlaceholder("https://...")).toHaveCount(0);
 
-    await page.getByPlaceholder("공지 제목").fill(title);
+    await page.getByPlaceholder("공지 제목").first().fill(title);
     await fillRichTextEditor(page, `${title} 본문`);
     await page
       .locator("label:has-text('파일 업로드') input[type='file']")

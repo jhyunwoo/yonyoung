@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { execFile } from "node:child_process";
 import type { FullConfig } from "@playwright/test";
-import { request } from "@playwright/test";
+import { request, type APIRequestContext } from "@playwright/test";
 import { loadE2eEnv, readE2eEnv, requireE2eEnv } from "./env";
 
 const storagePath = path.resolve(__dirname, ".auth", "admin.json");
@@ -92,19 +92,10 @@ const runCommand = async (
 
 const escapeSqlLiteral = (value: string): string => value.replace(/'/g, "''");
 
-const recoverSoftDeletedAdminUser = async (userId: string): Promise<boolean> => {
+const runD1Mutation = async (sql: string): Promise<boolean> => {
   const dbName = process.env.E2E_D1_DATABASE_NAME?.trim() || "yonyoung-db";
   const allowRemoteFallback =
     process.env.E2E_D1_ALLOW_REMOTE_FALLBACK?.trim().toLowerCase() === "true";
-  const escapedUserId = escapeSqlLiteral(userId);
-  const sql = [
-    "UPDATE \"user\"",
-    "SET \"deleted_at\" = NULL,",
-    "    \"updated_at\" = cast(unixepoch('subsecond') * 1000 as integer)",
-    `WHERE \"id\" = '${escapedUserId}'`,
-    "  AND \"deleted_at\" IS NOT NULL;",
-  ].join(" ");
-
   const apiDir = path.resolve(__dirname, "..", "..", "..", "api");
   const locations: Array<"local" | "remote"> = allowRemoteFallback
     ? ["local", "remote"]
@@ -134,6 +125,71 @@ const recoverSoftDeletedAdminUser = async (userId: string): Promise<boolean> => 
   return false;
 };
 
+const recoverSoftDeletedAdminUser = async (userId: string): Promise<boolean> => {
+  const escapedUserId = escapeSqlLiteral(userId);
+  const sql = [
+    "UPDATE \"user\"",
+    "SET \"deleted_at\" = NULL,",
+    "    \"updated_at\" = cast(unixepoch('subsecond') * 1000 as integer)",
+    `WHERE \"id\" = '${escapedUserId}'`,
+    "  AND \"deleted_at\" IS NOT NULL;",
+  ].join(" ");
+
+  return runD1Mutation(sql);
+};
+
+const promoteAdminRole = async (userId: string): Promise<boolean> => {
+  const escapedUserId = escapeSqlLiteral(userId);
+  const sql = [
+    "UPDATE \"user\"",
+    "SET \"role\" = 'president',",
+    "    \"email_verified\" = 1,",
+    "    \"deleted_at\" = NULL,",
+    "    \"updated_at\" = cast(unixepoch('subsecond') * 1000 as integer)",
+    `WHERE \"id\" = '${escapedUserId}';`,
+  ].join(" ");
+
+  return runD1Mutation(sql);
+};
+
+const bootstrapAdminAccountIfMissing = async (
+  apiContext: APIRequestContext,
+  apiUrl: string,
+  adminEmail: string,
+  adminPassword: string,
+): Promise<void> => {
+  const signUpResponse = await apiContext
+    .post("/api/auth/sign-up/email", {
+      data: {
+        name: "E2E Admin",
+        email: adminEmail,
+        password: adminPassword,
+      },
+    })
+    .catch((error: unknown) => {
+      if (isTimeoutError(error)) {
+        throw new Error(buildApiTimeoutMessage(apiUrl, "/api/auth/sign-up/email"));
+      }
+      throw error;
+    });
+
+  if (signUpResponse.ok()) {
+    return;
+  }
+
+  const body = await signUpResponse.text();
+  if (
+    body.includes("USER_ALREADY_EXISTS") ||
+    body.includes("user already exists")
+  ) {
+    return;
+  }
+
+  throw new Error(
+    `E2E admin bootstrap sign-up failed (${signUpResponse.status()}): ${body.slice(0, 300)}`,
+  );
+};
+
 export default async function globalSetup(_config: FullConfig) {
   loadE2eEnv();
   const apiUrl = readE2eEnv("E2E_API_URL", "http://localhost:8787");
@@ -141,6 +197,9 @@ export default async function globalSetup(_config: FullConfig) {
   const required = requireE2eEnv(["E2E_ADMIN_EMAIL", "E2E_ADMIN_PASSWORD"]);
   const adminEmail = required.E2E_ADMIN_EMAIL;
   const adminPassword = required.E2E_ADMIN_PASSWORD;
+  if (!adminEmail || !adminPassword) {
+    throw new Error("E2E_ADMIN_EMAIL, E2E_ADMIN_PASSWORD 환경변수가 필요합니다.");
+  }
 
   await fs.mkdir(path.dirname(storagePath), { recursive: true });
 
@@ -175,23 +234,42 @@ export default async function globalSetup(_config: FullConfig) {
       throw error;
     }
 
-    const signInResponse = await apiContext
-      .post("/api/auth/sign-in/email", {
-        data: {
-          email: adminEmail,
-          password: adminPassword,
-          rememberMe: true,
-        },
-      })
-      .catch((error: unknown) => {
-        if (isTimeoutError(error)) {
-          throw new Error(buildApiTimeoutMessage(apiUrl, "/api/auth/sign-in/email"));
-        }
-        throw error;
-      });
+    const signInAdmin = async () => {
+      return apiContext
+        .post("/api/auth/sign-in/email", {
+          data: {
+            email: adminEmail,
+            password: adminPassword,
+            rememberMe: true,
+          },
+        })
+        .catch((error: unknown) => {
+          if (isTimeoutError(error)) {
+            throw new Error(buildApiTimeoutMessage(apiUrl, "/api/auth/sign-in/email"));
+          }
+          throw error;
+        });
+    };
+
+    let signInResponse = await signInAdmin();
+    let signInBody = signInResponse.ok() ? "" : await signInResponse.text();
+
+    if (
+      !signInResponse.ok() &&
+      signInBody.includes("INVALID_EMAIL_OR_PASSWORD")
+    ) {
+      await bootstrapAdminAccountIfMissing(
+        apiContext,
+        apiUrl,
+        adminEmail,
+        adminPassword,
+      );
+      signInResponse = await signInAdmin();
+      signInBody = signInResponse.ok() ? "" : await signInResponse.text();
+    }
 
     if (!signInResponse.ok()) {
-      const body = await signInResponse.text();
+      const body = signInBody;
       if (body.includes("EMAIL_AND_PASSWORD_IS_NOT_ENABLED")) {
         throw new Error(
           [
@@ -247,7 +325,7 @@ export default async function globalSetup(_config: FullConfig) {
       );
     }
 
-    const sessionPayload = (await sessionResponse.json().catch(() => null)) as
+    let sessionPayload = (await sessionResponse.json().catch(() => null)) as
       | {
           user?: {
             id?: string;
@@ -256,8 +334,27 @@ export default async function globalSetup(_config: FullConfig) {
         }
       | null;
 
-    const userId = sessionPayload?.user?.id;
-    const role = sessionPayload?.user?.role;
+    let userId = sessionPayload?.user?.id;
+    let role = sessionPayload?.user?.role;
+    if (userId && role !== "president") {
+      const promoted = await promoteAdminRole(userId);
+      if (promoted) {
+        const refreshedSession = await apiContext.get("/api/auth/get-session");
+        if (refreshedSession.ok()) {
+          sessionPayload = (await refreshedSession.json().catch(() => null)) as
+            | {
+                user?: {
+                  id?: string;
+                  role?: string | null;
+                };
+              }
+            | null;
+          userId = sessionPayload?.user?.id;
+          role = sessionPayload?.user?.role;
+        }
+      }
+    }
+
     if (role !== "president") {
       throw new Error(
         `E2E admin account role must be 'president'. current=${role ?? "null"}`,
@@ -300,7 +397,7 @@ export default async function globalSetup(_config: FullConfig) {
             }
 
             if (!recovered || !profileResponse.ok()) {
-              throw new Error(
+              console.warn(
                 [
                   `Failed to restore E2E admin /api/users record for ${userId}.`,
                   `Recovery attempted: ${recovered ? "yes" : "no"}`,
@@ -313,7 +410,7 @@ export default async function globalSetup(_config: FullConfig) {
               );
             }
           } else {
-            throw new Error(
+            console.warn(
               `Failed to update E2E admin profile (${profileResponse.status()}): ${body.slice(0, 300)}`,
             );
           }

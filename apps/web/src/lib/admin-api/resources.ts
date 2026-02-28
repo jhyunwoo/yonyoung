@@ -16,7 +16,6 @@ import type {
   ApiCreateGlobalNoticeInput,
   ApiCreateLinktreeInput,
   ApiCreateLinktreeItemInput,
-  ApiCreateSupporterInput,
   ApiExhibition,
   ApiExhibitionImage,
   ApiGeneration,
@@ -27,7 +26,6 @@ import type {
   ApiLinktreeItem,
   ApiListActivitiesQuery,
   ApiListExhibitionsQuery,
-  ApiSupporter,
   ApiUpdateActivityImageBatchItemInput,
   ApiUpdateActivityImageInput,
   ApiUpdateActivityInput,
@@ -39,7 +37,6 @@ import type {
   ApiUpdateGlobalNoticeInput,
   ApiUpdateLinktreeInput,
   ApiUpdateLinktreeItemInput,
-  ApiUpdateSupporterInput,
   ApiUpdateUserInput,
   ApiUser,
   ApiUserResourceHistory,
@@ -197,15 +194,6 @@ export const adminResourceApi = {
     deleteWithRevalidation(`/activities/${id}/images/${imageId}`, [
       ADMIN_CACHE_TAGS.activities,
     ]),
-
-  listSupporters: () => apiRequest.get<ApiSupporter[]>("/supporters"),
-  createSupporter: (input: ApiCreateSupporterInput) =>
-    postWithRevalidation<ApiSupporter>("/supporters", input, [ADMIN_CACHE_TAGS.supporters]),
-  getSupporterById: (id: string) => apiRequest.get<ApiSupporter>(`/supporters/${id}`),
-  updateSupporter: (id: string, input: ApiUpdateSupporterInput) =>
-    patchWithRevalidation<ApiSupporter>(`/supporters/${id}`, input, [ADMIN_CACHE_TAGS.supporters]),
-  deleteSupporter: (id: string) =>
-    deleteWithRevalidation(`/supporters/${id}`, [ADMIN_CACHE_TAGS.supporters]),
 
   listExhibitions: (input: ApiListExhibitionsQuery = {}) =>
     apiRequest.get<ApiExhibition[]>(

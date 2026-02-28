@@ -4,7 +4,7 @@ import { resolveCrossSubDomainCookieDomain } from "../lib/auth";
 describe("resolveCrossSubDomainCookieDomain", () => {
   it("workers.dev 서브도메인에서 루트 도메인을 반환한다", () => {
     expect(
-      resolveCrossSubDomainCookieDomain("https://api.yonyoung.moveto.kr"),
+      resolveCrossSubDomainCookieDomain("https://api.moveto.workers.dev"),
     ).toBe("moveto.workers.dev");
   });
 

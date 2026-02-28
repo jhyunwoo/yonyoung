@@ -1,4 +1,5 @@
 import { Actor } from "../lib/authorization/types";
+import type { DataService } from "../lib/services/types";
 
 export type AppBindings = CloudflareBindings & {
   r2?: R2Bucket;
@@ -14,6 +15,12 @@ export type AppBindings = CloudflareBindings & {
   R2_BUCKET?: string;
   R2_PUBLIC_BASE_URL?: string;
   DOCS_AUTH_IN_PROD?: string;
+  D1_SESSION_CONSISTENCY?: string;
+  D1_WRITE_RETRY_ENABLED?: string;
+  D1_WRITE_RETRY_MAX_RETRIES?: string;
+  D1_WRITE_RETRY_BASE_DELAY_MS?: string;
+  D1_WRITE_RETRY_MAX_DELAY_MS?: string;
+  CSP_REPORT_ONLY?: string;
 };
 
 type HonoAppType = {
@@ -22,6 +29,8 @@ type HonoAppType = {
     actor: Actor | null;
     requestId: string;
     startedAt: number;
+    cacheStatus: "hit" | "miss" | "stale" | "bypass" | "skip-store" | null;
+    dataService: DataService | null;
   };
 };
 

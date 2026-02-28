@@ -54,6 +54,10 @@ export const user = sqliteTable("user", {
   department: text("department"),
   studentNumber: text("student_number"),
   phoneNumber: text("phone_number"),
+  collaborationAvailable: integer("collaboration_available", { mode: "boolean" })
+    .default(false)
+    .notNull(),
+  personalLink: text("personal_link"),
   role: text("role").default("unverified"),
   generationId: text("generation_id").references(/** text("generation_id").references 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => generations.id, {
     onDelete: "set null",
@@ -261,34 +265,6 @@ export const activityImages = sqliteTable(
     index("activity_images_activity_id_idx").on(table.activityId),
     index("activity_images_sort_order_idx").on(table.sortOrder),
   ],
-);
-
-export const supporters = sqliteTable(
-  "supporters",
-  {
-    id: text("id").primaryKey(),
-    name: text("name").notNull(),
-    link: text("link").notNull(),
-    logoUrl: text("logo_url").notNull(),
-    expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .default(nowTimestamp)
-      .notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-      .default(nowTimestamp)
-      .$onUpdate(/** integer("updated_at", { mode: "timestamp_ms" })
-      .default(nowTimestamp)
-      .$onUpdate 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => /* @__PURE__ */ new Date())
-      .notNull(),
-    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
-  },
-    /**
-   * sqliteTable 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다.
-   * @param table 함수 로직에서 사용하는 입력값입니다.
-   * @returns 함수 실행 결과를 반환합니다.
-   * @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다.
-   */
-  (table) => [index("supporters_expires_at_idx").on(table.expiresAt)],
 );
 
 export const exhibitions = sqliteTable(

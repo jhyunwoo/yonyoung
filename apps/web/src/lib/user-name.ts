@@ -4,6 +4,15 @@ type UserNameLike = {
   email?: string | null;
 };
 
+export const compactDisplayName = (value: string | null | undefined): string | null => {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const compacted = value.replace(/\s+/g, "").trim();
+  return compacted.length > 0 ? compacted : null;
+};
+
 const toTrimmedOrNull = (value: string | null | undefined): string | null => {
   if (typeof value !== "string") {
     return null;
@@ -14,8 +23,8 @@ const toTrimmedOrNull = (value: string | null | undefined): string | null => {
 };
 
 export const formatKoreanName = (user: UserNameLike): string => {
-  const familyName = toTrimmedOrNull(user.familyName);
-  const givenName = toTrimmedOrNull(user.givenName);
+  const familyName = compactDisplayName(user.familyName);
+  const givenName = compactDisplayName(user.givenName);
 
   if (familyName || givenName) {
     return `${familyName ?? ""}${givenName ?? ""}`;

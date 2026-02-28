@@ -265,6 +265,53 @@ describe("user routes additional coverage", /** describe 실행 과정에서 필
     expect(updateUser).not.toHaveBeenCalled();
   });
 
+  it("member 계열 사용자의 협업 가능 여부는 boolean만 허용한다", async () => {
+    const updateUser = fn(async () => createUser({ id: IDs.member }));
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({ updateUser }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.member}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ collaborationAvailable: "true" }),
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+    expect(updateUser).not.toHaveBeenCalled();
+  });
+
+  it("member 계열 사용자는 협업 가능 여부와 개인 링크를 수정할 수 있다", async () => {
+    const updateUser = fn(async () =>
+      createUser({
+        id: IDs.member,
+        collaborationAvailable: true,
+        personalLink: "https://example.com/me",
+      }),
+    );
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({ updateUser }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.member}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        collaborationAvailable: true,
+        personalLink: "https://example.com/me",
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(updateUser).toHaveBeenCalledWith(IDs.member, {
+      collaborationAvailable: true,
+      personalLink: "https://example.com/me",
+    });
+  });
+
   it("회장 1인 상태에서 회장 권한 하향은 400을 반환한다", async () => {
     const updateUser = fn(async () => createUser({ id: IDs.president, role: "regular_member" }));
     const app = createTestApp({

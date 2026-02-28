@@ -16,6 +16,15 @@ describe("buildMemberDisplayName", () => {
     ).toBe("김연영");
   });
 
+  it("성/이름 내부 공백도 제거해 붙여쓰기 형식으로 반환한다", () => {
+    expect(
+      buildMemberDisplayName({
+        familyName: " 김 ",
+        givenName: "연 영",
+      }),
+    ).toBe("김연영");
+  });
+
   it("성/이름이 없으면 레거시 name을 사용한다", () => {
     expect(
       buildMemberDisplayName({
@@ -24,6 +33,16 @@ describe("buildMemberDisplayName", () => {
         name: "legacy",
       }),
     ).toBe("legacy");
+  });
+
+  it("레거시 name의 공백을 제거해 붙여쓰기 형식으로 반환한다", () => {
+    expect(
+      buildMemberDisplayName({
+        familyName: null,
+        givenName: null,
+        name: "홍 길 동",
+      }),
+    ).toBe("홍길동");
   });
 
   it("name도 없으면 email local-part를 사용한다", () => {

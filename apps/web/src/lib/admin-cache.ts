@@ -1,7 +1,6 @@
 export const ADMIN_CACHE_TAGS = {
   generations: "admin:generations",
   activities: "admin:activities",
-  supporters: "admin:supporters",
   exhibitions: "admin:exhibitions",
   linktree: "admin:linktree",
   notices: "admin:notices",

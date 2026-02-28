@@ -15,7 +15,6 @@ export default function robots(): MetadataRoute.Robots {
           "/about/recruiting",
           "/archive",
           "/archive/records",
-          "/archive/supporters",
           "/archive/exhibitions",
           "/donate",
           "/linktree",

@@ -1,35 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { listPublicPhotographers, safeList } from "../../../../lib/public-api";
 import { formatKoreanYearRange } from "../../../../lib/date-formatters";
 import { createPageMetadata } from "../../../../lib/seo";
-import { formatKoreanName } from "../../../../lib/user-name";
-
-const readDisplayName = (member: {
-  familyName: string | null;
-  givenName: string | null;
-  name: string;
-}): string => {
-  const koreanName = formatKoreanName({
-    familyName: member.familyName,
-    givenName: member.givenName,
-  });
-  if (koreanName !== "이름 미등록") {
-    return koreanName;
-  }
-
-  const legacyName = member.name.trim();
-  return legacyName.length > 0 ? legacyName : "이름 미등록";
-};
-
-const readFallbackInitial = (name: string): string => {
-  const trimmed = name.trim();
-  if (trimmed.length === 0) {
-    return "?";
-  }
-  return Array.from(trimmed)[0] ?? "?";
-};
+import GenerationMembersGrid from "./generation-members-grid";
 
 export const metadata: Metadata = createPageMetadata({
   title: "PHOTOGRAPHERS | 연영회",
@@ -43,20 +17,26 @@ export default async function PhotographersPage() {
   const generations = await safeList(listPublicPhotographers, []);
 
   return (
-    <div className="px-4 pb-16 pt-10 md:px-8 md:pb-20" data-testid="about-photographers-page">
-      <main className="mx-auto w-full max-w-[1200px] space-y-10">
-        <section className="space-y-5">
-          <h1 className="text-[2.6rem] leading-tight font-semibold text-(--text-primary) md:text-[3.2rem]">
+    <div
+      className="bg-white pb-14 md:pb-20 md:pt-10"
+      data-testid="about-photographers-page"
+    >
+      <main
+        className="mx-auto w-full max-w-[1200px] space-y-10 px-4 md:space-y-20 md:px-8"
+        data-testid="about-photographers-main"
+      >
+        <section className="space-y-6 pt-6 md:space-y-10 md:pt-10">
+          <h1 className="text-4xl leading-none font-normal tracking-[-0.02em] text-[#04050a] md:text-6xl">
             PHOTOGRAPHERS
           </h1>
           {generations.length > 0 ? (
             <nav aria-label="기수 바로가기">
-              <ul className="flex flex-wrap gap-2">
+              <ul className="flex flex-wrap items-center gap-x-6 gap-y-1 md:gap-x-8 md:gap-y-2">
                 {generations.map((generation) => (
                   <li key={`photographers-anchor-${generation.id}`}>
                     <Link
                       href={`#gen-${generation.sortOrder}`}
-                      className="inline-flex border border-(--surface-border) px-3 py-1.5 text-sm text-(--text-primary) transition hover:bg-(--surface-muted)"
+                      className="inline-flex text-base leading-tight font-normal text-[#666666] transition-colors hover:text-[#111218] md:text-lg"
                     >
                       {generation.sortOrder}기
                     </Link>
@@ -65,66 +45,50 @@ export default async function PhotographersPage() {
               </ul>
             </nav>
           ) : null}
+          <div className="h-px w-full bg-[#d8d8dd]" />
         </section>
 
         {generations.length === 0 ? (
-          <section className="border border-(--surface-border) p-5 text-sm text-(--text-muted)">
+          <section className="border border-[#d8d8dd] p-5 text-sm text-[#6f6f79]">
             공개된 기수 정보가 없습니다.
           </section>
         ) : (
-          <section className="space-y-8" data-testid="about-photographers-generations">
+          <section
+            className="space-y-12 md:space-y-16"
+            data-testid="about-photographers-generations"
+          >
             {generations.map((generation) => (
               <article
                 key={generation.id}
                 id={`gen-${generation.sortOrder}`}
-                className="space-y-4 border border-(--surface-border) p-5"
+                className="scroll-mt-[calc(var(--public-header-height-mobile)+16px)] space-y-6 md:scroll-mt-[calc(var(--public-header-height-desktop)+40px)] md:space-y-8"
                 data-testid={`about-photographers-generation-${generation.id}`}
               >
-                <div className="space-y-1">
-                  <h2 className="text-[1.6rem] font-semibold text-(--text-primary)">
-                    {generation.sortOrder}기
-                  </h2>
-                  <p className="text-sm text-(--text-muted)">
-                    {generation.name} · {formatKoreanYearRange(generation.startDate, generation.endDate)}
+                <header>
+                  <div className="inline-flex flex-col items-start">
+                    <h2 className="text-xl leading-none font-medium tracking-tight text-[#3a3b43] md:text-2xl">
+                      {generation.sortOrder}기
+                    </h2>
+                    <span
+                      className="mt-1.5 block h-[3px] w-16 bg-[#12131a] md:w-20"
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <p className="sr-only">
+                    {generation.name} ·{" "}
+                    {formatKoreanYearRange(
+                      generation.startDate,
+                      generation.endDate,
+                    )}
                   </p>
-                </div>
+                </header>
 
                 {generation.members.length === 0 ? (
-                  <p className="text-sm text-(--text-muted)">등록된 멤버가 없습니다.</p>
+                  <p className="text-sm text-[#6f6f79]">
+                    등록된 멤버가 없습니다.
+                  </p>
                 ) : (
-                  <ul className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                    {generation.members.map((member) => {
-                      const displayName = readDisplayName(member);
-                      const fallbackInitial = readFallbackInitial(displayName);
-                      return (
-                        <li
-                          key={member.id}
-                          className="border border-(--surface-border) p-3"
-                          data-testid={`about-photographers-member-${member.id}`}
-                        >
-                          <div className="space-y-2">
-                            <div className="relative aspect-square overflow-hidden border border-(--surface-border) bg-(--surface-muted)">
-                              {member.image ? (
-                                <Image
-                                  src={member.image}
-                                  alt={`${displayName} 프로필`}
-                                  fill
-                                  unoptimized
-                                  sizes="(min-width: 1024px) 14vw, (min-width: 768px) 24vw, 44vw"
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <div className="flex h-full w-full items-center justify-center text-lg font-semibold text-(--text-muted)">
-                                  {fallbackInitial}
-                                </div>
-                              )}
-                            </div>
-                            <p className="text-sm font-medium text-(--text-primary)">{displayName}</p>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                  <GenerationMembersGrid generation={generation} />
                 )}
               </article>
             ))}

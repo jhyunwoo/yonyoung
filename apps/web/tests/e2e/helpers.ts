@@ -198,7 +198,7 @@ const parseFileUploadFlow = (): FileUploadFlow => {
   return "auto";
 };
 
-type UploadMockResource = "activities" | "exhibitions" | "supporters" | "users";
+type UploadMockResource = "activities" | "exhibitions" | "users";
 type UploadMockSlot = "cover" | "detail" | "logo" | "profile";
 type PresignPayload = Record<string, unknown> | null;
 
@@ -988,29 +988,6 @@ export const seedPublicExhibition = async (
   });
 };
 
-export const seedPublicSupporter = async (
-  request: APIRequestContext,
-  input: {
-    prefix: string;
-    name?: string;
-    link?: string;
-    logoUrl?: string;
-    expiresAt?: number;
-  },
-): Promise<{ id: string; name: string }> => {
-  return adminApiRequest<{ id: string; name: string }>(request, {
-    method: "POST",
-    path: "/supporters",
-    data: {
-      name: input.name ?? uniqueText(input.prefix, "public-supporter"),
-      link: input.link ?? `https://example.com/${input.prefix}/public-supporter`,
-      logoUrl:
-        input.logoUrl ?? `https://example.com/${input.prefix}/public-supporter-logo.png`,
-      expiresAt: input.expiresAt ?? Date.parse("2099-12-31T00:00:00.000Z"),
-    },
-  });
-};
-
 export const seedPublicLinktreeWithItems = async (
   request: APIRequestContext,
   input: {
@@ -1174,17 +1151,6 @@ export const cleanupByPrefix = async (
       await adminApiRequest<void>(request, {
         method: "DELETE",
         path: `/exhibitions/${exhibition.id}`,
-        failSilently: true,
-      });
-    }
-  }
-
-  const supporters = await safeList<{ id: string; name: string }>("/supporters");
-  for (const supporter of supporters) {
-    if (supporter.name.includes(prefix)) {
-      await adminApiRequest<void>(request, {
-        method: "DELETE",
-        path: `/supporters/${supporter.id}`,
         failSilently: true,
       });
     }

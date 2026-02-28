@@ -7,7 +7,6 @@ import {
   createGeneration,
   createLinktree,
   createLinktreeItem,
-  createSupporter,
   createTestApp,
   createUser,
   fn,
@@ -176,38 +175,6 @@ describe("public routes", () => {
 
     const response = await app.request(`/api/public/exhibitions/${IDs.exhibition}`);
     expect(response.status).toBe(404);
-  });
-
-  it("공개 후원사 목록은 서비스에서 계산한 우선순위를 그대로 반환한다", async () => {
-    const listPublicSupporters = fn(async () => [
-      createSupporter({
-        id: "30000000-0000-4000-8000-000000000013",
-        expiresAt: new Date("2030-01-01T00:00:00.000Z"),
-      }),
-      createSupporter({
-        id: "30000000-0000-4000-8000-000000000012",
-        expiresAt: new Date("2099-01-01T00:00:00.000Z"),
-      }),
-      createSupporter({
-        id: "30000000-0000-4000-8000-000000000011",
-        expiresAt: new Date("2020-01-01T00:00:00.000Z"),
-      }),
-    ]);
-    const app = createTestApp({
-      actor: null,
-      dataService: createDataServiceMock({ listPublicSupporters }),
-    });
-
-    const response = await app.request("/api/public/supporters");
-    expect(response.status).toBe(200);
-    expect(response.headers.get("cache-control")).toContain("s-maxage=60");
-
-    const body = await readJson<{ data: Array<{ id: string }> }>(response);
-    expect(body.data[0]?.id).toBe("30000000-0000-4000-8000-000000000013");
-    expect(body.data[1]?.id).toBe("30000000-0000-4000-8000-000000000012");
-    expect(body.data[2]?.id).toBe("30000000-0000-4000-8000-000000000011");
-    expect(listPublicSupporters).toHaveBeenCalledTimes(1);
-    expect(listPublicSupporters).toHaveBeenCalledWith(expect.any(Number));
   });
 
   it("공개 링크트리는 비로그인 상태에서도 조회할 수 있다", async () => {

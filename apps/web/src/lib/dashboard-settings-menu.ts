@@ -1,4 +1,4 @@
-export type DashboardSettingsMenuItem = {
+type DashboardSettingsMenuItem = {
   key: string;
   label: string;
   description: string;
@@ -18,12 +18,6 @@ const SETTINGS_MENU_ITEMS: DashboardSettingsMenuItem[] = [
     label: "Linktree 관리",
     description: "링크트리 항목을 관리합니다.",
     href: "/dashboard/settings/linktree",
-  },
-  {
-    key: "settings-supporters",
-    label: "후원사 관리",
-    description: "후원사 정보를 관리합니다.",
-    href: "/dashboard/settings/supporters",
   },
   {
     key: "settings-members",

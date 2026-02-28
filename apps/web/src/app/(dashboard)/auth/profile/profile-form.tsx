@@ -31,12 +31,20 @@ type ProfileFormProps = {
     department: string;
     studentNumber: string;
     phoneNumber: string;
+    collaborationAvailable: boolean;
+    personalLink: string;
   };
 };
 
 type FieldErrors = Partial<
   Record<
-    "familyName" | "givenName" | "college" | "department" | "studentNumber" | "phoneNumber",
+    | "familyName"
+    | "givenName"
+    | "college"
+    | "department"
+    | "studentNumber"
+    | "phoneNumber"
+    | "personalLink",
     string
   >
 >;
@@ -64,6 +72,7 @@ const validateForm = (input: {
   department: string;
   studentNumber: string;
   phoneNumber: string;
+  personalLink: string;
 }): FieldErrors => {
   const errors: FieldErrors = {};
 
@@ -84,6 +93,17 @@ const validateForm = (input: {
   }
   if (!isKoreanMobilePhoneNumber(input.phoneNumber.trim())) {
     errors.phoneNumber = "핸드폰 번호는 010-0000-0000 형식이어야 합니다.";
+  }
+  const personalLink = input.personalLink.trim();
+  if (personalLink.length > 0) {
+    try {
+      const url = new URL(personalLink);
+      if (!["http:", "https:"].includes(url.protocol)) {
+        errors.personalLink = "개인 링크는 http(s) URL만 허용됩니다.";
+      }
+    } catch {
+      errors.personalLink = "개인 링크는 올바른 URL 형식이어야 합니다.";
+    }
   }
 
   return errors;
@@ -108,6 +128,10 @@ export default function AuthProfileForm({
   const [department, setDepartment] = useState(initialProfile.department);
   const [studentNumber, setStudentNumber] = useState(initialProfile.studentNumber);
   const [phoneNumber, setPhoneNumber] = useState(initialProfile.phoneNumber);
+  const [collaborationAvailable, setCollaborationAvailable] = useState(
+    initialProfile.collaborationAvailable,
+  );
+  const [personalLink, setPersonalLink] = useState(initialProfile.personalLink);
 
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [selectedImageObjectUrl, setSelectedImageObjectUrl] = useState<string | null>(null);
@@ -163,6 +187,7 @@ export default function AuthProfileForm({
       department,
       studentNumber,
       phoneNumber,
+      personalLink,
     });
     if (Object.keys(validationErrors).length > 0) {
       setFieldErrors(validationErrors);
@@ -195,6 +220,8 @@ export default function AuthProfileForm({
         department: department.trim(),
         studentNumber: studentNumber.trim(),
         phoneNumber: phoneNumber.trim(),
+        collaborationAvailable,
+        personalLink: personalLink.trim().length > 0 ? personalLink.trim() : null,
       };
 
       if (canEditProfileImage) {
@@ -204,6 +231,8 @@ export default function AuthProfileForm({
       const updatedUser = await adminResourceApi.updateUser(userId, payload);
 
       setProfileImage(updatedUser.image ?? "");
+      setCollaborationAvailable(updatedUser.collaborationAvailable);
+      setPersonalLink(updatedUser.personalLink ?? "");
       if (selectedImageObjectUrl) {
         URL.revokeObjectURL(selectedImageObjectUrl);
       }
@@ -396,6 +425,38 @@ export default function AuthProfileForm({
               />
               {fieldErrors.phoneNumber ? (
                 <span className="text-xs text-red-600">{fieldErrors.phoneNumber}</span>
+              ) : null}
+            </label>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="font-medium">협업 가능 여부</span>
+              <select
+                value={collaborationAvailable ? "true" : "false"}
+                onChange={(event) =>
+                  setCollaborationAvailable(event.target.value === "true")
+                }
+                disabled={isSaving}
+                className="rounded-lg border border-slate-300 px-3 py-2"
+              >
+                <option value="true">가능</option>
+                <option value="false">불가</option>
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="font-medium">개인 링크</span>
+              <input
+                value={personalLink}
+                onChange={(event) => setPersonalLink(event.target.value)}
+                disabled={isSaving}
+                className="rounded-lg border border-slate-300 px-3 py-2"
+                placeholder="https://example.com/my-link"
+                inputMode="url"
+              />
+              {fieldErrors.personalLink ? (
+                <span className="text-xs text-red-600">{fieldErrors.personalLink}</span>
               ) : null}
             </label>
           </div>

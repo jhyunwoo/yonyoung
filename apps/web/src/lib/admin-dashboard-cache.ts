@@ -6,7 +6,6 @@ import type {
   ApiGenerationNotice,
   ApiGlobalNotice,
   ApiLinktree,
-  ApiSupporter,
 } from "./admin-api/types";
 
 const ADMIN_API_BASE_PATH = "/api";
@@ -92,12 +91,6 @@ export const listCachedGlobalNotices = async (
   cookieHeader: string | null,
 ): Promise<ApiGlobalNotice[]> => {
   return readAdminCollection<ApiGlobalNotice>("/global-notices", cookieHeader);
-};
-
-export const listCachedSupporters = async (
-  cookieHeader: string | null,
-): Promise<ApiSupporter[]> => {
-  return readAdminCollection<ApiSupporter>("/supporters", cookieHeader);
 };
 
 export const listCachedLinktrees = async (

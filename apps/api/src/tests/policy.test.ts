@@ -20,9 +20,15 @@ describe("authorization policy", /** describe 실행 과정에서 필요한 연�
     expect(can("president", "user", "update")).toBe(true);
   });
 
-  it("부회장은 generation/exhibition delete가 불가하다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
+  it("부회장은 활동/전시/링크트리 생성·수정이 가능하고 일부 delete만 제한된다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
     expect(can("vice_president", "generation", "delete")).toBe(false);
     expect(can("vice_president", "exhibition", "delete")).toBe(false);
+    expect(can("vice_president", "activity", "create")).toBe(true);
+    expect(can("vice_president", "activity", "update")).toBe(true);
+    expect(can("vice_president", "exhibition", "create")).toBe(true);
+    expect(can("vice_president", "exhibition", "update")).toBe(true);
+    expect(can("vice_president", "linktree", "create")).toBe(true);
+    expect(can("vice_president", "linktree", "update")).toBe(true);
     expect(can("vice_president", "generation", "update")).toBe(true);
   });
 
@@ -40,7 +46,6 @@ describe("authorization policy", /** describe 실행 과정에서 필요한 연�
     expect(can("new_member", "activity", "read")).toBe(true);
     expect(can("new_member", "activity", "create")).toBe(true);
     expect(can("new_member", "activity", "update")).toBe(true);
-    expect(can("associate_member", "supporter", "update")).toBe(false);
     expect(can("associate_member", "activity", "create")).toBe(true);
     expect(can("associate_member", "notice", "create")).toBe(false);
     expect(can("regular_member", "notice", "read")).toBe(true);

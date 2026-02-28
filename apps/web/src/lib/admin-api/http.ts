@@ -70,6 +70,7 @@ export const adminRequest = async <T>(
           status: response.status,
           code: envelope.error.code,
           message: envelope.error.message,
+          requestId: envelope.error.requestId,
         });
       }
 

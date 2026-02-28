@@ -20,6 +20,9 @@ const createUser = (input: Partial<ApiUser>): ApiUser => ({
   department: input.department !== undefined ? input.department : null,
   studentNumber: input.studentNumber !== undefined ? input.studentNumber : null,
   phoneNumber: input.phoneNumber !== undefined ? input.phoneNumber : null,
+  collaborationAvailable:
+    input.collaborationAvailable !== undefined ? input.collaborationAvailable : false,
+  personalLink: input.personalLink !== undefined ? input.personalLink : null,
   role: input.role !== undefined ? input.role : "regular_member",
   generationId: input.generationId !== undefined ? input.generationId : null,
   generationIds: input.generationIds ?? [],

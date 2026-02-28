@@ -117,6 +117,7 @@ describe("adminRequest", () => {
           error: {
             code: "FORBIDDEN",
             message: "권한이 없습니다.",
+            requestId: "request-id-1",
           },
         },
         403,
@@ -127,6 +128,7 @@ describe("adminRequest", () => {
       status: 403,
       code: "FORBIDDEN",
       message: "권한이 없습니다.",
+      requestId: "request-id-1",
     });
   });
 

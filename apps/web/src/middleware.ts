@@ -72,6 +72,15 @@ const buildCspHeader = (request: NextRequest): string =>
     `connect-src ${resolveConnectSrc(request)}`,
   ].join("; ");
 
+const isCspReportOnlyEnabled = (): boolean => {
+  const value = process.env.CSP_REPORT_ONLY;
+  if (!value) {
+    return true;
+  }
+
+  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+};
+
 const hasSessionCookie = (request: NextRequest): boolean => {
   return request.cookies.getAll().some((cookie) =>
     SESSION_COOKIE_NAMES.some(
@@ -102,7 +111,14 @@ const applySecurityHeaders = (
   response: NextResponse,
   request: NextRequest,
 ): void => {
-  response.headers.set("Content-Security-Policy", buildCspHeader(request));
+  const csp = buildCspHeader(request);
+  if (isCspReportOnlyEnabled()) {
+    response.headers.set("Content-Security-Policy-Report-Only", csp);
+    response.headers.delete("Content-Security-Policy");
+  } else {
+    response.headers.set("Content-Security-Policy", csp);
+    response.headers.delete("Content-Security-Policy-Report-Only");
+  }
 
   for (const [header, value] of Object.entries(STATIC_SECURITY_HEADERS)) {
     response.headers.set(header, value);

@@ -1,3 +1,5 @@
+import { compactDisplayName } from "./user-name";
+
 type MemberNameLike = {
   familyName?: string | null;
   givenName?: string | null;
@@ -5,31 +7,22 @@ type MemberNameLike = {
   email?: string | null;
 };
 
-const toTrimmedOrNull = (value: string | null | undefined): string | null => {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
-
 export const buildMemberDisplayName = (member: MemberNameLike): string => {
-  const familyName = toTrimmedOrNull(member.familyName);
-  const givenName = toTrimmedOrNull(member.givenName);
+  const familyName = compactDisplayName(member.familyName);
+  const givenName = compactDisplayName(member.givenName);
 
   if (familyName || givenName) {
     return `${familyName ?? ""}${givenName ?? ""}`;
   }
 
-  const legacyName = toTrimmedOrNull(member.name);
+  const legacyName = compactDisplayName(member.name);
   if (legacyName) {
     return legacyName;
   }
 
-  const email = toTrimmedOrNull(member.email);
+  const email = compactDisplayName(member.email);
   if (email) {
-    const localPart = email.split("@")[0]?.trim();
+    const localPart = compactDisplayName(email.split("@")[0]);
     if (localPart) {
       return localPart;
     }

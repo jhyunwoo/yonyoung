@@ -348,85 +348,6 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     errorGuide: [...readOnlyErrorGuide],
     permission: ["`activity:delete` 권한 필요"],
   }),
-  listSupporters: mkSpec({
-    summary: "후원사 목록 조회",
-    overview:
-      "후원사 데이터를 조회합니다. 링크, 로고 URL, 만료 시점 정보를 포함합니다.",
-    parameters: ["경로/쿼리 파라미터를 사용하지 않습니다."],
-    requestBody: ["요청 본문은 사용하지 않습니다."],
-    internalFlow: [
-      "세션 + `supporter:read` 권한 확인",
-      "후원사 목록 조회 후 `{ data }`로 반환",
-    ],
-    responseGuide: ["`200`: `ApiSupporter[]` 반환"],
-    errorGuide: [...readOnlyErrorGuide],
-    permission: ["`supporter:read` 권한 필요"],
-  }),
-  createSupporter: mkSpec({
-    summary: "후원사 생성",
-    overview:
-      "새 후원사를 등록합니다. 노출 링크와 로고 URL, 만료 시점(timestamp)을 함께 저장합니다.",
-    parameters: ["경로 파라미터를 사용하지 않습니다."],
-    requestBody: [
-      "`name`: 후원사명",
-      "`link`: 외부 이동 URL",
-      "`logoUrl`: 로고 이미지 URL",
-      "`expiresAt`: 만료 시점 Unix timestamp(ms)",
-    ],
-    internalFlow: [
-      "세션 + `supporter:create` 권한 확인",
-      "본문 검증 후 DB insert",
-      "생성 결과를 `201`로 반환",
-    ],
-    responseGuide: ["`201`: 생성된 `ApiSupporter` 반환"],
-    errorGuide: [...commonErrorGuide],
-    permission: ["`supporter:create` 권한 필요"],
-  }),
-  getSupporterById: mkSpec({
-    summary: "후원사 단건 조회",
-    overview: "후원사 ID 기준 상세 정보를 조회합니다.",
-    parameters: ["`id` (path, UUID): 조회 대상 후원사 식별자"],
-    requestBody: ["요청 본문은 사용하지 않습니다."],
-    internalFlow: [
-      "세션 + `supporter:read` 권한 확인",
-      "UUID 검증 후 단건 조회",
-      "없으면 `404`, 있으면 `200`",
-    ],
-    responseGuide: ["`200`: `ApiSupporter` 반환"],
-    errorGuide: [...readOnlyErrorGuide],
-    permission: ["`supporter:read` 권한 필요"],
-  }),
-  updateSupporter: mkSpec({
-    summary: "후원사 수정",
-    overview: "후원사 정보를 부분 수정합니다.",
-    parameters: ["`id` (path, UUID): 수정 대상 후원사 식별자"],
-    requestBody: [
-      "부분 수정 필드만 전달합니다.",
-      "빈 PATCH 본문은 `400`을 반환합니다.",
-    ],
-    internalFlow: [
-      "세션 + `supporter:update` 권한 확인",
-      "파라미터/본문 검증 후 업데이트",
-      "대상 미존재 시 `404`",
-    ],
-    responseGuide: ["`200`: 수정된 `ApiSupporter` 반환"],
-    errorGuide: [...commonErrorGuide],
-    permission: ["`supporter:update` 권한 필요"],
-  }),
-  deleteSupporter: mkSpec({
-    summary: "후원사 삭제",
-    overview: "후원사 1건을 삭제합니다.",
-    parameters: ["`id` (path, UUID): 삭제 대상 후원사 식별자"],
-    requestBody: ["요청 본문은 사용하지 않습니다."],
-    internalFlow: [
-      "세션 + `supporter:delete` 권한 확인",
-      "UUID 검증 후 삭제 실행",
-      "삭제 성공 시 `204`",
-    ],
-    responseGuide: ["`204`: 본문 없이 삭제 완료"],
-    errorGuide: [...readOnlyErrorGuide],
-    permission: ["`supporter:delete` 권한 필요"],
-  }),
   listExhibitions: mkSpec({
     summary: "전시 목록 조회",
     overview:
@@ -908,19 +829,6 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     responseGuide: ["`201`: presign 발급 정보 반환"],
     errorGuide: [...commonErrorGuide],
     permission: ["전시 생성/수정 권한 필요"],
-  }),
-  issueSupporterLogoPresign: mkSpec({
-    summary: "후원사 로고 업로드 URL 발급",
-    overview: "후원사 로고 이미지 업로드용 presigned URL을 발급합니다.",
-    parameters: ["경로 파라미터 없음"],
-    requestBody: ["`fileName`, `contentType(image/*)`"],
-    internalFlow: [
-      "`supporter:create/update` 권한 확인",
-      "presign 발급 후 업로드 정보 반환",
-    ],
-    responseGuide: ["`201`: presign 발급 정보 반환"],
-    errorGuide: [...commonErrorGuide],
-    permission: ["후원사 생성/수정 권한 필요"],
   }),
   issueUserProfilePresign: mkSpec({
     summary: "사용자 프로필 이미지 업로드 URL 발급",

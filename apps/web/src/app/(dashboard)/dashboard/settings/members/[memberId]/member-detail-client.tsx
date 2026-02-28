@@ -62,8 +62,6 @@ const readHistoryResourceLabel = (resourceType: ApiUserResourceHistoryItem["reso
       return "기수 공지";
     case "global_notice":
       return "전체 공지";
-    case "supporter":
-      return "후원사";
     case "linktree":
       return "링크트리";
     case "linktree_item":
@@ -93,8 +91,6 @@ const resolveHistoryPath = (
   switch (item.resourceType) {
     case "global_notice":
       return `/dashboard/settings/notices/${item.resourceId}`;
-    case "supporter":
-      return `/dashboard/settings/supporters/${item.resourceId}`;
     case "linktree":
       return `/dashboard/settings/linktree/${item.resourceId}`;
     case "linktree_item":

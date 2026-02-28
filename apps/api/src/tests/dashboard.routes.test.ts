@@ -18,7 +18,6 @@ describe("dashboard routes", () => {
       selectedGenerationMembersTotal: 9,
       selectedGenerationActivitiesTotal: 12,
       selectedGenerationExhibitionsTotal: 2,
-      activeSupportersTotal: 4,
       linktreeLinksTotal: 33,
     }));
 
@@ -51,7 +50,6 @@ describe("dashboard routes", () => {
           selectedGenerationMembersTotal: 0,
           selectedGenerationActivitiesTotal: 0,
           selectedGenerationExhibitionsTotal: 0,
-          activeSupportersTotal: 0,
           linktreeLinksTotal: 0,
         })),
       }),
@@ -80,7 +78,6 @@ describe("dashboard routes", () => {
           selectedGenerationMembersTotal: 0,
           selectedGenerationActivitiesTotal: 0,
           selectedGenerationExhibitionsTotal: 0,
-          activeSupportersTotal: 0,
           linktreeLinksTotal: 0,
         })),
       }),
