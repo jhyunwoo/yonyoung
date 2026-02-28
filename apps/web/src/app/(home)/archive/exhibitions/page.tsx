@@ -21,7 +21,7 @@ export default async function ArchiveExhibitionsPage() {
   const exhibitions = await getArchiveExhibitions();
 
   return (
-    <div className="min-h-screen bg-white pt-[72px] md:pt-[80px]">
+    <div className="min-h-screen bg-white">
       <div className="mb-16 border-b border-[#bfbfbf] px-4 py-8 text-center md:px-8 md:py-16">
         <div className="mx-auto max-w-[1200px]">
           <h1 className="mb-4 text-[2rem] leading-[1.2] font-bold text-[#2c3357] md:text-[3rem]">

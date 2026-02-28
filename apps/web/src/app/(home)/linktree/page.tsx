@@ -13,7 +13,7 @@ export default async function LinktreePage() {
   const linktrees = await safeList(listPublicLinktrees, []);
 
   return (
-    <div className="min-h-screen bg-white pt-[100px] md:pt-[120px]">
+    <div className="min-h-screen bg-white pt-7 md:pt-10">
       <div className="mx-auto max-w-[1200px] px-4 md:px-8">
         <header className="mb-16 text-center">
           <div className="mb-4 flex items-center justify-center gap-8">

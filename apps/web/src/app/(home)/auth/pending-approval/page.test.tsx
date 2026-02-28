@@ -45,7 +45,7 @@ describe("PendingApprovalPage", () => {
     vi.clearAllMocks();
   });
 
-  it("헤더 높이를 고려한 상단 오프셋과 최소 높이 레이아웃을 사용한다", async () => {
+  it("헤더 높이 토큰 기반 최소 높이 레이아웃을 사용한다", async () => {
     const session = {
       session: {
         id: "session-id",
@@ -74,8 +74,11 @@ describe("PendingApprovalPage", () => {
     const result = await PendingApprovalPage();
 
     expect(redirectMock).not.toHaveBeenCalled();
-    expect(result?.props.className).toContain("min-h-screen");
-    expect(result?.props.className).toContain("pt-[72px]");
-    expect(result?.props.className).toContain("md:pt-[80px]");
+    expect(result?.props.className).toContain(
+      "min-h-[calc(100dvh-var(--public-header-height-mobile))]",
+    );
+    expect(result?.props.className).toContain(
+      "md:min-h-[calc(100dvh-var(--public-header-height-desktop))]",
+    );
   });
 });

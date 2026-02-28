@@ -39,7 +39,7 @@ export default async function ExhibitionDetailPage({
       : [exhibition.coverImageUrl];
 
   return (
-    <div className="min-h-screen bg-white pb-9 pt-[84px] md:pb-12 md:pt-[96px]">
+    <div className="min-h-screen bg-white pb-9 pt-3 md:pb-12 md:pt-4">
       <div className="mx-auto max-w-[1200px] px-4 md:px-8">
         <header className="mb-8">
           <Link

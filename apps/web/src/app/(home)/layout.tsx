@@ -4,6 +4,7 @@ import { ReactNode, Suspense } from "react";
 import Script from "next/script";
 import SiteHeader from "./components/site-header";
 import SiteFooter from "./components/site-footer";
+import PublicHeaderSafeArea from "./components/public-header-safe-area";
 import { createPageMetadata } from "../../lib/seo";
 import { WebVitalsReporter } from "../_components/web-vitals-reporter";
 
@@ -43,10 +44,19 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <WebVitalsReporter />
         </Suspense>
-        <Suspense fallback={<div className="h-[72px]" aria-hidden="true" />}>
+        <Suspense
+          fallback={
+            <div
+              className="h-(--public-header-height-mobile) md:h-(--public-header-height-desktop)"
+              aria-hidden="true"
+            />
+          }
+        >
           <SiteHeader />
         </Suspense>
-        <main>{children}</main>
+        <main>
+          <PublicHeaderSafeArea>{children}</PublicHeaderSafeArea>
+        </main>
         <SiteFooter />
       </body>
     </html>

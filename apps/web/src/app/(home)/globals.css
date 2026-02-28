@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 :root {
+  --public-header-height-mobile: 72px;
+  --public-header-height-desktop: 80px;
   --bg-primary: #ffffff;
   --bg-secondary: #ffffff;
   --surface-elevated: #ffffff;

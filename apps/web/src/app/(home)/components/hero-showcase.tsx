@@ -9,7 +9,7 @@ import {
   useScroll,
   useTransform,
 } from "framer-motion";
-import type { ApiActivity, ApiExhibition } from "../../../lib/admin-api/types";
+import type { ApiActivity, ApiExhibition } from "@repo/shared-api-contracts";
 import { formatKoreanDateRange } from "../../../lib/date-formatters";
 import { shouldUseUnoptimizedImage } from "../../../lib/image-utils";
 import { pickFeaturedPublicExhibition } from "../../../lib/public-exhibition";
@@ -50,12 +50,12 @@ export default function HeroShowcase({
   return (
     <section
       ref={rootRef}
-      className="relative border-b border-(--surface-border) bg-(--surface-elevated) px-4 pb-44 pt-32 md:px-8 md:pb-20 md:pt-36"
+      className="relative border-b border-(--surface-border) bg-(--surface-elevated) px-4 pb-44 pt-14 md:px-8 md:pb-20 md:pt-16"
       data-testid="home-hero"
     >
-      <div className="mx-auto grid w-full max-w-[1200px] gap-10 md:grid-cols-[1.1fr_0.9fr] md:items-end">
+      <div className="mx-auto grid w-full max-w-300 gap-10 md:grid-cols-[1.1fr_0.9fr] md:items-end">
         <motion.div style={shouldReduceMotion ? undefined : { y: textOffset }}>
-          <p className="mb-3 text-sm font-medium uppercase tracking-[0.1em] text-(--text-muted)">
+          <p className="mb-3 text-sm font-medium uppercase tracking-widest text-(--text-muted)">
             Yonsei University Photography Club
           </p>
           <h1 className="text-6xl leading-[0.96] tracking-[-0.02em] text-(--text-primary) md:text-8xl">
@@ -92,7 +92,7 @@ export default function HeroShowcase({
             transition={{ type: "spring", damping: 20, stiffness: 260 }}
             className="overflow-hidden border border-(--surface-strong-border) bg-(--surface-elevated)"
           >
-            <div className="relative aspect-[4/3]">
+            <div className="relative aspect-4/3">
               {resolvedFeaturedExhibition ? (
                 <Image
                   src={resolvedFeaturedExhibition.coverImageUrl}

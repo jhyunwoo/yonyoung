@@ -2,152 +2,19 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1bef9ffe-e3a1-44d2-93e6-402527523c9b" name="변경" comment="Fix photographers">
-      <change afterPath="$PROJECT_DIR$/apps/api/drizzle/0017_direct_hardball.sql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/api/drizzle/0018_remove_supporters.sql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/api/drizzle/0019_user_profile_fields.sql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/api/scripts/deploy-worker.mjs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/api/src/lib/db/d1-client.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/api/src/lib/db/d1-retry.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/api/src/lib/db/d1-session.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/api/src/lib/http/background-task.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/api/src/tests/background-task.test.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/api/src/tests/d1-client.test.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/api/src/tests/d1-query-safety.test.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/api/src/tests/d1-retry.test.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/api/src/tests/d1-session.test.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/api/src/tests/db-factory.test.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/api/src/tests/error-format.test.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/api/src/tests/logger.test.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/about/photographers/generation-members-grid.test.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/about/photographers/generation-members-grid.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/about/photographers/page.test.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/about/recruiting/page.test.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/components/public-header-safe-area.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/web/src/lib/public-api.test.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apps/web/src/lib/user-profile.test.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/CACHE_STRATEGY.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/OBSERVABILITY.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/SECURITY_HARDENING.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CI.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/CI.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PERF.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/PERF.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RUNBOOK.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/RUNBOOK.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SECURITY.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/SECURITY.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TDD_GUIDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/TDD_GUIDE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/drizzle/meta/_journal.json" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/drizzle/meta/_journal.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/lib/auth.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/lib/auth.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/lib/authorization/policy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/lib/authorization/policy.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/lib/authorization/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/lib/authorization/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/lib/db/schema.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/lib/db/schema.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/lib/http/public-cache.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/lib/http/public-cache.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/lib/http/response.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/lib/http/response.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/lib/openapi/descriptions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/lib/openapi/descriptions.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/lib/openapi/schemas.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/lib/openapi/schemas.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/lib/services/db-service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/lib/services/db-service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/lib/services/dependencies.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/lib/services/dependencies.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/lib/services/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/lib/services/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/lib/storage/presign.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/lib/storage/presign.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/middlewares/logger.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/middlewares/logger.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/middlewares/request-id.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/middlewares/request-id.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/middlewares/security-headers.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/middlewares/security-headers.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/modules/audit.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/modules/audit.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/modules/generations.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/modules/generations.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/modules/public.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/modules/public.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/modules/supporters.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/modules/uploads.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/modules/uploads.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/routes/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/routes/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/tests/activities.routes.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/tests/activities.routes.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/tests/app-rbac.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/tests/app-rbac.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/tests/audit.routes.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/tests/audit.routes.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/tests/auth.cookie-domain.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/tests/auth.cookie-domain.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/tests/dashboard.routes.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/tests/dashboard.routes.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/tests/exhibitions.routes.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/tests/exhibitions.routes.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/tests/generations.members.routes.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/tests/generations.members.routes.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/tests/linktree.routes.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/tests/linktree.routes.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/tests/openapi-docs.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/tests/openapi-docs.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/tests/policy.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/tests/policy.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/tests/public-cache.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/tests/public-cache.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/tests/public.routes.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/tests/public.routes.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/tests/supporters.routes.test.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/tests/test-helpers.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/tests/test-helpers.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/tests/uploads.routes.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/tests/uploads.routes.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/tests/users.routes.additional.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/tests/users.routes.additional.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/tests/worker.runtime.integration.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/tests/worker.runtime.integration.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/src/types/honoAppType.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/src/types/honoAppType.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/api/wrangler.jsonc" beforeDir="false" afterPath="$PROJECT_DIR$/apps/api/wrangler.jsonc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/next.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/next.config.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/playwright-report/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/playwright-report/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/playwright.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/playwright.config.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/(dashboard)/_components/supporter-detail.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/(dashboard)/_components/supporter-manager.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/(dashboard)/_components/supporter-shared.test.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/(dashboard)/_components/supporter-shared.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/(dashboard)/auth/profile/profile-form.test.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(dashboard)/auth/profile/profile-form.test.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/(dashboard)/auth/profile/profile-form.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(dashboard)/auth/profile/profile-form.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/(dashboard)/dashboard/settings/generations/generation-management-shared.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(dashboard)/dashboard/settings/generations/generation-management-shared.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/(dashboard)/dashboard/settings/members/[memberId]/member-detail-client.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(dashboard)/dashboard/settings/members/[memberId]/member-detail-client.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/(dashboard)/dashboard/settings/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(dashboard)/dashboard/settings/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/(dashboard)/dashboard/settings/supporters/[supporterId]/page.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/(dashboard)/dashboard/settings/supporters/page.tsx" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/web/src/app/(home)/about/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/about/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/web/src/app/(home)/about/photographers/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/about/photographers/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/(home)/about/recruiting/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/about/recruiting/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/web/src/app/(home)/archive/exhibitions/[id]/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/archive/exhibitions/[id]/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/web/src/app/(home)/archive/exhibitions/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/archive/exhibitions/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/(home)/archive/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/archive/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/web/src/app/(home)/archive/records/[id]/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/archive/records/[id]/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/web/src/app/(home)/archive/records/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/archive/records/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/(home)/archive/supporters/page.tsx" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/web/src/app/(home)/auth/pending-approval/page.test.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/auth/pending-approval/page.test.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/(home)/auth/pending-approval/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/auth/pending-approval/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/web/src/app/(home)/components/hero-showcase.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/components/hero-showcase.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/(home)/components/site-header.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/components/site-header.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/(home)/components/supporter-grid.tsx" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/web/src/app/(home)/donate/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/donate/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/web/src/app/(home)/globals.css" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/globals.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/web/src/app/(home)/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/layout.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/web/src/app/(home)/linktree/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/linktree/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/(home)/loading.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/loading.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/(home)/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/(home)/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/api/admin/revalidate/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/api/admin/revalidate/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/robots.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/robots.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/app/sitemap.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/app/sitemap.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/lib/admin-api/http.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/lib/admin-api/http.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/lib/admin-api/http.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/lib/admin-api/http.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/lib/admin-api/resources.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/lib/admin-api/resources.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/lib/admin-api/resources.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/lib/admin-api/resources.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/lib/admin-api/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/lib/admin-api/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/lib/admin-api/upload.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/lib/admin-api/upload.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/lib/admin-cache.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/lib/admin-cache.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/lib/admin-dashboard-cache.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/lib/admin-dashboard-cache.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/lib/admin-dashboard-cache.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/lib/admin-dashboard-cache.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/lib/auth-shared.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/lib/auth-shared.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/lib/dashboard-settings-menu.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/lib/dashboard-settings-menu.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/lib/member-display-name.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/lib/member-display-name.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/lib/member-display-name.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/lib/member-display-name.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/lib/public-api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/lib/public-api.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/lib/user-name.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/lib/user-name.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/lib/user-profile.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/lib/user-profile.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/middleware.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/middleware.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/middleware.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/middleware.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/test-results/.last-run.json" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/test-results/.last-run.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/tests/e2e/.auth/admin.json" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/tests/e2e/.auth/admin.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/tests/e2e/activities-crud.spec.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/tests/e2e/activities-crud.spec.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/tests/e2e/auth-flow.spec.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/tests/e2e/auth-flow.spec.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/tests/e2e/global-setup.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/tests/e2e/global-setup.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/tests/e2e/helpers.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/tests/e2e/helpers.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/tests/e2e/notices-file-upload.spec.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/tests/e2e/notices-file-upload.spec.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/tests/e2e/public-home.spec.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/tests/e2e/public-home.spec.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/tests/e2e/public-pages-content.spec.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/tests/e2e/public-pages-content.spec.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/tests/e2e/supporters-crud.spec.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/tsconfig.json" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/tsconfig.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/wrangler.jsonc" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/wrangler.jsonc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/shared-api-contracts/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/packages/shared-api-contracts/src/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/shared-http/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/packages/shared-http/src/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/turbo.json" beforeDir="false" afterPath="$PROJECT_DIR$/turbo.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -219,8 +86,17 @@
       <workItem from="1772081744590" duration="37000" />
       <workItem from="1772211442652" duration="2119000" />
       <workItem from="1772240187468" duration="653000" />
-      <workItem from="1772265855636" duration="5726000" />
+      <workItem from="1772265855636" duration="5807000" />
     </task>
+    <task id="LOCAL-00001" summary="Fix photographers">
+      <option name="closed" value="true" />
+      <created>1772281559130</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1772281559130</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

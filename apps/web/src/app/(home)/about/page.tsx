@@ -38,7 +38,7 @@ export default async function AboutPage() {
   ];
 
   return (
-    <div className="px-4 pb-16 pt-28 md:px-8 md:pb-20 md:pt-32">
+    <div className="px-4 pb-16 pt-10 md:px-8 md:pb-20 md:pt-12">
       <main className="mx-auto w-full max-w-[1200px] space-y-14" data-testid="about-page">
         <section className="space-y-4">
           <h1 className="text-[2.4rem] leading-tight font-semibold text-(--text-primary) md:text-[3rem]">
