@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { listPublicLinktrees, safeList } from "../../../lib/public-api";
 import { createPageMetadata } from "../../../lib/seo";
+import PageTitleHero from "../components/page-title-hero";
 
 export const metadata: Metadata = createPageMetadata({
   title: "LINKTREE | 연영회",
@@ -13,14 +14,9 @@ export default async function LinktreePage() {
   const linktrees = await safeList(listPublicLinktrees, []);
 
   return (
-    <div className="min-h-screen bg-white pt-7 md:pt-10">
+    <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-[1200px] px-4 md:px-8">
-        <header className="mb-16 text-center">
-          <div className="mb-4 flex items-center justify-center gap-8">
-            <h1 className="mb-0 text-[2.5rem] tracking-[0.1em] text-[#2c3357]">LINKTREE</h1>
-          </div>
-          <p className="mb-0 text-[1.1rem] text-[#666666]">연영회 공식 채널 및 서비스</p>
-        </header>
+        <PageTitleHero title="LINKTREE" description="연영회 공식 채널 및 서비스" />
 
         <section
           className="mx-auto grid max-w-[1400px] grid-cols-5 gap-6 px-8 pb-16 max-[1200px]:grid-cols-3 max-[900px]:grid-cols-2 max-[768px]:grid-cols-1 max-[768px]:gap-6 max-[768px]:px-6 max-[768px]:pb-12"

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { listPublicGenerations, safeList } from "../../../lib/public-api";
 import { formatKoreanYearRange } from "../../../lib/date-formatters";
 import { createPageMetadata } from "../../../lib/seo";
+import PageTitleHero from "../components/page-title-hero";
 
 const annualActivities = [
   { month: "March", title: "리크루팅" },
@@ -38,17 +39,17 @@ export default async function AboutPage() {
   ];
 
   return (
-    <div className="px-4 pb-16 pt-10 md:px-8 md:pb-20 md:pt-12">
-      <main className="mx-auto w-full max-w-[1200px] space-y-14" data-testid="about-page">
-        <section className="space-y-4">
-          <h1 className="text-[2.4rem] leading-tight font-semibold text-(--text-primary) md:text-[3rem]">
-            연영회 소개
-          </h1>
-          <p className="max-w-5xl text-base leading-relaxed text-(--text-muted)">
-            연영회는 사진을 통해 세상을 기록하고 표현하는 동아리입니다. 우리는 다양한 주제와
-            스타일로 사진을 찍으며, 서로의 작품을 공유하고 함께 성장해 나갑니다.
-          </p>
-        </section>
+    <div className="min-h-screen bg-white">
+      <div className="mx-auto max-w-300 px-4 md:px-8">
+        <PageTitleHero
+          title="연영회 소개"
+          description="연영회는 사진을 통해 세상을 기록하고 표현하는 동아리입니다. 우리는 다양한 주제와 스타일로 사진을 찍으며, 서로의 작품을 공유하고 함께 성장해 나갑니다."
+        />
+      </div>
+      <main
+        className="mx-auto w-full max-w-[1200px] space-y-14 px-4 pb-16 md:px-8 md:pb-20"
+        data-testid="about-page"
+      >
 
         <section className="space-y-6" data-testid="about-annual-activities">
           <h2 className="text-[2rem] font-semibold text-(--text-primary)">연간 활동</h2>

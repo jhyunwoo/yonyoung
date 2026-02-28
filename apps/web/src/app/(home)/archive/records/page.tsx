@@ -5,6 +5,7 @@ import { listPublicActivities, safeList } from "../../../../lib/public-api";
 import { formatKoreanDateRange } from "../../../../lib/date-formatters";
 import { shouldUseUnoptimizedImage } from "../../../../lib/image-utils";
 import { createPageMetadata } from "../../../../lib/seo";
+import PageTitleHero from "../../components/page-title-hero";
 
 export const metadata: Metadata = createPageMetadata({
   title: "활동 기록 | 연영회",
@@ -22,12 +23,8 @@ export default async function ArchiveRecordsPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="mb-8 border-b border-[#bfbfbf] px-4 py-8 text-center md:px-8 md:py-16">
-        <div className="relative mx-auto max-w-[1400px]">
-          <h1 className="mb-4 text-[2rem] leading-[1.2] font-bold text-[#2c3357] md:text-[3rem]">
-            활동 기록
-          </h1>
-        </div>
+      <div className="mx-auto max-w-300 px-4 md:px-8">
+        <PageTitleHero title="활동 기록" />
       </div>
 
       <div className="pb-16">

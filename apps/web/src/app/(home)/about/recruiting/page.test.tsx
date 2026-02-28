@@ -4,12 +4,30 @@ import { describe, expect, it } from "vitest";
 Object.assign(globalThis, { React });
 
 describe("RecruitingPage", () => {
-  it("페이지 자체에는 추가 상단 여백만 남기고 헤더 오프셋은 레이아웃에서 처리한다", async () => {
+  it("상단 제목을 donate 기준 헤더 스타일로 렌더링한다", async () => {
     const { default: RecruitingPage } = await import("./page");
     const result = RecruitingPage();
+    const rootClassName = result?.props.className as string;
+    const container = result?.props.children as React.ReactElement<{
+      children?: React.ReactNode;
+    }>;
+    const [header] = React.Children.toArray(container.props.children) as React.ReactElement<{
+      title?: string;
+      description?: React.ReactNode;
+    }>[];
 
-    expect(result?.props.className).toContain("px-4");
-    expect(result?.props.className).toContain("pb-16");
-    expect(result?.props.className).not.toContain("pt-");
+    expect(header).toBeDefined();
+    if (!header) {
+      throw new Error("PageTitleHero 컴포넌트를 찾을 수 없습니다.");
+    }
+
+    const headerComponentType = header.type as { name?: string };
+
+    expect(rootClassName).toContain("min-h-screen");
+    expect(rootClassName).toContain("bg-white");
+    expect(rootClassName).not.toContain("pt-");
+    expect(headerComponentType.name).toBe("PageTitleHero");
+    expect(header.props.title).toBe("RECRUITING");
+    expect(header.props.description).toBe("연영회 모집 안내");
   });
 });
