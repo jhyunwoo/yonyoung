@@ -3,6 +3,8 @@ import RecentGlobalNotices from "../_components/recent-global-notices";
 import DashboardR2StorageUsage from "../_components/dashboard-r2-storage-usage";
 import { serverAuthTool } from "../../../lib/auth-server-tool";
 
+const YEONYOUNG_NAS_URL = "https://165.132.176.27:8080";
+
 export default async function DashboardPage() {
   await serverAuthTool.requireSession();
 
@@ -19,6 +21,16 @@ export default async function DashboardPage() {
           <p className="mt-3 text-sm leading-relaxed text-slate-600">
             왼쪽 메뉴에서 관리할 기수를 선택하면 공지, 활동, 전시 관리를 바로 시작할 수 있습니다.
           </p>
+          <div className="mt-5">
+            <a
+              href={YEONYOUNG_NAS_URL}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+            >
+              연영나스 바로가기
+            </a>
+          </div>
         </aside>
 
         <Suspense

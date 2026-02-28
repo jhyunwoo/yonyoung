@@ -139,7 +139,7 @@ export default function GenerationMembersGrid({ generation }: GenerationMembersG
       <AnimatePresence>
         {selectedMember ? (
           <motion.div
-            className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm"
+            className="fixed inset-0 z-[1100] flex items-end justify-center bg-black/60 px-3 py-3 backdrop-blur-sm sm:items-center sm:px-4 sm:py-8"
             role="dialog"
             aria-modal="true"
             aria-labelledby="about-photographers-member-modal-title"
@@ -160,7 +160,7 @@ export default function GenerationMembersGrid({ generation }: GenerationMembersG
               aria-label="사용자 정보 모달 닫기"
             />
             <motion.div
-              className="relative z-10 w-full max-w-[620px] overflow-hidden rounded-2xl border border-(--surface-border) bg-white shadow-[0_30px_80px_rgba(8,10,19,0.34)] ring-1 ring-black/5 will-change-transform"
+              className="relative z-10 flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[620px] flex-col overflow-hidden rounded-2xl border border-(--surface-border) bg-white shadow-[0_30px_80px_rgba(8,10,19,0.34)] ring-1 ring-black/5 will-change-transform sm:max-h-[calc(100dvh-4rem)]"
               data-testid="about-photographers-member-modal-card"
               initial={shouldReduceMotion ? false : { opacity: 0, y: 28, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -180,7 +180,7 @@ export default function GenerationMembersGrid({ generation }: GenerationMembersG
                 className="pointer-events-none absolute inset-x-16 top-2 -z-10 h-12 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(70,87,160,0.22),rgba(70,87,160,0))] blur-xl"
                 aria-hidden="true"
               />
-              <div className="relative h-[220px] w-full bg-(--surface-muted) md:h-[280px]">
+              <div className="relative h-[180px] w-full shrink-0 bg-(--surface-muted) sm:h-[220px] md:h-[280px]">
                 {selectedMember.image ? (
                   <Image
                     src={selectedMember.image}
@@ -197,16 +197,19 @@ export default function GenerationMembersGrid({ generation }: GenerationMembersG
                 )}
               </div>
 
-              <div className="p-6 md:p-8">
+              <div
+                className="overflow-y-auto overscroll-contain p-5 sm:p-6 md:p-8"
+                data-testid="about-photographers-member-modal-content"
+              >
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3
                       id="about-photographers-member-modal-title"
-                      className="text-2xl font-semibold text-(--text-primary)"
+                      className="text-xl font-semibold text-(--text-primary) sm:text-2xl"
                     >
                       {selectedMemberDisplayName}
                     </h3>
-                    <p className="mt-2 text-xl text-(--text-secondary)">
+                    <p className="mt-2 text-base text-(--text-secondary) sm:text-xl">
                       {generationDisplayName} · {selectedMemberRoleLabel}
                     </p>
                   </div>

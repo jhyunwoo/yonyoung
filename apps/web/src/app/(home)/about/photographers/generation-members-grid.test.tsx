@@ -159,12 +159,24 @@ describe("GenerationMembersGrid", () => {
     const modalCard = container.querySelector(
       "[data-testid='about-photographers-member-modal-card']",
     );
+    const modalContent = container.querySelector(
+      "[data-testid='about-photographers-member-modal-content']",
+    );
     expect(modal).toBeInTheDocument();
     expect(modalCard).toBeInTheDocument();
+    expect(modalContent).toBeInTheDocument();
     expect(modal?.className).toContain("backdrop-blur-sm");
     expect(modal?.className).toContain("bg-black/60");
+    expect(modal?.className).toContain("items-end");
+    expect(modal?.className).toContain("sm:items-center");
     expect(modalCard?.className).toContain("rounded-2xl");
     expect(modalCard?.className).toContain("will-change-transform");
+    expect(modalCard?.className).toContain("max-h-[calc(100dvh-1.5rem)]");
+    expect(modalCard?.className).toContain("sm:max-h-[calc(100dvh-4rem)]");
+    expect(modalCard?.className).toContain("flex");
+    expect(modalCard?.className).toContain("flex-col");
+    expect(modalContent?.className).toContain("overflow-y-auto");
+    expect(modalContent?.className).toContain("overscroll-contain");
     expect(modal).toHaveTextContent("홍길동");
     expect(modal).toHaveTextContent("60기");
     expect(modal).toHaveTextContent("회장");
