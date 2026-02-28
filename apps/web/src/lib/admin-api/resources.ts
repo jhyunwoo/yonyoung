@@ -26,6 +26,7 @@ import type {
   ApiLinktreeItem,
   ApiListActivitiesQuery,
   ApiListExhibitionsQuery,
+  ApiSiteSettings,
   ApiUpdateActivityImageBatchItemInput,
   ApiUpdateActivityImageInput,
   ApiUpdateActivityInput,
@@ -37,6 +38,7 @@ import type {
   ApiUpdateGlobalNoticeInput,
   ApiUpdateLinktreeInput,
   ApiUpdateLinktreeItemInput,
+  ApiUpdateSiteSettingsInput,
   ApiUpdateUserInput,
   ApiUser,
   ApiUserResourceHistory,
@@ -289,6 +291,12 @@ export const adminResourceApi = {
     patchWithRevalidation<ApiGlobalNotice>(`/global-notices/${id}`, input, [ADMIN_CACHE_TAGS.notices]),
   deleteGlobalNotice: (id: string) =>
     deleteWithRevalidation(`/global-notices/${id}`, [ADMIN_CACHE_TAGS.notices]),
+
+  getSiteSettings: () => apiRequest.get<ApiSiteSettings>("/site-settings"),
+  updateSiteSettings: (input: ApiUpdateSiteSettingsInput) =>
+    patchWithRevalidation<ApiSiteSettings>("/site-settings", input, [
+      ADMIN_CACHE_TAGS.siteSettings,
+    ]),
 
   listUsers: () => apiRequest.get<ApiUser[]>("/users"),
   getUserById: (id: string) => apiRequest.get<ApiUser>(`/users/${id}`),

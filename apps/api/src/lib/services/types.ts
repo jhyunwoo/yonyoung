@@ -133,11 +133,23 @@ export type GlobalNoticeEntity = {
   updatedBy: AuditActorEntity | null;
 };
 
+export type SiteSettingsEntity = {
+  footerOpenChatUrl: string;
+  footerInstagramId: string;
+  footerEmail: string;
+  footerPhone: string;
+  footerAddress: string;
+  donateBankName: string;
+  donateAccountNumber: string;
+  donateAccountHolder: string;
+};
+
 export type UserEntity = {
   id: string;
   name: string;
   email: string;
   image: string | null;
+  showcaseImageUrls: string[];
   familyName: string | null;
   givenName: string | null;
   college: string | null;
@@ -391,6 +403,20 @@ export type DataService = {
   ) => Promise<GlobalNoticeEntity | null>;
   deleteGlobalNotice: (noticeId: string) => Promise<boolean>;
 
+  getSiteSettings: () => Promise<SiteSettingsEntity>;
+  updateSiteSettings: (
+    input: Partial<{
+      footerOpenChatUrl: string;
+      footerInstagramId: string;
+      footerEmail: string;
+      footerPhone: string;
+      footerAddress: string;
+      donateBankName: string;
+      donateAccountNumber: string;
+      donateAccountHolder: string;
+    }>,
+  ) => Promise<SiteSettingsEntity>;
+
   listUsers: () => Promise<UserEntity[]>;
   getUserById: (id: string) => Promise<UserEntity | null>;
   listUserResourceHistory: (input: {
@@ -402,6 +428,7 @@ export type DataService = {
     input: Partial<{
       name: string;
       image: string | null;
+      showcaseImageUrls: string[];
       familyName: string | null;
       givenName: string | null;
       college: string | null;

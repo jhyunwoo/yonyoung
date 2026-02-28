@@ -6,6 +6,7 @@ import {
   ApiIdParamSchema,
   ApiLinktreeSchema,
   ApiPublicGenerationWithMembersSchema,
+  ApiSiteSettingsSchema,
 } from "../lib/openapi/schemas";
 import { dataResponse, errorResponses } from "../lib/openapi/responses";
 import { badRequest, notFound, ok } from "../lib/http/response";
@@ -88,6 +89,16 @@ const listPublicLinktreeRoute = createRoute({
   operationId: "listPublicLinktree",
   responses: {
     200: dataResponse(ApiLinktreeSchema.array(), "공개 링크트리 목록 조회 성공"),
+  },
+});
+
+const getPublicSiteSettingsRoute = createRoute({
+  method: "get",
+  path: "/api/public/site-settings",
+  tags: ["Public"],
+  operationId: "getPublicSiteSettings",
+  responses: {
+    200: dataResponse(ApiSiteSettingsSchema, "공개 사이트 기본 설정 조회 성공"),
   },
 });
 
@@ -180,6 +191,13 @@ export const registerPublicRoutes = (
     }),
   );
 
+  app.openapi(getPublicSiteSettingsRoute, async (c): Promise<any> =>
+    respondWithPublicCache(c, async () => {
+      const data = await dependencies.getDataService(c).getSiteSettings();
+      return ok(c, data);
+    }),
+  );
+
   app.openapi(listPublicGenerationsRoute, async (c): Promise<any> =>
     respondWithPublicCache(c, async () => {
       const data = await dependencies
@@ -227,6 +245,7 @@ export const registerPublicRoutes = (
             id: user.id,
             name: user.name,
             image: user.image,
+            showcaseImageUrls: user.showcaseImageUrls,
             familyName: user.familyName,
             givenName: user.givenName,
             collaborationAvailable: user.collaborationAvailable,

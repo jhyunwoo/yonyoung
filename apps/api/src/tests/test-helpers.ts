@@ -1,4 +1,5 @@
 import { expect, vi } from "vitest";
+import { DEFAULT_SITE_SETTINGS } from "@repo/shared-api-contracts";
 import { createApp } from "../app";
 import type { Actor, Role } from "../lib/authorization/types";
 import type {
@@ -13,6 +14,7 @@ import type {
   LinktreeEntity,
   LinktreeItemEntity,
   PresignService,
+  SiteSettingsEntity,
   UserEntity,
 } from "../lib/services/types";
 import type { OpenAPIDocument } from "../lib/openapi/merge";
@@ -230,6 +232,13 @@ export const createGlobalNotice = (
   createdAt: BASE_DATE,
   updatedAt: BASE_DATE,
   updatedBy: null,
+  ...overrides,
+});
+
+export const createSiteSettings = (
+  overrides: Partial<SiteSettingsEntity> = {},
+): SiteSettingsEntity => ({
+  ...DEFAULT_SITE_SETTINGS,
   ...overrides,
 });
 

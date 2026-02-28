@@ -7,6 +7,7 @@ import {
   formatKoreanMobilePhoneNumber,
   isKoreanMobilePhoneNumber,
 } from "@repo/shared-auth/profile";
+import SortableImageGrid from "../../_components/sortable-image-grid";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
 import { PRESIGN_PATHS, uploadWithPresign } from "../../../../lib/admin-api/upload";
 import { AdminApiError, type ApiMemberProfileUpdateInput } from "../../../../lib/admin-api/types";
@@ -16,6 +17,13 @@ import {
   isUnverifiedRole,
   resolvePostSignInPath,
 } from "../../../../lib/auth-shared";
+import { readFileList } from "../../../../lib/image-upload-state";
+import {
+  SHOWCASE_MAX_IMAGES,
+  normalizeShowcaseImageUrls,
+  toShowcaseUploadImageItems,
+} from "../../../../lib/showcase-images";
+import { useImageUploadState } from "../../../../lib/use-image-upload-state";
 
 type ProfileFormMode = "auth" | "dashboard";
 
@@ -25,6 +33,7 @@ type ProfileFormProps = {
   mode?: ProfileFormMode;
   initialProfile: {
     image: string;
+    showcaseImageUrls: string[];
     familyName: string;
     givenName: string;
     college: string;
@@ -132,10 +141,21 @@ export default function AuthProfileForm({
     initialProfile.collaborationAvailable,
   );
   const [personalLink, setPersonalLink] = useState(initialProfile.personalLink);
+  const {
+    items: showcaseImageItems,
+    appendExistingUrls,
+    removeItemById: removeShowcaseImageById,
+    reorderByIds: reorderShowcaseImagesByIds,
+    replaceItems: replaceShowcaseImages,
+  } = useImageUploadState({
+    initialItems: toShowcaseUploadImageItems(initialProfile.showcaseImageUrls),
+    maxItems: SHOWCASE_MAX_IMAGES,
+  });
 
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [selectedImageObjectUrl, setSelectedImageObjectUrl] = useState<string | null>(null);
   const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
+  const [isUploadingShowcaseImages, setIsUploadingShowcaseImages] = useState(false);
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -143,6 +163,10 @@ export default function AuthProfileForm({
   const [isSaving, setIsSaving] = useState(false);
 
   const isDashboardMode = mode === "dashboard";
+  const showcaseImageUrls = useMemo(
+    () => showcaseImageItems.map((item) => item.imageUrl),
+    [showcaseImageItems],
+  );
 
   useEffect(() => {
     return () => {
@@ -169,6 +193,43 @@ export default function AuthProfileForm({
     setSelectedImageObjectUrl(objectUrl);
   };
 
+  const handleShowcaseFilesChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = readFileList(event.target.files);
+    event.target.value = "";
+    if (files.length === 0) {
+      return;
+    }
+
+    const remainingSlots = SHOWCASE_MAX_IMAGES - showcaseImageItems.length;
+    if (remainingSlots <= 0) {
+      setSubmitError(`대표 작품 사진은 최대 ${SHOWCASE_MAX_IMAGES}장까지 등록할 수 있습니다.`);
+      setSubmitSuccess(null);
+      return;
+    }
+
+    const uploadTargets = files.slice(0, remainingSlots);
+    setIsUploadingShowcaseImages(true);
+    setSubmitError(null);
+    setSubmitSuccess(null);
+
+    try {
+      const uploadedUrls = await Promise.all(
+        uploadTargets.map((file) =>
+          uploadWithPresign({
+            presignPath: PRESIGN_PATHS.userProfile,
+            file,
+          }),
+        ),
+      );
+      appendExistingUrls(uploadedUrls);
+    } catch (error) {
+      setSubmitError(readErrorMessage(error));
+      setSubmitSuccess(null);
+    } finally {
+      setIsUploadingShowcaseImages(false);
+    }
+  };
+
   const handlePhoneNumberChange = (event: ChangeEvent<HTMLInputElement>) => {
     setPhoneNumber(formatKoreanMobilePhoneNumber(event.target.value));
   };
@@ -179,6 +240,12 @@ export default function AuthProfileForm({
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (isUploadingShowcaseImages) {
+      setSubmitError("대표 작품 사진 업로드가 완료된 후 저장해 주세요.");
+      setSubmitSuccess(null);
+      return;
+    }
 
     const validationErrors = validateForm({
       familyName,
@@ -213,6 +280,8 @@ export default function AuthProfileForm({
         });
       }
 
+      const normalizedShowcaseImageUrls = normalizeShowcaseImageUrls(showcaseImageUrls);
+
       const payload: ApiMemberProfileUpdateInput = {
         familyName: familyName.trim(),
         givenName: givenName.trim(),
@@ -226,11 +295,15 @@ export default function AuthProfileForm({
 
       if (canEditProfileImage) {
         payload.image = nextImageValue.length > 0 ? nextImageValue : null;
+        if (isDashboardMode) {
+          payload.showcaseImageUrls = normalizedShowcaseImageUrls;
+        }
       }
 
       const updatedUser = await adminResourceApi.updateUser(userId, payload);
 
       setProfileImage(updatedUser.image ?? "");
+      replaceShowcaseImages(toShowcaseUploadImageItems(updatedUser.showcaseImageUrls ?? []));
       setCollaborationAvailable(updatedUser.collaborationAvailable);
       setPersonalLink(updatedUser.personalLink ?? "");
       if (selectedImageObjectUrl) {
@@ -336,6 +409,53 @@ export default function AuthProfileForm({
               </p>
             ) : null}
           </div>
+
+          {isDashboardMode && canEditProfileImage ? (
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <p className="text-sm font-semibold text-slate-900">대표 작품 사진</p>
+              <p className="mt-1 text-xs text-slate-500">최대 {SHOWCASE_MAX_IMAGES}장</p>
+
+              <label className="mt-3 inline-flex cursor-pointer rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                파일 업로드
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleShowcaseFilesChange}
+                  disabled={
+                    isSaving ||
+                    isUploadingShowcaseImages ||
+                    showcaseImageUrls.length >= SHOWCASE_MAX_IMAGES
+                  }
+                  className="hidden"
+                />
+              </label>
+
+              {isUploadingShowcaseImages ? (
+                <p className="mt-2 text-xs text-slate-500">대표 작품 사진 업로드 중...</p>
+              ) : null}
+
+              <div className="mt-3 space-y-2">
+                <p className="text-xs text-slate-500">
+                  드래그하여 대표 작품 사진 순서를 변경할 수 있습니다.
+                </p>
+                <SortableImageGrid
+                  items={showcaseImageItems.map((image, index) => ({
+                    id: image.id,
+                    imageUrl: image.imageUrl,
+                    label: `대표 작품 사진 ${index + 1}`,
+                    alt: "대표 작품 사진",
+                  }))}
+                  onReorder={(nextItems) =>
+                    reorderShowcaseImagesByIds(nextItems.map((item) => item.id))
+                  }
+                  onRemoveItem={removeShowcaseImageById}
+                  disabled={isSaving || isUploadingShowcaseImages}
+                  emptyMessage="등록된 대표 작품 사진이 없습니다."
+                />
+              </div>
+            </div>
+          ) : null}
 
           <div className="grid gap-4 md:grid-cols-2">
             <label className="flex flex-col gap-1.5 text-sm">
@@ -466,7 +586,7 @@ export default function AuthProfileForm({
 
           <button
             type="submit"
-            disabled={isSaving}
+            disabled={isSaving || isUploadingShowcaseImages}
             className="inline-flex w-full items-center justify-center rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSaving

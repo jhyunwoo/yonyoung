@@ -256,11 +256,36 @@ export type ApiCreateLinktreeItemInput = {
 
 export type ApiUpdateLinktreeItemInput = Partial<ApiCreateLinktreeItemInput>;
 
+export type ApiSiteSettings = {
+  footerOpenChatUrl: string;
+  footerInstagramId: string;
+  footerEmail: string;
+  footerPhone: string;
+  footerAddress: string;
+  donateBankName: string;
+  donateAccountNumber: string;
+  donateAccountHolder: string;
+};
+
+export type ApiUpdateSiteSettingsInput = Partial<ApiSiteSettings>;
+
+export const DEFAULT_SITE_SETTINGS: ApiSiteSettings = {
+  footerOpenChatUrl: "https://open.kakao.com/o/snVWZ4th",
+  footerInstagramId: "yonyongpage",
+  footerEmail: "kimse0604@naver.com",
+  footerPhone: "010-6814-1800",
+  footerAddress: "서울특별시 서대문구 연희로 50 연세대학교 대강당 nn호",
+  donateBankName: "예시은행",
+  donateAccountNumber: "123-456-789012",
+  donateAccountHolder: "연영회",
+};
+
 export type ApiUser = {
   id: string;
   name: string;
   email: string;
   image: string | null;
+  showcaseImageUrls: string[];
   familyName: string | null;
   givenName: string | null;
   college: string | null;
@@ -306,6 +331,7 @@ export type ApiPublicGenerationMember = {
   id: string;
   name: string;
   image: string | null;
+  showcaseImageUrls: string[];
   familyName: string | null;
   givenName: string | null;
   collaborationAvailable: boolean;
@@ -339,6 +365,7 @@ export type ApiPublicGenerationWithMembers = {
 export type ApiAdminUpdateUserInput = {
   name?: string;
   image?: string | null;
+  showcaseImageUrls?: string[];
   familyName?: string | null;
   givenName?: string | null;
   college?: string | null;
@@ -354,6 +381,7 @@ export type ApiAdminUpdateUserInput = {
 
 export type ApiMemberProfileUpdateInput = {
   image?: string | null;
+  showcaseImageUrls?: string[];
   familyName?: string | null;
   givenName?: string | null;
   college?: string | null;

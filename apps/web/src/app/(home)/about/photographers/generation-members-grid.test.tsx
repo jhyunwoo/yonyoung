@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import type { ApiPublicGenerationWithMembers } from "@repo/shared-api-contracts";
 import React from "react";
 import { act } from "react";
@@ -12,7 +13,6 @@ vi.mock("next/image", () => ({
     const unoptimized = Boolean(rest.unoptimized);
     delete rest.fill;
     delete rest.unoptimized;
-    // eslint-disable-next-line @next/next/no-img-element
     return (
       <img
         data-unoptimized={String(unoptimized)}
@@ -21,6 +21,34 @@ vi.mock("next/image", () => ({
     );
   },
 }));
+
+vi.mock("framer-motion", () => {
+  const toDomSafeProps = (props: Record<string, unknown>) => {
+    const next = { ...props };
+    delete next.layout;
+    delete next.initial;
+    delete next.animate;
+    delete next.exit;
+    delete next.transition;
+    return next;
+  };
+
+  const motion = new Proxy(
+    {},
+    {
+      get: (_, tag: string) => {
+        return ({ children, ...props }: { children?: React.ReactNode }) =>
+          React.createElement(tag, toDomSafeProps(props), children);
+      },
+    },
+  ) as Record<string, (props: { children?: React.ReactNode }) => React.ReactElement>;
+
+  return {
+    AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+    motion,
+    useReducedMotion: () => false,
+  };
+});
 
 Object.assign(globalThis, { React, IS_REACT_ACT_ENVIRONMENT: true });
 
@@ -128,7 +156,10 @@ describe("GenerationMembersGrid", () => {
     );
     expect(modal).toBeInTheDocument();
     expect(modalCard).toBeInTheDocument();
+    expect(modal?.className).toContain("backdrop-blur-sm");
+    expect(modal?.className).toContain("bg-black/60");
     expect(modalCard?.className).toContain("rounded-2xl");
+    expect(modalCard?.className).toContain("will-change-transform");
     expect(modal).toHaveTextContent("홍길동");
     expect(modal).toHaveTextContent("60기");
     expect(modal).toHaveTextContent("회장");

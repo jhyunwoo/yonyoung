@@ -697,7 +697,7 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     parameters: ["`id` (path, UUID): 수정 대상 사용자 식별자"],
     requestBody: [
       "관리자 요청: `ApiAdminUpdateUserSchema` 기준",
-      "member 계열 role/unverified 본인 요청: `ApiMemberProfileUpdateSchema` 기준(image/familyName/givenName/college/department/studentNumber/phoneNumber)",
+      "member 계열 role/unverified 본인 요청: `ApiMemberProfileUpdateSchema` 기준(image/showcaseImageUrls/familyName/givenName/college/department/studentNumber/phoneNumber)",
       "빈 PATCH 본문은 `400` 반환",
     ],
     internalFlow: [

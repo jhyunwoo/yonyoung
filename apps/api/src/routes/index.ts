@@ -9,6 +9,7 @@ import { registerGenerationRoutes } from "../modules/generations";
 import { registerLinktreeRoutes } from "../modules/linktree";
 import { registerNoticeRoutes } from "../modules/notices";
 import { registerPublicRoutes } from "../modules/public";
+import { registerSiteSettingsRoutes } from "../modules/site-settings";
 import { registerUploadRoutes } from "../modules/uploads";
 import { registerUserRoutes } from "../modules/users";
 import type { AppDependencies } from "../lib/services/dependencies";
@@ -52,6 +53,7 @@ export const mountDomainRouters = (
       registerExhibitionRoutes(router, dependencies);
       registerLinktreeRoutes(router, dependencies);
       registerUserRoutes(router, dependencies);
+      registerSiteSettingsRoutes(router, dependencies);
       registerDashboardRoutes(router, dependencies);
       registerAuditRoutes(router, dependencies);
     }, defaultHook),

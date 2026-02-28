@@ -3,6 +3,7 @@ import { compactDisplayName, formatKoreanName } from "./user-name";
 
 type EditableUserProfile = {
   image: string;
+  showcaseImageUrls: string[];
   familyName: string;
   givenName: string;
   college: string;
@@ -64,11 +65,28 @@ const readBooleanByKey = (
   return value === true;
 };
 
+const readStringArrayByKey = (
+  source: Record<string, unknown> | null | undefined,
+  key: EditableUserProfileKey,
+): string[] => {
+  if (!source) {
+    return [];
+  }
+
+  const value = source[key];
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((item): item is string => typeof item === "string");
+};
+
 export const toEditableUserProfile = (value: unknown): EditableUserProfile => {
   const source = asRecord(value);
 
   return {
     image: readString(source, "image"),
+    showcaseImageUrls: readStringArrayByKey(source, "showcaseImageUrls"),
     familyName: readString(source, "familyName"),
     givenName: readString(source, "givenName"),
     college: readString(source, "college"),

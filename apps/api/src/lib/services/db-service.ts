@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { DEFAULT_SITE_SETTINGS } from "@repo/shared-api-contracts";
 import createDB from "../db";
 import {
   activities,
@@ -11,6 +12,7 @@ import {
   globalNotices,
   linktree,
   linktreeItems,
+  siteSettings,
   user,
   userGenerations,
 } from "../db/schema";
@@ -28,6 +30,7 @@ import {
   GlobalNoticeEntity,
   LinktreeEntity,
   NoticeAuthorEntity,
+  SiteSettingsEntity,
   UserEntity,
   UserResourceHistoryItemEntity,
   UserResourceHistoryResourceType,
@@ -497,6 +500,26 @@ const parseNoticeImageUrls = (value: string | null | undefined): string[] => {
 const serializeNoticeImageUrls = (value: string[] | undefined): string =>
   JSON.stringify(value ?? []);
 
+const parseShowcaseImageUrls = (value: string | null | undefined): string[] => {
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.filter((item): item is string => typeof item === "string");
+  } catch {
+    return [];
+  }
+};
+
+const serializeShowcaseImageUrls = (value: string[] | undefined): string =>
+  JSON.stringify(value ?? []);
+
 const toNoticeAuthor = (row: NoticeListRow): NoticeAuthorEntity => ({
   id: row.authorId,
   name: row.authorName,
@@ -598,6 +621,7 @@ const mapUsersWithGenerations = async (
 
     return {
       ...row,
+      showcaseImageUrls: parseShowcaseImageUrls(row.showcaseImageUrls),
       generationId: primaryGenerationId,
       generationIds,
       updatedBy: updatedByMap[row.id] ?? null,
@@ -681,6 +705,34 @@ const replaceUserGenerations = async (
         ? [primaryGenerationId]
         : [],
     primaryGenerationId,
+  };
+};
+
+const SITE_SETTINGS_SINGLETON_ID = "default";
+
+const normalizeInstagramId = (value: string): string => {
+  const trimmed = value.trim();
+  return trimmed.replace(/^@+/, "");
+};
+
+const toSiteSettingsEntity = (
+  row: typeof siteSettings.$inferSelect | null,
+): SiteSettingsEntity => {
+  if (!row) {
+    return {
+      ...DEFAULT_SITE_SETTINGS,
+    };
+  }
+
+  return {
+    footerOpenChatUrl: row.footerOpenChatUrl,
+    footerInstagramId: normalizeInstagramId(row.footerInstagramId),
+    footerEmail: row.footerEmail,
+    footerPhone: row.footerPhone,
+    footerAddress: row.footerAddress,
+    donateBankName: row.donateBankName,
+    donateAccountNumber: row.donateAccountNumber,
+    donateAccountHolder: row.donateAccountHolder,
   };
 };
 
@@ -2318,6 +2370,54 @@ export const createDbDataService = (database: D1Database): DataService => {
       return true;
     },
 
+    async getSiteSettings() {
+      const row =
+        (await db.query.siteSettings.findFirst({
+          where: eq(siteSettings.id, SITE_SETTINGS_SINGLETON_ID),
+        })) ?? null;
+      return toSiteSettingsEntity(row);
+    },
+
+    async updateSiteSettings(input) {
+      const current = await this.getSiteSettings();
+      const next: SiteSettingsEntity = {
+        ...current,
+        ...input,
+      };
+
+      next.footerInstagramId = normalizeInstagramId(next.footerInstagramId);
+
+      await db
+        .insert(siteSettings)
+        .values({
+          id: SITE_SETTINGS_SINGLETON_ID,
+          footerOpenChatUrl: next.footerOpenChatUrl,
+          footerInstagramId: next.footerInstagramId,
+          footerEmail: next.footerEmail,
+          footerPhone: next.footerPhone,
+          footerAddress: next.footerAddress,
+          donateBankName: next.donateBankName,
+          donateAccountNumber: next.donateAccountNumber,
+          donateAccountHolder: next.donateAccountHolder,
+        })
+        .onConflictDoUpdate({
+          target: siteSettings.id,
+          set: {
+            footerOpenChatUrl: next.footerOpenChatUrl,
+            footerInstagramId: next.footerInstagramId,
+            footerEmail: next.footerEmail,
+            footerPhone: next.footerPhone,
+            footerAddress: next.footerAddress,
+            donateBankName: next.donateBankName,
+            donateAccountNumber: next.donateAccountNumber,
+            donateAccountHolder: next.donateAccountHolder,
+            updatedAt: new Date(),
+          },
+        });
+
+      return next;
+    },
+
         /**
      * listUsers의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
      * @returns 비동기 처리 결과를 Promise로 반환합니다.
@@ -2600,6 +2700,9 @@ export const createDbDataService = (database: D1Database): DataService => {
         .set({
           ...(input.name !== undefined ? { name: input.name } : {}),
           ...(input.image !== undefined ? { image: input.image } : {}),
+          ...(input.showcaseImageUrls !== undefined
+            ? { showcaseImageUrls: serializeShowcaseImageUrls(input.showcaseImageUrls) }
+            : {}),
           ...(input.familyName !== undefined
             ? { familyName: input.familyName }
             : {}),

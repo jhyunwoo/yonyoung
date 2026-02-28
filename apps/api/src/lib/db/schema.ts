@@ -39,6 +39,7 @@ export const user = sqliteTable("user", {
     .default(false)
     .notNull(),
   image: text("image"),
+  showcaseImageUrls: text("showcase_image_urls").default("[]").notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .default(nowTimestamp)
     .notNull(),
@@ -435,6 +436,25 @@ export const linktreeItems = sqliteTable(
    */
   (table) => [index("linktree_items_linktree_id_idx").on(table.linktreeId)],
 );
+
+export const siteSettings = sqliteTable("site_settings", {
+  id: text("id").primaryKey(),
+  footerOpenChatUrl: text("footer_open_chat_url").notNull(),
+  footerInstagramId: text("footer_instagram_id").notNull(),
+  footerEmail: text("footer_email").notNull(),
+  footerPhone: text("footer_phone").notNull(),
+  footerAddress: text("footer_address").notNull(),
+  donateBankName: text("donate_bank_name").notNull(),
+  donateAccountNumber: text("donate_account_number").notNull(),
+  donateAccountHolder: text("donate_account_holder").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .default(nowTimestamp)
+    .notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .default(nowTimestamp)
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
 
 export const auditLogs = sqliteTable(
   "audit_logs",

@@ -4,6 +4,7 @@ export const ADMIN_CACHE_TAGS = {
   exhibitions: "admin:exhibitions",
   linktree: "admin:linktree",
   notices: "admin:notices",
+  siteSettings: "admin:site-settings",
   users: "admin:users",
 } as const;
 
