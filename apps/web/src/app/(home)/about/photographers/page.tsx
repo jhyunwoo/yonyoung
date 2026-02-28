@@ -22,7 +22,7 @@ export default async function PhotographersPage() {
       data-testid="about-photographers-page"
     >
       <main
-        className="mx-auto w-full max-w-[1200px] space-y-10 px-4 md:space-y-20 md:px-8"
+        className="mx-auto w-full max-w-300 space-y-10 px-4 md:space-y-20 md:px-8"
         data-testid="about-photographers-main"
       >
         <section className="space-y-6 pt-6 md:space-y-10 md:pt-10">
@@ -66,13 +66,9 @@ export default async function PhotographersPage() {
               >
                 <header>
                   <div className="inline-flex flex-col items-start">
-                    <h2 className="text-xl leading-none font-medium tracking-tight text-[#3a3b43] md:text-2xl">
+                    <h2 className="text-xl leading-none font-medium tracking-tight text-[#3a3b43] md:text-2xl underline underline-offset-4  ">
                       {generation.sortOrder}기
                     </h2>
-                    <span
-                      className="mt-1.5 block h-[3px] w-16 bg-[#12131a] md:w-20"
-                      aria-hidden="true"
-                    />
                   </div>
                   <p className="sr-only">
                     {generation.name} ·{" "}
