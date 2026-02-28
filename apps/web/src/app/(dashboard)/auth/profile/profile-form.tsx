@@ -15,7 +15,9 @@ import {
   isKoreanMobilePhoneNumber,
 } from "@repo/shared-auth/profile";
 import SortableImageGrid from "../../_components/sortable-image-grid";
+import UploadProgressBar from "../../_components/upload-progress-bar";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
+import { uploadFilesWithPresign } from "../../../../lib/admin-api/upload-batch";
 import {
   PRESIGN_PATHS,
   uploadWithPresign,
@@ -175,6 +177,9 @@ export default function AuthProfileForm({
   const [uploadProgressPercent, setUploadProgressPercent] = useState<
     number | null
   >(null);
+  const [showcaseUploadProgressPercent, setShowcaseUploadProgressPercent] = useState<
+    number | null
+  >(null);
   const [isUploadingShowcaseImages, setIsUploadingShowcaseImages] =
     useState(false);
 
@@ -240,24 +245,23 @@ export default function AuthProfileForm({
 
     const uploadTargets = files.slice(0, remainingSlots);
     setIsUploadingShowcaseImages(true);
+    setShowcaseUploadProgressPercent(0);
     setSubmitError(null);
     setSubmitSuccess(null);
 
     try {
-      const uploadedUrls = await Promise.all(
-        uploadTargets.map((file) =>
-          uploadWithPresign({
-            presignPath: PRESIGN_PATHS.userProfile,
-            file,
-          }),
-        ),
-      );
+      const uploadedUrls = await uploadFilesWithPresign({
+        presignPath: PRESIGN_PATHS.userProfile,
+        files: uploadTargets,
+        onProgress: setShowcaseUploadProgressPercent,
+      });
       appendExistingUrls(uploadedUrls);
     } catch (error) {
       setSubmitError(readErrorMessage(error));
       setSubmitSuccess(null);
     } finally {
       setIsUploadingShowcaseImages(false);
+      setShowcaseUploadProgressPercent(null);
     }
   };
 
@@ -467,11 +471,7 @@ export default function AuthProfileForm({
               />
             </div>
 
-            {uploadProgressPercent !== null ? (
-              <p className="mt-2 text-xs text-slate-500">
-                이미지 업로드 진행률: {uploadProgressPercent}%
-              </p>
-            ) : null}
+            <UploadProgressBar progressPercent={uploadProgressPercent} />
           </div>
 
           {isDashboardMode && canEditProfileImage ? (
@@ -506,6 +506,10 @@ export default function AuthProfileForm({
                   대표 작품 사진 업로드 중...
                 </p>
               ) : null}
+              <UploadProgressBar
+                progressPercent={showcaseUploadProgressPercent}
+                label="대표 작품 사진 업로드 진행률"
+              />
 
               <div className="mt-3 space-y-2">
                 <p className="text-xs text-slate-500">

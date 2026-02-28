@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 type NavChild = {
   href: string;
@@ -59,6 +60,7 @@ const mobileLinkBaseClass =
 
 export default function SiteHeader() {
   const pathname = usePathname();
+  const shouldReduceMotion = useReducedMotion();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -72,6 +74,13 @@ export default function SiteHeader() {
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileMenuOpen]);
 
   return (
     <header
@@ -154,49 +163,95 @@ export default function SiteHeader() {
           aria-expanded={isMobileMenuOpen}
           data-testid="public-nav-toggle"
         >
-          <span className="h-[2px] w-[25px] bg-[#2c3357] transition-all duration-300" />
-          <span className="h-[2px] w-[25px] bg-[#2c3357] transition-all duration-300" />
-          <span className="h-[2px] w-[25px] bg-[#2c3357] transition-all duration-300" />
+          <span
+            className={`h-[2px] w-[25px] bg-[#2c3357] transition-all duration-300 ${
+              isMobileMenuOpen ? "translate-y-[7px] rotate-45" : ""
+            }`}
+          />
+          <span
+            className={`h-[2px] w-[25px] bg-[#2c3357] transition-all duration-300 ${
+              isMobileMenuOpen ? "opacity-0" : ""
+            }`}
+          />
+          <span
+            className={`h-[2px] w-[25px] bg-[#2c3357] transition-all duration-300 ${
+              isMobileMenuOpen ? "-translate-y-[7px] -rotate-45" : ""
+            }`}
+          />
         </button>
       </div>
 
-      {isMobileMenuOpen ? (
-        <nav
-          className="fixed inset-x-0 top-[var(--public-header-height-mobile)] block border-b border-[#bfbfbf] bg-[rgba(255,255,255,0.98)] p-8 backdrop-blur-[10px] md:top-[var(--public-header-height-desktop)] md:hidden"
-          data-testid="public-nav-mobile"
-        >
-          <ul className="flex list-none flex-col gap-4">
-            {navItems.map((item) => {
-              const active = isActivePath(pathname, item);
-              return (
-                <li key={item.href} className="w-full">
-                  <Link
-                    href={item.href}
-                    className={`${mobileLinkBaseClass} ${active ? "after:w-12" : ""}`.trim()}
-                    data-testid={`public-nav-mobile-${item.testId}`}
-                  >
-                    {item.label}
-                  </Link>
-                  {item.children ? (
-                    <ul className="mt-[0.4rem] w-full list-none bg-[rgba(0,0,0,0.03)]">
-                      {item.children.map((child) => (
-                        <li key={child.href}>
-                          <Link
-                            href={child.href}
-                            className="block px-4 py-[0.8rem] text-center text-[0.8rem] text-[#2c3357]"
-                          >
-                            {child.label}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-      ) : null}
+      <AnimatePresence initial={false}>
+        {isMobileMenuOpen ? (
+          <div className="fixed inset-x-0 top-[var(--public-header-height-mobile)] bottom-0 z-[999] md:top-[var(--public-header-height-desktop)] md:hidden">
+            <motion.button
+              type="button"
+              className="absolute inset-0 bg-[rgba(44,51,87,0.12)]"
+              aria-label="모바일 메뉴 닫기"
+              data-testid="public-nav-mobile-backdrop"
+              onClick={() => setIsMobileMenuOpen(false)}
+              initial={shouldReduceMotion ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={
+                shouldReduceMotion
+                  ? { opacity: 0 }
+                  : { opacity: 0, transition: { duration: 0.18, ease: "easeOut" } }
+              }
+              transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2 }}
+            />
+            <motion.nav
+              className="absolute inset-x-0 top-0 block border-b border-[#bfbfbf] bg-[rgba(255,255,255,0.98)] p-8 backdrop-blur-[10px]"
+              data-testid="public-nav-mobile"
+              data-state="open"
+              initial={shouldReduceMotion ? false : { opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={
+                shouldReduceMotion
+                  ? { opacity: 0, y: -8 }
+                  : { opacity: 0, y: -20, transition: { duration: 0.2, ease: "easeOut" } }
+              }
+              transition={
+                shouldReduceMotion
+                  ? { duration: 0 }
+                  : { type: "spring", stiffness: 360, damping: 30, mass: 0.62 }
+              }
+            >
+              <ul className="flex list-none flex-col gap-4">
+                {navItems.map((item) => {
+                  const active = isActivePath(pathname, item);
+                  return (
+                    <li key={item.href} className="w-full">
+                      <Link
+                        href={item.href}
+                        className={`${mobileLinkBaseClass} ${active ? "after:w-12" : ""}`.trim()}
+                        data-testid={`public-nav-mobile-${item.testId}`}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        {item.label}
+                      </Link>
+                      {item.children ? (
+                        <ul className="mt-[0.4rem] w-full list-none bg-[rgba(0,0,0,0.03)]">
+                          {item.children.map((child) => (
+                            <li key={child.href}>
+                              <Link
+                                href={child.href}
+                                className="block px-4 py-[0.8rem] text-center text-[0.8rem] text-[#2c3357]"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                              >
+                                {child.label}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            </motion.nav>
+          </div>
+        ) : null}
+      </AnimatePresence>
     </header>
   );
 }

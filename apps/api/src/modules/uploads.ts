@@ -38,6 +38,7 @@ import {
   ALLOWED_IMAGE_CONTENT_TYPES,
   UPLOAD_LIMITS,
 } from "../lib/storage/presign";
+import { R2_STORAGE_LIMIT_BYTES } from "../lib/storage/usage";
 
 type App = OpenAPIHono<HonoAppType>;
 type ManagedResource = Extract<Resource, "activity" | "exhibition" | "notice">;
@@ -107,6 +108,29 @@ const readUploadValidationResponse = (
   }
 
   return payloadTooLarge(c, validationResult.message);
+};
+
+const ensureStorageCapacityBeforeUpload = async (input: {
+  c: Parameters<typeof badRequest>[0];
+  dependencies: AppDependencies;
+  fileSize: number;
+}): Promise<Response | null> => {
+  try {
+    const usedBytes = await input.dependencies.readR2TotalUsageBytes(input.c);
+    if (usedBytes + input.fileSize > R2_STORAGE_LIMIT_BYTES) {
+      return payloadTooLarge(
+        input.c,
+        "버킷 저장공간 10GB 한도를 초과할 수 있어 업로드를 차단했습니다.",
+      );
+    }
+
+    return null;
+  } catch {
+    return internalError(
+      input.c,
+      "버킷 저장공간 사용량을 확인할 수 없어 업로드를 차단했습니다.",
+    );
+  }
 };
 
 const isUserProfileUploadAllowed = (role: Role): boolean => {
@@ -223,6 +247,15 @@ const registerResourcePresignRoute = (
       return validationResponse;
     }
 
+    const storageCapacityResponse = await ensureStorageCapacityBeforeUpload({
+      c,
+      dependencies,
+      fileSize: body.data.fileSize,
+    });
+    if (storageCapacityResponse) {
+      return storageCapacityResponse;
+    }
+
     try {
       const data = await dependencies.getPresignService(c).issuePresignedPutUrl({
         actorId: actorResult.actor.id,
@@ -310,6 +343,15 @@ const registerResourceMultipartInitRoute = (
         c,
         `파트 수가 허용 범위(${UPLOAD_LIMITS.multipartMaxParts})를 초과합니다.`,
       );
+    }
+
+    const storageCapacityResponse = await ensureStorageCapacityBeforeUpload({
+      c,
+      dependencies,
+      fileSize: body.data.fileSize,
+    });
+    if (storageCapacityResponse) {
+      return storageCapacityResponse;
     }
 
     try {
@@ -559,6 +601,15 @@ export const registerUploadRoutes = (
       return validationResponse;
     }
 
+    const storageCapacityResponse = await ensureStorageCapacityBeforeUpload({
+      c,
+      dependencies,
+      fileSize: body.data.fileSize,
+    });
+    if (storageCapacityResponse) {
+      return storageCapacityResponse;
+    }
+
     try {
       const data = await dependencies.getPresignService(c).issuePresignedPutUrl({
         actorId: actorResult.actor.id,
@@ -611,6 +662,15 @@ export const registerUploadRoutes = (
         c,
         `파트 수가 허용 범위(${UPLOAD_LIMITS.multipartMaxParts})를 초과합니다.`,
       );
+    }
+
+    const storageCapacityResponse = await ensureStorageCapacityBeforeUpload({
+      c,
+      dependencies,
+      fileSize: body.data.fileSize,
+    });
+    if (storageCapacityResponse) {
+      return storageCapacityResponse;
     }
 
     try {

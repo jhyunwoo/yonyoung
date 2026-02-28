@@ -171,4 +171,42 @@ describe("DashboardShell", () => {
     expect(container.textContent).toContain("전체 멤버 관리");
     expect(container.textContent).not.toContain("전체 기수 관리");
   });
+
+  it("모바일 사이드바를 열면 애니메이션 상태 속성을 노출하고 닫을 수 있다", async () => {
+    const { default: DashboardShell } = await import("./dashboard-shell");
+
+    await act(async () => {
+      root.render(
+        <DashboardShell generationOptions={[]} viewer={null}>
+          <div>content</div>
+        </DashboardShell>,
+      );
+      await Promise.resolve();
+    });
+
+    const openButton = container.querySelector("button[aria-label='사이드바 열기']");
+    expect(openButton).toBeInTheDocument();
+
+    await act(async () => {
+      openButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const mobileSidebar = container.querySelector("[data-testid='dashboard-mobile-sidebar']");
+    expect(mobileSidebar).toBeInTheDocument();
+    expect(mobileSidebar?.getAttribute("data-state")).toBe("open");
+
+    const closeButton = container.querySelector(
+      "[data-testid='dashboard-mobile-sidebar'] button[aria-label='사이드바 닫기']",
+    );
+
+    await act(async () => {
+      closeButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(
+      container.querySelector("[data-testid='dashboard-mobile-sidebar']"),
+    ).not.toBeInTheDocument();
+  });
 });

@@ -10,6 +10,7 @@ import { getDbDataService } from "../db/factory";
 import { resolveDocsAuthEnabled } from "../config/runtime-env";
 import { createD1SequentialSession, resolveD1SessionMode } from "../db/d1-session";
 import { createRetryingD1Database } from "../db/d1-client";
+import { readR2TotalUsageBytes } from "../storage/usage";
 
 export type ResolveActor = (
   c: Context<HonoAppType>,
@@ -18,6 +19,10 @@ export type ResolveActor = (
 export type GetDataService = (c: Context<HonoAppType>) => DataService;
 
 export type GetPresignService = (c: Context<HonoAppType>) => PresignService;
+
+export type ReadR2TotalUsageBytes = (
+  c: Context<HonoAppType>,
+) => Promise<number>;
 
 export type GetAuthOpenApiSchema = (
   c: Context<HonoAppType>,
@@ -29,6 +34,7 @@ export type AppDependencies = {
   resolveActor: ResolveActor;
   getDataService: GetDataService;
   getPresignService: GetPresignService;
+  readR2TotalUsageBytes: ReadR2TotalUsageBytes;
   getAuthOpenApiSchema: GetAuthOpenApiSchema;
   shouldRequireDocsAuth: ShouldRequireDocsAuth;
 };
@@ -89,6 +95,7 @@ export const createDefaultDependencies = (): AppDependencies => ({
     return dataService;
   },
   getPresignService: (c) => createR2PresignService(c.env),
+  readR2TotalUsageBytes: (c) => readR2TotalUsageBytes(c.env.r2),
   getAuthOpenApiSchema: async (c) => {
     const auth = createAuth(c.env.db, c.env);
     const request = new Request(

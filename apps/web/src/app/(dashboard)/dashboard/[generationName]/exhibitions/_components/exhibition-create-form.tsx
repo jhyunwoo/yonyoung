@@ -4,6 +4,7 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "re
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "../../../../../../lib/admin-api/resources";
+import { uploadFilesWithPresign } from "../../../../../../lib/admin-api/upload-batch";
 import {
   PRESIGN_PATHS,
   uploadWithPresign,
@@ -14,6 +15,7 @@ import {
 } from "../../../../../../lib/image-upload-state";
 import { useImageUploadState } from "../../../../../../lib/use-image-upload-state";
 import SortableImageGrid from "../../../../_components/sortable-image-grid";
+import UploadProgressBar from "../../../../_components/upload-progress-bar";
 import ExhibitionRichTextEditor from "./exhibition-rich-text-editor";
 import {
   hasMeaningfulExhibitionDescription,
@@ -52,6 +54,7 @@ export default function ExhibitionCreateForm({
     reorderByIds,
   } = useImageUploadState();
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -153,11 +156,34 @@ export default function ExhibitionCreateForm({
     }
 
     setIsSaving(true);
+    setUploadProgressPercent(0);
 
     try {
+      const newDetailImages = detailImages.filter(
+        (image): image is UploadImageItem & { file: File } => image.file !== null,
+      );
+      const totalUploadCount = 1 + newDetailImages.length;
+      let coverUploadProgress = 0;
+      let detailUploadProgress = 0;
+      const updateUploadProgress = () => {
+        if (totalUploadCount <= 0) {
+          setUploadProgressPercent(null);
+          return;
+        }
+
+        const weightedProgress =
+          (coverUploadProgress + (detailUploadProgress * newDetailImages.length)) /
+          totalUploadCount;
+        setUploadProgressPercent(Math.round(weightedProgress));
+      };
+
       const coverImageUrl = await uploadWithPresign({
         presignPath: PRESIGN_PATHS.exhibitionCover,
         file: coverFile,
+        onProgress: (progressPercent) => {
+          coverUploadProgress = progressPercent;
+          updateUploadProgress();
+        },
       });
 
       const createdExhibition = await adminResourceApi.createExhibition({
@@ -170,19 +196,16 @@ export default function ExhibitionCreateForm({
         generationId,
       });
 
-      if (detailImages.length > 0) {
+      if (newDetailImages.length > 0) {
         try {
-          const newDetailImages = detailImages.filter(
-            (image): image is UploadImageItem & { file: File } => image.file !== null,
-          );
-          const uploadedDetailUrls = await Promise.all(
-            newDetailImages.map((image) =>
-              uploadWithPresign({
-                presignPath: PRESIGN_PATHS.exhibitionDetail,
-                file: image.file,
-              }),
-            ),
-          );
+          const uploadedDetailUrls = await uploadFilesWithPresign({
+            presignPath: PRESIGN_PATHS.exhibitionDetail,
+            files: newDetailImages.map((image) => image.file),
+            onProgress: (progressPercent) => {
+              detailUploadProgress = progressPercent;
+              updateUploadProgress();
+            },
+          });
 
           await adminResourceApi.addExhibitionImages(
             createdExhibition.id,
@@ -209,6 +232,7 @@ export default function ExhibitionCreateForm({
       setErrorMessage(readExhibitionErrorMessage(error));
     } finally {
       setIsSaving(false);
+      setUploadProgressPercent(null);
     }
   };
 
@@ -339,6 +363,7 @@ export default function ExhibitionCreateForm({
             disabled={isSaving}
             emptyMessage="추가할 세부 이미지가 없으면 비워 두세요."
           />
+          <UploadProgressBar progressPercent={uploadProgressPercent} label="사진 업로드 진행률" />
         </div>
 
         {errorMessage ? (

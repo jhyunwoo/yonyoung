@@ -1,3 +1,5 @@
+import Uppy from "@uppy/core";
+import AwsS3 from "@uppy/aws-s3";
 import { AdminApiError } from "./types";
 import { adminRequest } from "./http";
 import type { ApiPresignResponse } from "./types";
@@ -29,6 +31,21 @@ const readUploadProgress = (loaded: number, total: number): number => {
   }
 
   return raw;
+};
+
+const clampProgress = (progress: number): number => {
+  if (!Number.isFinite(progress)) {
+    return 0;
+  }
+
+  if (progress < 0) {
+    return 0;
+  }
+  if (progress > 100) {
+    return 100;
+  }
+
+  return Math.round(progress);
 };
 
 const defaultContentType = (file: File): string => {
@@ -75,6 +92,142 @@ const resolveUploadHeaders = (
   return resolved;
 };
 
+const toUploadError = (status = 0) =>
+  new AdminApiError({
+    status,
+    code: "UPLOAD_FAILED",
+    message: "파일 업로드에 실패했습니다.",
+  });
+
+const isJsdomEnvironment = (): boolean => {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+
+  return /\bjsdom\b/i.test(navigator.userAgent);
+};
+
+const shouldUseUppyUploader = (): boolean => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return !isJsdomEnvironment();
+};
+
+const runUploadWithFetch = async (input: {
+  uploadUrl: string;
+  uploadHeaders: UploadHeaders;
+  file: File;
+}) => {
+  let uploadResponse: Response;
+  try {
+    uploadResponse = await fetch(input.uploadUrl, {
+      method: "PUT",
+      mode: "cors",
+      credentials: "omit",
+      headers: input.uploadHeaders,
+      body: input.file,
+    });
+  } catch {
+    throw toUploadError();
+  }
+
+  if (!uploadResponse.ok) {
+    throw toUploadError(uploadResponse.status);
+  }
+};
+
+const runUploadWithXhr = async (input: {
+  uploadUrl: string;
+  uploadHeaders: UploadHeaders;
+  file: File;
+  onProgress?: (progressPercent: number) => void;
+}) =>
+  new Promise<void>((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("PUT", input.uploadUrl);
+    request.withCredentials = false;
+    for (const [key, value] of Object.entries(input.uploadHeaders)) {
+      request.setRequestHeader(key, value);
+    }
+
+    request.upload.onprogress = (event) => {
+      if (!event.lengthComputable || !input.onProgress) {
+        return;
+      }
+      input.onProgress(readUploadProgress(event.loaded, event.total));
+    };
+
+    request.onload = () => {
+      if (request.status >= 200 && request.status < 300) {
+        resolve();
+        return;
+      }
+
+      reject(toUploadError(request.status || 0));
+    };
+
+    request.onerror = () => {
+      reject(toUploadError(request.status || 0));
+    };
+
+    request.send(input.file);
+  });
+
+const runUploadWithUppy = async (input: {
+  uploadUrl: string;
+  uploadHeaders: UploadHeaders;
+  file: File;
+  onProgress?: (progressPercent: number) => void;
+}) => {
+  const uppy = new Uppy({
+    autoProceed: false,
+    restrictions: {
+      maxNumberOfFiles: 1,
+    },
+  });
+
+  if (input.onProgress) {
+    uppy.on("progress", (progress) => {
+      input.onProgress?.(clampProgress(progress));
+    });
+  }
+
+  try {
+    uppy.use(AwsS3, {
+      limit: 1,
+      retryDelays: [0, 1000, 3000, 5000],
+      shouldUseMultipart: false,
+      getUploadParameters: async () => ({
+        method: "PUT",
+        url: input.uploadUrl,
+        headers: input.uploadHeaders,
+      }),
+    });
+
+    uppy.addFile({
+      name: input.file.name,
+      type: input.file.type,
+      data: input.file,
+      source: "local",
+    });
+
+    const result = await uppy.upload();
+    if (!result || (result.failed?.length ?? 0) > 0) {
+      throw toUploadError();
+    }
+  } catch (error) {
+    if (error instanceof AdminApiError) {
+      throw error;
+    }
+
+    throw toUploadError();
+  } finally {
+    uppy.destroy();
+  }
+};
+
 export const uploadWithPresign = async (input: {
   presignPath: PresignPath;
   file: File;
@@ -89,85 +242,32 @@ export const uploadWithPresign = async (input: {
 
   const uploadHeaders = resolveUploadHeaders(presign.requiredHeaders, contentType);
 
-  const runUploadWithFetch = async () => {
-    let uploadResponse: Response;
-    try {
-      uploadResponse = await fetch(presign.uploadUrl, {
-        method: "PUT",
-        mode: "cors",
-        credentials: "omit",
-        headers: uploadHeaders,
-        body: input.file,
-      });
-    } catch {
-      throw new AdminApiError({
-        status: 0,
-        code: "UPLOAD_FAILED",
-        message: "파일 업로드에 실패했습니다.",
-      });
-    }
-
-    if (!uploadResponse.ok) {
-      throw new AdminApiError({
-        status: uploadResponse.status,
-        code: "UPLOAD_FAILED",
-        message: "파일 업로드에 실패했습니다.",
-      });
-    }
-  };
-
-  const runUploadWithXhr = async () =>
-    new Promise<void>((resolve, reject) => {
-      const request = new XMLHttpRequest();
-      request.open("PUT", presign.uploadUrl);
-      request.withCredentials = false;
-      for (const [key, value] of Object.entries(uploadHeaders)) {
-        request.setRequestHeader(key, value);
-      }
-
-      request.upload.onprogress = (event) => {
-        if (!event.lengthComputable || !input.onProgress) {
-          return;
-        }
-        input.onProgress(readUploadProgress(event.loaded, event.total));
-      };
-
-      request.onload = () => {
-        if (request.status >= 200 && request.status < 300) {
-          resolve();
-          return;
-        }
-
-        reject(
-          new AdminApiError({
-            status: request.status || 0,
-            code: "UPLOAD_FAILED",
-            message: "파일 업로드에 실패했습니다.",
-          }),
-        );
-      };
-
-      request.onerror = () => {
-        reject(
-          new AdminApiError({
-            status: request.status || 0,
-            code: "UPLOAD_FAILED",
-            message: "파일 업로드에 실패했습니다.",
-          }),
-        );
-      };
-
-      request.send(input.file);
-    });
-
   if (input.onProgress) {
     input.onProgress(0);
   }
-  if (input.onProgress && typeof XMLHttpRequest !== "undefined") {
-    await runUploadWithXhr();
+
+  if (shouldUseUppyUploader()) {
+    await runUploadWithUppy({
+      uploadUrl: presign.uploadUrl,
+      uploadHeaders,
+      file: input.file,
+      onProgress: input.onProgress,
+    });
+  } else if (input.onProgress && typeof XMLHttpRequest !== "undefined") {
+    await runUploadWithXhr({
+      uploadUrl: presign.uploadUrl,
+      uploadHeaders,
+      file: input.file,
+      onProgress: input.onProgress,
+    });
   } else {
-    await runUploadWithFetch();
+    await runUploadWithFetch({
+      uploadUrl: presign.uploadUrl,
+      uploadHeaders,
+      file: input.file,
+    });
   }
+
   if (input.onProgress) {
     input.onProgress(100);
   }

@@ -355,6 +355,7 @@ export const createTestApp = (input: {
   resolveActor?: () => Promise<Actor | null>;
   dataService?: DataService;
   presignService?: PresignService;
+  readR2TotalUsageBytes?: () => Promise<number> | number;
   getAuthOpenApiSchema?: () => Promise<OpenAPIDocument>;
   shouldRequireDocsAuth?: boolean;
 }) => {
@@ -377,6 +378,10 @@ export const createTestApp = (input: {
      * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
      */
     getPresignService: () => input.presignService ?? createPresignServiceMock(),
+    readR2TotalUsageBytes: async () =>
+      input.readR2TotalUsageBytes === undefined
+        ? 0
+        : await input.readR2TotalUsageBytes(),
     getAuthOpenApiSchema:
       input.getAuthOpenApiSchema ??
       /** createApp 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (async () =>

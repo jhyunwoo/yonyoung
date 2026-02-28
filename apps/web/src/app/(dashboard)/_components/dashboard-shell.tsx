@@ -466,6 +466,7 @@ export default function DashboardShell({
   viewer,
 }: DashboardShellProps) {
   const pathname = usePathname();
+  const shouldReduceMotion = useReducedMotion();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isSignOutPending, setIsSignOutPending] = useState(false);
 
@@ -595,39 +596,73 @@ export default function DashboardShell({
         <main>{children}</main>
       </div>
 
-      {mobileOpen ? (
-        <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true">
-          <button
-            type="button"
-            aria-label="사이드바 닫기"
-            className="absolute inset-0 bg-slate-900/40"
-            onClick={() => setMobileOpen(false)}
-          />
-          <aside className="absolute right-0 top-0 h-full w-[84%] max-w-sm border-l border-slate-200 bg-white shadow-2xl">
-            <div className="flex items-center justify-end border-b border-slate-200 px-4 py-3">
-              <button
-                type="button"
-                onClick={() => setMobileOpen(false)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 text-slate-700 hover:bg-slate-100"
-                aria-label="사이드바 닫기"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <SidebarContent
-              pathname={pathname}
-              generationOptions={generationOptions}
-              selectedGeneration={selectedGeneration}
-              selectedGenerationScopedPath={selectedGenerationScopedPath}
-              viewer={viewer}
-              onNavigate={() => setMobileOpen(false)}
-              onSignOut={handleSignOut}
-              isSignOutPending={isSignOutPending}
+      <AnimatePresence initial={false}>
+        {mobileOpen ? (
+          <div
+            className="fixed inset-0 z-40 md:hidden"
+            role="dialog"
+            aria-modal="true"
+            data-testid="dashboard-mobile-sidebar"
+            data-state="open"
+          >
+            <motion.button
+              type="button"
+              aria-label="사이드바 닫기"
+              className="absolute inset-0 bg-slate-900/40"
+              onClick={() => setMobileOpen(false)}
+              initial={shouldReduceMotion ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={
+                shouldReduceMotion
+                  ? { opacity: 0 }
+                  : { opacity: 0, transition: { duration: 0.2, ease: "easeOut" } }
+              }
+              transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2 }}
             />
-          </aside>
-        </div>
-      ) : null}
+            <motion.aside
+              className="absolute right-0 top-0 h-full w-[84%] max-w-sm border-l border-slate-200 bg-white shadow-2xl"
+              initial={shouldReduceMotion ? false : { x: "100%", opacity: 0.98 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={
+                shouldReduceMotion
+                  ? { x: "100%", opacity: 0.98 }
+                  : {
+                      x: "100%",
+                      opacity: 0.98,
+                      transition: { duration: 0.24, ease: [0.4, 0, 0.2, 1] },
+                    }
+              }
+              transition={
+                shouldReduceMotion
+                  ? { duration: 0 }
+                  : { type: "spring", stiffness: 330, damping: 32, mass: 0.7 }
+              }
+            >
+              <div className="flex items-center justify-end border-b border-slate-200 px-4 py-3">
+                <button
+                  type="button"
+                  onClick={() => setMobileOpen(false)}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 text-slate-700 hover:bg-slate-100"
+                  aria-label="사이드바 닫기"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <SidebarContent
+                pathname={pathname}
+                generationOptions={generationOptions}
+                selectedGeneration={selectedGeneration}
+                selectedGenerationScopedPath={selectedGenerationScopedPath}
+                viewer={viewer}
+                onNavigate={() => setMobileOpen(false)}
+                onSignOut={handleSignOut}
+                isSignOutPending={isSignOutPending}
+              />
+            </motion.aside>
+          </div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

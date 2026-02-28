@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ApiActivity } from "../../../../../../lib/admin-api/types";
 import { adminResourceApi } from "../../../../../../lib/admin-api/resources";
+import { uploadFilesWithPresign } from "../../../../../../lib/admin-api/upload-batch";
 import { PRESIGN_PATHS, uploadWithPresign } from "../../../../../../lib/admin-api/upload";
 import {
   createExistingUploadImageItem,
@@ -19,6 +20,7 @@ import AuditHistoryPanel from "../../../../_components/audit-history-panel";
 import LastUpdatedMeta from "../../../../_components/last-updated-meta";
 import RichTextEditor from "../../../../_components/rich-text-editor";
 import SortableImageGrid from "../../../../_components/sortable-image-grid";
+import UploadProgressBar from "../../../../_components/upload-progress-bar";
 import {
   formatTimestampToDateInput,
   readActivityErrorMessage,
@@ -64,6 +66,7 @@ export default function ActivityEditForm({
     reorderByIds,
   } = useImageUploadState();
   const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]);
+  const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
 
   useEffect(() => {
     return () => {
@@ -220,13 +223,37 @@ export default function ActivityEditForm({
     }
 
     setIsSaving(true);
+    setUploadProgressPercent(0);
 
     try {
+      const newOrder = detailImages.filter(
+        (image): image is UploadImageItem & { file: File } =>
+          image.source === "new" && image.file !== null,
+      );
+      const totalUploadCount = (coverFile ? 1 : 0) + newOrder.length;
+      let coverUploadProgress = coverFile ? 0 : 100;
+      let detailUploadProgress = newOrder.length > 0 ? 0 : 100;
+      const updateUploadProgress = () => {
+        if (totalUploadCount <= 0) {
+          setUploadProgressPercent(null);
+          return;
+        }
+
+        const weightedCover = coverFile ? coverUploadProgress : 0;
+        const weightedDetail = detailUploadProgress * newOrder.length;
+        const weightedProgress = (weightedCover + weightedDetail) / totalUploadCount;
+        setUploadProgressPercent(Math.round(weightedProgress));
+      };
+
       let nextCoverImageUrl = activity.coverImageUrl;
       if (coverFile) {
         nextCoverImageUrl = await uploadWithPresign({
           presignPath: PRESIGN_PATHS.activityCover,
           file: coverFile,
+          onProgress: (progressPercent) => {
+            coverUploadProgress = progressPercent;
+            updateUploadProgress();
+          },
         });
       }
 
@@ -248,20 +275,17 @@ export default function ActivityEditForm({
       const existingOrder = detailImages.filter(
         (image) => image.source === "existing",
       );
-      const newOrder = detailImages.filter(
-        (image): image is UploadImageItem & { file: File } =>
-          image.source === "new" && image.file !== null,
-      );
 
       const createdMap = new Map<string, string>();
       if (newOrder.length > 0) {
-        const uploadedUrls = await Promise.all(
-          newOrder.map((image) =>
-            uploadWithPresign({
-              presignPath: PRESIGN_PATHS.activityDetail,
-              file: image.file,
-            })),
-        );
+        const uploadedUrls = await uploadFilesWithPresign({
+          presignPath: PRESIGN_PATHS.activityDetail,
+          files: newOrder.map((image) => image.file),
+          onProgress: (progressPercent) => {
+            detailUploadProgress = progressPercent;
+            updateUploadProgress();
+          },
+        });
 
         const created = await adminResourceApi.addActivityImages(
           activity.id,
@@ -306,6 +330,7 @@ export default function ActivityEditForm({
       setErrorMessage(readActivityErrorMessage(error));
     } finally {
       setIsSaving(false);
+      setUploadProgressPercent(null);
     }
   };
 
@@ -445,6 +470,7 @@ export default function ActivityEditForm({
               disabled={isSaving}
               emptyMessage="등록된 세부 이미지가 없습니다."
             />
+            <UploadProgressBar progressPercent={uploadProgressPercent} label="사진 업로드 진행률" />
           </div>
 
           <LastUpdatedMeta

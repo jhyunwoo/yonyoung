@@ -8,6 +8,7 @@ import type {
 } from "../../../lib/admin-api/types";
 import { AdminApiError } from "../../../lib/admin-api/types";
 import { adminResourceApi } from "../../../lib/admin-api/resources";
+import { uploadFilesWithPresign } from "../../../lib/admin-api/upload-batch";
 import { PRESIGN_PATHS, uploadWithPresign } from "../../../lib/admin-api/upload";
 import { readFileList } from "../../../lib/image-upload-state";
 import { buildMemberRoleLabel } from "../../../lib/member-role-label";
@@ -18,6 +19,7 @@ import {
 } from "../../../lib/showcase-images";
 import { useImageUploadState } from "../../../lib/use-image-upload-state";
 import SortableImageGrid from "./sortable-image-grid";
+import UploadProgressBar from "./upload-progress-bar";
 
 type MemberEditFormProps = {
   user: ApiUser;
@@ -93,6 +95,7 @@ export default function MemberEditForm({
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [selectedImageObjectUrl, setSelectedImageObjectUrl] = useState<string | null>(null);
   const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
+  const [showcaseUploadProgressPercent, setShowcaseUploadProgressPercent] = useState<number | null>(null);
   const profileFileInputRef = useRef<HTMLInputElement | null>(null);
   const showcaseFileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -116,6 +119,7 @@ export default function MemberEditForm({
       return null;
     });
     setUploadProgressPercent(null);
+    setShowcaseUploadProgressPercent(null);
     setIsUploadingShowcaseImages(false);
     setErrorMessage(null);
     setSuccessMessage(null);
@@ -162,24 +166,23 @@ export default function MemberEditForm({
 
     const uploadTargets = files.slice(0, remainingSlots);
     setIsUploadingShowcaseImages(true);
+    setShowcaseUploadProgressPercent(0);
     setErrorMessage(null);
     setSuccessMessage(null);
 
     try {
-      const uploadedUrls = await Promise.all(
-        uploadTargets.map((file) =>
-          uploadWithPresign({
-            presignPath: PRESIGN_PATHS.userProfile,
-            file,
-          }),
-        ),
-      );
+      const uploadedUrls = await uploadFilesWithPresign({
+        presignPath: PRESIGN_PATHS.userProfile,
+        files: uploadTargets,
+        onProgress: setShowcaseUploadProgressPercent,
+      });
       appendExistingUrls(uploadedUrls);
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
       setSuccessMessage(null);
     } finally {
       setIsUploadingShowcaseImages(false);
+      setShowcaseUploadProgressPercent(null);
     }
   };
 
@@ -395,9 +398,7 @@ export default function MemberEditForm({
             />
           </div>
 
-          {uploadProgressPercent !== null ? (
-            <p className="mt-2 text-xs text-slate-500">이미지 업로드 진행률: {uploadProgressPercent}%</p>
-          ) : null}
+          <UploadProgressBar progressPercent={uploadProgressPercent} />
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-4">
@@ -425,6 +426,10 @@ export default function MemberEditForm({
           {isUploadingShowcaseImages ? (
             <p className="mt-2 text-xs text-slate-500">대표 작품 사진 업로드 중...</p>
           ) : null}
+          <UploadProgressBar
+            progressPercent={showcaseUploadProgressPercent}
+            label="대표 작품 사진 업로드 진행률"
+          />
 
           <div className="mt-3 space-y-2">
             <p className="text-xs text-slate-500">

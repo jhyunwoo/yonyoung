@@ -9,7 +9,7 @@ import NoticeEditForm from "./notice-edit-form";
 const routerReplace = vi.fn();
 const routerRefresh = vi.fn();
 const getGlobalNoticeById = vi.fn();
-const uploadWithPresign = vi.fn();
+const uploadFilesWithPresign = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -79,7 +79,10 @@ vi.mock("../../../lib/admin-api/upload", () => ({
   PRESIGN_PATHS: {
     noticeImage: "/notices/presign/image",
   },
-  uploadWithPresign: (...args: unknown[]) => uploadWithPresign(...args),
+}));
+
+vi.mock("../../../lib/admin-api/upload-batch", () => ({
+  uploadFilesWithPresign: (...args: unknown[]) => uploadFilesWithPresign(...args),
 }));
 
 Object.assign(globalThis, { React, IS_REACT_ACT_ENVIRONMENT: true });
@@ -132,10 +135,10 @@ describe("notice image input mode", () => {
     routerReplace.mockReset();
     routerRefresh.mockReset();
     getGlobalNoticeById.mockReset();
-    uploadWithPresign.mockReset();
+    uploadFilesWithPresign.mockReset();
     getGlobalNoticeById.mockResolvedValue(NOTICE);
-    uploadWithPresign.mockImplementation(async ({ file }: { file: File }) => {
-      return `https://example.com/${file.name}`;
+    uploadFilesWithPresign.mockImplementation(async ({ files }: { files: File[] }) => {
+      return files.map((file) => `https://example.com/${file.name}`);
     });
     container = document.createElement("div");
     document.body.appendChild(container);
@@ -272,19 +275,11 @@ describe("notice image input mode", () => {
       await flushEffects();
     });
 
-    expect(uploadWithPresign).toHaveBeenCalledTimes(2);
-    expect(uploadWithPresign).toHaveBeenNthCalledWith(
-      1,
+    expect(uploadFilesWithPresign).toHaveBeenCalledTimes(1);
+    expect(uploadFilesWithPresign).toHaveBeenCalledWith(
       expect.objectContaining({
         presignPath: "/notices/presign/image",
-        file: firstFile,
-      }),
-    );
-    expect(uploadWithPresign).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({
-        presignPath: "/notices/presign/image",
-        file: secondFile,
+        files: [firstFile, secondFile],
       }),
     );
   });

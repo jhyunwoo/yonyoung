@@ -8,11 +8,13 @@ import {
   readFileList,
   type UploadImageItem,
 } from "../../../../../../lib/image-upload-state";
+import { uploadFilesWithPresign } from "../../../../../../lib/admin-api/upload-batch";
 import { PRESIGN_PATHS, uploadWithPresign } from "../../../../../../lib/admin-api/upload";
 import { hasMeaningfulRichTextHtml } from "../../../../../../lib/rich-text";
 import { useImageUploadState } from "../../../../../../lib/use-image-upload-state";
 import RichTextEditor, { EMPTY_RICH_TEXT_HTML } from "../../../../_components/rich-text-editor";
 import SortableImageGrid from "../../../../_components/sortable-image-grid";
+import UploadProgressBar from "../../../../_components/upload-progress-bar";
 import {
   readActivityErrorMessage,
   validateActivityDateRange,
@@ -41,6 +43,7 @@ export default function ActivityCreateForm({
   const detailFileInputRef = useRef<HTMLInputElement | null>(null);
   const { items: detailImages, appendFiles, removeItemById, reorderByIds } = useImageUploadState();
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -130,11 +133,34 @@ export default function ActivityCreateForm({
     }
 
     setIsSaving(true);
+    setUploadProgressPercent(0);
 
     try {
+      const newDetailImages = detailImages.filter(
+        (image): image is UploadImageItem & { file: File } => image.file !== null,
+      );
+      const totalUploadCount = 1 + newDetailImages.length;
+      let coverUploadProgress = 0;
+      let detailUploadProgress = 0;
+      const updateUploadProgress = () => {
+        if (totalUploadCount <= 0) {
+          setUploadProgressPercent(null);
+          return;
+        }
+
+        const weightedProgress =
+          (coverUploadProgress + (detailUploadProgress * newDetailImages.length)) /
+          totalUploadCount;
+        setUploadProgressPercent(Math.round(weightedProgress));
+      };
+
       const coverImageUrl = await uploadWithPresign({
         presignPath: PRESIGN_PATHS.activityCover,
         file: coverFile,
+        onProgress: (progressPercent) => {
+          coverUploadProgress = progressPercent;
+          updateUploadProgress();
+        },
       });
 
       const createdActivity = await adminResourceApi.createActivity({
@@ -146,19 +172,16 @@ export default function ActivityCreateForm({
         generationId,
       });
 
-      if (detailImages.length > 0) {
+      if (newDetailImages.length > 0) {
         try {
-          const newDetailImages = detailImages.filter(
-            (image): image is UploadImageItem & { file: File } => image.file !== null,
-          );
-
-          const uploadedDetailUrls = await Promise.all(
-            newDetailImages.map((image) =>
-              uploadWithPresign({
-                presignPath: PRESIGN_PATHS.activityDetail,
-                file: image.file,
-              })),
-          );
+          const uploadedDetailUrls = await uploadFilesWithPresign({
+            presignPath: PRESIGN_PATHS.activityDetail,
+            files: newDetailImages.map((image) => image.file),
+            onProgress: (progressPercent) => {
+              detailUploadProgress = progressPercent;
+              updateUploadProgress();
+            },
+          });
 
           await adminResourceApi.addActivityImages(
             createdActivity.id,
@@ -181,10 +204,11 @@ export default function ActivityCreateForm({
       }
 
       router.push(`${generationPath}/activities/${createdActivity.id}`);
-    } catch (error) {
+  } catch (error) {
       setErrorMessage(readActivityErrorMessage(error));
     } finally {
       setIsSaving(false);
+      setUploadProgressPercent(null);
     }
   };
 
@@ -304,6 +328,7 @@ export default function ActivityCreateForm({
             disabled={isSaving}
             emptyMessage="추가할 세부 이미지가 없으면 비워 두세요."
           />
+          <UploadProgressBar progressPercent={uploadProgressPercent} label="사진 업로드 진행률" />
         </div>
 
         {errorMessage ? (

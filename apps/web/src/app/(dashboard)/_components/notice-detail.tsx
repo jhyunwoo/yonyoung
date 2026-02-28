@@ -11,7 +11,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "../../../lib/admin-api/resources";
-import { PRESIGN_PATHS, uploadWithPresign } from "../../../lib/admin-api/upload";
+import { PRESIGN_PATHS } from "../../../lib/admin-api/upload";
+import { uploadFilesWithPresign } from "../../../lib/admin-api/upload-batch";
 import { AdminApiError } from "../../../lib/admin-api/types";
 import { formatKoreanDate } from "../../../lib/date-formatters";
 import { createExistingUploadImageItem } from "../../../lib/image-upload-state";
@@ -23,6 +24,7 @@ import AuditHistoryPanel from "./audit-history-panel";
 import LastUpdatedMeta from "./last-updated-meta";
 import RichTextEditor from "./rich-text-editor";
 import SortableImageGrid from "./sortable-image-grid";
+import UploadProgressBar from "./upload-progress-bar";
 import {
   NOTICE_MAX_IMAGES,
   buildRoleLabel,
@@ -63,6 +65,7 @@ export default function NoticeDetail({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
   const [isNotFound, setIsNotFound] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -181,23 +184,22 @@ export default function NoticeDetail({
     const uploadTargets = files.slice(0, remainingSlots);
 
     setIsUploadingImage(true);
+    setUploadProgressPercent(0);
     setErrorMessage(null);
 
     try {
-      const uploadedUrls = await Promise.all(
-        uploadTargets.map((file) =>
-          uploadWithPresign({
-            presignPath: PRESIGN_PATHS.noticeImage,
-            file,
-          }),
-        ),
-      );
+      const uploadedUrls = await uploadFilesWithPresign({
+        presignPath: PRESIGN_PATHS.noticeImage,
+        files: uploadTargets,
+        onProgress: setUploadProgressPercent,
+      });
       appendEditingImageUrls(uploadedUrls);
       setErrorMessage(null);
     } catch (error) {
       setErrorMessage(readNoticeErrorMessage(error));
     } finally {
       setIsUploadingImage(false);
+      setUploadProgressPercent(null);
     }
   };
 
@@ -388,6 +390,7 @@ export default function NoticeDetail({
           {isUploadingImage ? (
             <p className="mt-2 text-xs text-slate-500">이미지 업로드 중...</p>
           ) : null}
+          <UploadProgressBar progressPercent={uploadProgressPercent} label="첨부 이미지 업로드 진행률" />
 
           <div className="mt-3 space-y-2">
             <p className="text-xs text-slate-500">마우스로 끌어 이미지 순서를 바꿀 수 있습니다.</p>

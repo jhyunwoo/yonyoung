@@ -10,6 +10,7 @@ import {
 } from "./test-helpers";
 import { MissingStorageConfigError } from "../lib/storage/presign";
 import { UPLOAD_LIMITS } from "../lib/storage/presign";
+import { R2_STORAGE_LIMIT_BYTES } from "../lib/storage/usage";
 
 describe("upload presign routes", /** describe 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
   const resourceRoutes = [
@@ -156,6 +157,64 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
         contentType: "image/png",
         fileSize: 1024,
       });
+    });
+
+    it(`${route.path}는 버킷 10GB 한도 초과가 예상되면 413으로 업로드를 차단한다`, async () => {
+      const issuePresignedPutUrl = fn(async () => ({
+        uploadUrl: "https://upload.example.com/signed",
+        objectKey: "object-key",
+        publicUrl: "https://cdn.example.com/object-key",
+        requiredHeaders: { "Content-Type": "image/png" },
+      }));
+      const app = createTestApp({
+        actor: createActor(route.role, IDs.manager),
+        presignService: createPresignServiceMock({ issuePresignedPutUrl }),
+        readR2TotalUsageBytes: () => R2_STORAGE_LIMIT_BYTES - 512,
+      });
+
+      const response = await app.request(route.path, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          fileName: "cover.png",
+          contentType: "image/png",
+          fileSize: 1024,
+        }),
+      });
+
+      expect(response.status).toBe(413);
+      await expectErrorCode(response, "BAD_REQUEST");
+      expect(issuePresignedPutUrl).not.toHaveBeenCalled();
+    });
+
+    it(`${route.path}는 버킷 사용량 확인 실패 시 500으로 업로드를 차단한다`, async () => {
+      const issuePresignedPutUrl = fn(async () => ({
+        uploadUrl: "https://upload.example.com/signed",
+        objectKey: "object-key",
+        publicUrl: "https://cdn.example.com/object-key",
+        requiredHeaders: { "Content-Type": "image/png" },
+      }));
+      const app = createTestApp({
+        actor: createActor(route.role, IDs.manager),
+        presignService: createPresignServiceMock({ issuePresignedPutUrl }),
+        readR2TotalUsageBytes: async () => {
+          throw new Error("r2 usage unavailable");
+        },
+      });
+
+      const response = await app.request(route.path, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          fileName: "cover.png",
+          contentType: "image/png",
+          fileSize: 1024,
+        }),
+      });
+
+      expect(response.status).toBe(500);
+      await expectErrorCode(response, "INTERNAL_ERROR");
+      expect(issuePresignedPutUrl).not.toHaveBeenCalled();
     });
 
     it(`${route.path}는 presign 서비스 예외 시 500을 반환한다`, /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
@@ -441,6 +500,34 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
 
     expect(response.status).toBe(500);
     await expectErrorCode(response, "INTERNAL_ERROR");
+  });
+
+  it("/api/users/presign/profile는 버킷 10GB 한도 초과가 예상되면 413으로 업로드를 차단한다", async () => {
+    const issuePresignedPutUrl = fn(async () => ({
+      uploadUrl: "https://upload.example.com/signed",
+      objectKey: "users/profile-key",
+      publicUrl: "https://cdn.example.com/users/profile-key",
+      requiredHeaders: { "Content-Type": "image/png" },
+    }));
+    const app = createTestApp({
+      actor: createActor("associate_member", IDs.member),
+      presignService: createPresignServiceMock({ issuePresignedPutUrl }),
+      readR2TotalUsageBytes: () => R2_STORAGE_LIMIT_BYTES - 256,
+    });
+
+    const response = await app.request("/api/users/presign/profile", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "profile.png",
+        contentType: "image/png",
+        fileSize: 1024,
+      }),
+    });
+
+    expect(response.status).toBe(413);
+    await expectErrorCode(response, "BAD_REQUEST");
+    expect(issuePresignedPutUrl).not.toHaveBeenCalled();
   });
 
   it("/api/users/presign/profile는 스토리지 설정 누락 시 안내 메시지와 함께 500을 반환한다", async () => {
@@ -1147,6 +1234,64 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     expect(response.status).toBe(500);
     const body = await readJson<{ error: { message: string } }>(response);
     expect(body.error.message).toContain("R2_*");
+  });
+
+  it("/api/activities/multipart/detail/init은 버킷 10GB 한도 초과가 예상되면 413으로 업로드를 차단한다", async () => {
+    const initiateMultipartUpload = fn(async () => ({
+      uploadId: "upload-id-1",
+      objectKey: `activities/${IDs.manager}/detail/multipart-key`,
+      publicUrl: "https://cdn.example.com/multipart-key",
+      partSize: 8 * 1024 * 1024,
+      maxPartNumber: 2,
+    }));
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      presignService: createPresignServiceMock({ initiateMultipartUpload }),
+      readR2TotalUsageBytes: () => R2_STORAGE_LIMIT_BYTES - 1,
+    });
+
+    const response = await app.request("/api/activities/multipart/detail/init", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "large.png",
+        contentType: "image/png",
+        fileSize: 2,
+      }),
+    });
+
+    expect(response.status).toBe(413);
+    await expectErrorCode(response, "BAD_REQUEST");
+    expect(initiateMultipartUpload).not.toHaveBeenCalled();
+  });
+
+  it("/api/users/multipart/profile/init은 버킷 10GB 한도 초과가 예상되면 413으로 업로드를 차단한다", async () => {
+    const initiateMultipartUpload = fn(async () => ({
+      uploadId: "profile-upload-id",
+      objectKey: `users/${IDs.member}/profile/profile-key`,
+      publicUrl: "https://cdn.example.com/users/profile-key",
+      partSize: UPLOAD_LIMITS.multipartPartSizeBytes,
+      maxPartNumber: 5,
+    }));
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      presignService: createPresignServiceMock({ initiateMultipartUpload }),
+      readR2TotalUsageBytes: () => R2_STORAGE_LIMIT_BYTES - 4,
+    });
+
+    const response = await app.request("/api/users/multipart/profile/init", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "profile-large.png",
+        contentType: "image/png",
+        fileSize: 8,
+      }),
+    });
+
+    expect(response.status).toBe(413);
+    await expectErrorCode(response, "BAD_REQUEST");
+    expect(initiateMultipartUpload).not.toHaveBeenCalled();
   });
 
   it("/api/users/multipart/profile/init 서비스 예외 시 500을 반환한다", async () => {
