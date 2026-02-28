@@ -177,7 +177,7 @@ export default function NoticeCreateForm({
           className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
         />
         <div className="space-y-1">
-          <span className="text-sm font-semibold text-slate-900">공지 본문 (리치 텍스트)</span>
+          <span className="text-sm font-semibold text-slate-900">공지 내용</span>
           <RichTextEditor
             value={content}
             onChange={setContent}
@@ -206,7 +206,7 @@ export default function NoticeCreateForm({
           ) : null}
 
           <div className="mt-3 space-y-2">
-            <p className="text-xs text-slate-500">드래그하여 이미지 순서를 변경할 수 있습니다.</p>
+            <p className="text-xs text-slate-500">마우스로 끌어 이미지 순서를 바꿀 수 있습니다.</p>
             <SortableImageGrid
               items={imageItems.map((image, index) => ({
                 id: image.id,

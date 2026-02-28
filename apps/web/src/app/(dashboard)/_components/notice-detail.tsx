@@ -390,7 +390,7 @@ export default function NoticeDetail({
           ) : null}
 
           <div className="mt-3 space-y-2">
-            <p className="text-xs text-slate-500">드래그하여 이미지 순서를 변경할 수 있습니다.</p>
+            <p className="text-xs text-slate-500">마우스로 끌어 이미지 순서를 바꿀 수 있습니다.</p>
             <SortableImageGrid
               items={editingImageItems.map((image, index) => ({
                 id: image.id,
@@ -463,7 +463,7 @@ export default function NoticeDetail({
                 onClick={startEditing}
                 className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
               >
-                인라인 수정
+                바로 수정
               </button>
               <button
                 type="button"

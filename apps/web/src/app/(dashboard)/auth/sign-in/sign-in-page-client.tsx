@@ -39,7 +39,7 @@ export default function SignInPageClient() {
         <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Dashboard Auth</p>
         <h1 className="mt-2 text-2xl font-bold">연영회 Dashboard 로그인</h1>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
-          내부 인원 확인을 위해 Google 계정으로 로그인해 주세요.
+          내부 운영 화면 이용을 위해 Google 계정으로 로그인해 주세요.
         </p>
 
         <button

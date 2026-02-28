@@ -66,6 +66,10 @@ const generationFixture: ApiPublicGenerationWithMembers = {
       familyName: "홍",
       givenName: "길동",
       image: "https://example.com/member-1.jpg",
+      showcaseImageUrls: [
+        "https://example.com/member-1-showcase-1.jpg",
+        "https://example.com/member-1-showcase-2.jpg",
+      ],
       collaborationAvailable: true,
       personalLink: "https://example.com/member-1",
       role: "president",
@@ -77,6 +81,7 @@ const generationFixture: ApiPublicGenerationWithMembers = {
       familyName: null,
       givenName: null,
       image: null,
+      showcaseImageUrls: [],
       collaborationAvailable: false,
       personalLink: null,
       role: "regular_member",
@@ -215,5 +220,62 @@ describe("GenerationMembersGrid", () => {
     expect(collaborationStatus).toHaveTextContent("불가");
     expect(collaborationStatus?.className).toContain("bg-rose-50");
     expect(collaborationStatus?.className).toContain("text-rose-700");
+  });
+
+  it("모달에서 대표 작품 사진 갤러리를 노출한다", async () => {
+    const { default: GenerationMembersGrid } = await import("./generation-members-grid");
+
+    await act(async () => {
+      root.render(<GenerationMembersGrid generation={generationFixture} />);
+      await Promise.resolve();
+    });
+
+    const memberButton = container.querySelector(
+      "[data-testid='about-photographers-member-button-member-1']",
+    );
+    expect(memberButton).toBeInTheDocument();
+
+    await act(async () => {
+      memberButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const showcaseSection = container.querySelector(
+      "[data-testid='about-photographers-member-showcase-section']",
+    );
+    const showcaseItems = container.querySelectorAll(
+      "[data-testid^='about-photographers-member-showcase-item-']",
+    );
+
+    expect(showcaseSection).toBeInTheDocument();
+    expect(showcaseSection).toHaveTextContent("대표 작품 사진");
+    expect(showcaseItems).toHaveLength(2);
+    expect(
+      container.querySelector("[data-testid='about-photographers-member-showcase-empty']"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("대표 작품 사진이 없으면 empty state 문구를 노출한다", async () => {
+    const { default: GenerationMembersGrid } = await import("./generation-members-grid");
+
+    await act(async () => {
+      root.render(<GenerationMembersGrid generation={generationFixture} />);
+      await Promise.resolve();
+    });
+
+    const memberButton = container.querySelector(
+      "[data-testid='about-photographers-member-button-member-2']",
+    );
+    expect(memberButton).toBeInTheDocument();
+
+    await act(async () => {
+      memberButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(
+      container.querySelector("[data-testid='about-photographers-member-showcase-empty']"),
+    ).toBeInTheDocument();
+    expect(container.textContent).toContain("등록된 대표 작품 사진이 없습니다.");
   });
 });

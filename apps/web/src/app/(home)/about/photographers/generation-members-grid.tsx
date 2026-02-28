@@ -73,6 +73,9 @@ export default function GenerationMembersGrid({ generation }: GenerationMembersG
     selectedMember?.personalLink?.trim().length
       ? selectedMember.personalLink.trim()
       : null;
+  const selectedMemberShowcaseImageUrls = (
+    selectedMember?.showcaseImageUrls ?? []
+  ).filter((imageUrl) => imageUrl.trim().length > 0);
   const collaborationStatus = selectedMember?.collaborationAvailable
     ? {
         label: "가능",
@@ -266,6 +269,41 @@ export default function GenerationMembersGrid({ generation }: GenerationMembersG
                     </dd>
                   </div>
                 </dl>
+
+                <section
+                  className="mt-8"
+                  data-testid="about-photographers-member-showcase-section"
+                >
+                  <h4 className="text-sm font-semibold text-(--text-primary)">대표 작품 사진</h4>
+                  {selectedMemberShowcaseImageUrls.length > 0 ? (
+                    <ul className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3">
+                      {selectedMemberShowcaseImageUrls.map((imageUrl, index) => (
+                        <li
+                          key={`${selectedMember.id}-showcase-${index}`}
+                          data-testid={`about-photographers-member-showcase-item-${index}`}
+                        >
+                          <div className="relative aspect-square overflow-hidden rounded-xl border border-(--surface-border) bg-(--surface-muted)">
+                            <Image
+                              src={imageUrl}
+                              alt={`${selectedMemberDisplayName} 대표 작품 사진 ${index + 1}`}
+                              fill
+                              unoptimized
+                              sizes="(min-width: 768px) 180px, 42vw"
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p
+                      className="mt-3 rounded-xl border border-dashed border-(--surface-border) bg-(--surface-muted) px-3 py-4 text-sm text-(--text-muted)"
+                      data-testid="about-photographers-member-showcase-empty"
+                    >
+                      등록된 대표 작품 사진이 없습니다.
+                    </p>
+                  )}
+                </section>
               </div>
             </motion.div>
           </motion.div>

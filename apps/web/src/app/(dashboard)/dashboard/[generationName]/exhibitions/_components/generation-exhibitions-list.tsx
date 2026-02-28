@@ -40,7 +40,7 @@ export default async function GenerationExhibitionsList({
             {generationName} 전시 관리
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
-            현재 기수의 전시를 확인하고 필요한 경우 새 전시를 추가할 수 있습니다.
+            이 기수의 전시를 확인하고 필요할 때 새 전시를 등록할 수 있습니다.
           </p>
         </div>
         {canManage ? (
@@ -55,7 +55,7 @@ export default async function GenerationExhibitionsList({
 
       {!canManage ? (
         <p className="mt-6 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-          전시 생성/수정 권한이 없습니다.
+          전시를 등록하거나 수정할 권한이 없습니다.
         </p>
       ) : null}
 

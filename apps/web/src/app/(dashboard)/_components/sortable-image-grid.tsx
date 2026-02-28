@@ -100,7 +100,7 @@ const SortableImageCard = ({ item, disabled, onRemoveItem }: SortableCardProps) 
             disabled={disabled}
             className="rounded border border-slate-300 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
             aria-label="이미지 순서 변경"
-            title="드래그하여 순서 변경"
+            title="마우스로 끌어 순서 변경"
           >
             이동
           </button>

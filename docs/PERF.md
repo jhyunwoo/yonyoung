@@ -67,7 +67,7 @@ Initialize/update baselines (intentional only):
 ## API Load Testing
 - Script: `scripts/api-load-test.mjs`
 - Default:
-  - endpoints: `/message,/api/public/activities`
+  - endpoints: `/health,/api/public/activities`
   - requests: 200
   - concurrency: 20
   - p95 targets: cached 150ms, global 300ms

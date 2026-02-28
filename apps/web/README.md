@@ -77,7 +77,7 @@ If `global-setup.ts` fails with a timeout on `/api/auth/sign-in/email`, check wh
 
 Quick checks:
 
-- `http://localhost:8787/message` should respond immediately
+- `http://localhost:8787/health` should respond immediately
 - If it hangs, inspect `apps/api` dev logs
 - A common local cause is Wrangler remote proxy startup failure (`Failed to start the remote proxy session`)
 

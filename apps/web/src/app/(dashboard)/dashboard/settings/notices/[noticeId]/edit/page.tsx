@@ -28,7 +28,7 @@ export default async function SettingsNoticeEditPage({
         listPath={noticesBasePath}
         detailPath={detailPath}
         heading="전체 공지 수정"
-        description="공지 제목, 본문, 첨부 이미지를 수정할 수 있습니다."
+        description="공지 제목, 내용, 첨부 이미지를 수정할 수 있습니다."
       />
     </main>
   );

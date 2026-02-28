@@ -14,7 +14,7 @@ export default async function GenerationMembersPage({
         <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Members</p>
         <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">{generation.name} 멤버 관리</h1>
         <p className="mt-3 text-sm text-slate-600">
-          현재 기수에 소속된 멤버를 확인하고 상세 정보를 열람할 수 있습니다.
+          이 기수에 소속된 멤버를 확인하고 상세 정보를 볼 수 있습니다.
         </p>
         <MembersGrid generationId={generation.id} generationPath={generation.path} />
       </section>

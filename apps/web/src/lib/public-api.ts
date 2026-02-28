@@ -5,8 +5,10 @@ import type {
   ApiLinktree,
   ApiLinktreeItem,
   ApiPublicGenerationWithMembers,
+  ApiSiteSettings,
   DataEnvelope,
 } from "@repo/shared-api-contracts";
+import { DEFAULT_SITE_SETTINGS } from "@repo/shared-api-contracts";
 import { cacheLife, cacheTag } from "next/cache";
 import {
   clearTimeoutController,
@@ -27,6 +29,7 @@ export const PUBLIC_CACHE_TAGS = {
   linktree: "public:linktree",
   generations: "public:generations",
   photographers: "public:photographers",
+  siteSettings: "public:site-settings",
 } as const;
 
 type PublicGetOptions = {
@@ -199,6 +202,25 @@ export const listPublicLinktrees = async (): Promise<ApiLinktree[]> =>
       });
     } catch {
       return [];
+    }
+  };
+
+export const getPublicSiteSettings = async (): Promise<ApiSiteSettings> =>
+  {
+    "use cache";
+    cacheLife({
+      stale: 300,
+      revalidate: 120,
+      expire: 1200,
+    });
+    cacheTag(PUBLIC_CACHE_TAGS.siteSettings);
+    try {
+      return await publicGet<ApiSiteSettings>("/api/public/site-settings", {
+        revalidateSeconds: 120,
+        tags: [PUBLIC_CACHE_TAGS.siteSettings],
+      });
+    } catch {
+      return DEFAULT_SITE_SETTINGS;
     }
   };
 

@@ -106,7 +106,7 @@ export default function LinktreeItemEditForm({
     }
 
     if (!normalized.link || !isValidHttpUrl(normalized.link)) {
-      setErrorMessage("올바른 URL(http/https)을 입력해 주세요.");
+      setErrorMessage("http:// 또는 https://로 시작하는 링크 주소를 입력해 주세요.");
       return;
     }
 
@@ -191,7 +191,7 @@ export default function LinktreeItemEditForm({
       <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Settings / Linktree</p>
       <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">링크 수정</h1>
       <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
-        링크 이름과 URL을 수정할 수 있습니다.
+        링크 이름과 링크 주소를 수정할 수 있습니다.
       </p>
 
       {errorMessage ? (
@@ -214,7 +214,7 @@ export default function LinktreeItemEditForm({
         </label>
 
         <label className="block space-y-1">
-          <span className="text-sm font-semibold text-slate-900">URL</span>
+          <span className="text-sm font-semibold text-slate-900">링크 주소</span>
           <input
             value={link}
             onChange={(event) => setLink(event.target.value)}

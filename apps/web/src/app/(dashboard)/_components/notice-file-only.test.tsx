@@ -203,7 +203,7 @@ describe("notice image input mode", () => {
     expect(fileInput).toHaveAttribute("multiple");
   });
 
-  it("공지 상세 인라인 수정에서도 URL 입력 없이 파일 업로드만 노출한다", async () => {
+  it("공지 상세 바로 수정에서도 URL 입력 없이 파일 업로드만 노출한다", async () => {
     await act(async () => {
       root.render(
         <NoticeDetail
@@ -220,7 +220,7 @@ describe("notice image input mode", () => {
     });
 
     const editButton = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent?.includes("인라인 수정"),
+      (button) => button.textContent?.includes("바로 수정"),
     );
     expect(editButton).toBeTruthy();
 

@@ -94,7 +94,7 @@ export default function GenerationActivityDetail({
           <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Activities</p>
           <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">{generationName} 활동 상세</h1>
           <p className="mt-2 text-sm text-slate-600">
-            활동 내용과 세부 이미지를 확인할 수 있습니다.
+            활동 내용과 사진을 확인할 수 있습니다.
           </p>
         </div>
         <div className="flex gap-2">

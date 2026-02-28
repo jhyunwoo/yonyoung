@@ -1,6 +1,13 @@
 "use client";
 
-import { type ChangeEvent, type FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  type ChangeEvent,
+  type FormEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import {
   STUDENT_NUMBER_REGEX,
@@ -9,8 +16,14 @@ import {
 } from "@repo/shared-auth/profile";
 import SortableImageGrid from "../../_components/sortable-image-grid";
 import { adminResourceApi } from "../../../../lib/admin-api/resources";
-import { PRESIGN_PATHS, uploadWithPresign } from "../../../../lib/admin-api/upload";
-import { AdminApiError, type ApiMemberProfileUpdateInput } from "../../../../lib/admin-api/types";
+import {
+  PRESIGN_PATHS,
+  uploadWithPresign,
+} from "../../../../lib/admin-api/upload";
+import {
+  AdminApiError,
+  type ApiMemberProfileUpdateInput,
+} from "../../../../lib/admin-api/types";
 import {
   AUTH_PROFILE_PATH,
   hasCompletedRequiredProfile,
@@ -58,7 +71,8 @@ type FieldErrors = Partial<
   >
 >;
 
-const DEFAULT_SAVE_ERROR_MESSAGE = "기본 정보 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+const DEFAULT_SAVE_ERROR_MESSAGE =
+  "기본 정보 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.";
 const AUTH_COLLEGE_PLACEHOLDER = "인공지능융합대학";
 const AUTH_DEPARTMENT_PLACEHOLDER = "컴퓨터과학과";
 
@@ -108,10 +122,10 @@ const validateForm = (input: {
     try {
       const url = new URL(personalLink);
       if (!["http:", "https:"].includes(url.protocol)) {
-        errors.personalLink = "개인 링크는 http(s) URL만 허용됩니다.";
+        errors.personalLink = "개인 링크는 http:// 또는 https://로 시작해야 합니다.";
       }
     } catch {
-      errors.personalLink = "개인 링크는 올바른 URL 형식이어야 합니다.";
+      errors.personalLink = "개인 링크는 올바른 링크 주소 형식이어야 합니다.";
     }
   }
 
@@ -135,7 +149,9 @@ export default function AuthProfileForm({
   const [givenName, setGivenName] = useState(initialProfile.givenName);
   const [college, setCollege] = useState(initialProfile.college);
   const [department, setDepartment] = useState(initialProfile.department);
-  const [studentNumber, setStudentNumber] = useState(initialProfile.studentNumber);
+  const [studentNumber, setStudentNumber] = useState(
+    initialProfile.studentNumber,
+  );
   const [phoneNumber, setPhoneNumber] = useState(initialProfile.phoneNumber);
   const [collaborationAvailable, setCollaborationAvailable] = useState(
     initialProfile.collaborationAvailable,
@@ -153,20 +169,31 @@ export default function AuthProfileForm({
   });
 
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
-  const [selectedImageObjectUrl, setSelectedImageObjectUrl] = useState<string | null>(null);
-  const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
-  const [isUploadingShowcaseImages, setIsUploadingShowcaseImages] = useState(false);
+  const [selectedImageObjectUrl, setSelectedImageObjectUrl] = useState<
+    string | null
+  >(null);
+  const [uploadProgressPercent, setUploadProgressPercent] = useState<
+    number | null
+  >(null);
+  const [isUploadingShowcaseImages, setIsUploadingShowcaseImages] =
+    useState(false);
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const profileFileInputRef = useRef<HTMLInputElement | null>(null);
+  const showcaseFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const isDashboardMode = mode === "dashboard";
   const showcaseImageUrls = useMemo(
     () => showcaseImageItems.map((item) => item.imageUrl),
     [showcaseImageItems],
   );
+  const isShowcaseUploadDisabled =
+    isSaving ||
+    isUploadingShowcaseImages ||
+    showcaseImageUrls.length >= SHOWCASE_MAX_IMAGES;
 
   useEffect(() => {
     return () => {
@@ -193,7 +220,9 @@ export default function AuthProfileForm({
     setSelectedImageObjectUrl(objectUrl);
   };
 
-  const handleShowcaseFilesChange = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleShowcaseFilesChange = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
     const files = readFileList(event.target.files);
     event.target.value = "";
     if (files.length === 0) {
@@ -202,7 +231,9 @@ export default function AuthProfileForm({
 
     const remainingSlots = SHOWCASE_MAX_IMAGES - showcaseImageItems.length;
     if (remainingSlots <= 0) {
-      setSubmitError(`대표 작품 사진은 최대 ${SHOWCASE_MAX_IMAGES}장까지 등록할 수 있습니다.`);
+      setSubmitError(
+        `대표 작품 사진은 최대 ${SHOWCASE_MAX_IMAGES}장까지 등록할 수 있습니다.`,
+      );
       setSubmitSuccess(null);
       return;
     }
@@ -228,6 +259,22 @@ export default function AuthProfileForm({
     } finally {
       setIsUploadingShowcaseImages(false);
     }
+  };
+
+  const handleShowcaseUploadClick = () => {
+    if (isShowcaseUploadDisabled) {
+      return;
+    }
+
+    showcaseFileInputRef.current?.click();
+  };
+
+  const handleProfileImageUploadClick = () => {
+    if (!canEditProfileImage || isSaving) {
+      return;
+    }
+
+    profileFileInputRef.current?.click();
   };
 
   const handlePhoneNumberChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -280,7 +327,8 @@ export default function AuthProfileForm({
         });
       }
 
-      const normalizedShowcaseImageUrls = normalizeShowcaseImageUrls(showcaseImageUrls);
+      const normalizedShowcaseImageUrls =
+        normalizeShowcaseImageUrls(showcaseImageUrls);
 
       const payload: ApiMemberProfileUpdateInput = {
         familyName: familyName.trim(),
@@ -290,7 +338,8 @@ export default function AuthProfileForm({
         studentNumber: studentNumber.trim(),
         phoneNumber: phoneNumber.trim(),
         collaborationAvailable,
-        personalLink: personalLink.trim().length > 0 ? personalLink.trim() : null,
+        personalLink:
+          personalLink.trim().length > 0 ? personalLink.trim() : null,
       };
 
       if (canEditProfileImage) {
@@ -303,7 +352,9 @@ export default function AuthProfileForm({
       const updatedUser = await adminResourceApi.updateUser(userId, payload);
 
       setProfileImage(updatedUser.image ?? "");
-      replaceShowcaseImages(toShowcaseUploadImageItems(updatedUser.showcaseImageUrls ?? []));
+      replaceShowcaseImages(
+        toShowcaseUploadImageItems(updatedUser.showcaseImageUrls ?? []),
+      );
       setCollaborationAvailable(updatedUser.collaborationAvailable);
       setPersonalLink(updatedUser.personalLink ?? "");
       if (selectedImageObjectUrl) {
@@ -329,7 +380,9 @@ export default function AuthProfileForm({
       }
 
       setSubmitSuccess(
-        isDashboardMode ? "개인 프로필이 저장되었습니다." : "기본 정보가 저장되었습니다.",
+        isDashboardMode
+          ? "개인 프로필이 저장되었습니다."
+          : "기본 정보가 저장되었습니다.",
       );
       router.refresh();
     } catch (error) {
@@ -365,17 +418,19 @@ export default function AuthProfileForm({
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
           {isDashboardMode
-            ? "개인 정보와 프로필 이미지를 수정할 수 있습니다."
-            : "Dashboard 이용을 위해 기본 정보를 입력해 주세요."}
+            ? "개인 정보와 프로필 사진을 수정할 수 있습니다."
+            : "대시보드 이용을 위해 기본 정보를 입력해 주세요."}
         </p>
 
         <form className="mt-7 space-y-5" onSubmit={handleSubmit} noValidate>
           <div className="rounded-xl border border-slate-200 p-4">
-            <p className="text-sm font-semibold text-slate-900">프로필 이미지</p>
+            <p className="text-sm font-semibold text-slate-900">
+              프로필 이미지
+            </p>
             <p className="mt-1 text-xs text-slate-500">
               {canEditProfileImage
-                ? "프로필 이미지를 수정할 수 있습니다."
-                : "현재 role에서는 프로필 이미지를 수정할 수 없습니다."}
+                ? "프로필 사진을 수정할 수 있습니다."
+                : "현재 권한에서는 프로필 사진을 수정할 수 없습니다."}
             </p>
 
             <div className="mt-3 flex items-center gap-4">
@@ -394,12 +449,21 @@ export default function AuthProfileForm({
                 )}
               </div>
 
+              <button
+                type="button"
+                onClick={handleProfileImageUploadClick}
+                disabled={!canEditProfileImage || isSaving}
+                className="inline-flex rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                사진 선택
+              </button>
               <input
+                ref={profileFileInputRef}
                 type="file"
                 accept="image/*"
                 disabled={!canEditProfileImage || isSaving}
                 onChange={handleImageChange}
-                className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-md file:border file:border-slate-300 file:bg-white file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="sr-only"
               />
             </div>
 
@@ -412,32 +476,40 @@ export default function AuthProfileForm({
 
           {isDashboardMode && canEditProfileImage ? (
             <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <p className="text-sm font-semibold text-slate-900">대표 작품 사진</p>
-              <p className="mt-1 text-xs text-slate-500">최대 {SHOWCASE_MAX_IMAGES}장</p>
+              <p className="text-sm font-semibold text-slate-900">
+                대표 작품 사진
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                최대 {SHOWCASE_MAX_IMAGES}장
+              </p>
 
-              <label className="mt-3 inline-flex cursor-pointer rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-                파일 업로드
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleShowcaseFilesChange}
-                  disabled={
-                    isSaving ||
-                    isUploadingShowcaseImages ||
-                    showcaseImageUrls.length >= SHOWCASE_MAX_IMAGES
-                  }
-                  className="hidden"
-                />
-              </label>
+              <button
+                type="button"
+                onClick={handleShowcaseUploadClick}
+                disabled={isShowcaseUploadDisabled}
+                className="mt-3 inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                사진 선택
+              </button>
+              <input
+                ref={showcaseFileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleShowcaseFilesChange}
+                disabled={isShowcaseUploadDisabled}
+                className="sr-only"
+              />
 
               {isUploadingShowcaseImages ? (
-                <p className="mt-2 text-xs text-slate-500">대표 작품 사진 업로드 중...</p>
+                <p className="mt-2 text-xs text-slate-500">
+                  대표 작품 사진 업로드 중...
+                </p>
               ) : null}
 
               <div className="mt-3 space-y-2">
                 <p className="text-xs text-slate-500">
-                  드래그하여 대표 작품 사진 순서를 변경할 수 있습니다.
+                  마우스로 끌어 대표 작품 사진 순서를 바꿀 수 있습니다.
                 </p>
                 <SortableImageGrid
                   items={showcaseImageItems.map((image, index) => ({
@@ -468,7 +540,9 @@ export default function AuthProfileForm({
                 autoComplete="family-name"
               />
               {fieldErrors.familyName ? (
-                <span className="text-xs text-red-600">{fieldErrors.familyName}</span>
+                <span className="text-xs text-red-600">
+                  {fieldErrors.familyName}
+                </span>
               ) : null}
             </label>
 
@@ -482,7 +556,9 @@ export default function AuthProfileForm({
                 autoComplete="given-name"
               />
               {fieldErrors.givenName ? (
-                <span className="text-xs text-red-600">{fieldErrors.givenName}</span>
+                <span className="text-xs text-red-600">
+                  {fieldErrors.givenName}
+                </span>
               ) : null}
             </label>
           </div>
@@ -495,10 +571,14 @@ export default function AuthProfileForm({
                 onChange={(event) => setCollege(event.target.value)}
                 disabled={isSaving}
                 className="rounded-lg border border-slate-300 px-3 py-2"
-                placeholder={isDashboardMode ? undefined : AUTH_COLLEGE_PLACEHOLDER}
+                placeholder={
+                  isDashboardMode ? undefined : AUTH_COLLEGE_PLACEHOLDER
+                }
               />
               {fieldErrors.college ? (
-                <span className="text-xs text-red-600">{fieldErrors.college}</span>
+                <span className="text-xs text-red-600">
+                  {fieldErrors.college}
+                </span>
               ) : null}
             </label>
 
@@ -509,10 +589,14 @@ export default function AuthProfileForm({
                 onChange={(event) => setDepartment(event.target.value)}
                 disabled={isSaving}
                 className="rounded-lg border border-slate-300 px-3 py-2"
-                placeholder={isDashboardMode ? undefined : AUTH_DEPARTMENT_PLACEHOLDER}
+                placeholder={
+                  isDashboardMode ? undefined : AUTH_DEPARTMENT_PLACEHOLDER
+                }
               />
               {fieldErrors.department ? (
-                <span className="text-xs text-red-600">{fieldErrors.department}</span>
+                <span className="text-xs text-red-600">
+                  {fieldErrors.department}
+                </span>
               ) : null}
             </label>
           </div>
@@ -529,7 +613,9 @@ export default function AuthProfileForm({
                 placeholder="2026000123"
               />
               {fieldErrors.studentNumber ? (
-                <span className="text-xs text-red-600">{fieldErrors.studentNumber}</span>
+                <span className="text-xs text-red-600">
+                  {fieldErrors.studentNumber}
+                </span>
               ) : null}
             </label>
 
@@ -544,7 +630,9 @@ export default function AuthProfileForm({
                 placeholder="010-0000-0000"
               />
               {fieldErrors.phoneNumber ? (
-                <span className="text-xs text-red-600">{fieldErrors.phoneNumber}</span>
+                <span className="text-xs text-red-600">
+                  {fieldErrors.phoneNumber}
+                </span>
               ) : null}
             </label>
           </div>
@@ -576,13 +664,19 @@ export default function AuthProfileForm({
                 inputMode="url"
               />
               {fieldErrors.personalLink ? (
-                <span className="text-xs text-red-600">{fieldErrors.personalLink}</span>
+                <span className="text-xs text-red-600">
+                  {fieldErrors.personalLink}
+                </span>
               ) : null}
             </label>
           </div>
 
-          {submitError ? <p className="text-sm text-red-600">{submitError}</p> : null}
-          {submitSuccess ? <p className="text-sm text-emerald-700">{submitSuccess}</p> : null}
+          {submitError ? (
+            <p className="text-sm text-red-600">{submitError}</p>
+          ) : null}
+          {submitSuccess ? (
+            <p className="text-sm text-emerald-700">{submitSuccess}</p>
+          ) : null}
 
           <button
             type="submit"

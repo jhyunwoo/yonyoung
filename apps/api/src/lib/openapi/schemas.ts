@@ -1568,6 +1568,19 @@ export const ApiAdminDashboardStatsSchema = z
       description: "링크트리 전체 링크 수",
       example: 19,
     }),
+    r2StorageUsedBytes: z.number().int().nonnegative().openapi({
+      description: "R2 버킷 전체 사용량(bytes)",
+      example: 2147483648,
+    }),
+    r2StorageLimitBytes: z.number().int().positive().openapi({
+      description: "R2 사용량 기준 한도(bytes), 기본 10GB",
+      example: 10737418240,
+    }),
+    r2StorageUsageAvailable: z.boolean().openapi({
+      description:
+        "R2 사용량 조회 성공 여부. false면 사용량 수치는 표시용 기본값일 수 있습니다.",
+      example: true,
+    }),
   })
   .openapi("ApiAdminDashboardStats");
 

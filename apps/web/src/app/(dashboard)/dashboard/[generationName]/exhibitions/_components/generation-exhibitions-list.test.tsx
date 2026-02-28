@@ -102,7 +102,7 @@ describe("GenerationExhibitionsList", () => {
 
     expect(readServerCookieHeader).toHaveBeenCalledTimes(1);
     expect(listCachedExhibitions).toHaveBeenCalledWith("generation-60", "session=abc");
-    expect(container.textContent).toContain("전시 생성/수정 권한이 없습니다.");
+    expect(container.textContent).toContain("전시를 등록하거나 수정할 권한이 없습니다.");
     expect(container.textContent).not.toContain("전시 추가");
   });
 });

@@ -761,6 +761,8 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
       "세션을 확인하고 관리자 페이지 접근 가능한 역할인지 검사합니다.",
       "전체/선택기수 집계를 계산해 단일 응답으로 반환합니다.",
       "선택 기수가 없거나 유효하지 않으면 선택 기수 관련 지표는 0으로 반환됩니다.",
+      "R2 버킷 전체 사용량을 조회해 10GB 한도 대비 사용량 메타를 함께 반환합니다.",
+      "R2 조회 실패 시에도 응답은 200을 유지하며 `r2StorageUsageAvailable=false`를 반환합니다.",
     ],
     responseGuide: ["`200`: `ApiAdminDashboardStats` 반환"],
     errorGuide: [...readOnlyErrorGuide],
@@ -880,16 +882,21 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
       "플래그가 비활성화된 환경에서는 공개 접근이 가능합니다.",
     ],
   }),
-  getMessage: mkSpec({
-    summary: "시스템 헬스 체크 메시지",
-    overview: "서비스 상태 확인을 위한 단순 텍스트 메시지를 반환합니다.",
+  getHealth: mkSpec({
+    summary: "시스템 인프라 헬스 체크",
+    overview:
+      "D1, R2, Durable Object, ASSETS 등 Cloudflare 의존 서비스 상태를 점검한 종합 결과를 반환합니다.",
     parameters: ["파라미터를 사용하지 않습니다."],
     requestBody: ["요청 본문은 사용하지 않습니다."],
     internalFlow: [
-      "추가 인증/권한 검증 없이 즉시 고정 메시지를 반환합니다.",
+      "D1 쿼리, R2 put/head/delete, R2 presign 생성, Durable Object/ASSETS 바인딩 점검을 수행합니다.",
+      "각 체크 결과를 집계해 전체 상태를 계산하고 JSON으로 반환합니다.",
     ],
-    responseGuide: ["`200`: `text/plain` 문자열 반환 (`Hello Hono!`)"],
-    errorGuide: ["일반적으로 비즈니스 오류를 반환하지 않습니다."],
+    responseGuide: [
+      "`200`: 모든 필수 체크가 `healthy`인 경우 헬스 체크 JSON을 반환합니다.",
+      "`503`: 하나 이상의 체크가 `unhealthy`인 경우 헬스 체크 JSON을 반환합니다.",
+    ],
+    errorGuide: ["체크 실패 시에도 가능한 한 실패 원인을 포함한 JSON을 반환합니다."],
     permission: ["공개 엔드포인트입니다."],
   }),
 };

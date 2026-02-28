@@ -2,7 +2,7 @@ import type { MiddlewareHandler } from "hono";
 import type HonoAppType from "../types/honoAppType";
 import type { AppDependencies } from "../lib/services/dependencies";
 
-const SKIP_SESSION_PREFIXES = ["/api/auth", "/api/public", "/message"] as const;
+const SKIP_SESSION_PREFIXES = ["/api/auth", "/api/public", "/health"] as const;
 
 const shouldSkipSessionResolution = (path: string): boolean =>
   SKIP_SESSION_PREFIXES.some((prefix) => path.startsWith(prefix));

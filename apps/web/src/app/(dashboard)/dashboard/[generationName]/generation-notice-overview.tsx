@@ -29,7 +29,7 @@ export default async function GenerationNoticeOverview({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-bold text-slate-900">공지</h2>
         <Link href={`${generationPath}/notices`} className="text-xs font-semibold text-slate-600 hover:text-slate-900">
-          기수 공지 관리로 이동
+          기수 공지 화면으로 이동
         </Link>
       </div>
 

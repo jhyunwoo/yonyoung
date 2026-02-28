@@ -10,7 +10,7 @@ const args = Object.fromEntries(
 );
 
 const baseUrl = (args.baseUrl ?? process.env.LOAD_BASE_URL ?? "http://127.0.0.1:8787").replace(/\/+$/, "");
-const endpoints = (args.endpoints ?? process.env.LOAD_ENDPOINTS ?? "/message,/api/public/activities")
+const endpoints = (args.endpoints ?? process.env.LOAD_ENDPOINTS ?? "/health,/api/public/activities")
   .split(",")
   .map((entry) => entry.trim())
   .filter(Boolean);
@@ -144,7 +144,7 @@ const fiveXXCount = [...statusCounts.entries()]
 const fiveXXRate = totalCompleted > 0 ? fiveXXCount / totalCompleted : 0;
 
 const cachedEndpoints = endpointSummaries.filter((entry) =>
-  entry.endpoint === "/message" || entry.endpoint.startsWith("/api/public/"),
+  entry.endpoint === "/health" || entry.endpoint.startsWith("/api/public/"),
 );
 const cachedP95 = cachedEndpoints.length
   ? Math.max(...cachedEndpoints.map((entry) => entry.p95))

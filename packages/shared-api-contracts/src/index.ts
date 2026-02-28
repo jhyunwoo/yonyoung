@@ -407,6 +407,9 @@ export type ApiAdminDashboardStats = {
   selectedGenerationActivitiesTotal: number;
   selectedGenerationExhibitionsTotal: number;
   linktreeLinksTotal: number;
+  r2StorageUsedBytes: number;
+  r2StorageLimitBytes: number;
+  r2StorageUsageAvailable: boolean;
 };
 
 export type ApiPresignRequest = {

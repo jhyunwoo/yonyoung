@@ -20,7 +20,7 @@ export default async function SettingsNoticesPage() {
           scope="global"
           canWrite={isPresidentRole(session.user.role)}
           heading="전체 공지"
-          description="최근 공지를 확인하고 항목을 클릭해 상세 내용을 볼 수 있습니다."
+          description="최근 공지를 확인하고 제목을 눌러 자세한 내용을 볼 수 있습니다."
           emptyMessage="등록된 전체 공지가 없습니다."
           basePath={noticesBasePath}
           createPath={`${noticesBasePath}/new`}

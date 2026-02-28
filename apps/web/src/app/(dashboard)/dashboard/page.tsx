@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import RecentGlobalNotices from "../_components/recent-global-notices";
+import DashboardR2StorageUsage from "../_components/dashboard-r2-storage-usage";
 import { serverAuthTool } from "../../../lib/auth-server-tool";
 
 export default async function DashboardPage() {
@@ -16,9 +17,19 @@ export default async function DashboardPage() {
             연영회에 오신 것을 환영합니다.
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-slate-600">
-            사이드바에서 원하는 기수를 선택해 내부 관리 작업을 시작해 주세요.
+            왼쪽 메뉴에서 관리할 기수를 선택하면 공지, 활동, 전시 관리를 바로 시작할 수 있습니다.
           </p>
         </aside>
+
+        <Suspense
+          fallback={
+            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+              <p className="text-sm text-slate-500">파일 저장공간 사용량을 불러오는 중입니다...</p>
+            </section>
+          }
+        >
+          <DashboardR2StorageUsage />
+        </Suspense>
 
         <Suspense
           fallback={

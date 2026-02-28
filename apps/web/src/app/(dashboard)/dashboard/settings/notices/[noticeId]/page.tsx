@@ -24,7 +24,7 @@ export default async function SettingsNoticeDetailPage({
         editPath={`${detailPath}/edit`}
         allowInlineEdit={false}
         heading="전체 공지 상세"
-        description="공지 내용을 확인하고, 필요한 경우 수정 페이지에서 변경하거나 삭제할 수 있습니다."
+        description="공지 내용을 확인하고 필요하면 수정 화면에서 내용을 바꾸거나 삭제할 수 있습니다."
       />
     </main>
   );

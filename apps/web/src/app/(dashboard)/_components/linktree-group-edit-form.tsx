@@ -107,7 +107,7 @@ export default function LinktreeGroupEditForm({
   if (isNotFound) {
     return (
       <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-        <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">링크트리 분류 수정</h1>
+        <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">링크 분류 수정</h1>
         <p className="mt-3 text-sm text-slate-600">존재하지 않는 분류이거나 접근할 수 없습니다.</p>
         <Link
           href={listPath}
@@ -122,9 +122,9 @@ export default function LinktreeGroupEditForm({
   return (
     <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
       <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Settings / Linktree</p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">링크트리 분류 수정</h1>
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">링크 분류 수정</h1>
       <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
-        분류 이름을 수정하고 저장할 수 있습니다.
+        분류 이름을 바꾼 뒤 저장할 수 있습니다.
       </p>
 
       {errorMessage ? (

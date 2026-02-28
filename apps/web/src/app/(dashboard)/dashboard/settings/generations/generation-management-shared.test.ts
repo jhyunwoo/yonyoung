@@ -14,6 +14,7 @@ const createUser = (input: Partial<ApiUser>): ApiUser => ({
   name: input.name ?? "홍길동",
   email: input.email ?? "user@example.com",
   image: input.image !== undefined ? input.image : null,
+  showcaseImageUrls: input.showcaseImageUrls ?? [],
   familyName: input.familyName !== undefined ? input.familyName : null,
   givenName: input.givenName !== undefined ? input.givenName : null,
   college: input.college !== undefined ? input.college : null,

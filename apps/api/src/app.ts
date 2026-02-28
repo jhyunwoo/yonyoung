@@ -10,6 +10,7 @@ import {
   AppDependencies,
   createDefaultDependencies,
 } from "./lib/services/dependencies";
+import { runInfrastructureHealthChecks } from "./lib/health/check";
 import { apiCorsMiddleware } from "./middlewares/cors";
 import { errorHandler } from "./middlewares/error-handler";
 import { loggerMiddleware } from "./middlewares/logger";
@@ -18,17 +19,54 @@ import { sessionMiddleware } from "./middlewares/session";
 import { apiSecurityHeadersMiddleware } from "./middlewares/security-headers";
 import { mountDomainRouters } from "./routes";
 
-const messageRoute = createRoute({
+const healthCheckSchema = z.object({
+  service: z.enum([
+    "d1",
+    "r2",
+    "r2_presign",
+    "durable_object",
+    "assets",
+    "service_binding",
+  ]),
+  binding: z.string(),
+  status: z.enum(["healthy", "unhealthy", "skipped"]),
+  detail: z.string(),
+  latencyMs: z.number().optional(),
+  error: z.string().optional(),
+});
+
+const healthResponseSchema = z.object({
+  status: z.enum(["healthy", "unhealthy"]),
+  checkedAt: z.string(),
+  durationMs: z.number(),
+  summary: z.object({
+    total: z.number(),
+    healthy: z.number(),
+    unhealthy: z.number(),
+    skipped: z.number(),
+  }),
+  checks: z.array(healthCheckSchema),
+});
+
+const healthRoute = createRoute({
   method: "get",
-  path: "/message",
+  path: "/health",
   tags: ["System"],
-  operationId: "getMessage",
+  operationId: "getHealth",
   responses: {
     200: {
-      description: "헬스 체크 메시지",
+      description: "모든 인프라 의존성이 정상 동작하는 상태",
       content: {
-        "text/plain": {
-          schema: z.string(),
+        "application/json": {
+          schema: healthResponseSchema,
+        },
+      },
+    },
+    503: {
+      description: "하나 이상의 인프라 의존성 점검에 실패한 상태",
+      content: {
+        "application/json": {
+          schema: healthResponseSchema,
         },
       },
     },
@@ -94,8 +132,10 @@ export const createApp = (partialDependencies?: Partial<AppDependencies>) => {
 
   mountDomainRouters(app, dependencies, defaultValidationHook);
 
-  app.openapi(messageRoute, (c) => {
-    return c.text("Hello Hono!");
+  app.openapi(healthRoute, async (c) => {
+    const healthReport = await runInfrastructureHealthChecks(c.env);
+    c.header("Cache-Control", "no-store, no-cache, must-revalidate");
+    return c.json(healthReport, healthReport.status === "healthy" ? 200 : 503);
   });
 
   app.notFound((c) => notFound(c));

@@ -1,6 +1,7 @@
 import { resolveAuthApiUrl } from "./auth-server";
 import type {
   ApiActivity,
+  ApiAdminDashboardStats,
   ApiExhibition,
   ApiGenerationMemberSummary,
   ApiGenerationNotice,
@@ -58,6 +59,36 @@ const readAdminCollection = async <T>(
   }
 };
 
+const readAdminData = async <T>(
+  path: string,
+  cookieHeader: string | null,
+): Promise<T | null> => {
+  const headers = new Headers({
+    Accept: "application/json",
+  });
+
+  if (cookieHeader) {
+    headers.set("cookie", cookieHeader);
+  }
+
+  try {
+    const response = await fetch(`${resolveAuthApiUrl()}${ADMIN_API_BASE_PATH}${path}`, {
+      method: "GET",
+      headers,
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = (await response.json().catch(() => null)) as unknown;
+    return unwrapDataEnvelope<T>(payload);
+  } catch {
+    return null;
+  }
+};
+
 export const listCachedActivities = async (
   generationId: string,
   cookieHeader: string | null,
@@ -107,4 +138,17 @@ export const listCachedGenerationMembers = async (
     `/generations/${encodeURIComponent(generationId)}/members`,
     cookieHeader,
   );
+};
+
+export const getCachedAdminDashboardStats = async (
+  cookieHeader: string | null,
+  generationSortOrder: number | null = null,
+): Promise<ApiAdminDashboardStats | null> => {
+  const search = new URLSearchParams();
+  if (typeof generationSortOrder === "number" && Number.isFinite(generationSortOrder)) {
+    search.set("generationSortOrder", String(generationSortOrder));
+  }
+
+  const suffix = search.size > 0 ? `?${search.toString()}` : "";
+  return readAdminData<ApiAdminDashboardStats>(`/admin/dashboard${suffix}`, cookieHeader);
 };

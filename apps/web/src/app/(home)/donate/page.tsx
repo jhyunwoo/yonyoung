@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { DEFAULT_SITE_SETTINGS } from "@repo/shared-api-contracts";
 import { createPageMetadata } from "../../../lib/seo";
+import { getPublicSiteSettings } from "../../../lib/public-api";
 import PageTitleHero from "../components/page-title-hero";
 
 export const metadata: Metadata = createPageMetadata({
@@ -15,7 +17,11 @@ export const metadata: Metadata = createPageMetadata({
   ],
 });
 
-export default function DonatePage() {
+export default async function DonatePage() {
+  const siteSettings = await getPublicSiteSettings().catch(
+    () => DEFAULT_SITE_SETTINGS,
+  );
+
   return (
     <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-300 px-4 md:px-8">
@@ -52,13 +58,13 @@ export default function DonatePage() {
                 </h3>
                 <div className="mt-4 rounded-[5px] border border-[#e5e7eb] bg-white p-6">
                   <p className="mb-2 font-mono text-[1.1rem] text-[#666666]">
-                    은행: 예시은행
+                    은행: {siteSettings.donateBankName}
                   </p>
                   <p className="mb-2 font-mono text-[1.1rem] text-[#666666]">
-                    계좌번호: 123-456-789012
+                    계좌번호: {siteSettings.donateAccountNumber}
                   </p>
                   <p className="font-mono text-[1.1rem] text-[#666666]">
-                    예금주: 연영회
+                    예금주: {siteSettings.donateAccountHolder}
                   </p>
                 </div>
               </div>

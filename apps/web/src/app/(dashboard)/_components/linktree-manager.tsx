@@ -20,20 +20,20 @@ export default async function LinktreeManager({
   return (
     <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
       <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Settings / Linktree</p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">Linktree 관리</h1>
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">링크 모음 관리</h1>
       <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
-        링크트리 분류와 분류별 링크를 확인할 수 있습니다. 항목을 클릭하면 상세 페이지로 이동합니다.
+        링크 분류와 분류별 링크를 확인할 수 있습니다. 항목을 누르면 자세한 화면으로 이동합니다.
       </p>
 
       {!canWrite ? (
         <p className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-          링크트리 수정/삭제는 회장, 부회장, 부장만 가능합니다.
+          링크 모음을 수정하거나 삭제할 수 있는 권한이 없습니다.
         </p>
       ) : null}
 
       {linktrees.length === 0 ? (
         <p className="mt-6 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
-          등록된 링크트리 분류가 없습니다.
+          등록된 링크 분류가 없습니다.
         </p>
       ) : (
         <ul className="mt-6 space-y-3">

@@ -1,6 +1,6 @@
 "use client";
 
-import { type ChangeEvent, type FormEvent, useEffect, useMemo, useState } from "react";
+import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type {
   ApiAdminUpdateUserInput,
   ApiGeneration,
@@ -9,7 +9,15 @@ import type {
 import { AdminApiError } from "../../../lib/admin-api/types";
 import { adminResourceApi } from "../../../lib/admin-api/resources";
 import { PRESIGN_PATHS, uploadWithPresign } from "../../../lib/admin-api/upload";
+import { readFileList } from "../../../lib/image-upload-state";
 import { buildMemberRoleLabel } from "../../../lib/member-role-label";
+import {
+  SHOWCASE_MAX_IMAGES,
+  normalizeShowcaseImageUrls,
+  toShowcaseUploadImageItems,
+} from "../../../lib/showcase-images";
+import { useImageUploadState } from "../../../lib/use-image-upload-state";
+import SortableImageGrid from "./sortable-image-grid";
 
 type MemberEditFormProps = {
   user: ApiUser;
@@ -65,15 +73,28 @@ export default function MemberEditForm({
   const [generationIds, setGenerationIds] = useState<string[]>(
     user.generationIds ?? (user.generationId ? [user.generationId] : []),
   );
+  const {
+    items: showcaseImageItems,
+    appendExistingUrls,
+    removeItemById: removeShowcaseImageById,
+    reorderByIds: reorderShowcaseImagesByIds,
+    replaceItems: replaceShowcaseImages,
+  } = useImageUploadState({
+    initialItems: toShowcaseUploadImageItems(user.showcaseImageUrls),
+    maxItems: SHOWCASE_MAX_IMAGES,
+  });
 
   const [allGenerations, setAllGenerations] = useState<ApiGeneration[]>([]);
   const [isLoadingGenerations, setIsLoadingGenerations] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingShowcaseImages, setIsUploadingShowcaseImages] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [selectedImageObjectUrl, setSelectedImageObjectUrl] = useState<string | null>(null);
   const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
+  const profileFileInputRef = useRef<HTMLInputElement | null>(null);
+  const showcaseFileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setName(user.name);
@@ -86,6 +107,7 @@ export default function MemberEditForm({
     setPhoneNumber(user.phoneNumber ?? "");
     setRole((user.role as ApiAdminUpdateUserInput["role"]) ?? "regular_member");
     setGenerationIds(user.generationIds ?? (user.generationId ? [user.generationId] : []));
+    replaceShowcaseImages(toShowcaseUploadImageItems(user.showcaseImageUrls));
     setSelectedImageFile(null);
     setSelectedImageObjectUrl((previous) => {
       if (previous) {
@@ -94,9 +116,10 @@ export default function MemberEditForm({
       return null;
     });
     setUploadProgressPercent(null);
+    setIsUploadingShowcaseImages(false);
     setErrorMessage(null);
     setSuccessMessage(null);
-  }, [user]);
+  }, [replaceShowcaseImages, user]);
 
   useEffect(() => {
     return () => {
@@ -121,6 +144,43 @@ export default function MemberEditForm({
 
     const objectUrl = URL.createObjectURL(nextFile);
     setSelectedImageObjectUrl(objectUrl);
+  };
+
+  const handleShowcaseFilesChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = readFileList(event.target.files);
+    event.target.value = "";
+    if (files.length === 0) {
+      return;
+    }
+
+    const remainingSlots = SHOWCASE_MAX_IMAGES - showcaseImageItems.length;
+    if (remainingSlots <= 0) {
+      setErrorMessage(`대표 작품 사진은 최대 ${SHOWCASE_MAX_IMAGES}장까지 등록할 수 있습니다.`);
+      setSuccessMessage(null);
+      return;
+    }
+
+    const uploadTargets = files.slice(0, remainingSlots);
+    setIsUploadingShowcaseImages(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    try {
+      const uploadedUrls = await Promise.all(
+        uploadTargets.map((file) =>
+          uploadWithPresign({
+            presignPath: PRESIGN_PATHS.userProfile,
+            file,
+          }),
+        ),
+      );
+      appendExistingUrls(uploadedUrls);
+    } catch (error) {
+      setErrorMessage(readErrorMessage(error));
+      setSuccessMessage(null);
+    } finally {
+      setIsUploadingShowcaseImages(false);
+    }
   };
 
   useEffect(() => {
@@ -156,6 +216,12 @@ export default function MemberEditForm({
   }, []);
 
   const generationIdSet = useMemo(() => new Set(generationIds), [generationIds]);
+  const showcaseImageUrls = useMemo(
+    () => showcaseImageItems.map((item) => item.imageUrl),
+    [showcaseImageItems],
+  );
+  const isShowcaseUploadDisabled =
+    isSaving || isUploadingShowcaseImages || showcaseImageUrls.length >= SHOWCASE_MAX_IMAGES;
 
   const toggleGeneration = (generationId: string) => {
     setGenerationIds((previous) => {
@@ -169,6 +235,12 @@ export default function MemberEditForm({
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (isUploadingShowcaseImages) {
+      setErrorMessage("대표 작품 사진 업로드가 완료된 후 저장해 주세요.");
+      setSuccessMessage(null);
+      return;
+    }
 
     if (name.trim().length === 0) {
       setErrorMessage("이름은 비워둘 수 없습니다.");
@@ -192,6 +264,8 @@ export default function MemberEditForm({
         });
       }
 
+      const normalizedShowcaseImageUrls = normalizeShowcaseImageUrls(showcaseImageUrls);
+
       const payload: ApiAdminUpdateUserInput = {
         name: name.trim(),
         image: nextImageValue.length > 0 ? nextImageValue : null,
@@ -203,10 +277,12 @@ export default function MemberEditForm({
         phoneNumber: toNullableText(phoneNumber),
         role,
         generationIds,
+        showcaseImageUrls: normalizedShowcaseImageUrls,
       };
 
       const updated = await adminResourceApi.updateUser(user.id, payload);
       setImage(updated.image ?? "");
+      replaceShowcaseImages(toShowcaseUploadImageItems(updated.showcaseImageUrls ?? []));
       setSelectedImageFile(null);
       if (selectedImageObjectUrl) {
         URL.revokeObjectURL(selectedImageObjectUrl);
@@ -223,6 +299,22 @@ export default function MemberEditForm({
     }
   };
 
+  const handleShowcaseUploadClick = () => {
+    if (isShowcaseUploadDisabled) {
+      return;
+    }
+
+    showcaseFileInputRef.current?.click();
+  };
+
+  const handleProfileImageUploadClick = () => {
+    if (isSaving) {
+      return;
+    }
+
+    profileFileInputRef.current?.click();
+  };
+
   const imagePreviewUrl = selectedImageObjectUrl ?? image;
 
   return (
@@ -234,7 +326,7 @@ export default function MemberEditForm({
       }
     >
       <h2 className="text-lg font-bold text-slate-900">사용자 정보 수정</h2>
-      <p className="mt-2 text-sm text-slate-600">회장 및 부회장은 사용자 정보를 수정할 수 있습니다.</p>
+      <p className="mt-2 text-sm text-slate-600">권한이 있는 운영자는 사용자 정보를 수정할 수 있습니다.</p>
 
       <form className="mt-5 space-y-4" onSubmit={handleSubmit} noValidate>
         <div className="grid gap-4 md:grid-cols-2">
@@ -267,7 +359,7 @@ export default function MemberEditForm({
 
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <p className="text-sm font-semibold text-slate-900">프로필 이미지</p>
-          <p className="mt-1 text-xs text-slate-500">링크 입력 없이 파일 업로드로만 변경할 수 있습니다.</p>
+          <p className="mt-1 text-xs text-slate-500">사진 파일을 선택해 프로필 이미지를 바꿀 수 있습니다.</p>
 
           <div className="mt-3 flex items-center gap-4">
             <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-50">
@@ -285,18 +377,74 @@ export default function MemberEditForm({
               )}
             </div>
 
+            <button
+              type="button"
+              onClick={handleProfileImageUploadClick}
+              disabled={isSaving}
+              className="inline-flex rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              파일 선택
+            </button>
             <input
+              ref={profileFileInputRef}
               type="file"
               accept="image/*"
               disabled={isSaving}
               onChange={handleImageChange}
-              className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-md file:border file:border-slate-300 file:bg-white file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="sr-only"
             />
           </div>
 
           {uploadProgressPercent !== null ? (
             <p className="mt-2 text-xs text-slate-500">이미지 업로드 진행률: {uploadProgressPercent}%</p>
           ) : null}
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <p className="text-sm font-semibold text-slate-900">대표 작품 사진</p>
+          <p className="mt-1 text-xs text-slate-500">최대 {SHOWCASE_MAX_IMAGES}장</p>
+
+          <button
+            type="button"
+            onClick={handleShowcaseUploadClick}
+            disabled={isShowcaseUploadDisabled}
+            className="mt-3 inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            파일 업로드
+          </button>
+          <input
+            ref={showcaseFileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleShowcaseFilesChange}
+            disabled={isShowcaseUploadDisabled}
+            className="sr-only"
+          />
+
+          {isUploadingShowcaseImages ? (
+            <p className="mt-2 text-xs text-slate-500">대표 작품 사진 업로드 중...</p>
+          ) : null}
+
+          <div className="mt-3 space-y-2">
+            <p className="text-xs text-slate-500">
+              마우스로 끌어 대표 작품 사진 순서를 바꿀 수 있습니다.
+            </p>
+            <SortableImageGrid
+              items={showcaseImageItems.map((image, index) => ({
+                id: image.id,
+                imageUrl: image.imageUrl,
+                label: `대표 작품 사진 ${index + 1}`,
+                alt: "대표 작품 사진",
+              }))}
+              onReorder={(nextItems) =>
+                reorderShowcaseImagesByIds(nextItems.map((item) => item.id))
+              }
+              onRemoveItem={removeShowcaseImageById}
+              disabled={isSaving || isUploadingShowcaseImages}
+              emptyMessage="등록된 대표 작품 사진이 없습니다."
+            />
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -405,7 +553,7 @@ export default function MemberEditForm({
         <div className="flex items-center gap-2">
           <button
             type="submit"
-            disabled={isSaving}
+            disabled={isSaving || isUploadingShowcaseImages}
             className="inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSaving ? "저장 중..." : "저장"}
@@ -414,7 +562,7 @@ export default function MemberEditForm({
             <button
               type="button"
               onClick={onCancel}
-              disabled={isSaving}
+              disabled={isSaving || isUploadingShowcaseImages}
               className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
               취소

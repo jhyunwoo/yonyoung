@@ -46,8 +46,8 @@ export default async function NoticeManager({
   const cookieHeader = await readServerCookieHeader();
   const readOnlyMessage =
     scope === "global"
-      ? "전체 공지 작성/수정/삭제는 회장만 가능합니다."
-      : "공지 작성/수정/삭제는 회장, 부회장, 부장만 가능합니다.";
+      ? "전체 공지는 회장만 등록, 수정, 삭제할 수 있습니다."
+      : "이 기수 공지는 회장, 부회장, 부장만 등록, 수정, 삭제할 수 있습니다.";
   const generationIdOrNull = scope === "generation" ? generationId ?? null : null;
   let notices: NoticeItem[] = [];
 

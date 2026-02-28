@@ -7,6 +7,7 @@ import {
   createGeneration,
   createLinktree,
   createLinktreeItem,
+  createSiteSettings,
   createTestApp,
   createUser,
   fn,
@@ -205,6 +206,26 @@ describe("public routes", () => {
     expect(body.data[0]?.id).toBe(IDs.linktree);
   });
 
+  it("공개 사이트 기본 설정은 비로그인 상태에서도 조회할 수 있다", async () => {
+    const getSiteSettings = fn(async () =>
+      createSiteSettings({
+        footerInstagramId: "yonyoung_archive",
+      }),
+    );
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({ getSiteSettings }),
+    });
+
+    const response = await app.request("/api/public/site-settings");
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toContain("s-maxage=60");
+
+    const body = await readJson<{ data: { footerInstagramId: string } }>(response);
+    expect(body.data.footerInstagramId).toBe("yonyoung_archive");
+    expect(getSiteSettings).toHaveBeenCalledTimes(1);
+  });
+
   it("공개 기수 목록은 sortOrder 기준 오름차순으로 정렬된다", async () => {
     const listGenerations = fn(async () => [
       createGeneration({
@@ -260,6 +281,10 @@ describe("public routes", () => {
         familyName: "김",
         givenName: "민수",
         generationId: IDs.generation,
+        showcaseImageUrls: [
+          "https://example.com/showcase/member-1.jpg",
+          "https://example.com/showcase/member-2.jpg",
+        ],
         email: "private-2@example.com",
       }),
       createUser({
@@ -301,6 +326,11 @@ describe("public routes", () => {
       body.data[0]?.members.map((member) => member.id),
     ).toEqual([IDs.member, IDs.otherUser]);
     expect(body.data[1]?.members.map((member) => member.id)).toEqual([IDs.manager]);
+    expect(body.data[0]?.members[0]?.showcaseImageUrls).toEqual([
+      "https://example.com/showcase/member-1.jpg",
+      "https://example.com/showcase/member-2.jpg",
+    ]);
+    expect(body.data[0]?.members[1]?.showcaseImageUrls).toEqual([]);
     expect(body.data[0]?.members[0]).not.toHaveProperty("email");
     expect(body.data[0]?.members[0]).not.toHaveProperty("phoneNumber");
     expect(body.data[0]?.members[0]).not.toHaveProperty("studentNumber");

@@ -11,7 +11,7 @@ export default async function SettingsLinktreePage() {
       <Suspense
         fallback={
           <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-            <p className="text-sm text-slate-500">링크트리 목록을 불러오는 중입니다...</p>
+            <p className="text-sm text-slate-500">링크 모음 목록을 불러오는 중입니다...</p>
           </section>
         }
       >

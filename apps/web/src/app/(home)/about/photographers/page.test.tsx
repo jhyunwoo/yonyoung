@@ -53,7 +53,7 @@ describe("PhotographersPage", () => {
 
     expect(result?.props.className).not.toContain("pt-[72px]");
     expect(result?.props.className).toContain("md:pt-10");
-    expect(mainProps?.className).toContain("max-w-[1200px]");
+    expect(mainProps?.className).toContain("max-w-300");
     expect(mainProps?.className).toContain("px-4");
     expect(mainProps?.className).toContain("md:px-8");
   });

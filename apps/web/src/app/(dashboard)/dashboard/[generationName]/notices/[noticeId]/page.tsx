@@ -28,7 +28,7 @@ export default async function GenerationNoticeDetailPage({
         canWrite={isAdminRole(session.user.role)}
         listPath={noticesBasePath}
         heading={`${generation.name} 공지 상세`}
-        description="공지 내용을 확인하고, 필요한 경우 수정하거나 삭제할 수 있습니다."
+        description="공지 내용을 확인하고 필요하면 바로 수정하거나 삭제할 수 있습니다."
       />
     </main>
   );

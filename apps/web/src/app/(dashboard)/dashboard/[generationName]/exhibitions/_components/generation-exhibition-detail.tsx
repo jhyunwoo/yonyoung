@@ -121,7 +121,7 @@ export default function GenerationExhibitionDetail({
         <div>
           <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Exhibitions</p>
           <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">{generationName} 전시 상세</h1>
-          <p className="mt-2 text-sm text-slate-600">전시 정보와 세부 이미지를 확인할 수 있습니다.</p>
+          <p className="mt-2 text-sm text-slate-600">전시 정보와 사진을 확인할 수 있습니다.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {canManage ? (

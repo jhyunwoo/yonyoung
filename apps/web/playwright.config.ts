@@ -67,7 +67,7 @@ export default defineConfig({
   webServer: [
     {
       command: `pnpm --filter api run dev -- --port ${apiPort}`,
-      url: `${apiURL}/message`,
+      url: `${apiURL}/health`,
       reuseExistingServer: true,
       timeout: 120_000,
     },

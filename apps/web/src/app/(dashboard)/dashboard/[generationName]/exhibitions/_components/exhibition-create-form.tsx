@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "../../../../../../lib/admin-api/resources";
@@ -43,6 +43,8 @@ export default function ExhibitionCreateForm({
   const [endDateInput, setEndDateInput] = useState("");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+  const coverFileInputRef = useRef<HTMLInputElement | null>(null);
+  const detailFileInputRef = useRef<HTMLInputElement | null>(null);
   const {
     items: detailImages,
     appendFiles,
@@ -96,6 +98,22 @@ export default function ExhibitionCreateForm({
     }
 
     appendFiles(files);
+  };
+
+  const handleOpenCoverFilePicker = () => {
+    if (isSaving) {
+      return;
+    }
+
+    coverFileInputRef.current?.click();
+  };
+
+  const handleOpenDetailFilePicker = () => {
+    if (isSaving) {
+      return;
+    }
+
+    detailFileInputRef.current?.click();
   };
 
   const handleRemoveDetailImage = (imageId: string) => {
@@ -199,7 +217,7 @@ export default function ExhibitionCreateForm({
       <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Exhibitions</p>
       <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">{generationName} 전시 추가</h1>
       <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
-        대표 이미지는 필수이며, 세부 이미지는 선택으로 여러 장 등록할 수 있습니다.
+        대표 사진은 꼭 등록해야 하며, 세부 사진은 필요할 때 여러 장 추가할 수 있습니다.
       </p>
 
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
@@ -226,7 +244,7 @@ export default function ExhibitionCreateForm({
         </label>
 
         <div className="space-y-1">
-          <span className="text-sm font-semibold text-slate-900">전시 상세 설명 (리치 텍스트)</span>
+          <span className="text-sm font-semibold text-slate-900">전시 상세 설명</span>
           <ExhibitionRichTextEditor
             value={descriptionHtml}
             onChange={setDescriptionHtml}
@@ -259,12 +277,21 @@ export default function ExhibitionCreateForm({
 
         <label className="block space-y-1">
           <span className="text-sm font-semibold text-slate-900">대표 이미지 (필수)</span>
+          <button
+            type="button"
+            onClick={handleOpenCoverFilePicker}
+            disabled={isSaving}
+            className="inline-flex rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            파일 선택
+          </button>
           <input
+            ref={coverFileInputRef}
             type="file"
             accept="image/*"
             onChange={handleCoverFileChange}
             disabled={isSaving}
-            className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            className="sr-only"
           />
           <p className="text-xs text-slate-500">
             {coverFile ? `선택됨: ${coverFile.name}` : "아직 파일이 선택되지 않았습니다."}
@@ -279,18 +306,27 @@ export default function ExhibitionCreateForm({
 
         <div className="space-y-2">
           <label className="block space-y-1">
-            <span className="text-sm font-semibold text-slate-900">세부 이미지 (선택, 다중)</span>
+            <span className="text-sm font-semibold text-slate-900">세부 이미지 (선택, 여러 장)</span>
+            <button
+              type="button"
+              onClick={handleOpenDetailFilePicker}
+              disabled={isSaving}
+              className="inline-flex rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              파일 선택
+            </button>
             <input
+              ref={detailFileInputRef}
               type="file"
               accept="image/*"
               multiple
               onChange={handleDetailFilesChange}
               disabled={isSaving}
-              className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              className="sr-only"
             />
           </label>
 
-          <p className="text-xs text-slate-500">드래그하여 세부 이미지 순서를 변경할 수 있습니다.</p>
+          <p className="text-xs text-slate-500">마우스로 끌어 세부 이미지 순서를 바꿀 수 있습니다.</p>
           <SortableImageGrid
             items={detailImages.map((image, index) => ({
               id: image.id,

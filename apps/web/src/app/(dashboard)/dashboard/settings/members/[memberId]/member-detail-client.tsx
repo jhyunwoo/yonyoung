@@ -63,9 +63,9 @@ const readHistoryResourceLabel = (resourceType: ApiUserResourceHistoryItem["reso
     case "global_notice":
       return "전체 공지";
     case "linktree":
-      return "링크트리";
+      return "링크 모음";
     case "linktree_item":
-      return "링크트리 아이템";
+      return "링크 모음 항목";
     default:
       return resourceType;
   }

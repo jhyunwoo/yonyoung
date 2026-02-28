@@ -53,6 +53,7 @@ const createUser = (
   name: "tester",
   email: "tester@example.com",
   image: null,
+  showcaseImageUrls: [],
   familyName: null,
   givenName: null,
   college: null,

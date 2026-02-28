@@ -9,6 +9,10 @@ import {
   ApiAdminDashboardStatsQuerySchema,
   ApiAdminDashboardStatsSchema,
 } from "../lib/openapi/schemas";
+import {
+  readR2TotalUsageBytes,
+  R2_STORAGE_LIMIT_BYTES,
+} from "../lib/storage/usage";
 
 type App = OpenAPIHono<HonoAppType>;
 
@@ -58,7 +62,22 @@ export const registerDashboardRoutes = (
     const stats = await dependencies
       .getDataService(c)
       .getAdminDashboardStats(query.data.generationSortOrder ?? null);
-    return ok(c, stats);
+
+    try {
+      const r2StorageUsedBytes = await readR2TotalUsageBytes(c.env.r2);
+      return ok(c, {
+        ...stats,
+        r2StorageUsedBytes,
+        r2StorageLimitBytes: R2_STORAGE_LIMIT_BYTES,
+        r2StorageUsageAvailable: true,
+      });
+    } catch {
+      return ok(c, {
+        ...stats,
+        r2StorageUsedBytes: 0,
+        r2StorageLimitBytes: R2_STORAGE_LIMIT_BYTES,
+        r2StorageUsageAvailable: false,
+      });
+    }
   });
 };
-

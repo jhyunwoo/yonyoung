@@ -113,7 +113,7 @@ export default function RichTextEditor({
 
     const previousLink = editor.getAttributes("link").href as string | undefined;
     const nextLink = window.prompt(
-      "링크 URL을 입력하세요. 비우면 링크가 제거됩니다.",
+      "링크 주소를 입력하세요. 비워 두면 링크가 삭제됩니다.",
       previousLink ?? "https://",
     );
 

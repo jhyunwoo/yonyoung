@@ -39,6 +39,7 @@ describe("AuthProfileForm", () => {
           mode="auth"
           initialProfile={{
             image: "",
+            showcaseImageUrls: [],
             familyName: "",
             givenName: "",
             college: "",
@@ -58,5 +59,32 @@ describe("AuthProfileForm", () => {
     expect(
       container.querySelector("input[placeholder='컴퓨터과학과']"),
     ).toBeInTheDocument();
+  });
+
+  it("대시보드 모드에서 대표 작품 사진 섹션을 노출한다", async () => {
+    await act(async () => {
+      root.render(
+        <AuthProfileForm
+          userId="user-1"
+          role="regular_member"
+          mode="dashboard"
+          initialProfile={{
+            image: "",
+            showcaseImageUrls: [],
+            familyName: "김",
+            givenName: "연영",
+            college: "인공지능융합대학",
+            department: "컴퓨터과학과",
+            studentNumber: "2026000123",
+            phoneNumber: "010-1234-5678",
+            collaborationAvailable: false,
+            personalLink: "",
+          }}
+        />,
+      );
+    });
+
+    expect(container.textContent).toContain("대표 작품 사진");
+    expect(container.textContent).toContain("최대 10장");
   });
 });

@@ -13,6 +13,10 @@ describe("worker runtime integration", () => {
       vars: {
         BETTER_AUTH_URL: "http://localhost:8787",
         BETTER_AUTH_TRUSTED_ORIGINS: "http://localhost:3000",
+        R2_S3_ENDPOINT: "https://example-account.r2.cloudflarestorage.com",
+        R2_ACCESS_KEY_ID: "key",
+        R2_SECRET_ACCESS_KEY: "secret",
+        R2_BUCKET: "yonyoung-storage",
       },
     });
   }, 120_000);
@@ -25,12 +29,21 @@ describe("worker runtime integration", () => {
   });
 
   it(
-    "/message responds in Workers runtime with request tracking headers",
+    "/health responds in Workers runtime with request tracking headers",
     async () => {
-      const response = await worker!.fetch("/message");
+      const response = await worker!.fetch("/health");
 
-      expect(response.status).toBe(200);
-      expect(await response.text()).toBe("Hello Hono!");
+      expect([200, 503]).toContain(response.status);
+      const body = (await response.json()) as {
+        status: string;
+        checks: Array<{ service: string; status: string }>;
+      };
+      if (response.status === 200) {
+        expect(body.status).toBe("healthy");
+      } else {
+        expect(body.status).toBe("unhealthy");
+      }
+      expect(body.checks.length).toBeGreaterThan(0);
       expect(response.headers.get("x-request-id")).toBeTruthy();
       expect(response.headers.get("server-timing")).toContain("total;dur=");
     },

@@ -312,6 +312,125 @@ describe("user routes additional coverage", /** describe 실행 과정에서 필
     });
   });
 
+  it("member 계열 사용자는 대표 작품 사진 목록을 수정할 수 있다", async () => {
+    const showcaseImageUrls = [
+      "https://example.com/showcase-1.jpg",
+      "https://example.com/showcase-2.jpg",
+    ];
+    const updateUser = fn(async () =>
+      createUser({
+        id: IDs.member,
+        showcaseImageUrls,
+      }),
+    );
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({ updateUser }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.member}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ showcaseImageUrls }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(updateUser).toHaveBeenCalledWith(IDs.member, { showcaseImageUrls });
+  });
+
+  it("admin은 대표 작품 사진 목록을 수정할 수 있다", async () => {
+    const showcaseImageUrls = [
+      "https://example.com/admin-showcase-1.jpg",
+      "https://example.com/admin-showcase-2.jpg",
+    ];
+    const updateUser = fn(async () =>
+      createUser({
+        id: IDs.otherUser,
+        showcaseImageUrls,
+      }),
+    );
+    const app = createTestApp({
+      actor: createActor("vice_president", IDs.vicePresident),
+      dataService: createDataServiceMock({
+        getUserById: fn(async () => createUser({ id: IDs.otherUser, role: "regular_member" })),
+        updateUser,
+      }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.otherUser}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ showcaseImageUrls }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(updateUser).toHaveBeenCalledWith(IDs.otherUser, { showcaseImageUrls });
+  });
+
+  it("showcaseImageUrls가 10장을 초과하면 400을 반환한다", async () => {
+    const updateUser = fn(async () => createUser({ id: IDs.member }));
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({ updateUser }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.member}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        showcaseImageUrls: Array.from(
+          { length: 11 },
+          (_, index) => `https://example.com/showcase-${index + 1}.jpg`,
+        ),
+      }),
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+    expect(updateUser).not.toHaveBeenCalled();
+  });
+
+  it("showcaseImageUrls에 중복 URL이 포함되면 400을 반환한다", async () => {
+    const updateUser = fn(async () => createUser({ id: IDs.member }));
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({ updateUser }),
+    });
+
+    const duplicateUrl = "https://example.com/showcase-duplicate.jpg";
+    const response = await app.request(`/api/users/${IDs.member}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        showcaseImageUrls: [duplicateUrl, duplicateUrl],
+      }),
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+    expect(updateUser).not.toHaveBeenCalled();
+  });
+
+  it("showcaseImageUrls에 잘못된 URL이 포함되면 400을 반환한다", async () => {
+    const updateUser = fn(async () => createUser({ id: IDs.member }));
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({ updateUser }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.member}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        showcaseImageUrls: ["invalid-url"],
+      }),
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+    expect(updateUser).not.toHaveBeenCalled();
+  });
+
   it("회장 1인 상태에서 회장 권한 하향은 400을 반환한다", async () => {
     const updateUser = fn(async () => createUser({ id: IDs.president, role: "regular_member" }));
     const app = createTestApp({

@@ -14,7 +14,7 @@ export default async function SettingsPage() {
         <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Settings</p>
         <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">대시보드 설정</h1>
         <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
-          설정 메뉴에서 공지, Linktree, 멤버/기수 운영 항목을 관리할 수 있습니다.
+          이곳에서 공지, 링크 모음, 멤버, 기수 등 운영에 필요한 항목을 한 번에 관리할 수 있습니다.
         </p>
 
         <ul className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-5">

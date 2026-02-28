@@ -69,4 +69,50 @@ describe("admin-dashboard-cache", () => {
 
     expect(rows).toEqual([]);
   });
+
+  it("관리자 대시보드 통계 조회 시 generationSortOrder와 쿠키를 포함한다", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            usersTotal: 1,
+            unverifiedUsersTotal: 0,
+            generationsTotal: 1,
+            selectedGenerationMembersTotal: 1,
+            selectedGenerationActivitiesTotal: 1,
+            selectedGenerationExhibitionsTotal: 1,
+            linktreeLinksTotal: 1,
+            r2StorageUsedBytes: 1024,
+            r2StorageLimitBytes: 10 * 1024 * 1024 * 1024,
+            r2StorageUsageAvailable: true,
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+
+    const { getCachedAdminDashboardStats } = await import("./admin-dashboard-cache");
+    const stats = await getCachedAdminDashboardStats("a=b", 60);
+
+    expect(stats).toEqual(
+      expect.objectContaining({
+        r2StorageUsedBytes: 1024,
+        r2StorageUsageAvailable: true,
+      }),
+    );
+    const [url, init] = fetchSpy.mock.calls[0] ?? [];
+    expect(url).toBe("https://api.example.com/api/admin/dashboard?generationSortOrder=60");
+    expect(init).toMatchObject({ method: "GET", cache: "no-store" });
+    const headers = (init as RequestInit | undefined)?.headers as Headers | undefined;
+    expect(headers?.get("cookie")).toBe("a=b");
+  });
+
+  it("관리자 대시보드 통계 조회 실패 시 null을 반환한다", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}", { status: 500 }));
+
+    const { getCachedAdminDashboardStats } = await import("./admin-dashboard-cache");
+    const stats = await getCachedAdminDashboardStats("a=b", null);
+
+    expect(stats).toBeNull();
+  });
 });

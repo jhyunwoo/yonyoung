@@ -96,6 +96,9 @@ describe("adminResourceApi", () => {
       "GET",
     );
 
+    await adminResourceApi.getSiteSettings();
+    expect(adminRequestMock).toHaveBeenLastCalledWith("/site-settings", "GET");
+
     await adminResourceApi.listUsers();
     expect(adminRequestMock).toHaveBeenLastCalledWith("/users", "GET");
 
@@ -444,6 +447,15 @@ describe("adminResourceApi", () => {
         path: "/global-notices/global-1",
         method: "DELETE",
         tags: [ADMIN_CACHE_TAGS.notices],
+      },
+      {
+        invoke: () =>
+          adminResourceApi.updateSiteSettings(
+            { footerInstagramId: "yonyoungpage" } as unknown as never,
+          ),
+        path: "/site-settings",
+        method: "PATCH",
+        tags: [ADMIN_CACHE_TAGS.siteSettings],
       },
       {
         invoke: () =>

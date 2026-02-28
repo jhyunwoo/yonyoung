@@ -102,7 +102,7 @@ describe("GenerationActivitiesList", () => {
 
     expect(readServerCookieHeader).toHaveBeenCalledTimes(1);
     expect(listCachedActivities).toHaveBeenCalledWith("generation-60", "session=abc");
-    expect(container.textContent).toContain("활동 생성/수정 권한이 없습니다.");
+    expect(container.textContent).toContain("활동을 등록하거나 수정할 권한이 없습니다.");
     expect(container.textContent).not.toContain("활동 추가");
   });
 });

@@ -428,7 +428,7 @@ export default function GenerationManagementClient() {
         전체 기수 관리
       </h1>
       <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
-        기수를 생성/수정/삭제하고, 선택한 기수에 사용자를 배정할 수 있습니다.
+        기수를 만들고 수정하거나 삭제할 수 있고, 멤버를 원하는 기수에 배정할 수 있습니다.
       </p>
 
       {errorMessage ? (
@@ -445,14 +445,14 @@ export default function GenerationManagementClient() {
 
       {isLoading ? (
         <p className="mt-6 text-sm text-slate-500">
-          기수/사용자 목록을 불러오는 중입니다...
+          기수와 멤버 목록을 불러오는 중입니다...
         </p>
       ) : (
         <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
           <div className="space-y-4">
             <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <h2 className="text-base font-semibold text-slate-900">
-                전체 기수 리스트
+                전체 기수 목록
               </h2>
               {generations.length === 0 ? (
                 <p className="mt-3 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-4 text-sm text-slate-500">
@@ -575,7 +575,7 @@ export default function GenerationManagementClient() {
 
             <article className="rounded-xl border border-slate-200 p-4">
               <h2 className="text-base font-semibold text-slate-900">
-                선택 기수 수정/삭제
+                선택한 기수 수정/삭제
               </h2>
               {!selectedGeneration ? (
                 <p className="mt-3 text-sm text-slate-500">
@@ -670,12 +670,12 @@ export default function GenerationManagementClient() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h2 className="text-base font-semibold text-slate-900">
-                  사용자 배정
+                  멤버 기수 배정
                 </h2>
                 <p className="mt-1 text-sm text-slate-600">
                   {selectedGeneration
-                    ? `${selectedGeneration.name}에 추가할 사용자를 선택하세요.`
-                    : "사용자를 배정하려면 기수를 먼저 선택해 주세요."}
+                    ? `${selectedGeneration.name}에 넣을 멤버를 선택해 주세요.`
+                    : "멤버를 배정하려면 먼저 기수를 선택해 주세요."}
                 </p>
               </div>
               <button

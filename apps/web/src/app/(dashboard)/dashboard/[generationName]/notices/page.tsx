@@ -29,7 +29,7 @@ export default async function GenerationNoticesPage({
           generationId={generation.id}
           canWrite={isAdminRole(session.user.role)}
           heading={`${generation.name} 공지`}
-          description="최근 공지를 확인하고 항목을 클릭해 상세 내용을 볼 수 있습니다."
+          description="최근 공지를 확인하고 제목을 눌러 자세한 내용을 볼 수 있습니다."
           emptyMessage="등록된 기수 공지가 없습니다."
           basePath={noticesBasePath}
           createPath={`${noticesBasePath}/new`}

@@ -8,6 +8,7 @@ import {
   listCachedExhibitions,
   listCachedGenerationMembers,
 } from "../../../../lib/admin-dashboard-cache";
+import DashboardR2StorageUsage from "../../_components/dashboard-r2-storage-usage";
 import { requireDashboardGeneration } from "./_lib/resolve-generation";
 import GenerationNoticeOverview from "./generation-notice-overview";
 
@@ -61,6 +62,10 @@ const GenerationDashboardSummary = async (input: {
           </p>
         </li>
       </ul>
+
+      <div className="mt-4">
+        <DashboardR2StorageUsage />
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         <GenerationNoticeOverview
@@ -126,22 +131,22 @@ export default async function GenerationDashboardPage({
   const items = [
     {
       title: "공지 관리",
-      description: "해당 기수의 공지를 작성하고 수정합니다.",
+      description: "이 기수 공지를 확인하고 새로 작성하거나 수정할 수 있습니다.",
       href: `${generation.path}/notices`,
     },
     {
       title: "활동 관리",
-      description: "해당 기수의 활동 정보를 관리합니다.",
+      description: "활동 내용을 등록하고 수정할 수 있습니다.",
       href: `${generation.path}/activities`,
     },
     {
       title: "전시 관리",
-      description: "해당 기수의 전시 정보를 관리합니다.",
+      description: "전시 정보를 등록하고 수정할 수 있습니다.",
       href: `${generation.path}/exhibitions`,
     },
     {
       title: "멤버 관리",
-      description: "해당 기수 소속 멤버를 관리합니다.",
+      description: "이 기수에 속한 멤버를 확인할 수 있습니다.",
       href: `${generation.path}/members`,
     },
   ];
@@ -156,7 +161,7 @@ export default async function GenerationDashboardPage({
             활동 기간: {formatKoreanDateRange(generation.startDate, generation.endDate)}
           </p>
           <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
-            해당 기수의 공지, 최근 활동, 최근 전시 등 핵심 정보를 한눈에 확인할 수 있습니다.
+            이 화면에서 공지, 최근 활동, 최근 전시 등 핵심 정보를 한 번에 확인할 수 있습니다.
           </p>
           <p className="mt-2 text-xs text-slate-500">
             최근 수정: {formatKoreanDate(generation.updatedAt)} · {formatAuditActor(generation.updatedBy)}

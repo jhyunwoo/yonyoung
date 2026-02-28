@@ -23,7 +23,7 @@ export default async function GenerationNoticeCreatePage({
         basePath={noticesBasePath}
         listPath={noticesBasePath}
         heading={`${generation.name} 공지 작성`}
-        description="새 공지를 작성하면 상세 페이지로 이동합니다."
+        description="공지 제목과 내용을 입력하고 저장하면 상세 화면으로 이동합니다."
       />
     </main>
   );

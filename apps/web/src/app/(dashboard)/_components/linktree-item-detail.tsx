@@ -146,7 +146,7 @@ export default function LinktreeItemDetail({
       <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Settings / Linktree</p>
       <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">링크 상세</h1>
       <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
-        링크 상세 정보를 확인하고, 권한이 있으면 수정 페이지로 이동하거나 삭제할 수 있습니다.
+        링크 정보를 확인하고, 권한이 있으면 수정 화면으로 이동하거나 삭제할 수 있습니다.
       </p>
 
       {errorMessage ? (
@@ -162,7 +162,7 @@ export default function LinktreeItemDetail({
         <p className="mt-4 text-xs font-semibold text-slate-500">링크 이름</p>
         <p className="mt-1 text-base font-semibold text-slate-900">{item.name}</p>
 
-        <p className="mt-4 text-xs font-semibold text-slate-500">URL</p>
+        <p className="mt-4 text-xs font-semibold text-slate-500">링크 주소</p>
         <a
           href={item.link}
           target="_blank"

@@ -216,7 +216,7 @@ export default async function globalSetup(_config: FullConfig) {
 
   try {
     try {
-      const healthResponse = await apiContext.get("/message");
+      const healthResponse = await apiContext.get("/health");
       if (!healthResponse.ok()) {
         const body = await healthResponse.text();
         throw new Error(
@@ -229,7 +229,7 @@ export default async function globalSetup(_config: FullConfig) {
       }
     } catch (error) {
       if (isTimeoutError(error)) {
-        throw new Error(buildApiTimeoutMessage(apiUrl, "/message"));
+        throw new Error(buildApiTimeoutMessage(apiUrl, "/health"));
       }
       throw error;
     }
