@@ -524,7 +524,8 @@ export default function DashboardShell({
 
     if (selectedGeneration) {
       if (selectedGenerationScopedPath === "/") {
-        return "기수 홈";
+        const generationName = selectedGeneration.name.trim();
+        return generationName.length > 0 ? generationName : "기수 홈";
       }
       if (selectedGenerationScopedPath?.startsWith("/notices")) {
         return "공지";

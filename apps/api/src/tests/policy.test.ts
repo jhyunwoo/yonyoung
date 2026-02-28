@@ -36,6 +36,7 @@ describe("authorization policy", /** describe 실행 과정에서 필요한 연�
     expect(can("manager", "exhibition", "delete")).toBe(false);
     expect(can("manager", "activity", "delete")).toBe(true);
     expect(can("manager", "notice", "create")).toBe(true);
+    expect(can("manager", "market", "delete")).toBe(true);
   });
 
   it("정회원은 user 일반 조회 권한이 없다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
@@ -51,10 +52,13 @@ describe("authorization policy", /** describe 실행 과정에서 필요한 연�
     expect(can("regular_member", "notice", "read")).toBe(true);
     expect(can("regular_member", "activity", "update")).toBe(true);
     expect(can("regular_member", "user", "read")).toBe(false);
+    expect(can("regular_member", "market", "create")).toBe(true);
+    expect(can("regular_member", "market", "delete")).toBe(true);
   });
 
   it("unverified는 어떤 리소스 권한도 없다", /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () => {
     expect(can("unverified", "generation", "read")).toBe(false);
     expect(can("unverified", "user", "update")).toBe(false);
+    expect(can("unverified", "market", "read")).toBe(false);
   });
 });

@@ -3,12 +3,16 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const { usePathnameMock } = vi.hoisted(() => ({
+  usePathnameMock: vi.fn(() => "/dashboard"),
+}));
+
 vi.mock("../../../lib/auth-client-tool", () => ({
   signOut: vi.fn(async () => ({ ok: true })),
 }));
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/dashboard",
+  usePathname: usePathnameMock,
 }));
 
 vi.mock("next/link", () => ({
@@ -73,6 +77,7 @@ describe("DashboardShell", () => {
   let root: Root;
 
   beforeEach(() => {
+    usePathnameMock.mockReturnValue("/dashboard");
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
@@ -208,5 +213,38 @@ describe("DashboardShell", () => {
     expect(
       container.querySelector("[data-testid='dashboard-mobile-sidebar']"),
     ).not.toBeInTheDocument();
+  });
+
+  it("모바일에서 기수 메인 경로에 있으면 헤더에 기수명을 노출한다", async () => {
+    usePathnameMock.mockReturnValue("/dashboard/60%EA%B8%B0");
+    const { default: DashboardShell } = await import("./dashboard-shell");
+
+    await act(async () => {
+      root.render(
+        <DashboardShell
+          generationOptions={[
+            {
+              id: "generation-60",
+              name: "60기",
+              sortOrder: 60,
+              startDate: Date.UTC(2030, 2, 1),
+              endDate: Date.UTC(2031, 1, 28),
+              updatedAt: Date.UTC(2030, 2, 1),
+              updatedBy: null,
+              path: "/dashboard/60%EA%B8%B0",
+            },
+          ]}
+          viewer={null}
+        >
+          <div>content</div>
+        </DashboardShell>,
+      );
+      await Promise.resolve();
+    });
+
+    const mobileHeaderTitle = container.querySelector("header p");
+    expect(mobileHeaderTitle).toBeInTheDocument();
+    expect(mobileHeaderTitle).toHaveTextContent("60기");
+    expect(mobileHeaderTitle).not.toHaveTextContent("기수 홈");
   });
 });

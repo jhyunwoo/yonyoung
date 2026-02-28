@@ -32,6 +32,8 @@ export type ApiAuditResourceType =
   | "exhibition"
   | "generation_notice"
   | "global_notice"
+  | "market_item"
+  | "market_comment"
   | "linktree"
   | "linktree_item"
   | "user";
@@ -223,6 +225,86 @@ export type ApiCreateGlobalNoticeInput = {
 };
 
 export type ApiUpdateGlobalNoticeInput = Partial<ApiCreateGlobalNoticeInput>;
+
+export type ApiMarketItemStatus = "selling" | "reserved" | "sold";
+export type ApiMarketConditionGrade = "A" | "B" | "C" | "D";
+
+export type ApiMarketSeller = {
+  id: string;
+  name: string;
+  image: string | null;
+  role: ApiRole | null;
+};
+
+export type ApiMarketItem = {
+  id: string;
+  sellerId: string;
+  name: string;
+  imageUrls: string[];
+  manufacturer: string | null;
+  productCode: string | null;
+  conditionGrade: ApiMarketConditionGrade | null;
+  description: string | null;
+  price: number;
+  status: ApiMarketItemStatus;
+  seller: ApiMarketSeller;
+  createdAt: number;
+  updatedAt: number;
+  updatedBy: ApiAuditActor | null;
+};
+
+export type ApiCreateMarketItemInput = {
+  name: string;
+  imageUrls: string[];
+  manufacturer?: string | null;
+  productCode?: string | null;
+  conditionGrade?: ApiMarketConditionGrade | null;
+  description?: string | null;
+  price: number;
+};
+
+export type ApiUpdateMarketItemInput = Partial<{
+  name: string;
+  imageUrls: string[];
+  manufacturer: string | null;
+  productCode: string | null;
+  conditionGrade: ApiMarketConditionGrade | null;
+  description: string | null;
+  price: number;
+}>;
+
+export type ApiUpdateMarketItemStatusInput = {
+  status: ApiMarketItemStatus;
+};
+
+export type ApiListMarketItemsQuery = {
+  status?: ApiMarketItemStatus;
+  sellerId?: string;
+  page?: number;
+  pageSize?: number;
+};
+
+export type ApiMarketComment = {
+  id: string;
+  itemId: string;
+  author: ApiMarketSeller;
+  content: string;
+  createdAt: number;
+  updatedAt: number;
+  updatedBy: ApiAuditActor | null;
+};
+
+export type ApiCreateMarketCommentInput = {
+  content: string;
+};
+
+export type ApiUpdateMarketCommentInput = Partial<ApiCreateMarketCommentInput>;
+
+export type ApiMarketPushSubscriptionInput = {
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+};
 
 export type ApiLinktreeItem = {
   id: string;

@@ -21,6 +21,9 @@ export type AppBindings = CloudflareBindings & {
   D1_WRITE_RETRY_BASE_DELAY_MS?: string;
   D1_WRITE_RETRY_MAX_DELAY_MS?: string;
   CSP_REPORT_ONLY?: string;
+  VAPID_PUBLIC_KEY?: string;
+  VAPID_PRIVATE_KEY?: string;
+  VAPID_SUBJECT?: string;
 };
 
 type HonoAppType = {

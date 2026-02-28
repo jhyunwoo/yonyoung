@@ -395,6 +395,111 @@ export const globalNotices = sqliteTable(
   ],
 );
 
+export const marketItems = sqliteTable(
+  "market_items",
+  {
+    id: text("id").primaryKey(),
+    sellerId: text("seller_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    manufacturer: text("manufacturer"),
+    productCode: text("product_code"),
+    conditionGrade: text("condition_grade"),
+    description: text("description"),
+    price: integer("price").notNull(),
+    status: text("status").default("selling").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .$onUpdate(() => new Date())
+      .notNull(),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
+  },
+  (table) => [
+    index("market_items_status_created_idx").on(
+      table.status,
+      table.createdAt,
+      table.deletedAt,
+    ),
+    index("market_items_seller_deleted_idx").on(table.sellerId, table.deletedAt),
+  ],
+);
+
+export const marketItemImages = sqliteTable(
+  "market_item_images",
+  {
+    id: text("id").primaryKey(),
+    itemId: text("item_id")
+      .notNull()
+      .references(() => marketItems.id, { onDelete: "cascade" }),
+    imageUrl: text("image_url").notNull(),
+    sortOrder: integer("sort_order").default(0).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .$onUpdate(() => new Date())
+      .notNull(),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
+  },
+  (table) => [index("market_item_images_item_sort_idx").on(table.itemId, table.sortOrder)],
+);
+
+export const marketComments = sqliteTable(
+  "market_comments",
+  {
+    id: text("id").primaryKey(),
+    itemId: text("item_id")
+      .notNull()
+      .references(() => marketItems.id, { onDelete: "cascade" }),
+    authorId: text("author_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    content: text("content").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .$onUpdate(() => new Date())
+      .notNull(),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
+  },
+  (table) => [
+    index("market_comments_item_created_idx").on(
+      table.itemId,
+      table.createdAt,
+      table.deletedAt,
+    ),
+    index("market_comments_author_deleted_idx").on(table.authorId, table.deletedAt),
+  ],
+);
+
+export const marketPushSubscriptions = sqliteTable(
+  "market_push_subscriptions",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    endpoint: text("endpoint").notNull().unique(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .default(nowTimestamp)
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [index("market_push_subscriptions_user_idx").on(table.userId)],
+);
+
 export const linktree = sqliteTable("linktree", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -496,6 +601,9 @@ export const userRelations = relations(user, /** relations 실행 과정에서 �
   accounts: many(account),
   generationNotices: many(generationNotices),
   globalNotices: many(globalNotices),
+  marketItems: many(marketItems),
+  marketComments: many(marketComments),
+  marketPushSubscriptions: many(marketPushSubscriptions),
 }));
 
 export const userGenerationsRelations = relations(
@@ -602,3 +710,40 @@ export const linktreeItemsRelations = relations(linktreeItems, /** relations 실
     references: [linktree.id],
   }),
 }));
+
+export const marketItemsRelations = relations(marketItems, ({ many, one }) => ({
+  seller: one(user, {
+    fields: [marketItems.sellerId],
+    references: [user.id],
+  }),
+  images: many(marketItemImages),
+  comments: many(marketComments),
+}));
+
+export const marketItemImagesRelations = relations(marketItemImages, ({ one }) => ({
+  item: one(marketItems, {
+    fields: [marketItemImages.itemId],
+    references: [marketItems.id],
+  }),
+}));
+
+export const marketCommentsRelations = relations(marketComments, ({ one }) => ({
+  item: one(marketItems, {
+    fields: [marketComments.itemId],
+    references: [marketItems.id],
+  }),
+  author: one(user, {
+    fields: [marketComments.authorId],
+    references: [user.id],
+  }),
+}));
+
+export const marketPushSubscriptionsRelations = relations(
+  marketPushSubscriptions,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [marketPushSubscriptions.userId],
+      references: [user.id],
+    }),
+  }),
+);

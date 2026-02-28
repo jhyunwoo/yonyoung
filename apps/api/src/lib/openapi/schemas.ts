@@ -17,6 +17,8 @@ const EXAMPLE_GENERATION_ID = "55555555-5555-4555-8555-555555555555";
 const EXAMPLE_NOTICE_ID = "66666666-6666-4666-8666-666666666666";
 const EXAMPLE_USER_ID = "OrYuGkpIFldOIkcrxLrwgzEegsLSJbrh";
 const EXAMPLE_AUDIT_ID = "77777777-7777-4777-8777-777777777777";
+const EXAMPLE_MARKET_ITEM_ID = "88888888-8888-4888-8888-888888888888";
+const EXAMPLE_MARKET_COMMENT_ID = "99999999-9999-4999-8999-999999999999";
 const EXAMPLE_TIMESTAMP_MS = 1735689600000;
 const EXAMPLE_TIMESTAMP_MS_END = 1738368000000;
 
@@ -168,6 +170,8 @@ const ApiAuditResourceTypeSchema = z
     "exhibition",
     "generation_notice",
     "global_notice",
+    "market_item",
+    "market_comment",
     "linktree",
     "linktree_item",
     "user",
@@ -902,6 +906,276 @@ export const ApiUpdateGlobalNoticeSchema = z
   })
   .strict()
   .openapi("ApiUpdateGlobalNoticeInput");
+
+const ApiMarketItemStatusSchema = z
+  .enum(["selling", "reserved", "sold"])
+  .openapi("ApiMarketItemStatus");
+
+const ApiMarketConditionGradeSchema = z
+  .enum(["A", "B", "C", "D"])
+  .openapi("ApiMarketConditionGrade");
+
+const ApiMarketImageUrlsSchema = z
+  .array(z.string().url("이미지 URL 형식이 올바르지 않습니다."))
+  .min(1, "상품 이미지는 최소 1장 필요합니다.")
+  .max(10, "상품 이미지는 최대 10장까지 등록할 수 있습니다.")
+  .refine(
+    (urls) => new Set(urls).size === urls.length,
+    "중복된 이미지 URL은 허용되지 않습니다.",
+  )
+  .openapi("ApiMarketImageUrls");
+
+const ApiMarketSellerSchema = z
+  .object({
+    id: z.string().min(1).openapi({
+      description: "판매자 식별자",
+      example: EXAMPLE_USER_ID,
+    }),
+    name: z.string().openapi({
+      description: "판매자 이름",
+      example: "홍길동",
+    }),
+    image: z.string().url().nullable().openapi({
+      description: "판매자 프로필 이미지 URL",
+      example: "https://cdn.yonyoung.example/users/profile/member.png",
+    }),
+    role: z.string().nullable().openapi({
+      description: "판매자 역할 문자열",
+      example: "regular_member",
+    }),
+  })
+  .openapi("ApiMarketSeller");
+
+export const ApiMarketItemSchema = z
+  .object({
+    id: z.string().uuid().openapi({
+      description: "장터 게시물 UUID",
+      example: EXAMPLE_MARKET_ITEM_ID,
+    }),
+    sellerId: z.string().min(1).openapi({
+      description: "판매자 식별자",
+      example: EXAMPLE_USER_ID,
+    }),
+    name: z.string().openapi({
+      description: "판매 물건 이름",
+      example: "Sony FE 24-70mm F2.8 GM II",
+    }),
+    imageUrls: ApiMarketImageUrlsSchema.openapi({
+      description: "판매 물건 이미지 URL 목록 (1~10장)",
+    }),
+    manufacturer: z.string().nullable().openapi({
+      description: "제조사",
+      example: "Sony",
+    }),
+    productCode: z.string().nullable().openapi({
+      description: "제품 코드",
+      example: "SEL2470GM2",
+    }),
+    conditionGrade: ApiMarketConditionGradeSchema.nullable().openapi({
+      description: "제품 상태 등급",
+      example: "A",
+    }),
+    description: z.string().nullable().openapi({
+      description: "판매 설명",
+      example: "실사용 3개월, 박스/보증서 포함",
+    }),
+    price: z.number().int().nonnegative().openapi({
+      description: "판매 가격(원 단위 정수)",
+      example: 2200000,
+    }),
+    status: ApiMarketItemStatusSchema.openapi({
+      description: "판매 상태",
+      example: "selling",
+    }),
+    seller: ApiMarketSellerSchema.openapi({
+      description: "판매자 프로필",
+    }),
+    createdAt: timestampField("게시물 생성 시각", EXAMPLE_TIMESTAMP_MS),
+    updatedAt: timestampField("게시물 수정 시각", EXAMPLE_TIMESTAMP_MS),
+    updatedBy: ApiAuditActorSchema.nullable().openapi({
+      description: "마지막 수정자 정보",
+    }),
+  })
+  .openapi("ApiMarketItem");
+
+const nullableTrimmedStringField = (description: string, example: string) =>
+  z
+    .string()
+    .trim()
+    .min(1, `${description}은 비워둘 수 없습니다.`)
+    .nullable()
+    .openapi({
+      description,
+      example,
+    });
+
+export const ApiCreateMarketItemSchema = z
+  .object({
+    name: z.string().trim().min(1, "판매 물건 이름은 비워둘 수 없습니다.").openapi({
+      description: "판매 물건 이름",
+      example: "Sony FE 24-70mm F2.8 GM II",
+    }),
+    imageUrls: ApiMarketImageUrlsSchema.openapi({
+      description: "판매 물건 이미지 URL 목록 (필수, 1~10장)",
+    }),
+    manufacturer: nullableTrimmedStringField("제조사", "Sony").optional(),
+    productCode: nullableTrimmedStringField("제품 코드", "SEL2470GM2").optional(),
+    conditionGrade: ApiMarketConditionGradeSchema.nullable().optional().openapi({
+      description: "제품 상태 등급",
+      example: "A",
+    }),
+    description: nullableTrimmedStringField("판매 설명", "실사용 3개월, 박스/보증서 포함").optional(),
+    price: z.number().int().nonnegative("가격은 0 이상이어야 합니다.").openapi({
+      description: "판매 가격(원 단위 정수)",
+      example: 2200000,
+    }),
+  })
+  .openapi("ApiCreateMarketItemInput");
+
+export const ApiUpdateMarketItemSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(1, "판매 물건 이름은 비워둘 수 없습니다.")
+      .optional()
+      .openapi({
+        description: "판매 물건 이름",
+        example: "Sony FE 24-70mm F2.8 GM II",
+      }),
+    imageUrls: ApiMarketImageUrlsSchema.optional().openapi({
+      description: "판매 물건 이미지 URL 목록 (1~10장)",
+    }),
+    manufacturer: nullableTrimmedStringField("제조사", "Sony").optional(),
+    productCode: nullableTrimmedStringField("제품 코드", "SEL2470GM2").optional(),
+    conditionGrade: ApiMarketConditionGradeSchema.nullable().optional().openapi({
+      description: "제품 상태 등급",
+      example: "B",
+    }),
+    description: nullableTrimmedStringField("판매 설명", "생활기스 있음").optional(),
+    price: z.number().int().nonnegative("가격은 0 이상이어야 합니다.").optional().openapi({
+      description: "판매 가격(원 단위 정수)",
+      example: 1990000,
+    }),
+  })
+  .strict()
+  .openapi("ApiUpdateMarketItemInput");
+
+export const ApiUpdateMarketItemStatusSchema = z
+  .object({
+    status: ApiMarketItemStatusSchema.openapi({
+      description: "변경할 판매 상태",
+      example: "reserved",
+    }),
+  })
+  .strict()
+  .openapi("ApiUpdateMarketItemStatusInput");
+
+export const ApiListMarketItemsQuerySchema = z
+  .object({
+    status: ApiMarketItemStatusSchema.optional().openapi({
+      description: "판매 상태 필터",
+      example: "selling",
+    }),
+    sellerId: z.string().min(1).optional().openapi({
+      description: "판매자 식별자 필터",
+      example: EXAMPLE_USER_ID,
+    }),
+    page: z.coerce.number().int().min(1).optional().openapi({
+      description: "페이지 번호(1부터 시작)",
+      example: 1,
+    }),
+    pageSize: z.coerce.number().int().min(1).max(100).optional().openapi({
+      description: "페이지 크기(기본 20, 최대 100)",
+      example: 20,
+    }),
+  })
+  .openapi("ApiListMarketItemsQuery");
+
+export const ApiMarketCommentSchema = z
+  .object({
+    id: z.string().uuid().openapi({
+      description: "댓글 UUID",
+      example: EXAMPLE_MARKET_COMMENT_ID,
+    }),
+    itemId: z.string().uuid().openapi({
+      description: "상위 장터 게시물 UUID",
+      example: EXAMPLE_MARKET_ITEM_ID,
+    }),
+    author: ApiMarketSellerSchema.openapi({
+      description: "댓글 작성자 정보",
+    }),
+    content: z.string().openapi({
+      description: "댓글 본문(plain text)",
+      example: "거래 가능할까요?",
+    }),
+    createdAt: timestampField("댓글 생성 시각", EXAMPLE_TIMESTAMP_MS),
+    updatedAt: timestampField("댓글 수정 시각", EXAMPLE_TIMESTAMP_MS),
+    updatedBy: ApiAuditActorSchema.nullable().openapi({
+      description: "마지막 수정자 정보",
+    }),
+  })
+  .openapi("ApiMarketComment");
+
+export const ApiCreateMarketCommentSchema = z
+  .object({
+    content: z.string().trim().min(1, "댓글 본문은 비워둘 수 없습니다.").openapi({
+      description: "댓글 본문",
+      example: "거래 가능할까요?",
+    }),
+  })
+  .openapi("ApiCreateMarketCommentInput");
+
+export const ApiUpdateMarketCommentSchema = z
+  .object({
+    content: z
+      .string()
+      .trim()
+      .min(1, "댓글 본문은 비워둘 수 없습니다.")
+      .optional()
+      .openapi({
+        description: "댓글 본문",
+        example: "채팅 확인 부탁드립니다.",
+      }),
+  })
+  .strict()
+  .openapi("ApiUpdateMarketCommentInput");
+
+export const ApiMarketItemIdParamSchema = z
+  .object({
+    id: z.string().uuid().openapi({
+      description: "장터 게시물 UUID",
+      example: EXAMPLE_MARKET_ITEM_ID,
+    }),
+  })
+  .openapi("ApiMarketItemIdParam");
+
+export const ApiMarketCommentIdParamSchema = z
+  .object({
+    id: z.string().uuid().openapi({
+      description: "장터 댓글 UUID",
+      example: EXAMPLE_MARKET_COMMENT_ID,
+    }),
+  })
+  .openapi("ApiMarketCommentIdParam");
+
+export const ApiMarketPushSubscriptionSchema = z
+  .object({
+    endpoint: z.string().url().openapi({
+      description: "Push subscription endpoint URL",
+      example: "https://fcm.googleapis.com/fcm/send/abc123",
+    }),
+    p256dh: z.string().min(1).openapi({
+      description: "Push subscription p256dh key",
+      example: "BOr6-fake-key",
+    }),
+    auth: z.string().min(1).openapi({
+      description: "Push subscription auth secret",
+      example: "fake-auth-secret",
+    }),
+  })
+  .strict()
+  .openapi("ApiMarketPushSubscriptionInput");
 
 export const ApiLinktreeItemSchema = z
   .object({

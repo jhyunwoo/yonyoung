@@ -15,6 +15,8 @@ export type AuditResourceType =
   | "exhibition"
   | "generation_notice"
   | "global_notice"
+  | "market_item"
+  | "market_comment"
   | "linktree"
   | "linktree_item"
   | "user";
@@ -131,6 +133,53 @@ export type GlobalNoticeEntity = {
   createdAt: Date;
   updatedAt: Date;
   updatedBy: AuditActorEntity | null;
+};
+
+export type MarketItemStatus = "selling" | "reserved" | "sold";
+export type MarketConditionGrade = "A" | "B" | "C" | "D";
+
+export type MarketSellerEntity = {
+  id: string;
+  name: string;
+  image: string | null;
+  role: string | null;
+};
+
+export type MarketItemEntity = {
+  id: string;
+  sellerId: string;
+  name: string;
+  imageUrls: string[];
+  manufacturer: string | null;
+  productCode: string | null;
+  conditionGrade: MarketConditionGrade | null;
+  description: string | null;
+  price: number;
+  status: MarketItemStatus;
+  seller: MarketSellerEntity;
+  createdAt: Date;
+  updatedAt: Date;
+  updatedBy: AuditActorEntity | null;
+};
+
+export type MarketCommentEntity = {
+  id: string;
+  itemId: string;
+  author: MarketSellerEntity;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  updatedBy: AuditActorEntity | null;
+};
+
+export type MarketPushSubscriptionEntity = {
+  id: string;
+  userId: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export type SiteSettingsEntity = {
@@ -402,6 +451,66 @@ export type DataService = {
     }>,
   ) => Promise<GlobalNoticeEntity | null>;
   deleteGlobalNotice: (noticeId: string) => Promise<boolean>;
+
+  listMarketItems: (input: {
+    status?: MarketItemStatus;
+    sellerId?: string;
+    page?: number;
+    pageSize?: number;
+  }) => Promise<MarketItemEntity[]>;
+  createMarketItem: (input: {
+    sellerId: string;
+    name: string;
+    imageUrls: string[];
+    manufacturer: string | null;
+    productCode: string | null;
+    conditionGrade: MarketConditionGrade | null;
+    description: string | null;
+    price: number;
+  }) => Promise<MarketItemEntity | null>;
+  getMarketItemById: (id: string) => Promise<MarketItemEntity | null>;
+  updateMarketItem: (
+    id: string,
+    input: Partial<{
+      name: string;
+      imageUrls: string[];
+      manufacturer: string | null;
+      productCode: string | null;
+      conditionGrade: MarketConditionGrade | null;
+      description: string | null;
+      price: number;
+    }>,
+  ) => Promise<MarketItemEntity | null>;
+  updateMarketItemStatus: (
+    id: string,
+    status: MarketItemStatus,
+  ) => Promise<MarketItemEntity | null>;
+  deleteMarketItem: (id: string) => Promise<boolean>;
+  listMarketCommentsByItemId: (itemId: string) => Promise<MarketCommentEntity[]>;
+  createMarketComment: (input: {
+    itemId: string;
+    authorId: string;
+    content: string;
+  }) => Promise<MarketCommentEntity | null>;
+  getMarketCommentById: (id: string) => Promise<MarketCommentEntity | null>;
+  updateMarketComment: (
+    id: string,
+    input: Partial<{ content: string }>,
+  ) => Promise<MarketCommentEntity | null>;
+  deleteMarketComment: (id: string) => Promise<boolean>;
+  upsertMarketPushSubscription: (input: {
+    userId: string;
+    endpoint: string;
+    p256dh: string;
+    auth: string;
+  }) => Promise<MarketPushSubscriptionEntity | null>;
+  deleteMarketPushSubscription: (input: {
+    userId: string;
+    endpoint: string;
+  }) => Promise<boolean>;
+  listMarketPushSubscriptionsByUserId: (
+    userId: string,
+  ) => Promise<MarketPushSubscriptionEntity[]>;
 
   getSiteSettings: () => Promise<SiteSettingsEntity>;
   updateSiteSettings: (

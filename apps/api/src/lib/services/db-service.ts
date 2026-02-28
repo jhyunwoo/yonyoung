@@ -12,6 +12,10 @@ import {
   globalNotices,
   linktree,
   linktreeItems,
+  marketComments,
+  marketItemImages,
+  marketItems,
+  marketPushSubscriptions,
   siteSettings,
   user,
   userGenerations,
@@ -29,6 +33,12 @@ import {
   GenerationNoticeEntity,
   GlobalNoticeEntity,
   LinktreeEntity,
+  MarketCommentEntity,
+  MarketConditionGrade,
+  MarketItemEntity,
+  MarketItemStatus,
+  MarketPushSubscriptionEntity,
+  MarketSellerEntity,
   NoticeAuthorEntity,
   SiteSettingsEntity,
   UserEntity,
@@ -551,6 +561,141 @@ const toGlobalNoticeEntity = (
   content: row.content,
   imageUrls: parseNoticeImageUrls(row.imageUrls),
   author: toNoticeAuthor(row),
+  createdAt: row.createdAt,
+  updatedAt: row.updatedAt,
+  updatedBy,
+});
+
+type MarketItemRow = {
+  id: string;
+  sellerId: string;
+  name: string;
+  manufacturer: string | null;
+  productCode: string | null;
+  conditionGrade: string | null;
+  description: string | null;
+  price: number;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+  sellerName: string;
+  sellerImage: string | null;
+  sellerRole: string | null;
+};
+
+type MarketCommentRow = {
+  id: string;
+  itemId: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  authorId: string;
+  authorName: string;
+  authorImage: string | null;
+  authorRole: string | null;
+};
+
+const parseMarketItemStatus = (value: string | null | undefined): MarketItemStatus => {
+  if (value === "reserved" || value === "sold") {
+    return value;
+  }
+  return "selling";
+};
+
+const parseMarketConditionGrade = (
+  value: string | null | undefined,
+): MarketConditionGrade | null => {
+  if (value === "A" || value === "B" || value === "C" || value === "D") {
+    return value;
+  }
+  return null;
+};
+
+const mapMarketSeller = (input: {
+  id: string;
+  name: string;
+  image: string | null;
+  role: string | null;
+}): MarketSellerEntity => ({
+  id: input.id,
+  name: input.name,
+  image: input.image,
+  role: input.role,
+});
+
+const mapMarketItemsWithImages = async (
+  db: ReturnType<typeof createDB>,
+  rows: MarketItemRow[],
+): Promise<MarketItemEntity[]> => {
+  if (rows.length === 0) {
+    return [];
+  }
+
+  const itemIds = rows.map((row) => row.id);
+  const imageRows = await db
+    .select({
+      itemId: marketItemImages.itemId,
+      imageUrl: marketItemImages.imageUrl,
+      sortOrder: marketItemImages.sortOrder,
+    })
+    .from(marketItemImages)
+    .where(
+      and(
+        inArray(marketItemImages.itemId, itemIds),
+        isNull(marketItemImages.deletedAt),
+      ),
+    )
+    .orderBy(asc(marketItemImages.sortOrder));
+
+  const imagesByItemId = new Map<string, string[]>();
+  for (const row of imageRows) {
+    const current = imagesByItemId.get(row.itemId) ?? [];
+    current.push(row.imageUrl);
+    imagesByItemId.set(row.itemId, current);
+  }
+
+  const updatedByMap = await listLatestAuditActorsByResourceId(
+    db,
+    "market_item",
+    itemIds,
+  );
+
+  return rows.map((row) => ({
+    id: row.id,
+    sellerId: row.sellerId,
+    name: row.name,
+    imageUrls: imagesByItemId.get(row.id) ?? [],
+    manufacturer: row.manufacturer,
+    productCode: row.productCode,
+    conditionGrade: parseMarketConditionGrade(row.conditionGrade),
+    description: row.description,
+    price: row.price,
+    status: parseMarketItemStatus(row.status),
+    seller: mapMarketSeller({
+      id: row.sellerId,
+      name: row.sellerName,
+      image: row.sellerImage,
+      role: row.sellerRole,
+    }),
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    updatedBy: updatedByMap[row.id] ?? null,
+  }));
+};
+
+const toMarketCommentEntity = (
+  row: MarketCommentRow,
+  updatedBy: AuditActorEntity | null,
+): MarketCommentEntity => ({
+  id: row.id,
+  itemId: row.itemId,
+  author: mapMarketSeller({
+    id: row.authorId,
+    name: row.authorName,
+    image: row.authorImage,
+    role: row.authorRole,
+  }),
+  content: row.content,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
   updatedBy,
@@ -2368,6 +2513,463 @@ export const createDbDataService = (database: D1Database): DataService => {
         .where(and(eq(globalNotices.id, noticeId), isNull(globalNotices.deletedAt)));
 
       return true;
+    },
+
+    async listMarketItems(input) {
+      const safePage =
+        typeof input.page === "number" && Number.isFinite(input.page) && input.page > 0
+          ? Math.floor(input.page)
+          : 1;
+      const safePageSize =
+        typeof input.pageSize === "number" &&
+        Number.isFinite(input.pageSize) &&
+        input.pageSize > 0
+          ? Math.min(100, Math.floor(input.pageSize))
+          : 20;
+
+      const conditions = [
+        isNull(marketItems.deletedAt),
+        isNull(user.deletedAt),
+      ];
+      if (input.status) {
+        conditions.push(eq(marketItems.status, input.status));
+      }
+      if (input.sellerId) {
+        conditions.push(eq(marketItems.sellerId, input.sellerId));
+      }
+
+      const rows = await db
+        .select({
+          id: marketItems.id,
+          sellerId: marketItems.sellerId,
+          name: marketItems.name,
+          manufacturer: marketItems.manufacturer,
+          productCode: marketItems.productCode,
+          conditionGrade: marketItems.conditionGrade,
+          description: marketItems.description,
+          price: marketItems.price,
+          status: marketItems.status,
+          createdAt: marketItems.createdAt,
+          updatedAt: marketItems.updatedAt,
+          sellerName: user.name,
+          sellerImage: user.image,
+          sellerRole: user.role,
+        })
+        .from(marketItems)
+        .innerJoin(user, eq(marketItems.sellerId, user.id))
+        .where(and(...conditions))
+        .orderBy(desc(marketItems.createdAt))
+        .limit(safePageSize)
+        .offset((safePage - 1) * safePageSize);
+
+      return mapMarketItemsWithImages(db, rows);
+    },
+
+    async createMarketItem(input) {
+      const seller = await db.query.user.findFirst({
+        where: and(eq(user.id, input.sellerId), isNull(user.deletedAt)),
+        columns: { id: true },
+      });
+      if (!seller) {
+        return null;
+      }
+
+      const itemId = crypto.randomUUID();
+      const now = new Date();
+      await db.insert(marketItems).values({
+        id: itemId,
+        sellerId: input.sellerId,
+        name: input.name,
+        manufacturer: input.manufacturer,
+        productCode: input.productCode,
+        conditionGrade: input.conditionGrade,
+        description: input.description,
+        price: input.price,
+        status: "selling",
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      if (input.imageUrls.length > 0) {
+        await db.insert(marketItemImages).values(
+          input.imageUrls.map((imageUrl, index) => ({
+            id: crypto.randomUUID(),
+            itemId,
+            imageUrl,
+            sortOrder: index,
+            createdAt: now,
+            updatedAt: now,
+          })),
+        );
+      }
+
+      return this.getMarketItemById(itemId);
+    },
+
+    async getMarketItemById(id) {
+      const rows = await db
+        .select({
+          id: marketItems.id,
+          sellerId: marketItems.sellerId,
+          name: marketItems.name,
+          manufacturer: marketItems.manufacturer,
+          productCode: marketItems.productCode,
+          conditionGrade: marketItems.conditionGrade,
+          description: marketItems.description,
+          price: marketItems.price,
+          status: marketItems.status,
+          createdAt: marketItems.createdAt,
+          updatedAt: marketItems.updatedAt,
+          sellerName: user.name,
+          sellerImage: user.image,
+          sellerRole: user.role,
+        })
+        .from(marketItems)
+        .innerJoin(user, eq(marketItems.sellerId, user.id))
+        .where(
+          and(
+            eq(marketItems.id, id),
+            isNull(marketItems.deletedAt),
+            isNull(user.deletedAt),
+          ),
+        )
+        .limit(1);
+
+      if (!rows[0]) {
+        return null;
+      }
+
+      const mapped = await mapMarketItemsWithImages(db, [rows[0]]);
+      return mapped[0] ?? null;
+    },
+
+    async updateMarketItem(id, input) {
+      const exists = await db.query.marketItems.findFirst({
+        where: and(eq(marketItems.id, id), isNull(marketItems.deletedAt)),
+        columns: { id: true },
+      });
+      if (!exists) {
+        return null;
+      }
+
+      await db
+        .update(marketItems)
+        .set({
+          ...(input.name !== undefined ? { name: input.name } : {}),
+          ...(input.manufacturer !== undefined
+            ? { manufacturer: input.manufacturer }
+            : {}),
+          ...(input.productCode !== undefined ? { productCode: input.productCode } : {}),
+          ...(input.conditionGrade !== undefined
+            ? { conditionGrade: input.conditionGrade }
+            : {}),
+          ...(input.description !== undefined ? { description: input.description } : {}),
+          ...(input.price !== undefined ? { price: input.price } : {}),
+          updatedAt: new Date(),
+        })
+        .where(and(eq(marketItems.id, id), isNull(marketItems.deletedAt)));
+
+      if (input.imageUrls !== undefined) {
+        const now = new Date();
+        await db
+          .update(marketItemImages)
+          .set({
+            deletedAt: now,
+            updatedAt: now,
+          })
+          .where(and(eq(marketItemImages.itemId, id), isNull(marketItemImages.deletedAt)));
+
+        if (input.imageUrls.length > 0) {
+          await db.insert(marketItemImages).values(
+            input.imageUrls.map((imageUrl, index) => ({
+              id: crypto.randomUUID(),
+              itemId: id,
+              imageUrl,
+              sortOrder: index,
+              createdAt: now,
+              updatedAt: now,
+            })),
+          );
+        }
+      }
+
+      return this.getMarketItemById(id);
+    },
+
+    async updateMarketItemStatus(id, status) {
+      const exists = await db.query.marketItems.findFirst({
+        where: and(eq(marketItems.id, id), isNull(marketItems.deletedAt)),
+        columns: { id: true },
+      });
+      if (!exists) {
+        return null;
+      }
+
+      await db
+        .update(marketItems)
+        .set({
+          status,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(marketItems.id, id), isNull(marketItems.deletedAt)));
+
+      return this.getMarketItemById(id);
+    },
+
+    async deleteMarketItem(id) {
+      const exists = await db.query.marketItems.findFirst({
+        where: and(eq(marketItems.id, id), isNull(marketItems.deletedAt)),
+        columns: { id: true },
+      });
+      if (!exists) {
+        return false;
+      }
+
+      const now = new Date();
+      await db
+        .update(marketItems)
+        .set({
+          deletedAt: now,
+          updatedAt: now,
+        })
+        .where(and(eq(marketItems.id, id), isNull(marketItems.deletedAt)));
+      await db
+        .update(marketItemImages)
+        .set({
+          deletedAt: now,
+          updatedAt: now,
+        })
+        .where(and(eq(marketItemImages.itemId, id), isNull(marketItemImages.deletedAt)));
+      await db
+        .update(marketComments)
+        .set({
+          deletedAt: now,
+          updatedAt: now,
+        })
+        .where(and(eq(marketComments.itemId, id), isNull(marketComments.deletedAt)));
+
+      return true;
+    },
+
+    async listMarketCommentsByItemId(itemId) {
+      const rows = await db
+        .select({
+          id: marketComments.id,
+          itemId: marketComments.itemId,
+          content: marketComments.content,
+          createdAt: marketComments.createdAt,
+          updatedAt: marketComments.updatedAt,
+          authorId: user.id,
+          authorName: user.name,
+          authorImage: user.image,
+          authorRole: user.role,
+        })
+        .from(marketComments)
+        .innerJoin(user, eq(marketComments.authorId, user.id))
+        .where(
+          and(
+            eq(marketComments.itemId, itemId),
+            isNull(marketComments.deletedAt),
+            isNull(user.deletedAt),
+          ),
+        )
+        .orderBy(asc(marketComments.createdAt));
+
+      const updatedByMap = await listLatestAuditActorsByResourceId(
+        db,
+        "market_comment",
+        rows.map((row) => row.id),
+      );
+
+      return rows.map((row) => toMarketCommentEntity(row, updatedByMap[row.id] ?? null));
+    },
+
+    async createMarketComment(input) {
+      const [itemExists, authorExists] = await Promise.all([
+        db.query.marketItems.findFirst({
+          where: and(eq(marketItems.id, input.itemId), isNull(marketItems.deletedAt)),
+          columns: { id: true },
+        }),
+        db.query.user.findFirst({
+          where: and(eq(user.id, input.authorId), isNull(user.deletedAt)),
+          columns: { id: true },
+        }),
+      ]);
+
+      if (!itemExists || !authorExists) {
+        return null;
+      }
+
+      const id = crypto.randomUUID();
+      await db.insert(marketComments).values({
+        id,
+        itemId: input.itemId,
+        authorId: input.authorId,
+        content: input.content,
+      });
+
+      await db
+        .update(marketItems)
+        .set({ updatedAt: new Date() })
+        .where(and(eq(marketItems.id, input.itemId), isNull(marketItems.deletedAt)));
+
+      return this.getMarketCommentById(id);
+    },
+
+    async getMarketCommentById(id) {
+      const rows = await db
+        .select({
+          id: marketComments.id,
+          itemId: marketComments.itemId,
+          content: marketComments.content,
+          createdAt: marketComments.createdAt,
+          updatedAt: marketComments.updatedAt,
+          authorId: user.id,
+          authorName: user.name,
+          authorImage: user.image,
+          authorRole: user.role,
+        })
+        .from(marketComments)
+        .innerJoin(user, eq(marketComments.authorId, user.id))
+        .where(
+          and(
+            eq(marketComments.id, id),
+            isNull(marketComments.deletedAt),
+            isNull(user.deletedAt),
+          ),
+        )
+        .limit(1);
+
+      if (!rows[0]) {
+        return null;
+      }
+
+      const updatedBy = await this.getLatestAuditActor("market_comment", id);
+      return toMarketCommentEntity(rows[0], updatedBy);
+    },
+
+    async updateMarketComment(id, input) {
+      const exists = await db.query.marketComments.findFirst({
+        where: and(eq(marketComments.id, id), isNull(marketComments.deletedAt)),
+        columns: { id: true, itemId: true },
+      });
+      if (!exists) {
+        return null;
+      }
+
+      await db
+        .update(marketComments)
+        .set({
+          ...(input.content !== undefined ? { content: input.content } : {}),
+          updatedAt: new Date(),
+        })
+        .where(and(eq(marketComments.id, id), isNull(marketComments.deletedAt)));
+
+      await db
+        .update(marketItems)
+        .set({ updatedAt: new Date() })
+        .where(and(eq(marketItems.id, exists.itemId), isNull(marketItems.deletedAt)));
+
+      return this.getMarketCommentById(id);
+    },
+
+    async deleteMarketComment(id) {
+      const exists = await db.query.marketComments.findFirst({
+        where: and(eq(marketComments.id, id), isNull(marketComments.deletedAt)),
+        columns: { id: true, itemId: true },
+      });
+      if (!exists) {
+        return false;
+      }
+
+      const now = new Date();
+      await db
+        .update(marketComments)
+        .set({
+          deletedAt: now,
+          updatedAt: now,
+        })
+        .where(and(eq(marketComments.id, id), isNull(marketComments.deletedAt)));
+
+      await db
+        .update(marketItems)
+        .set({ updatedAt: now })
+        .where(and(eq(marketItems.id, exists.itemId), isNull(marketItems.deletedAt)));
+
+      return true;
+    },
+
+    async upsertMarketPushSubscription(input) {
+      const userExists = await db.query.user.findFirst({
+        where: and(eq(user.id, input.userId), isNull(user.deletedAt)),
+        columns: { id: true },
+      });
+      if (!userExists) {
+        return null;
+      }
+
+      const existing = await db.query.marketPushSubscriptions.findFirst({
+        where: eq(marketPushSubscriptions.endpoint, input.endpoint),
+      });
+
+      if (existing) {
+        await db
+          .update(marketPushSubscriptions)
+          .set({
+            userId: input.userId,
+            p256dh: input.p256dh,
+            auth: input.auth,
+            updatedAt: new Date(),
+          })
+          .where(eq(marketPushSubscriptions.id, existing.id));
+
+        return (
+          (await db.query.marketPushSubscriptions.findFirst({
+            where: eq(marketPushSubscriptions.id, existing.id),
+          })) ?? null
+        );
+      }
+
+      const id = crypto.randomUUID();
+      await db.insert(marketPushSubscriptions).values({
+        id,
+        userId: input.userId,
+        endpoint: input.endpoint,
+        p256dh: input.p256dh,
+        auth: input.auth,
+      });
+
+      return (
+        (await db.query.marketPushSubscriptions.findFirst({
+          where: eq(marketPushSubscriptions.id, id),
+        })) ?? null
+      );
+    },
+
+    async deleteMarketPushSubscription(input) {
+      const existing = await db.query.marketPushSubscriptions.findFirst({
+        where: and(
+          eq(marketPushSubscriptions.userId, input.userId),
+          eq(marketPushSubscriptions.endpoint, input.endpoint),
+        ),
+        columns: { id: true },
+      });
+      if (!existing) {
+        return false;
+      }
+
+      await db
+        .delete(marketPushSubscriptions)
+        .where(eq(marketPushSubscriptions.id, existing.id));
+      return true;
+    },
+
+    async listMarketPushSubscriptionsByUserId(userId) {
+      return db
+        .select()
+        .from(marketPushSubscriptions)
+        .where(eq(marketPushSubscriptions.userId, userId))
+        .orderBy(desc(marketPushSubscriptions.updatedAt));
     },
 
     async getSiteSettings() {

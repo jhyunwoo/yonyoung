@@ -6,6 +6,7 @@ export type Resource =
   | "generation"
   | "activity"
   | "notice"
+  | "market"
   | "exhibition"
   | "linktree"
   | "user";
