@@ -39,6 +39,8 @@ import {
 
 type App = OpenAPIHono<HonoAppType>;
 const isPresidentActor = (role: string): boolean => role === "president";
+const isPrivilegedActor = (role: string): boolean =>
+  role === "president" || role === "vice_president";
 
 const sanitizeNoticeContentField = <T extends { content: string }>(notice: T): T => ({
   ...notice,
@@ -440,7 +442,7 @@ export const registerNoticeRoutes = (app: App, dependencies: AppDependencies) =>
       return actorResult.response;
     }
 
-    if (!isPresidentActor(actorResult.actor.role)) {
+    if (!isPrivilegedActor(actorResult.actor.role)) {
       return forbidden(c);
     }
 
@@ -517,7 +519,7 @@ export const registerNoticeRoutes = (app: App, dependencies: AppDependencies) =>
       return actorResult.response;
     }
 
-    if (!isPresidentActor(actorResult.actor.role)) {
+    if (!isPrivilegedActor(actorResult.actor.role)) {
       return forbidden(c);
     }
 

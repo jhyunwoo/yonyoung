@@ -40,6 +40,11 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
       expected: { resource: "notices", slot: "image" as const },
     },
     {
+      path: "/api/recruiting/presign/image",
+      role: "manager" as const,
+      expected: { resource: "notices", slot: "image" as const },
+    },
+    {
       path: "/api/market/presign/image",
       role: "regular_member" as const,
       expected: { resource: "market", slot: "image" as const },

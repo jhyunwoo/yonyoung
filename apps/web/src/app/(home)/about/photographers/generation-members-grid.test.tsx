@@ -126,9 +126,11 @@ describe("GenerationMembersGrid", () => {
     expect(avatar?.className).toContain("rounded-full");
     expect(avatar?.className).toContain("h-24");
     expect(avatar?.className).toContain("w-24");
-    expect(avatar?.className).toContain("border-[#2f3763]");
+    expect(avatar?.className).toContain("border-(--surface-strong-border)");
+    expect(avatar?.className).toContain("bg-(--surface-muted)");
     expect(nameOverlay).toBeInTheDocument();
     expect(nameOverlay?.className).toContain("text-base");
+    expect(nameOverlay?.className).toContain("text-(--text-primary)");
     expect(nameOverlay?.className).toContain("md:text-xl");
     expect(nameOverlay?.className).not.toContain("absolute");
     expect(nameOverlay).toHaveTextContent("홍길동");

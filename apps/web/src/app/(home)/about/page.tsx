@@ -39,7 +39,7 @@ export default async function AboutPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-(--bg-primary)">
       <div className="mx-auto max-w-300 px-4 md:px-8">
         <PageTitleHero
           title="연영회 소개"

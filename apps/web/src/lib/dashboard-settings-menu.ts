@@ -3,7 +3,7 @@ type DashboardSettingsMenuItem = {
   label: string;
   description: string;
   href: string;
-  presidentOnly?: boolean;
+  privilegedOnly?: boolean;
 };
 
 const SETTINGS_MENU_ITEMS: DashboardSettingsMenuItem[] = [
@@ -24,7 +24,15 @@ const SETTINGS_MENU_ITEMS: DashboardSettingsMenuItem[] = [
     label: "기본 설정",
     description: "하단 연락처와 후원 계좌 같은 사이트 기본 정보를 바꿀 수 있습니다.",
     href: "/dashboard/settings/site",
-    presidentOnly: true,
+    privilegedOnly: true,
+  },
+  {
+    key: "settings-recruiting",
+    label: "모집 계획",
+    description:
+      "올해 모집 계획의 제목, 세부 내용, 홍보 이미지, 모집 기간을 관리할 수 있습니다.",
+    href: "/dashboard/settings/recruiting",
+    privilegedOnly: true,
   },
   {
     key: "settings-members",
@@ -37,15 +45,15 @@ const SETTINGS_MENU_ITEMS: DashboardSettingsMenuItem[] = [
     label: "전체 기수 관리",
     description: "기수를 만들고 고치거나 삭제하고, 멤버를 기수에 배정할 수 있습니다.",
     href: "/dashboard/settings/generations",
-    presidentOnly: true,
+    privilegedOnly: true,
   },
 ];
 
 export const buildDashboardSettingsMenuItems = (input: {
-  isPresident: boolean;
+  canManagePrivilegedSettings: boolean;
 }): DashboardSettingsMenuItem[] =>
   SETTINGS_MENU_ITEMS.filter((item) => {
-    if (item.presidentOnly && !input.isPresident) {
+    if (item.privilegedOnly && !input.canManagePrivilegedSettings) {
       return false;
     }
     return true;

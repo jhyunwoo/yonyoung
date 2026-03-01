@@ -22,7 +22,7 @@ export default async function ArchiveExhibitionsPage() {
   const exhibitions = await getArchiveExhibitions();
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-(--bg-primary)">
       <div className="mx-auto max-w-300 px-4 md:px-8">
         <PageTitleHero title="전시회" />
       </div>
@@ -30,7 +30,7 @@ export default async function ArchiveExhibitionsPage() {
       <div className="pb-16">
         <div className="mx-auto max-w-[1200px] px-4 md:px-8">
           {exhibitions.length === 0 ? (
-            <div className="py-16 text-center text-[#666666]">
+            <div className="py-16 text-center text-(--text-muted)">
               <p>전시 정보가 없습니다.</p>
             </div>
           ) : (

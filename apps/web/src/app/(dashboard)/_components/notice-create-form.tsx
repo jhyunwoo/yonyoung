@@ -5,6 +5,7 @@ import {
   type FormEvent,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import Link from "next/link";
@@ -44,6 +45,7 @@ export default function NoticeCreateForm({
   description,
 }: NoticeCreateFormProps) {
   const router = useRouter();
+  const imageFileInputRef = useRef<HTMLInputElement | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState(EMPTY_RICH_TEXT_HTML);
   const {
@@ -58,6 +60,8 @@ export default function NoticeCreateForm({
   );
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const isImageUploadDisabled =
+    isSaving || isUploadingImage || imageUrls.length >= NOTICE_MAX_IMAGES;
   const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -103,6 +107,14 @@ export default function NoticeCreateForm({
       setIsUploadingImage(false);
       setUploadProgressPercent(null);
     }
+  };
+
+  const handleUploadImageClick = () => {
+    if (isImageUploadDisabled) {
+      return;
+    }
+
+    imageFileInputRef.current?.click();
   };
 
   const removeImageUrl = (targetId: string) => {
@@ -191,20 +203,31 @@ export default function NoticeCreateForm({
           <p className="text-sm font-semibold text-slate-900">첨부 이미지</p>
           <p className="mt-1 text-xs text-slate-500">최대 {NOTICE_MAX_IMAGES}장</p>
 
-          <label className="mt-3 inline-flex cursor-pointer rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+          <button
+            type="button"
+            onClick={handleUploadImageClick}
+            disabled={isImageUploadDisabled}
+            className="mt-3 inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
             파일 업로드
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleUploadImage}
-              disabled={isSaving || isUploadingImage || imageUrls.length >= NOTICE_MAX_IMAGES}
-              className="hidden"
-            />
-          </label>
+          </button>
+          <input
+            ref={imageFileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleUploadImage}
+            disabled={isImageUploadDisabled}
+            className="sr-only"
+          />
 
           {isUploadingImage ? (
             <p className="mt-2 text-xs text-slate-500">이미지 업로드 중...</p>
+          ) : null}
+          {!isUploadingImage && imageUrls.length >= NOTICE_MAX_IMAGES ? (
+            <p className="mt-2 text-xs text-slate-500">
+              최대 {NOTICE_MAX_IMAGES}장까지 등록되어 추가 업로드가 비활성화되었습니다.
+            </p>
           ) : null}
           <UploadProgressBar progressPercent={uploadProgressPercent} label="첨부 이미지 업로드 진행률" />
 

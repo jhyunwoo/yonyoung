@@ -127,6 +127,12 @@ describe("adminResourceApi", () => {
     await adminResourceApi.getSiteSettings();
     expect(adminRequestMock).toHaveBeenLastCalledWith("/site-settings", "GET");
 
+    await adminResourceApi.getCurrentRecruitingPlan();
+    expect(adminRequestMock).toHaveBeenLastCalledWith(
+      "/recruiting-plan/current",
+      "GET",
+    );
+
     await adminResourceApi.listUsers();
     expect(adminRequestMock).toHaveBeenLastCalledWith("/users", "GET");
 
@@ -549,6 +555,19 @@ describe("adminResourceApi", () => {
         path: "/site-settings",
         method: "PATCH",
         tags: [ADMIN_CACHE_TAGS.siteSettings],
+      },
+      {
+        invoke: () =>
+          adminResourceApi.upsertCurrentRecruitingPlan({
+            title: "2030 모집",
+            content: "<p>본문</p>",
+            promotionImageUrls: [],
+            recruitmentStartAt: Date.parse("2030-03-01T00:00:00.000Z"),
+            recruitmentEndAt: Date.parse("2030-03-31T23:59:59.000Z"),
+          } as unknown as never),
+        path: "/recruiting-plan/current",
+        method: "PATCH",
+        tags: [ADMIN_CACHE_TAGS.recruitingPlan],
       },
       {
         invoke: () =>

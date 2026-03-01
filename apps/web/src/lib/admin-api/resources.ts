@@ -31,6 +31,7 @@ import type {
   ApiMarketItem,
   ApiMarketPushSubscriptionInput,
   ApiSiteSettings,
+  ApiRecruitingPlan,
   ApiUpdateActivityImageBatchItemInput,
   ApiUpdateActivityImageInput,
   ApiUpdateActivityInput,
@@ -46,6 +47,7 @@ import type {
   ApiUpdateMarketItemInput,
   ApiUpdateMarketItemStatusInput,
   ApiUpdateSiteSettingsInput,
+  ApiUpsertCurrentRecruitingPlanInput,
   ApiUpdateUserInput,
   ApiUser,
   ApiUserResourceHistory,
@@ -344,6 +346,12 @@ export const adminResourceApi = {
   updateSiteSettings: (input: ApiUpdateSiteSettingsInput) =>
     patchWithRevalidation<ApiSiteSettings>("/site-settings", input, [
       ADMIN_CACHE_TAGS.siteSettings,
+    ]),
+  getCurrentRecruitingPlan: () =>
+    apiRequest.get<ApiRecruitingPlan | null>("/recruiting-plan/current"),
+  upsertCurrentRecruitingPlan: (input: ApiUpsertCurrentRecruitingPlanInput) =>
+    patchWithRevalidation<ApiRecruitingPlan>("/recruiting-plan/current", input, [
+      ADMIN_CACHE_TAGS.recruitingPlan,
     ]),
 
   listUsers: () => apiRequest.get<ApiUser[]>("/users"),

@@ -1,6 +1,6 @@
 import NoticeDetail from "../../../../_components/notice-detail";
 import { serverAuthTool } from "../../../../../../lib/auth-server-tool";
-import { isPresidentRole } from "../../../../../../lib/auth-shared";
+import { isPresidentOrVicePresidentRole } from "../../../../../../lib/auth-shared";
 
 export default async function SettingsNoticeDetailPage({
   params,
@@ -19,7 +19,7 @@ export default async function SettingsNoticeDetailPage({
       <NoticeDetail
         scope="global"
         noticeId={noticeId}
-        canWrite={isPresidentRole(session.user.role)}
+        canWrite={isPresidentOrVicePresidentRole(session.user.role)}
         listPath={noticesBasePath}
         editPath={`${detailPath}/edit`}
         allowInlineEdit={false}

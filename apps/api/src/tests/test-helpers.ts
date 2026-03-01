@@ -14,6 +14,7 @@ import type {
   LinktreeEntity,
   LinktreeItemEntity,
   PresignService,
+  RecruitingPlanEntity,
   SiteSettingsEntity,
   UserEntity,
 } from "../lib/services/types";
@@ -239,6 +240,23 @@ export const createSiteSettings = (
   overrides: Partial<SiteSettingsEntity> = {},
 ): SiteSettingsEntity => ({
   ...DEFAULT_SITE_SETTINGS,
+  ...overrides,
+});
+
+export const createRecruitingPlan = (
+  overrides: Partial<RecruitingPlanEntity> = {},
+): RecruitingPlanEntity => ({
+  year: 2030,
+  title: "2030년도 모집 계획",
+  content: "<p>2030년 모집 계획 본문입니다.</p>",
+  promotionImageUrls: [
+    "https://cdn.yonyoung.example/recruiting/2030-1.jpg",
+    "https://cdn.yonyoung.example/recruiting/2030-2.jpg",
+  ],
+  recruitmentStartAt: new Date("2030-03-01T00:00:00.000Z"),
+  recruitmentEndAt: new Date("2030-03-31T23:59:59.000Z"),
+  createdAt: BASE_DATE,
+  updatedAt: BASE_DATE,
   ...overrides,
 });
 

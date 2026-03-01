@@ -10,6 +10,7 @@ import { registerLinktreeRoutes } from "../modules/linktree";
 import { registerMarketRoutes } from "../modules/market";
 import { registerNoticeRoutes } from "../modules/notices";
 import { registerPublicRoutes } from "../modules/public";
+import { registerRecruitingPlanRoutes } from "../modules/recruiting-plan";
 import { registerSiteSettingsRoutes } from "../modules/site-settings";
 import { registerUploadRoutes } from "../modules/uploads";
 import { registerUserRoutes } from "../modules/users";
@@ -56,6 +57,7 @@ export const mountDomainRouters = (
       registerLinktreeRoutes(router, dependencies);
       registerUserRoutes(router, dependencies);
       registerSiteSettingsRoutes(router, dependencies);
+      registerRecruitingPlanRoutes(router, dependencies);
       registerDashboardRoutes(router, dependencies);
       registerAuditRoutes(router, dependencies);
     }, defaultHook),

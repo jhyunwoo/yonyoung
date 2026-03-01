@@ -25,15 +25,16 @@ describe("PageTitleHero", () => {
 
     expect(result.props.className).toContain("mb-16");
     expect(result.props.className).toContain("border-b");
+    expect(result.props.className).toContain("border-(--surface-border)");
     expect(result.props.className).toContain("text-center");
 
     expect(heading.props.className).toContain("text-[2rem]");
     expect(heading.props.className).toContain("font-bold");
-    expect(heading.props.className).toContain("text-[#2c3357]");
+    expect(heading.props.className).toContain("text-(--text-primary)");
     expect(heading.props.children).toBe("테스트 제목");
 
     expect(description.props.className).toContain("text-lg");
-    expect(description.props.className).toContain("text-[#666666]");
+    expect(description.props.className).toContain("text-(--text-muted)");
     expect(description.props.children).toBe("설명");
   });
 

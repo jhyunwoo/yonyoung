@@ -111,6 +111,9 @@ export const isUnverifiedRole = (role: unknown): boolean =>
 export const isPresidentRole = (role: unknown): role is typeof PRESIDENT_ROLE =>
   typeof role === "string" && role === PRESIDENT_ROLE;
 
+export const isPresidentOrVicePresidentRole = (role: unknown): boolean =>
+  typeof role === "string" && (role === "president" || role === "vice_president");
+
 /**
  * canAccessAdminPage 조건을 평가해 사용 가능 여부를 판별합니다.
  * @param session 인증/인가 상태를 포함한 세션 정보입니다.
@@ -136,7 +139,7 @@ export const canManageGenerations = (session: SessionWithRole): boolean => {
     return false;
   }
 
-  return isPresidentRole(getRoleFromSession(session));
+  return isPresidentOrVicePresidentRole(getRoleFromSession(session));
 };
 
 /**
@@ -150,8 +153,7 @@ export const canManageGlobalUsers = (session: SessionWithRole): boolean => {
     return false;
   }
 
-  const role = getRoleFromSession(session);
-  return role === "president" || role === "vice_president";
+  return isPresidentOrVicePresidentRole(getRoleFromSession(session));
 };
 
 export const resolvePostSignInPath = (input: {

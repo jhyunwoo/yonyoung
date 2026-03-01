@@ -362,6 +362,25 @@ export const DEFAULT_SITE_SETTINGS: ApiSiteSettings = {
   donateAccountHolder: "연영회",
 };
 
+export type ApiRecruitingPlan = {
+  year: number;
+  title: string;
+  content: string;
+  promotionImageUrls: string[];
+  recruitmentStartAt: number;
+  recruitmentEndAt: number;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type ApiUpsertCurrentRecruitingPlanInput = {
+  title: string;
+  content: string;
+  promotionImageUrls: string[];
+  recruitmentStartAt: number;
+  recruitmentEndAt: number;
+};
+
 export type ApiUser = {
   id: string;
   name: string;

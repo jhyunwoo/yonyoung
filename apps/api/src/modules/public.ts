@@ -6,6 +6,7 @@ import {
   ApiIdParamSchema,
   ApiLinktreeSchema,
   ApiPublicGenerationWithMembersSchema,
+  ApiRecruitingPlanSchema,
   ApiSiteSettingsSchema,
 } from "../lib/openapi/schemas";
 import { dataResponse, errorResponses } from "../lib/openapi/responses";
@@ -102,6 +103,19 @@ const getPublicSiteSettingsRoute = createRoute({
   },
 });
 
+const getPublicCurrentRecruitingPlanRoute = createRoute({
+  method: "get",
+  path: "/api/public/recruiting-plan/current",
+  tags: ["Public"],
+  operationId: "getPublicCurrentRecruitingPlan",
+  responses: {
+    200: dataResponse(
+      ApiRecruitingPlanSchema.nullable(),
+      "공개 현재 연도 모집 계획 조회 성공",
+    ),
+  },
+});
+
 const listPublicGenerationsRoute = createRoute({
   method: "get",
   path: "/api/public/generations",
@@ -194,6 +208,13 @@ export const registerPublicRoutes = (
   app.openapi(getPublicSiteSettingsRoute, async (c): Promise<any> =>
     respondWithPublicCache(c, async () => {
       const data = await dependencies.getDataService(c).getSiteSettings();
+      return ok(c, data);
+    }),
+  );
+
+  app.openapi(getPublicCurrentRecruitingPlanRoute, async (c): Promise<any> =>
+    respondWithPublicCache(c, async () => {
+      const data = await dependencies.getDataService(c).getCurrentRecruitingPlan();
       return ok(c, data);
     }),
   );

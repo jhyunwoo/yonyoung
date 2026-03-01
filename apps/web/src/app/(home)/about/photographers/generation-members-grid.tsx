@@ -104,10 +104,10 @@ export default function GenerationMembersGrid({ generation }: GenerationMembersG
                 data-testid={`about-photographers-member-button-${member.id}`}
               >
                 <div
-                  className="flex h-24 w-24 items-center justify-center rounded-full border-[3px] border-[#2f3763] bg-[#efefef] p-1 shadow-[0_0_0_1px_rgba(15,16,24,0.08)] md:h-28 md:w-28"
+                  className="flex h-24 w-24 items-center justify-center rounded-full border-[3px] border-(--surface-strong-border) bg-(--surface-muted) p-1 shadow-[0_0_0_1px_rgba(15,16,24,0.08)] md:h-28 md:w-28"
                   data-testid={`about-photographers-member-avatar-${member.id}`}
                 >
-                  <div className="relative h-full w-full overflow-hidden rounded-full bg-[#dddddd]">
+                  <div className="relative h-full w-full overflow-hidden rounded-full bg-(--surface-border)">
                     {member.image ? (
                       <Image
                         src={member.image}
@@ -118,14 +118,14 @@ export default function GenerationMembersGrid({ generation }: GenerationMembersG
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-[#8a8b93]">
+                      <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-(--text-muted)">
                         {fallbackInitial}
                       </div>
                     )}
                   </div>
                 </div>
                 <span
-                  className="text-base font-semibold tracking-tight text-[#101217] md:text-xl md:leading-none"
+                  className="text-base font-semibold tracking-tight text-(--text-primary) md:text-xl md:leading-none"
                   data-testid={`about-photographers-member-name-${member.id}`}
                 >
                   {displayName}
@@ -160,7 +160,7 @@ export default function GenerationMembersGrid({ generation }: GenerationMembersG
               aria-label="사용자 정보 모달 닫기"
             />
             <motion.div
-              className="relative z-10 flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[620px] flex-col overflow-hidden rounded-2xl border border-(--surface-border) bg-white shadow-[0_30px_80px_rgba(8,10,19,0.34)] ring-1 ring-black/5 will-change-transform sm:max-h-[calc(100dvh-4rem)]"
+              className="relative z-10 flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[620px] flex-col overflow-hidden rounded-2xl border border-(--surface-border) bg-(--surface-elevated) shadow-[0_30px_80px_rgba(8,10,19,0.34)] ring-1 ring-black/5 will-change-transform sm:max-h-[calc(100dvh-4rem)]"
               data-testid="about-photographers-member-modal-card"
               initial={shouldReduceMotion ? false : { opacity: 0, y: 28, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -177,7 +177,7 @@ export default function GenerationMembersGrid({ generation }: GenerationMembersG
               }
             >
               <div
-                className="pointer-events-none absolute inset-x-16 top-2 -z-10 h-12 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(70,87,160,0.22),rgba(70,87,160,0))] blur-xl"
+                className="pointer-events-none absolute inset-x-16 top-2 -z-10 h-12 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(122,132,148,0.2),rgba(122,132,148,0))] blur-xl"
                 aria-hidden="true"
               />
               <div className="relative h-[180px] w-full shrink-0 bg-(--surface-muted) sm:h-[220px] md:h-[280px]">
@@ -262,7 +262,7 @@ export default function GenerationMembersGrid({ generation }: GenerationMembersG
                           href={selectedMemberPersonalLink}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-blue-600 underline-offset-2 hover:underline"
+                          className="text-(--text-primary) underline underline-offset-2"
                         >
                           바로가기
                         </a>

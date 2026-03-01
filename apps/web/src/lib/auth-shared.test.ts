@@ -54,7 +54,7 @@ describe("auth-shared helpers", /** describe 실행 과정에서 필요한 연�
     expect(canAccessAdminPage({ user: { role: "regular_member" } })).toBe(true);
 
     expect(canManageGenerations(null)).toBe(false);
-    expect(canManageGenerations({ user: { role: "vice_president" } })).toBe(false);
+    expect(canManageGenerations({ user: { role: "vice_president" } })).toBe(true);
     expect(canManageGenerations({ user: { role: "president" } })).toBe(true);
 
     expect(canManageGlobalUsers(null)).toBe(false);

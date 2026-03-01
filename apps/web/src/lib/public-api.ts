@@ -5,6 +5,7 @@ import type {
   ApiLinktree,
   ApiLinktreeItem,
   ApiPublicGenerationWithMembers,
+  ApiRecruitingPlan,
   ApiSiteSettings,
   DataEnvelope,
 } from "@repo/shared-api-contracts";
@@ -28,6 +29,7 @@ export const PUBLIC_CACHE_TAGS = {
   linktree: "public:linktree",
   generations: "public:generations",
   photographers: "public:photographers",
+  recruitingPlan: "public:recruiting-plan",
   siteSettings: "public:site-settings",
 } as const;
 
@@ -178,6 +180,18 @@ export const getPublicSiteSettings = async (): Promise<ApiSiteSettings> =>
       });
     } catch {
       return DEFAULT_SITE_SETTINGS;
+    }
+  };
+
+export const getPublicCurrentRecruitingPlan = async (): Promise<ApiRecruitingPlan | null> =>
+  {
+    try {
+      return await publicGet<ApiRecruitingPlan | null>("/api/public/recruiting-plan/current", {
+        revalidateSeconds: 120,
+        tags: [PUBLIC_CACHE_TAGS.recruitingPlan],
+      });
+    } catch {
+      return null;
     }
   };
 

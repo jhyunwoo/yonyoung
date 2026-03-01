@@ -25,7 +25,7 @@ describe("site settings routes", () => {
     expect(getSiteSettings).not.toHaveBeenCalled();
   });
 
-  it("회장이 아니면 사이트 설정 조회가 불가하다", async () => {
+  it("회장/부회장이 아니면 사이트 설정 조회가 불가하다", async () => {
     const getSiteSettings = fn(async () => createSiteSettings());
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
@@ -58,10 +58,29 @@ describe("site settings routes", () => {
     expect(getSiteSettings).toHaveBeenCalledTimes(1);
   });
 
-  it("회장이 아니면 사이트 설정 수정이 불가하다", async () => {
-    const updateSiteSettings = fn(async () => createSiteSettings());
+  it("부회장은 사이트 설정을 조회할 수 있다", async () => {
+    const getSiteSettings = fn(async () =>
+      createSiteSettings({
+        footerInstagramId: "vice-page",
+      }),
+    );
     const app = createTestApp({
       actor: createActor("vice_president", IDs.vicePresident),
+      dataService: createDataServiceMock({ getSiteSettings }),
+    });
+
+    const response = await app.request("/api/site-settings");
+
+    expect(response.status).toBe(200);
+    const body = await readJson<{ data: { footerInstagramId: string } }>(response);
+    expect(body.data.footerInstagramId).toBe("vice-page");
+    expect(getSiteSettings).toHaveBeenCalledTimes(1);
+  });
+
+  it("회장/부회장이 아니면 사이트 설정 수정이 불가하다", async () => {
+    const updateSiteSettings = fn(async () => createSiteSettings());
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
       dataService: createDataServiceMock({ updateSiteSettings }),
     });
 
@@ -74,6 +93,40 @@ describe("site settings routes", () => {
     expect(response.status).toBe(403);
     await expectErrorCode(response, "FORBIDDEN");
     expect(updateSiteSettings).not.toHaveBeenCalled();
+  });
+
+  it("부회장은 사이트 설정을 수정할 수 있다", async () => {
+    const updateSiteSettings = fn(async () =>
+      createSiteSettings({
+        footerInstagramId: "vice_page",
+        footerPhone: "010-9876-5432",
+      }),
+    );
+
+    const app = createTestApp({
+      actor: createActor("vice_president", IDs.vicePresident),
+      dataService: createDataServiceMock({ updateSiteSettings }),
+    });
+
+    const response = await app.request("/api/site-settings", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        footerInstagramId: "@vice_page",
+        footerPhone: "010-9876-5432",
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    const body = await readJson<{ data: { footerInstagramId: string; footerPhone: string } }>(
+      response,
+    );
+    expect(body.data.footerInstagramId).toBe("vice_page");
+    expect(body.data.footerPhone).toBe("010-9876-5432");
+    expect(updateSiteSettings).toHaveBeenCalledWith({
+      footerInstagramId: "vice_page",
+      footerPhone: "010-9876-5432",
+    });
   });
 
   it("사이트 설정 수정 본문이 비어있으면 400을 반환한다", async () => {

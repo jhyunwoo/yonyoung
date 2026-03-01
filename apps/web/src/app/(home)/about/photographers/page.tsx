@@ -18,7 +18,7 @@ export default async function PhotographersPage() {
 
   return (
     <div
-      className="bg-white pb-14 md:pb-20 md:pt-10"
+      className="bg-(--bg-primary) pb-14 md:pb-20 md:pt-10"
       data-testid="about-photographers-page"
     >
       <main
@@ -26,7 +26,7 @@ export default async function PhotographersPage() {
         data-testid="about-photographers-main"
       >
         <section className="space-y-6 pt-6 md:space-y-10 md:pt-10">
-          <h1 className="text-4xl leading-none font-normal tracking-[-0.02em] text-[#04050a] md:text-6xl">
+          <h1 className="text-4xl leading-none font-normal tracking-[-0.02em] text-(--text-primary) md:text-6xl">
             PHOTOGRAPHERS
           </h1>
           {generations.length > 0 ? (
@@ -36,7 +36,7 @@ export default async function PhotographersPage() {
                   <li key={`photographers-anchor-${generation.id}`}>
                     <Link
                       href={`#gen-${generation.sortOrder}`}
-                      className="inline-flex text-base leading-tight font-normal text-[#666666] transition-colors hover:text-[#111218] md:text-lg"
+                      className="inline-flex text-base leading-tight font-normal text-(--text-muted) transition-colors hover:text-(--text-primary) md:text-lg"
                     >
                       {generation.sortOrder}기
                     </Link>
@@ -45,11 +45,11 @@ export default async function PhotographersPage() {
               </ul>
             </nav>
           ) : null}
-          <div className="h-px w-full bg-[#d8d8dd]" />
+          <div className="h-px w-full bg-(--surface-border)" />
         </section>
 
         {generations.length === 0 ? (
-          <section className="border border-[#d8d8dd] p-5 text-sm text-[#6f6f79]">
+          <section className="border border-(--surface-border) p-5 text-sm text-(--text-muted)">
             공개된 기수 정보가 없습니다.
           </section>
         ) : (
@@ -66,7 +66,7 @@ export default async function PhotographersPage() {
               >
                 <header>
                   <div className="inline-flex flex-col items-start">
-                    <h2 className="text-xl leading-none font-medium tracking-tight text-[#3a3b43] md:text-2xl underline underline-offset-4  ">
+                    <h2 className="text-xl leading-none font-medium tracking-tight text-(--text-primary) md:text-2xl underline underline-offset-4  ">
                       {generation.sortOrder}기
                     </h2>
                   </div>
@@ -80,7 +80,7 @@ export default async function PhotographersPage() {
                 </header>
 
                 {generation.members.length === 0 ? (
-                  <p className="text-sm text-[#6f6f79]">
+                  <p className="text-sm text-(--text-muted)">
                     등록된 멤버가 없습니다.
                   </p>
                 ) : (

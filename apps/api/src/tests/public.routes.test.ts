@@ -7,6 +7,7 @@ import {
   createGeneration,
   createLinktree,
   createLinktreeItem,
+  createRecruitingPlan,
   createSiteSettings,
   createTestApp,
   createUser,
@@ -224,6 +225,44 @@ describe("public routes", () => {
     const body = await readJson<{ data: { footerInstagramId: string } }>(response);
     expect(body.data.footerInstagramId).toBe("yonyoung_archive");
     expect(getSiteSettings).toHaveBeenCalledTimes(1);
+  });
+
+  it("공개 현재 연도 모집 계획은 비로그인 상태에서도 조회할 수 있다", async () => {
+    const getCurrentRecruitingPlan = fn(async () =>
+      createRecruitingPlan({
+        year: 2031,
+        title: "2031 모집",
+      }),
+    );
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({ getCurrentRecruitingPlan }),
+    });
+
+    const response = await app.request("/api/public/recruiting-plan/current");
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toContain("s-maxage=60");
+
+    const body = await readJson<{ data: { year: number; title: string } }>(response);
+    expect(body.data.year).toBe(2031);
+    expect(body.data.title).toBe("2031 모집");
+    expect(getCurrentRecruitingPlan).toHaveBeenCalledTimes(1);
+  });
+
+  it("공개 현재 연도 모집 계획이 없으면 null을 반환한다", async () => {
+    const getCurrentRecruitingPlan = fn(async () => null);
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({ getCurrentRecruitingPlan }),
+    });
+
+    const response = await app.request("/api/public/recruiting-plan/current");
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toContain("s-maxage=60");
+
+    const body = await readJson<{ data: null }>(response);
+    expect(body.data).toBeNull();
+    expect(getCurrentRecruitingPlan).toHaveBeenCalledTimes(1);
   });
 
   it("공개 기수 목록은 sortOrder 기준 오름차순으로 정렬된다", async () => {

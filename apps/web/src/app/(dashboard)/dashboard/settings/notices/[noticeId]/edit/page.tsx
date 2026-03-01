@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import NoticeEditForm from "../../../../../_components/notice-edit-form";
 import { serverAuthTool } from "../../../../../../../lib/auth-server-tool";
-import { isPresidentRole } from "../../../../../../../lib/auth-shared";
+import { isPresidentOrVicePresidentRole } from "../../../../../../../lib/auth-shared";
 
 export default async function SettingsNoticeEditPage({
   params,
@@ -15,7 +15,7 @@ export default async function SettingsNoticeEditPage({
   const noticesBasePath = "/dashboard/settings/notices";
   const detailPath = `${noticesBasePath}/${noticeId}`;
 
-  if (!isPresidentRole(session.user.role)) {
+  if (!isPresidentOrVicePresidentRole(session.user.role)) {
     redirect(detailPath);
   }
 

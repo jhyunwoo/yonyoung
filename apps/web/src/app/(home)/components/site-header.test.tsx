@@ -159,9 +159,13 @@ describe("SiteHeader", () => {
     const lightButton = container.querySelector("[data-testid='public-theme-mode-light']");
     const darkButton = container.querySelector("[data-testid='public-theme-mode-dark']");
     const systemButton = container.querySelector("[data-testid='public-theme-mode-system']");
+    const logoImage = () =>
+      container.querySelector<HTMLImageElement>("[data-testid='public-logo-image']");
     expect(lightButton).toBeInTheDocument();
     expect(darkButton).toBeInTheDocument();
     expect(systemButton).toBeInTheDocument();
+    expect(logoImage()).toBeInTheDocument();
+    expect(logoImage()?.getAttribute("src")).toContain("/yonyoung-logo-black.png");
 
     await act(async () => {
       darkButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -173,6 +177,7 @@ describe("SiteHeader", () => {
     expect(document.documentElement.dataset.themeMode).toBe("dark");
     expect(localStorage.getItem("theme")).toBe("dark");
     expect(darkButton).toHaveAttribute("aria-pressed", "true");
+    expect(logoImage()?.getAttribute("src")).toContain("/yonyong-logo-white.png");
 
     await act(async () => {
       systemButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -184,5 +189,41 @@ describe("SiteHeader", () => {
     expect(document.documentElement.dataset.themeMode).toBe("system");
     expect(localStorage.getItem("theme")).toBe("system");
     expect(systemButton).toHaveAttribute("aria-pressed", "true");
+    expect(logoImage()?.getAttribute("src")).toContain("/yonyoung-logo-black.png");
+  });
+
+  it("기기 다크 모드(system + dark) 초기 상태에서 white 로고를 적용한다", async () => {
+    localStorage.setItem("theme", "system");
+    document.documentElement.dataset.theme = "dark";
+    document.documentElement.dataset.themeMode = "system";
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: true,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+
+    const { default: SiteHeader } = await import("./site-header");
+
+    await act(async () => {
+      root.render(<SiteHeader />);
+      await Promise.resolve();
+    });
+
+    const logoImage = container.querySelector<HTMLImageElement>(
+      "[data-testid='public-logo-image']",
+    );
+    expect(logoImage).toBeInTheDocument();
+    expect(logoImage?.getAttribute("src")).toContain("/yonyong-logo-white.png");
+    expect(document.documentElement.classList.contains("dark")).toBe(true);
+    expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(document.documentElement.dataset.themeMode).toBe("system");
   });
 });

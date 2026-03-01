@@ -1,6 +1,6 @@
 import NoticeCreateForm from "../../../../_components/notice-create-form";
 import { serverAuthTool } from "../../../../../../lib/auth-server-tool";
-import { isPresidentRole } from "../../../../../../lib/auth-shared";
+import { isPresidentOrVicePresidentRole } from "../../../../../../lib/auth-shared";
 
 export default async function SettingsNoticeCreatePage() {
   const session = await serverAuthTool.requireSession();
@@ -10,7 +10,7 @@ export default async function SettingsNoticeCreatePage() {
     <main className="px-4 py-6 md:px-8 md:py-8">
       <NoticeCreateForm
         scope="global"
-        canWrite={isPresidentRole(session.user.role)}
+        canWrite={isPresidentOrVicePresidentRole(session.user.role)}
         basePath={noticesBasePath}
         listPath={noticesBasePath}
         heading="전체 공지 작성"

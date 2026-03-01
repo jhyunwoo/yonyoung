@@ -4,8 +4,8 @@ import { DEFAULT_SITE_SETTINGS } from "@repo/shared-api-contracts";
 import { getPublicSiteSettings } from "../../../lib/public-api";
 import CurrentYear from "./current-year";
 
-const infoLabelClass = "text-[0.85rem] font-bold uppercase text-[#999999]";
-const infoContentClass = "break-all text-[0.9rem] leading-[1.6] text-[#cccccc]";
+const infoLabelClass = "text-[0.85rem] font-bold uppercase text-(--footer-muted)";
+const infoContentClass = "break-all text-[0.9rem] leading-[1.6] text-(--footer-muted)";
 const infoLinkClass = `${infoContentClass} inline-flex min-h-11 w-full items-center`;
 
 export default async function SiteFooter() {
@@ -17,11 +17,11 @@ export default async function SiteFooter() {
 
   return (
     <footer
-      className="mt-16 bg-[#1a1a1a] pb-6 pt-12 text-white md:pb-8 md:pt-16"
+      className="mt-16 bg-(--footer-bg) pb-6 pt-12 text-(--footer-text) md:pb-8 md:pt-16"
       data-testid="public-footer"
     >
       <div className="mx-auto max-w-[1200px] px-4 md:px-8">
-        <div className="mb-6 border-b border-[#333333] pb-6 md:mb-8 md:pb-8">
+        <div className="mb-6 border-b border-(--surface-strong-border) pb-6 md:mb-8 md:pb-8">
           <div className="flex items-center gap-[0.6rem]">
             <div className="flex h-[1.92rem] items-center justify-center">
               <Image
@@ -33,7 +33,7 @@ export default async function SiteFooter() {
                 className="h-full w-auto object-contain"
               />
             </div>
-            <div className="text-left text-[0.8rem] leading-[1.2] font-bold tracking-[-0.02em] text-white">
+            <div className="text-left text-[0.8rem] leading-[1.2] font-bold tracking-[-0.02em] text-(--footer-text)">
               <span className="block tracking-[-0.05em]">
                 연세대학교 중앙사진동아리
               </span>
@@ -50,7 +50,7 @@ export default async function SiteFooter() {
                 href={siteSettings.footerOpenChatUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`${infoLinkClass} transition-colors duration-300 hover:text-white`}
+                className={`${infoLinkClass} transition-colors duration-300 hover:text-(--footer-text)`}
               >
                 {siteSettings.footerOpenChatUrl}
               </a>
@@ -62,7 +62,7 @@ export default async function SiteFooter() {
                 href={instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`${infoLinkClass} transition-colors duration-300 hover:text-white`}
+                className={`${infoLinkClass} transition-colors duration-300 hover:text-(--footer-text)`}
               >
                 @{instagramId}
               </a>
@@ -72,7 +72,7 @@ export default async function SiteFooter() {
               <span className={infoLabelClass}>E-mail</span>
               <a
                 href={`mailto:${siteSettings.footerEmail}`}
-                className={`${infoLinkClass} transition-colors duration-300 hover:text-white`}
+                className={`${infoLinkClass} transition-colors duration-300 hover:text-(--footer-text)`}
               >
                 {siteSettings.footerEmail}
               </a>
@@ -93,8 +93,8 @@ export default async function SiteFooter() {
             </div>
           </div>
         </div>
-        <div className="border-t border-[#333333] pt-4 md:pt-5">
-          <p className="text-[0.8rem] leading-normal text-[#999999]">
+        <div className="border-t border-(--surface-strong-border) pt-4 md:pt-5">
+          <p className="text-[0.8rem] leading-normal text-(--footer-muted)">
             ©{" "}
             <Suspense fallback={null}>
               <CurrentYear />

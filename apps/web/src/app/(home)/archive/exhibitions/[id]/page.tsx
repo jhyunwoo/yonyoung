@@ -39,26 +39,26 @@ export default async function ExhibitionDetailPage({
       : [exhibition.coverImageUrl];
 
   return (
-    <div className="min-h-screen bg-white pb-9 pt-3 md:pb-12 md:pt-4">
+    <div className="min-h-screen bg-(--bg-primary) pb-9 pt-3 md:pb-12 md:pt-4">
       <div className="mx-auto max-w-[1200px] px-4 md:px-8">
         <header className="mb-8">
           <Link
             href="/archive/exhibitions"
-            className="mb-4 inline-flex text-[0.9rem] text-[#2c3357] no-underline hover:underline"
+            className="mb-4 inline-flex text-[0.9rem] text-(--text-primary) no-underline hover:underline"
           >
             전시 아카이브로 돌아가기
           </Link>
-          <h1 className="m-0 text-[1.7rem] font-bold text-[#2c3357] md:text-[2rem]">
+          <h1 className="m-0 text-[1.7rem] font-bold text-(--text-primary) md:text-[2rem]">
             {exhibition.title}
           </h1>
-          <p className="mb-0 mt-3 text-[0.95rem] text-[#666666]">
+          <p className="mb-0 mt-3 text-[0.95rem] text-(--text-muted)">
             {formatKoreanDateCompact(exhibition.startDate)} ~{" "}
             {formatKoreanDateCompact(exhibition.endDate)}
           </p>
-          <p className="mb-0 mt-[0.4rem] text-[#555555]">{exhibition.place}</p>
+          <p className="mb-0 mt-[0.4rem] text-(--text-secondary)">{exhibition.place}</p>
           <RichTextContent
             html={exhibition.description}
-            className="mb-0 mt-3 leading-[1.6] text-[#4a4a4a]"
+            className="exhibition-description mb-0 mt-3 leading-[1.6]"
           />
         </header>
 
@@ -69,7 +69,7 @@ export default async function ExhibitionDetailPage({
           {imageUrls.map((imageUrl, index) => (
             <div
               key={`${exhibition.id}-${imageUrl}-${index}`}
-              className="relative aspect-[2/3] w-full overflow-hidden border border-[#d4d4d4] bg-[#f1f1f1]"
+              className="relative aspect-[2/3] w-full overflow-hidden border border-(--surface-border) bg-(--surface-muted)"
             >
               <Image
                 src={imageUrl}

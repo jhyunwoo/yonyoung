@@ -20,6 +20,7 @@ type NavItem = {
 };
 
 type ThemeMode = "light" | "dark" | "system";
+type ResolvedTheme = "light" | "dark";
 
 const navItems: NavItem[] = [
   {
@@ -61,7 +62,7 @@ const desktopLinkBaseClass =
 const mobileLinkBaseClass =
   "relative block px-4 py-4 text-center text-[0.9rem] font-medium tracking-[0.05em] text-(--text-primary) uppercase after:absolute after:bottom-[0.6rem] after:left-1/2 after:h-[2px] after:w-0 after:-translate-x-1/2 after:bg-(--text-primary) after:transition-[width] after:duration-300 hover:after:w-12";
 
-const resolveTheme = (mode: ThemeMode, isSystemDark: boolean): "light" | "dark" => {
+const resolveTheme = (mode: ThemeMode, isSystemDark: boolean): ResolvedTheme => {
   if (mode === "system") {
     return isSystemDark ? "dark" : "light";
   }
@@ -90,12 +91,26 @@ const readStoredThemeMode = (): ThemeMode => {
   return "system";
 };
 
+const readResolvedThemeFromDataset = (): ResolvedTheme | null => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const datasetTheme = document.documentElement.dataset.theme;
+  if (datasetTheme === "light" || datasetTheme === "dark") {
+    return datasetTheme;
+  }
+
+  return null;
+};
+
 export default function SiteHeader() {
   const pathname = usePathname();
   const shouldReduceMotion = useReducedMotion();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [themeMode, setThemeMode] = useState<ThemeMode>("system");
+  const [isSystemDark, setIsSystemDark] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 50);
@@ -119,10 +134,12 @@ export default function SiteHeader() {
     const initialMode = readStoredThemeMode();
     setThemeMode(initialMode);
 
+    const datasetTheme = readResolvedThemeFromDataset();
     const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const resolvedTheme = resolveTheme(initialMode, systemDark);
-    document.documentElement.classList.toggle("dark", resolvedTheme === "dark");
-    document.documentElement.dataset.theme = resolvedTheme;
+    setIsSystemDark(systemDark);
+    const nextResolvedTheme = datasetTheme ?? resolveTheme(initialMode, systemDark);
+    document.documentElement.classList.toggle("dark", nextResolvedTheme === "dark");
+    document.documentElement.dataset.theme = nextResolvedTheme;
     document.documentElement.dataset.themeMode = initialMode;
   }, []);
 
@@ -133,12 +150,13 @@ export default function SiteHeader() {
 
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const onSystemThemeChange = () => {
+      setIsSystemDark(mediaQuery.matches);
       if (themeMode !== "system") {
         return;
       }
-      const resolvedTheme = resolveTheme("system", mediaQuery.matches);
-      document.documentElement.classList.toggle("dark", resolvedTheme === "dark");
-      document.documentElement.dataset.theme = resolvedTheme;
+      const nextResolvedTheme = resolveTheme("system", mediaQuery.matches);
+      document.documentElement.classList.toggle("dark", nextResolvedTheme === "dark");
+      document.documentElement.dataset.theme = nextResolvedTheme;
     };
 
     if (typeof mediaQuery.addEventListener === "function") {
@@ -154,9 +172,9 @@ export default function SiteHeader() {
     setThemeMode(nextMode);
 
     const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const resolvedTheme = resolveTheme(nextMode, systemDark);
-    document.documentElement.classList.toggle("dark", resolvedTheme === "dark");
-    document.documentElement.dataset.theme = resolvedTheme;
+    const nextResolvedTheme = resolveTheme(nextMode, systemDark);
+    document.documentElement.classList.toggle("dark", nextResolvedTheme === "dark");
+    document.documentElement.dataset.theme = nextResolvedTheme;
     document.documentElement.dataset.themeMode = nextMode;
 
     try {
@@ -165,6 +183,11 @@ export default function SiteHeader() {
       // ignore storage errors
     }
   };
+
+  const logoSrc =
+    resolveTheme(themeMode, isSystemDark) === "dark"
+      ? "/yonyong-logo-white.png"
+      : "/yonyoung-logo-black.png";
 
   return (
     <header
@@ -187,13 +210,15 @@ export default function SiteHeader() {
           >
             <div className="flex h-[1.92rem] items-center justify-center">
               <Image
-                src="/yonyoung-logo-black.png"
+                key={logoSrc}
+                src={logoSrc}
                 alt="연영회 로고"
                 width={40}
                 height={40}
                 priority
                 unoptimized
                 className="h-full w-auto object-contain"
+                data-testid="public-logo-image"
               />
             </div>
             <div className="text-left text-[0.8rem] leading-[1.2] font-bold tracking-[-0.02em] text-(--text-primary)">
@@ -319,7 +344,7 @@ export default function SiteHeader() {
           <div className="fixed inset-x-0 top-[var(--public-header-height-mobile)] bottom-0 z-[999] md:top-[var(--public-header-height-desktop)] md:hidden">
             <motion.button
               type="button"
-              className="absolute inset-0 bg-[rgba(44,51,87,0.12)]"
+              className="absolute inset-0 bg-black/25"
               aria-label="모바일 메뉴 닫기"
               data-testid="public-nav-mobile-backdrop"
               onClick={() => setIsMobileMenuOpen(false)}

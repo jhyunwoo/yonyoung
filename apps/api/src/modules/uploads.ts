@@ -547,6 +547,14 @@ export const registerUploadRoutes = (
   registerResourcePresignRoute(
     app,
     dependencies,
+    "/api/recruiting/presign/image",
+    "issueRecruitingImagePresign",
+    "notice",
+    "image",
+  );
+  registerResourcePresignRoute(
+    app,
+    dependencies,
     "/api/market/presign/image",
     "issueMarketImagePresign",
     "market",

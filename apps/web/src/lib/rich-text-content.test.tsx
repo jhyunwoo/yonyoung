@@ -8,6 +8,8 @@ describe("RichTextContent", () => {
     const markup = renderToStaticMarkup(<RichTextContent html="<p>안녕하세요</p>" />);
 
     expect(markup).toContain("text-sm");
+    expect(markup).toContain("dark:text-slate-200");
+    expect(markup).toContain("dark:[&amp;_h2]:text-slate-100");
     expect(markup).toContain("<p>안녕하세요</p>");
   });
 

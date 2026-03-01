@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { serverAuthTool } from "../../../../lib/auth-server-tool";
-import { isPresidentRole } from "../../../../lib/auth-shared";
+import { isPresidentOrVicePresidentRole } from "../../../../lib/auth-shared";
 import { buildDashboardSettingsMenuItems } from "../../../../lib/dashboard-settings-menu";
 export default async function SettingsPage() {
   const session = await serverAuthTool.requireSession();
   const settingsItems = buildDashboardSettingsMenuItems({
-    isPresident: isPresidentRole(session.user.role),
+    canManagePrivilegedSettings: isPresidentOrVicePresidentRole(session.user.role),
   });
 
   return (

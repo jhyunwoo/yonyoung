@@ -12,7 +12,8 @@ import {
 
 type App = OpenAPIHono<HonoAppType>;
 
-const isPresidentActor = (role: string): boolean => role === "president";
+const isPrivilegedActor = (role: string): boolean =>
+  role === "president" || role === "vice_president";
 
 const normalizeInstagramId = (value: string): string => {
   return value.trim().replace(/^@+/, "");
@@ -58,7 +59,7 @@ export const registerSiteSettingsRoutes = (
       return actorResult.response;
     }
 
-    if (!isPresidentActor(actorResult.actor.role)) {
+    if (!isPrivilegedActor(actorResult.actor.role)) {
       return forbidden(c);
     }
 
@@ -72,7 +73,7 @@ export const registerSiteSettingsRoutes = (
       return actorResult.response;
     }
 
-    if (!isPresidentActor(actorResult.actor.role)) {
+    if (!isPrivilegedActor(actorResult.actor.role)) {
       return forbidden(c);
     }
 

@@ -552,8 +552,18 @@ describe("notices routes", () => {
     await expectErrorCode(response, "FORBIDDEN");
   });
 
-  it("vice_president는 전체 공지를 생성할 수 없다", async () => {
-    const createGlobalNoticeMock = fn(async () => createGlobalNotice());
+  it("vice_president는 전체 공지를 생성할 수 있다", async () => {
+    const createGlobalNoticeMock = fn(async () =>
+      createGlobalNotice({
+        title: "전체 공지 생성",
+        author: {
+          id: IDs.vicePresident,
+          name: "vice-name",
+          image: null,
+          role: "vice_president",
+        },
+      }),
+    );
     const app = createTestApp({
       actor: createActor("vice_president", IDs.vicePresident),
       dataService: createDataServiceMock({
@@ -570,9 +580,15 @@ describe("notices routes", () => {
       }),
     });
 
-    expect(response.status).toBe(403);
-    await expectErrorCode(response, "FORBIDDEN");
-    expect(createGlobalNoticeMock).not.toHaveBeenCalled();
+    expect(response.status).toBe(201);
+    const body = await readJson<{ data: { author: { id: string } } }>(response);
+    expect(body.data.author.id).toBe(IDs.vicePresident);
+    expect(createGlobalNoticeMock).toHaveBeenCalledWith({
+      title: "전체 공지 생성",
+      content: "전체 공지 본문",
+      imageUrls: [],
+      authorId: IDs.vicePresident,
+    });
   });
 
   it("president는 전체 공지를 이미지와 함께 생성할 수 있다", async () => {
@@ -716,6 +732,34 @@ describe("notices routes", () => {
     expect(response.status).toBe(403);
     await expectErrorCode(response, "FORBIDDEN");
     expect(updateGlobalNotice).not.toHaveBeenCalled();
+  });
+
+  it("vice_president는 전체 공지를 수정할 수 있다", async () => {
+    const updateGlobalNotice = fn(async () =>
+      createGlobalNotice({
+        title: "부회장 수정 완료",
+      }),
+    );
+    const app = createTestApp({
+      actor: createActor("vice_president", IDs.vicePresident),
+      dataService: createDataServiceMock({ updateGlobalNotice }),
+    });
+
+    const response = await app.request(
+      `/api/global-notices/${IDs.globalNotice}`,
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ title: "부회장 수정 완료" }),
+      },
+    );
+
+    expect(response.status).toBe(200);
+    const body = await readJson<{ data: { title: string } }>(response);
+    expect(body.data.title).toBe("부회장 수정 완료");
+    expect(updateGlobalNotice).toHaveBeenCalledWith(IDs.globalNotice, {
+      title: "부회장 수정 완료",
+    });
   });
 
   it("president는 전체 공지를 수정할 수 있다", async () => {

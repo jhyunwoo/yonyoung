@@ -81,4 +81,11 @@ describe("public-api", () => {
 
     await expect(listPublicPhotographers()).resolves.toEqual([]);
   });
+
+  it("공개 현재 연도 모집 계획 조회 실패 시 null fallback을 반환한다", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("fetch failed"));
+    const { getPublicCurrentRecruitingPlan } = await import("./public-api");
+
+    await expect(getPublicCurrentRecruitingPlan()).resolves.toBeNull();
+  });
 });

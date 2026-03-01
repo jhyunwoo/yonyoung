@@ -16,6 +16,7 @@ import {
   marketItemImages,
   marketItems,
   marketPushSubscriptions,
+  recruitingPlans,
   siteSettings,
   user,
   userGenerations,
@@ -39,6 +40,7 @@ import {
   MarketItemStatus,
   MarketSellerEntity,
   NoticeAuthorEntity,
+  RecruitingPlanEntity,
   SiteSettingsEntity,
   UserEntity,
   UserResourceHistoryItemEntity,
@@ -879,6 +881,53 @@ const toSiteSettingsEntity = (
     donateAccountHolder: row.donateAccountHolder,
   };
 };
+
+const KOREA_TIME_ZONE = "Asia/Seoul";
+const koreanYearFormatter = new Intl.DateTimeFormat("en-CA", {
+  year: "numeric",
+  timeZone: KOREA_TIME_ZONE,
+});
+
+const readCurrentKoreanYear = (): number => {
+  const formatted = koreanYearFormatter.format(Date.now());
+  const parsed = Number.parseInt(formatted, 10);
+  return Number.isFinite(parsed) ? parsed : new Date().getUTCFullYear();
+};
+
+const parseRecruitingPromotionImageUrls = (
+  value: string | null | undefined,
+): string[] => {
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.filter((item): item is string => typeof item === "string");
+  } catch {
+    return [];
+  }
+};
+
+const serializeRecruitingPromotionImageUrls = (value: string[] | undefined): string =>
+  JSON.stringify(value ?? []);
+
+const toRecruitingPlanEntity = (
+  row: typeof recruitingPlans.$inferSelect,
+): RecruitingPlanEntity => ({
+  year: row.year,
+  title: row.title,
+  content: row.content,
+  promotionImageUrls: parseRecruitingPromotionImageUrls(row.promotionImageUrls),
+  recruitmentStartAt: row.recruitmentStartAt,
+  recruitmentEndAt: row.recruitmentEndAt,
+  createdAt: row.createdAt,
+  updatedAt: row.updatedAt,
+});
 
 /**
  * createDbDataService 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
@@ -3017,6 +3066,59 @@ export const createDbDataService = (database: D1Database): DataService => {
         });
 
       return next;
+    },
+
+    async getCurrentRecruitingPlan() {
+      const currentYear = readCurrentKoreanYear();
+      const row =
+        (await db.query.recruitingPlans.findFirst({
+          where: eq(recruitingPlans.year, currentYear),
+        })) ?? null;
+
+      if (!row) {
+        return null;
+      }
+
+      return toRecruitingPlanEntity(row);
+    },
+
+    async upsertCurrentRecruitingPlan(input) {
+      const currentYear = readCurrentKoreanYear();
+
+      await db
+        .insert(recruitingPlans)
+        .values({
+          year: currentYear,
+          title: input.title,
+          content: input.content,
+          promotionImageUrls: serializeRecruitingPromotionImageUrls(
+            input.promotionImageUrls,
+          ),
+          recruitmentStartAt: input.recruitmentStartAt,
+          recruitmentEndAt: input.recruitmentEndAt,
+        })
+        .onConflictDoUpdate({
+          target: recruitingPlans.year,
+          set: {
+            title: input.title,
+            content: input.content,
+            promotionImageUrls: serializeRecruitingPromotionImageUrls(
+              input.promotionImageUrls,
+            ),
+            recruitmentStartAt: input.recruitmentStartAt,
+            recruitmentEndAt: input.recruitmentEndAt,
+            updatedAt: new Date(),
+          },
+        });
+
+      const saved = await db.query.recruitingPlans.findFirst({
+        where: eq(recruitingPlans.year, currentYear),
+      });
+      if (!saved) {
+        throw new Error("현재 연도 모집 계획 저장 결과를 찾을 수 없습니다.");
+      }
+
+      return toRecruitingPlanEntity(saved);
     },
 
         /**

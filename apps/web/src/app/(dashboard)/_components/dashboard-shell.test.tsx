@@ -142,6 +142,42 @@ describe("DashboardShell", () => {
     expect(container.textContent).toContain("전체 기수 관리");
   });
 
+  it("부회장이면 설정 하위 메뉴에 전체 기수 관리를 노출한다", async () => {
+    const { default: DashboardShell } = await import("./dashboard-shell");
+
+    await act(async () => {
+      root.render(
+        <DashboardShell
+          generationOptions={[]}
+          viewer={{
+            id: "user-vice",
+            displayName: "부회장",
+            email: "vice@example.com",
+            image: null,
+            role: "vice_president",
+          }}
+        >
+          <div>content</div>
+        </DashboardShell>,
+      );
+      await Promise.resolve();
+    });
+
+    const settingsButton = Array.from(
+      container.querySelectorAll("button[aria-expanded]"),
+    ).find((button) => button.textContent?.includes("설정"));
+    expect(settingsButton).toBeInTheDocument();
+
+    await act(async () => {
+      settingsButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(container.textContent).toContain("전체 기수 관리");
+    expect(container.textContent).toContain("기본 설정");
+    expect(container.textContent).toContain("모집 계획");
+  });
+
   it("회장이 아니면 설정 하위 메뉴에서 전체 기수 관리를 숨긴다", async () => {
     const { default: DashboardShell } = await import("./dashboard-shell");
 

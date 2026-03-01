@@ -5,6 +5,7 @@ export const ADMIN_CACHE_TAGS = {
   linktree: "admin:linktree",
   market: "admin:market",
   notices: "admin:notices",
+  recruitingPlan: "admin:recruiting-plan",
   siteSettings: "admin:site-settings",
   users: "admin:users",
 } as const;

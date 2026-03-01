@@ -193,6 +193,17 @@ export type SiteSettingsEntity = {
   donateAccountHolder: string;
 };
 
+export type RecruitingPlanEntity = {
+  year: number;
+  title: string;
+  content: string;
+  promotionImageUrls: string[];
+  recruitmentStartAt: Date;
+  recruitmentEndAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 export type UserEntity = {
   id: string;
   name: string;
@@ -525,6 +536,15 @@ export type DataService = {
       donateAccountHolder: string;
     }>,
   ) => Promise<SiteSettingsEntity>;
+
+  getCurrentRecruitingPlan: () => Promise<RecruitingPlanEntity | null>;
+  upsertCurrentRecruitingPlan: (input: {
+    title: string;
+    content: string;
+    promotionImageUrls: string[];
+    recruitmentStartAt: Date;
+    recruitmentEndAt: Date;
+  }) => Promise<RecruitingPlanEntity>;
 
   listUsers: () => Promise<UserEntity[]>;
   getUserById: (id: string) => Promise<UserEntity | null>;

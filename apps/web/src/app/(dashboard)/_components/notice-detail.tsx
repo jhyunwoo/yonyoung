@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import Image from "next/image";
@@ -60,6 +61,7 @@ export default function NoticeDetail({
   allowInlineEdit = true,
 }: NoticeDetailProps) {
   const router = useRouter();
+  const editingImageFileInputRef = useRef<HTMLInputElement | null>(null);
   const canInlineEdit = canWrite && allowInlineEdit;
 
   const [notice, setNotice] = useState<NoticeItem | null>(null);
@@ -83,6 +85,10 @@ export default function NoticeDetail({
     () => editingImageItems.map((item) => item.imageUrl),
     [editingImageItems],
   );
+  const isEditingImageUploadDisabled =
+    isSaving ||
+    isUploadingImage ||
+    editingImageUrls.length >= NOTICE_MAX_IMAGES;
 
   const loadNotice = useCallback(async () => {
     setIsLoading(true);
@@ -202,6 +208,14 @@ export default function NoticeDetail({
       setIsUploadingImage(false);
       setUploadProgressPercent(null);
     }
+  };
+
+  const handleUploadEditingImageClick = () => {
+    if (isEditingImageUploadDisabled) {
+      return;
+    }
+
+    editingImageFileInputRef.current?.click();
   };
 
   const handleUpdateNotice = async () => {
@@ -386,20 +400,31 @@ export default function NoticeDetail({
           <p className="text-sm font-semibold text-slate-900">첨부 이미지</p>
           <p className="mt-1 text-xs text-slate-500">최대 {NOTICE_MAX_IMAGES}장</p>
 
-          <label className="mt-3 inline-flex cursor-pointer rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+          <button
+            type="button"
+            onClick={handleUploadEditingImageClick}
+            disabled={isEditingImageUploadDisabled}
+            className="mt-3 inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
             파일 업로드
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleUploadEditingImage}
-              disabled={isSaving || isUploadingImage || editingImageUrls.length >= NOTICE_MAX_IMAGES}
-              className="hidden"
-            />
-          </label>
+          </button>
+          <input
+            ref={editingImageFileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleUploadEditingImage}
+            disabled={isEditingImageUploadDisabled}
+            className="sr-only"
+          />
 
           {isUploadingImage ? (
             <p className="mt-2 text-xs text-slate-500">이미지 업로드 중...</p>
+          ) : null}
+          {!isUploadingImage && editingImageUrls.length >= NOTICE_MAX_IMAGES ? (
+            <p className="mt-2 text-xs text-slate-500">
+              최대 {NOTICE_MAX_IMAGES}장까지 등록되어 추가 업로드가 비활성화되었습니다.
+            </p>
           ) : null}
           <UploadProgressBar progressPercent={uploadProgressPercent} label="첨부 이미지 업로드 진행률" />
 

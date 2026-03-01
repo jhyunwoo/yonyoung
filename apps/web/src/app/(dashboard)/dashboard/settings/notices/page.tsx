@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import NoticeManager from "../../../_components/notice-manager";
 import { serverAuthTool } from "../../../../../lib/auth-server-tool";
-import { isPresidentRole } from "../../../../../lib/auth-shared";
+import { isPresidentOrVicePresidentRole } from "../../../../../lib/auth-shared";
 import { Skeleton } from "../../../../../components/skeleton";
 
 export default async function SettingsNoticesPage() {
@@ -32,7 +32,7 @@ export default async function SettingsNoticesPage() {
       >
         <NoticeManager
           scope="global"
-          canWrite={isPresidentRole(session.user.role)}
+          canWrite={isPresidentOrVicePresidentRole(session.user.role)}
           heading="전체 공지"
           description="최근 공지를 확인하고 제목을 눌러 자세한 내용을 볼 수 있습니다."
           emptyMessage="등록된 전체 공지가 없습니다."

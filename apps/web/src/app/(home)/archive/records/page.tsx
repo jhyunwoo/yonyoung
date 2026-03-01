@@ -22,7 +22,7 @@ export default async function ArchiveRecordsPage() {
   const activities = await getArchiveRecords();
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-(--bg-primary)">
       <div className="mx-auto max-w-300 px-4 md:px-8">
         <PageTitleHero title="활동 기록" />
       </div>
@@ -30,7 +30,7 @@ export default async function ArchiveRecordsPage() {
       <div className="pb-16">
         {activities.length === 0 ? (
           <div className="mx-auto max-w-[1400px] px-4 md:px-8">
-            <p className="text-center text-base text-[#999999]">준비 중입니다.</p>
+            <p className="text-center text-base text-(--text-muted)">준비 중입니다.</p>
           </div>
         ) : (
           <div
@@ -41,7 +41,7 @@ export default async function ArchiveRecordsPage() {
               <Link
                 key={activity.id}
                 href={`/archive/records/${activity.id}`}
-                className="group relative block aspect-[4/3] cursor-pointer overflow-hidden bg-[#bfbfbf] transition-transform duration-300 hover:scale-[1.02]"
+                className="group relative block aspect-[4/3] cursor-pointer overflow-hidden bg-(--surface-border) transition-transform duration-300 hover:scale-[1.02]"
                 data-testid={`archive-record-card-${activity.id}`}
                 aria-label={`${activity.title} 상세 보기`}
               >

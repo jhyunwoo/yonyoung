@@ -28,7 +28,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { signOut } from "../../../lib/auth-client-tool";
-import { isPresidentRole } from "../../../lib/auth-shared";
+import { isPresidentOrVicePresidentRole } from "../../../lib/auth-shared";
 import { buildDashboardSettingsMenuItems } from "../../../lib/dashboard-settings-menu";
 import type { DashboardGenerationOption } from "../../../lib/dashboard-generation-server";
 import { isSameGenerationRouteName } from "../../../lib/dashboard-generation-route";
@@ -68,7 +68,7 @@ const SidebarContent = (input: {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
   const settingsSubItems = buildDashboardSettingsMenuItems({
-    isPresident: isPresidentRole(input.viewer?.role),
+    canManagePrivilegedSettings: isPresidentOrVicePresidentRole(input.viewer?.role),
   });
   const isSettingsSectionActive =
     input.pathname === "/dashboard/settings" || input.pathname.startsWith("/dashboard/settings/");

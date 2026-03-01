@@ -1,6 +1,6 @@
 "use client";
 
-import { type ChangeEvent, type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { type ChangeEvent, type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "../../../../../../lib/admin-api/resources";
@@ -30,6 +30,7 @@ export default function MarketItemEditPageClient({
   viewer: MarketViewer;
 }) {
   const router = useRouter();
+  const imageFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [item, setItem] = useState<ApiMarketItem | null>(null);
   const [isLoadingItem, setIsLoadingItem] = useState(true);
@@ -57,6 +58,8 @@ export default function MarketItemEditPageClient({
     () => imageItems.map((imageItem) => imageItem.imageUrl),
     [imageItems],
   );
+  const isImageUploadDisabled =
+    isSavingItem || isUploadingImage || imageUrls.length >= MARKET_MAX_IMAGES;
 
   const canEdit = item !== null && item.sellerId === viewer.id;
 
@@ -115,6 +118,14 @@ export default function MarketItemEditPageClient({
       setIsUploadingImage(false);
       setUploadProgressPercent(null);
     }
+  };
+
+  const handleOpenImageFilePicker = () => {
+    if (isImageUploadDisabled) {
+      return;
+    }
+
+    imageFileInputRef.current?.click();
   };
 
   const handleUpdateItem = async (event: FormEvent<HTMLFormElement>) => {
@@ -255,20 +266,31 @@ export default function MarketItemEditPageClient({
 
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                 <div className="flex flex-wrap items-center gap-3">
-                  <label className="inline-flex cursor-pointer rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white">
+                  <button
+                    type="button"
+                    onClick={handleOpenImageFilePicker}
+                    disabled={isImageUploadDisabled}
+                    className="inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                  >
                     사진 업로드
-                    <input
-                      data-testid="market-edit-image-input"
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleUploadImage}
-                      disabled={isSavingItem || isUploadingImage || imageUrls.length >= MARKET_MAX_IMAGES}
-                      className="hidden"
-                    />
-                  </label>
+                  </button>
+                  <input
+                    ref={imageFileInputRef}
+                    data-testid="market-edit-image-input"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleUploadImage}
+                    disabled={isImageUploadDisabled}
+                    className="sr-only"
+                  />
                   <p className="text-xs text-slate-500">최소 1장, 최대 {MARKET_MAX_IMAGES}장</p>
                 </div>
+                {!isUploadingImage && imageUrls.length >= MARKET_MAX_IMAGES ? (
+                  <p className="mt-2 text-xs text-slate-500">
+                    최대 {MARKET_MAX_IMAGES}장까지 등록되어 추가 업로드가 비활성화되었습니다.
+                  </p>
+                ) : null}
                 <UploadProgressBar
                   progressPercent={uploadProgressPercent}
                   label="장터 이미지 업로드 진행률"
