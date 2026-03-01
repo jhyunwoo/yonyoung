@@ -9,7 +9,6 @@ import type {
   DataEnvelope,
 } from "@repo/shared-api-contracts";
 import { DEFAULT_SITE_SETTINGS } from "@repo/shared-api-contracts";
-import { cacheLife, cacheTag } from "next/cache";
 import {
   clearTimeoutController,
   createTimeoutController,
@@ -120,13 +119,6 @@ const publicGet = async <T>(
 
 export const listPublicActivities = async (): Promise<ApiActivity[]> =>
   {
-    "use cache";
-    cacheLife({
-      stale: 120,
-      revalidate: 60,
-      expire: 600,
-    });
-    cacheTag(PUBLIC_CACHE_TAGS.activities);
     try {
       return await publicGet<ApiActivity[]>("/api/public/activities", {
         revalidateSeconds: 60,
@@ -139,13 +131,6 @@ export const listPublicActivities = async (): Promise<ApiActivity[]> =>
 
 export const getPublicActivityById = async (id: string): Promise<ApiActivity> =>
   {
-    "use cache";
-    cacheLife({
-      stale: 120,
-      revalidate: 60,
-      expire: 600,
-    });
-    cacheTag(PUBLIC_CACHE_TAGS.activities);
     return publicGet<ApiActivity>(`/api/public/activities/${id}`, {
       revalidateSeconds: 60,
       tags: [PUBLIC_CACHE_TAGS.activities],
@@ -154,13 +139,6 @@ export const getPublicActivityById = async (id: string): Promise<ApiActivity> =>
 
 export const listPublicExhibitions = async (): Promise<ApiExhibition[]> =>
   {
-    "use cache";
-    cacheLife({
-      stale: 120,
-      revalidate: 60,
-      expire: 600,
-    });
-    cacheTag(PUBLIC_CACHE_TAGS.exhibitions);
     try {
       return await publicGet<ApiExhibition[]>("/api/public/exhibitions", {
         revalidateSeconds: 60,
@@ -173,13 +151,6 @@ export const listPublicExhibitions = async (): Promise<ApiExhibition[]> =>
 
 export const getPublicExhibitionById = async (id: string): Promise<ApiExhibition> =>
   {
-    "use cache";
-    cacheLife({
-      stale: 120,
-      revalidate: 60,
-      expire: 600,
-    });
-    cacheTag(PUBLIC_CACHE_TAGS.exhibitions);
     return publicGet<ApiExhibition>(`/api/public/exhibitions/${id}`, {
       revalidateSeconds: 60,
       tags: [PUBLIC_CACHE_TAGS.exhibitions],
@@ -188,13 +159,6 @@ export const getPublicExhibitionById = async (id: string): Promise<ApiExhibition
 
 export const listPublicLinktrees = async (): Promise<ApiLinktree[]> =>
   {
-    "use cache";
-    cacheLife({
-      stale: 300,
-      revalidate: 120,
-      expire: 1200,
-    });
-    cacheTag(PUBLIC_CACHE_TAGS.linktree);
     try {
       return await publicGet<ApiLinktree[]>("/api/public/linktree", {
         revalidateSeconds: 120,
@@ -207,13 +171,6 @@ export const listPublicLinktrees = async (): Promise<ApiLinktree[]> =>
 
 export const getPublicSiteSettings = async (): Promise<ApiSiteSettings> =>
   {
-    "use cache";
-    cacheLife({
-      stale: 300,
-      revalidate: 120,
-      expire: 1200,
-    });
-    cacheTag(PUBLIC_CACHE_TAGS.siteSettings);
     try {
       return await publicGet<ApiSiteSettings>("/api/public/site-settings", {
         revalidateSeconds: 120,
@@ -226,13 +183,6 @@ export const getPublicSiteSettings = async (): Promise<ApiSiteSettings> =>
 
 export const listPublicGenerations = async (): Promise<ApiGeneration[]> =>
   {
-    "use cache";
-    cacheLife({
-      stale: 600,
-      revalidate: 300,
-      expire: 3600,
-    });
-    cacheTag(PUBLIC_CACHE_TAGS.generations);
     try {
       return await publicGet<ApiGeneration[]>("/api/public/generations", {
         revalidateSeconds: 300,
@@ -247,13 +197,6 @@ export const listPublicPhotographers = async (): Promise<
   ApiPublicGenerationWithMembers[]
 > =>
   {
-    "use cache";
-    cacheLife({
-      stale: 600,
-      revalidate: 300,
-      expire: 3600,
-    });
-    cacheTag(PUBLIC_CACHE_TAGS.photographers);
     try {
       return await publicGet<ApiPublicGenerationWithMembers[]>("/api/public/photographers", {
         revalidateSeconds: 300,

@@ -1,6 +1,8 @@
 import Image from "next/image";
+import { Suspense } from "react";
 import { DEFAULT_SITE_SETTINGS } from "@repo/shared-api-contracts";
 import { getPublicSiteSettings } from "../../../lib/public-api";
+import CurrentYear from "./current-year";
 
 const infoLabelClass = "text-[0.85rem] font-bold uppercase text-[#999999]";
 const infoContentClass = "break-all text-[0.9rem] leading-[1.6] text-[#cccccc]";
@@ -10,7 +12,6 @@ export default async function SiteFooter() {
   const siteSettings = await getPublicSiteSettings().catch(
     () => DEFAULT_SITE_SETTINGS,
   );
-  const currentYear = new Date().getFullYear();
   const instagramId = siteSettings.footerInstagramId.replace(/^@+/, "");
   const instagramUrl = `https://www.instagram.com/${encodeURIComponent(instagramId)}`;
 
@@ -93,8 +94,12 @@ export default async function SiteFooter() {
           </div>
         </div>
         <div className="border-t border-[#333333] pt-4 md:pt-5">
-          <p className="text-[0.8rem] leading-[1.5] text-[#999999]">
-            © {currentYear} 연세대학교 중앙사진동아리 연영회. All rights reserved.
+          <p className="text-[0.8rem] leading-normal text-[#999999]">
+            ©{" "}
+            <Suspense fallback={null}>
+              <CurrentYear />
+            </Suspense>{" "}
+            연세대학교 중앙사진동아리 연영회. All rights reserved.
           </p>
         </div>
       </div>

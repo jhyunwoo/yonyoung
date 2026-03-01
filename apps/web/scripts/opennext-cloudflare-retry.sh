@@ -14,6 +14,21 @@ if [ "$command_name" != "deploy" ] && [ "$command_name" != "upload" ]; then
   exit 1
 fi
 
+has_env_flag="false"
+for arg in "$@"; do
+  case "$arg" in
+    --env | --env=*)
+      has_env_flag="true"
+      break
+      ;;
+  esac
+done
+
+if [ "$has_env_flag" = "false" ]; then
+  deploy_env="${OPENNEXT_CF_ENV:-production}"
+  set -- --env "$deploy_env" "$@"
+fi
+
 max_attempts="${OPENNEXT_CF_MAX_ATTEMPTS:-3}"
 retry_delay_seconds="${OPENNEXT_CF_RETRY_DELAY_SECONDS:-10}"
 
@@ -22,9 +37,9 @@ while [ "$attempt" -le "$max_attempts" ]; do
   echo "OpenNext Cloudflare ${command_name} attempt ${attempt}/${max_attempts}"
   if pnpm exec opennextjs-cloudflare "$command_name" "$@"; then
     exit 0
+  else
+    exit_code=$?
   fi
-
-  exit_code=$?
   if [ "$attempt" -eq "$max_attempts" ]; then
     echo "OpenNext Cloudflare ${command_name} failed after ${max_attempts} attempts." >&2
     exit "$exit_code"

@@ -1,7 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ReactNode, Suspense } from "react";
-import Script from "next/script";
 import SiteHeader from "./components/site-header";
 import SiteFooter from "./components/site-footer";
 import PublicHeaderSafeArea from "./components/public-header-safe-area";
@@ -22,6 +21,35 @@ export const metadata: Metadata = createPageMetadata({
   ],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
+const INLINE_THEME_INIT_SCRIPT = `(() => {
+  const root = document.documentElement;
+  const resolveSystemDark = () =>
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+  try {
+    const stored = localStorage.getItem("theme");
+    const mode =
+      stored === "light" || stored === "dark" || stored === "system"
+        ? stored
+        : "system";
+    const resolvedTheme = mode === "system" ? (resolveSystemDark() ? "dark" : "light") : mode;
+    root.classList.toggle("dark", resolvedTheme === "dark");
+    root.dataset.theme = resolvedTheme;
+    root.dataset.themeMode = mode;
+  } catch {
+    const fallbackTheme = resolveSystemDark() ? "dark" : "light";
+    root.classList.toggle("dark", fallbackTheme === "dark");
+    root.dataset.theme = fallbackTheme;
+    root.dataset.themeMode = "system";
+  }
+})();`;
+
 /**
  * RootLayout 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
  * @param {
@@ -38,7 +66,7 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
-        <Script src="/theme-init.js" strategy="beforeInteractive" />
+        <script dangerouslySetInnerHTML={{ __html: INLINE_THEME_INIT_SCRIPT }} />
       </head>
       <body className="min-h-screen bg-(--bg-primary) text-(--text-primary) antialiased">
         <Suspense fallback={null}>
@@ -57,7 +85,9 @@ export default function RootLayout({
         <main>
           <PublicHeaderSafeArea>{children}</PublicHeaderSafeArea>
         </main>
-        <SiteFooter />
+        <Suspense fallback={null}>
+          <SiteFooter />
+        </Suspense>
       </body>
     </html>
   );

@@ -9,6 +9,7 @@ import {
 describe("date-formatters", () => {
   const start = Date.parse("2026-02-01T00:00:00.000Z");
   const end = Date.parse("2027-03-01T00:00:00.000Z");
+  const timezoneBoundary = Date.parse("2026-02-01T23:30:00.000Z");
 
   it("한국어 날짜 포맷 문자열을 반환한다", () => {
     expect(formatKoreanDate(start).length).toBeGreaterThan(0);
@@ -24,5 +25,9 @@ describe("date-formatters", () => {
 
   it("연도 범위를 하이픈으로 연결한다", () => {
     expect(formatKoreanYearRange(start, end)).toContain(" - ");
+  });
+
+  it("타임존 경계에서도 Asia/Seoul 기준 일자를 유지한다", () => {
+    expect(formatKoreanDateCompact(timezoneBoundary)).toBe("2026.02.02");
   });
 });

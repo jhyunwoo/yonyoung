@@ -118,6 +118,43 @@
     },
     "production": {
       "name": "web",
+      "r2_buckets": [
+        {
+          "binding": "NEXT_INC_CACHE_R2_BUCKET",
+          "bucket_name": "web-next-inc-cache",
+          "remote": false,
+        },
+      ],
+      "images": {
+        "binding": "IMAGES",
+      },
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "NEXT_CACHE_DO_QUEUE",
+            "class_name": "DOQueueHandler",
+          },
+          {
+            "name": "NEXT_CACHE_TAG_CACHE",
+            "class_name": "DOShardedTagCache",
+          },
+        ],
+      },
+      "d1_databases": [
+        {
+          "binding": "NEXT_TAG_CACHE_D1",
+          "database_name": "web-next-tag-cache",
+          "database_id": "3903e976-24bc-491b-8f33-9ffd004c4e72",
+          "preview_database_id": "3903e976-24bc-491b-8f33-9ffd004c4e72",
+          "remote": false,
+        },
+      ],
+      "analytics_engine_datasets": [
+        {
+          "binding": "ANALYTICS",
+          "dataset": "yonyoung-log",
+        },
+      ],
       "observability": {
         "enabled": true,
         "head_sampling_rate": 1,

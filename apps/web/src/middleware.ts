@@ -74,11 +74,11 @@ const buildCspHeader = (request: NextRequest): string =>
 
 const isCspReportOnlyEnabled = (): boolean => {
   const value = process.env.CSP_REPORT_ONLY;
-  if (!value) {
-    return true;
+  if (value) {
+    return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
   }
 
-  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+  return process.env.NODE_ENV !== "production";
 };
 
 const hasSessionCookie = (request: NextRequest): boolean => {
@@ -134,8 +134,12 @@ const applySecurityHeaders = (
 
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const hasSession = hasSessionCookie(request);
-  if (shouldRedirectToSignIn(pathname) && !hasSession) {
+  const requiresSessionForRedirect = shouldRedirectToSignIn(pathname);
+  const hasSession = requiresSessionForRedirect
+    ? hasSessionCookie(request)
+    : false;
+
+  if (requiresSessionForRedirect && !hasSession) {
     const redirectUrl = new URL("/auth/sign-in", request.url);
     redirectUrl.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
     const redirectResponse = NextResponse.redirect(redirectUrl);
@@ -148,7 +152,7 @@ export function middleware(request: NextRequest) {
 
   applySecurityHeaders(response, request);
 
-  const isPrivate = isPrivatePath(pathname) || hasSession;
+  const isPrivate = isPrivatePath(pathname);
   if (isPrivate) {
     response.headers.set("Cache-Control", PRIVATE_CACHE_CONTROL);
   } else if (isPublicCacheablePath(pathname)) {

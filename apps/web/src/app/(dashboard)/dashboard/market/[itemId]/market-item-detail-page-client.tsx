@@ -92,6 +92,7 @@ const formatPostedDate = (timestamp: number): string => {
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Asia/Seoul",
   }).format(date);
 };
 

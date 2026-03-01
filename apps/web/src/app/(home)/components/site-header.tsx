@@ -56,10 +56,10 @@ const isActivePath = (pathname: string, item: NavItem): boolean => {
 };
 
 const desktopLinkBaseClass =
-  "relative block py-6 text-[0.9rem] font-medium tracking-[0.05em] text-[#2c3357] uppercase after:absolute after:bottom-[0.8rem] after:left-0 after:h-[2px] after:w-0 after:bg-[#2c3357] after:transition-[width] after:duration-300 hover:after:w-full";
+  "relative block py-6 text-[0.9rem] font-medium tracking-[0.05em] text-(--text-primary) uppercase after:absolute after:bottom-[0.8rem] after:left-0 after:h-[2px] after:w-0 after:bg-(--text-primary) after:transition-[width] after:duration-300 hover:after:w-full";
 
 const mobileLinkBaseClass =
-  "relative block px-4 py-4 text-center text-[0.9rem] font-medium tracking-[0.05em] text-[#2c3357] uppercase after:absolute after:bottom-[0.6rem] after:left-1/2 after:h-[2px] after:w-0 after:-translate-x-1/2 after:bg-[#2c3357] after:transition-[width] after:duration-300 hover:after:w-12";
+  "relative block px-4 py-4 text-center text-[0.9rem] font-medium tracking-[0.05em] text-(--text-primary) uppercase after:absolute after:bottom-[0.6rem] after:left-1/2 after:h-[2px] after:w-0 after:-translate-x-1/2 after:bg-(--text-primary) after:transition-[width] after:duration-300 hover:after:w-12";
 
 const resolveTheme = (mode: ThemeMode, isSystemDark: boolean): "light" | "dark" => {
   if (mode === "system") {
@@ -169,9 +169,9 @@ export default function SiteHeader() {
   return (
     <header
       className={[
-        "fixed inset-x-0 top-0 z-[1000] h-[var(--public-header-height-mobile)] border-b border-transparent bg-white backdrop-blur-[10px] transition-all duration-300 md:h-[var(--public-header-height-desktop)]",
+        "fixed inset-x-0 top-0 z-[1000] h-[var(--public-header-height-mobile)] border-b border-transparent bg-(--surface-elevated) backdrop-blur-[10px] transition-all duration-300 md:h-[var(--public-header-height-desktop)]",
         isScrolled
-          ? "border-b-[#bfbfbf] shadow-[0_2px_10px_rgba(44,51,87,0.1)]"
+          ? "border-b-(--surface-border) shadow-[0_2px_10px_var(--shadow-strong)]"
           : "",
       ]
         .join(" ")
@@ -196,7 +196,7 @@ export default function SiteHeader() {
                 className="h-full w-auto object-contain"
               />
             </div>
-            <div className="text-left text-[0.8rem] leading-[1.2] font-bold tracking-[-0.02em] text-[#2c3357]">
+            <div className="text-left text-[0.8rem] leading-[1.2] font-bold tracking-[-0.02em] text-(--text-primary)">
               <span className="block tracking-[-0.05em]">연세대학교 중앙사진동아리</span>
               연영회
             </div>
@@ -220,12 +220,12 @@ export default function SiteHeader() {
                     {item.label}
                   </Link>
                   {item.children ? (
-                    <ul className="invisible absolute top-full left-1/2 z-20 min-w-[150px] -translate-x-1/2 border-t-2 border-[#2c3357] bg-white py-2 opacity-0 shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all duration-300 group-hover:visible group-hover:opacity-100">
+                    <ul className="invisible absolute top-full left-1/2 z-20 min-w-[150px] -translate-x-1/2 border-t-2 border-(--surface-strong-border) bg-(--surface-elevated) py-2 opacity-0 shadow-[0_4px_15px_var(--shadow-strong)] transition-all duration-300 group-hover:visible group-hover:opacity-100">
                       {item.children.map((child) => (
                         <li key={child.href} className="w-full">
                           <Link
                             href={child.href}
-                            className="block whitespace-nowrap px-6 py-[0.8rem] text-[0.85rem] text-[#2c3357] transition-colors duration-200 hover:bg-[#f5f5f5]"
+                            className="block whitespace-nowrap px-6 py-[0.8rem] text-[0.85rem] text-(--text-primary) transition-colors duration-200 hover:bg-(--surface-muted)"
                           >
                             {child.label}
                           </Link>
@@ -238,7 +238,7 @@ export default function SiteHeader() {
             })}
           </ul>
           <div
-            className="flex items-center gap-1 rounded-full border border-[#bfbfbf] bg-white p-1"
+            className="flex items-center gap-1 rounded-full border border-(--surface-border) bg-(--surface-elevated) p-1"
             role="group"
             aria-label="테마 모드 선택"
             data-testid="public-theme-mode-group"
@@ -251,8 +251,8 @@ export default function SiteHeader() {
               data-testid="public-theme-mode-light"
               className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition ${
                 themeMode === "light"
-                  ? "bg-[#2c3357] text-white"
-                  : "text-[#2c3357] hover:bg-[#f5f5f5]"
+                  ? "bg-(--accent) text-(--accent-foreground)"
+                  : "text-(--text-primary) hover:bg-(--surface-muted)"
               }`}
             >
               <Sun className="h-4 w-4" aria-hidden="true" />
@@ -265,8 +265,8 @@ export default function SiteHeader() {
               data-testid="public-theme-mode-dark"
               className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition ${
                 themeMode === "dark"
-                  ? "bg-[#2c3357] text-white"
-                  : "text-[#2c3357] hover:bg-[#f5f5f5]"
+                  ? "bg-(--accent) text-(--accent-foreground)"
+                  : "text-(--text-primary) hover:bg-(--surface-muted)"
               }`}
             >
               <Moon className="h-4 w-4" aria-hidden="true" />
@@ -279,8 +279,8 @@ export default function SiteHeader() {
               data-testid="public-theme-mode-system"
               className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition ${
                 themeMode === "system"
-                  ? "bg-[#2c3357] text-white"
-                  : "text-[#2c3357] hover:bg-[#f5f5f5]"
+                  ? "bg-(--accent) text-(--accent-foreground)"
+                  : "text-(--text-primary) hover:bg-(--surface-muted)"
               }`}
             >
               <Monitor className="h-4 w-4" aria-hidden="true" />
@@ -297,17 +297,17 @@ export default function SiteHeader() {
           data-testid="public-nav-toggle"
         >
           <span
-            className={`h-[2px] w-[25px] bg-[#2c3357] transition-all duration-300 ${
+            className={`h-[2px] w-[25px] bg-(--text-primary) transition-all duration-300 ${
               isMobileMenuOpen ? "translate-y-[7px] rotate-45" : ""
             }`}
           />
           <span
-            className={`h-[2px] w-[25px] bg-[#2c3357] transition-all duration-300 ${
+            className={`h-[2px] w-[25px] bg-(--text-primary) transition-all duration-300 ${
               isMobileMenuOpen ? "opacity-0" : ""
             }`}
           />
           <span
-            className={`h-[2px] w-[25px] bg-[#2c3357] transition-all duration-300 ${
+            className={`h-[2px] w-[25px] bg-(--text-primary) transition-all duration-300 ${
               isMobileMenuOpen ? "-translate-y-[7px] -rotate-45" : ""
             }`}
           />
@@ -333,7 +333,7 @@ export default function SiteHeader() {
               transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2 }}
             />
             <motion.nav
-              className="absolute inset-x-0 top-0 block border-b border-[#bfbfbf] bg-[rgba(255,255,255,0.98)] p-8 backdrop-blur-[10px]"
+              className="absolute inset-x-0 top-0 block border-b border-(--surface-border) bg-(--surface-elevated) p-8 backdrop-blur-[10px]"
               data-testid="public-nav-mobile"
               data-state="open"
               initial={shouldReduceMotion ? false : { opacity: 0, y: -20 }}
@@ -363,12 +363,12 @@ export default function SiteHeader() {
                         {item.label}
                       </Link>
                       {item.children ? (
-                        <ul className="mt-[0.4rem] w-full list-none bg-[rgba(0,0,0,0.03)]">
+                        <ul className="mt-[0.4rem] w-full list-none bg-(--surface-muted)">
                           {item.children.map((child) => (
                             <li key={child.href}>
                               <Link
                                 href={child.href}
-                                className="block px-4 py-[0.8rem] text-center text-[0.8rem] text-[#2c3357]"
+                                className="block px-4 py-[0.8rem] text-center text-[0.8rem] text-(--text-primary)"
                                 onClick={() => setIsMobileMenuOpen(false)}
                               >
                                 {child.label}
