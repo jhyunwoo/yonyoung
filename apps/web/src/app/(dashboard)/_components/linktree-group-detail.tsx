@@ -8,6 +8,7 @@ import { AdminApiError } from "../../../lib/admin-api/types";
 import { adminResourceApi } from "../../../lib/admin-api/resources";
 import { formatAuditActor } from "../../../lib/audit-display";
 import { formatKoreanDate } from "../../../lib/date-formatters";
+import { Skeleton } from "../../../components/skeleton";
 import AuditHistoryPanel from "./audit-history-panel";
 import LastUpdatedMeta from "./last-updated-meta";
 import { readLinktreeErrorMessage } from "./linktree-shared";
@@ -77,7 +78,20 @@ export default function LinktreeGroupDetail({
   if (isLoading) {
     return (
       <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-        <p className="text-sm text-slate-500">분류 정보를 불러오는 중입니다...</p>
+        <div className="space-y-4" aria-hidden="true">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-3 w-full max-w-lg" />
+          <div className="rounded-xl border border-slate-200 p-4">
+            <Skeleton className="h-6 w-56" />
+            <Skeleton className="mt-3 h-3 w-28" />
+            <Skeleton className="mt-1 h-3 w-36" />
+            <div className="mt-4 flex gap-2">
+              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-8 w-24" />
+            </div>
+          </div>
+        </div>
       </section>
     );
   }

@@ -8,6 +8,7 @@ import { adminResourceApi } from "../../../../../lib/admin-api/resources";
 import { formatKoreanDateRange } from "../../../../../lib/date-formatters";
 import { buildMemberDisplayName } from "../../../../../lib/member-display-name";
 import { buildMemberRoleLabel } from "../../../../../lib/member-role-label";
+import { Skeleton } from "../../../../../components/skeleton";
 import {
   USER_ROLE_FILTER_ALL,
   USER_ROLE_FILTER_NONE,
@@ -444,9 +445,35 @@ export default function GenerationManagementClient() {
       ) : null}
 
       {isLoading ? (
-        <p className="mt-6 text-sm text-slate-500">
-          기수와 멤버 목록을 불러오는 중입니다...
-        </p>
+        <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]" aria-hidden="true">
+          <div className="space-y-4">
+            <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <Skeleton className="h-5 w-32" />
+              <div className="mt-3 space-y-2">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <Skeleton key={`generation-loading-list-${index + 1}`} className="h-12 w-full" />
+                ))}
+              </div>
+            </article>
+            <article className="rounded-xl border border-slate-200 p-4">
+              <Skeleton className="h-5 w-24" />
+              <div className="mt-3 grid gap-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </article>
+          </div>
+          <article className="rounded-xl border border-slate-200 p-4">
+            <Skeleton className="h-5 w-40" />
+            <div className="mt-3 grid gap-2">
+              <Skeleton className="h-10 w-full" />
+              {Array.from({ length: 6 }).map((_, index) => (
+                <Skeleton key={`generation-loading-members-${index + 1}`} className="h-11 w-full" />
+              ))}
+            </div>
+          </article>
+        </div>
       ) : (
         <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
           <div className="space-y-4">

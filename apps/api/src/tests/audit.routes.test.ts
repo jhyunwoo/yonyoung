@@ -75,6 +75,8 @@ describe("audit routes", () => {
       { resourceType: "linktree", resourceId: IDs.linktree },
       { resourceType: "linktree_item", resourceId: IDs.linktreeItem },
       { resourceType: "global_notice", resourceId: IDs.globalNotice },
+      { resourceType: "market_item", resourceId: "88000000-0000-4000-8000-000000000001" },
+      { resourceType: "market_comment", resourceId: "99000000-0000-4000-8000-000000000001" },
     ] as const;
 
     for (const sample of samples) {

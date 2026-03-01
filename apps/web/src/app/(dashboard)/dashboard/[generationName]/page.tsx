@@ -8,6 +8,7 @@ import {
   listCachedExhibitions,
   listCachedGenerationMembers,
 } from "../../../../lib/admin-dashboard-cache";
+import { Skeleton } from "../../../../components/skeleton";
 import DashboardR2StorageUsage from "../../_components/dashboard-r2-storage-usage";
 import { requireDashboardGeneration } from "./_lib/resolve-generation";
 import GenerationNoticeOverview from "./generation-notice-overview";
@@ -171,7 +172,25 @@ export default async function GenerationDashboardPage({
         <Suspense
           fallback={
             <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-              <p className="text-sm text-slate-500">대시보드 데이터를 불러오는 중입니다...</p>
+              <div className="space-y-4" aria-hidden="true">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <div
+                      key={`generation-summary-skeleton-${index + 1}`}
+                      className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+                    >
+                      <Skeleton className="h-3 w-16" />
+                      <Skeleton className="mt-2 h-7 w-14" />
+                      <Skeleton className="mt-2 h-3 w-10" />
+                    </div>
+                  ))}
+                </div>
+                <Skeleton className="h-32 w-full" />
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+                  <Skeleton className="h-52 w-full" />
+                  <Skeleton className="h-52 w-full" />
+                </div>
+              </div>
             </section>
           }
         >

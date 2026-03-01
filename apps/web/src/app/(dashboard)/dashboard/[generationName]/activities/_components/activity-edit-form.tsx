@@ -16,6 +16,7 @@ import {
 import { shouldUseUnoptimizedImage } from "../../../../../../lib/image-utils";
 import { hasMeaningfulRichTextHtml } from "../../../../../../lib/rich-text";
 import { useImageUploadState } from "../../../../../../lib/use-image-upload-state";
+import { Skeleton } from "../../../../../../components/skeleton";
 import AuditHistoryPanel from "../../../../_components/audit-history-panel";
 import LastUpdatedMeta from "../../../../_components/last-updated-meta";
 import RichTextEditor from "../../../../_components/rich-text-editor";
@@ -355,7 +356,50 @@ export default function ActivityEditForm({
       ) : null}
 
       {isLoading ? (
-        <p className="mt-6 text-sm text-slate-500">활동 정보를 불러오는 중입니다...</p>
+        <div className="mt-6 space-y-6" aria-hidden="true">
+          <div className="space-y-1">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <div className="space-y-1">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Skeleton className="h-4 w-14" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-1">
+              <Skeleton className="h-4 w-14" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+          <div className="space-y-2 rounded-xl border border-slate-200 p-4">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="aspect-[4/3] w-full max-w-md rounded-lg" />
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-3 w-64" />
+          </div>
+          <div className="space-y-2 rounded-xl border border-slate-200 p-4">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-3 w-52" />
+            <Skeleton className="h-10 w-24" />
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <Skeleton
+                  key={`activity-edit-image-loading-${index + 1}`}
+                  className="aspect-[4/3] w-full rounded-lg"
+                />
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-20" />
+            <Skeleton className="h-10 w-20" />
+          </div>
+        </div>
       ) : activity ? (
         <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
           <label className="block space-y-1">

@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  createActor,
   createDataServiceMock,
   createTestApp,
+  expectErrorCode,
   fn,
   readJson,
 } from "./test-helpers";
@@ -55,5 +57,22 @@ describe("error response format", () => {
     expect(body.error.code).toBe("INTERNAL_ERROR");
     expect(body.error.requestId).toBe(requestId);
     expect(body.error.message).not.toContain("DB_PASSWORD");
+  });
+
+  it("잘못된 JSON 본문은 400 BAD_REQUEST로 처리되고 서버 오류로 승격되지 않는다", async () => {
+    const app = createTestApp({
+      actor: createActor("regular_member"),
+    });
+
+    const response = await app.request("/api/market/items", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: "{bad-json",
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
   });
 });

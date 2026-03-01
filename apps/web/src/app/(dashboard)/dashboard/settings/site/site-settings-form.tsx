@@ -9,6 +9,7 @@ import {
   type ApiSiteSettings,
   type ApiUpdateSiteSettingsInput,
 } from "../../../../../lib/admin-api/types";
+import { Skeleton } from "../../../../../components/skeleton";
 
 const inputClassName =
   "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
@@ -110,9 +111,20 @@ export default function SiteSettingsForm() {
   if (isLoading) {
     return (
       <section className="mx-auto w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-        <p className="text-sm text-slate-500">
-          기본 설정을 불러오는 중입니다...
-        </p>
+        <div className="space-y-4" aria-hidden="true">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-8 w-36" />
+          <Skeleton className="h-3 w-full max-w-lg" />
+          <div className="grid gap-5 md:grid-cols-2">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div key={`site-settings-loading-field-${index + 1}`} className="space-y-2">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ))}
+          </div>
+          <Skeleton className="h-10 w-24" />
+        </div>
       </section>
     );
   }

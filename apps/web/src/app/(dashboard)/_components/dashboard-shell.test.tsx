@@ -247,4 +247,51 @@ describe("DashboardShell", () => {
     expect(mobileHeaderTitle).toHaveTextContent("60기");
     expect(mobileHeaderTitle).not.toHaveTextContent("기수 홈");
   });
+
+  it("사이드바에서 연영장터 링크는 설정 버튼보다 위에 노출된다", async () => {
+    const { default: DashboardShell } = await import("./dashboard-shell");
+
+    await act(async () => {
+      root.render(
+        <DashboardShell generationOptions={[]} viewer={null}>
+          <div>content</div>
+        </DashboardShell>,
+      );
+      await Promise.resolve();
+    });
+
+    const marketLink = container.querySelector("a[href='/dashboard/market']");
+    const settingsButton = Array.from(
+      container.querySelectorAll("button[aria-expanded]"),
+    ).find((button) => button.textContent?.includes("설정"));
+
+    expect(marketLink).toBeInTheDocument();
+    expect(settingsButton).toBeInTheDocument();
+    if (!marketLink || !settingsButton) {
+      throw new Error("연영장터 링크 또는 설정 버튼을 찾지 못했습니다.");
+    }
+    const position = marketLink.compareDocumentPosition(settingsButton);
+    expect(Boolean(position & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+  });
+
+  it("/dashboard/market 경로에서 연영장터 메뉴가 활성화되고 모바일 헤더 타이틀을 표시한다", async () => {
+    usePathnameMock.mockReturnValue("/dashboard/market");
+    const { default: DashboardShell } = await import("./dashboard-shell");
+
+    await act(async () => {
+      root.render(
+        <DashboardShell generationOptions={[]} viewer={null}>
+          <div>content</div>
+        </DashboardShell>,
+      );
+      await Promise.resolve();
+    });
+
+    const marketLink = container.querySelector("a[href='/dashboard/market']");
+    expect(marketLink?.className).toContain("bg-slate-900");
+    expect(marketLink?.className).toContain("text-white");
+
+    const mobileHeaderTitle = container.querySelector("header p");
+    expect(mobileHeaderTitle).toHaveTextContent("연영장터");
+  });
 });

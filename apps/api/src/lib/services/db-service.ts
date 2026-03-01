@@ -37,7 +37,6 @@ import {
   MarketConditionGrade,
   MarketItemEntity,
   MarketItemStatus,
-  MarketPushSubscriptionEntity,
   MarketSellerEntity,
   NoticeAuthorEntity,
   SiteSettingsEntity,

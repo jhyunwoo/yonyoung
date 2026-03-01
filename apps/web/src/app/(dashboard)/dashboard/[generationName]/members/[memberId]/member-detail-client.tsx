@@ -18,6 +18,7 @@ import {
   canEditMemberProfile,
   isExecutiveRole,
 } from "../../../../../../lib/member-role-label";
+import { Skeleton } from "../../../../../../components/skeleton";
 import AuditHistoryPanel from "../../../../_components/audit-history-panel";
 import LastUpdatedMeta from "../../../../_components/last-updated-meta";
 import MemberEditForm from "../../../../_components/member-edit-form";
@@ -168,7 +169,26 @@ export default function MemberDetailClient({
     return (
       <main className="px-4 py-6 md:px-8 md:py-8">
         <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-          <p className="text-sm text-slate-500">멤버 정보를 불러오는 중입니다...</p>
+          <div className="space-y-4" aria-hidden="true">
+            <Skeleton className="h-4 w-24" />
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-16 w-16 rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-7 w-44" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {Array.from({ length: 9 }).map((_, index) => (
+                  <div key={`generation-member-detail-skeleton-${index + 1}`} className="space-y-2">
+                    <Skeleton className="h-3 w-16" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </section>
       </main>
     );

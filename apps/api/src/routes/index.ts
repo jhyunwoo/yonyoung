@@ -7,6 +7,7 @@ import { registerDocsRoutes } from "../modules/docs";
 import { registerExhibitionRoutes } from "../modules/exhibitions";
 import { registerGenerationRoutes } from "../modules/generations";
 import { registerLinktreeRoutes } from "../modules/linktree";
+import { registerMarketRoutes } from "../modules/market";
 import { registerNoticeRoutes } from "../modules/notices";
 import { registerPublicRoutes } from "../modules/public";
 import { registerSiteSettingsRoutes } from "../modules/site-settings";
@@ -49,6 +50,7 @@ export const mountDomainRouters = (
     createDomainRouter((router) => {
       registerGenerationRoutes(router, dependencies);
       registerNoticeRoutes(router, dependencies);
+      registerMarketRoutes(router, dependencies);
       registerActivityRoutes(router, dependencies);
       registerExhibitionRoutes(router, dependencies);
       registerLinktreeRoutes(router, dependencies);

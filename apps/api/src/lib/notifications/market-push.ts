@@ -2,7 +2,7 @@ import webpush from "web-push";
 import type { AppBindings } from "../../types/honoAppType";
 import type { MarketPushSubscriptionEntity } from "../services/types";
 
-export type MarketPushPayload = {
+type MarketPushPayload = {
   title: string;
   body: string;
   url: string;

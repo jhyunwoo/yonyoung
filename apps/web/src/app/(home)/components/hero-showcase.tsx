@@ -108,8 +108,10 @@ export default function HeroShowcase({
                   preload
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-(--surface-muted) text-sm text-(--text-muted)">
-                  전시 데이터를 불러오는 중입니다.
+                <div className="h-full w-full bg-(--surface-muted) p-6">
+                  <div className="h-3 w-24 animate-pulse bg-(--surface-border)" />
+                  <div className="mt-3 h-8 w-3/4 animate-pulse bg-(--surface-border)" />
+                  <div className="mt-2 h-4 w-4/5 animate-pulse bg-(--surface-border)" />
                 </div>
               )}
             </div>

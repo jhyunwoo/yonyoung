@@ -147,7 +147,7 @@ const resolveStorageEnv = (env: AppBindings): StorageEnv => {
 
 const buildObjectKey = (input: {
   actorId: string;
-  resource: "activities" | "exhibitions" | "users" | "notices";
+  resource: "activities" | "exhibitions" | "users" | "notices" | "market";
   slot: "cover" | "detail" | "profile" | "image";
   fileName: string;
 }): string => {

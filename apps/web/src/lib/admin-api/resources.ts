@@ -26,6 +26,10 @@ import type {
   ApiLinktreeItem,
   ApiListActivitiesQuery,
   ApiListExhibitionsQuery,
+  ApiListMarketItemsQuery,
+  ApiMarketComment,
+  ApiMarketItem,
+  ApiMarketPushSubscriptionInput,
   ApiSiteSettings,
   ApiUpdateActivityImageBatchItemInput,
   ApiUpdateActivityImageInput,
@@ -38,10 +42,15 @@ import type {
   ApiUpdateGlobalNoticeInput,
   ApiUpdateLinktreeInput,
   ApiUpdateLinktreeItemInput,
+  ApiUpdateMarketCommentInput,
+  ApiUpdateMarketItemInput,
+  ApiUpdateMarketItemStatusInput,
   ApiUpdateSiteSettingsInput,
   ApiUpdateUserInput,
   ApiUser,
   ApiUserResourceHistory,
+  ApiCreateMarketCommentInput,
+  ApiCreateMarketItemInput,
 } from "./types";
 
 const ADMIN_REVALIDATE_ENDPOINT = "/api/admin/revalidate";
@@ -291,6 +300,45 @@ export const adminResourceApi = {
     patchWithRevalidation<ApiGlobalNotice>(`/global-notices/${id}`, input, [ADMIN_CACHE_TAGS.notices]),
   deleteGlobalNotice: (id: string) =>
     deleteWithRevalidation(`/global-notices/${id}`, [ADMIN_CACHE_TAGS.notices]),
+
+  listMarketItems: (input: ApiListMarketItemsQuery = {}) =>
+    apiRequest.get<ApiMarketItem[]>(
+      withOptionalQuery("/market/items", {
+        status: input.status,
+        sellerId: input.sellerId,
+        page: typeof input.page === "number" ? String(input.page) : undefined,
+        pageSize: typeof input.pageSize === "number" ? String(input.pageSize) : undefined,
+      }),
+    ),
+  createMarketItem: (input: ApiCreateMarketItemInput) =>
+    postWithRevalidation<ApiMarketItem>("/market/items", input, [ADMIN_CACHE_TAGS.market]),
+  getMarketItemById: (id: string) => apiRequest.get<ApiMarketItem>(`/market/items/${id}`),
+  updateMarketItem: (id: string, input: ApiUpdateMarketItemInput) =>
+    patchWithRevalidation<ApiMarketItem>(`/market/items/${id}`, input, [
+      ADMIN_CACHE_TAGS.market,
+    ]),
+  updateMarketItemStatus: (id: string, input: ApiUpdateMarketItemStatusInput) =>
+    patchWithRevalidation<ApiMarketItem>(`/market/items/${id}/status`, input, [
+      ADMIN_CACHE_TAGS.market,
+    ]),
+  deleteMarketItem: (id: string) =>
+    deleteWithRevalidation(`/market/items/${id}`, [ADMIN_CACHE_TAGS.market]),
+  listMarketCommentsByItemId: (id: string) =>
+    apiRequest.get<ApiMarketComment[]>(`/market/items/${id}/comments`),
+  createMarketComment: (id: string, input: ApiCreateMarketCommentInput) =>
+    postWithRevalidation<ApiMarketComment>(`/market/items/${id}/comments`, input, [
+      ADMIN_CACHE_TAGS.market,
+    ]),
+  updateMarketComment: (id: string, input: ApiUpdateMarketCommentInput) =>
+    patchWithRevalidation<ApiMarketComment>(`/market/comments/${id}`, input, [
+      ADMIN_CACHE_TAGS.market,
+    ]),
+  deleteMarketComment: (id: string) =>
+    deleteWithRevalidation(`/market/comments/${id}`, [ADMIN_CACHE_TAGS.market]),
+  upsertMarketPushSubscription: (input: ApiMarketPushSubscriptionInput) =>
+    apiRequest.post<void>("/market/push-subscriptions", input),
+  deleteMarketPushSubscription: (input: ApiMarketPushSubscriptionInput) =>
+    adminRequest<void>("/market/push-subscriptions", "DELETE", input),
 
   getSiteSettings: () => apiRequest.get<ApiSiteSettings>("/site-settings"),
   updateSiteSettings: (input: ApiUpdateSiteSettingsInput) =>

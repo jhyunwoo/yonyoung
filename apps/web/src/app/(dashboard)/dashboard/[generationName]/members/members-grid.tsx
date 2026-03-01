@@ -10,6 +10,7 @@ import {
   buildMemberDisplayName,
 } from "../../../../../lib/member-display-name";
 import { buildMemberRoleLabel } from "../../../../../lib/member-role-label";
+import { Skeleton } from "../../../../../components/skeleton";
 
 type MembersGridProps = {
   generationId: string;
@@ -69,7 +70,27 @@ export default function MembersGrid({ generationId, generationPath }: MembersGri
   }, [generationId]);
 
   if (isLoading) {
-    return <p className="mt-6 text-sm text-slate-500">멤버 목록을 불러오는 중입니다...</p>;
+    return (
+      <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-hidden="true">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <li key={`generation-members-skeleton-${index + 1}`}>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-12 w-12 shrink-0 rounded-full" />
+                <div className="min-w-0 flex-1 space-y-2">
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              </div>
+              <div className="mt-3 flex items-center justify-between">
+                <Skeleton className="h-6 w-20 rounded-full" />
+                <Skeleton className="h-3 w-12" />
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    );
   }
 
   if (errorMessage) {

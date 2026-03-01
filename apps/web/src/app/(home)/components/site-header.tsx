@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Monitor, Moon, Sun } from "lucide-react";
 
 type NavChild = {
   href: string;
@@ -17,6 +18,8 @@ type NavItem = {
   testId: string;
   children?: NavChild[];
 };
+
+type ThemeMode = "light" | "dark" | "system";
 
 const navItems: NavItem[] = [
   {
@@ -58,11 +61,41 @@ const desktopLinkBaseClass =
 const mobileLinkBaseClass =
   "relative block px-4 py-4 text-center text-[0.9rem] font-medium tracking-[0.05em] text-[#2c3357] uppercase after:absolute after:bottom-[0.6rem] after:left-1/2 after:h-[2px] after:w-0 after:-translate-x-1/2 after:bg-[#2c3357] after:transition-[width] after:duration-300 hover:after:w-12";
 
+const resolveTheme = (mode: ThemeMode, isSystemDark: boolean): "light" | "dark" => {
+  if (mode === "system") {
+    return isSystemDark ? "dark" : "light";
+  }
+  return mode;
+};
+
+const readStoredThemeMode = (): ThemeMode => {
+  if (typeof window === "undefined") {
+    return "system";
+  }
+
+  try {
+    const stored = localStorage.getItem("theme");
+    if (stored === "light" || stored === "dark" || stored === "system") {
+      return stored;
+    }
+  } catch {
+    // ignore storage errors
+  }
+
+  const datasetMode = document.documentElement.dataset.themeMode;
+  if (datasetMode === "light" || datasetMode === "dark" || datasetMode === "system") {
+    return datasetMode;
+  }
+
+  return "system";
+};
+
 export default function SiteHeader() {
   const pathname = usePathname();
   const shouldReduceMotion = useReducedMotion();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [themeMode, setThemeMode] = useState<ThemeMode>("system");
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 50);
@@ -81,6 +114,57 @@ export default function SiteHeader() {
       document.body.style.overflow = "";
     };
   }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    const initialMode = readStoredThemeMode();
+    setThemeMode(initialMode);
+
+    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const resolvedTheme = resolveTheme(initialMode, systemDark);
+    document.documentElement.classList.toggle("dark", resolvedTheme === "dark");
+    document.documentElement.dataset.theme = resolvedTheme;
+    document.documentElement.dataset.themeMode = initialMode;
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const onSystemThemeChange = () => {
+      if (themeMode !== "system") {
+        return;
+      }
+      const resolvedTheme = resolveTheme("system", mediaQuery.matches);
+      document.documentElement.classList.toggle("dark", resolvedTheme === "dark");
+      document.documentElement.dataset.theme = resolvedTheme;
+    };
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", onSystemThemeChange);
+      return () => mediaQuery.removeEventListener("change", onSystemThemeChange);
+    }
+
+    mediaQuery.addListener(onSystemThemeChange);
+    return () => mediaQuery.removeListener(onSystemThemeChange);
+  }, [themeMode]);
+
+  const handleThemeModeChange = (nextMode: ThemeMode) => {
+    setThemeMode(nextMode);
+
+    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const resolvedTheme = resolveTheme(nextMode, systemDark);
+    document.documentElement.classList.toggle("dark", resolvedTheme === "dark");
+    document.documentElement.dataset.theme = resolvedTheme;
+    document.documentElement.dataset.themeMode = nextMode;
+
+    try {
+      localStorage.setItem("theme", nextMode);
+    } catch {
+      // ignore storage errors
+    }
+  };
 
   return (
     <header
@@ -119,7 +203,7 @@ export default function SiteHeader() {
           </Link>
         </div>
 
-        <nav className="hidden md:block" data-testid="public-nav-desktop">
+        <nav className="hidden items-center gap-3 md:flex" data-testid="public-nav-desktop">
           <ul className="flex list-none items-center gap-8">
             {navItems.map((item) => {
               const active = isActivePath(pathname, item);
@@ -153,6 +237,55 @@ export default function SiteHeader() {
               );
             })}
           </ul>
+          <div
+            className="flex items-center gap-1 rounded-full border border-[#bfbfbf] bg-white p-1"
+            role="group"
+            aria-label="테마 모드 선택"
+            data-testid="public-theme-mode-group"
+          >
+            <button
+              type="button"
+              onClick={() => handleThemeModeChange("light")}
+              aria-label="라이트 모드"
+              aria-pressed={themeMode === "light"}
+              data-testid="public-theme-mode-light"
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition ${
+                themeMode === "light"
+                  ? "bg-[#2c3357] text-white"
+                  : "text-[#2c3357] hover:bg-[#f5f5f5]"
+              }`}
+            >
+              <Sun className="h-4 w-4" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleThemeModeChange("dark")}
+              aria-label="다크 모드"
+              aria-pressed={themeMode === "dark"}
+              data-testid="public-theme-mode-dark"
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition ${
+                themeMode === "dark"
+                  ? "bg-[#2c3357] text-white"
+                  : "text-[#2c3357] hover:bg-[#f5f5f5]"
+              }`}
+            >
+              <Moon className="h-4 w-4" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleThemeModeChange("system")}
+              aria-label="기기 설정"
+              aria-pressed={themeMode === "system"}
+              data-testid="public-theme-mode-system"
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition ${
+                themeMode === "system"
+                  ? "bg-[#2c3357] text-white"
+                  : "text-[#2c3357] hover:bg-[#f5f5f5]"
+              }`}
+            >
+              <Monitor className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
         </nav>
 
         <button

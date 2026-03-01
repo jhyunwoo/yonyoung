@@ -72,6 +72,39 @@ describe("SiteHeader", () => {
   let root: Root;
 
   beforeEach(() => {
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+    const storage = new Map<string, string>();
+    Object.defineProperty(window, "localStorage", {
+      writable: true,
+      value: {
+        getItem: (key: string) => storage.get(key) ?? null,
+        setItem: (key: string, value: string) => {
+          storage.set(key, value);
+        },
+        removeItem: (key: string) => {
+          storage.delete(key);
+        },
+        clear: () => {
+          storage.clear();
+        },
+      },
+    });
+    document.documentElement.classList.remove("dark");
+    delete document.documentElement.dataset.theme;
+    delete document.documentElement.dataset.themeMode;
+
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
@@ -113,5 +146,43 @@ describe("SiteHeader", () => {
     });
 
     expect(container.querySelector("[data-testid='public-nav-mobile']")).not.toBeInTheDocument();
+  });
+
+  it("Donate US 옆 아이콘 버튼으로 라이트/다크/기기 설정 모드를 전환한다", async () => {
+    const { default: SiteHeader } = await import("./site-header");
+
+    await act(async () => {
+      root.render(<SiteHeader />);
+      await Promise.resolve();
+    });
+
+    const lightButton = container.querySelector("[data-testid='public-theme-mode-light']");
+    const darkButton = container.querySelector("[data-testid='public-theme-mode-dark']");
+    const systemButton = container.querySelector("[data-testid='public-theme-mode-system']");
+    expect(lightButton).toBeInTheDocument();
+    expect(darkButton).toBeInTheDocument();
+    expect(systemButton).toBeInTheDocument();
+
+    await act(async () => {
+      darkButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(document.documentElement.classList.contains("dark")).toBe(true);
+    expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(document.documentElement.dataset.themeMode).toBe("dark");
+    expect(localStorage.getItem("theme")).toBe("dark");
+    expect(darkButton).toHaveAttribute("aria-pressed", "true");
+
+    await act(async () => {
+      systemButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(document.documentElement.classList.contains("dark")).toBe(false);
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(document.documentElement.dataset.themeMode).toBe("system");
+    expect(localStorage.getItem("theme")).toBe("system");
+    expect(systemButton).toHaveAttribute("aria-pressed", "true");
   });
 });

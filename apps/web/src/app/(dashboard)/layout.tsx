@@ -9,6 +9,7 @@ import DashboardShell, {
 import { serverAuthTool } from "../../lib/auth-server-tool";
 import { getAccessibleDashboardGenerationOptions } from "../../lib/dashboard-generation-server";
 import { buildDashboardViewerProfile } from "../../lib/user-profile";
+import { Skeleton } from "../../components/skeleton";
 
 export const metadata: Metadata = createPageMetadata({
   title: "연영회 Dashboard",
@@ -73,7 +74,30 @@ export default function RootLayout({
               <p className="sr-only" role="status" aria-live="polite">
                 대시보드 셸을 불러오는 중입니다.
               </p>
-              <div className="mx-auto h-64 w-full max-w-6xl animate-pulse rounded-2xl border border-slate-200 bg-white" />
+              <div className="mx-auto grid w-full max-w-6xl gap-4 md:grid-cols-[18rem_minmax(0,1fr)]">
+                <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <Skeleton className="h-11 w-11 rounded-full" />
+                  <Skeleton className="mt-4 h-5 w-36" />
+                  <Skeleton className="mt-2 h-3 w-24" />
+                  <div className="mt-6 space-y-2">
+                    {Array.from({ length: 6 }).map((_, index) => (
+                      <Skeleton key={`dashboard-shell-nav-${index + 1}`} className="h-10 w-full" />
+                    ))}
+                  </div>
+                  <div className="mt-10">
+                    <Skeleton className="h-12 w-full" />
+                  </div>
+                </section>
+                <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+                  <Skeleton className="h-6 w-48" />
+                  <Skeleton className="mt-3 h-4 w-full max-w-xl" />
+                  <Skeleton className="mt-2 h-4 w-full max-w-lg" />
+                  <div className="mt-8 grid gap-4 md:grid-cols-2">
+                    <Skeleton className="h-32 w-full" />
+                    <Skeleton className="h-32 w-full" />
+                  </div>
+                </section>
+              </div>
             </main>
           }
         >

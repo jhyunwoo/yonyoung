@@ -25,6 +25,7 @@ import LastUpdatedMeta from "./last-updated-meta";
 import RichTextEditor from "./rich-text-editor";
 import SortableImageGrid from "./sortable-image-grid";
 import UploadProgressBar from "./upload-progress-bar";
+import { Skeleton } from "../../../components/skeleton";
 import {
   NOTICE_MAX_IMAGES,
   buildRoleLabel,
@@ -297,7 +298,17 @@ export default function NoticeDetail({
   if (isLoading) {
     return (
       <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-        <p className="text-sm text-slate-500">공지 내용을 불러오는 중입니다...</p>
+        <div className="space-y-4" aria-hidden="true">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-3 w-full max-w-lg" />
+          <Skeleton className="h-36 w-full" />
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <Skeleton key={`notice-detail-loading-image-${index + 1}`} className="aspect-[4/3] w-full" />
+            ))}
+          </div>
+        </div>
       </section>
     );
   }

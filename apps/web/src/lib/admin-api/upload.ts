@@ -10,6 +10,7 @@ export const PRESIGN_PATHS = {
   exhibitionCover: "/exhibitions/presign/cover",
   exhibitionDetail: "/exhibitions/presign/detail",
   noticeImage: "/notices/presign/image",
+  marketImage: "/market/presign/image",
   userProfile: "/users/presign/profile",
 } as const;
 

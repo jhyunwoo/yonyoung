@@ -562,7 +562,7 @@ export type DataService = {
 export type PresignService = {
   issuePresignedPutUrl: (input: {
     actorId: string;
-    resource: "activities" | "exhibitions" | "users" | "notices";
+    resource: "activities" | "exhibitions" | "users" | "notices" | "market";
     slot: "cover" | "detail" | "profile" | "image";
     fileName: string;
     contentType: string;
@@ -575,7 +575,7 @@ export type PresignService = {
   }>;
   initiateMultipartUpload: (input: {
     actorId: string;
-    resource: "activities" | "exhibitions" | "users" | "notices";
+    resource: "activities" | "exhibitions" | "users" | "notices" | "market";
     slot: "cover" | "detail" | "profile" | "image";
     fileName: string;
     contentType: string;

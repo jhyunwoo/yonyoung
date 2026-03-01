@@ -3,7 +3,7 @@ import type { AppBindings } from "../../types/honoAppType";
 
 const DEFAULT_HEALTH_TIMEOUT_MS = 3_000;
 
-export type HealthCheckService =
+type HealthCheckService =
   | "d1"
   | "r2"
   | "r2_presign"
@@ -11,9 +11,9 @@ export type HealthCheckService =
   | "assets"
   | "service_binding";
 
-export type HealthCheckStatus = "healthy" | "unhealthy" | "skipped";
+type HealthCheckStatus = "healthy" | "unhealthy" | "skipped";
 
-export type HealthCheckResult = {
+type HealthCheckResult = {
   service: HealthCheckService;
   binding: string;
   status: HealthCheckStatus;
@@ -22,7 +22,7 @@ export type HealthCheckResult = {
   error?: string;
 };
 
-export type HealthReport = {
+type HealthReport = {
   status: "healthy" | "unhealthy";
   checkedAt: string;
   durationMs: number;

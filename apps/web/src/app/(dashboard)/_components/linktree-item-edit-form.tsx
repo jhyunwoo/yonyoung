@@ -11,6 +11,7 @@ import {
   normalizeLinktreeItemInput,
   readLinktreeErrorMessage,
 } from "./linktree-shared";
+import { Skeleton } from "../../../components/skeleton";
 
 type LinktreeItemEditFormProps = {
   linktreeId: string;
@@ -127,7 +128,11 @@ export default function LinktreeItemEditForm({
   if (!canWrite) {
     return (
       <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-        <p className="text-sm text-slate-500">권한을 확인하는 중입니다...</p>
+        <div className="space-y-3" aria-hidden="true">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-3 w-64" />
+        </div>
       </section>
     );
   }
@@ -135,7 +140,14 @@ export default function LinktreeItemEditForm({
   if (isLoading) {
     return (
       <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-        <p className="text-sm text-slate-500">링크 정보를 불러오는 중입니다...</p>
+        <div className="space-y-3" aria-hidden="true">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-3 w-64" />
+          <Skeleton className="h-10 w-full max-w-lg" />
+          <Skeleton className="h-10 w-full max-w-lg" />
+          <Skeleton className="h-10 w-20" />
+        </div>
       </section>
     );
   }

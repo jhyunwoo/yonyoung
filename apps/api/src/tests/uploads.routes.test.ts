@@ -39,6 +39,11 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
       role: "manager" as const,
       expected: { resource: "notices", slot: "image" as const },
     },
+    {
+      path: "/api/market/presign/image",
+      role: "regular_member" as const,
+      expected: { resource: "market", slot: "image" as const },
+    },
   ];
 
   for (const route of resourceRoutes) {
@@ -59,9 +64,11 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
     });
 
     it(`${route.path}는 권한 없는 사용자에게 403을 반환한다`, /** it 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
-      const forbiddenRole = route.path.startsWith("/api/activities/")
-        ? ("unverified" as const)
-        : ("regular_member" as const);
+      const forbiddenRole =
+        route.path.startsWith("/api/activities/") ||
+        route.path.startsWith("/api/market/")
+          ? ("unverified" as const)
+          : ("regular_member" as const);
       const issuePresignedPutUrl = fn(
         /** fn 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => ({
           uploadUrl: "https://upload.example.com/signed",
@@ -268,6 +275,7 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
   for (const path of [
     "/api/activities/presign/cover",
     "/api/activities/presign/detail",
+    "/api/market/presign/image",
   ]) {
     it(`${path}는 regular_member에게 허용된다`, async () => {
       const issuePresignedPutUrl = fn(async () => ({
@@ -1101,6 +1109,55 @@ describe("upload presign routes", /** describe 실행 과정에서 필요한 연
       missingStorageResponse,
     );
     expect(missingStorageBody.error.message).toContain("R2_*");
+  });
+
+  it("/api/market/multipart/image/init은 regular_member에게 허용되고 unverified는 403을 반환한다", async () => {
+    const initiateMultipartUpload = fn(async () => ({
+      uploadId: "market-upload-id",
+      objectKey: `market/${IDs.member}/image/market-image-key`,
+      publicUrl: "https://cdn.example.com/market/market-image-key",
+      partSize: UPLOAD_LIMITS.multipartPartSizeBytes,
+      maxPartNumber: 4,
+    }));
+    const allowedApp = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      presignService: createPresignServiceMock({ initiateMultipartUpload }),
+    });
+
+    const allowedResponse = await allowedApp.request("/api/market/multipart/image/init", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "market-image.png",
+        contentType: "image/png",
+        fileSize: UPLOAD_LIMITS.multipartPartSizeBytes * 2,
+      }),
+    });
+    expect(allowedResponse.status).toBe(201);
+    expect(initiateMultipartUpload).toHaveBeenCalledWith({
+      actorId: IDs.member,
+      resource: "market",
+      slot: "image",
+      fileName: "market-image.png",
+      contentType: "image/png",
+      fileSize: UPLOAD_LIMITS.multipartPartSizeBytes * 2,
+    });
+
+    const deniedApp = createTestApp({
+      actor: createActor("unverified", IDs.otherUser),
+      presignService: createPresignServiceMock({ initiateMultipartUpload }),
+    });
+    const deniedResponse = await deniedApp.request("/api/market/multipart/image/init", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "market-image.png",
+        contentType: "image/png",
+        fileSize: UPLOAD_LIMITS.multipartPartSizeBytes * 2,
+      }),
+    });
+    expect(deniedResponse.status).toBe(403);
+    await expectErrorCode(deniedResponse, "FORBIDDEN");
   });
 
   it("/api/users/multipart/profile/init은 member 계열 사용자에게 허용된다", async () => {

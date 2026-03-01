@@ -26,6 +26,7 @@ Set the following environment variables in `.env.local` (or your runtime environ
 ```bash
 AUTH_API_URL=http://localhost:8787
 NEXT_PUBLIC_AUTH_API_URL=http://localhost:8787
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=<web-push-public-key>
 ```
 
 Better Auth client/server URL resolution:
@@ -33,8 +34,11 @@ Better Auth client/server URL resolution:
 - Better Auth client (`createAuthClient`) uses `NEXT_PUBLIC_AUTH_API_URL`.
 - Server-side auth/public API calls use `AUTH_API_URL` first, then `NEXT_PUBLIC_AUTH_API_URL`.
 - In production, `NEXT_PUBLIC_AUTH_API_URL` must be configured explicitly.
+- 연영장터 댓글 알림(웹푸시)을 사용하려면 `NEXT_PUBLIC_VAPID_PUBLIC_KEY`를 함께 설정해야 합니다.
 
 For Cloudflare deployment, register both values in `apps/web/wrangler.jsonc` under `vars` (or in the Cloudflare dashboard environment variables) instead of passing inline terminal values during deploy.
+
+연영장터 알림은 `public/market-sw.js` 서비스워커를 통해 표시되며, 클릭 시 `/dashboard/market`으로 이동합니다.
 
 ## E2E Environment Variables (Playwright)
 
@@ -88,6 +92,18 @@ Preview the application locally on the Cloudflare runtime:
 ```bash
 npm run preview
 # or similar package manager command
+```
+
+## UX Performance Metrics (Terminal)
+
+웹 사용자 경험에 직접적인 영향을 주는 Core Web Vitals(LCP/INP/CLS/FCP/TTFB)를 터미널에서 확인할 수 있습니다.
+
+```bash
+# 루트에서 실행
+pnpm perf:web:ux
+
+# 커스텀 대상
+pnpm perf:web:ux --baseUrl=http://127.0.0.1:3000 --routes=/,/archive/records,/about
 ```
 
 ## Deploy

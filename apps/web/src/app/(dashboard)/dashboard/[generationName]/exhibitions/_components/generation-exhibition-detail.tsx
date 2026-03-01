@@ -12,6 +12,7 @@ import {
 } from "../../../../../../lib/date-formatters";
 import { shouldUseUnoptimizedImage } from "../../../../../../lib/image-utils";
 import { RichTextContent } from "../../../../../../lib/rich-text-content";
+import { Skeleton } from "../../../../../../components/skeleton";
 import AuditHistoryPanel from "../../../../_components/audit-history-panel";
 import LastUpdatedMeta from "../../../../_components/last-updated-meta";
 import { readExhibitionErrorMessage } from "./exhibition-shared";
@@ -152,7 +153,29 @@ export default function GenerationExhibitionDetail({
       </div>
 
       {isLoading ? (
-        <p className="mt-6 text-sm text-slate-500">전시 정보를 불러오는 중입니다...</p>
+        <div className="mt-6 space-y-6" aria-hidden="true">
+          <div className="rounded-xl border border-slate-200 p-4">
+            <Skeleton className="h-7 w-2/3" />
+            <Skeleton className="mt-2 h-4 w-40" />
+            <Skeleton className="mt-2 h-4 w-52" />
+            <Skeleton className="mt-4 h-4 w-full" />
+            <Skeleton className="mt-2 h-4 w-5/6" />
+            <Skeleton className="mt-1 h-4 w-2/3" />
+            <Skeleton className="mt-3 h-3 w-28" />
+            <Skeleton className="mt-1 h-3 w-36" />
+          </div>
+          <div>
+            <Skeleton className="h-4 w-14" />
+            <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <Skeleton
+                  key={`exhibition-detail-image-loading-${index + 1}`}
+                  className="aspect-[4/3] w-full rounded-xl"
+                />
+              ))}
+            </div>
+          </div>
+        </div>
       ) : errorMessage ? (
         <p className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {errorMessage}

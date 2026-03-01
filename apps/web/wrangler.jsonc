@@ -60,6 +60,7 @@
   "vars": {
     "AUTH_API_URL": "https://api.yonyoung.moveto.kr",
     "NEXT_PUBLIC_AUTH_API_URL": "https://api.yonyoung.moveto.kr",
+    "NEXT_PUBLIC_VAPID_PUBLIC_KEY": "",
     "CSP_REPORT_ONLY": "true",
   },
   "observability": {
@@ -105,6 +106,7 @@
       "vars": {
         "AUTH_API_URL": "https://api-staging.yonyoung.moveto.kr",
         "NEXT_PUBLIC_AUTH_API_URL": "https://api-staging.yonyoung.moveto.kr",
+        "NEXT_PUBLIC_VAPID_PUBLIC_KEY": "BN4aaUxRWLGV4EJ1lcCDXEwNJ11qrC08zr29J1P8DxufuvM_geXKylNgQvkwKoRzJ_AzENjfj0EYpItDbtUsJeE",
         "CSP_REPORT_ONLY": "true",
       },
       "services": [
@@ -133,6 +135,7 @@
       "vars": {
         "AUTH_API_URL": "https://api.yonyoung.moveto.kr",
         "NEXT_PUBLIC_AUTH_API_URL": "https://api.yonyoung.moveto.kr",
+        "NEXT_PUBLIC_VAPID_PUBLIC_KEY": "",
         "CSP_REPORT_ONLY": "false",
       },
       "services": [

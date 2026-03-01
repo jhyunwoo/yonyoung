@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import NoticeManager from "../../../_components/notice-manager";
 import { serverAuthTool } from "../../../../../lib/auth-server-tool";
 import { isPresidentRole } from "../../../../../lib/auth-shared";
+import { Skeleton } from "../../../../../components/skeleton";
 
 export default async function SettingsNoticesPage() {
   const session = await serverAuthTool.requireSession();
@@ -12,7 +13,20 @@ export default async function SettingsNoticesPage() {
       <Suspense
         fallback={
           <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-            <p className="text-sm text-slate-500">공지 목록을 불러오는 중입니다...</p>
+            <div className="space-y-3" aria-hidden="true">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-3 w-full max-w-xl" />
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div
+                  key={`settings-notice-skeleton-${index + 1}`}
+                  className="rounded-lg border border-slate-200 p-3"
+                >
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="mt-2 h-3 w-full" />
+                  <Skeleton className="mt-1 h-3 w-1/4" />
+                </div>
+              ))}
+            </div>
           </section>
         }
       >

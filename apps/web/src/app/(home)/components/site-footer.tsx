@@ -10,6 +10,7 @@ export default async function SiteFooter() {
   const siteSettings = await getPublicSiteSettings().catch(
     () => DEFAULT_SITE_SETTINGS,
   );
+  const currentYear = new Date().getFullYear();
   const instagramId = siteSettings.footerInstagramId.replace(/^@+/, "");
   const instagramUrl = `https://www.instagram.com/${encodeURIComponent(instagramId)}`;
 
@@ -90,6 +91,11 @@ export default async function SiteFooter() {
               </span>
             </div>
           </div>
+        </div>
+        <div className="border-t border-[#333333] pt-4 md:pt-5">
+          <p className="text-[0.8rem] leading-[1.5] text-[#999999]">
+            © {currentYear} 연세대학교 중앙사진동아리 연영회. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>

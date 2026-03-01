@@ -18,6 +18,7 @@ import {
   toShowcaseUploadImageItems,
 } from "../../../lib/showcase-images";
 import { useImageUploadState } from "../../../lib/use-image-upload-state";
+import { Skeleton } from "../../../components/skeleton";
 import SortableImageGrid from "./sortable-image-grid";
 import UploadProgressBar from "./upload-progress-bar";
 
@@ -521,7 +522,11 @@ export default function MemberEditForm({
         <fieldset className="rounded-xl border border-slate-200 p-4">
           <legend className="px-1 text-sm font-medium text-slate-700">소속 기수</legend>
           {isLoadingGenerations ? (
-            <p className="text-sm text-slate-500">기수 목록을 불러오는 중입니다...</p>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <Skeleton key={`member-generation-loading-${index + 1}`} className="h-9 w-full" />
+              ))}
+            </div>
           ) : allGenerations.length === 0 ? (
             <p className="text-sm text-slate-500">선택 가능한 기수가 없습니다.</p>
           ) : (

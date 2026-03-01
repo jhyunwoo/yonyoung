@@ -21,6 +21,7 @@ import {
   Megaphone,
   Menu,
   Settings,
+  Store,
   UserCircle2,
   Users,
   X,
@@ -162,6 +163,15 @@ const SidebarContent = (input: {
           Icon: Users,
           active: input.selectedGenerationScopedPath?.startsWith("/members") === true,
         },
+        {
+          key: "market",
+          href: "/dashboard/market",
+          label: "연영장터",
+          Icon: Store,
+          active:
+            input.pathname === "/dashboard/market" ||
+            input.pathname.startsWith("/dashboard/market/"),
+        },
       ]
     : [
         ...input.generationOptions.map((generation) => ({
@@ -173,6 +183,15 @@ const SidebarContent = (input: {
             input.pathname === generation.path ||
             input.pathname.startsWith(`${generation.path}/`),
         })),
+        {
+          key: "market",
+          href: "/dashboard/market",
+          label: "연영장터",
+          Icon: Store,
+          active:
+            input.pathname === "/dashboard/market" ||
+            input.pathname.startsWith("/dashboard/market/"),
+        },
       ];
 
   const currentGeneration = input.selectedGeneration;
@@ -431,7 +450,12 @@ const resolveActiveGenerationFromPath = (
 
   const nextPathname = pathname.slice("/dashboard/".length);
   const routeName = nextPathname.split("/")[0];
-  if (!routeName || routeName === "settings" || routeName === "profile") {
+  if (
+    !routeName ||
+    routeName === "settings" ||
+    routeName === "profile" ||
+    routeName === "market"
+  ) {
     return null;
   }
 
@@ -449,7 +473,12 @@ const resolveSelectedGenerationScopedPath = (pathname: string): string | null =>
   }
 
   const routeName = segments[1];
-  if (!routeName || routeName === "settings" || routeName === "profile") {
+  if (
+    !routeName ||
+    routeName === "settings" ||
+    routeName === "profile" ||
+    routeName === "market"
+  ) {
     return null;
   }
 
@@ -520,6 +549,10 @@ export default function DashboardShell({
 
     if (pathname.startsWith("/dashboard/settings")) {
       return "설정";
+    }
+
+    if (pathname.startsWith("/dashboard/market")) {
+      return "연영장터";
     }
 
     if (selectedGeneration) {

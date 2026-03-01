@@ -9,6 +9,7 @@ import {
   buildMemberDisplayInitial,
   buildMemberDisplayName,
 } from "../../../../../lib/member-display-name";
+import { Skeleton } from "../../../../../components/skeleton";
 
 const readErrorMessage = (error: unknown): string => {
   if (error instanceof AdminApiError) {
@@ -61,7 +62,27 @@ export default function MembersGrid() {
   }, []);
 
   if (isLoading) {
-    return <p className="mt-6 text-sm text-slate-500">전체 멤버 목록을 불러오는 중입니다...</p>;
+    return (
+      <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-hidden="true">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <li key={`settings-members-skeleton-${index + 1}`}>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-12 w-12 shrink-0 rounded-full" />
+                <div className="min-w-0 flex-1 space-y-2">
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              </div>
+              <div className="mt-3 space-y-2">
+                <Skeleton className="h-3 w-5/6" />
+                <Skeleton className="h-3 w-3/4" />
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    );
   }
 
   if (errorMessage) {

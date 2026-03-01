@@ -53,6 +53,9 @@
     "verify:cache": "node scripts/cache-verify.mjs",
     "verify:api-load": "node scripts/api-load-test.mjs",
     "verify:lighthouse": "node scripts/lighthouse-runner.mjs",
+    "perf:web:ux": "node scripts/lighthouse-runner.mjs --printJson=false",
+    "perf:api:ux": "node scripts/api-load-test.mjs --printJson=false",
+    "perf:ux": "node scripts/ux-performance-suite.mjs",
     "test:all": "pnpm lint && pnpm check-types && pnpm api:test:coverage && pnpm web:test:unit:coverage && pnpm web:test:e2e:smoke && pnpm web:test:e2e:full",
     "tdd:guard": "node scripts/tdd-guard.mjs"
   },

@@ -48,6 +48,25 @@ describe("adminResourceApi", () => {
     );
   });
 
+  it("장터 목록은 status/page/pageSize/sellerId 쿼리를 선택적으로 전달한다", async () => {
+    adminRequestMock.mockResolvedValueOnce([]);
+    await adminResourceApi.listMarketItems();
+    expect(adminRequestMock).toHaveBeenNthCalledWith(1, "/market/items", "GET");
+
+    adminRequestMock.mockResolvedValueOnce([]);
+    await adminResourceApi.listMarketItems({
+      status: "selling",
+      page: 2,
+      pageSize: 30,
+      sellerId: "user-1",
+    });
+    expect(adminRequestMock).toHaveBeenNthCalledWith(
+      2,
+      "/market/items?status=selling&sellerId=user-1&page=2&pageSize=30",
+      "GET",
+    );
+  });
+
   it("조회 메서드는 리소스 경로에 맞는 GET 요청을 보낸다", async () => {
     adminRequestMock.mockResolvedValue({});
 
@@ -93,6 +112,15 @@ describe("adminResourceApi", () => {
     await adminResourceApi.getGlobalNoticeById("global-1");
     expect(adminRequestMock).toHaveBeenLastCalledWith(
       "/global-notices/global-1",
+      "GET",
+    );
+
+    await adminResourceApi.getMarketItemById("market-1");
+    expect(adminRequestMock).toHaveBeenLastCalledWith("/market/items/market-1", "GET");
+
+    await adminResourceApi.listMarketCommentsByItemId("market-1");
+    expect(adminRequestMock).toHaveBeenLastCalledWith(
+      "/market/items/market-1/comments",
       "GET",
     );
 
@@ -450,6 +478,71 @@ describe("adminResourceApi", () => {
       },
       {
         invoke: () =>
+          adminResourceApi.createMarketItem(
+            {
+              name: "렌즈",
+              imageUrls: ["https://example.com/m-1.jpg"],
+              price: 1000,
+            } as unknown as never,
+          ),
+        path: "/market/items",
+        method: "POST",
+        tags: [ADMIN_CACHE_TAGS.market],
+      },
+      {
+        invoke: () =>
+          adminResourceApi.updateMarketItem(
+            "market-1",
+            { name: "렌즈 수정" } as unknown as never,
+          ),
+        path: "/market/items/market-1",
+        method: "PATCH",
+        tags: [ADMIN_CACHE_TAGS.market],
+      },
+      {
+        invoke: () =>
+          adminResourceApi.updateMarketItemStatus(
+            "market-1",
+            { status: "reserved" } as unknown as never,
+          ),
+        path: "/market/items/market-1/status",
+        method: "PATCH",
+        tags: [ADMIN_CACHE_TAGS.market],
+      },
+      {
+        invoke: () => adminResourceApi.deleteMarketItem("market-1"),
+        path: "/market/items/market-1",
+        method: "DELETE",
+        tags: [ADMIN_CACHE_TAGS.market],
+      },
+      {
+        invoke: () =>
+          adminResourceApi.createMarketComment(
+            "market-1",
+            { content: "댓글" } as unknown as never,
+          ),
+        path: "/market/items/market-1/comments",
+        method: "POST",
+        tags: [ADMIN_CACHE_TAGS.market],
+      },
+      {
+        invoke: () =>
+          adminResourceApi.updateMarketComment(
+            "comment-1",
+            { content: "수정 댓글" } as unknown as never,
+          ),
+        path: "/market/comments/comment-1",
+        method: "PATCH",
+        tags: [ADMIN_CACHE_TAGS.market],
+      },
+      {
+        invoke: () => adminResourceApi.deleteMarketComment("comment-1"),
+        path: "/market/comments/comment-1",
+        method: "DELETE",
+        tags: [ADMIN_CACHE_TAGS.market],
+      },
+      {
+        invoke: () =>
           adminResourceApi.updateSiteSettings(
             { footerInstagramId: "yonyoungpage" } as unknown as never,
           ),
@@ -502,6 +595,44 @@ describe("adminResourceApi", () => {
       const requestInit = latestRevalidate?.[1] as RequestInit;
       expect(requestInit.body).toBe(JSON.stringify({ tags: scenario.tags }));
     }
+  });
+
+  it("장터 푸시 구독 등록/해제는 재검증 없이 지정 엔드포인트를 호출한다", async () => {
+    adminRequestMock.mockResolvedValue(undefined);
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(null, { status: 204 }));
+
+    await adminResourceApi.upsertMarketPushSubscription({
+      endpoint: "https://push.example.com/sub",
+      p256dh: "key",
+      auth: "auth",
+    });
+    expect(adminRequestMock).toHaveBeenCalledWith(
+      "/market/push-subscriptions",
+      "POST",
+      {
+        endpoint: "https://push.example.com/sub",
+        p256dh: "key",
+        auth: "auth",
+      },
+    );
+
+    await adminResourceApi.deleteMarketPushSubscription({
+      endpoint: "https://push.example.com/sub",
+      p256dh: "key",
+      auth: "auth",
+    });
+    expect(adminRequestMock).toHaveBeenCalledWith(
+      "/market/push-subscriptions",
+      "DELETE",
+      {
+        endpoint: "https://push.example.com/sub",
+        p256dh: "key",
+        auth: "auth",
+      },
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   it("브라우저 환경이 아니면 재검증 요청을 생략한다", async () => {

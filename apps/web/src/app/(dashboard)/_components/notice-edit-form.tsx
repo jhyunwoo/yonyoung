@@ -22,6 +22,7 @@ import LastUpdatedMeta from "./last-updated-meta";
 import RichTextEditor from "./rich-text-editor";
 import SortableImageGrid from "./sortable-image-grid";
 import UploadProgressBar from "./upload-progress-bar";
+import { Skeleton } from "../../../components/skeleton";
 import {
   createExistingUploadImageItem,
 } from "../../../lib/image-upload-state";
@@ -227,7 +228,11 @@ export default function NoticeEditForm({
   if (!canWrite) {
     return (
       <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-        <p className="text-sm text-slate-500">권한을 확인하는 중입니다...</p>
+        <div className="space-y-3" aria-hidden="true">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-8 w-44" />
+          <Skeleton className="h-3 w-full max-w-md" />
+        </div>
       </section>
     );
   }
@@ -235,9 +240,15 @@ export default function NoticeEditForm({
   if (isLoading) {
     return (
       <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-        <p className="text-sm text-slate-500">
-          공지 정보를 불러오는 중입니다...
-        </p>
+        <div className="space-y-4" aria-hidden="true">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-8 w-44" />
+          <Skeleton className="h-3 w-full max-w-lg" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-10 w-24" />
+        </div>
       </section>
     );
   }

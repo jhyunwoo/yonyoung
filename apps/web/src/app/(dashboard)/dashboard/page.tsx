@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import RecentGlobalNotices from "../_components/recent-global-notices";
 import DashboardR2StorageUsage from "../_components/dashboard-r2-storage-usage";
 import { serverAuthTool } from "../../../lib/auth-server-tool";
+import { Skeleton } from "../../../components/skeleton";
 
 const YEONYOUNG_NAS_URL = "https://165.132.176.27:8080";
 
@@ -36,7 +37,12 @@ export default async function DashboardPage() {
         <Suspense
           fallback={
             <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-              <p className="text-sm text-slate-500">파일 저장공간 사용량을 불러오는 중입니다...</p>
+              <div className="space-y-3" aria-hidden="true">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-10 w-40" />
+                <Skeleton className="h-3 w-48" />
+                <Skeleton className="h-2 w-full max-w-lg" />
+              </div>
             </section>
           }
         >
@@ -46,7 +52,19 @@ export default async function DashboardPage() {
         <Suspense
           fallback={
             <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-              <p className="text-sm text-slate-500">최근 전체 공지를 불러오는 중입니다...</p>
+              <div className="space-y-3" aria-hidden="true">
+                <Skeleton className="h-4 w-40" />
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div
+                    key={`dashboard-global-notice-skeleton-${index + 1}`}
+                    className="rounded-lg border border-slate-200 p-3"
+                  >
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="mt-2 h-3 w-full" />
+                    <Skeleton className="mt-1 h-3 w-1/3" />
+                  </div>
+                ))}
+              </div>
             </section>
           }
         >

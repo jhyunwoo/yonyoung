@@ -20,10 +20,12 @@ const readPermissionResource = (
     | "exhibition"
     | "generation_notice"
     | "global_notice"
+    | "market_item"
+    | "market_comment"
     | "linktree"
     | "linktree_item"
     | "user",
-): "generation" | "activity" | "exhibition" | "notice" | "linktree" | "user" => {
+): "generation" | "activity" | "exhibition" | "notice" | "market" | "linktree" | "user" => {
   switch (resourceType) {
     case "generation":
       return "generation";
@@ -34,6 +36,9 @@ const readPermissionResource = (
     case "generation_notice":
     case "global_notice":
       return "notice";
+    case "market_item":
+    case "market_comment":
+      return "market";
     case "linktree":
     case "linktree_item":
       return "linktree";

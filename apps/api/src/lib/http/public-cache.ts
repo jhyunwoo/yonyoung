@@ -104,14 +104,6 @@ const setCacheStatusVariable = (
   c.set("cacheStatus", status);
 };
 
-const buildCacheRequest = (
-  c: Context<HonoAppType>,
-  path: string,
-): Request => {
-  const url = new URL(path, c.req.url);
-  return new Request(url.toString(), { method: "GET" });
-};
-
 export const withPublicCacheHeaders = (response: Response): Response => {
   return annotateCacheMetadata(response, Date.now());
 };
@@ -183,23 +175,4 @@ export const respondWithPublicCache = async (
   );
 
   return addCacheStatusHeader(response, "miss");
-};
-
-export const purgePublicCachePath = async (
-  c: Context<HonoAppType>,
-  path: string,
-): Promise<void> => {
-  const cache = getDefaultCache();
-  if (!cache) {
-    return;
-  }
-
-  const cacheKey = buildCacheRequest(c, path);
-  await runInBackground(
-    c,
-    cache.delete(cacheKey),
-    {
-      fallback: "await",
-    },
-  );
 };

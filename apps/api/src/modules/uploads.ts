@@ -41,8 +41,13 @@ import {
 import { R2_STORAGE_LIMIT_BYTES } from "../lib/storage/usage";
 
 type App = OpenAPIHono<HonoAppType>;
-type ManagedResource = Extract<Resource, "activity" | "exhibition" | "notice">;
-type UploadResourcePath = "activities" | "exhibitions" | "users" | "notices";
+type ManagedResource = Extract<Resource, "activity" | "exhibition" | "notice" | "market">;
+type UploadResourcePath =
+  | "activities"
+  | "exhibitions"
+  | "users"
+  | "notices"
+  | "market";
 type UploadSlot = "cover" | "detail" | "profile" | "image";
 
 const canCreateOrUpdate = (role: Role, resource: Resource) => {
@@ -53,6 +58,7 @@ const resourceUploadPathMap: Record<ManagedResource, UploadResourcePath> = {
   activity: "activities",
   exhibition: "exhibitions",
   notice: "notices",
+  market: "market",
 };
 
 const resourceByPath: Record<UploadResourcePath, Resource | "user"> = {
@@ -60,6 +66,7 @@ const resourceByPath: Record<UploadResourcePath, Resource | "user"> = {
   exhibitions: "exhibition",
   users: "user",
   notices: "notice",
+  market: "market",
 };
 
 const slotAllowlistByPath: Record<UploadResourcePath, UploadSlot[]> = {
@@ -67,6 +74,7 @@ const slotAllowlistByPath: Record<UploadResourcePath, UploadSlot[]> = {
   exhibitions: ["cover", "detail"],
   users: ["profile"],
   notices: ["image"],
+  market: ["image"],
 };
 
 const isAllowedContentType = (contentType: string): boolean =>
@@ -536,6 +544,14 @@ export const registerUploadRoutes = (
     "notice",
     "image",
   );
+  registerResourcePresignRoute(
+    app,
+    dependencies,
+    "/api/market/presign/image",
+    "issueMarketImagePresign",
+    "market",
+    "image",
+  );
 
   registerResourceMultipartInitRoute(
     app,
@@ -575,6 +591,14 @@ export const registerUploadRoutes = (
     "/api/notices/multipart/image/init",
     "initNoticeImageMultipartUpload",
     "notice",
+    "image",
+  );
+  registerResourceMultipartInitRoute(
+    app,
+    dependencies,
+    "/api/market/multipart/image/init",
+    "initMarketImageMultipartUpload",
+    "market",
     "image",
   );
 

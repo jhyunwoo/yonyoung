@@ -17,6 +17,7 @@ const PUBLIC_TAGS_BY_ADMIN_TAG: Record<AdminCacheTag, PublicCacheTag[]> = {
   "admin:exhibitions": [PUBLIC_CACHE_TAGS.exhibitions],
   "admin:generations": [PUBLIC_CACHE_TAGS.generations, PUBLIC_CACHE_TAGS.photographers],
   "admin:linktree": [PUBLIC_CACHE_TAGS.linktree],
+  "admin:market": [],
   "admin:notices": [],
   "admin:site-settings": [PUBLIC_CACHE_TAGS.siteSettings],
   "admin:users": [PUBLIC_CACHE_TAGS.photographers],

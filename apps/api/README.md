@@ -38,6 +38,9 @@ Required runtime variables:
 - `R2_SECRET_ACCESS_KEY`
 - `R2_BUCKET`
 - `R2_PUBLIC_BASE_URL`
+- `VAPID_PUBLIC_KEY` (웹푸시 공개 키)
+- `VAPID_PRIVATE_KEY` (웹푸시 비공개 키, Wrangler secret 권장)
+- `VAPID_SUBJECT` (예: `mailto:admin@example.com`)
 
 Required for Drizzle migration scripts:
 
@@ -78,6 +81,9 @@ Protected resources (all require auth session):
 - `/api/exhibitions`
 - `/api/linktree`
 - `/api/users`
+- `/api/market/items`
+- `/api/market/comments`
+- `/api/market/push-subscriptions`
 
 Presigned upload endpoints:
 
@@ -86,6 +92,8 @@ Presigned upload endpoints:
 - `POST /api/exhibitions/presign/cover`
 - `POST /api/exhibitions/presign/detail`
 - `POST /api/users/presign/profile`
+- `POST /api/market/presign/image`
+- `POST /api/market/multipart/image/init`
 
 ## API Docs
 
@@ -108,6 +116,18 @@ Better Auth schema endpoint is also protected:
 ```txt
 pnpm install
 pnpm --filter api dev
+```
+
+## API UX Performance Metrics (Terminal)
+
+사용자 체감 품질에 영향을 주는 응답 지연(P50/P95/P99), 처리량(RPS), 5xx 오류율을 터미널에서 확인할 수 있습니다.
+
+```bash
+# 루트에서 실행
+pnpm perf:api:ux
+
+# 커스텀 대상
+pnpm perf:api:ux --baseUrl=http://127.0.0.1:8787 --endpoints=/health,/api/public/activities --requests=240 --concurrency=12
 ```
 
 ## Generate Auth Schema and Migrations

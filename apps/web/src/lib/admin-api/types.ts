@@ -32,7 +32,6 @@ export {
   type ApiMarketItem,
   type ApiMarketItemStatus,
   type ApiMarketPushSubscriptionInput,
-  type ApiMarketSeller,
   type ApiMemberProfileUpdateInput,
   type ApiPresignResponse,
   type ApiSiteSettings,

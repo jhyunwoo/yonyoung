@@ -154,4 +154,23 @@ describe("uploadWithPresign", () => {
       }),
     );
   });
+
+  it("marketImage presign 경로로도 업로드를 수행한다", async () => {
+    adminRequestMock.mockResolvedValue(createPresign());
+    const file = new File(["a"], "market.jpg", { type: "image/jpeg" });
+
+    await uploadWithPresign({
+      presignPath: PRESIGN_PATHS.marketImage,
+      file,
+    });
+
+    expect(adminRequestMock).toHaveBeenCalledWith(
+      PRESIGN_PATHS.marketImage,
+      "POST",
+      expect.objectContaining({
+        fileName: "market.jpg",
+        contentType: "image/jpeg",
+      }),
+    );
+  });
 });

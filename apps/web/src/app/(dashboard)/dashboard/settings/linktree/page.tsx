@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import LinktreeManager from "../../../_components/linktree-manager";
 import { serverAuthTool } from "../../../../../lib/auth-server-tool";
 import { isAdminRole } from "../../../../../lib/auth-shared";
+import { Skeleton } from "../../../../../components/skeleton";
 
 export default async function SettingsLinktreePage() {
   const session = await serverAuthTool.requireSession();
@@ -11,7 +12,19 @@ export default async function SettingsLinktreePage() {
       <Suspense
         fallback={
           <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-            <p className="text-sm text-slate-500">링크 모음 목록을 불러오는 중입니다...</p>
+            <div className="space-y-3" aria-hidden="true">
+              <Skeleton className="h-4 w-36" />
+              <Skeleton className="h-3 w-full max-w-lg" />
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div
+                  key={`linktree-list-skeleton-${index + 1}`}
+                  className="rounded-lg border border-slate-200 p-3"
+                >
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="mt-2 h-3 w-1/3" />
+                </div>
+              ))}
+            </div>
           </section>
         }
       >
