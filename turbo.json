@@ -5,7 +5,15 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": [
+        "AUTH_API_URL",
+        "NEXTJS_ENV",
+        "NEXT_PUBLIC_AUTH_API_URL",
+        "NEXT_PUBLIC_SITE_URL",
+        "NODE_ENV",
+        "REVALIDATE_SECRET"
+      ]
     },
     "lint": {
       "dependsOn": ["^lint"],

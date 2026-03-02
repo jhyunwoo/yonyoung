@@ -6,7 +6,6 @@ import SiteFooter from "./components/site-footer";
 import PublicHeaderSafeArea from "./components/public-header-safe-area";
 import { createPageMetadata } from "../../lib/seo";
 import { WebVitalsReporter } from "../_components/web-vitals-reporter";
-import { Analytics } from "@vercel/analytics/next"
 
 export const metadata: Metadata = createPageMetadata({
   title: "연영회 | 연세대학교 중앙사진동아리",
@@ -70,7 +69,6 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: INLINE_THEME_INIT_SCRIPT }} />
       </head>
       <body className="min-h-screen bg-(--bg-primary) text-(--text-primary) antialiased">
-        <Analytics />
         <Suspense fallback={null}>
           <WebVitalsReporter />
         </Suspense>
