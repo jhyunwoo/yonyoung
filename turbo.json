@@ -38,14 +38,14 @@
       "cache": true,
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [],
-      "env": ["CLOUDFLARE_*", "CF_*", "WRANGLER_*", "AUTH_API_URL", "NEXT_PUBLIC_AUTH_API_URL"]
-    },
-    "upload": {
-      "cache": false
-    },
-    "preview": {
-      "cache": false,
-      "persistent": true
+      "env": [
+        "AUTH_API_URL",
+        "NEXT_PUBLIC_AUTH_API_URL",
+        "NEXT_PUBLIC_SITE_URL",
+        "NEXT_PUBLIC_VAPID_PUBLIC_KEY",
+        "CSP_REPORT_ONLY",
+        "REVALIDATE_SECRET"
+      ]
     },
     "cf-typegen": {
       "cache": false

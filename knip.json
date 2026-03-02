@@ -10,17 +10,14 @@
     "packages/*/**/*.{ts,tsx}"
   ],
   "ignore": [
-    "apps/**/.open-next/**",
     "apps/**/.next/**",
     "apps/api/drizzle/**",
-    "apps/web/cloudflare-env.d.ts",
     "apps/web/public/theme-init.js",
     "apps/web/public/market-sw.js",
     "apps/api/worker-configuration.d.ts",
     "apps/web/tests/e2e/**",
     "apps/web/playwright-report/**",
     "apps/web/test-results/**",
-    "apps/web/open-next.config.ts",
     "apps/api/src/lib/auth.ts"
   ],
   "ignoreUnresolved": [
