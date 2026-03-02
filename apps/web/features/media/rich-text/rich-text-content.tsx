@@ -26,6 +26,7 @@ export const HIGH_CONTRAST_RICH_TEXT_CLASS_NAMES = [
   "[&_p]:!text-black dark:[&_p]:!text-slate-200",
   "[&_li]:!text-black dark:[&_li]:!text-slate-200",
   "[&_span]:!text-black dark:[&_span]:!text-slate-200",
+  "[&_small]:!text-black dark:[&_small]:!text-slate-200",
   "[&_strong]:!text-black dark:[&_strong]:!text-slate-100",
   "[&_em]:!text-black dark:[&_em]:!text-slate-200",
   "[&_h2]:!text-black dark:[&_h2]:!text-slate-100",

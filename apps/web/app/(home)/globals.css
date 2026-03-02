@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --public-header-height-mobile: 72px;
@@ -114,6 +115,7 @@ body {
 .recruiting-rich-text-contrast p,
 .recruiting-rich-text-contrast li,
 .recruiting-rich-text-contrast span,
+.recruiting-rich-text-contrast small,
 .recruiting-rich-text-contrast strong,
 .recruiting-rich-text-contrast em,
 .recruiting-rich-text-contrast h2,
@@ -121,12 +123,13 @@ body {
 .recruiting-rich-text-contrast td,
 .recruiting-rich-text-contrast th,
 .recruiting-rich-text-contrast blockquote {
-  color: #0f172b !important;
+  color: #000000 !important;
 }
 
 .dark .recruiting-rich-text-contrast p,
 .dark .recruiting-rich-text-contrast li,
 .dark .recruiting-rich-text-contrast span,
+.dark .recruiting-rich-text-contrast small,
 .dark .recruiting-rich-text-contrast strong,
 .dark .recruiting-rich-text-contrast em,
 .dark .recruiting-rich-text-contrast h2,
