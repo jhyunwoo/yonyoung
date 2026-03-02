@@ -937,10 +937,19 @@ const toRecruitingPlanEntity = (
  */
 export const createDbDataService = (database: D1Database): DataService => {
   const db = createDB(database);
-  const findActiveGenerationByName = async (name: string) => {
-    return db.query.generations.findFirst({
-      where: and(eq(generations.name, name), isNull(generations.deletedAt)),
+  const findGenerationsByName = async (name: string) => {
+    return db.query.generations.findMany({
+      where: eq(generations.name, name),
     });
+  };
+
+  const purgeGeneration = async (generationId: string) => {
+    await db.delete(activities).where(eq(activities.generationId, generationId));
+    await db.delete(exhibitions).where(eq(exhibitions.generationId, generationId));
+    await db
+      .delete(generationNotices)
+      .where(eq(generationNotices.generationId, generationId));
+    await db.delete(generations).where(eq(generations.id, generationId));
   };
 
   return {
@@ -1030,10 +1039,10 @@ export const createDbDataService = (database: D1Database): DataService => {
     async createGeneration(input) {
       const id = crypto.randomUUID();
       const generationName = input.name.trim();
-      const existingGenerationWithSameName =
-        await findActiveGenerationByName(generationName);
-      if (existingGenerationWithSameName) {
-        throw new Error("UNIQUE constraint failed: generations.name");
+      const existingGenerationsWithSameName =
+        await findGenerationsByName(generationName);
+      for (const existingGeneration of existingGenerationsWithSameName) {
+        await purgeGeneration(existingGeneration.id);
       }
 
       await db.insert(generations).values({
@@ -1083,8 +1092,9 @@ export const createDbDataService = (database: D1Database): DataService => {
 
       const generationName = input.name?.trim();
       if (generationName !== undefined) {
-        const existingGenerationWithSameName =
-          await findActiveGenerationByName(generationName);
+        const existingGenerationWithSameName = await db.query.generations.findFirst({
+          where: and(eq(generations.name, generationName), isNull(generations.deletedAt)),
+        });
         if (existingGenerationWithSameName && existingGenerationWithSameName.id !== id) {
           throw new Error("UNIQUE constraint failed: generations.name");
         }

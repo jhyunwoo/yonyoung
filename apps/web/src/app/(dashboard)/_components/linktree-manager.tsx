@@ -25,6 +25,15 @@ export default async function LinktreeManager({
         링크 분류와 분류별 링크를 확인할 수 있습니다. 항목을 누르면 자세한 화면으로 이동합니다.
       </p>
 
+      {canWrite ? (
+        <Link
+          href={`${basePath}/new`}
+          className="mt-4 inline-flex rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+        >
+          링크 모음 추가
+        </Link>
+      ) : null}
+
       {!canWrite ? (
         <p className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-500">
           링크 모음을 수정하거나 삭제할 수 있는 권한이 없습니다.
