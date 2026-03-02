@@ -1,4 +1,4 @@
-import { serverAuthTool } from "@/features/auth/server/auth-server-tool";
+import { serverAuthTool } from "@/features/auth/server/auth-guard";
 import { isAdminRole, isPresidentRole } from "@/features/auth/model/auth-shared";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
 import GenerationExhibitionDetail from "@/app/(dashboard)/dashboard/[generationName]/exhibitions/_components/generation-exhibition-detail";

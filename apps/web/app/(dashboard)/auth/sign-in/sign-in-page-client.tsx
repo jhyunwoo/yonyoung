@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signInWithGoogle } from "@/features/auth/client/auth-client-tool";
+import { signInWithGoogle } from "@/features/auth/client/auth-actions";
 
 export default function SignInPageClient() {
   const [isPending, setIsPending] = useState(false);

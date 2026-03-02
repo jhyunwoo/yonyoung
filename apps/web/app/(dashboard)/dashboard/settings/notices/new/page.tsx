@@ -1,5 +1,5 @@
 import NoticeCreateForm from "@/app/(dashboard)/_components/notice-create-form";
-import { serverAuthTool } from "@/features/auth/server/auth-server-tool";
+import { serverAuthTool } from "@/features/auth/server/auth-guard";
 import { isPresidentOrVicePresidentRole } from "@/features/auth/model/auth-shared";
 
 export default async function SettingsNoticeCreatePage() {

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { listCachedGlobalNotices } from "@/features/dashboard/cache/admin-dashboard-cache";
-import { readServerCookieHeader } from "@/features/dashboard/generation/admin-generation-server";
+import { readCookieHeader } from "@/shared/http/http";
 import { formatKoreanDate } from "@/shared/utils/date-formatters";
 import { normalizeNotices } from "@/app/(dashboard)/_components/notice-shared";
 
@@ -8,7 +8,7 @@ const GLOBAL_NOTICES_BASE_PATH = "/dashboard/settings/notices";
 const MAX_RECENT_NOTICES = 5;
 
 export default async function RecentGlobalNotices() {
-  const cookieHeader = await readServerCookieHeader();
+  const cookieHeader = await readCookieHeader();
   const notices = normalizeNotices(await listCachedGlobalNotices(cookieHeader)).slice(
     0,
     MAX_RECENT_NOTICES,

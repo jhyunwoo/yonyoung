@@ -1,4 +1,4 @@
-import { serverAuthTool } from "@/features/auth/server/auth-server-tool";
+import { serverAuthTool } from "@/features/auth/server/auth-guard";
 import GenerationManagementClient from "@/app/(dashboard)/dashboard/settings/generations/generation-management-client";
 
 export default async function SettingsGenerationsPage() {

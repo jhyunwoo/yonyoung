@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import LinktreeManager from "@/app/(dashboard)/_components/linktree-manager";
-import { serverAuthTool } from "@/features/auth/server/auth-server-tool";
+import { serverAuthTool } from "@/features/auth/server/auth-guard";
 import { isAdminRole } from "@/features/auth/model/auth-shared";
 import { Skeleton } from "@/components/ui/skeleton";
 

@@ -53,7 +53,7 @@ import type {
   ApiUserResourceHistory,
   ApiCreateMarketCommentInput,
   ApiCreateMarketItemInput,
-} from "@/features/dashboard/api/admin-api/types";
+} from "@/shared/contracts/api-contracts";
 
 const ADMIN_REVALIDATE_ENDPOINT = "/api/admin/revalidate";
 

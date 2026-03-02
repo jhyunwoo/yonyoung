@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { PRESIGN_PATHS } from "@/features/dashboard/api/admin-api/upload";
 import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/upload-batch";
-import { AdminApiError } from "@/features/dashboard/api/admin-api/types";
+import { AdminApiError } from "@/shared/http/http";
 import { formatKoreanDate } from "@/shared/utils/date-formatters";
 import { createExistingUploadImageItem } from "@/features/media/upload/image-upload-state";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";

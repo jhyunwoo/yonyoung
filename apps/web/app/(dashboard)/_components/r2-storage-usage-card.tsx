@@ -1,4 +1,4 @@
-import type { ApiAdminDashboardStats } from "@/features/dashboard/api/admin-api/types";
+import type { ApiAdminDashboardStats } from "@/shared/contracts/api-contracts";
 
 const DEFAULT_R2_STORAGE_LIMIT_BYTES = 10 * 1024 * 1024 * 1024;
 

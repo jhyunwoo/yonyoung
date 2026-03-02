@@ -27,10 +27,10 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { signOut } from "@/features/auth/client/auth-client-tool";
+import { signOut } from "@/features/auth/client/auth-actions";
 import { isPresidentOrVicePresidentRole } from "@/features/auth/model/auth-shared";
 import { buildDashboardSettingsMenuItems } from "@/features/dashboard/settings/dashboard-settings-menu";
-import type { DashboardGenerationOption } from "@/features/dashboard/generation/dashboard-generation-server";
+import type { DashboardGenerationOption } from "@/features/dashboard/generation/generation-options";
 import { isSameGenerationRouteName } from "@/features/dashboard/generation/dashboard-generation-route";
 
 export type DashboardViewer = {

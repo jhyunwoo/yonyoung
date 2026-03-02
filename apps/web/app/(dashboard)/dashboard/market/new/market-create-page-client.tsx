@@ -9,7 +9,7 @@ import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/uploa
 import type {
   ApiCreateMarketItemInput,
   ApiMarketConditionGrade,
-} from "@/features/dashboard/api/admin-api/types";
+} from "@/shared/contracts/api-contracts";
 import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";
 import SortableImageGrid from "@/app/(dashboard)/_components/sortable-image-grid";
 import UploadProgressBar from "@/app/(dashboard)/_components/upload-progress-bar";

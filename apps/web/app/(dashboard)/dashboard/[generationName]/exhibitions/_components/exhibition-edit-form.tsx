@@ -4,7 +4,7 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "re
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { ApiExhibition } from "@/features/dashboard/api/admin-api/types";
+import type { ApiExhibition } from "@/shared/contracts/api-contracts";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/upload-batch";
 import {

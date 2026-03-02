@@ -1,8 +1,8 @@
 import Uppy from "@uppy/core";
 import AwsS3 from "@uppy/aws-s3";
-import { AdminApiError } from "@/features/dashboard/api/admin-api/types";
+import { AdminApiError } from "@/shared/http/http";
 import { adminRequest } from "@/features/dashboard/api/admin-api/http";
-import type { ApiPresignResponse } from "@/features/dashboard/api/admin-api/types";
+import type { ApiPresignResponse } from "@/shared/contracts/api-contracts";
 
 export const PRESIGN_PATHS = {
   activityCover: "/activities/presign/cover",

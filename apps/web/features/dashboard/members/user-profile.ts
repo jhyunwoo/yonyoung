@@ -1,5 +1,5 @@
 import type { AuthUser } from "@/features/auth/model/auth-shared";
-import { compactDisplayName, formatKoreanName } from "@/features/dashboard/members/user-name";
+import { compactDisplayName, formatKoreanName } from "@/features/dashboard/members/display-name";
 
 type EditableUserProfile = {
   image: string;

@@ -1,5 +1,5 @@
-import type { ApiLinktree, ApiLinktreeItem } from "@/features/dashboard/api/admin-api/types";
-import { AdminApiError } from "@/features/dashboard/api/admin-api/types";
+import type { ApiLinktree, ApiLinktreeItem } from "@/shared/contracts/api-contracts";
+import { AdminApiError } from "@/shared/http/http";
 
 export const readLinktreeErrorMessage = (error: unknown): string => {
   if (error instanceof AdminApiError) {

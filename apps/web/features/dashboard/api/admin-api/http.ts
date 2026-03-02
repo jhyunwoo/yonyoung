@@ -7,45 +7,15 @@ import {
   normalizePath,
   parseApiErrorEnvelope,
   parseJsonBody,
-  resolveBaseUrl,
+  resolveApiBaseUrl,
 } from "@/shared/http/http";
 
-const DEFAULT_AUTH_API_URL = "http://localhost:8787";
-const DEFAULT_PRODUCTION_AUTH_API_URL = "https://api.yonyoung.moveto.kr";
 const ADMIN_API_BASE_PATH = "/api";
 const REQUEST_TIMEOUT_MS = 45_000;
 
 type AdminRequestMethod = "GET" | "POST" | "PATCH" | "DELETE";
 
 type RequestBody = unknown;
-
-const resolveAdminApiBaseUrl = (): string => {
-  if (typeof window === "undefined") {
-    if (process.env.NODE_ENV !== "production") {
-      return resolveBaseUrl(
-        [process.env.AUTH_API_URL, process.env.NEXT_PUBLIC_AUTH_API_URL],
-        DEFAULT_AUTH_API_URL,
-      );
-    }
-
-    return resolveBaseUrl(
-      [process.env.AUTH_API_URL, process.env.NEXT_PUBLIC_AUTH_API_URL],
-      DEFAULT_PRODUCTION_AUTH_API_URL,
-    );
-  }
-
-  if (process.env.NODE_ENV !== "production") {
-    return resolveBaseUrl(
-      [process.env.NEXT_PUBLIC_AUTH_API_URL],
-      DEFAULT_AUTH_API_URL,
-    );
-  }
-
-  return resolveBaseUrl(
-    [process.env.NEXT_PUBLIC_AUTH_API_URL],
-    DEFAULT_PRODUCTION_AUTH_API_URL,
-  );
-};
 
 export const adminRequest = async <T>(
   path: string,
@@ -57,7 +27,7 @@ export const adminRequest = async <T>(
   try {
     const hasBody = body !== undefined;
     const response = await fetch(
-      `${resolveAdminApiBaseUrl()}${ADMIN_API_BASE_PATH}${normalizePath(path)}`,
+      `${resolveApiBaseUrl()}${ADMIN_API_BASE_PATH}${normalizePath(path)}`,
       {
         method,
         credentials: "include",
@@ -65,12 +35,12 @@ export const adminRequest = async <T>(
         signal: controller.signal,
         headers: hasBody
           ? {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            }
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          }
           : {
-              Accept: "application/json",
-            },
+            Accept: "application/json",
+          },
         body: hasBody ? JSON.stringify(body) : undefined,
       },
     );

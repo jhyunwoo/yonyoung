@@ -1,4 +1,4 @@
-import { serverAuthTool } from "@/features/auth/server/auth-server-tool";
+import { serverAuthTool } from "@/features/auth/server/auth-guard";
 import MembersGrid from "@/app/(dashboard)/dashboard/settings/members/members-grid";
 
 export default async function SettingsMembersPage() {

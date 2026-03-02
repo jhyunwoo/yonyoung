@@ -1,5 +1,5 @@
 import LinktreeGroupEditForm from "@/app/(dashboard)/_components/linktree-group-edit-form";
-import { serverAuthTool } from "@/features/auth/server/auth-server-tool";
+import { serverAuthTool } from "@/features/auth/server/auth-guard";
 import { isAdminRole } from "@/features/auth/model/auth-shared";
 
 export default async function SettingsLinktreeEditPage({

@@ -4,11 +4,11 @@ import { DEFAULT_SITE_SETTINGS } from "@/shared/contracts/api-contracts";
 import { type FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
+import { AdminApiError } from "@/shared/http/http";
 import {
-  AdminApiError,
   type ApiSiteSettings,
   type ApiUpdateSiteSettingsInput,
-} from "@/features/dashboard/api/admin-api/types";
+} from "@/shared/contracts/api-contracts";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const inputClassName =

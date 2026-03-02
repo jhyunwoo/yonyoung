@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { serverAuthTool } from "@/features/auth/server/auth-server-tool";
+import { serverAuthTool } from "@/features/auth/server/auth-guard";
 import { toEditableUserProfile } from "@/features/dashboard/members/user-profile";
 import AuthProfileForm from "@/app/(dashboard)/auth/profile/profile-form";
 

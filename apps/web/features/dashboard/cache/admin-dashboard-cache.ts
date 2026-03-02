@@ -1,4 +1,4 @@
-import { resolveAuthApiUrl } from "@/features/auth/server/auth-server";
+import { resolveApiBaseUrl } from "@/shared/http/http";
 import type {
   ApiActivity,
   ApiAdminDashboardStats,
@@ -7,25 +7,10 @@ import type {
   ApiGenerationNotice,
   ApiGlobalNotice,
   ApiLinktree,
-} from "@/features/dashboard/api/admin-api/types";
+} from "@/shared/contracts/api-contracts";
+import { unwrapDataEnvelope } from "@/shared/http/http";
 
 const ADMIN_API_BASE_PATH = "/api";
-
-type DataEnvelope<T> = {
-  data: T;
-};
-
-const unwrapDataEnvelope = <T>(payload: unknown): T | null => {
-  if (typeof payload !== "object" || payload === null) {
-    return null;
-  }
-
-  if ("data" in payload) {
-    return (payload as DataEnvelope<T>).data ?? null;
-  }
-
-  return payload as T;
-};
 
 const readAdminCollection = async <T>(
   path: string,
@@ -40,7 +25,7 @@ const readAdminCollection = async <T>(
   }
 
   try {
-    const response = await fetch(`${resolveAuthApiUrl()}${ADMIN_API_BASE_PATH}${path}`, {
+    const response = await fetch(`${resolveApiBaseUrl()}${ADMIN_API_BASE_PATH}${path}`, {
       method: "GET",
       headers,
       cache: "no-store",
@@ -72,7 +57,7 @@ const readAdminData = async <T>(
   }
 
   try {
-    const response = await fetch(`${resolveAuthApiUrl()}${ADMIN_API_BASE_PATH}${path}`, {
+    const response = await fetch(`${resolveApiBaseUrl()}${ADMIN_API_BASE_PATH}${path}`, {
       method: "GET",
       headers,
       cache: "no-store",

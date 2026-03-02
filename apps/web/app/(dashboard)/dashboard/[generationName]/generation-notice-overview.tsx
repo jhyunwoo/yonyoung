@@ -1,6 +1,6 @@
 import Link from "next/link";
-import type { ApiGenerationNotice, ApiGlobalNotice } from "@/features/dashboard/api/admin-api/types";
-import { readServerCookieHeader } from "@/features/dashboard/generation/admin-generation-server";
+import type { ApiGenerationNotice, ApiGlobalNotice } from "@/shared/contracts/api-contracts";
+import { readCookieHeader } from "@/shared/http/http";
 import {
   listCachedGenerationNotices,
   listCachedGlobalNotices,
@@ -16,7 +16,7 @@ export default async function GenerationNoticeOverview({
   generationId,
   generationPath,
 }: GenerationNoticeOverviewProps) {
-  const cookieHeader = await readServerCookieHeader();
+  const cookieHeader = await readCookieHeader();
   const [generationRows, globalRows] = await Promise.all([
     listCachedGenerationNotices(generationId, cookieHeader),
     listCachedGlobalNotices(cookieHeader),

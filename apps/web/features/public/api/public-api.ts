@@ -15,11 +15,10 @@ import {
   createTimeoutController,
   isRecord,
   normalizePath,
+  resolveApiBaseUrl,
   resolveBaseUrl,
 } from "@/shared/http/http";
 
-const DEFAULT_AUTH_API_URL = "http://localhost:8787";
-const DEFAULT_PRODUCTION_AUTH_API_URL = "https://api.yonyoung.moveto.kr";
 const REQUEST_TIMEOUT_MS = 10_000;
 const IS_E2E_MODE = Boolean(process.env.E2E_SUITE_MODE);
 
@@ -43,31 +42,21 @@ type PublicLinkItem = ApiLinktreeItem & {
   groupName: string;
 };
 
-const resolvePublicApiBaseUrl = (): string =>
-  {
-    if (IS_E2E_MODE) {
-      return resolveBaseUrl(
-        [
-          process.env.E2E_API_URL,
-          process.env.AUTH_API_URL,
-          process.env.NEXT_PUBLIC_AUTH_API_URL,
-        ],
-        DEFAULT_AUTH_API_URL,
-      );
-    }
-
-    if (process.env.NODE_ENV === "production") {
-      return resolveBaseUrl(
-        [process.env.AUTH_API_URL, process.env.NEXT_PUBLIC_AUTH_API_URL],
-        DEFAULT_PRODUCTION_AUTH_API_URL,
-      );
-    }
-
+const resolvePublicApiBaseUrl = (): string => {
+  if (IS_E2E_MODE) {
     return resolveBaseUrl(
-      [process.env.AUTH_API_URL, process.env.NEXT_PUBLIC_AUTH_API_URL],
-      DEFAULT_AUTH_API_URL,
+      [
+        process.env.E2E_API_URL,
+        process.env.AUTH_API_URL,
+        process.env.NEXT_PUBLIC_AUTH_API_URL,
+      ],
+      "http://localhost:8787",
     );
-  };
+  }
+
+  return resolveApiBaseUrl();
+};
+
 
 const resolvePublicApiUrl = (path: string): string =>
   `${resolvePublicApiBaseUrl()}${normalizePath(path)}`;
@@ -90,11 +79,11 @@ const publicGet = async <T>(
   const requestCacheOptions = options?.useNoStore || IS_E2E_MODE
     ? ({ cache: "no-store" } as const)
     : ({
-        next: {
-          revalidate: revalidateSeconds,
-          tags: options?.tags,
-        },
-      } as const);
+      next: {
+        revalidate: revalidateSeconds,
+        tags: options?.tags,
+      },
+    } as const);
 
   try {
     const targetUrl = resolvePublicApiUrl(path);
@@ -119,107 +108,98 @@ const publicGet = async <T>(
   }
 };
 
-export const listPublicActivities = async (): Promise<ApiActivity[]> =>
-  {
-    try {
-      return await publicGet<ApiActivity[]>("/api/public/activities", {
-        revalidateSeconds: 60,
-        tags: [PUBLIC_CACHE_TAGS.activities],
-      });
-    } catch {
-      return [];
-    }
-  };
-
-export const getPublicActivityById = async (id: string): Promise<ApiActivity> =>
-  {
-    return publicGet<ApiActivity>(`/api/public/activities/${id}`, {
+export const listPublicActivities = async (): Promise<ApiActivity[]> => {
+  try {
+    return await publicGet<ApiActivity[]>("/api/public/activities", {
       revalidateSeconds: 60,
       tags: [PUBLIC_CACHE_TAGS.activities],
     });
-  };
+  } catch {
+    return [];
+  }
+};
 
-export const listPublicExhibitions = async (): Promise<ApiExhibition[]> =>
-  {
-    try {
-      return await publicGet<ApiExhibition[]>("/api/public/exhibitions", {
-        revalidateSeconds: 60,
-        tags: [PUBLIC_CACHE_TAGS.exhibitions],
-      });
-    } catch {
-      return [];
-    }
-  };
+export const getPublicActivityById = async (id: string): Promise<ApiActivity> => {
+  return publicGet<ApiActivity>(`/api/public/activities/${id}`, {
+    revalidateSeconds: 60,
+    tags: [PUBLIC_CACHE_TAGS.activities],
+  });
+};
 
-export const getPublicExhibitionById = async (id: string): Promise<ApiExhibition> =>
-  {
-    return publicGet<ApiExhibition>(`/api/public/exhibitions/${id}`, {
+export const listPublicExhibitions = async (): Promise<ApiExhibition[]> => {
+  try {
+    return await publicGet<ApiExhibition[]>("/api/public/exhibitions", {
       revalidateSeconds: 60,
       tags: [PUBLIC_CACHE_TAGS.exhibitions],
     });
-  };
+  } catch {
+    return [];
+  }
+};
 
-export const listPublicLinktrees = async (): Promise<ApiLinktree[]> =>
-  {
-    try {
-      return await publicGet<ApiLinktree[]>("/api/public/linktree", {
-        revalidateSeconds: 120,
-        tags: [PUBLIC_CACHE_TAGS.linktree],
-      });
-    } catch {
-      return [];
-    }
-  };
+export const getPublicExhibitionById = async (id: string): Promise<ApiExhibition> => {
+  return publicGet<ApiExhibition>(`/api/public/exhibitions/${id}`, {
+    revalidateSeconds: 60,
+    tags: [PUBLIC_CACHE_TAGS.exhibitions],
+  });
+};
 
-export const getPublicSiteSettings = async (): Promise<ApiSiteSettings> =>
-  {
-    try {
-      return await publicGet<ApiSiteSettings>("/api/public/site-settings", {
-        revalidateSeconds: 120,
-        tags: [PUBLIC_CACHE_TAGS.siteSettings],
-      });
-    } catch {
-      return DEFAULT_SITE_SETTINGS;
-    }
-  };
+export const listPublicLinktrees = async (): Promise<ApiLinktree[]> => {
+  try {
+    return await publicGet<ApiLinktree[]>("/api/public/linktree", {
+      revalidateSeconds: 120,
+      tags: [PUBLIC_CACHE_TAGS.linktree],
+    });
+  } catch {
+    return [];
+  }
+};
 
-export const getPublicCurrentRecruitingPlan = async (): Promise<ApiRecruitingPlan | null> =>
-  {
-    try {
-      return await publicGet<ApiRecruitingPlan | null>("/api/public/recruiting-plan/current", {
-        revalidateSeconds: 120,
-        tags: [PUBLIC_CACHE_TAGS.recruitingPlan],
-      });
-    } catch {
-      return null;
-    }
-  };
+export const getPublicSiteSettings = async (): Promise<ApiSiteSettings> => {
+  try {
+    return await publicGet<ApiSiteSettings>("/api/public/site-settings", {
+      revalidateSeconds: 120,
+      tags: [PUBLIC_CACHE_TAGS.siteSettings],
+    });
+  } catch {
+    return DEFAULT_SITE_SETTINGS;
+  }
+};
 
-export const listPublicGenerations = async (): Promise<ApiGeneration[]> =>
-  {
-    try {
-      return await publicGet<ApiGeneration[]>("/api/public/generations", {
-        revalidateSeconds: 300,
-        tags: [PUBLIC_CACHE_TAGS.generations],
-      });
-    } catch {
-      return [];
-    }
-  };
+export const getPublicCurrentRecruitingPlan = async (): Promise<ApiRecruitingPlan | null> => {
+  try {
+    return await publicGet<ApiRecruitingPlan | null>("/api/public/recruiting-plan/current", {
+      revalidateSeconds: 120,
+      tags: [PUBLIC_CACHE_TAGS.recruitingPlan],
+    });
+  } catch {
+    return null;
+  }
+};
+
+export const listPublicGenerations = async (): Promise<ApiGeneration[]> => {
+  try {
+    return await publicGet<ApiGeneration[]>("/api/public/generations", {
+      revalidateSeconds: 300,
+      tags: [PUBLIC_CACHE_TAGS.generations],
+    });
+  } catch {
+    return [];
+  }
+};
 
 export const listPublicPhotographers = async (): Promise<
   ApiPublicGenerationWithMembers[]
-> =>
-  {
-    try {
-      return await publicGet<ApiPublicGenerationWithMembers[]>("/api/public/photographers", {
-        revalidateSeconds: 300,
-        tags: [PUBLIC_CACHE_TAGS.photographers],
-      });
-    } catch {
-      return [];
-    }
-  };
+> => {
+  try {
+    return await publicGet<ApiPublicGenerationWithMembers[]>("/api/public/photographers", {
+      revalidateSeconds: 300,
+      tags: [PUBLIC_CACHE_TAGS.photographers],
+    });
+  } catch {
+    return [];
+  }
+};
 
 export const flattenLinktreeItems = (
   linktrees: ApiLinktree[],

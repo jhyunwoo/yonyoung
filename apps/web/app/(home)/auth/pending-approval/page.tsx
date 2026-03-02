@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { serverAuthTool } from "@/features/auth/server/auth-server-tool";
+import { serverAuthTool } from "@/features/auth/server/auth-guard";
 import { hasCompletedRequiredProfile, isUnverifiedRole } from "@/features/auth/model/auth-shared";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 

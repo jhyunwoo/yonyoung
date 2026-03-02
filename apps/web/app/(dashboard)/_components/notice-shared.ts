@@ -1,9 +1,9 @@
+import { AdminApiError } from "@/shared/http/http";
 import {
-  AdminApiError,
   type ApiAuditActor,
   type ApiGenerationNotice,
   type ApiGlobalNotice,
-} from "@/features/dashboard/api/admin-api/types";
+} from "@/shared/contracts/api-contracts";
 import { summarizeRichTextHtml } from "@/features/media/rich-text/rich-text";
 
 export const NOTICE_MAX_IMAGES = 10;

@@ -6,8 +6,8 @@ import { createPageMetadata } from "@/features/seo/metadata/seo";
 import DashboardShell, {
   type DashboardViewer,
 } from "@/app/(dashboard)/_components/dashboard-shell";
-import { serverAuthTool } from "@/features/auth/server/auth-server-tool";
-import { getAccessibleDashboardGenerationOptions } from "@/features/dashboard/generation/dashboard-generation-server";
+import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { getAccessibleDashboardGenerationOptions } from "@/features/dashboard/generation/generation-options";
 import { buildDashboardViewerProfile } from "@/features/dashboard/members/user-profile";
 import { Skeleton } from "@/components/ui/skeleton";
 

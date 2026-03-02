@@ -1,5 +1,5 @@
-import type { ApiActivity, ApiUpdateActivityImageBatchItemInput } from "@/features/dashboard/api/admin-api/types";
-import { AdminApiError } from "@/features/dashboard/api/admin-api/types";
+import type { ApiActivity, ApiUpdateActivityImageBatchItemInput } from "@/shared/contracts/api-contracts";
+import { AdminApiError } from "@/shared/http/http";
 import { summarizeRichTextHtml } from "@/features/media/rich-text/rich-text";
 
 type ActivityImageSortInput = {

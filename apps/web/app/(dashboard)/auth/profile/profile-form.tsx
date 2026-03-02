@@ -22,10 +22,8 @@ import {
   PRESIGN_PATHS,
   uploadWithPresign,
 } from "@/features/dashboard/api/admin-api/upload";
-import {
-  AdminApiError,
-  type ApiMemberProfileUpdateInput,
-} from "@/features/dashboard/api/admin-api/types";
+import { AdminApiError } from "@/shared/http/http";
+import { type ApiMemberProfileUpdateInput } from "@/shared/contracts/api-contracts";
 import {
   AUTH_PROFILE_PATH,
   hasCompletedRequiredProfile,

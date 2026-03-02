@@ -1,4 +1,4 @@
-import { serverAuthTool } from "@/features/auth/server/auth-server-tool";
+import { serverAuthTool } from "@/features/auth/server/auth-guard";
 import { isUnverifiedRole } from "@/features/auth/model/auth-shared";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
 import GenerationActivityDetail from "@/app/(dashboard)/dashboard/[generationName]/activities/_components/generation-activity-detail";

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { PRESIGN_PATHS } from "@/features/dashboard/api/admin-api/upload";
 import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/upload-batch";
-import { AdminApiError } from "@/features/dashboard/api/admin-api/types";
+import { AdminApiError } from "@/shared/http/http";
 import { createExistingUploadImageItem } from "@/features/media/upload/image-upload-state";
 import { hasMeaningfulRichTextHtml } from "@/features/media/rich-text/rich-text";
 import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";

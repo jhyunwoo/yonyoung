@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
-import type { ApiMarketItem, ApiMarketItemStatus } from "@/features/dashboard/api/admin-api/types";
+import type { ApiMarketItem, ApiMarketItemStatus } from "@/shared/contracts/api-contracts";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   type MarketViewer,

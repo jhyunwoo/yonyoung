@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { readServerCookieHeader } from "@/features/dashboard/generation/admin-generation-server";
+import { readCookieHeader } from "@/shared/http/http";
 import { listCachedActivities } from "@/features/dashboard/cache/admin-dashboard-cache";
 import { formatAuditActor } from "@/features/dashboard/ui/audit-display";
 import { formatKoreanDate, formatKoreanDateRange } from "@/shared/utils/date-formatters";
@@ -23,7 +23,7 @@ export default async function GenerationActivitiesList({
   generationName,
   canManage,
 }: GenerationActivitiesListProps) {
-  const cookieHeader = await readServerCookieHeader();
+  const cookieHeader = await readCookieHeader();
   const activities = sortActivitiesByStartDateDesc(
     await listCachedActivities(generationId, cookieHeader),
   );

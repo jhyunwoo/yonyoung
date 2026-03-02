@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { serverAuthTool } from "@/features/auth/server/auth-server-tool";
+import { serverAuthTool } from "@/features/auth/server/auth-guard";
 import SignInPageClient from "@/app/(dashboard)/auth/sign-in/sign-in-page-client";
 
 export default async function SignInPage() {

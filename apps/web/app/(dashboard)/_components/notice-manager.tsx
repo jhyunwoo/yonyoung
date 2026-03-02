@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { formatKoreanDate } from "@/shared/utils/date-formatters";
-import { readServerCookieHeader } from "@/features/dashboard/generation/admin-generation-server";
+import { readCookieHeader } from "@/shared/http/http";
 import {
   listCachedGenerationNotices,
   listCachedGlobalNotices,
@@ -43,7 +43,7 @@ export default async function NoticeManager({
   basePath,
   createPath,
 }: NoticeManagerProps) {
-  const cookieHeader = await readServerCookieHeader();
+  const cookieHeader = await readCookieHeader();
   const readOnlyMessage =
     scope === "global"
       ? "전체 공지는 회장과 부회장만 등록, 수정할 수 있고 삭제는 회장만 가능합니다."

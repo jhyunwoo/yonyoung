@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { serverAuthTool } from "@/features/auth/server/auth-server-tool";
+import { serverAuthTool } from "@/features/auth/server/auth-guard";
 import MemberDetailClient from "@/app/(dashboard)/dashboard/settings/members/[memberId]/member-detail-client";
 
 const decodeMemberId = (rawMemberId: string): string | null => {

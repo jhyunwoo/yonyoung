@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { ApiUser } from "@/features/dashboard/api/admin-api/types";
-import { AdminApiError } from "@/features/dashboard/api/admin-api/types";
+import type { ApiUser } from "@/shared/contracts/api-contracts";
+import { AdminApiError } from "@/shared/http/http";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import {
   buildMemberDisplayInitial,
   buildMemberDisplayName,
-} from "@/features/dashboard/members/member-display-name";
+} from "@/features/dashboard/members/display-name";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const readErrorMessage = (error: unknown): string => {

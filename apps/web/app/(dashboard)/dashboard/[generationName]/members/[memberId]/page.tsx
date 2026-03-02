@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { serverAuthTool } from "@/features/auth/server/auth-server-tool";
+import { serverAuthTool } from "@/features/auth/server/auth-guard";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
 import MemberDetailClient from "@/app/(dashboard)/dashboard/[generationName]/members/[memberId]/member-detail-client";
 

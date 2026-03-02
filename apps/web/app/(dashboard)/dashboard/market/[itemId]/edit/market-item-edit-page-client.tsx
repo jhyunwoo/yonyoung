@@ -10,7 +10,7 @@ import type {
   ApiMarketConditionGrade,
   ApiMarketItem,
   ApiUpdateMarketItemInput,
-} from "@/features/dashboard/api/admin-api/types";
+} from "@/shared/contracts/api-contracts";
 import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import SortableImageGrid from "@/app/(dashboard)/_components/sortable-image-grid";

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { serverAuthTool } from "@/features/auth/server/auth-server-tool";
+import { serverAuthTool } from "@/features/auth/server/auth-guard";
 import { isPresidentOrVicePresidentRole } from "@/features/auth/model/auth-shared";
 import { buildDashboardSettingsMenuItems } from "@/features/dashboard/settings/dashboard-settings-menu";
 export default async function SettingsPage() {

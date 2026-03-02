@@ -1,4 +1,4 @@
-import type { ApiAuditActor, ApiAuditLog } from "@/features/dashboard/api/admin-api/types";
+import type { ApiAuditActor, ApiAuditLog } from "@/shared/contracts/api-contracts";
 import { buildMemberRoleLabel } from "@/features/dashboard/members/member-role-label";
 
 export const formatAuditActor = (actor: ApiAuditActor | null): string => {

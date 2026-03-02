@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   buildMemberDisplayInitial,
   buildMemberDisplayName,
-} from "@/features/dashboard/members/member-display-name";
+} from "@/features/dashboard/members/display-name";
 import { buildMemberRoleLabel } from "@/features/dashboard/members/member-role-label";
 
 type GenerationMembersGridProps = {

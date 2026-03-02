@@ -1,4 +1,4 @@
-import { serverAuthTool } from "@/features/auth/server/auth-server-tool";
+import { serverAuthTool } from "@/features/auth/server/auth-guard";
 import SiteSettingsForm from "@/app/(dashboard)/dashboard/settings/site/site-settings-form";
 
 export default async function SettingsSitePage() {

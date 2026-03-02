@@ -1,6 +1,6 @@
-import type { ApiCreateGenerationInput, ApiGeneration, ApiUser } from "@/features/dashboard/api/admin-api/types";
+import type { ApiCreateGenerationInput, ApiGeneration, ApiUser } from "@/shared/contracts/api-contracts";
 import { isUnverifiedRole } from "@/features/auth/model/auth-shared";
-import { buildMemberDisplayName } from "@/features/dashboard/members/member-display-name";
+import { buildMemberDisplayName } from "@/features/dashboard/members/display-name";
 
 export const USER_ROLE_FILTER_ALL = "all";
 export const USER_ROLE_FILTER_NONE = "__none__";

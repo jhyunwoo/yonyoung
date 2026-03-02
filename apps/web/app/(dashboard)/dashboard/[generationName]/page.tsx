@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { formatAuditActor } from "@/features/dashboard/ui/audit-display";
 import { formatKoreanDate, formatKoreanDateRange } from "@/shared/utils/date-formatters";
-import { readServerCookieHeader } from "@/features/dashboard/generation/admin-generation-server";
+import { readCookieHeader } from "@/shared/http/http";
 import {
   listCachedActivities,
   listCachedExhibitions,
@@ -21,7 +21,7 @@ const GenerationDashboardSummary = async (input: {
   generationId: string;
   generationPath: string;
 }) => {
-  const cookieHeader = await readServerCookieHeader();
+  const cookieHeader = await readCookieHeader();
   const [activities, exhibitions, generationMembers] = await Promise.all([
     listCachedActivities(input.generationId, cookieHeader),
     listCachedExhibitions(input.generationId, cookieHeader),

@@ -5,8 +5,8 @@ import type {
   ApiAdminUpdateUserInput,
   ApiGeneration,
   ApiUser,
-} from "@/features/dashboard/api/admin-api/types";
-import { AdminApiError } from "@/features/dashboard/api/admin-api/types";
+} from "@/shared/contracts/api-contracts";
+import { AdminApiError } from "@/shared/http/http";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/upload-batch";
 import { PRESIGN_PATHS, uploadWithPresign } from "@/features/dashboard/api/admin-api/upload";

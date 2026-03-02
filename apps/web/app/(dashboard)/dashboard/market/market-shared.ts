@@ -1,4 +1,4 @@
-import type { ApiMarketConditionGrade, ApiMarketItemStatus } from "@/features/dashboard/api/admin-api/types";
+import type { ApiMarketConditionGrade, ApiMarketItemStatus } from "@/shared/contracts/api-contracts";
 
 export const MARKET_MAX_IMAGES = 10;
 

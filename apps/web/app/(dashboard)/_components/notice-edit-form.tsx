@@ -16,7 +16,7 @@ import {
   PRESIGN_PATHS,
 } from "@/features/dashboard/api/admin-api/upload";
 import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/upload-batch";
-import { AdminApiError } from "@/features/dashboard/api/admin-api/types";
+import { AdminApiError } from "@/shared/http/http";
 import { hasMeaningfulRichTextHtml } from "@/features/media/rich-text/rich-text";
 import AuditHistoryPanel from "@/app/(dashboard)/_components/audit-history-panel";
 import LastUpdatedMeta from "@/app/(dashboard)/_components/last-updated-meta";

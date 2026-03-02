@@ -15,7 +15,7 @@ import type {
   ApiMarketItem,
   ApiMarketItemStatus,
   ApiMarketPushSubscriptionInput,
-} from "@/features/dashboard/api/admin-api/types";
+} from "@/shared/contracts/api-contracts";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   type MarketViewer,

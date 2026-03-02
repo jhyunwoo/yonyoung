@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
-import { serverAuthTool } from "@/features/auth/server/auth-server-tool";
+import { serverAuthTool } from "@/features/auth/server/auth-guard";
 import {
   getAccessibleDashboardGenerationOptions,
   resolveGenerationOptionFromRouteName,
   type DashboardGenerationOption,
-} from "@/features/dashboard/generation/dashboard-generation-server";
+} from "@/features/dashboard/generation/generation-options";
 
 type GenerationRouteParams = Promise<{ generationName: string }>;
 

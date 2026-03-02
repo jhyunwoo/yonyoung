@@ -1,4 +1,4 @@
-import { serverAuthTool } from "@/features/auth/server/auth-server-tool";
+import { serverAuthTool } from "@/features/auth/server/auth-guard";
 import { buildDashboardViewerProfile } from "@/features/dashboard/members/user-profile";
 import MarketPageClient from "@/app/(dashboard)/dashboard/market/market-page-client";
 

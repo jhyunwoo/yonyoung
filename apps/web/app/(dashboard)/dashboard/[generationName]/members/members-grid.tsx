@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { ApiGenerationMemberSummary } from "@/features/dashboard/api/admin-api/types";
-import { AdminApiError } from "@/features/dashboard/api/admin-api/types";
+import type { ApiGenerationMemberSummary } from "@/shared/contracts/api-contracts";
+import { AdminApiError } from "@/shared/http/http";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import {
   buildMemberDisplayInitial,
   buildMemberDisplayName,
-} from "@/features/dashboard/members/member-display-name";
+} from "@/features/dashboard/members/display-name";
 import { buildMemberRoleLabel } from "@/features/dashboard/members/member-role-label";
 import { Skeleton } from "@/components/ui/skeleton";
 

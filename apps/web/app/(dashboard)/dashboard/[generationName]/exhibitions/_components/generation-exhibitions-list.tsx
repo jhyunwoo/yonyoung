@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { readServerCookieHeader } from "@/features/dashboard/generation/admin-generation-server";
+import { readCookieHeader } from "@/shared/http/http";
 import { listCachedExhibitions } from "@/features/dashboard/cache/admin-dashboard-cache";
 import { formatAuditActor } from "@/features/dashboard/ui/audit-display";
 import {
@@ -26,7 +26,7 @@ export default async function GenerationExhibitionsList({
   generationName,
   canManage,
 }: GenerationExhibitionsListProps) {
-  const cookieHeader = await readServerCookieHeader();
+  const cookieHeader = await readCookieHeader();
   const exhibitions = sortExhibitionsByStartDateDesc(
     await listCachedExhibitions(generationId, cookieHeader),
   );

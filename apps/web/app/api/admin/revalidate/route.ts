@@ -1,7 +1,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { canAccessAdminPage } from "@/features/auth/model/auth-shared";
-import { serverAuthTool } from "@/features/auth/server/auth-server-tool";
+import { serverAuthTool } from "@/features/auth/server/auth-guard";
 import { ADMIN_CACHE_TAG_VALUES, type AdminCacheTag } from "@/features/dashboard/cache/admin-cache";
 import { PUBLIC_CACHE_TAGS } from "@/features/public/api/public-api";
 

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import { serverAuthTool } from "@/features/auth/server/auth-server-tool";
+import { serverAuthTool } from "@/features/auth/server/auth-guard";
 import { DASHBOARD_PATH } from "@/features/auth/model/auth-shared";
 
 export default async function DashboardRouteLayout({

@@ -6,7 +6,7 @@ import type { ApiGeneration, ApiUser } from "@/shared/contracts/api-contracts";
 import { AdminApiError } from "@/shared/http/http";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
-import { buildMemberDisplayName } from "@/features/dashboard/members/member-display-name";
+import { buildMemberDisplayName } from "@/features/dashboard/members/display-name";
 import { buildMemberRoleLabel } from "@/features/dashboard/members/member-role-label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {

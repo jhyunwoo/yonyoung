@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { serverAuthTool } from "@/features/auth/server/auth-server-tool";
+import { serverAuthTool } from "@/features/auth/server/auth-guard";
 import { isUnverifiedRole } from "@/features/auth/model/auth-shared";
 import { Skeleton } from "@/components/ui/skeleton";
 import GenerationActivitiesList from "@/app/(dashboard)/dashboard/[generationName]/activities/_components/generation-activities-list";

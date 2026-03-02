@@ -1,26 +1,19 @@
-import type { ApiGeneration } from "@/features/dashboard/api/admin-api/types";
-import { getAccessibleGenerations } from "@/features/dashboard/generation/admin-generation";
-import { fetchGenerationsFromServer, readServerCookieHeader } from "@/features/dashboard/generation/admin-generation-server";
-import { serverAuthTool } from "@/features/auth/server/auth-server-tool";
+import type { ApiGeneration } from "@/shared/contracts/api-contracts";
+import { getAccessibleGenerations } from "@/features/dashboard/generation/generation-access";
+import { fetchGenerationsFromServer } from "@/features/dashboard/generation/generation-fetcher";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import type { AuthSession } from "@/features/auth/model/auth-shared";
 import {
   buildDashboardGenerationPath,
   isSameGenerationRouteName,
 } from "@/features/dashboard/generation/dashboard-generation-route";
+import { asRecord, readCookieHeader } from "@/shared/http/http";
 
 export type DashboardGenerationOption = Pick<
   ApiGeneration,
   "id" | "name" | "sortOrder" | "startDate" | "endDate" | "updatedAt" | "updatedBy"
 > & {
   path: string;
-};
-
-const asRecord = (value: unknown): Record<string, unknown> | null => {
-  if (typeof value !== "object" || value === null) {
-    return null;
-  }
-
-  return value as Record<string, unknown>;
 };
 
 const toGenerationOption = (
@@ -48,10 +41,10 @@ export const getAccessibleDashboardGenerationOptions = async (
   const profilePromise =
     options?.profile !== undefined
       ? Promise.resolve(options.profile)
-      : serverAuthTool.getCurrentUserProfile(session);
+      : serverAuthGuard.getCurrentUserProfile(session);
 
   const [cookieHeader, profile] = await Promise.all([
-    readServerCookieHeader(),
+    readCookieHeader(),
     profilePromise,
   ]);
 

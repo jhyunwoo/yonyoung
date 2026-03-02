@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { ApiLinktree, ApiLinktreeItem } from "@/features/dashboard/api/admin-api/types";
-import { AdminApiError } from "@/features/dashboard/api/admin-api/types";
+import type { ApiLinktree, ApiLinktreeItem } from "@/shared/contracts/api-contracts";
+import { AdminApiError } from "@/shared/http/http";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { formatKoreanDate } from "@/shared/utils/date-formatters";
 import { Skeleton } from "@/components/ui/skeleton";
