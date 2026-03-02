@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 import { getPublicCurrentRecruitingPlan } from "@/features/public/api/public-api";
-import { RichTextContent } from "@/features/media/rich-text/rich-text-content";
+import {
+  HIGH_CONTRAST_RICH_TEXT_CLASS_NAMES,
+  RichTextContent,
+} from "@/features/media/rich-text/rich-text-content";
 import PageTitleHero from "@/app/(home)/_components/page-title-hero";
 
 const qualificationItems = [
@@ -132,7 +135,10 @@ export default async function RecruitingPage() {
                   {formatKoreanDateTime(currentRecruitingPlan.recruitmentEndAt)}
                 </p>
 
-                <RichTextContent html={currentRecruitingPlan.content} />
+                <RichTextContent
+                  html={currentRecruitingPlan.content}
+                  className={HIGH_CONTRAST_RICH_TEXT_CLASS_NAMES}
+                />
 
                 {currentRecruitingPlan.promotionImageUrls.length > 0 ? (
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

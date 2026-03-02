@@ -21,6 +21,13 @@ const BASE_CLASS_NAMES = [
   "[&_td]:border [&_td]:border-slate-300 [&_td]:px-2 [&_td]:py-1 dark:[&_td]:border-slate-600",
 ].join(" ");
 
+export const HIGH_CONTRAST_RICH_TEXT_CLASS_NAMES = [
+  "!text-black dark:!text-slate-200",
+  "[&_h2]:!text-black dark:[&_h2]:!text-slate-100",
+  "[&_h3]:!text-black dark:[&_h3]:!text-slate-100",
+  "[&_blockquote]:!text-black dark:[&_blockquote]:!text-slate-300",
+].join(" ");
+
 export const RichTextContent = ({ html, className }: RichTextContentProps) => {
   const mergedClassName = className
     ? `${BASE_CLASS_NAMES} ${className}`

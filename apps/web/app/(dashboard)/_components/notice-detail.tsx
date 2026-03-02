@@ -8,7 +8,6 @@ import {
   useRef,
   useState,
 } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
@@ -17,9 +16,11 @@ import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/uploa
 import { AdminApiError } from "@/shared/http/http";
 import { formatKoreanDate } from "@/shared/utils/date-formatters";
 import { createExistingUploadImageItem } from "@/features/media/upload/image-upload-state";
-import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import { hasMeaningfulRichTextHtml } from "@/features/media/rich-text/rich-text";
-import { RichTextContent } from "@/features/media/rich-text/rich-text-content";
+import {
+  HIGH_CONTRAST_RICH_TEXT_CLASS_NAMES,
+  RichTextContent,
+} from "@/features/media/rich-text/rich-text-content";
 import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";
 import AuditHistoryPanel from "@/app/(dashboard)/_components/audit-history-panel";
 import LastUpdatedMeta from "@/app/(dashboard)/_components/last-updated-meta";
@@ -389,7 +390,10 @@ export default function NoticeDetail({
               className="mt-2 text-xs text-slate-500"
             />
             <div className="mt-3">
-              <RichTextContent html={notice.content} />
+              <RichTextContent
+                html={notice.content}
+                className={HIGH_CONTRAST_RICH_TEXT_CLASS_NAMES}
+              />
             </div>
           </>
         )}
@@ -451,15 +455,14 @@ export default function NoticeDetail({
             {renderedImageUrls.map((imageUrl, index) => (
               <div
                 key={`${notice.id}-${imageUrl}-${index}`}
-                className="relative aspect-[4/3] overflow-hidden rounded-xl border border-slate-200 bg-slate-100"
+                className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100"
               >
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={imageUrl}
                   alt={`공지 첨부 이미지 ${index + 1}`}
-                  fill
-                  className="object-cover"
-                  unoptimized={shouldUseUnoptimizedImage(imageUrl)}
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="block h-auto w-full"
+                  loading="lazy"
                 />
               </div>
             ))}
