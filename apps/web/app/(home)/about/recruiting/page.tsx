@@ -137,7 +137,7 @@ export default async function RecruitingPage() {
 
                 <RichTextContent
                   html={currentRecruitingPlan.content}
-                  className={HIGH_CONTRAST_RICH_TEXT_CLASS_NAMES}
+                  className={`${HIGH_CONTRAST_RICH_TEXT_CLASS_NAMES} recruiting-rich-text-contrast`}
                 />
 
                 {currentRecruitingPlan.promotionImageUrls.length > 0 ? (

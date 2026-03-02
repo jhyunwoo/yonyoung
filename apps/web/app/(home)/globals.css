@@ -110,3 +110,37 @@ body {
 .record-description a {
   color: var(--text-primary);
 }
+
+.recruiting-rich-text-contrast p,
+.recruiting-rich-text-contrast li,
+.recruiting-rich-text-contrast span,
+.recruiting-rich-text-contrast strong,
+.recruiting-rich-text-contrast em,
+.recruiting-rich-text-contrast h2,
+.recruiting-rich-text-contrast h3,
+.recruiting-rich-text-contrast td,
+.recruiting-rich-text-contrast th,
+.recruiting-rich-text-contrast blockquote {
+  color: #0f172b !important;
+}
+
+.dark .recruiting-rich-text-contrast p,
+.dark .recruiting-rich-text-contrast li,
+.dark .recruiting-rich-text-contrast span,
+.dark .recruiting-rich-text-contrast strong,
+.dark .recruiting-rich-text-contrast em,
+.dark .recruiting-rich-text-contrast h2,
+.dark .recruiting-rich-text-contrast h3,
+.dark .recruiting-rich-text-contrast td,
+.dark .recruiting-rich-text-contrast th,
+.dark .recruiting-rich-text-contrast blockquote {
+  color: #e2e8f0 !important;
+}
+
+.recruiting-rich-text-contrast a {
+  color: #1447e6 !important;
+}
+
+.dark .recruiting-rich-text-contrast a {
+  color: #90c5ff !important;
+}
