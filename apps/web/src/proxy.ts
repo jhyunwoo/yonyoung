@@ -132,7 +132,7 @@ const applySecurityHeaders = (
   }
 };
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const requiresSessionForRedirect = shouldRedirectToSignIn(pathname);
   const hasSession = requiresSessionForRedirect
