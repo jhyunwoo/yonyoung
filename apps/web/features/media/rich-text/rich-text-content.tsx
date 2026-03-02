@@ -23,9 +23,17 @@ const BASE_CLASS_NAMES = [
 
 export const HIGH_CONTRAST_RICH_TEXT_CLASS_NAMES = [
   "!text-black dark:!text-slate-200",
+  "[&_p]:!text-black dark:[&_p]:!text-slate-200",
+  "[&_li]:!text-black dark:[&_li]:!text-slate-200",
+  "[&_span]:!text-black dark:[&_span]:!text-slate-200",
+  "[&_strong]:!text-black dark:[&_strong]:!text-slate-100",
+  "[&_em]:!text-black dark:[&_em]:!text-slate-200",
   "[&_h2]:!text-black dark:[&_h2]:!text-slate-100",
   "[&_h3]:!text-black dark:[&_h3]:!text-slate-100",
+  "[&_td]:!text-black dark:[&_td]:!text-slate-200",
+  "[&_th]:!text-black dark:[&_th]:!text-slate-100",
   "[&_blockquote]:!text-black dark:[&_blockquote]:!text-slate-300",
+  "[&_a]:!text-blue-700 dark:[&_a]:!text-blue-300",
 ].join(" ");
 
 export const RichTextContent = ({ html, className }: RichTextContentProps) => {
