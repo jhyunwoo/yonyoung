@@ -19,6 +19,7 @@ import {
 
 const SIGN_IN_PATH = "/auth/sign-in";
 const USER_PATH_PREFIX = "/api/users";
+const CURRENT_USER_PATH = `${USER_PATH_PREFIX}/me`;
 
 const getSession = async (): Promise<AuthSession | null> => {
   const cookieHeader = await readCookieHeader();
@@ -37,7 +38,18 @@ const getCurrentUserProfile = async (
   }
 
   try {
-    const response = await fetch(
+    const currentUserResponse = await fetch(`${resolveApiBaseUrl()}${CURRENT_USER_PATH}`, {
+      method: "GET",
+      headers,
+      cache: "no-store",
+    });
+
+    if (currentUserResponse.ok) {
+      const payload = (await currentUserResponse.json().catch(() => null)) as unknown;
+      return asRecord(unwrapDataEnvelope(payload));
+    }
+
+    const userByIdResponse = await fetch(
       `${resolveApiBaseUrl()}${USER_PATH_PREFIX}/${encodeURIComponent(session.user.id)}`,
       {
         method: "GET",
@@ -46,13 +58,13 @@ const getCurrentUserProfile = async (
       },
     );
 
-    if (response.ok) {
-      const payload = (await response.json().catch(() => null)) as unknown;
+    if (userByIdResponse.ok) {
+      const payload = (await userByIdResponse.json().catch(() => null)) as unknown;
       return asRecord(unwrapDataEnvelope(payload));
     }
 
     const normalizedEmail = session.user.email.trim().toLowerCase();
-    if (response.status !== 404 || normalizedEmail.length === 0) {
+    if (normalizedEmail.length === 0) {
       return null;
     }
 

@@ -75,6 +75,13 @@ describe("features/dashboard/generation", () => {
 
     expect(
       getAccessibleGenerations(
+        { user: { role: "vice_president" } },
+        generations,
+      ).map((generation) => generation.id),
+    ).toEqual(["gen-58", "gen-59", "gen-60"]);
+
+    expect(
+      getAccessibleGenerations(
         {
           user: {
             role: "regular_member",
