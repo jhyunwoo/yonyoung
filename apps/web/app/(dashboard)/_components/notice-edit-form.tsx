@@ -2,7 +2,6 @@
 
 import {
   type ChangeEvent,
-  type FormEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -17,6 +16,7 @@ import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/uploa
 import { AdminApiError } from "@/shared/http/http";
 import { hasMeaningfulRichTextHtml } from "@/features/media/rich-text/rich-text";
 import AuditHistoryPanel from "@/app/(dashboard)/_components/audit-history-panel";
+import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import LastUpdatedMeta from "@/app/(dashboard)/_components/last-updated-meta";
 import RichTextEditor from "@/app/(dashboard)/_components/rich-text-editor";
 import SortableImageGrid from "@/app/(dashboard)/_components/sortable-image-grid";
@@ -189,8 +189,7 @@ export default function NoticeEditForm({
     imageFileInputRef.current?.click();
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = async () => {
 
     const nextTitle = title.trim();
     if (!nextTitle || !hasMeaningfulRichTextHtml(content)) {
@@ -301,7 +300,7 @@ export default function NoticeEditForm({
 
       <form
         className="mt-6 space-y-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4"
-        onSubmit={handleSubmit}
+        action={handleSubmit}
       >
         <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">공지 수정</p>
         <input
@@ -377,14 +376,13 @@ export default function NoticeEditForm({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="submit"
+          <FormSubmitButton
             data-testid="notice-edit-submit"
             disabled={isSaving || isUploadingImage}
             className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSaving ? "저장 중..." : "저장"}
-          </button>
+            idleLabel="저장"
+            pendingLabel="저장 중..."
+          />
           <Link
             href={detailPath}
             className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"

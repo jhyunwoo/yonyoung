@@ -2,7 +2,6 @@
 
 import {
   type ChangeEvent,
-  type FormEvent,
   useEffect,
   useMemo,
   useRef,
@@ -14,6 +13,7 @@ import {
   formatKoreanMobilePhoneNumber,
   isKoreanMobilePhoneNumber,
 } from "@/shared/contracts/auth-profile";
+import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import SortableImageGrid from "@/app/(dashboard)/_components/sortable-image-grid";
 import UploadProgressBar from "@/app/(dashboard)/_components/upload-progress-bar";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
@@ -280,8 +280,7 @@ export default function AuthProfileForm({
     setStudentNumber(event.target.value.replace(/\D/g, "").slice(0, 10));
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = async () => {
 
     if (isUploadingShowcaseImages) {
       setSubmitError("대표 작품 사진 업로드가 완료된 후 저장해 주세요.");
@@ -416,7 +415,7 @@ export default function AuthProfileForm({
             : "대시보드 이용을 위해 기본 정보를 입력해 주세요."}
         </p>
 
-        <form className="mt-7 space-y-5" onSubmit={handleSubmit} noValidate>
+        <form className="mt-7 space-y-5" action={handleSubmit} noValidate>
           <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
             <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">프로필 이미지</p>
             <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
@@ -646,14 +645,13 @@ export default function AuthProfileForm({
             <p className="text-sm text-emerald-700">{submitSuccess}</p>
           ) : null}
 
-          <button
-            type="submit"
+          <FormSubmitButton
             data-testid="auth-profile-submit"
             disabled={isSaving || isUploadingShowcaseImages}
             className="inline-flex w-full items-center justify-center rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSaving ? "저장 중..." : isDashboardMode ? "프로필 저장" : "기본 정보 저장"}
-          </button>
+            idleLabel={isDashboardMode ? "프로필 저장" : "기본 정보 저장"}
+            pendingLabel="저장 중..."
+          />
         </form>
       </section>
     </main>

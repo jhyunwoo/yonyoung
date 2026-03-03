@@ -2,7 +2,6 @@
 
 import {
   type ChangeEvent,
-  type FormEvent,
   useEffect,
   useMemo,
   useRef,
@@ -15,6 +14,7 @@ import { PRESIGN_PATHS } from "@/features/dashboard/api/admin-api/upload";
 import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/upload-batch";
 import { hasMeaningfulRichTextHtml } from "@/features/media/rich-text/rich-text";
 import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";
+import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import RichTextEditor, {
   EMPTY_RICH_TEXT_HTML,
 } from "@/app/(dashboard)/_components/rich-text-editor";
@@ -120,8 +120,7 @@ export default function NoticeCreateForm({
     removeItemById(targetId);
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = async () => {
 
     const nextTitle = title.trim();
     if (!nextTitle || !hasMeaningfulRichTextHtml(content)) {
@@ -183,7 +182,7 @@ export default function NoticeCreateForm({
 
       <form
         className="mt-6 space-y-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4"
-        onSubmit={handleSubmit}
+        action={handleSubmit}
       >
         <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">새 공지 작성</p>
         <input
@@ -264,14 +263,13 @@ export default function NoticeCreateForm({
         ) : null}
 
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="submit"
+          <FormSubmitButton
             data-testid="notice-create-submit"
             disabled={isSaving || isUploadingImage}
             className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSaving ? "저장 중..." : "공지 등록"}
-          </button>
+            idleLabel="공지 등록"
+            pendingLabel="저장 중..."
+          />
           <Link
             href={listPath}
             className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"

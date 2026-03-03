@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import type {
   ApiMarketComment,
@@ -12,6 +12,7 @@ import type {
   ApiMarketPushSubscriptionInput,
 } from "@/shared/contracts/api-contracts";
 import { Skeleton } from "@/components/ui/skeleton";
+import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import {
   type MarketViewer,
   STATUS_BADGE_CLASS,
@@ -378,8 +379,7 @@ export default function MarketItemDetailPageClient({
     }
   };
 
-  const handleCreateComment = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleCreateComment = async () => {
     if (!item) {
       return;
     }
@@ -808,7 +808,7 @@ export default function MarketItemDetailPageClient({
                   </ul>
                 )}
 
-                <form className="mt-3 flex gap-2" onSubmit={handleCreateComment}>
+                <form className="mt-3 flex gap-2" action={handleCreateComment}>
                   <input
                     value={commentInput}
                     onChange={(event) => setCommentInput(event.target.value)}
@@ -816,14 +816,13 @@ export default function MarketItemDetailPageClient({
                     className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
                     disabled={isCommentPending}
                   />
-                  <button
-                    type="submit"
+                  <FormSubmitButton
                     data-testid="market-comment-submit"
                     disabled={isCommentPending}
                     className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    등록
-                  </button>
+                    idleLabel="등록"
+                    pendingLabel="등록 중..."
+                  />
                 </form>
               </div>
             </article>

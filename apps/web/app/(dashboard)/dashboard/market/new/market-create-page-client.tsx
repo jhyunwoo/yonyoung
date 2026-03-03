@@ -1,6 +1,6 @@
 "use client";
 
-import { type ChangeEvent, type FormEvent, useMemo, useRef, useState } from "react";
+import { type ChangeEvent, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
@@ -11,6 +11,7 @@ import type {
   ApiMarketConditionGrade,
 } from "@/shared/contracts/api-contracts";
 import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";
+import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import SortableImageGrid from "@/app/(dashboard)/_components/sortable-image-grid";
 import UploadProgressBar from "@/app/(dashboard)/_components/upload-progress-bar";
 import {
@@ -90,8 +91,7 @@ export default function MarketCreatePageClient({ viewer }: { viewer: MarketViewe
     imageFileInputRef.current?.click();
   };
 
-  const handleCreateItem = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleCreateItem = async () => {
 
     const trimmedName = name.trim();
     const numericPrice = Number(price);
@@ -161,7 +161,7 @@ export default function MarketCreatePageClient({ viewer }: { viewer: MarketViewe
           <form
             data-testid="market-create-form"
             className="space-y-4"
-            onSubmit={handleCreateItem}
+            action={handleCreateItem}
           >
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <input
@@ -270,14 +270,13 @@ export default function MarketCreatePageClient({ viewer }: { viewer: MarketViewe
               </div>
             </div>
 
-            <button
-              type="submit"
+            <FormSubmitButton
               data-testid="market-create-submit"
               disabled={isSavingItem || isUploadingImage}
               className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSavingItem ? "등록 중..." : "판매글 등록"}
-            </button>
+              idleLabel="판매글 등록"
+              pendingLabel="등록 중..."
+            />
           </form>
         </section>
 

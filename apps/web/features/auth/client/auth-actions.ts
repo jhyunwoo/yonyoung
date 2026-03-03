@@ -58,9 +58,27 @@ export const signInWithGoogle = async ({
   disableRedirect = true,
 }: SignInWithGoogleParams): Promise<AuthActionResult<{ redirectUrl: string }>> => {
   try {
+    const resolvedCallbackURL = (() => {
+      if (typeof window === "undefined") {
+        return callbackURL;
+      }
+
+      const fallback = `${window.location.origin}/auth/sign-in`;
+      const raw = callbackURL?.trim();
+      if (!raw) {
+        return fallback;
+      }
+
+      try {
+        return new URL(raw, window.location.origin).toString();
+      } catch {
+        return fallback;
+      }
+    })();
+
     const response = await authClient.signIn.social({
       provider: "google",
-      callbackURL,
+      callbackURL: resolvedCallbackURL,
       disableRedirect,
     });
 

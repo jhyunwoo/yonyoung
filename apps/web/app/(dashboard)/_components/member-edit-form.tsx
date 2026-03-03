@@ -2,7 +2,6 @@
 
 import {
   type ChangeEvent,
-  type FormEvent,
   useEffect,
   useMemo,
   useRef,
@@ -29,6 +28,7 @@ import {
 } from "@/features/media/upload/showcase-images";
 import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";
 import { Skeleton } from "@/components/ui/skeleton";
+import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import SortableImageGrid from "@/app/(dashboard)/_components/sortable-image-grid";
 import UploadProgressBar from "@/app/(dashboard)/_components/upload-progress-bar";
 
@@ -257,8 +257,7 @@ export default function MemberEditForm({
     });
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = async () => {
 
     if (isUploadingShowcaseImages) {
       setErrorMessage("대표 작품 사진 업로드가 완료된 후 저장해 주세요.");
@@ -354,7 +353,7 @@ export default function MemberEditForm({
         권한이 있는 운영자는 사용자 정보를 수정할 수 있습니다.
       </p>
 
-      <form className="mt-5 space-y-4" onSubmit={handleSubmit} noValidate>
+      <form className="mt-5 space-y-4" action={handleSubmit} noValidate>
         <div className="grid gap-4 md:grid-cols-2">
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium">이름</span>
@@ -592,14 +591,13 @@ export default function MemberEditForm({
         ) : null}
 
         <div className="flex items-center gap-2">
-          <button
-            type="submit"
+          <FormSubmitButton
             data-testid="member-edit-submit"
             disabled={isSaving || isUploadingShowcaseImages}
             className="inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSaving ? "저장 중..." : "저장"}
-          </button>
+            idleLabel="저장"
+            pendingLabel="저장 중..."
+          />
           {onCancel ? (
             <button
               type="button"

@@ -1,10 +1,11 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AdminApiError } from "@/shared/http/http";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
+import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import {
   normalizeLinktreeName,
   readLinktreeErrorMessage,
@@ -64,8 +65,7 @@ export default function LinktreeGroupEditForm({
     void loadLinktree();
   }, [canWrite, loadLinktree]);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = async () => {
 
     const normalizedName = normalizeLinktreeName(name);
     if (!normalizedName) {
@@ -152,7 +152,7 @@ export default function LinktreeGroupEditForm({
 
       <form
         className="mt-6 space-y-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4"
-        onSubmit={handleSubmit}
+        action={handleSubmit}
       >
         <label className="block space-y-1">
           <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">분류 이름</span>
@@ -165,14 +165,13 @@ export default function LinktreeGroupEditForm({
         </label>
 
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="submit"
+          <FormSubmitButton
             data-testid="linktree-group-edit-submit"
             disabled={isSaving}
             className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSaving ? "저장 중..." : "저장"}
-          </button>
+            idleLabel="저장"
+            pendingLabel="저장 중..."
+          />
           <Link
             href={`${listPath}/${linktreeId}`}
             className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"
