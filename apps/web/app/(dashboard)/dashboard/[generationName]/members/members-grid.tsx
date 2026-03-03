@@ -77,7 +77,7 @@ export default function MembersGrid({ generationId, generationPath }: MembersGri
       >
         {Array.from({ length: 8 }).map((_, index) => (
           <li key={`generation-members-skeleton-${index + 1}`}>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4">
               <div className="flex items-center gap-3">
                 <Skeleton className="h-12 w-12 shrink-0 rounded-full" />
                 <div className="min-w-0 flex-1 space-y-2">
@@ -106,7 +106,7 @@ export default function MembersGrid({ generationId, generationPath }: MembersGri
 
   if (members.length === 0) {
     return (
-      <p className="mt-6 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+      <p className="mt-6 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 p-4 text-sm text-slate-600 dark:text-slate-300">
         현재 기수에 등록된 멤버가 없습니다.
       </p>
     );
@@ -123,10 +123,10 @@ export default function MembersGrid({ generationId, generationPath }: MembersGri
           <li key={member.id}>
             <Link
               href={`${generationPath}/members/${encodeURIComponent(member.id)}`}
-              className="block rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white"
+              className="block rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4 transition hover:border-slate-300 hover:bg-white"
             >
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+                <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700">
                   {member.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -135,27 +135,27 @@ export default function MembersGrid({ generationId, generationPath }: MembersGri
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-500">
+                    <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-600 dark:text-slate-300">
                       {avatarFallback}
                     </div>
                   )}
                 </div>
 
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-900">
+                  <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">
                     {displayName}
                   </p>
-                  <p className="truncate text-xs text-slate-500">
+                  <p className="truncate text-xs text-slate-600 dark:text-slate-300">
                     {member.department?.trim() || "학과 미등록"}
                   </p>
                 </div>
               </div>
 
               <div className="mt-3 flex items-center justify-between text-xs">
-                <span className="rounded-full border border-slate-300 bg-white px-2 py-1 text-slate-600">
+                <span className="rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2 py-1 text-slate-600 dark:text-slate-300">
                   {roleLabel}
                 </span>
-                <span className="text-slate-500">상세 보기</span>
+                <span className="text-slate-600 dark:text-slate-300">상세 보기</span>
               </div>
             </Link>
           </li>

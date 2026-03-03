@@ -483,21 +483,21 @@ export default function MarketItemDetailPageClient({
   return (
     <main className="px-4 py-6 md:px-8 md:py-8">
       <section className="mx-auto w-full max-w-7xl space-y-6">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+              <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
                 Market
               </p>
-              <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
+              <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
                 판매글 상세
               </h1>
-              {item ? <p className="mt-3 text-sm text-slate-600">{item.name}</p> : null}
+              {item ? <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{item.name}</p> : null}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 href="/dashboard/market"
-                className="inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 목록으로
               </Link>
@@ -505,7 +505,7 @@ export default function MarketItemDetailPageClient({
                 <Link
                   href={`/dashboard/market/${item.id}/edit`}
                   data-testid="market-edit-link"
-                  className="inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                  className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   게시글 수정
                 </Link>
@@ -522,7 +522,7 @@ export default function MarketItemDetailPageClient({
 
         {isLoadingItem ? (
           <section
-            className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+            className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm"
             aria-hidden="true"
           >
             <Skeleton className="h-80 w-full" />
@@ -532,10 +532,10 @@ export default function MarketItemDetailPageClient({
           </section>
         ) : item ? (
           <section className="grid grid-cols-1 gap-6 lg:grid-cols-[1.05fr,0.95fr]">
-            <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <article className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
               {selectedImageUrl ? (
                 <div className="mx-auto w-full max-w-full space-y-4 md:max-w-[50vw]">
-                  <div className="relative aspect-square w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                  <div className="relative aspect-square w-full overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700">
                     <button
                       type="button"
                       data-testid="market-main-image-button"
@@ -565,7 +565,7 @@ export default function MarketItemDetailPageClient({
                           data-testid="market-image-prev"
                           onClick={showPreviousImage}
                           aria-label="이전 이미지"
-                          className="absolute top-1/2 left-3 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/50 text-slate-700 shadow transition hover:bg-white/70"
+                          className="absolute top-1/2 left-3 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white dark:bg-slate-900/50 text-slate-700 dark:text-slate-200 shadow transition hover:bg-white/70"
                         >
                           <ChevronLeftIcon />
                         </button>
@@ -574,7 +574,7 @@ export default function MarketItemDetailPageClient({
                           data-testid="market-image-next"
                           onClick={showNextImage}
                           aria-label="다음 이미지"
-                          className="absolute top-1/2 right-3 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/50 text-slate-700 shadow transition hover:bg-white/70"
+                          className="absolute top-1/2 right-3 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white dark:bg-slate-900/50 text-slate-700 dark:text-slate-200 shadow transition hover:bg-white/70"
                         >
                           <ChevronRightIcon />
                         </button>
@@ -590,10 +590,10 @@ export default function MarketItemDetailPageClient({
                           data-testid={`market-thumbnail-${index}`}
                           aria-pressed={selectedImageIndex === index}
                           onClick={() => setSelectedImageIndex(index)}
-                          className={`relative aspect-square w-full overflow-hidden rounded-lg border bg-slate-100 transition ${
+                          className={`relative aspect-square w-full overflow-hidden rounded-lg border bg-slate-100 dark:bg-slate-700 transition ${
                             selectedImageIndex === index
                               ? "border-slate-900 ring-2 ring-slate-200"
-                              : "border-slate-200 hover:border-slate-400"
+                              : "border-slate-200 dark:border-slate-700 hover:border-slate-400"
                           }`}
                         >
                           <Image
@@ -620,23 +620,23 @@ export default function MarketItemDetailPageClient({
                   </ul>
                 </div>
               ) : (
-                <div className="flex aspect-square items-center justify-center rounded-xl border border-dashed border-slate-300 text-sm text-slate-400">
+                <div className="flex aspect-square items-center justify-center rounded-xl border border-dashed border-slate-300 dark:border-slate-600 text-sm text-slate-600 dark:text-slate-300">
                   등록된 이미지가 없습니다.
                 </div>
               )}
             </article>
 
             <article className="space-y-6">
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-2xl font-bold text-slate-900">{item.name}</h2>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-50">{item.name}</h2>
                   <span
                     className={`rounded-full border px-2 py-1 text-xs font-semibold ${STATUS_BADGE_CLASS[item.status]}`}
                   >
                     {STATUS_LABEL[item.status]}
                   </span>
                 </div>
-                <p className="mt-3 text-2xl font-semibold text-slate-800">
+                <p className="mt-3 text-2xl font-semibold text-slate-800 dark:text-slate-100">
                   {formatPrice(item.price)}
                 </p>
 
@@ -644,12 +644,12 @@ export default function MarketItemDetailPageClient({
                   {metadataItems.map((entry) => (
                     <div
                       key={entry.label}
-                      className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
+                      className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2"
                     >
-                      <p className="text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
+                      <p className="text-[11px] font-semibold tracking-wide text-slate-600 dark:text-slate-300 uppercase">
                         {entry.label}
                       </p>
-                      <p className="mt-1 text-sm font-semibold text-slate-800">
+                      <p className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">
                         {entry.value}
                       </p>
                     </div>
@@ -657,11 +657,11 @@ export default function MarketItemDetailPageClient({
                 </div>
 
                 {item.description ? (
-                  <div className="mt-4 rounded-xl border border-slate-200 bg-white px-3 py-3">
-                    <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                  <div className="mt-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-3">
+                    <p className="text-xs font-semibold tracking-wide text-slate-600 dark:text-slate-300 uppercase">
                       제품 설명
                     </p>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                    <p className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
                       {item.description}
                     </p>
                   </div>
@@ -674,7 +674,7 @@ export default function MarketItemDetailPageClient({
                       data-testid="market-status-selling"
                       onClick={() => void handleChangeStatus("selling")}
                       disabled={isChangingStatus}
-                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       판매중
                     </button>
@@ -683,7 +683,7 @@ export default function MarketItemDetailPageClient({
                       data-testid="market-status-reserved"
                       onClick={() => void handleChangeStatus("reserved")}
                       disabled={isChangingStatus}
-                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       예약중
                     </button>
@@ -692,7 +692,7 @@ export default function MarketItemDetailPageClient({
                       data-testid="market-status-sold"
                       onClick={() => void handleChangeStatus("sold")}
                       disabled={isChangingStatus}
-                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       판매완료
                     </button>
@@ -700,11 +700,11 @@ export default function MarketItemDetailPageClient({
                 ) : null}
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-slate-900">
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
                   브라우저 댓글 알림
                 </h3>
-                <p className="mt-2 text-sm text-slate-600">
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                   상세 페이지에서 댓글 알림 등록/해제를 할 수 있습니다.
                 </p>
                 <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -722,11 +722,11 @@ export default function MarketItemDetailPageClient({
                     data-testid="market-push-unregister"
                     onClick={handleUnregisterPush}
                     disabled={!isPushSupported || isPushPending}
-                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     알림 해제
                   </button>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
                     상태:{" "}
                     {isPushSupported
                       ? isPushSubscribed
@@ -736,18 +736,18 @@ export default function MarketItemDetailPageClient({
                   </p>
                 </div>
                 {pushMessage ? (
-                  <p className="mt-3 text-sm text-slate-600">{pushMessage}</p>
+                  <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{pushMessage}</p>
                 ) : null}
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-slate-900">댓글</h3>
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">댓글</h3>
                 {isLoadingComments ? (
                   <div className="mt-3 space-y-2" aria-hidden="true">
                     {Array.from({ length: 3 }).map((_, index) => (
                       <div
                         key={`market-comment-loading-${index + 1}`}
-                        className="rounded-lg border border-slate-200 bg-white p-3"
+                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3"
                       >
                         <Skeleton className="h-3 w-20" />
                         <Skeleton className="mt-2 h-3 w-full" />
@@ -756,16 +756,16 @@ export default function MarketItemDetailPageClient({
                     ))}
                   </div>
                 ) : comments.length === 0 ? (
-                  <p className="mt-3 text-sm text-slate-500">아직 댓글이 없습니다.</p>
+                  <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">아직 댓글이 없습니다.</p>
                 ) : (
                   <ul className="mt-3 space-y-2">
                     {comments.map((comment) => (
                       <li
                         key={comment.id}
-                        className="rounded-lg border border-slate-200 bg-white p-3"
+                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3"
                       >
-                        <p className="text-xs text-slate-500">{comment.author.name}</p>
-                        <p className="mt-1 text-sm text-slate-700">{comment.content}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-300">{comment.author.name}</p>
+                        <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">{comment.content}</p>
                       </li>
                     ))}
                   </ul>
@@ -776,7 +776,7 @@ export default function MarketItemDetailPageClient({
                     value={commentInput}
                     onChange={(event) => setCommentInput(event.target.value)}
                     placeholder="댓글 작성"
-                    className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                    className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
                     disabled={isCommentPending}
                   />
                   <button
@@ -792,8 +792,8 @@ export default function MarketItemDetailPageClient({
             </article>
           </section>
         ) : (
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm text-slate-500">판매글을 찾을 수 없습니다.</p>
+          <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
+            <p className="text-sm text-slate-600 dark:text-slate-300">판매글을 찾을 수 없습니다.</p>
           </section>
         )}
 
@@ -840,7 +840,7 @@ export default function MarketItemDetailPageClient({
                         data-testid="market-image-modal-prev"
                         onClick={showPreviousImage}
                         aria-label="이전 이미지"
-                        className="absolute top-1/2 left-4 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/50 text-slate-700"
+                        className="absolute top-1/2 left-4 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white dark:bg-slate-900/50 text-slate-700 dark:text-slate-200"
                       >
                         <ChevronLeftIcon />
                       </button>
@@ -849,7 +849,7 @@ export default function MarketItemDetailPageClient({
                         data-testid="market-image-modal-next"
                         onClick={showNextImage}
                         aria-label="다음 이미지"
-                        className="absolute top-1/2 right-4 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/50 text-slate-700"
+                        className="absolute top-1/2 right-4 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white dark:bg-slate-900/50 text-slate-700 dark:text-slate-200"
                       >
                         <ChevronRightIcon />
                       </button>

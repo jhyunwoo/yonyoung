@@ -337,14 +337,14 @@ export default function ActivityEditForm({
   };
 
   return (
-    <section className="mx-auto w-full max-w-5xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+    <section className="mx-auto w-full max-w-5xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
+      <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
         Activities
       </p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
         {generationName} 활동 수정
       </h1>
-      <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
+      <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
         활동 기본 정보와 사진을 함께 수정할 수 있습니다.
       </p>
 
@@ -380,13 +380,13 @@ export default function ActivityEditForm({
               <Skeleton className="h-10 w-full" />
             </div>
           </div>
-          <div className="space-y-2 rounded-xl border border-slate-200 p-4">
+          <div className="space-y-2 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
             <Skeleton className="h-4 w-32" />
             <Skeleton className="aspect-[4/3] w-full max-w-md rounded-lg" />
             <Skeleton className="h-10 w-24" />
             <Skeleton className="h-3 w-64" />
           </div>
-          <div className="space-y-2 rounded-xl border border-slate-200 p-4">
+          <div className="space-y-2 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
             <Skeleton className="h-4 w-16" />
             <Skeleton className="h-3 w-52" />
             <Skeleton className="h-10 w-24" />
@@ -408,17 +408,17 @@ export default function ActivityEditForm({
       ) : activity ? (
         <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
           <label className="block space-y-1">
-            <span className="text-sm font-semibold text-slate-900">활동 제목</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">활동 제목</span>
             <input
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               disabled={isSaving}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
             />
           </label>
 
           <div className="space-y-1">
-            <span className="text-sm font-semibold text-slate-900">활동 설명</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">활동 설명</span>
             <RichTextEditor
               value={description}
               onChange={setDescription}
@@ -428,32 +428,32 @@ export default function ActivityEditForm({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-1">
-              <span className="text-sm font-semibold text-slate-900">시작일</span>
+              <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">시작일</span>
               <input
                 type="date"
                 value={startDateInput}
                 onChange={(event) => setStartDateInput(event.target.value)}
                 disabled={isSaving}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
               />
             </label>
             <label className="block space-y-1">
-              <span className="text-sm font-semibold text-slate-900">종료일</span>
+              <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">종료일</span>
               <input
                 type="date"
                 value={endDateInput}
                 onChange={(event) => setEndDateInput(event.target.value)}
                 disabled={isSaving}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
               />
             </label>
           </div>
 
-          <div className="space-y-2 rounded-xl border border-slate-200 p-4">
-            <p className="text-sm font-semibold text-slate-900">
+          <div className="space-y-2 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
               대표 이미지 교체 (선택)
             </p>
-            <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+            <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700">
               <Image
                 src={activity.coverImageUrl}
                 alt={`${activity.title} 대표 이미지`}
@@ -465,9 +465,10 @@ export default function ActivityEditForm({
             </div>
             <button
               type="button"
+              data-testid="activity-edit-cover-select"
               onClick={handleOpenCoverFilePicker}
               disabled={isSaving}
-              className="inline-flex rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               파일 선택
             </button>
@@ -479,7 +480,7 @@ export default function ActivityEditForm({
               disabled={isSaving}
               className="sr-only"
             />
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600 dark:text-slate-300">
               {coverFile
                 ? `선택됨: ${coverFile.name}`
                 : "대표 이미지를 교체하지 않으려면 비워 두세요."}
@@ -496,17 +497,18 @@ export default function ActivityEditForm({
             ) : null}
           </div>
 
-          <div className="space-y-2 rounded-xl border border-slate-200 p-4">
-            <p className="text-sm font-semibold text-slate-900">세부 이미지</p>
+          <div className="space-y-2 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">세부 이미지</p>
             <label className="block space-y-1">
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-slate-600 dark:text-slate-300">
                 새 세부 이미지 추가 (선택, 여러 장)
               </span>
               <button
                 type="button"
+                data-testid="activity-edit-detail-select"
                 onClick={handleOpenDetailFilePicker}
                 disabled={isSaving}
-                className="inline-flex rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 파일 선택
               </button>
@@ -520,7 +522,7 @@ export default function ActivityEditForm({
                 className="sr-only"
               />
             </label>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600 dark:text-slate-300">
               마우스로 끌어 세부 이미지 순서를 바꿀 수 있습니다.
             </p>
             <SortableImageGrid
@@ -547,12 +549,13 @@ export default function ActivityEditForm({
           <LastUpdatedMeta
             updatedAt={activity.updatedAt}
             updatedBy={activity.updatedBy}
-            className="text-xs text-slate-500"
+            className="text-xs text-slate-600 dark:text-slate-300"
           />
 
           <div className="flex flex-wrap gap-2">
             <button
               type="submit"
+              data-testid="activity-edit-submit"
               disabled={isSubmitDisabled}
               className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
             >
@@ -560,13 +563,13 @@ export default function ActivityEditForm({
             </button>
             <Link
               href={`${generationPath}/activities/${activity.id}`}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
+              className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200"
             >
               상세로
             </Link>
             <Link
               href={`${generationPath}/activities`}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
+              className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200"
             >
               목록으로
             </Link>

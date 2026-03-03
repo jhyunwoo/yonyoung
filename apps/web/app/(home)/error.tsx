@@ -40,6 +40,7 @@ export default function HomeErrorPage({ error, reset }: HomeErrorPageProps) {
         </p>
         <button
           type="button"
+          data-testid="home-error-reset"
           onClick={reset}
           className="mt-8 inline-flex border border-(--surface-strong-border) bg-(--text-primary) px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
         >

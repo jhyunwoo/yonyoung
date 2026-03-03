@@ -136,28 +136,28 @@ export default function MarketCreatePageClient({ viewer }: { viewer: MarketViewe
   return (
     <main className="px-4 py-6 md:px-8 md:py-8">
       <section className="mx-auto w-full max-w-4xl space-y-6">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-          <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
+          <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
             Market
           </p>
-          <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
+          <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
             판매글 작성
           </h1>
-          <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
+          <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
             판매글은 인증된 연영회 구성원만 등록할 수 있습니다.
           </p>
-          <p className="mt-1 text-sm text-slate-500">작성자: {viewer.displayName}</p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">작성자: {viewer.displayName}</p>
           <div className="mt-4">
             <Link
               href="/dashboard/market"
-              className="inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+              className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               장터 목록으로 돌아가기
             </Link>
           </div>
         </div>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+        <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
           <form
             data-testid="market-create-form"
             className="space-y-4"
@@ -168,7 +168,7 @@ export default function MarketCreatePageClient({ viewer }: { viewer: MarketViewe
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 placeholder="판매물건 이름"
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
                 disabled={isSavingItem || isUploadingImage}
               />
               <input
@@ -176,21 +176,21 @@ export default function MarketCreatePageClient({ viewer }: { viewer: MarketViewe
                 onChange={(event) => setPrice(event.target.value)}
                 placeholder="가격(원)"
                 inputMode="numeric"
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
                 disabled={isSavingItem || isUploadingImage}
               />
               <input
                 value={manufacturer}
                 onChange={(event) => setManufacturer(event.target.value)}
                 placeholder="제조사 (선택)"
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
                 disabled={isSavingItem || isUploadingImage}
               />
               <input
                 value={productCode}
                 onChange={(event) => setProductCode(event.target.value)}
                 placeholder="제품 코드 (선택)"
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
                 disabled={isSavingItem || isUploadingImage}
               />
               <select
@@ -198,7 +198,7 @@ export default function MarketCreatePageClient({ viewer }: { viewer: MarketViewe
                 onChange={(event) =>
                   setConditionGrade(event.target.value as "" | ApiMarketConditionGrade)
                 }
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
                 disabled={isSavingItem || isUploadingImage}
               >
                 {CONDITION_OPTIONS.map((option) => (
@@ -213,17 +213,18 @@ export default function MarketCreatePageClient({ viewer }: { viewer: MarketViewe
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               placeholder="제품 설명 (선택)"
-              className="min-h-24 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              className="min-h-24 w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
               disabled={isSavingItem || isUploadingImage}
             />
 
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4">
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="button"
+                  data-testid="market-image-upload-open"
                   onClick={handleOpenImageFilePicker}
                   disabled={isImageUploadDisabled}
-                  className="inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   사진 업로드
                 </button>
@@ -237,12 +238,12 @@ export default function MarketCreatePageClient({ viewer }: { viewer: MarketViewe
                   disabled={isImageUploadDisabled}
                   className="sr-only"
                 />
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-600 dark:text-slate-300">
                   최소 1장, 최대 {MARKET_MAX_IMAGES}장
                 </p>
               </div>
               {!isUploadingImage && imageUrls.length >= MARKET_MAX_IMAGES ? (
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
                   최대 {MARKET_MAX_IMAGES}장까지 등록되어 추가 업로드가
                   비활성화되었습니다.
                 </p>

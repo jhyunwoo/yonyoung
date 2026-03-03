@@ -62,12 +62,14 @@ const handle = async (
 
   const upstreamPath = path.join("/");
   const upstreamUrl = `${getApiBaseUrl()}/api/${upstreamPath}${request.nextUrl.search}`;
+  const hasRequestBody = request.method !== "GET" && request.method !== "HEAD";
+  const requestBody = hasRequestBody ? request.body : undefined;
 
   const upstreamResponse = await fetch(upstreamUrl, {
     method: request.method,
     headers: buildUpstreamHeaders(request),
-    body:
-      request.method === "GET" || request.method === "HEAD" ? undefined : request.body,
+    body: requestBody,
+    ...(requestBody ? { duplex: "half" as const } : {}),
     cache: "no-store",
     redirect: "manual",
   });

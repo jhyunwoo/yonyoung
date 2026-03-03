@@ -12,7 +12,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 const inputClassName =
-  "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
+  "w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
 
 const readErrorMessage = (error: unknown): string => {
   if (error instanceof AdminApiError) {
@@ -108,7 +108,7 @@ export default function SiteSettingsForm() {
 
   if (isLoading) {
     return (
-      <section className="mx-auto w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+      <section className="mx-auto w-full max-w-4xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
         <div className="space-y-4" aria-hidden="true">
           <Skeleton className="h-4 w-28" />
           <Skeleton className="h-8 w-36" />
@@ -128,12 +128,12 @@ export default function SiteSettingsForm() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+    <section className="mx-auto w-full max-w-4xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
+      <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
         Settings / Site
       </p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">기본 설정</h1>
-      <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">기본 설정</h1>
+      <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
         홈페이지 하단 연락처와 후원 계좌 정보를 수정할 수 있습니다. 저장하면 홈페이지와
         후원 페이지에 바로 반영됩니다.
       </p>
@@ -152,7 +152,7 @@ export default function SiteSettingsForm() {
       <form onSubmit={handleSubmit} className="mt-6 space-y-6">
         <div className="grid gap-5 md:grid-cols-2">
           <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-slate-700">오픈 카톡방 링크</span>
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">오픈 카톡방 링크</span>
             <input
               type="url"
               value={formState.footerOpenChatUrl}
@@ -164,7 +164,7 @@ export default function SiteSettingsForm() {
           </label>
 
           <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-slate-700">
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
               인스타그램 아이디
             </span>
             <div className="flex items-center gap-1">
@@ -178,13 +178,13 @@ export default function SiteSettingsForm() {
                 required
               />
             </div>
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-slate-600 dark:text-slate-300">
               @ 없이 아이디만 입력하면 됩니다.
             </span>
           </label>
 
           <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-slate-700">이메일</span>
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">이메일</span>
             <input
               type="email"
               value={formState.footerEmail}
@@ -196,7 +196,7 @@ export default function SiteSettingsForm() {
           </label>
 
           <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-slate-700">전화번호</span>
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">전화번호</span>
             <input
               type="text"
               value={formState.footerPhone}
@@ -209,7 +209,7 @@ export default function SiteSettingsForm() {
         </div>
 
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-semibold text-slate-700">주소</span>
+          <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">주소</span>
           <textarea
             value={formState.footerAddress}
             onChange={(event) => updateField("footerAddress", event.target.value)}
@@ -219,11 +219,11 @@ export default function SiteSettingsForm() {
           />
         </label>
 
-        <section className="rounded-xl border border-slate-200 bg-slate-50 p-4 md:p-5">
-          <h2 className="text-base font-semibold text-slate-900">후원 계좌 설정</h2>
+        <section className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4 md:p-5">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-50">후원 계좌 설정</h2>
           <div className="mt-4 grid gap-4 md:grid-cols-3">
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-slate-700">은행</span>
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">은행</span>
               <input
                 type="text"
                 value={formState.donateBankName}
@@ -234,7 +234,7 @@ export default function SiteSettingsForm() {
             </label>
 
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-slate-700">계좌번호</span>
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">계좌번호</span>
               <input
                 type="text"
                 value={formState.donateAccountNumber}
@@ -247,7 +247,7 @@ export default function SiteSettingsForm() {
             </label>
 
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-slate-700">예금주</span>
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">예금주</span>
               <input
                 type="text"
                 value={formState.donateAccountHolder}
@@ -264,6 +264,7 @@ export default function SiteSettingsForm() {
         <div className="flex justify-end">
           <button
             type="submit"
+            data-testid="site-settings-submit"
             disabled={isSaving}
             className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
           >

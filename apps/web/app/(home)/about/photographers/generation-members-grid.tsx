@@ -159,6 +159,7 @@ export default function GenerationMembersGrid({
           >
             <button
               type="button"
+              data-testid="about-photographers-member-modal-close-overlay"
               className="absolute inset-0"
               onClick={closeModal}
               aria-label="사용자 정보 모달 닫기"

@@ -171,7 +171,7 @@ export default function MemberDetailClient({
   if (isLoading) {
     return (
       <main className="px-4 py-6 md:px-8 md:py-8">
-        <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+        <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
           <div className="space-y-4" aria-hidden="true">
             <Skeleton className="h-4 w-24" />
             <div className="flex items-center gap-4">
@@ -181,7 +181,7 @@ export default function MemberDetailClient({
                 <Skeleton className="h-4 w-32" />
               </div>
             </div>
-            <div className="rounded-xl border border-slate-200 p-4">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {Array.from({ length: 9 }).map((_, index) => (
                   <div
@@ -203,13 +203,13 @@ export default function MemberDetailClient({
   if (errorMessage || !currentUserLike) {
     return (
       <main className="px-4 py-6 md:px-8 md:py-8">
-        <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+        <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
           <p className="text-sm text-red-700">
             {errorMessage ?? "멤버 정보를 찾을 수 없습니다."}
           </p>
           <Link
             href={`${generation.path}/members`}
-            className="mt-4 inline-flex text-sm font-semibold text-slate-700 hover:text-slate-900"
+            className="mt-4 inline-flex text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-slate-50"
           >
             멤버 목록으로 돌아가기
           </Link>
@@ -228,16 +228,16 @@ export default function MemberDetailClient({
   return (
     <main className="px-4 py-6 md:px-8 md:py-8">
       <div className="mx-auto grid w-full max-w-6xl gap-4">
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+        <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
           <Link
             href={`${generation.path}/members`}
-            className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase hover:text-slate-700"
+            className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase hover:text-slate-700 dark:hover:text-slate-200"
           >
             Members
           </Link>
 
           <div className="mt-4 flex flex-wrap items-center gap-4">
-            <div className="h-16 w-16 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+            <div className="h-16 w-16 overflow-hidden rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700">
               {profileImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -246,21 +246,21 @@ export default function MemberDetailClient({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-base font-semibold text-slate-500">
+                <div className="flex h-full w-full items-center justify-center text-base font-semibold text-slate-600 dark:text-slate-300">
                   {avatarFallback}
                 </div>
               )}
             </div>
 
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
                 {displayName}
               </h1>
-              <p className="mt-1 text-sm text-slate-600">{generation.name} 멤버 상세</p>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{generation.name} 멤버 상세</p>
             </div>
 
             {isSelf ? (
-              <span className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+              <span className="rounded-full border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-700 px-3 py-1 text-xs font-semibold text-slate-700 dark:text-slate-200">
                 내 정보
               </span>
             ) : null}
@@ -268,8 +268,9 @@ export default function MemberDetailClient({
             {canInlineEdit && !isEditing ? (
               <button
                 type="button"
+                data-testid="generation-member-detail-edit-toggle"
                 onClick={() => setIsEditing(true)}
-                className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+                className="inline-flex items-center rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 수정
               </button>
@@ -304,87 +305,87 @@ export default function MemberDetailClient({
           ) : (
             <>
               <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs font-semibold text-slate-500">회원 구분</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">{roleLabel}</p>
+                <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4">
+                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">회원 구분</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-50">{roleLabel}</p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs font-semibold text-slate-500">학과</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">
+                <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4">
+                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">학과</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-50">
                     {currentUserLike.department?.trim() || "학과 미등록"}
                   </p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs font-semibold text-slate-500">표시 이름</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">
+                <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4">
+                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">표시 이름</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-50">
                     {displayName}
                   </p>
                 </div>
               </div>
 
               {showsFullDetails && fullUser ? (
-                <div className="mt-6 rounded-xl border border-slate-200 p-4">
-                  <h2 className="text-sm font-semibold text-slate-900">전체 정보</h2>
+                <div className="mt-6 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+                  <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">전체 정보</h2>
                   <dl className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     <div>
-                      <dt className="text-xs font-semibold text-slate-500">이메일</dt>
-                      <dd className="mt-1 text-sm text-slate-900">{fullUser.email}</dd>
+                      <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">이메일</dt>
+                      <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">{fullUser.email}</dd>
                     </div>
                     <div>
-                      <dt className="text-xs font-semibold text-slate-500">성</dt>
-                      <dd className="mt-1 text-sm text-slate-900">
+                      <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">성</dt>
+                      <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">
                         {fullUser.familyName ?? "-"}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-xs font-semibold text-slate-500">이름</dt>
-                      <dd className="mt-1 text-sm text-slate-900">
+                      <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">이름</dt>
+                      <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">
                         {fullUser.givenName ?? "-"}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-xs font-semibold text-slate-500">대학</dt>
-                      <dd className="mt-1 text-sm text-slate-900">
+                      <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">대학</dt>
+                      <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">
                         {fullUser.college ?? "-"}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-xs font-semibold text-slate-500">학번</dt>
-                      <dd className="mt-1 text-sm text-slate-900">
+                      <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">학번</dt>
+                      <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">
                         {fullUser.studentNumber ?? "-"}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-xs font-semibold text-slate-500">전화번호</dt>
-                      <dd className="mt-1 text-sm text-slate-900">
+                      <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">전화번호</dt>
+                      <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">
                         {fullUser.phoneNumber ?? "-"}
                       </dd>
                     </div>
                     <div className="md:col-span-2 xl:col-span-3">
-                      <dt className="text-xs font-semibold text-slate-500">소속 기수</dt>
-                      <dd className="mt-1 break-all text-sm text-slate-900">
+                      <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">소속 기수</dt>
+                      <dd className="mt-1 break-all text-sm text-slate-900 dark:text-slate-50">
                         {readGenerationNameText(fullUser, generationNamesById)}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-xs font-semibold text-slate-500">생성일</dt>
-                      <dd className="mt-1 text-sm text-slate-900">
+                      <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">생성일</dt>
+                      <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">
                         {formatKoreanDate(fullUser.createdAt)}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-xs font-semibold text-slate-500">수정일</dt>
-                      <dd className="mt-1 text-sm text-slate-900">
+                      <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">수정일</dt>
+                      <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">
                         {formatKoreanDate(fullUser.updatedAt)}
                       </dd>
                     </div>
                     <div className="md:col-span-2 xl:col-span-3">
-                      <dt className="text-xs font-semibold text-slate-500">최근 수정</dt>
+                      <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">최근 수정</dt>
                       <dd className="mt-1">
                         <LastUpdatedMeta
                           updatedAt={fullUser.updatedAt}
                           updatedBy={fullUser.updatedBy}
-                          className="text-sm text-slate-900"
+                          className="text-sm text-slate-900 dark:text-slate-50"
                         />
                       </dd>
                     </div>

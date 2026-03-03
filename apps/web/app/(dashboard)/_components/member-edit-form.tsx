@@ -345,12 +345,12 @@ export default function MemberEditForm({
     <section
       className={
         inline
-          ? "mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4"
-          : "rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8"
+          ? "mt-6 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4"
+          : "rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8"
       }
     >
-      <h2 className="text-lg font-bold text-slate-900">사용자 정보 수정</h2>
-      <p className="mt-2 text-sm text-slate-600">
+      <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">사용자 정보 수정</h2>
+      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
         권한이 있는 운영자는 사용자 정보를 수정할 수 있습니다.
       </p>
 
@@ -362,7 +362,7 @@ export default function MemberEditForm({
               value={name}
               onChange={(event) => setName(event.target.value)}
               disabled={isSaving}
-              className="rounded-lg border border-slate-300 px-3 py-2"
+              className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
             />
           </label>
 
@@ -374,7 +374,7 @@ export default function MemberEditForm({
                 setRole(event.target.value as ApiAdminUpdateUserInput["role"])
               }
               disabled={isSaving}
-              className="rounded-lg border border-slate-300 px-3 py-2"
+              className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
             >
               {ROLE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -385,14 +385,14 @@ export default function MemberEditForm({
           </label>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <p className="text-sm font-semibold text-slate-900">프로필 이미지</p>
-          <p className="mt-1 text-xs text-slate-500">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">프로필 이미지</p>
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
             사진 파일을 선택해 프로필 이미지를 바꿀 수 있습니다.
           </p>
 
           <div className="mt-3 flex items-center gap-4">
-            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-50">
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
               {imagePreviewUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -401,7 +401,7 @@ export default function MemberEditForm({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+                <div className="flex h-full w-full items-center justify-center text-xs text-slate-600 dark:text-slate-300">
                   없음
                 </div>
               )}
@@ -409,9 +409,10 @@ export default function MemberEditForm({
 
             <button
               type="button"
+              data-testid="member-edit-profile-image-select"
               onClick={handleProfileImageUploadClick}
               disabled={isSaving}
-              className="inline-flex rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               파일 선택
             </button>
@@ -428,15 +429,16 @@ export default function MemberEditForm({
           <UploadProgressBar progressPercent={uploadProgressPercent} />
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <p className="text-sm font-semibold text-slate-900">대표 작품 사진</p>
-          <p className="mt-1 text-xs text-slate-500">최대 {SHOWCASE_MAX_IMAGES}장</p>
+        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">대표 작품 사진</p>
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">최대 {SHOWCASE_MAX_IMAGES}장</p>
 
           <button
             type="button"
+            data-testid="member-edit-showcase-upload"
             onClick={handleShowcaseUploadClick}
             disabled={isShowcaseUploadDisabled}
-            className="mt-3 inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-3 inline-flex rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             파일 업로드
           </button>
@@ -451,7 +453,7 @@ export default function MemberEditForm({
           />
 
           {isUploadingShowcaseImages ? (
-            <p className="mt-2 text-xs text-slate-500">대표 작품 사진 업로드 중...</p>
+            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">대표 작품 사진 업로드 중...</p>
           ) : null}
           <UploadProgressBar
             progressPercent={showcaseUploadProgressPercent}
@@ -459,7 +461,7 @@ export default function MemberEditForm({
           />
 
           <div className="mt-3 space-y-2">
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600 dark:text-slate-300">
               마우스로 끌어 대표 작품 사진 순서를 바꿀 수 있습니다.
             </p>
             <SortableImageGrid
@@ -486,7 +488,7 @@ export default function MemberEditForm({
               value={familyName}
               onChange={(event) => setFamilyName(event.target.value)}
               disabled={isSaving}
-              className="rounded-lg border border-slate-300 px-3 py-2"
+              className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
             />
           </label>
 
@@ -496,7 +498,7 @@ export default function MemberEditForm({
               value={givenName}
               onChange={(event) => setGivenName(event.target.value)}
               disabled={isSaving}
-              className="rounded-lg border border-slate-300 px-3 py-2"
+              className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
             />
           </label>
         </div>
@@ -508,7 +510,7 @@ export default function MemberEditForm({
               value={college}
               onChange={(event) => setCollege(event.target.value)}
               disabled={isSaving}
-              className="rounded-lg border border-slate-300 px-3 py-2"
+              className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
             />
           </label>
 
@@ -518,7 +520,7 @@ export default function MemberEditForm({
               value={department}
               onChange={(event) => setDepartment(event.target.value)}
               disabled={isSaving}
-              className="rounded-lg border border-slate-300 px-3 py-2"
+              className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
             />
           </label>
         </div>
@@ -530,7 +532,7 @@ export default function MemberEditForm({
               value={studentNumber}
               onChange={(event) => setStudentNumber(event.target.value)}
               disabled={isSaving}
-              className="rounded-lg border border-slate-300 px-3 py-2"
+              className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
             />
           </label>
 
@@ -540,13 +542,13 @@ export default function MemberEditForm({
               value={phoneNumber}
               onChange={(event) => setPhoneNumber(event.target.value)}
               disabled={isSaving}
-              className="rounded-lg border border-slate-300 px-3 py-2"
+              className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
             />
           </label>
         </div>
 
-        <fieldset className="rounded-xl border border-slate-200 p-4">
-          <legend className="px-1 text-sm font-medium text-slate-700">소속 기수</legend>
+        <fieldset className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          <legend className="px-1 text-sm font-medium text-slate-700 dark:text-slate-200">소속 기수</legend>
           {isLoadingGenerations ? (
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
               {Array.from({ length: 6 }).map((_, index) => (
@@ -557,12 +559,12 @@ export default function MemberEditForm({
               ))}
             </div>
           ) : allGenerations.length === 0 ? (
-            <p className="text-sm text-slate-500">선택 가능한 기수가 없습니다.</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300">선택 가능한 기수가 없습니다.</p>
           ) : (
             <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {allGenerations.map((generation) => (
                 <li key={generation.id}>
-                  <label className="flex cursor-pointer items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700">
+                  <label className="flex cursor-pointer items-center gap-2 rounded-md border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-700 dark:text-slate-200">
                     <input
                       type="checkbox"
                       checked={generationIdSet.has(generation.id)}
@@ -592,6 +594,7 @@ export default function MemberEditForm({
         <div className="flex items-center gap-2">
           <button
             type="submit"
+            data-testid="member-edit-submit"
             disabled={isSaving || isUploadingShowcaseImages}
             className="inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
@@ -600,9 +603,10 @@ export default function MemberEditForm({
           {onCancel ? (
             <button
               type="button"
+              data-testid="member-edit-cancel"
               onClick={onCancel}
               disabled={isSaving || isUploadingShowcaseImages}
-              className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
               취소
             </button>

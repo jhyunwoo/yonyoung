@@ -59,7 +59,7 @@ export default async function PendingApprovalPage() {
           </Link>
           <Link
             href="/auth/pending-approval"
-            className="inline-flex border border-(--surface-strong-border) bg-(--text-primary) px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+            className="inline-flex border border-(--surface-strong-border) bg-(--accent) px-4 py-2 text-sm font-semibold text-(--accent-foreground) transition hover:opacity-90"
           >
             상태 새로고침
           </Link>

@@ -29,16 +29,16 @@ export default async function GenerationActivitiesList({
   );
 
   return (
-    <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+    <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+          <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
             Activities
           </p>
-          <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
+          <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
             {generationName} 활동 관리
           </h1>
-          <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
+          <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
             이 기수의 활동을 확인하고 필요할 때 새 활동을 등록할 수 있습니다.
           </p>
         </div>
@@ -53,13 +53,13 @@ export default async function GenerationActivitiesList({
       </div>
 
       {!canManage ? (
-        <p className="mt-6 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+        <p className="mt-6 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
           활동을 등록하거나 수정할 권한이 없습니다.
         </p>
       ) : null}
 
       {activities.length === 0 ? (
-        <p className="mt-6 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+        <p className="mt-6 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-6 text-sm text-slate-600 dark:text-slate-300">
           현재 기수에 등록된 활동이 없습니다.
         </p>
       ) : (
@@ -71,10 +71,10 @@ export default async function GenerationActivitiesList({
             <li key={activity.id}>
               <Link
                 href={`${generationPath}/activities/${activity.id}`}
-                className="block overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:border-slate-300 hover:shadow-sm"
+                className="block overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 transition hover:border-slate-300 hover:shadow-sm"
                 data-testid={`generation-activity-card-${activity.id}`}
               >
-                <div className="relative aspect-[4/3] w-full bg-slate-100">
+                <div className="relative aspect-[4/3] w-full bg-slate-100 dark:bg-slate-700">
                   <Image
                     src={activity.coverImageUrl}
                     alt={activity.title}
@@ -85,16 +85,16 @@ export default async function GenerationActivitiesList({
                   />
                 </div>
                 <div className="p-4">
-                  <p className="text-base font-semibold text-slate-900">
+                  <p className="text-base font-semibold text-slate-900 dark:text-slate-50">
                     {activity.title}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
                     {formatKoreanDateRange(activity.startDate, activity.endDate)}
                   </p>
-                  <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-600">
+                  <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                     {summarizeActivityDescription(activity.description)}
                   </p>
-                  <p className="mt-3 text-xs text-slate-400">
+                  <p className="mt-3 text-xs text-slate-600 dark:text-slate-300">
                     최근 수정: {formatKoreanDate(activity.updatedAt)} ·{" "}
                     {formatAuditActor(activity.updatedBy)}
                   </p>

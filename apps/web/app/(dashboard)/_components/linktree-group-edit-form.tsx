@@ -91,7 +91,7 @@ export default function LinktreeGroupEditForm({
 
   if (!canWrite) {
     return (
-      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
         <div className="space-y-3" aria-hidden="true">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-8 w-36" />
@@ -103,7 +103,7 @@ export default function LinktreeGroupEditForm({
 
   if (isLoading) {
     return (
-      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
         <div className="space-y-3" aria-hidden="true">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-8 w-36" />
@@ -117,14 +117,14 @@ export default function LinktreeGroupEditForm({
 
   if (isNotFound) {
     return (
-      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-        <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">링크 분류 수정</h1>
-        <p className="mt-3 text-sm text-slate-600">
+      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">링크 분류 수정</h1>
+        <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
           존재하지 않는 분류이거나 접근할 수 없습니다.
         </p>
         <Link
           href={listPath}
-          className="mt-6 inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+          className="mt-6 inline-flex rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"
         >
           목록으로 이동
         </Link>
@@ -133,14 +133,14 @@ export default function LinktreeGroupEditForm({
   }
 
   return (
-    <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+    <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
+      <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
         Settings / Linktree
       </p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
         링크 분류 수정
       </h1>
-      <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
+      <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
         분류 이름을 바꾼 뒤 저장할 수 있습니다.
       </p>
 
@@ -151,22 +151,23 @@ export default function LinktreeGroupEditForm({
       ) : null}
 
       <form
-        className="mt-6 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4"
+        className="mt-6 space-y-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4"
         onSubmit={handleSubmit}
       >
         <label className="block space-y-1">
-          <span className="text-sm font-semibold text-slate-900">분류 이름</span>
+          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">분류 이름</span>
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
             disabled={isSaving}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
           />
         </label>
 
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="submit"
+            data-testid="linktree-group-edit-submit"
             disabled={isSaving}
             className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
@@ -174,7 +175,7 @@ export default function LinktreeGroupEditForm({
           </button>
           <Link
             href={`${listPath}/${linktreeId}`}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+            className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             취소
           </Link>

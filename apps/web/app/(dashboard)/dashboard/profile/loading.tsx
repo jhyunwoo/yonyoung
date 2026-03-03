@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function DashboardProfileLoading() {
   return (
     <main className="px-4 py-6 md:px-8 md:py-8">
-      <section className="mx-auto w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+      <section className="mx-auto w-full max-w-4xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
         <div className="space-y-3" aria-hidden="true">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-8 w-44" />

@@ -73,14 +73,14 @@ export default function RootLayout({
         <Suspense
           fallback={
             <main
-              className="min-h-screen bg-slate-50 px-4 py-6 md:px-8 md:py-8"
+              className="min-h-screen bg-slate-50 dark:bg-slate-800 px-4 py-6 md:px-8 md:py-8"
               data-testid="dashboard-shell-loading"
             >
               <p className="sr-only" role="status" aria-live="polite">
                 대시보드 셸을 불러오는 중입니다.
               </p>
               <div className="mx-auto grid w-full max-w-6xl gap-4 md:grid-cols-[18rem_minmax(0,1fr)]">
-                <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-sm">
                   <Skeleton className="h-11 w-11 rounded-full" />
                   <Skeleton className="mt-4 h-5 w-36" />
                   <Skeleton className="mt-2 h-3 w-24" />
@@ -96,7 +96,7 @@ export default function RootLayout({
                     <Skeleton className="h-12 w-full" />
                   </div>
                 </section>
-                <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+                <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
                   <Skeleton className="h-6 w-48" />
                   <Skeleton className="mt-3 h-4 w-full max-w-xl" />
                   <Skeleton className="mt-2 h-4 w-full max-w-lg" />

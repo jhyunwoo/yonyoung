@@ -17,7 +17,7 @@ import UploadProgressBar from "@/app/(dashboard)/_components/upload-progress-bar
 const RECRUITING_MAX_IMAGES = 10;
 
 const inputClassName =
-  "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
+  "w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
 
 const readErrorMessage = (error: unknown): string => {
   if (error instanceof AdminApiError) {
@@ -232,7 +232,7 @@ export default function RecruitingPlanSettingsForm() {
 
   if (isLoading) {
     return (
-      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
         <div className="space-y-4" aria-hidden="true">
           <Skeleton className="h-4 w-28" />
           <Skeleton className="h-8 w-48" />
@@ -253,12 +253,12 @@ export default function RecruitingPlanSettingsForm() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+    <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
+      <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
         Settings / Recruiting
       </p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">모집 계획</h1>
-      <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">모집 계획</h1>
+      <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
         올해 모집 계획의 제목, 세부 내용, 홍보 이미지, 모집 기간을 설정할 수 있습니다.
       </p>
 
@@ -275,7 +275,7 @@ export default function RecruitingPlanSettingsForm() {
 
       <div className="mt-6 space-y-6">
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-semibold text-slate-700">제목</span>
+          <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">제목</span>
           <input
             type="text"
             value={title}
@@ -287,7 +287,7 @@ export default function RecruitingPlanSettingsForm() {
         </label>
 
         <div className="space-y-2">
-          <p className="text-sm font-semibold text-slate-700">세부 내용</p>
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">세부 내용</p>
           <RichTextEditor
             value={content}
             onChange={setContent}
@@ -297,7 +297,7 @@ export default function RecruitingPlanSettingsForm() {
 
         <div className="grid gap-4 md:grid-cols-2">
           <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-slate-700">모집 시작일시</span>
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">모집 시작일시</span>
             <input
               type="datetime-local"
               value={recruitmentStartAtInput}
@@ -307,7 +307,7 @@ export default function RecruitingPlanSettingsForm() {
             />
           </label>
           <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-slate-700">모집 종료일시</span>
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">모집 종료일시</span>
             <input
               type="datetime-local"
               value={recruitmentEndAtInput}
@@ -318,15 +318,16 @@ export default function RecruitingPlanSettingsForm() {
           </label>
         </div>
 
-        <section className="rounded-xl border border-slate-200 bg-slate-50 p-4 md:p-5">
-          <p className="text-sm font-semibold text-slate-900">홍보 이미지</p>
-          <p className="mt-1 text-xs text-slate-500">최대 {RECRUITING_MAX_IMAGES}장</p>
+        <section className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4 md:p-5">
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">홍보 이미지</p>
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">최대 {RECRUITING_MAX_IMAGES}장</p>
 
           <button
             type="button"
+            data-testid="recruiting-plan-upload"
             onClick={handlePromotionImageUploadClick}
             disabled={isPromotionUploadDisabled}
-            className="mt-3 inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-3 inline-flex rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             파일 업로드
           </button>
@@ -341,10 +342,10 @@ export default function RecruitingPlanSettingsForm() {
           />
 
           {isUploadingImage ? (
-            <p className="mt-2 text-xs text-slate-500">이미지 업로드 중...</p>
+            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">이미지 업로드 중...</p>
           ) : null}
           {!isUploadingImage && promotionImageUrls.length >= RECRUITING_MAX_IMAGES ? (
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
               최대 {RECRUITING_MAX_IMAGES}장까지 등록되어 추가 업로드가
               비활성화되었습니다.
             </p>
@@ -355,7 +356,7 @@ export default function RecruitingPlanSettingsForm() {
           />
 
           <div className="mt-3 space-y-2">
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600 dark:text-slate-300">
               마우스로 끌어 이미지 순서를 바꿀 수 있습니다.
             </p>
             <SortableImageGrid
@@ -378,6 +379,7 @@ export default function RecruitingPlanSettingsForm() {
         <div className="flex justify-end">
           <button
             type="button"
+            data-testid="recruiting-plan-save"
             onClick={() => void handleSubmit()}
             disabled={isSaving || isUploadingImage}
             className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
