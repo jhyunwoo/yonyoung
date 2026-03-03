@@ -26,9 +26,7 @@ const readErrorMessage = (error: unknown): string => {
   return "기본 설정 저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
 };
 
-const normalizeInput = (
-  state: ApiSiteSettings,
-): ApiUpdateSiteSettingsInput => ({
+const normalizeInput = (state: ApiSiteSettings): ApiUpdateSiteSettingsInput => ({
   footerOpenChatUrl: state.footerOpenChatUrl.trim(),
   footerInstagramId: state.footerInstagramId.trim().replace(/^@+/, ""),
   footerEmail: state.footerEmail.trim(),
@@ -134,12 +132,10 @@ export default function SiteSettingsForm() {
       <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
         Settings / Site
       </p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
-        기본 설정
-      </h1>
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">기본 설정</h1>
       <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
-        홈페이지 하단 연락처와 후원 계좌 정보를 수정할 수 있습니다.
-        저장하면 홈페이지와 후원 페이지에 바로 반영됩니다.
+        홈페이지 하단 연락처와 후원 계좌 정보를 수정할 수 있습니다. 저장하면 홈페이지와
+        후원 페이지에 바로 반영됩니다.
       </p>
 
       {errorMessage ? (
@@ -156,15 +152,11 @@ export default function SiteSettingsForm() {
       <form onSubmit={handleSubmit} className="mt-6 space-y-6">
         <div className="grid gap-5 md:grid-cols-2">
           <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-slate-700">
-              오픈 카톡방 링크
-            </span>
+            <span className="text-sm font-semibold text-slate-700">오픈 카톡방 링크</span>
             <input
               type="url"
               value={formState.footerOpenChatUrl}
-              onChange={(event) =>
-                updateField("footerOpenChatUrl", event.target.value)
-              }
+              onChange={(event) => updateField("footerOpenChatUrl", event.target.value)}
               className={inputClassName}
               placeholder="https://open.kakao.com/..."
               required
@@ -180,9 +172,7 @@ export default function SiteSettingsForm() {
               <input
                 type="text"
                 value={formState.footerInstagramId}
-                onChange={(event) =>
-                  updateField("footerInstagramId", event.target.value)
-                }
+                onChange={(event) => updateField("footerInstagramId", event.target.value)}
                 className={inputClassName}
                 placeholder="yonyoungpage"
                 required
@@ -198,9 +188,7 @@ export default function SiteSettingsForm() {
             <input
               type="email"
               value={formState.footerEmail}
-              onChange={(event) =>
-                updateField("footerEmail", event.target.value)
-              }
+              onChange={(event) => updateField("footerEmail", event.target.value)}
               className={inputClassName}
               placeholder="example@yonyoung.com"
               required
@@ -208,15 +196,11 @@ export default function SiteSettingsForm() {
           </label>
 
           <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-slate-700">
-              전화번호
-            </span>
+            <span className="text-sm font-semibold text-slate-700">전화번호</span>
             <input
               type="text"
               value={formState.footerPhone}
-              onChange={(event) =>
-                updateField("footerPhone", event.target.value)
-              }
+              onChange={(event) => updateField("footerPhone", event.target.value)}
               className={inputClassName}
               placeholder="010-0000-0000"
               required
@@ -228,9 +212,7 @@ export default function SiteSettingsForm() {
           <span className="text-sm font-semibold text-slate-700">주소</span>
           <textarea
             value={formState.footerAddress}
-            onChange={(event) =>
-              updateField("footerAddress", event.target.value)
-            }
+            onChange={(event) => updateField("footerAddress", event.target.value)}
             className={`${inputClassName} min-h-24 resize-y`}
             placeholder="주소를 입력하세요."
             required
@@ -238,27 +220,21 @@ export default function SiteSettingsForm() {
         </label>
 
         <section className="rounded-xl border border-slate-200 bg-slate-50 p-4 md:p-5">
-          <h2 className="text-base font-semibold text-slate-900">
-            후원 계좌 설정
-          </h2>
+          <h2 className="text-base font-semibold text-slate-900">후원 계좌 설정</h2>
           <div className="mt-4 grid gap-4 md:grid-cols-3">
             <label className="flex flex-col gap-2">
               <span className="text-sm font-semibold text-slate-700">은행</span>
               <input
                 type="text"
                 value={formState.donateBankName}
-                onChange={(event) =>
-                  updateField("donateBankName", event.target.value)
-                }
+                onChange={(event) => updateField("donateBankName", event.target.value)}
                 className={inputClassName}
                 required
               />
             </label>
 
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-slate-700">
-                계좌번호
-              </span>
+              <span className="text-sm font-semibold text-slate-700">계좌번호</span>
               <input
                 type="text"
                 value={formState.donateAccountNumber}
@@ -271,9 +247,7 @@ export default function SiteSettingsForm() {
             </label>
 
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-slate-700">
-                예금주
-              </span>
+              <span className="text-sm font-semibold text-slate-700">예금주</span>
               <input
                 type="text"
                 value={formState.donateAccountHolder}

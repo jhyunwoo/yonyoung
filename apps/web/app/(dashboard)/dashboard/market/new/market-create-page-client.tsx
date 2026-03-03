@@ -35,8 +35,12 @@ export default function MarketCreatePageClient({ viewer }: { viewer: MarketViewe
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
 
-  const { items: imageItems, appendExistingUrls, removeItemById, reorderByIds } =
-    useImageUploadState({ maxItems: MARKET_MAX_IMAGES });
+  const {
+    items: imageItems,
+    appendExistingUrls,
+    removeItemById,
+    reorderByIds,
+  } = useImageUploadState({ maxItems: MARKET_MAX_IMAGES });
 
   const imageUrls = useMemo(
     () => imageItems.map((imageItem) => imageItem.imageUrl),
@@ -96,7 +100,9 @@ export default function MarketCreatePageClient({ viewer }: { viewer: MarketViewe
       return;
     }
     if (imageUrls.length === 0 || imageUrls.length > MARKET_MAX_IMAGES) {
-      setErrorMessage(`상품 이미지는 1장 이상, 최대 ${MARKET_MAX_IMAGES}장까지 등록할 수 있습니다.`);
+      setErrorMessage(
+        `상품 이미지는 1장 이상, 최대 ${MARKET_MAX_IMAGES}장까지 등록할 수 있습니다.`,
+      );
       return;
     }
     if (!Number.isInteger(numericPrice) || numericPrice < 0) {
@@ -134,7 +140,9 @@ export default function MarketCreatePageClient({ viewer }: { viewer: MarketViewe
           <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
             Market
           </p>
-          <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">판매글 작성</h1>
+          <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
+            판매글 작성
+          </h1>
           <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
             판매글은 인증된 연영회 구성원만 등록할 수 있습니다.
           </p>
@@ -229,11 +237,14 @@ export default function MarketCreatePageClient({ viewer }: { viewer: MarketViewe
                   disabled={isImageUploadDisabled}
                   className="sr-only"
                 />
-                <p className="text-xs text-slate-500">최소 1장, 최대 {MARKET_MAX_IMAGES}장</p>
+                <p className="text-xs text-slate-500">
+                  최소 1장, 최대 {MARKET_MAX_IMAGES}장
+                </p>
               </div>
               {!isUploadingImage && imageUrls.length >= MARKET_MAX_IMAGES ? (
                 <p className="mt-2 text-xs text-slate-500">
-                  최대 {MARKET_MAX_IMAGES}장까지 등록되어 추가 업로드가 비활성화되었습니다.
+                  최대 {MARKET_MAX_IMAGES}장까지 등록되어 추가 업로드가
+                  비활성화되었습니다.
                 </p>
               ) : null}
               <UploadProgressBar
@@ -248,7 +259,9 @@ export default function MarketCreatePageClient({ viewer }: { viewer: MarketViewe
                     label: `상품 이미지 ${index + 1}`,
                     alt: "상품 이미지",
                   }))}
-                  onReorder={(nextItems) => reorderByIds(nextItems.map((item) => item.id))}
+                  onReorder={(nextItems) =>
+                    reorderByIds(nextItems.map((item) => item.id))
+                  }
                   onRemoveItem={removeItemById}
                   disabled={isSavingItem || isUploadingImage}
                   emptyMessage="등록된 상품 이미지가 없습니다."

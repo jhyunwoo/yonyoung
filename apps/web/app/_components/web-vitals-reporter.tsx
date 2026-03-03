@@ -41,10 +41,7 @@ export function WebVitalsReporter() {
       sampledAt: Date.now(),
     };
 
-    navigator.sendBeacon(
-      "/api/internal/web-vitals",
-      JSON.stringify(payload),
-    );
+    navigator.sendBeacon("/api/internal/web-vitals", JSON.stringify(payload));
   });
 
   return null;

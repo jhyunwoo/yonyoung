@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { listPublicExhibitions, safeList } from "@/features/public/api/public-api";
+import {
+  listPublicExhibitions,
+  safeList,
+} from "@/features/public/services/public-read-service";
 import { formatKoreanDateCompact } from "@/shared/utils/date-formatters";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import { createPageMetadata } from "@/features/seo/metadata/seo";

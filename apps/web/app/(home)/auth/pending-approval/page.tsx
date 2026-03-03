@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { serverAuthTool } from "@/features/auth/server/auth-guard";
-import { hasCompletedRequiredProfile, isUnverifiedRole } from "@/features/auth/model/auth-shared";
+import {
+  hasCompletedRequiredProfile,
+  isUnverifiedRole,
+} from "@/features/auth/model/auth-shared";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 
 export const metadata: Metadata = createPageMetadata({
@@ -38,12 +41,13 @@ export default async function PendingApprovalPage() {
           기본 정보 입력이 완료되었습니다.
         </h1>
         <p className="mt-4 text-sm leading-relaxed text-(--text-muted) md:text-base">
-          기본 정보 입력이 완료되었습니다. 관리자가 계정 권한을 변경하면 Dashboard에 접근할 수
-          있습니다.
+          기본 정보 입력이 완료되었습니다. 관리자가 계정 권한을 변경하면 Dashboard에
+          접근할 수 있습니다.
         </p>
 
         <div className="mt-8 border border-(--surface-border) bg-(--surface-muted) p-4 text-sm text-(--text-muted)">
-          계정: <span className="font-medium text-(--text-primary)">{session.user.email}</span>
+          계정:{" "}
+          <span className="font-medium text-(--text-primary)">{session.user.email}</span>
         </div>
 
         <div className="mt-8 flex flex-wrap gap-3">

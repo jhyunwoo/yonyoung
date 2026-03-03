@@ -1,4 +1,7 @@
-import { PRESIGN_PATHS, uploadWithPresign } from "@/features/dashboard/api/admin-api/upload";
+import {
+  PRESIGN_PATHS,
+  uploadWithPresign,
+} from "@/features/dashboard/api/admin-api/upload";
 
 type PresignPath = (typeof PRESIGN_PATHS)[keyof typeof PRESIGN_PATHS];
 

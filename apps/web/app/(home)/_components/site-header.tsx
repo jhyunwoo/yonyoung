@@ -228,7 +228,10 @@ export default function SiteHeader() {
           </Link>
         </div>
 
-        <nav className="hidden items-center gap-3 md:flex" data-testid="public-nav-desktop">
+        <nav
+          className="hidden items-center gap-3 md:flex"
+          data-testid="public-nav-desktop"
+        >
           <ul className="flex list-none items-center gap-8">
             {navItems.map((item) => {
               const active = isActivePath(pathname, item);

@@ -59,9 +59,7 @@ export default function GenerationManagementClient() {
   const router = useRouter();
   const [generations, setGenerations] = useState<ApiGeneration[]>([]);
   const [users, setUsers] = useState<ApiUser[]>([]);
-  const [selectedGenerationId, setSelectedGenerationId] = useState<
-    string | null
-  >(null);
+  const [selectedGenerationId, setSelectedGenerationId] = useState<string | null>(null);
 
   const [createName, setCreateName] = useState("");
   const [createSortOrderInput, setCreateSortOrderInput] = useState("");
@@ -100,8 +98,7 @@ export default function GenerationManagementClient() {
           return;
         }
 
-        const sortedGenerations =
-          sortGenerationsBySortOrderDesc(generationRows);
+        const sortedGenerations = sortGenerationsBySortOrderDesc(generationRows);
         setGenerations(sortedGenerations);
         setUsers(userRows);
         setSelectedGenerationId((previous) => {
@@ -140,9 +137,8 @@ export default function GenerationManagementClient() {
   const selectedGeneration = useMemo(
     () =>
       selectedGenerationId
-        ? (generations.find(
-            (generation) => generation.id === selectedGenerationId,
-          ) ?? null)
+        ? (generations.find((generation) => generation.id === selectedGenerationId) ??
+          null)
         : null,
     [generations, selectedGenerationId],
   );
@@ -158,9 +154,7 @@ export default function GenerationManagementClient() {
 
     setEditName(selectedGeneration.name);
     setEditSortOrderInput(String(selectedGeneration.sortOrder));
-    setEditStartDateInput(
-      formatTimestampToDateInput(selectedGeneration.startDate),
-    );
+    setEditStartDateInput(formatTimestampToDateInput(selectedGeneration.startDate));
     setEditEndDateInput(formatTimestampToDateInput(selectedGeneration.endDate));
   }, [selectedGeneration]);
 
@@ -181,10 +175,7 @@ export default function GenerationManagementClient() {
     const orderedRoles = ROLE_FILTER_ORDER.filter((role) => roleSet.has(role));
     const customRoles = [...roleSet]
       .filter(
-        (role) =>
-          !ROLE_FILTER_ORDER.includes(
-            role as (typeof ROLE_FILTER_ORDER)[number],
-          ),
+        (role) => !ROLE_FILTER_ORDER.includes(role as (typeof ROLE_FILTER_ORDER)[number]),
       )
       .sort((left, right) => left.localeCompare(right, "ko"));
 
@@ -207,10 +198,7 @@ export default function GenerationManagementClient() {
     [nameQuery, roleFilter, users],
   );
 
-  const selectedUserIdSet = useMemo(
-    () => new Set(selectedUserIds),
-    [selectedUserIds],
-  );
+  const selectedUserIdSet = useMemo(() => new Set(selectedUserIds), [selectedUserIds]);
 
   const handleCreateGeneration = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -232,9 +220,7 @@ export default function GenerationManagementClient() {
     setSuccessMessage(null);
 
     try {
-      const created = await adminResourceApi.createGeneration(
-        validationResult.payload,
-      );
+      const created = await adminResourceApi.createGeneration(validationResult.payload);
       setGenerations((previous) =>
         sortGenerationsBySortOrderDesc([...previous, created]),
       );
@@ -380,8 +366,7 @@ export default function GenerationManagementClient() {
         };
       })
       .filter(
-        (item): item is { userId: string; generationIds: string[] } =>
-          item !== null,
+        (item): item is { userId: string; generationIds: string[] } => item !== null,
       );
 
     if (updateTargets.length === 0) {
@@ -402,9 +387,7 @@ export default function GenerationManagementClient() {
           }),
         ),
       );
-      const updatedUserById = new Map(
-        updatedUsers.map((user) => [user.id, user]),
-      );
+      const updatedUserById = new Map(updatedUsers.map((user) => [user.id, user]));
 
       setUsers((previous) =>
         previous.map((user) => updatedUserById.get(user.id) ?? user),
@@ -445,13 +428,19 @@ export default function GenerationManagementClient() {
       ) : null}
 
       {isLoading ? (
-        <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]" aria-hidden="true">
+        <div
+          className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]"
+          aria-hidden="true"
+        >
           <div className="space-y-4">
             <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <Skeleton className="h-5 w-32" />
               <div className="mt-3 space-y-2">
                 {Array.from({ length: 4 }).map((_, index) => (
-                  <Skeleton key={`generation-loading-list-${index + 1}`} className="h-12 w-full" />
+                  <Skeleton
+                    key={`generation-loading-list-${index + 1}`}
+                    className="h-12 w-full"
+                  />
                 ))}
               </div>
             </article>
@@ -469,7 +458,10 @@ export default function GenerationManagementClient() {
             <div className="mt-3 grid gap-2">
               <Skeleton className="h-10 w-full" />
               {Array.from({ length: 6 }).map((_, index) => (
-                <Skeleton key={`generation-loading-members-${index + 1}`} className="h-11 w-full" />
+                <Skeleton
+                  key={`generation-loading-members-${index + 1}`}
+                  className="h-11 w-full"
+                />
               ))}
             </div>
           </article>
@@ -478,9 +470,7 @@ export default function GenerationManagementClient() {
         <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
           <div className="space-y-4">
             <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <h2 className="text-base font-semibold text-slate-900">
-                전체 기수 목록
-              </h2>
+              <h2 className="text-base font-semibold text-slate-900">전체 기수 목록</h2>
               {generations.length === 0 ? (
                 <p className="mt-3 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-4 text-sm text-slate-500">
                   등록된 기수가 없습니다.
@@ -500,9 +490,7 @@ export default function GenerationManagementClient() {
                               : "border-slate-200 bg-white text-slate-900 hover:border-slate-300"
                           }`}
                         >
-                          <p className="text-sm font-semibold">
-                            {generation.name}
-                          </p>
+                          <p className="text-sm font-semibold">{generation.name}</p>
                           <p
                             className={`mt-1 text-xs ${
                               isSelected ? "text-slate-200" : "text-slate-500"
@@ -523,17 +511,10 @@ export default function GenerationManagementClient() {
             </article>
 
             <article className="rounded-xl border border-slate-200 p-4">
-              <h2 className="text-base font-semibold text-slate-900">
-                기수 생성
-              </h2>
-              <form
-                className="mt-3 space-y-3"
-                onSubmit={handleCreateGeneration}
-              >
+              <h2 className="text-base font-semibold text-slate-900">기수 생성</h2>
+              <form className="mt-3 space-y-3" onSubmit={handleCreateGeneration}>
                 <label className="block space-y-1">
-                  <span className="text-sm font-medium text-slate-700">
-                    기수 이름
-                  </span>
+                  <span className="text-sm font-medium text-slate-700">기수 이름</span>
                   <input
                     value={createName}
                     onChange={(event) => setCreateName(event.target.value)}
@@ -544,15 +525,11 @@ export default function GenerationManagementClient() {
                 </label>
 
                 <label className="block space-y-1">
-                  <span className="text-sm font-medium text-slate-700">
-                    정렬 순서
-                  </span>
+                  <span className="text-sm font-medium text-slate-700">정렬 순서</span>
                   <input
                     type="number"
                     value={createSortOrderInput}
-                    onChange={(event) =>
-                      setCreateSortOrderInput(event.target.value)
-                    }
+                    onChange={(event) => setCreateSortOrderInput(event.target.value)}
                     disabled={isSavingGeneration}
                     placeholder="예: 60"
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
@@ -561,29 +538,21 @@ export default function GenerationManagementClient() {
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="block space-y-1">
-                    <span className="text-sm font-medium text-slate-700">
-                      시작일
-                    </span>
+                    <span className="text-sm font-medium text-slate-700">시작일</span>
                     <input
                       type="date"
                       value={createStartDateInput}
-                      onChange={(event) =>
-                        setCreateStartDateInput(event.target.value)
-                      }
+                      onChange={(event) => setCreateStartDateInput(event.target.value)}
                       disabled={isSavingGeneration}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                     />
                   </label>
                   <label className="block space-y-1">
-                    <span className="text-sm font-medium text-slate-700">
-                      종료일
-                    </span>
+                    <span className="text-sm font-medium text-slate-700">종료일</span>
                     <input
                       type="date"
                       value={createEndDateInput}
-                      onChange={(event) =>
-                        setCreateEndDateInput(event.target.value)
-                      }
+                      onChange={(event) => setCreateEndDateInput(event.target.value)}
                       disabled={isSavingGeneration}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                     />
@@ -609,14 +578,9 @@ export default function GenerationManagementClient() {
                   수정할 기수를 먼저 선택해 주세요.
                 </p>
               ) : (
-                <form
-                  className="mt-3 space-y-3"
-                  onSubmit={handleUpdateGeneration}
-                >
+                <form className="mt-3 space-y-3" onSubmit={handleUpdateGeneration}>
                   <label className="block space-y-1">
-                    <span className="text-sm font-medium text-slate-700">
-                      기수 이름
-                    </span>
+                    <span className="text-sm font-medium text-slate-700">기수 이름</span>
                     <input
                       value={editName}
                       onChange={(event) => setEditName(event.target.value)}
@@ -626,15 +590,11 @@ export default function GenerationManagementClient() {
                   </label>
 
                   <label className="block space-y-1">
-                    <span className="text-sm font-medium text-slate-700">
-                      정렬 순서
-                    </span>
+                    <span className="text-sm font-medium text-slate-700">정렬 순서</span>
                     <input
                       type="number"
                       value={editSortOrderInput}
-                      onChange={(event) =>
-                        setEditSortOrderInput(event.target.value)
-                      }
+                      onChange={(event) => setEditSortOrderInput(event.target.value)}
                       disabled={isSavingGeneration}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                     />
@@ -642,29 +602,21 @@ export default function GenerationManagementClient() {
 
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="block space-y-1">
-                      <span className="text-sm font-medium text-slate-700">
-                        시작일
-                      </span>
+                      <span className="text-sm font-medium text-slate-700">시작일</span>
                       <input
                         type="date"
                         value={editStartDateInput}
-                        onChange={(event) =>
-                          setEditStartDateInput(event.target.value)
-                        }
+                        onChange={(event) => setEditStartDateInput(event.target.value)}
                         disabled={isSavingGeneration}
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                       />
                     </label>
                     <label className="block space-y-1">
-                      <span className="text-sm font-medium text-slate-700">
-                        종료일
-                      </span>
+                      <span className="text-sm font-medium text-slate-700">종료일</span>
                       <input
                         type="date"
                         value={editEndDateInput}
-                        onChange={(event) =>
-                          setEditEndDateInput(event.target.value)
-                        }
+                        onChange={(event) => setEditEndDateInput(event.target.value)}
                         disabled={isSavingGeneration}
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                       />
@@ -696,9 +648,7 @@ export default function GenerationManagementClient() {
           <article className="rounded-xl border border-slate-200 p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h2 className="text-base font-semibold text-slate-900">
-                  멤버 기수 배정
-                </h2>
+                <h2 className="text-base font-semibold text-slate-900">멤버 기수 배정</h2>
                 <p className="mt-1 text-sm text-slate-600">
                   {selectedGeneration
                     ? `${selectedGeneration.name}에 넣을 멤버를 선택해 주세요.`
@@ -724,9 +674,7 @@ export default function GenerationManagementClient() {
 
             <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_200px_auto]">
               <label className="block space-y-1">
-                <span className="text-xs font-semibold text-slate-500">
-                  이름 검색
-                </span>
+                <span className="text-xs font-semibold text-slate-500">이름 검색</span>
                 <input
                   value={nameQuery}
                   onChange={(event) => setNameQuery(event.target.value)}
@@ -736,9 +684,7 @@ export default function GenerationManagementClient() {
               </label>
 
               <label className="block space-y-1">
-                <span className="text-xs font-semibold text-slate-500">
-                  권한 필터
-                </span>
+                <span className="text-xs font-semibold text-slate-500">권한 필터</span>
                 <select
                   value={roleFilter}
                   onChange={(event) => setRoleFilter(event.target.value)}
@@ -782,9 +728,7 @@ export default function GenerationManagementClient() {
                   const displayName = buildMemberDisplayName(user);
                   const isSelected = selectedUserIdSet.has(user.id);
                   const belongsToSelectedGeneration = selectedGeneration
-                    ? readNormalizedGenerationIds(user).includes(
-                        selectedGeneration.id,
-                      )
+                    ? readNormalizedGenerationIds(user).includes(selectedGeneration.id)
                     : false;
 
                   return (
@@ -820,8 +764,7 @@ export default function GenerationManagementClient() {
                                 isSelected ? "text-slate-200" : "text-slate-600"
                               }`}
                             >
-                              학번:{" "}
-                              {user.studentNumber?.trim() || "학번 미등록"}
+                              학번: {user.studentNumber?.trim() || "학번 미등록"}
                             </p>
                           </div>
                           <span

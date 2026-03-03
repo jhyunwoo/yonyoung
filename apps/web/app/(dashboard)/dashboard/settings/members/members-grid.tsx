@@ -63,7 +63,10 @@ export default function MembersGrid() {
 
   if (isLoading) {
     return (
-      <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-hidden="true">
+      <ul
+        className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        aria-hidden="true"
+      >
         {Array.from({ length: 8 }).map((_, index) => (
           <li key={`settings-members-skeleton-${index + 1}`}>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -130,8 +133,12 @@ export default function MembersGrid() {
                 </div>
 
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-900">{displayName}</p>
-                  <p className="truncate text-xs text-slate-500">{user.studentNumber ?? "학번 미등록"}</p>
+                  <p className="truncate text-sm font-semibold text-slate-900">
+                    {displayName}
+                  </p>
+                  <p className="truncate text-xs text-slate-500">
+                    {user.studentNumber ?? "학번 미등록"}
+                  </p>
                 </div>
               </div>
 

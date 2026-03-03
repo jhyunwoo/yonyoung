@@ -120,10 +120,7 @@ export const hasMeaningfulExhibitionDescription = (html: string): boolean => {
   return hasMeaningfulRichTextHtml(html);
 };
 
-export const summarizeExhibitionDescription = (
-  html: string,
-  maxLength = 120,
-): string => {
+export const summarizeExhibitionDescription = (html: string, maxLength = 120): string => {
   return summarizeRichTextHtml(html, maxLength);
 };
 

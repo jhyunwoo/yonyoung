@@ -28,7 +28,8 @@ export const formatKoreanDateCompact = (timestampMs: number): string =>
 export const formatKoreanDateRange = (
   startTimestampMs: number,
   endTimestampMs: number,
-): string => `${formatKoreanDate(startTimestampMs)} - ${formatKoreanDate(endTimestampMs)}`;
+): string =>
+  `${formatKoreanDate(startTimestampMs)} - ${formatKoreanDate(endTimestampMs)}`;
 
 const formatKoreanYear = (timestampMs: number): string =>
   koreanYearFormatter.format(timestampMs);
@@ -36,4 +37,5 @@ const formatKoreanYear = (timestampMs: number): string =>
 export const formatKoreanYearRange = (
   startTimestampMs: number,
   endTimestampMs: number,
-): string => `${formatKoreanYear(startTimestampMs)} - ${formatKoreanYear(endTimestampMs)}`;
+): string =>
+  `${formatKoreanYear(startTimestampMs)} - ${formatKoreanYear(endTimestampMs)}`;

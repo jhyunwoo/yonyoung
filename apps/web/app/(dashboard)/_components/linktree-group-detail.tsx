@@ -100,7 +100,9 @@ export default function LinktreeGroupDetail({
     return (
       <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
         <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">링크 분류 상세</h1>
-        <p className="mt-3 text-sm text-slate-600">존재하지 않는 분류이거나 접근할 수 없습니다.</p>
+        <p className="mt-3 text-sm text-slate-600">
+          존재하지 않는 분류이거나 접근할 수 없습니다.
+        </p>
         <Link
           href={listPath}
           className="mt-6 inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
@@ -121,10 +123,15 @@ export default function LinktreeGroupDetail({
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Settings / Linktree</p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">링크 분류 상세</h1>
+      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+        Settings / Linktree
+      </p>
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
+        링크 분류 상세
+      </h1>
       <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
-        분류 정보와 하위 링크를 확인할 수 있고, 권한이 있으면 분류를 수정하거나 삭제할 수 있습니다.
+        분류 정보와 하위 링크를 확인할 수 있고, 권한이 있으면 분류를 수정하거나 삭제할 수
+        있습니다.
       </p>
 
       {errorMessage ? (
@@ -136,7 +143,9 @@ export default function LinktreeGroupDetail({
       <div className="mt-6 rounded-xl border border-slate-200 p-4">
         <p className="text-xl font-semibold text-slate-900">{linktree.name}</p>
         <p className="mt-2 text-xs text-slate-500">링크 {linktree.items.length}개</p>
-        <p className="mt-1 text-xs text-slate-500">생성일: {formatKoreanDate(linktree.createdAt)}</p>
+        <p className="mt-1 text-xs text-slate-500">
+          생성일: {formatKoreanDate(linktree.createdAt)}
+        </p>
         <LastUpdatedMeta
           updatedAt={linktree.updatedAt}
           updatedBy={linktree.updatedBy}
@@ -190,7 +199,8 @@ export default function LinktreeGroupDetail({
                   <span className="font-medium text-slate-900">{item.name}</span>
                   <span className="ml-2 text-xs text-slate-500">상세 보기</span>
                   <span className="mt-1 block text-[11px] text-slate-400">
-                    최근 수정: {formatKoreanDate(item.updatedAt)} · {formatAuditActor(item.updatedBy)}
+                    최근 수정: {formatKoreanDate(item.updatedAt)} ·{" "}
+                    {formatAuditActor(item.updatedBy)}
                   </span>
                 </Link>
               </li>

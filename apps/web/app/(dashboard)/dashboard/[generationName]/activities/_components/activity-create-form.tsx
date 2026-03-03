@@ -9,10 +9,15 @@ import {
   type UploadImageItem,
 } from "@/features/media/upload/image-upload-state";
 import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/upload-batch";
-import { PRESIGN_PATHS, uploadWithPresign } from "@/features/dashboard/api/admin-api/upload";
+import {
+  PRESIGN_PATHS,
+  uploadWithPresign,
+} from "@/features/dashboard/api/admin-api/upload";
 import { hasMeaningfulRichTextHtml } from "@/features/media/rich-text/rich-text";
 import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";
-import RichTextEditor, { EMPTY_RICH_TEXT_HTML } from "@/app/(dashboard)/_components/rich-text-editor";
+import RichTextEditor, {
+  EMPTY_RICH_TEXT_HTML,
+} from "@/app/(dashboard)/_components/rich-text-editor";
 import SortableImageGrid from "@/app/(dashboard)/_components/sortable-image-grid";
 import UploadProgressBar from "@/app/(dashboard)/_components/upload-progress-bar";
 import {
@@ -41,7 +46,12 @@ export default function ActivityCreateForm({
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
   const coverFileInputRef = useRef<HTMLInputElement | null>(null);
   const detailFileInputRef = useRef<HTMLInputElement | null>(null);
-  const { items: detailImages, appendFiles, removeItemById, reorderByIds } = useImageUploadState();
+  const {
+    items: detailImages,
+    appendFiles,
+    removeItemById,
+    reorderByIds,
+  } = useImageUploadState();
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -149,7 +159,7 @@ export default function ActivityCreateForm({
         }
 
         const weightedProgress =
-          (coverUploadProgress + (detailUploadProgress * newDetailImages.length)) /
+          (coverUploadProgress + detailUploadProgress * newDetailImages.length) /
           totalUploadCount;
         setUploadProgressPercent(Math.round(weightedProgress));
       };
@@ -204,7 +214,7 @@ export default function ActivityCreateForm({
       }
 
       router.push(`${generationPath}/activities/${createdActivity.id}`);
-  } catch (error) {
+    } catch (error) {
       setErrorMessage(readActivityErrorMessage(error));
     } finally {
       setIsSaving(false);
@@ -214,8 +224,12 @@ export default function ActivityCreateForm({
 
   return (
     <section className="mx-auto w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Activities</p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">{generationName} 활동 추가</h1>
+      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+        Activities
+      </p>
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
+        {generationName} 활동 추가
+      </h1>
       <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
         대표 사진은 꼭 등록해야 하며, 세부 사진은 필요할 때 여러 장 추가할 수 있습니다.
       </p>
@@ -234,7 +248,11 @@ export default function ActivityCreateForm({
 
         <div className="space-y-1">
           <span className="text-sm font-semibold text-slate-900">활동 설명</span>
-          <RichTextEditor value={description} onChange={setDescription} disabled={isSaving} />
+          <RichTextEditor
+            value={description}
+            onChange={setDescription}
+            disabled={isSaving}
+          />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -295,7 +313,9 @@ export default function ActivityCreateForm({
 
         <div className="space-y-2">
           <label className="block space-y-1">
-            <span className="text-sm font-semibold text-slate-900">세부 이미지 (선택, 여러 장)</span>
+            <span className="text-sm font-semibold text-slate-900">
+              세부 이미지 (선택, 여러 장)
+            </span>
             <button
               type="button"
               onClick={handleOpenDetailFilePicker}
@@ -315,7 +335,9 @@ export default function ActivityCreateForm({
             />
           </label>
 
-          <p className="text-xs text-slate-500">마우스로 끌어 세부 이미지 순서를 바꿀 수 있습니다.</p>
+          <p className="text-xs text-slate-500">
+            마우스로 끌어 세부 이미지 순서를 바꿀 수 있습니다.
+          </p>
           <SortableImageGrid
             items={detailImages.map((image, index) => ({
               id: image.id,
@@ -328,7 +350,10 @@ export default function ActivityCreateForm({
             disabled={isSaving}
             emptyMessage="추가할 세부 이미지가 없으면 비워 두세요."
           />
-          <UploadProgressBar progressPercent={uploadProgressPercent} label="사진 업로드 진행률" />
+          <UploadProgressBar
+            progressPercent={uploadProgressPercent}
+            label="사진 업로드 진행률"
+          />
         </div>
 
         {errorMessage ? (

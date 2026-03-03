@@ -14,4 +14,3 @@ export const shouldUseUnoptimizedImage = (src: string): boolean => {
     return false;
   }
 };
-

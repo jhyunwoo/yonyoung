@@ -40,7 +40,8 @@ export default async function RecentGlobalNotices() {
               >
                 <p className="text-sm font-semibold text-slate-900">{notice.title}</p>
                 <p className="mt-1 text-xs text-slate-500">
-                  작성일: {formatKoreanDate(notice.createdAt)} · 작성자: {notice.author.name}
+                  작성일: {formatKoreanDate(notice.createdAt)} · 작성자:{" "}
+                  {notice.author.name}
                 </p>
               </Link>
             </li>

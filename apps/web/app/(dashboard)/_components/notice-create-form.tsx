@@ -15,7 +15,9 @@ import { PRESIGN_PATHS } from "@/features/dashboard/api/admin-api/upload";
 import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/upload-batch";
 import { hasMeaningfulRichTextHtml } from "@/features/media/rich-text/rich-text";
 import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";
-import RichTextEditor, { EMPTY_RICH_TEXT_HTML } from "@/app/(dashboard)/_components/rich-text-editor";
+import RichTextEditor, {
+  EMPTY_RICH_TEXT_HTML,
+} from "@/app/(dashboard)/_components/rich-text-editor";
 import SortableImageGrid from "@/app/(dashboard)/_components/sortable-image-grid";
 import UploadProgressBar from "@/app/(dashboard)/_components/upload-progress-bar";
 import {
@@ -54,10 +56,7 @@ export default function NoticeCreateForm({
     removeItemById,
     reorderByIds,
   } = useImageUploadState({ maxItems: NOTICE_MAX_IMAGES });
-  const imageUrls = useMemo(
-    () => imageItems.map((item) => item.imageUrl),
-    [imageItems],
-  );
+  const imageUrls = useMemo(() => imageItems.map((item) => item.imageUrl), [imageItems]);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const isImageUploadDisabled =
@@ -174,9 +173,13 @@ export default function NoticeCreateForm({
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Notices</p>
+      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+        Notices
+      </p>
       <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">{heading}</h1>
-      <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">{description}</p>
+      <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
+        {description}
+      </p>
 
       <form
         className="mt-6 space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4"
@@ -229,10 +232,15 @@ export default function NoticeCreateForm({
               최대 {NOTICE_MAX_IMAGES}장까지 등록되어 추가 업로드가 비활성화되었습니다.
             </p>
           ) : null}
-          <UploadProgressBar progressPercent={uploadProgressPercent} label="첨부 이미지 업로드 진행률" />
+          <UploadProgressBar
+            progressPercent={uploadProgressPercent}
+            label="첨부 이미지 업로드 진행률"
+          />
 
           <div className="mt-3 space-y-2">
-            <p className="text-xs text-slate-500">마우스로 끌어 이미지 순서를 바꿀 수 있습니다.</p>
+            <p className="text-xs text-slate-500">
+              마우스로 끌어 이미지 순서를 바꿀 수 있습니다.
+            </p>
             <SortableImageGrid
               items={imageItems.map((image, index) => ({
                 id: image.id,

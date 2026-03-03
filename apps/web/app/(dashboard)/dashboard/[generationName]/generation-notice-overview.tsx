@@ -1,5 +1,8 @@
 import Link from "next/link";
-import type { ApiGenerationNotice, ApiGlobalNotice } from "@/shared/contracts/api-contracts";
+import type {
+  ApiGenerationNotice,
+  ApiGlobalNotice,
+} from "@/shared/contracts/api-contracts";
 import { readCookieHeader } from "@/shared/http/http";
 import {
   listCachedGenerationNotices,
@@ -28,7 +31,10 @@ export default async function GenerationNoticeOverview({
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-bold text-slate-900">공지</h2>
-        <Link href={`${generationPath}/notices`} className="text-xs font-semibold text-slate-600 hover:text-slate-900">
+        <Link
+          href={`${generationPath}/notices`}
+          className="text-xs font-semibold text-slate-600 hover:text-slate-900"
+        >
           기수 공지 화면으로 이동
         </Link>
       </div>
@@ -43,7 +49,10 @@ export default async function GenerationNoticeOverview({
           ) : (
             <ul className="mt-2 space-y-2">
               {generationNotices.map((notice) => (
-                <li key={notice.id} className="rounded-lg border border-slate-200 px-3 py-2">
+                <li
+                  key={notice.id}
+                  className="rounded-lg border border-slate-200 px-3 py-2"
+                >
                   <p className="text-sm font-medium text-slate-900">{notice.title}</p>
                   <p className="mt-1 text-xs text-slate-500">
                     작성일: {formatKoreanDate(notice.createdAt)}
@@ -63,7 +72,10 @@ export default async function GenerationNoticeOverview({
           ) : (
             <ul className="mt-2 space-y-2">
               {globalNotices.map((notice) => (
-                <li key={notice.id} className="rounded-lg border border-slate-200 px-3 py-2">
+                <li
+                  key={notice.id}
+                  className="rounded-lg border border-slate-200 px-3 py-2"
+                >
                   <p className="text-sm font-medium text-slate-900">{notice.title}</p>
                   <p className="mt-1 text-xs text-slate-500">
                     작성일: {formatKoreanDate(notice.createdAt)}

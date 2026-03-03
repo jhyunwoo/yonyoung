@@ -87,9 +87,7 @@ export default function NoticeDetail({
     [editingImageItems],
   );
   const isEditingImageUploadDisabled =
-    isSaving ||
-    isUploadingImage ||
-    editingImageUrls.length >= NOTICE_MAX_IMAGES;
+    isSaving || isUploadingImage || editingImageUrls.length >= NOTICE_MAX_IMAGES;
 
   const loadNotice = useCallback(async () => {
     setIsLoading(true);
@@ -103,7 +101,10 @@ export default function NoticeDetail({
           throw new Error("기수 정보가 없습니다.");
         }
 
-        noticeEntity = await adminResourceApi.getGenerationNoticeById(generationId, noticeId);
+        noticeEntity = await adminResourceApi.getGenerationNoticeById(
+          generationId,
+          noticeId,
+        );
       } else {
         noticeEntity = await adminResourceApi.getGlobalNoticeById(noticeId);
       }
@@ -239,11 +240,15 @@ export default function NoticeDetail({
           throw new Error("기수 정보가 없습니다.");
         }
 
-        updatedNotice = await adminResourceApi.updateGenerationNotice(generationId, noticeId, {
-          title: nextTitle,
-          content: editingContent,
-          imageUrls: normalizedImageUrls,
-        });
+        updatedNotice = await adminResourceApi.updateGenerationNotice(
+          generationId,
+          noticeId,
+          {
+            title: nextTitle,
+            content: editingContent,
+            imageUrls: normalizedImageUrls,
+          },
+        );
       } else {
         updatedNotice = await adminResourceApi.updateGlobalNotice(noticeId, {
           title: nextTitle,
@@ -320,7 +325,10 @@ export default function NoticeDetail({
           <Skeleton className="h-36 w-full" />
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 3 }).map((_, index) => (
-              <Skeleton key={`notice-detail-loading-image-${index + 1}`} className="aspect-[4/3] w-full" />
+              <Skeleton
+                key={`notice-detail-loading-image-${index + 1}`}
+                className="aspect-[4/3] w-full"
+              />
             ))}
           </div>
         </div>
@@ -332,7 +340,9 @@ export default function NoticeDetail({
     return (
       <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
         <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">{heading}</h1>
-        <p className="mt-3 text-sm text-slate-600">존재하지 않는 공지이거나 접근할 수 없습니다.</p>
+        <p className="mt-3 text-sm text-slate-600">
+          존재하지 않는 공지이거나 접근할 수 없습니다.
+        </p>
         <Link
           href={listPath}
           className="mt-6 inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
@@ -353,9 +363,13 @@ export default function NoticeDetail({
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Notices</p>
+      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+        Notices
+      </p>
       <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">{heading}</h1>
-      <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">{description}</p>
+      <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
+        {description}
+      </p>
 
       {errorMessage ? (
         <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -382,7 +396,8 @@ export default function NoticeDetail({
           <>
             <h2 className="text-xl font-semibold text-slate-900">{notice.title}</h2>
             <p className="mt-2 text-xs text-slate-500">
-              작성자: {notice.author.name} ({buildRoleLabel(notice.author.role)}) · 작성일: {formatKoreanDate(notice.createdAt)}
+              작성자: {notice.author.name} ({buildRoleLabel(notice.author.role)}) ·
+              작성일: {formatKoreanDate(notice.createdAt)}
             </p>
             <LastUpdatedMeta
               updatedAt={notice.updatedAt}
@@ -430,10 +445,15 @@ export default function NoticeDetail({
               최대 {NOTICE_MAX_IMAGES}장까지 등록되어 추가 업로드가 비활성화되었습니다.
             </p>
           ) : null}
-          <UploadProgressBar progressPercent={uploadProgressPercent} label="첨부 이미지 업로드 진행률" />
+          <UploadProgressBar
+            progressPercent={uploadProgressPercent}
+            label="첨부 이미지 업로드 진행률"
+          />
 
           <div className="mt-3 space-y-2">
-            <p className="text-xs text-slate-500">마우스로 끌어 이미지 순서를 바꿀 수 있습니다.</p>
+            <p className="text-xs text-slate-500">
+              마우스로 끌어 이미지 순서를 바꿀 수 있습니다.
+            </p>
             <SortableImageGrid
               items={editingImageItems.map((image, index) => ({
                 id: image.id,
@@ -441,7 +461,9 @@ export default function NoticeDetail({
                 label: `첨부 이미지 ${index + 1}`,
                 alt: "공지 첨부 이미지",
               }))}
-              onReorder={(nextItems) => reorderEditingImageByIds(nextItems.map((item) => item.id))}
+              onReorder={(nextItems) =>
+                reorderEditingImageByIds(nextItems.map((item) => item.id))
+              }
               onRemoveItem={removeEditingImageById}
               disabled={isSaving || isUploadingImage}
               emptyMessage="첨부된 이미지가 없습니다."

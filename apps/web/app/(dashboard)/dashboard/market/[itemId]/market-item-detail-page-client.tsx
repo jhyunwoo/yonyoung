@@ -2,13 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import {
-  type FormEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import type {
   ApiMarketComment,
@@ -109,6 +103,8 @@ const clampIndex = (index: number, imageCount: number): number => {
   return index;
 };
 
+const EMPTY_IMAGE_URLS: readonly string[] = [];
+
 const ChevronLeftIcon = () => (
   <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
     <path
@@ -174,20 +170,17 @@ export default function MarketItemDetailPageClient({
   const [pushMessage, setPushMessage] = useState<string | null>(null);
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [imageAspectRatios, setImageAspectRatios] = useState<
-    Record<string, number>
-  >({});
+  const [imageAspectRatios, setImageAspectRatios] = useState<Record<string, number>>({});
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   const canManageItem = useMemo(
     () =>
-      item !== null &&
-      (item.sellerId === viewer.id || isMarketAdminRole(viewer.role)),
+      item !== null && (item.sellerId === viewer.id || isMarketAdminRole(viewer.role)),
     [item, viewer.id, viewer.role],
   );
 
   const isOwnerItem = item !== null && item.sellerId === viewer.id;
-  const imageUrls = item?.imageUrls ?? [];
+  const imageUrls = item?.imageUrls ?? EMPTY_IMAGE_URLS;
   const selectedImageUrl = imageUrls[selectedImageIndex] ?? null;
   const selectedImageAspectRatio = selectedImageUrl
     ? (imageAspectRatios[selectedImageUrl] ?? 1)
@@ -230,8 +223,7 @@ export default function MarketItemDetailPageClient({
   const loadComments = useCallback(async () => {
     setIsLoadingComments(true);
     try {
-      const nextComments =
-        await adminResourceApi.listMarketCommentsByItemId(itemId);
+      const nextComments = await adminResourceApi.listMarketCommentsByItemId(itemId);
       setComments(nextComments);
     } catch (error) {
       setErrorMessage(readMarketErrorMessage(error));
@@ -292,11 +284,7 @@ export default function MarketItemDetailPageClient({
       const preloaded = new window.Image();
       preloaded.decoding = "async";
       preloaded.onload = () => {
-        updateImageAspectRatio(
-          imageUrl,
-          preloaded.naturalWidth,
-          preloaded.naturalHeight,
-        );
+        updateImageAspectRatio(imageUrl, preloaded.naturalWidth, preloaded.naturalHeight);
       };
       preloaded.src = imageUrl;
       preloadedImages.push(preloaded);
@@ -328,8 +316,7 @@ export default function MarketItemDetailPageClient({
     setIsPushSupported(true);
     void (async () => {
       try {
-        const registration =
-          await navigator.serviceWorker.register("/market-sw.js");
+        const registration = await navigator.serviceWorker.register("/market-sw.js");
         const subscription = await registration.pushManager.getSubscription();
         setIsPushSubscribed(subscription !== null);
       } catch {
@@ -339,15 +326,11 @@ export default function MarketItemDetailPageClient({
   }, []);
 
   const showPreviousImage = useCallback(() => {
-    setSelectedImageIndex((previous) =>
-      clampIndex(previous - 1, imageUrls.length),
-    );
+    setSelectedImageIndex((previous) => clampIndex(previous - 1, imageUrls.length));
   }, [imageUrls.length]);
 
   const showNextImage = useCallback(() => {
-    setSelectedImageIndex((previous) =>
-      clampIndex(previous + 1, imageUrls.length),
-    );
+    setSelectedImageIndex((previous) => clampIndex(previous + 1, imageUrls.length));
   }, [imageUrls.length]);
 
   useEffect(() => {
@@ -381,12 +364,9 @@ export default function MarketItemDetailPageClient({
     setIsChangingStatus(true);
     setErrorMessage(null);
     try {
-      const updatedItem = await adminResourceApi.updateMarketItemStatus(
-        item.id,
-        {
-          status,
-        },
-      );
+      const updatedItem = await adminResourceApi.updateMarketItemStatus(item.id, {
+        status,
+      });
       setItem(updatedItem);
     } catch (error) {
       setErrorMessage(readMarketErrorMessage(error));
@@ -410,12 +390,9 @@ export default function MarketItemDetailPageClient({
     setIsCommentPending(true);
     setErrorMessage(null);
     try {
-      const createdComment = await adminResourceApi.createMarketComment(
-        item.id,
-        {
-          content: nextContent,
-        },
-      );
+      const createdComment = await adminResourceApi.createMarketComment(item.id, {
+        content: nextContent,
+      });
       setComments((previous) => [...previous, createdComment]);
       setCommentInput("");
     } catch (error) {
@@ -431,12 +408,9 @@ export default function MarketItemDetailPageClient({
       return;
     }
 
-    const vapidPublicKey =
-      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim() ?? "";
+    const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim() ?? "";
     if (!vapidPublicKey) {
-      setPushMessage(
-        "웹푸시 설정이 누락되었습니다. VAPID 공개 키를 확인해 주세요.",
-      );
+      setPushMessage("웹푸시 설정이 누락되었습니다. VAPID 공개 키를 확인해 주세요.");
       return;
     }
 
@@ -449,13 +423,10 @@ export default function MarketItemDetailPageClient({
         return;
       }
 
-      const registration =
-        await navigator.serviceWorker.register("/market-sw.js");
+      const registration = await navigator.serviceWorker.register("/market-sw.js");
       let subscription = await registration.pushManager.getSubscription();
       if (!subscription) {
-        const applicationServerKey = toArrayBuffer(
-          urlBase64ToUint8Array(vapidPublicKey),
-        );
+        const applicationServerKey = toArrayBuffer(urlBase64ToUint8Array(vapidPublicKey));
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey,
@@ -487,8 +458,7 @@ export default function MarketItemDetailPageClient({
     setIsPushPending(true);
     setPushMessage(null);
     try {
-      const registration =
-        await navigator.serviceWorker.register("/market-sw.js");
+      const registration = await navigator.serviceWorker.register("/market-sw.js");
       const subscription = await registration.pushManager.getSubscription();
       if (!subscription) {
         setIsPushSubscribed(false);
@@ -522,9 +492,7 @@ export default function MarketItemDetailPageClient({
               <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
                 판매글 상세
               </h1>
-              {item ? (
-                <p className="mt-3 text-sm text-slate-600">{item.name}</p>
-              ) : null}
+              {item ? <p className="mt-3 text-sm text-slate-600">{item.name}</p> : null}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Link
@@ -661,9 +629,7 @@ export default function MarketItemDetailPageClient({
             <article className="space-y-6">
               <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-2xl font-bold text-slate-900">
-                    {item.name}
-                  </h2>
+                  <h2 className="text-2xl font-bold text-slate-900">{item.name}</h2>
                   <span
                     className={`rounded-full border px-2 py-1 text-xs font-semibold ${STATUS_BADGE_CLASS[item.status]}`}
                   >
@@ -790,9 +756,7 @@ export default function MarketItemDetailPageClient({
                     ))}
                   </div>
                 ) : comments.length === 0 ? (
-                  <p className="mt-3 text-sm text-slate-500">
-                    아직 댓글이 없습니다.
-                  </p>
+                  <p className="mt-3 text-sm text-slate-500">아직 댓글이 없습니다.</p>
                 ) : (
                   <ul className="mt-3 space-y-2">
                     {comments.map((comment) => (
@@ -800,21 +764,14 @@ export default function MarketItemDetailPageClient({
                         key={comment.id}
                         className="rounded-lg border border-slate-200 bg-white p-3"
                       >
-                        <p className="text-xs text-slate-500">
-                          {comment.author.name}
-                        </p>
-                        <p className="mt-1 text-sm text-slate-700">
-                          {comment.content}
-                        </p>
+                        <p className="text-xs text-slate-500">{comment.author.name}</p>
+                        <p className="mt-1 text-sm text-slate-700">{comment.content}</p>
                       </li>
                     ))}
                   </ul>
                 )}
 
-                <form
-                  className="mt-3 flex gap-2"
-                  onSubmit={handleCreateComment}
-                >
+                <form className="mt-3 flex gap-2" onSubmit={handleCreateComment}>
                   <input
                     value={commentInput}
                     onChange={(event) => setCommentInput(event.target.value)}

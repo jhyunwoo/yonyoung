@@ -149,9 +149,7 @@ export default function AuthProfileForm({
   const [givenName, setGivenName] = useState(initialProfile.givenName);
   const [college, setCollege] = useState(initialProfile.college);
   const [department, setDepartment] = useState(initialProfile.department);
-  const [studentNumber, setStudentNumber] = useState(
-    initialProfile.studentNumber,
-  );
+  const [studentNumber, setStudentNumber] = useState(initialProfile.studentNumber);
   const [phoneNumber, setPhoneNumber] = useState(initialProfile.phoneNumber);
   const [collaborationAvailable, setCollaborationAvailable] = useState(
     initialProfile.collaborationAvailable,
@@ -169,17 +167,14 @@ export default function AuthProfileForm({
   });
 
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
-  const [selectedImageObjectUrl, setSelectedImageObjectUrl] = useState<
-    string | null
-  >(null);
-  const [uploadProgressPercent, setUploadProgressPercent] = useState<
-    number | null
-  >(null);
+  const [selectedImageObjectUrl, setSelectedImageObjectUrl] = useState<string | null>(
+    null,
+  );
+  const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
   const [showcaseUploadProgressPercent, setShowcaseUploadProgressPercent] = useState<
     number | null
   >(null);
-  const [isUploadingShowcaseImages, setIsUploadingShowcaseImages] =
-    useState(false);
+  const [isUploadingShowcaseImages, setIsUploadingShowcaseImages] = useState(false);
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -223,9 +218,7 @@ export default function AuthProfileForm({
     setSelectedImageObjectUrl(objectUrl);
   };
 
-  const handleShowcaseFilesChange = async (
-    event: ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleShowcaseFilesChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = readFileList(event.target.files);
     event.target.value = "";
     if (files.length === 0) {
@@ -329,8 +322,7 @@ export default function AuthProfileForm({
         });
       }
 
-      const normalizedShowcaseImageUrls =
-        normalizeShowcaseImageUrls(showcaseImageUrls);
+      const normalizedShowcaseImageUrls = normalizeShowcaseImageUrls(showcaseImageUrls);
 
       const payload: ApiMemberProfileUpdateInput = {
         familyName: familyName.trim(),
@@ -340,8 +332,7 @@ export default function AuthProfileForm({
         studentNumber: studentNumber.trim(),
         phoneNumber: phoneNumber.trim(),
         collaborationAvailable,
-        personalLink:
-          personalLink.trim().length > 0 ? personalLink.trim() : null,
+        personalLink: personalLink.trim().length > 0 ? personalLink.trim() : null,
       };
 
       if (canEditProfileImage) {
@@ -382,9 +373,7 @@ export default function AuthProfileForm({
       }
 
       setSubmitSuccess(
-        isDashboardMode
-          ? "개인 프로필이 저장되었습니다."
-          : "기본 정보가 저장되었습니다.",
+        isDashboardMode ? "개인 프로필이 저장되었습니다." : "기본 정보가 저장되었습니다.",
       );
       router.refresh();
     } catch (error) {
@@ -426,9 +415,7 @@ export default function AuthProfileForm({
 
         <form className="mt-7 space-y-5" onSubmit={handleSubmit} noValidate>
           <div className="rounded-xl border border-slate-200 p-4">
-            <p className="text-sm font-semibold text-slate-900">
-              프로필 이미지
-            </p>
+            <p className="text-sm font-semibold text-slate-900">프로필 이미지</p>
             <p className="mt-1 text-xs text-slate-500">
               {canEditProfileImage
                 ? "프로필 사진을 수정할 수 있습니다."
@@ -474,12 +461,8 @@ export default function AuthProfileForm({
 
           {isDashboardMode && canEditProfileImage ? (
             <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <p className="text-sm font-semibold text-slate-900">
-                대표 작품 사진
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                최대 {SHOWCASE_MAX_IMAGES}장
-              </p>
+              <p className="text-sm font-semibold text-slate-900">대표 작품 사진</p>
+              <p className="mt-1 text-xs text-slate-500">최대 {SHOWCASE_MAX_IMAGES}장</p>
 
               <button
                 type="button"
@@ -500,9 +483,7 @@ export default function AuthProfileForm({
               />
 
               {isUploadingShowcaseImages ? (
-                <p className="mt-2 text-xs text-slate-500">
-                  대표 작품 사진 업로드 중...
-                </p>
+                <p className="mt-2 text-xs text-slate-500">대표 작품 사진 업로드 중...</p>
               ) : null}
               <UploadProgressBar
                 progressPercent={showcaseUploadProgressPercent}
@@ -542,9 +523,7 @@ export default function AuthProfileForm({
                 autoComplete="family-name"
               />
               {fieldErrors.familyName ? (
-                <span className="text-xs text-red-600">
-                  {fieldErrors.familyName}
-                </span>
+                <span className="text-xs text-red-600">{fieldErrors.familyName}</span>
               ) : null}
             </label>
 
@@ -558,9 +537,7 @@ export default function AuthProfileForm({
                 autoComplete="given-name"
               />
               {fieldErrors.givenName ? (
-                <span className="text-xs text-red-600">
-                  {fieldErrors.givenName}
-                </span>
+                <span className="text-xs text-red-600">{fieldErrors.givenName}</span>
               ) : null}
             </label>
           </div>
@@ -573,14 +550,10 @@ export default function AuthProfileForm({
                 onChange={(event) => setCollege(event.target.value)}
                 disabled={isSaving}
                 className="rounded-lg border border-slate-300 px-3 py-2"
-                placeholder={
-                  isDashboardMode ? undefined : AUTH_COLLEGE_PLACEHOLDER
-                }
+                placeholder={isDashboardMode ? undefined : AUTH_COLLEGE_PLACEHOLDER}
               />
               {fieldErrors.college ? (
-                <span className="text-xs text-red-600">
-                  {fieldErrors.college}
-                </span>
+                <span className="text-xs text-red-600">{fieldErrors.college}</span>
               ) : null}
             </label>
 
@@ -591,14 +564,10 @@ export default function AuthProfileForm({
                 onChange={(event) => setDepartment(event.target.value)}
                 disabled={isSaving}
                 className="rounded-lg border border-slate-300 px-3 py-2"
-                placeholder={
-                  isDashboardMode ? undefined : AUTH_DEPARTMENT_PLACEHOLDER
-                }
+                placeholder={isDashboardMode ? undefined : AUTH_DEPARTMENT_PLACEHOLDER}
               />
               {fieldErrors.department ? (
-                <span className="text-xs text-red-600">
-                  {fieldErrors.department}
-                </span>
+                <span className="text-xs text-red-600">{fieldErrors.department}</span>
               ) : null}
             </label>
           </div>
@@ -615,9 +584,7 @@ export default function AuthProfileForm({
                 placeholder="2026000123"
               />
               {fieldErrors.studentNumber ? (
-                <span className="text-xs text-red-600">
-                  {fieldErrors.studentNumber}
-                </span>
+                <span className="text-xs text-red-600">{fieldErrors.studentNumber}</span>
               ) : null}
             </label>
 
@@ -632,9 +599,7 @@ export default function AuthProfileForm({
                 placeholder="010-0000-0000"
               />
               {fieldErrors.phoneNumber ? (
-                <span className="text-xs text-red-600">
-                  {fieldErrors.phoneNumber}
-                </span>
+                <span className="text-xs text-red-600">{fieldErrors.phoneNumber}</span>
               ) : null}
             </label>
           </div>
@@ -666,16 +631,12 @@ export default function AuthProfileForm({
                 inputMode="url"
               />
               {fieldErrors.personalLink ? (
-                <span className="text-xs text-red-600">
-                  {fieldErrors.personalLink}
-                </span>
+                <span className="text-xs text-red-600">{fieldErrors.personalLink}</span>
               ) : null}
             </label>
           </div>
 
-          {submitError ? (
-            <p className="text-sm text-red-600">{submitError}</p>
-          ) : null}
+          {submitError ? <p className="text-sm text-red-600">{submitError}</p> : null}
           {submitSuccess ? (
             <p className="text-sm text-emerald-700">{submitSuccess}</p>
           ) : null}
@@ -685,11 +646,7 @@ export default function AuthProfileForm({
             disabled={isSaving || isUploadingShowcaseImages}
             className="inline-flex w-full items-center justify-center rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSaving
-              ? "저장 중..."
-              : isDashboardMode
-                ? "프로필 저장"
-                : "기본 정보 저장"}
+            {isSaving ? "저장 중..." : isDashboardMode ? "프로필 저장" : "기본 정보 저장"}
           </button>
         </form>
       </section>

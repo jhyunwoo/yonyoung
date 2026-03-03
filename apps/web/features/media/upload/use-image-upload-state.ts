@@ -96,42 +96,53 @@ export const useImageUploadState = (options: UseImageUploadStateOptions = {}) =>
     };
   }, []);
 
-  const replaceItems = useCallback((nextItems: UploadImageItem[]) => {
-    const normalizedItems = normalizeItems(nextItems, options.maxItems);
-    const removedItems = readRemovedItems(itemsRef.current, normalizedItems);
-    revokeUploadImageItems(removedItems);
-    itemsRef.current = normalizedItems;
-    setItems(normalizedItems);
-  }, [options.maxItems]);
+  const replaceItems = useCallback(
+    (nextItems: UploadImageItem[]) => {
+      const normalizedItems = normalizeItems(nextItems, options.maxItems);
+      const removedItems = readRemovedItems(itemsRef.current, normalizedItems);
+      revokeUploadImageItems(removedItems);
+      itemsRef.current = normalizedItems;
+      setItems(normalizedItems);
+    },
+    [options.maxItems],
+  );
 
-  const appendFiles = useCallback((files: FileList | File[] | null) => {
-    const nextFiles = Array.isArray(files) ? files : readFileList(files);
-    if (nextFiles.length === 0) {
-      return;
-    }
+  const appendFiles = useCallback(
+    (files: FileList | File[] | null) => {
+      const nextFiles = Array.isArray(files) ? files : readFileList(files);
+      if (nextFiles.length === 0) {
+        return;
+      }
 
-    const nextItems = nextFiles.map((file) => createNewUploadImageItem(file));
-    setItems((previousItems) =>
-      normalizeItems([...previousItems, ...nextItems], options.maxItems),
-    );
-  }, [options.maxItems]);
+      const nextItems = nextFiles.map((file) => createNewUploadImageItem(file));
+      setItems((previousItems) =>
+        normalizeItems([...previousItems, ...nextItems], options.maxItems),
+      );
+    },
+    [options.maxItems],
+  );
 
-  const appendExistingUrls = useCallback((urls: string[]) => {
-    const normalizedUrls = urls.map((url) => url.trim()).filter((url) => url.length > 0);
-    if (normalizedUrls.length === 0) {
-      return;
-    }
+  const appendExistingUrls = useCallback(
+    (urls: string[]) => {
+      const normalizedUrls = urls
+        .map((url) => url.trim())
+        .filter((url) => url.length > 0);
+      if (normalizedUrls.length === 0) {
+        return;
+      }
 
-    const nextItems = normalizedUrls.map((url) =>
-      createExistingUploadImageItem({
-        id: `existing-${crypto.randomUUID()}`,
-        imageUrl: url,
-      }),
-    );
-    setItems((previousItems) =>
-      normalizeItems([...previousItems, ...nextItems], options.maxItems),
-    );
-  }, [options.maxItems]);
+      const nextItems = normalizedUrls.map((url) =>
+        createExistingUploadImageItem({
+          id: `existing-${crypto.randomUUID()}`,
+          imageUrl: url,
+        }),
+      );
+      setItems((previousItems) =>
+        normalizeItems([...previousItems, ...nextItems], options.maxItems),
+      );
+    },
+    [options.maxItems],
+  );
 
   const removeItemById = useCallback((itemId: string) => {
     setItems((previousItems) => {

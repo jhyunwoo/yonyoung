@@ -11,7 +11,9 @@ export default function PageTitleHero({ title, description }: PageTitleHeroProps
       <h1 className="mb-4 text-[2rem] leading-[1.2] font-bold text-(--text-primary) md:text-[3rem]">
         {title}
       </h1>
-      {description ? <p className="mb-4 text-lg text-(--text-muted)">{description}</p> : null}
+      {description ? (
+        <p className="mb-4 text-lg text-(--text-muted)">{description}</p>
+      ) : null}
     </section>
   );
 }

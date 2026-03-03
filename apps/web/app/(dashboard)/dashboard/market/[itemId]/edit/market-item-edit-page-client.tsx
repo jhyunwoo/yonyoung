@@ -1,6 +1,14 @@
 "use client";
 
-import { type ChangeEvent, type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ChangeEvent,
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
@@ -142,7 +150,9 @@ export default function MarketItemEditPageClient({
       return;
     }
     if (imageUrls.length === 0 || imageUrls.length > MARKET_MAX_IMAGES) {
-      setErrorMessage(`상품 이미지는 1장 이상, 최대 ${MARKET_MAX_IMAGES}장까지 등록할 수 있습니다.`);
+      setErrorMessage(
+        `상품 이미지는 1장 이상, 최대 ${MARKET_MAX_IMAGES}장까지 등록할 수 있습니다.`,
+      );
       return;
     }
     if (!Number.isInteger(numericPrice) || numericPrice < 0) {
@@ -177,8 +187,12 @@ export default function MarketItemEditPageClient({
     <main className="px-4 py-6 md:px-8 md:py-8">
       <section className="mx-auto w-full max-w-4xl space-y-6">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-          <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Market</p>
-          <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">판매글 수정</h1>
+          <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+            Market
+          </p>
+          <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
+            판매글 수정
+          </h1>
           <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
             본인이 작성한 판매글만 수정할 수 있습니다.
           </p>
@@ -200,7 +214,10 @@ export default function MarketItemEditPageClient({
         </div>
 
         {isLoadingItem ? (
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" aria-hidden="true">
+          <section
+            className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+            aria-hidden="true"
+          >
             <Skeleton className="h-10 w-2/3" />
             <Skeleton className="mt-3 h-10 w-full" />
             <Skeleton className="mt-3 h-24 w-full" />
@@ -211,7 +228,11 @@ export default function MarketItemEditPageClient({
           </section>
         ) : (
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-            <form data-testid="market-edit-form" className="space-y-4" onSubmit={handleUpdateItem}>
+            <form
+              data-testid="market-edit-form"
+              className="space-y-4"
+              onSubmit={handleUpdateItem}
+            >
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <input
                   value={name}
@@ -244,7 +265,9 @@ export default function MarketItemEditPageClient({
                 />
                 <select
                   value={conditionGrade}
-                  onChange={(event) => setConditionGrade(event.target.value as "" | ApiMarketConditionGrade)}
+                  onChange={(event) =>
+                    setConditionGrade(event.target.value as "" | ApiMarketConditionGrade)
+                  }
                   className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
                   disabled={isSavingItem || isUploadingImage}
                 >
@@ -284,11 +307,14 @@ export default function MarketItemEditPageClient({
                     disabled={isImageUploadDisabled}
                     className="sr-only"
                   />
-                  <p className="text-xs text-slate-500">최소 1장, 최대 {MARKET_MAX_IMAGES}장</p>
+                  <p className="text-xs text-slate-500">
+                    최소 1장, 최대 {MARKET_MAX_IMAGES}장
+                  </p>
                 </div>
                 {!isUploadingImage && imageUrls.length >= MARKET_MAX_IMAGES ? (
                   <p className="mt-2 text-xs text-slate-500">
-                    최대 {MARKET_MAX_IMAGES}장까지 등록되어 추가 업로드가 비활성화되었습니다.
+                    최대 {MARKET_MAX_IMAGES}장까지 등록되어 추가 업로드가
+                    비활성화되었습니다.
                   </p>
                 ) : null}
                 <UploadProgressBar
@@ -303,7 +329,9 @@ export default function MarketItemEditPageClient({
                       label: `상품 이미지 ${index + 1}`,
                       alt: "상품 이미지",
                     }))}
-                    onReorder={(nextItems) => reorderByIds(nextItems.map((entry) => entry.id))}
+                    onReorder={(nextItems) =>
+                      reorderByIds(nextItems.map((entry) => entry.id))
+                    }
                     onRemoveItem={removeItemById}
                     disabled={isSavingItem || isUploadingImage}
                     emptyMessage="등록된 상품 이미지가 없습니다."

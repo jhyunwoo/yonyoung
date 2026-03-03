@@ -70,7 +70,9 @@ export class AdminApiError extends Error {
   }
 }
 
-export const createTimeoutController = (timeoutMs: number): {
+export const createTimeoutController = (
+  timeoutMs: number,
+): {
   controller: AbortController;
   timeoutId: ReturnType<typeof setTimeout>;
 } => {
@@ -79,7 +81,9 @@ export const createTimeoutController = (timeoutMs: number): {
   return { controller, timeoutId };
 };
 
-export const clearTimeoutController = (timeoutId: ReturnType<typeof setTimeout>): void => {
+export const clearTimeoutController = (
+  timeoutId: ReturnType<typeof setTimeout>,
+): void => {
   clearTimeout(timeoutId);
 };
 
@@ -108,8 +112,6 @@ export const asRecord = (value: unknown): Record<string, unknown> | null => {
   return value as Record<string, unknown>;
 };
 
-
-
 export const unwrapDataEnvelope = <T>(payload: unknown): T | null => {
   const record = asRecord(payload);
   if (record && "data" in record) {
@@ -133,24 +135,20 @@ export const readCookieHeader = async (): Promise<string | null> => {
 // Centralised API base URL resolution
 // ---------------------------------------------------------------------------
 
-const DEFAULT_DEV_API_URL = "http://localhost:8787";
-const DEFAULT_PROD_API_URL = "https://api.yonyoung.moveto.kr";
-
-export const resolveApiBaseUrl = (options?: {
-  clientSide?: boolean;
-}): string => {
+export const resolveApiBaseUrl = (options?: { clientSide?: boolean }): string => {
   const isClient = options?.clientSide ?? typeof window !== "undefined";
-  const isProd = process.env.NODE_ENV === "production";
 
   if (isClient) {
-    return resolveBaseUrl(
-      [process.env.NEXT_PUBLIC_AUTH_API_URL],
-      isProd ? DEFAULT_PROD_API_URL : DEFAULT_DEV_API_URL,
-    );
+    if (typeof window === "undefined") {
+      return "";
+    }
+    return normalizeBaseUrl(window.location.origin);
   }
 
-  return resolveBaseUrl(
-    [process.env.AUTH_API_URL, process.env.NEXT_PUBLIC_AUTH_API_URL],
-    isProd ? DEFAULT_PROD_API_URL : DEFAULT_DEV_API_URL,
-  );
+  const serverBaseUrl = process.env.API_BASE_URL?.trim();
+  if (!serverBaseUrl) {
+    throw new Error("API_BASE_URL is required on the server runtime.");
+  }
+
+  return normalizeBaseUrl(serverBaseUrl);
 };

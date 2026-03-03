@@ -7,7 +7,10 @@ import { useRouter } from "next/navigation";
 import type { ApiActivity } from "@/shared/contracts/api-contracts";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/upload-batch";
-import { PRESIGN_PATHS, uploadWithPresign } from "@/features/dashboard/api/admin-api/upload";
+import {
+  PRESIGN_PATHS,
+  uploadWithPresign,
+} from "@/features/dashboard/api/admin-api/upload";
 import {
   createExistingUploadImageItem,
   readFileList,
@@ -191,9 +194,7 @@ export default function ActivityEditForm({
     removeItemById(imageId);
     if (targetExistingId) {
       setDeletedImageIds((previous) =>
-        previous.includes(targetExistingId)
-          ? previous
-          : [...previous, targetExistingId],
+        previous.includes(targetExistingId) ? previous : [...previous, targetExistingId],
       );
     }
   };
@@ -269,13 +270,13 @@ export default function ActivityEditForm({
 
       if (deletedImageIds.length > 0) {
         await Promise.all(
-          deletedImageIds.map((imageId) => adminResourceApi.deleteActivityImage(activity.id, imageId)),
+          deletedImageIds.map((imageId) =>
+            adminResourceApi.deleteActivityImage(activity.id, imageId),
+          ),
         );
       }
 
-      const existingOrder = detailImages.filter(
-        (image) => image.source === "existing",
-      );
+      const existingOrder = detailImages.filter((image) => image.source === "existing");
 
       const createdMap = new Map<string, string>();
       if (newOrder.length > 0) {
@@ -337,8 +338,12 @@ export default function ActivityEditForm({
 
   return (
     <section className="mx-auto w-full max-w-5xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Activities</p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">{generationName} 활동 수정</h1>
+      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+        Activities
+      </p>
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
+        {generationName} 활동 수정
+      </h1>
       <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
         활동 기본 정보와 사진을 함께 수정할 수 있습니다.
       </p>
@@ -414,7 +419,11 @@ export default function ActivityEditForm({
 
           <div className="space-y-1">
             <span className="text-sm font-semibold text-slate-900">활동 설명</span>
-            <RichTextEditor value={description} onChange={setDescription} disabled={isSaving} />
+            <RichTextEditor
+              value={description}
+              onChange={setDescription}
+              disabled={isSaving}
+            />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -441,7 +450,9 @@ export default function ActivityEditForm({
           </div>
 
           <div className="space-y-2 rounded-xl border border-slate-200 p-4">
-            <p className="text-sm font-semibold text-slate-900">대표 이미지 교체 (선택)</p>
+            <p className="text-sm font-semibold text-slate-900">
+              대표 이미지 교체 (선택)
+            </p>
             <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
               <Image
                 src={activity.coverImageUrl}
@@ -469,12 +480,18 @@ export default function ActivityEditForm({
               className="sr-only"
             />
             <p className="text-xs text-slate-500">
-              {coverFile ? `선택됨: ${coverFile.name}` : "대표 이미지를 교체하지 않으려면 비워 두세요."}
+              {coverFile
+                ? `선택됨: ${coverFile.name}`
+                : "대표 이미지를 교체하지 않으려면 비워 두세요."}
             </p>
             {coverPreviewUrl ? (
               <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-emerald-200 bg-emerald-50">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={coverPreviewUrl} alt="새 대표 이미지 미리보기" className="h-full w-full object-cover" />
+                <img
+                  src={coverPreviewUrl}
+                  alt="새 대표 이미지 미리보기"
+                  className="h-full w-full object-cover"
+                />
               </div>
             ) : null}
           </div>
@@ -482,7 +499,9 @@ export default function ActivityEditForm({
           <div className="space-y-2 rounded-xl border border-slate-200 p-4">
             <p className="text-sm font-semibold text-slate-900">세부 이미지</p>
             <label className="block space-y-1">
-              <span className="text-xs text-slate-500">새 세부 이미지 추가 (선택, 여러 장)</span>
+              <span className="text-xs text-slate-500">
+                새 세부 이미지 추가 (선택, 여러 장)
+              </span>
               <button
                 type="button"
                 onClick={handleOpenDetailFilePicker}
@@ -501,12 +520,17 @@ export default function ActivityEditForm({
                 className="sr-only"
               />
             </label>
-            <p className="text-xs text-slate-500">마우스로 끌어 세부 이미지 순서를 바꿀 수 있습니다.</p>
+            <p className="text-xs text-slate-500">
+              마우스로 끌어 세부 이미지 순서를 바꿀 수 있습니다.
+            </p>
             <SortableImageGrid
               items={detailImages.map((image, index) => ({
                 id: image.id,
                 imageUrl: image.imageUrl,
-                label: image.source === "existing" ? `기존 이미지 ${index + 1}` : image.file?.name ?? `새 이미지 ${index + 1}`,
+                label:
+                  image.source === "existing"
+                    ? `기존 이미지 ${index + 1}`
+                    : (image.file?.name ?? `새 이미지 ${index + 1}`),
                 subtitle: image.source === "existing" ? "기존" : "새 업로드",
               }))}
               onReorder={(nextItems) => reorderByIds(nextItems.map((item) => item.id))}
@@ -514,7 +538,10 @@ export default function ActivityEditForm({
               disabled={isSaving}
               emptyMessage="등록된 세부 이미지가 없습니다."
             />
-            <UploadProgressBar progressPercent={uploadProgressPercent} label="사진 업로드 진행률" />
+            <UploadProgressBar
+              progressPercent={uploadProgressPercent}
+              label="사진 업로드 진행률"
+            />
           </div>
 
           <LastUpdatedMeta

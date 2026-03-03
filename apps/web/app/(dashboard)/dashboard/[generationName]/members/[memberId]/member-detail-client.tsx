@@ -118,10 +118,13 @@ export default function MemberDetailClient({
         };
         try {
           const generations = await adminResourceApi.listGenerations();
-          nextGenerationNamesById = generations.reduce<Record<string, string>>((acc, item) => {
-            acc[item.id] = item.name;
-            return acc;
-          }, nextGenerationNamesById);
+          nextGenerationNamesById = generations.reduce<Record<string, string>>(
+            (acc, item) => {
+              acc[item.id] = item.name;
+              return acc;
+            },
+            nextGenerationNamesById,
+          );
         } catch {
           // 기수명 조회 실패 시 기본값(현재 기수)으로만 표시한다.
         }
@@ -181,7 +184,10 @@ export default function MemberDetailClient({
             <div className="rounded-xl border border-slate-200 p-4">
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {Array.from({ length: 9 }).map((_, index) => (
-                  <div key={`generation-member-detail-skeleton-${index + 1}`} className="space-y-2">
+                  <div
+                    key={`generation-member-detail-skeleton-${index + 1}`}
+                    className="space-y-2"
+                  >
                     <Skeleton className="h-3 w-16" />
                     <Skeleton className="h-4 w-24" />
                   </div>
@@ -198,7 +204,9 @@ export default function MemberDetailClient({
     return (
       <main className="px-4 py-6 md:px-8 md:py-8">
         <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-          <p className="text-sm text-red-700">{errorMessage ?? "멤버 정보를 찾을 수 없습니다."}</p>
+          <p className="text-sm text-red-700">
+            {errorMessage ?? "멤버 정보를 찾을 수 없습니다."}
+          </p>
           <Link
             href={`${generation.path}/members`}
             className="mt-4 inline-flex text-sm font-semibold text-slate-700 hover:text-slate-900"
@@ -245,7 +253,9 @@ export default function MemberDetailClient({
             </div>
 
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">{displayName}</h1>
+              <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">
+                {displayName}
+              </h1>
               <p className="mt-1 text-sm text-slate-600">{generation.name} 멤버 상세</p>
             </div>
 
@@ -306,7 +316,9 @@ export default function MemberDetailClient({
                 </div>
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <p className="text-xs font-semibold text-slate-500">표시 이름</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">{displayName}</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">
+                    {displayName}
+                  </p>
                 </div>
               </div>
 
@@ -320,23 +332,33 @@ export default function MemberDetailClient({
                     </div>
                     <div>
                       <dt className="text-xs font-semibold text-slate-500">성</dt>
-                      <dd className="mt-1 text-sm text-slate-900">{fullUser.familyName ?? "-"}</dd>
+                      <dd className="mt-1 text-sm text-slate-900">
+                        {fullUser.familyName ?? "-"}
+                      </dd>
                     </div>
                     <div>
                       <dt className="text-xs font-semibold text-slate-500">이름</dt>
-                      <dd className="mt-1 text-sm text-slate-900">{fullUser.givenName ?? "-"}</dd>
+                      <dd className="mt-1 text-sm text-slate-900">
+                        {fullUser.givenName ?? "-"}
+                      </dd>
                     </div>
                     <div>
                       <dt className="text-xs font-semibold text-slate-500">대학</dt>
-                      <dd className="mt-1 text-sm text-slate-900">{fullUser.college ?? "-"}</dd>
+                      <dd className="mt-1 text-sm text-slate-900">
+                        {fullUser.college ?? "-"}
+                      </dd>
                     </div>
                     <div>
                       <dt className="text-xs font-semibold text-slate-500">학번</dt>
-                      <dd className="mt-1 text-sm text-slate-900">{fullUser.studentNumber ?? "-"}</dd>
+                      <dd className="mt-1 text-sm text-slate-900">
+                        {fullUser.studentNumber ?? "-"}
+                      </dd>
                     </div>
                     <div>
                       <dt className="text-xs font-semibold text-slate-500">전화번호</dt>
-                      <dd className="mt-1 text-sm text-slate-900">{fullUser.phoneNumber ?? "-"}</dd>
+                      <dd className="mt-1 text-sm text-slate-900">
+                        {fullUser.phoneNumber ?? "-"}
+                      </dd>
                     </div>
                     <div className="md:col-span-2 xl:col-span-3">
                       <dt className="text-xs font-semibold text-slate-500">소속 기수</dt>
@@ -346,11 +368,15 @@ export default function MemberDetailClient({
                     </div>
                     <div>
                       <dt className="text-xs font-semibold text-slate-500">생성일</dt>
-                      <dd className="mt-1 text-sm text-slate-900">{formatKoreanDate(fullUser.createdAt)}</dd>
+                      <dd className="mt-1 text-sm text-slate-900">
+                        {formatKoreanDate(fullUser.createdAt)}
+                      </dd>
                     </div>
                     <div>
                       <dt className="text-xs font-semibold text-slate-500">수정일</dt>
-                      <dd className="mt-1 text-sm text-slate-900">{formatKoreanDate(fullUser.updatedAt)}</dd>
+                      <dd className="mt-1 text-sm text-slate-900">
+                        {formatKoreanDate(fullUser.updatedAt)}
+                      </dd>
                     </div>
                     <div className="md:col-span-2 xl:col-span-3">
                       <dt className="text-xs font-semibold text-slate-500">최근 수정</dt>

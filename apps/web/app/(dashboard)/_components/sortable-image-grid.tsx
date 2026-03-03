@@ -46,17 +46,11 @@ type SortableCardProps = {
 };
 
 const SortableImageCard = ({ item, disabled, onRemoveItem }: SortableCardProps) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id: item.id,
-    disabled,
-  });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({
+      id: item.id,
+      disabled,
+    });
 
   const style = {
     transform: CSS.Transform.toString(transform),

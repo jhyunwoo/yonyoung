@@ -3,12 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import {
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from "framer-motion";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import type { ApiActivity, ApiExhibition } from "@/shared/contracts/api-contracts";
 import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
@@ -62,8 +57,8 @@ export default function HeroShowcase({
             연영회
           </h1>
           <p className="mt-4 max-w-xl text-base leading-relaxed text-(--text-muted) md:text-lg">
-            1966년부터 이어온 연세대학교 중앙사진동아리. 기록과 전시, 그리고
-            서로의 시선이 만나는 장소를 만듭니다.
+            1966년부터 이어온 연세대학교 중앙사진동아리. 기록과 전시, 그리고 서로의 시선이
+            만나는 장소를 만듭니다.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
@@ -115,10 +110,7 @@ export default function HeroShowcase({
                 </div>
               )}
             </div>
-            <div
-              className="space-y-2 p-5"
-              data-testid="home-hero-exhibition-meta"
-            >
+            <div className="space-y-2 p-5" data-testid="home-hero-exhibition-meta">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-(--text-muted)">
                 Latest Exhibition
               </p>
@@ -156,9 +148,7 @@ export default function HeroShowcase({
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-(--text-muted)">
                 Since
               </p>
-              <p className="mt-2 text-3xl font-semibold text-(--text-primary)">
-                1966
-              </p>
+              <p className="mt-2 text-3xl font-semibold text-(--text-primary)">1966</p>
             </motion.div>
           </div>
         </motion.div>

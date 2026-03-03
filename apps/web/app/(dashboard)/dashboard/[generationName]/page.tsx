@@ -43,17 +43,23 @@ const GenerationDashboardSummary = async (input: {
       <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <li className="rounded-xl border border-slate-200 bg-slate-50 p-4">
           <p className="text-xs font-semibold text-slate-500">기수 멤버</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">{generationMembers.length}</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900">
+            {generationMembers.length}
+          </p>
           <p className="text-xs text-slate-500">명</p>
         </li>
         <li className="rounded-xl border border-slate-200 bg-slate-50 p-4">
           <p className="text-xs font-semibold text-slate-500">활동</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">{generationActivities.length}</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900">
+            {generationActivities.length}
+          </p>
           <p className="text-xs text-slate-500">건</p>
         </li>
         <li className="rounded-xl border border-slate-200 bg-slate-50 p-4">
           <p className="text-xs font-semibold text-slate-500">전시</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">{generationExhibitions.length}</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900">
+            {generationExhibitions.length}
+          </p>
           <p className="text-xs text-slate-500">건</p>
         </li>
         <li className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -108,7 +114,9 @@ const GenerationDashboardSummary = async (input: {
                   key={exhibition.id}
                   className="rounded-lg border border-slate-200 px-4 py-3"
                 >
-                  <p className="text-sm font-semibold text-slate-900">{exhibition.title}</p>
+                  <p className="text-sm font-semibold text-slate-900">
+                    {exhibition.title}
+                  </p>
                   <p className="mt-1 text-xs text-slate-500">
                     {formatKoreanDateRange(exhibition.startDate, exhibition.endDate)}
                   </p>
@@ -156,16 +164,22 @@ export default async function GenerationDashboardPage({
     <main className="px-4 py-6 md:px-8 md:py-8">
       <div className="mx-auto grid w-full max-w-6xl gap-4">
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-          <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Generation Overview</p>
-          <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">{generation.name}</h1>
+          <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+            Generation Overview
+          </p>
+          <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
+            {generation.name}
+          </h1>
           <p className="mt-2 text-sm text-slate-500">
             활동 기간: {formatKoreanDateRange(generation.startDate, generation.endDate)}
           </p>
           <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
-            이 화면에서 공지, 최근 활동, 최근 전시 등 핵심 정보를 한 번에 확인할 수 있습니다.
+            이 화면에서 공지, 최근 활동, 최근 전시 등 핵심 정보를 한 번에 확인할 수
+            있습니다.
           </p>
           <p className="mt-2 text-xs text-slate-500">
-            최근 수정: {formatKoreanDate(generation.updatedAt)} · {formatAuditActor(generation.updatedBy)}
+            최근 수정: {formatKoreanDate(generation.updatedAt)} ·{" "}
+            {formatAuditActor(generation.updatedBy)}
           </p>
         </section>
 
@@ -214,7 +228,9 @@ export default async function GenerationDashboardPage({
                   className="block rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white"
                 >
                   <p className="text-sm font-semibold text-slate-900">{item.title}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-500">{item.description}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                    {item.description}
+                  </p>
                 </Link>
               </li>
             ))}

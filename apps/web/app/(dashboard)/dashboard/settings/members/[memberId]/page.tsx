@@ -31,5 +31,7 @@ export default async function SettingsMemberDetailPage({
     notFound();
   }
 
-  return <MemberDetailClient memberId={memberId} viewerRole={session.user.role ?? null} />;
+  return (
+    <MemberDetailClient memberId={memberId} viewerRole={session.user.role ?? null} />
+  );
 }

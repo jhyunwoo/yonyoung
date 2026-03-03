@@ -35,12 +35,12 @@ export const adminRequest = async <T>(
         signal: controller.signal,
         headers: hasBody
           ? {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          }
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            }
           : {
-            Accept: "application/json",
-          },
+              Accept: "application/json",
+            },
         body: hasBody ? JSON.stringify(body) : undefined,
       },
     );
@@ -96,10 +96,7 @@ export const adminRequest = async <T>(
     throw new AdminApiError({
       status: 500,
       code: "UNKNOWN",
-      message:
-        error instanceof Error
-          ? error.message
-          : "알 수 없는 오류가 발생했습니다.",
+      message: error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.",
     });
   } finally {
     clearTimeoutController(timeoutId);

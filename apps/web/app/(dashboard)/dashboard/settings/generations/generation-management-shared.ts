@@ -1,4 +1,8 @@
-import type { ApiCreateGenerationInput, ApiGeneration, ApiUser } from "@/shared/contracts/api-contracts";
+import type {
+  ApiCreateGenerationInput,
+  ApiGeneration,
+  ApiUser,
+} from "@/shared/contracts/api-contracts";
 import { isUnverifiedRole } from "@/features/auth/model/auth-shared";
 import { buildMemberDisplayName } from "@/features/dashboard/members/display-name";
 
@@ -95,7 +99,9 @@ export const validateGenerationFormInput = (
   };
 };
 
-export const sortGenerationsBySortOrderDesc = (generations: ApiGeneration[]): ApiGeneration[] =>
+export const sortGenerationsBySortOrderDesc = (
+  generations: ApiGeneration[],
+): ApiGeneration[] =>
   [...generations].sort((left, right) => right.sortOrder - left.sortOrder);
 
 export const readNormalizedGenerationIds = (
@@ -128,7 +134,9 @@ export const mergeGenerationId = (
     return [...currentGenerationIds];
   }
 
-  const nextGenerationIds = new Set(currentGenerationIds.map((id) => id.trim()).filter((id) => id.length > 0));
+  const nextGenerationIds = new Set(
+    currentGenerationIds.map((id) => id.trim()).filter((id) => id.length > 0),
+  );
   nextGenerationIds.add(trimmedTarget);
   return [...nextGenerationIds];
 };

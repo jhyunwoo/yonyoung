@@ -14,7 +14,10 @@ export const requireDashboardGeneration = async (
   const { generationName } = await params;
   const session = await serverAuthTool.requireSession();
   const generationOptions = await getAccessibleDashboardGenerationOptions(session);
-  const generation = resolveGenerationOptionFromRouteName(generationOptions, generationName);
+  const generation = resolveGenerationOptionFromRouteName(
+    generationOptions,
+    generationName,
+  );
 
   if (!generation) {
     redirect("/dashboard");

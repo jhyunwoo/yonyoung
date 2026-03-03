@@ -6,10 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ApiExhibition } from "@/shared/contracts/api-contracts";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
-import {
-  formatKoreanDate,
-  formatKoreanDateRange,
-} from "@/shared/utils/date-formatters";
+import { formatKoreanDate, formatKoreanDateRange } from "@/shared/utils/date-formatters";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import { RichTextContent } from "@/features/media/rich-text/rich-text-content";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -120,9 +117,15 @@ export default function GenerationExhibitionDetail({
     <section className="mx-auto w-full max-w-5xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Exhibitions</p>
-          <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">{generationName} 전시 상세</h1>
-          <p className="mt-2 text-sm text-slate-600">전시 정보와 사진을 확인할 수 있습니다.</p>
+          <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+            Exhibitions
+          </p>
+          <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
+            {generationName} 전시 상세
+          </h1>
+          <p className="mt-2 text-sm text-slate-600">
+            전시 정보와 사진을 확인할 수 있습니다.
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           {canManage ? (
@@ -191,7 +194,9 @@ export default function GenerationExhibitionDetail({
             <div className="mt-3">
               <RichTextContent html={exhibition.description} />
             </div>
-            <p className="mt-3 text-xs text-slate-500">생성일: {formatKoreanDate(exhibition.createdAt)}</p>
+            <p className="mt-3 text-xs text-slate-500">
+              생성일: {formatKoreanDate(exhibition.createdAt)}
+            </p>
             <LastUpdatedMeta
               updatedAt={exhibition.updatedAt}
               updatedBy={exhibition.updatedBy}

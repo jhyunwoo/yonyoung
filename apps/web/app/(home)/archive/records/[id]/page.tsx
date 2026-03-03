@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getPublicActivityById } from "@/features/public/api/public-api";
+import { getPublicActivityById } from "@/features/public/services/public-read-service";
 import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import { RichTextContent } from "@/features/media/rich-text/rich-text-content";

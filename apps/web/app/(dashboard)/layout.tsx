@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ReactNode, Suspense } from "react";
+import { Noto_Sans_KR } from "next/font/google";
 
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 import DashboardShell, {
@@ -11,6 +12,12 @@ import { getAccessibleDashboardGenerationOptions } from "@/features/dashboard/ge
 import { buildDashboardViewerProfile } from "@/features/dashboard/members/user-profile";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const notoSansKr = Noto_Sans_KR({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  display: "swap",
+});
+
 export const metadata: Metadata = createPageMetadata({
   title: "연영회 Dashboard",
   description: "연영회 내부 인원 전용 대시보드",
@@ -18,9 +25,7 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 const readDashboardLayoutData = async (): Promise<{
-  generationOptions: Awaited<
-    ReturnType<typeof getAccessibleDashboardGenerationOptions>
-  >;
+  generationOptions: Awaited<ReturnType<typeof getAccessibleDashboardGenerationOptions>>;
   viewer: DashboardViewer | null;
 }> => {
   const session = await serverAuthTool.getSession();
@@ -64,7 +69,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body>
+      <body className={notoSansKr.className}>
         <Suspense
           fallback={
             <main
@@ -81,7 +86,10 @@ export default function RootLayout({
                   <Skeleton className="mt-2 h-3 w-24" />
                   <div className="mt-6 space-y-2">
                     {Array.from({ length: 6 }).map((_, index) => (
-                      <Skeleton key={`dashboard-shell-nav-${index + 1}`} className="h-10 w-full" />
+                      <Skeleton
+                        key={`dashboard-shell-nav-${index + 1}`}
+                        className="h-10 w-full"
+                      />
                     ))}
                   </div>
                   <div className="mt-10">

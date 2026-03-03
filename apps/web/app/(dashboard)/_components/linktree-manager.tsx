@@ -19,10 +19,15 @@ export default async function LinktreeManager({
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Settings / Linktree</p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">링크 모음 관리</h1>
+      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+        Settings / Linktree
+      </p>
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
+        링크 모음 관리
+      </h1>
       <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
-        링크 분류와 분류별 링크를 확인할 수 있습니다. 항목을 누르면 자세한 화면으로 이동합니다.
+        링크 분류와 분류별 링크를 확인할 수 있습니다. 항목을 누르면 자세한 화면으로
+        이동합니다.
       </p>
 
       {canWrite ? (
@@ -63,7 +68,8 @@ export default async function LinktreeManager({
                 </span>
               </div>
               <p className="mt-2 text-xs text-slate-500">
-                최근 수정: {formatKoreanDate(group.updatedAt)} · {formatAuditActor(group.updatedBy)}
+                최근 수정: {formatKoreanDate(group.updatedAt)} ·{" "}
+                {formatAuditActor(group.updatedBy)}
               </p>
 
               {group.items.length === 0 ? (
@@ -81,7 +87,8 @@ export default async function LinktreeManager({
                         <span className="font-medium text-slate-900">{item.name}</span>
                         <span className="ml-2 text-xs text-slate-500">상세 보기</span>
                         <span className="mt-1 block text-[11px] text-slate-400">
-                          최근 수정: {formatKoreanDate(item.updatedAt)} · {formatAuditActor(item.updatedBy)}
+                          최근 수정: {formatKoreanDate(item.updatedAt)} ·{" "}
+                          {formatAuditActor(item.updatedBy)}
                         </span>
                       </Link>
                     </li>

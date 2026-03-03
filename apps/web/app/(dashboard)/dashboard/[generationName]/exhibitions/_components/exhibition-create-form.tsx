@@ -172,7 +172,7 @@ export default function ExhibitionCreateForm({
         }
 
         const weightedProgress =
-          (coverUploadProgress + (detailUploadProgress * newDetailImages.length)) /
+          (coverUploadProgress + detailUploadProgress * newDetailImages.length) /
           totalUploadCount;
         setUploadProgressPercent(Math.round(weightedProgress));
       };
@@ -238,8 +238,12 @@ export default function ExhibitionCreateForm({
 
   return (
     <section className="mx-auto w-full max-w-5xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Exhibitions</p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">{generationName} 전시 추가</h1>
+      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+        Exhibitions
+      </p>
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
+        {generationName} 전시 추가
+      </h1>
       <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
         대표 사진은 꼭 등록해야 하며, 세부 사진은 필요할 때 여러 장 추가할 수 있습니다.
       </p>
@@ -323,14 +327,20 @@ export default function ExhibitionCreateForm({
           {coverPreviewUrl ? (
             <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={coverPreviewUrl} alt="대표 이미지 미리보기" className="h-full w-full object-cover" />
+              <img
+                src={coverPreviewUrl}
+                alt="대표 이미지 미리보기"
+                className="h-full w-full object-cover"
+              />
             </div>
           ) : null}
         </label>
 
         <div className="space-y-2">
           <label className="block space-y-1">
-            <span className="text-sm font-semibold text-slate-900">세부 이미지 (선택, 여러 장)</span>
+            <span className="text-sm font-semibold text-slate-900">
+              세부 이미지 (선택, 여러 장)
+            </span>
             <button
               type="button"
               onClick={handleOpenDetailFilePicker}
@@ -350,7 +360,9 @@ export default function ExhibitionCreateForm({
             />
           </label>
 
-          <p className="text-xs text-slate-500">마우스로 끌어 세부 이미지 순서를 바꿀 수 있습니다.</p>
+          <p className="text-xs text-slate-500">
+            마우스로 끌어 세부 이미지 순서를 바꿀 수 있습니다.
+          </p>
           <SortableImageGrid
             items={detailImages.map((image, index) => ({
               id: image.id,
@@ -363,7 +375,10 @@ export default function ExhibitionCreateForm({
             disabled={isSaving}
             emptyMessage="추가할 세부 이미지가 없으면 비워 두세요."
           />
-          <UploadProgressBar progressPercent={uploadProgressPercent} label="사진 업로드 진행률" />
+          <UploadProgressBar
+            progressPercent={uploadProgressPercent}
+            label="사진 업로드 진행률"
+          />
         </div>
 
         {errorMessage ? (

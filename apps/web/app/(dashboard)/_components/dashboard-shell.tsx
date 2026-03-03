@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  type ReactNode,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -71,7 +65,8 @@ const SidebarContent = (input: {
     canManagePrivilegedSettings: isPresidentOrVicePresidentRole(input.viewer?.role),
   });
   const isSettingsSectionActive =
-    input.pathname === "/dashboard/settings" || input.pathname.startsWith("/dashboard/settings/");
+    input.pathname === "/dashboard/settings" ||
+    input.pathname.startsWith("/dashboard/settings/");
   const [isSettingsExpanded, setIsSettingsExpanded] = useState(isSettingsSectionActive);
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -153,8 +148,7 @@ const SidebarContent = (input: {
           href: `${input.selectedGeneration.path}/exhibitions`,
           label: "전시",
           Icon: Camera,
-          active:
-            input.selectedGenerationScopedPath?.startsWith("/exhibitions") === true,
+          active: input.selectedGenerationScopedPath?.startsWith("/exhibitions") === true,
         },
         {
           key: "generation-members",
@@ -218,7 +212,11 @@ const SidebarContent = (input: {
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-slate-200 px-5 py-5">
-        <Link href="/dashboard" onClick={input.onNavigate} className="flex items-center gap-3">
+        <Link
+          href="/dashboard"
+          onClick={input.onNavigate}
+          className="flex items-center gap-3"
+        >
           <span className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
             <Image
               src="/yonyoung-logo-black.png"
@@ -422,7 +420,9 @@ const SidebarContent = (input: {
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-slate-900">{viewerName}</p>
+              <p className="truncate text-sm font-semibold text-slate-900">
+                {viewerName}
+              </p>
               {viewerEmail ? (
                 <p className="truncate text-xs text-slate-500">{viewerEmail}</p>
               ) : null}
@@ -460,8 +460,8 @@ const resolveActiveGenerationFromPath = (
   }
 
   return (
-    generationOptions.find(
-      (generation) => isSameGenerationRouteName(generation.name, routeName),
+    generationOptions.find((generation) =>
+      isSameGenerationRouteName(generation.name, routeName),
     ) ?? null
   );
 };

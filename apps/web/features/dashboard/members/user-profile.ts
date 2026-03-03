@@ -1,5 +1,8 @@
 import type { AuthUser } from "@/features/auth/model/auth-shared";
-import { compactDisplayName, formatKoreanName } from "@/features/dashboard/members/display-name";
+import {
+  compactDisplayName,
+  formatKoreanName,
+} from "@/features/dashboard/members/display-name";
 
 type EditableUserProfile = {
   image: string;
@@ -117,7 +120,8 @@ export const buildDashboardViewerProfile = (
     readTrimmedStringByKey(profile, "givenName") ??
     readTrimmedSessionString(sessionUser.givenName);
   const image =
-    readTrimmedStringByKey(profile, "image") ?? readTrimmedSessionString(sessionUser.image);
+    readTrimmedStringByKey(profile, "image") ??
+    readTrimmedSessionString(sessionUser.image);
 
   const fallbackName = compactDisplayName(readTrimmedSessionString(sessionUser.name));
   const computedName = formatKoreanName({
@@ -134,6 +138,8 @@ export const buildDashboardViewerProfile = (
     image,
     role: sessionUser.role ?? null,
     displayName:
-      computedName === "이름 미등록" ? fallbackName ?? emailLocalPartName : computedName,
+      computedName === "이름 미등록"
+        ? (fallbackName ?? emailLocalPartName)
+        : computedName,
   };
 };

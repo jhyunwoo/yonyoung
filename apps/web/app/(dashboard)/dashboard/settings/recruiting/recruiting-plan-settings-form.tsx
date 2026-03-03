@@ -81,9 +81,7 @@ export default function RecruitingPlanSettingsForm() {
     [promotionImageItems],
   );
   const isPromotionUploadDisabled =
-    isSaving ||
-    isUploadingImage ||
-    promotionImageUrls.length >= RECRUITING_MAX_IMAGES;
+    isSaving || isUploadingImage || promotionImageUrls.length >= RECRUITING_MAX_IMAGES;
 
   useEffect(() => {
     let isMounted = true;
@@ -112,9 +110,7 @@ export default function RecruitingPlanSettingsForm() {
         setRecruitmentStartAtInput(
           formatTimestampToDateTimeLocal(plan.recruitmentStartAt),
         );
-        setRecruitmentEndAtInput(
-          formatTimestampToDateTimeLocal(plan.recruitmentEndAt),
-        );
+        setRecruitmentEndAtInput(formatTimestampToDateTimeLocal(plan.recruitmentEndAt));
         replacePromotionImageItems(toUploadImageItems(plan.promotionImageUrls));
       } catch (error) {
         if (!isMounted) {
@@ -135,9 +131,7 @@ export default function RecruitingPlanSettingsForm() {
     };
   }, [replacePromotionImageItems]);
 
-  const handleUploadPromotionImages = async (
-    event: ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleUploadPromotionImages = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
     event.target.value = "";
 
@@ -225,9 +219,7 @@ export default function RecruitingPlanSettingsForm() {
       setRecruitmentStartAtInput(
         formatTimestampToDateTimeLocal(updated.recruitmentStartAt),
       );
-      setRecruitmentEndAtInput(
-        formatTimestampToDateTimeLocal(updated.recruitmentEndAt),
-      );
+      setRecruitmentEndAtInput(formatTimestampToDateTimeLocal(updated.recruitmentEndAt));
       replacePromotionImageItems(toUploadImageItems(updated.promotionImageUrls));
       setSuccessMessage("올해 모집 계획을 저장했습니다.");
       router.refresh();
@@ -249,7 +241,10 @@ export default function RecruitingPlanSettingsForm() {
           <Skeleton className="h-48 w-full" />
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {Array.from({ length: 4 }).map((_, index) => (
-              <Skeleton key={`recruiting-plan-image-loading-${index + 1}`} className="aspect-square w-full" />
+              <Skeleton
+                key={`recruiting-plan-image-loading-${index + 1}`}
+                className="aspect-square w-full"
+              />
             ))}
           </div>
         </div>
@@ -262,9 +257,7 @@ export default function RecruitingPlanSettingsForm() {
       <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
         Settings / Recruiting
       </p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
-        모집 계획
-      </h1>
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">모집 계획</h1>
       <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
         올해 모집 계획의 제목, 세부 내용, 홍보 이미지, 모집 기간을 설정할 수 있습니다.
       </p>
@@ -352,7 +345,8 @@ export default function RecruitingPlanSettingsForm() {
           ) : null}
           {!isUploadingImage && promotionImageUrls.length >= RECRUITING_MAX_IMAGES ? (
             <p className="mt-2 text-xs text-slate-500">
-              최대 {RECRUITING_MAX_IMAGES}장까지 등록되어 추가 업로드가 비활성화되었습니다.
+              최대 {RECRUITING_MAX_IMAGES}장까지 등록되어 추가 업로드가
+              비활성화되었습니다.
             </p>
           ) : null}
           <UploadProgressBar
@@ -361,7 +355,9 @@ export default function RecruitingPlanSettingsForm() {
           />
 
           <div className="mt-3 space-y-2">
-            <p className="text-xs text-slate-500">마우스로 끌어 이미지 순서를 바꿀 수 있습니다.</p>
+            <p className="text-xs text-slate-500">
+              마우스로 끌어 이미지 순서를 바꿀 수 있습니다.
+            </p>
             <SortableImageGrid
               items={promotionImageItems.map((item, index) => ({
                 id: item.id,

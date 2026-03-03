@@ -1,5 +1,8 @@
 import { forbidden, redirect } from "next/navigation";
-import { fetchSessionFromApi, resolveAuthApiUrl } from "@/features/auth/server/auth-server";
+import {
+  fetchSessionFromApi,
+  resolveAuthApiUrl,
+} from "@/features/auth/server/auth-server";
 import {
   AUTH_PROFILE_PATH,
   DASHBOARD_PATH,
@@ -53,9 +56,7 @@ const getCurrentUserProfile = async (
 
 type AccessPredicate = (session: AuthSession) => boolean;
 
-const requireSession = async (
-  redirectTo = SIGN_IN_PATH,
-): Promise<AuthSession> => {
+const requireSession = async (redirectTo = SIGN_IN_PATH): Promise<AuthSession> => {
   const session = await getSession();
 
   if (!session) {
@@ -100,9 +101,7 @@ const redirectIfProfileIncomplete = async (
   }
 };
 
-const resolveAdminLandingPath = async (
-  session: AuthSession,
-): Promise<string> => {
+const resolveAdminLandingPath = async (session: AuthSession): Promise<string> => {
   const profile = (await getCurrentUserProfile(session)) ?? asRecord(session.user);
   const isProfileComplete = hasCompletedRequiredProfile(profile);
 

@@ -1,4 +1,7 @@
-import type { ApiMarketConditionGrade, ApiMarketItemStatus } from "@/shared/contracts/api-contracts";
+import type {
+  ApiMarketConditionGrade,
+  ApiMarketItemStatus,
+} from "@/shared/contracts/api-contracts";
 
 export const MARKET_MAX_IMAGES = 10;
 
@@ -14,7 +17,13 @@ export const STATUS_BADGE_CLASS: Record<ApiMarketItemStatus, string> = {
   sold: "border-slate-300 bg-slate-100 text-slate-600",
 };
 
-export const CONDITION_OPTIONS: Array<"" | ApiMarketConditionGrade> = ["", "A", "B", "C", "D"];
+export const CONDITION_OPTIONS: Array<"" | ApiMarketConditionGrade> = [
+  "",
+  "A",
+  "B",
+  "C",
+  "D",
+];
 
 export type MarketViewer = {
   id: string;

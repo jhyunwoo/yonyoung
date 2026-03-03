@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
-import { listPublicLinktrees, safeList } from "@/features/public/api/public-api";
+import {
+  listPublicLinktrees,
+  safeList,
+} from "@/features/public/services/public-read-service";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 import PageTitleHero from "@/app/(home)/_components/page-title-hero";
 

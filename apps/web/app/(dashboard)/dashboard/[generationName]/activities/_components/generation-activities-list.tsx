@@ -32,7 +32,9 @@ export default async function GenerationActivitiesList({
     <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Activities</p>
+          <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+            Activities
+          </p>
           <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
             {generationName} 활동 관리
           </h1>
@@ -61,7 +63,10 @@ export default async function GenerationActivitiesList({
           현재 기수에 등록된 활동이 없습니다.
         </p>
       ) : (
-        <ul className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3" data-testid="generation-activities-list">
+        <ul
+          className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+          data-testid="generation-activities-list"
+        >
           {activities.map((activity) => (
             <li key={activity.id}>
               <Link
@@ -80,7 +85,9 @@ export default async function GenerationActivitiesList({
                   />
                 </div>
                 <div className="p-4">
-                  <p className="text-base font-semibold text-slate-900">{activity.title}</p>
+                  <p className="text-base font-semibold text-slate-900">
+                    {activity.title}
+                  </p>
                   <p className="mt-1 text-xs text-slate-500">
                     {formatKoreanDateRange(activity.startDate, activity.endDate)}
                   </p>
@@ -88,7 +95,8 @@ export default async function GenerationActivitiesList({
                     {summarizeActivityDescription(activity.description)}
                   </p>
                   <p className="mt-3 text-xs text-slate-400">
-                    최근 수정: {formatKoreanDate(activity.updatedAt)} · {formatAuditActor(activity.updatedBy)}
+                    최근 수정: {formatKoreanDate(activity.updatedAt)} ·{" "}
+                    {formatAuditActor(activity.updatedBy)}
                   </p>
                 </div>
               </Link>

@@ -37,7 +37,10 @@ const createItemDraft = (id: number): LinktreeItemDraft => ({
   link: "",
 });
 
-export default function LinktreeCreateForm({ canWrite, listPath }: LinktreeCreateFormProps) {
+export default function LinktreeCreateForm({
+  canWrite,
+  listPath,
+}: LinktreeCreateFormProps) {
   const router = useRouter();
   const [groupName, setGroupName] = useState("");
   const [itemDrafts, setItemDrafts] = useState<LinktreeItemDraft[]>([createItemDraft(0)]);
@@ -100,7 +103,9 @@ export default function LinktreeCreateForm({ canWrite, listPath }: LinktreeCreat
       }
 
       if (!item.link || !isValidHttpUrl(item.link)) {
-        setErrorMessage(`${itemNumber}번째 링크 주소는 http:// 또는 https://로 시작해야 합니다.`);
+        setErrorMessage(
+          `${itemNumber}번째 링크 주소는 http:// 또는 https://로 시작해야 합니다.`,
+        );
         return;
       }
     }
@@ -140,8 +145,12 @@ export default function LinktreeCreateForm({ canWrite, listPath }: LinktreeCreat
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Settings / Linktree</p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">링크 모음 생성</h1>
+      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+        Settings / Linktree
+      </p>
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
+        링크 모음 생성
+      </h1>
       <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
         링크 분류를 만들고, 분류에 포함할 링크를 함께 등록할 수 있습니다.
       </p>
@@ -172,13 +181,18 @@ export default function LinktreeCreateForm({ canWrite, listPath }: LinktreeCreat
         <div className="space-y-2">
           <p className="text-sm font-semibold text-slate-900">링크 목록</p>
           {itemDrafts.map((item, index) => (
-            <div key={item.id} className="rounded-lg border border-slate-200 bg-white p-3">
+            <div
+              key={item.id}
+              className="rounded-lg border border-slate-200 bg-white p-3"
+            >
               <p className="text-xs font-semibold text-slate-500">링크 {index + 1}</p>
               <div className="mt-2 space-y-2">
                 <input
                   data-testid={`linktree-item-name-input-${index}`}
                   value={item.name}
-                  onChange={(event) => handleUpdateItemDraft(item.id, "name", event.target.value)}
+                  onChange={(event) =>
+                    handleUpdateItemDraft(item.id, "name", event.target.value)
+                  }
                   disabled={isSaving}
                   placeholder="링크 이름"
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
@@ -186,7 +200,9 @@ export default function LinktreeCreateForm({ canWrite, listPath }: LinktreeCreat
                 <input
                   data-testid={`linktree-item-link-input-${index}`}
                   value={item.link}
-                  onChange={(event) => handleUpdateItemDraft(item.id, "link", event.target.value)}
+                  onChange={(event) =>
+                    handleUpdateItemDraft(item.id, "link", event.target.value)
+                  }
                   disabled={isSaving}
                   placeholder="https://example.com"
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"

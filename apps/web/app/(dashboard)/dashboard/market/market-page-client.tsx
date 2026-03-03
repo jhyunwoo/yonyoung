@@ -4,7 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
-import type { ApiMarketItem, ApiMarketItemStatus } from "@/shared/contracts/api-contracts";
+import type {
+  ApiMarketItem,
+  ApiMarketItemStatus,
+} from "@/shared/contracts/api-contracts";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   type MarketViewer,
@@ -58,12 +61,19 @@ export default function MarketPageClient({ viewer }: { viewer: MarketViewer }) {
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Market</p>
-              <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">연영장터</h1>
-              <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
-                판매글 목록입니다. 카드를 클릭하면 상세 페이지에서 전체 정보를 확인할 수 있습니다.
+              <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+                Market
               </p>
-              <p className="mt-1 text-xs text-slate-500">접속 사용자: {viewer.displayName}</p>
+              <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
+                연영장터
+              </h1>
+              <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
+                판매글 목록입니다. 카드를 클릭하면 상세 페이지에서 전체 정보를 확인할 수
+                있습니다.
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                접속 사용자: {viewer.displayName}
+              </p>
             </div>
             <Link
               href="/dashboard/market/new"
@@ -79,7 +89,9 @@ export default function MarketPageClient({ viewer }: { viewer: MarketViewer }) {
             <h2 className="text-lg font-semibold text-slate-900">판매글 목록</h2>
             <select
               value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as "" | ApiMarketItemStatus)}
+              onChange={(event) =>
+                setStatusFilter(event.target.value as "" | ApiMarketItemStatus)
+              }
               className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
             >
               <option value="">전체 상태</option>
@@ -90,9 +102,15 @@ export default function MarketPageClient({ viewer }: { viewer: MarketViewer }) {
           </div>
 
           {isLoadingItems ? (
-            <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-hidden="true">
+            <ul
+              className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+              aria-hidden="true"
+            >
               {Array.from({ length: 6 }).map((_, index) => (
-                <li key={`market-grid-loading-${index + 1}`} className="rounded-xl border border-slate-200 bg-white p-3">
+                <li
+                  key={`market-grid-loading-${index + 1}`}
+                  className="rounded-xl border border-slate-200 bg-white p-3"
+                >
                   <Skeleton className="h-40 w-full" />
                   <Skeleton className="mt-3 h-5 w-3/4" />
                   <Skeleton className="mt-2 h-4 w-1/2" />
@@ -132,10 +150,14 @@ export default function MarketPageClient({ viewer }: { viewer: MarketViewer }) {
                       </span>
                     </div>
                     <div className="space-y-1 p-3">
-                      <p className="line-clamp-1 font-semibold text-slate-900">{item.name}</p>
+                      <p className="line-clamp-1 font-semibold text-slate-900">
+                        {item.name}
+                      </p>
                       <p className="text-sm text-slate-700">{formatPrice(item.price)}</p>
                       <p className="text-xs text-slate-500">판매자: {item.seller.name}</p>
-                      <p className="text-xs text-slate-500">게시일: {formatPostedDate(item.createdAt)}</p>
+                      <p className="text-xs text-slate-500">
+                        게시일: {formatPostedDate(item.createdAt)}
+                      </p>
                     </div>
                   </Link>
                 </li>

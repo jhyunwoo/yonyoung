@@ -1,6 +1,13 @@
 "use client";
 
-import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ChangeEvent,
+  type FormEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type {
   ApiAdminUpdateUserInput,
   ApiGeneration,
@@ -9,7 +16,10 @@ import type {
 import { AdminApiError } from "@/shared/http/http";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/upload-batch";
-import { PRESIGN_PATHS, uploadWithPresign } from "@/features/dashboard/api/admin-api/upload";
+import {
+  PRESIGN_PATHS,
+  uploadWithPresign,
+} from "@/features/dashboard/api/admin-api/upload";
 import { readFileList } from "@/features/media/upload/image-upload-state";
 import { buildMemberRoleLabel } from "@/features/dashboard/members/member-role-label";
 import {
@@ -94,9 +104,13 @@ export default function MemberEditForm({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
-  const [selectedImageObjectUrl, setSelectedImageObjectUrl] = useState<string | null>(null);
+  const [selectedImageObjectUrl, setSelectedImageObjectUrl] = useState<string | null>(
+    null,
+  );
   const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
-  const [showcaseUploadProgressPercent, setShowcaseUploadProgressPercent] = useState<number | null>(null);
+  const [showcaseUploadProgressPercent, setShowcaseUploadProgressPercent] = useState<
+    number | null
+  >(null);
   const profileFileInputRef = useRef<HTMLInputElement | null>(null);
   const showcaseFileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -110,7 +124,9 @@ export default function MemberEditForm({
     setStudentNumber(user.studentNumber ?? "");
     setPhoneNumber(user.phoneNumber ?? "");
     setRole((user.role as ApiAdminUpdateUserInput["role"]) ?? "regular_member");
-    setGenerationIds(user.generationIds ?? (user.generationId ? [user.generationId] : []));
+    setGenerationIds(
+      user.generationIds ?? (user.generationId ? [user.generationId] : []),
+    );
     replaceShowcaseImages(toShowcaseUploadImageItems(user.showcaseImageUrls));
     setSelectedImageFile(null);
     setSelectedImageObjectUrl((previous) => {
@@ -160,7 +176,9 @@ export default function MemberEditForm({
 
     const remainingSlots = SHOWCASE_MAX_IMAGES - showcaseImageItems.length;
     if (remainingSlots <= 0) {
-      setErrorMessage(`대표 작품 사진은 최대 ${SHOWCASE_MAX_IMAGES}장까지 등록할 수 있습니다.`);
+      setErrorMessage(
+        `대표 작품 사진은 최대 ${SHOWCASE_MAX_IMAGES}장까지 등록할 수 있습니다.`,
+      );
       setSuccessMessage(null);
       return;
     }
@@ -225,7 +243,9 @@ export default function MemberEditForm({
     [showcaseImageItems],
   );
   const isShowcaseUploadDisabled =
-    isSaving || isUploadingShowcaseImages || showcaseImageUrls.length >= SHOWCASE_MAX_IMAGES;
+    isSaving ||
+    isUploadingShowcaseImages ||
+    showcaseImageUrls.length >= SHOWCASE_MAX_IMAGES;
 
   const toggleGeneration = (generationId: string) => {
     setGenerationIds((previous) => {
@@ -330,7 +350,9 @@ export default function MemberEditForm({
       }
     >
       <h2 className="text-lg font-bold text-slate-900">사용자 정보 수정</h2>
-      <p className="mt-2 text-sm text-slate-600">권한이 있는 운영자는 사용자 정보를 수정할 수 있습니다.</p>
+      <p className="mt-2 text-sm text-slate-600">
+        권한이 있는 운영자는 사용자 정보를 수정할 수 있습니다.
+      </p>
 
       <form className="mt-5 space-y-4" onSubmit={handleSubmit} noValidate>
         <div className="grid gap-4 md:grid-cols-2">
@@ -348,7 +370,9 @@ export default function MemberEditForm({
             <span className="font-medium">역할</span>
             <select
               value={role}
-              onChange={(event) => setRole(event.target.value as ApiAdminUpdateUserInput["role"])}
+              onChange={(event) =>
+                setRole(event.target.value as ApiAdminUpdateUserInput["role"])
+              }
               disabled={isSaving}
               className="rounded-lg border border-slate-300 px-3 py-2"
             >
@@ -363,7 +387,9 @@ export default function MemberEditForm({
 
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <p className="text-sm font-semibold text-slate-900">프로필 이미지</p>
-          <p className="mt-1 text-xs text-slate-500">사진 파일을 선택해 프로필 이미지를 바꿀 수 있습니다.</p>
+          <p className="mt-1 text-xs text-slate-500">
+            사진 파일을 선택해 프로필 이미지를 바꿀 수 있습니다.
+          </p>
 
           <div className="mt-3 flex items-center gap-4">
             <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-50">
@@ -524,7 +550,10 @@ export default function MemberEditForm({
           {isLoadingGenerations ? (
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
               {Array.from({ length: 6 }).map((_, index) => (
-                <Skeleton key={`member-generation-loading-${index + 1}`} className="h-9 w-full" />
+                <Skeleton
+                  key={`member-generation-loading-${index + 1}`}
+                  className="h-9 w-full"
+                />
               ))}
             </div>
           ) : allGenerations.length === 0 ? (

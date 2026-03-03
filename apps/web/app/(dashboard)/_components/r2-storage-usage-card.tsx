@@ -42,7 +42,9 @@ export default function R2StorageUsageCard({ stats }: R2StorageUsageCardProps) {
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-lg font-bold text-slate-900">파일 저장공간 사용량</h2>
-        <span className="text-xs font-semibold text-slate-500">한도 {formatBytes(limitBytes)}</span>
+        <span className="text-xs font-semibold text-slate-500">
+          한도 {formatBytes(limitBytes)}
+        </span>
       </div>
 
       {isAvailable ? (

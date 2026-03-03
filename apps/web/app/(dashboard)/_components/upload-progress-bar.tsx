@@ -33,7 +33,9 @@ export default function UploadProgressBar({
 
   return (
     <div className={wrapperClassName}>
-      <p className="text-xs text-slate-500">{label}: {normalizedProgress}%</p>
+      <p className="text-xs text-slate-500">
+        {label}: {normalizedProgress}%
+      </p>
       <div
         className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-200"
         role="progressbar"

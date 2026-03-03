@@ -11,10 +11,15 @@ import {
 import { buildMemberRoleLabel } from "@/features/dashboard/members/member-role-label";
 
 type GenerationMembersGridProps = {
-  generation: Pick<ApiPublicGenerationWithMembers, "id" | "name" | "sortOrder" | "members">;
+  generation: Pick<
+    ApiPublicGenerationWithMembers,
+    "id" | "name" | "sortOrder" | "members"
+  >;
 };
 
-export default function GenerationMembersGrid({ generation }: GenerationMembersGridProps) {
+export default function GenerationMembersGrid({
+  generation,
+}: GenerationMembersGridProps) {
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const shouldReduceMotion = useReducedMotion();
 
@@ -69,10 +74,9 @@ export default function GenerationMembersGrid({ generation }: GenerationMembersG
   const selectedMemberRoleLabel = selectedMember
     ? buildMemberRoleLabel(selectedMember.role)
     : "역할 미지정";
-  const selectedMemberPersonalLink =
-    selectedMember?.personalLink?.trim().length
-      ? selectedMember.personalLink.trim()
-      : null;
+  const selectedMemberPersonalLink = selectedMember?.personalLink?.trim().length
+    ? selectedMember.personalLink.trim()
+    : null;
   const selectedMemberShowcaseImageUrls = (
     selectedMember?.showcaseImageUrls ?? []
   ).filter((imageUrl) => imageUrl.trim().length > 0);
@@ -164,7 +168,9 @@ export default function GenerationMembersGrid({ generation }: GenerationMembersG
               data-testid="about-photographers-member-modal-card"
               initial={shouldReduceMotion ? false : { opacity: 0, y: 28, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.98 }}
+              exit={
+                shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.98 }
+              }
               transition={
                 shouldReduceMotion
                   ? { duration: 0 }
@@ -226,7 +232,9 @@ export default function GenerationMembersGrid({ generation }: GenerationMembersG
                 <dl className="mt-8 border-t border-(--surface-border) text-sm">
                   <div className="flex items-center justify-between gap-3 border-b border-(--surface-border) py-4">
                     <dt className="text-(--text-muted)">기수</dt>
-                    <dd className="font-medium text-(--text-primary)">{generationDisplayName}</dd>
+                    <dd className="font-medium text-(--text-primary)">
+                      {generationDisplayName}
+                    </dd>
                   </div>
                   <div className="flex items-center justify-between gap-3 border-b border-(--surface-border) py-4">
                     <dt className="text-(--text-muted)">역할</dt>
@@ -277,7 +285,9 @@ export default function GenerationMembersGrid({ generation }: GenerationMembersG
                   className="mt-8"
                   data-testid="about-photographers-member-showcase-section"
                 >
-                  <h4 className="text-sm font-semibold text-(--text-primary)">대표 작품 사진</h4>
+                  <h4 className="text-sm font-semibold text-(--text-primary)">
+                    대표 작품 사진
+                  </h4>
                   {selectedMemberShowcaseImageUrls.length > 0 ? (
                     <ul className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3">
                       {selectedMemberShowcaseImageUrls.map((imageUrl, index) => (

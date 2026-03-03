@@ -3,10 +3,7 @@ import Link from "next/link";
 import { readCookieHeader } from "@/shared/http/http";
 import { listCachedExhibitions } from "@/features/dashboard/cache/admin-dashboard-cache";
 import { formatAuditActor } from "@/features/dashboard/ui/audit-display";
-import {
-  formatKoreanDate,
-  formatKoreanDateRange,
-} from "@/shared/utils/date-formatters";
+import { formatKoreanDate, formatKoreanDateRange } from "@/shared/utils/date-formatters";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import {
   sortExhibitionsByStartDateDesc,
@@ -35,7 +32,9 @@ export default async function GenerationExhibitionsList({
     <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Exhibitions</p>
+          <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+            Exhibitions
+          </p>
           <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
             {generationName} 전시 관리
           </h1>
@@ -64,7 +63,10 @@ export default async function GenerationExhibitionsList({
           현재 기수에 등록된 전시가 없습니다.
         </p>
       ) : (
-        <ul className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3" data-testid="generation-exhibitions-list">
+        <ul
+          className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+          data-testid="generation-exhibitions-list"
+        >
           {exhibitions.map((exhibition) => (
             <li key={exhibition.id}>
               <Link
@@ -83,7 +85,9 @@ export default async function GenerationExhibitionsList({
                   />
                 </div>
                 <div className="p-4">
-                  <p className="text-base font-semibold text-slate-900">{exhibition.title}</p>
+                  <p className="text-base font-semibold text-slate-900">
+                    {exhibition.title}
+                  </p>
                   <p className="mt-1 text-xs text-slate-500">
                     {formatKoreanDateRange(exhibition.startDate, exhibition.endDate)}
                   </p>
@@ -92,7 +96,8 @@ export default async function GenerationExhibitionsList({
                     {summarizeExhibitionDescription(exhibition.description)}
                   </p>
                   <p className="mt-3 text-xs text-slate-400">
-                    최근 수정: {formatKoreanDate(exhibition.updatedAt)} · {formatAuditActor(exhibition.updatedBy)}
+                    최근 수정: {formatKoreanDate(exhibition.updatedAt)} ·{" "}
+                    {formatAuditActor(exhibition.updatedBy)}
                   </p>
                 </div>
               </Link>

@@ -1,4 +1,8 @@
-import { clearTimeoutController, createTimeoutController, resolveApiBaseUrl } from "@/shared/http/http";
+import {
+  clearTimeoutController,
+  createTimeoutController,
+  resolveApiBaseUrl,
+} from "@/shared/http/http";
 import type { AuthSession } from "@/features/auth/model/auth-shared";
 
 const SESSION_PATH = "/api/auth/get-session";

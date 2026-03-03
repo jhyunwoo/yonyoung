@@ -20,7 +20,8 @@ export default async function DashboardPage() {
             연영회에 오신 것을 환영합니다.
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-slate-600">
-            왼쪽 메뉴에서 관리할 기수를 선택하면 공지, 활동, 전시 관리를 바로 시작할 수 있습니다.
+            왼쪽 메뉴에서 관리할 기수를 선택하면 공지, 활동, 전시 관리를 바로 시작할 수
+            있습니다.
           </p>
           <div className="mt-5">
             <a

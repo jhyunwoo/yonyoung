@@ -10,7 +10,10 @@ export default function DashboardProfileLoading() {
           <Skeleton className="h-3 w-full max-w-lg" />
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             {Array.from({ length: 6 }).map((_, index) => (
-              <Skeleton key={`dashboard-profile-loading-field-${index + 1}`} className="h-10 w-full" />
+              <Skeleton
+                key={`dashboard-profile-loading-field-${index + 1}`}
+                className="h-10 w-full"
+              />
             ))}
           </div>
           <Skeleton className="h-24 w-full" />

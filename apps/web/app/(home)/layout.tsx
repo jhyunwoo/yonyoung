@@ -1,13 +1,20 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ReactNode, Suspense } from "react";
+import { Noto_Sans_KR } from "next/font/google";
 import SiteHeader from "@/app/(home)/_components/site-header";
 import SiteFooter from "@/app/(home)/_components/site-footer";
 import PublicHeaderSafeArea from "@/app/(home)/_components/public-header-safe-area";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 import { WebVitalsReporter } from "@/app/_components/web-vitals-reporter";
-import { SpeedInsights } from '@vercel/speed-insights/next';
-import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
+
+const notoSansKr = Noto_Sans_KR({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  display: "swap",
+});
 
 export const metadata: Metadata = createPageMetadata({
   title: "연영회 | 연세대학교 중앙사진동아리",
@@ -70,7 +77,9 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: INLINE_THEME_INIT_SCRIPT }} />
       </head>
-      <body className="min-h-screen bg-(--bg-primary) text-(--text-primary) antialiased">
+      <body
+        className={`${notoSansKr.className} min-h-screen bg-(--bg-primary) text-(--text-primary) antialiased`}
+      >
         <Suspense fallback={null}>
           <WebVitalsReporter />
         </Suspense>

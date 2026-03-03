@@ -2,7 +2,10 @@ import Link from "next/link";
 
 export default function HomeNotFoundPage() {
   return (
-    <section className="px-4 pb-16 pt-10 md:px-8 md:pb-20" data-testid="home-not-found-page">
+    <section
+      className="px-4 pb-16 pt-10 md:px-8 md:pb-20"
+      data-testid="home-not-found-page"
+    >
       <div className="mx-auto w-full max-w-[1200px] border border-(--surface-border) p-7 md:p-10">
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-(--text-muted)">
           404 Not Found
