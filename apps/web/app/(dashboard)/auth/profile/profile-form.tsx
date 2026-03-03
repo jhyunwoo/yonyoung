@@ -149,9 +149,7 @@ export default function AuthProfileForm({
   const [givenName, setGivenName] = useState(initialProfile.givenName);
   const [college, setCollege] = useState(initialProfile.college);
   const [department, setDepartment] = useState(initialProfile.department);
-  const [studentNumber, setStudentNumber] = useState(
-    initialProfile.studentNumber,
-  );
+  const [studentNumber, setStudentNumber] = useState(initialProfile.studentNumber);
   const [phoneNumber, setPhoneNumber] = useState(initialProfile.phoneNumber);
   const [collaborationAvailable, setCollaborationAvailable] = useState(
     initialProfile.collaborationAvailable,
@@ -169,17 +167,14 @@ export default function AuthProfileForm({
   });
 
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
-  const [selectedImageObjectUrl, setSelectedImageObjectUrl] = useState<
-    string | null
-  >(null);
-  const [uploadProgressPercent, setUploadProgressPercent] = useState<
-    number | null
-  >(null);
+  const [selectedImageObjectUrl, setSelectedImageObjectUrl] = useState<string | null>(
+    null,
+  );
+  const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
   const [showcaseUploadProgressPercent, setShowcaseUploadProgressPercent] = useState<
     number | null
   >(null);
-  const [isUploadingShowcaseImages, setIsUploadingShowcaseImages] =
-    useState(false);
+  const [isUploadingShowcaseImages, setIsUploadingShowcaseImages] = useState(false);
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -223,9 +218,7 @@ export default function AuthProfileForm({
     setSelectedImageObjectUrl(objectUrl);
   };
 
-  const handleShowcaseFilesChange = async (
-    event: ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleShowcaseFilesChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = readFileList(event.target.files);
     event.target.value = "";
     if (files.length === 0) {
@@ -329,8 +322,8 @@ export default function AuthProfileForm({
         });
       }
 
-      const normalizedShowcaseImageUrls =
-        normalizeShowcaseImageUrls(showcaseImageUrls);
+      const normalizedShowcaseImageUrls = normalizeShowcaseImageUrls(showcaseImageUrls);
+      const trimmedPersonalLink = personalLink.trim();
 
       const payload: ApiMemberProfileUpdateInput = {
         familyName: familyName.trim(),
@@ -340,9 +333,10 @@ export default function AuthProfileForm({
         studentNumber: studentNumber.trim(),
         phoneNumber: phoneNumber.trim(),
         collaborationAvailable,
-        personalLink:
-          personalLink.trim().length > 0 ? personalLink.trim() : null,
       };
+      if (trimmedPersonalLink.length > 0) {
+        payload.personalLink = trimmedPersonalLink;
+      }
 
       if (canEditProfileImage) {
         payload.image = nextImageValue.length > 0 ? nextImageValue : null;
@@ -382,9 +376,7 @@ export default function AuthProfileForm({
       }
 
       setSubmitSuccess(
-        isDashboardMode
-          ? "개인 프로필이 저장되었습니다."
-          : "기본 정보가 저장되었습니다.",
+        isDashboardMode ? "개인 프로필이 저장되었습니다." : "기본 정보가 저장되었습니다.",
       );
       router.refresh();
     } catch (error) {
@@ -402,41 +394,39 @@ export default function AuthProfileForm({
       className={
         isDashboardMode
           ? "px-4 py-6 md:px-8 md:py-8"
-          : "flex min-h-screen w-full items-center justify-center bg-white px-4 py-12 text-slate-900"
+          : "flex min-h-screen w-full items-center justify-center bg-white dark:bg-slate-900 px-4 py-12 text-slate-900 dark:text-slate-50"
       }
     >
       <section
         className={
           isDashboardMode
-            ? "mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8"
-            : "w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8"
+            ? "mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8"
+            : "w-full max-w-2xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8"
         }
       >
-        <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+        <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
           {isDashboardMode ? "My Profile" : "Profile Setup"}
         </p>
         <h1 className="mt-2 text-2xl font-bold">
           {isDashboardMode ? "개인 프로필" : "기본 정보 입력"}
         </h1>
-        <p className="mt-3 text-sm leading-relaxed text-slate-600">
+        <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
           {isDashboardMode
             ? "개인 정보와 프로필 사진을 수정할 수 있습니다."
             : "대시보드 이용을 위해 기본 정보를 입력해 주세요."}
         </p>
 
         <form className="mt-7 space-y-5" onSubmit={handleSubmit} noValidate>
-          <div className="rounded-xl border border-slate-200 p-4">
-            <p className="text-sm font-semibold text-slate-900">
-              프로필 이미지
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
+          <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">프로필 이미지</p>
+            <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
               {canEditProfileImage
                 ? "프로필 사진을 수정할 수 있습니다."
                 : "현재 권한에서는 프로필 사진을 수정할 수 없습니다."}
             </p>
 
             <div className="mt-3 flex items-center gap-4">
-              <div className="h-16 w-16 shrink-0 aspect-square overflow-hidden rounded-full border border-slate-200 bg-slate-50">
+              <div className="h-16 w-16 shrink-0 aspect-square overflow-hidden rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
                 {imagePreviewUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -445,7 +435,7 @@ export default function AuthProfileForm({
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+                  <div className="flex h-full w-full items-center justify-center text-xs text-slate-600 dark:text-slate-300">
                     없음
                   </div>
                 )}
@@ -453,9 +443,10 @@ export default function AuthProfileForm({
 
               <button
                 type="button"
+                data-testid="auth-profile-image-select"
                 onClick={handleProfileImageUploadClick}
                 disabled={!canEditProfileImage || isSaving}
-                className="inline-flex rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 사진 선택
               </button>
@@ -473,19 +464,16 @@ export default function AuthProfileForm({
           </div>
 
           {isDashboardMode && canEditProfileImage ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <p className="text-sm font-semibold text-slate-900">
-                대표 작품 사진
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                최대 {SHOWCASE_MAX_IMAGES}장
-              </p>
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">대표 작품 사진</p>
+              <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">최대 {SHOWCASE_MAX_IMAGES}장</p>
 
               <button
                 type="button"
+                data-testid="auth-profile-showcase-select"
                 onClick={handleShowcaseUploadClick}
                 disabled={isShowcaseUploadDisabled}
-                className="mt-3 inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-3 inline-flex rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 사진 선택
               </button>
@@ -500,9 +488,7 @@ export default function AuthProfileForm({
               />
 
               {isUploadingShowcaseImages ? (
-                <p className="mt-2 text-xs text-slate-500">
-                  대표 작품 사진 업로드 중...
-                </p>
+                <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">대표 작품 사진 업로드 중...</p>
               ) : null}
               <UploadProgressBar
                 progressPercent={showcaseUploadProgressPercent}
@@ -510,7 +496,7 @@ export default function AuthProfileForm({
               />
 
               <div className="mt-3 space-y-2">
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-600 dark:text-slate-300">
                   마우스로 끌어 대표 작품 사진 순서를 바꿀 수 있습니다.
                 </p>
                 <SortableImageGrid
@@ -538,13 +524,11 @@ export default function AuthProfileForm({
                 value={familyName}
                 onChange={(event) => setFamilyName(event.target.value)}
                 disabled={isSaving}
-                className="rounded-lg border border-slate-300 px-3 py-2"
+                className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
                 autoComplete="family-name"
               />
               {fieldErrors.familyName ? (
-                <span className="text-xs text-red-600">
-                  {fieldErrors.familyName}
-                </span>
+                <span className="text-xs text-red-600">{fieldErrors.familyName}</span>
               ) : null}
             </label>
 
@@ -554,13 +538,11 @@ export default function AuthProfileForm({
                 value={givenName}
                 onChange={(event) => setGivenName(event.target.value)}
                 disabled={isSaving}
-                className="rounded-lg border border-slate-300 px-3 py-2"
+                className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
                 autoComplete="given-name"
               />
               {fieldErrors.givenName ? (
-                <span className="text-xs text-red-600">
-                  {fieldErrors.givenName}
-                </span>
+                <span className="text-xs text-red-600">{fieldErrors.givenName}</span>
               ) : null}
             </label>
           </div>
@@ -572,15 +554,11 @@ export default function AuthProfileForm({
                 value={college}
                 onChange={(event) => setCollege(event.target.value)}
                 disabled={isSaving}
-                className="rounded-lg border border-slate-300 px-3 py-2"
-                placeholder={
-                  isDashboardMode ? undefined : AUTH_COLLEGE_PLACEHOLDER
-                }
+                className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
+                placeholder={isDashboardMode ? undefined : AUTH_COLLEGE_PLACEHOLDER}
               />
               {fieldErrors.college ? (
-                <span className="text-xs text-red-600">
-                  {fieldErrors.college}
-                </span>
+                <span className="text-xs text-red-600">{fieldErrors.college}</span>
               ) : null}
             </label>
 
@@ -590,15 +568,11 @@ export default function AuthProfileForm({
                 value={department}
                 onChange={(event) => setDepartment(event.target.value)}
                 disabled={isSaving}
-                className="rounded-lg border border-slate-300 px-3 py-2"
-                placeholder={
-                  isDashboardMode ? undefined : AUTH_DEPARTMENT_PLACEHOLDER
-                }
+                className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
+                placeholder={isDashboardMode ? undefined : AUTH_DEPARTMENT_PLACEHOLDER}
               />
               {fieldErrors.department ? (
-                <span className="text-xs text-red-600">
-                  {fieldErrors.department}
-                </span>
+                <span className="text-xs text-red-600">{fieldErrors.department}</span>
               ) : null}
             </label>
           </div>
@@ -611,13 +585,11 @@ export default function AuthProfileForm({
                 onChange={handleStudentNumberChange}
                 inputMode="numeric"
                 disabled={isSaving}
-                className="rounded-lg border border-slate-300 px-3 py-2"
+                className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
                 placeholder="2026000123"
               />
               {fieldErrors.studentNumber ? (
-                <span className="text-xs text-red-600">
-                  {fieldErrors.studentNumber}
-                </span>
+                <span className="text-xs text-red-600">{fieldErrors.studentNumber}</span>
               ) : null}
             </label>
 
@@ -628,13 +600,11 @@ export default function AuthProfileForm({
                 onChange={handlePhoneNumberChange}
                 inputMode="tel"
                 disabled={isSaving}
-                className="rounded-lg border border-slate-300 px-3 py-2"
+                className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
                 placeholder="010-0000-0000"
               />
               {fieldErrors.phoneNumber ? (
-                <span className="text-xs text-red-600">
-                  {fieldErrors.phoneNumber}
-                </span>
+                <span className="text-xs text-red-600">{fieldErrors.phoneNumber}</span>
               ) : null}
             </label>
           </div>
@@ -648,7 +618,7 @@ export default function AuthProfileForm({
                   setCollaborationAvailable(event.target.value === "true")
                 }
                 disabled={isSaving}
-                className="rounded-lg border border-slate-300 px-3 py-2"
+                className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
               >
                 <option value="true">가능</option>
                 <option value="false">불가</option>
@@ -656,40 +626,33 @@ export default function AuthProfileForm({
             </label>
 
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium">개인 링크</span>
+              <span className="font-medium">개인 링크 (선택)</span>
               <input
                 value={personalLink}
                 onChange={(event) => setPersonalLink(event.target.value)}
                 disabled={isSaving}
-                className="rounded-lg border border-slate-300 px-3 py-2"
+                className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
                 placeholder="https://example.com/my-link"
                 inputMode="url"
               />
               {fieldErrors.personalLink ? (
-                <span className="text-xs text-red-600">
-                  {fieldErrors.personalLink}
-                </span>
+                <span className="text-xs text-red-600">{fieldErrors.personalLink}</span>
               ) : null}
             </label>
           </div>
 
-          {submitError ? (
-            <p className="text-sm text-red-600">{submitError}</p>
-          ) : null}
+          {submitError ? <p className="text-sm text-red-600">{submitError}</p> : null}
           {submitSuccess ? (
             <p className="text-sm text-emerald-700">{submitSuccess}</p>
           ) : null}
 
           <button
             type="submit"
+            data-testid="auth-profile-submit"
             disabled={isSaving || isUploadingShowcaseImages}
             className="inline-flex w-full items-center justify-center rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSaving
-              ? "저장 중..."
-              : isDashboardMode
-                ? "프로필 저장"
-                : "기본 정보 저장"}
+            {isSaving ? "저장 중..." : isDashboardMode ? "프로필 저장" : "기본 정보 저장"}
           </button>
         </form>
       </section>

@@ -48,7 +48,7 @@ export default async function NoticeManager({
     scope === "global"
       ? "전체 공지는 회장과 부회장만 등록, 수정할 수 있고 삭제는 회장만 가능합니다."
       : "이 기수 공지는 회장, 부회장, 부장만 등록, 수정, 삭제할 수 있습니다.";
-  const generationIdOrNull = scope === "generation" ? generationId ?? null : null;
+  const generationIdOrNull = scope === "generation" ? (generationId ?? null) : null;
   let notices: NoticeItem[] = [];
 
   if (scope === "generation") {
@@ -66,10 +66,12 @@ export default async function NoticeManager({
       : notices;
 
   return (
-    <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Notices</p>
+    <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
+      <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
+        Notices
+      </p>
       <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">{heading}</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">{heading}</h1>
         {canWrite ? (
           <Link
             href={createPath}
@@ -79,16 +81,18 @@ export default async function NoticeManager({
           </Link>
         ) : null}
       </div>
-      <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">{description}</p>
+      <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
+        {description}
+      </p>
 
       {!canWrite ? (
-        <p className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+        <p className="mt-4 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
           {readOnlyMessage}
         </p>
       ) : null}
 
       {visibleNotices.length === 0 ? (
-        <p className="mt-6 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+        <p className="mt-6 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-6 text-sm text-slate-600 dark:text-slate-300">
           {emptyMessage}
         </p>
       ) : (
@@ -97,15 +101,15 @@ export default async function NoticeManager({
             <li key={notice.id}>
               <Link
                 href={`${basePath}/${notice.id}`}
-                className="block rounded-xl border border-slate-200 p-4 transition hover:border-slate-300 hover:bg-slate-50"
+                className="block rounded-xl border border-slate-200 dark:border-slate-700 p-4 transition hover:border-slate-300 hover:bg-slate-50"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-base font-semibold text-slate-900">
+                  <p className="text-base font-semibold text-slate-900 dark:text-slate-50">
                     {truncateNoticeTitle(notice.title)}
                   </p>
-                  <span className="text-xs font-semibold text-slate-500">상세 보기</span>
+                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">상세 보기</span>
                 </div>
-                <p className="mt-3 text-xs text-slate-500">
+                <p className="mt-3 text-xs text-slate-600 dark:text-slate-300">
                   작성일: {formatKoreanDate(notice.createdAt)}
                 </p>
               </Link>

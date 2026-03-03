@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  type ReactNode,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -71,7 +65,8 @@ const SidebarContent = (input: {
     canManagePrivilegedSettings: isPresidentOrVicePresidentRole(input.viewer?.role),
   });
   const isSettingsSectionActive =
-    input.pathname === "/dashboard/settings" || input.pathname.startsWith("/dashboard/settings/");
+    input.pathname === "/dashboard/settings" ||
+    input.pathname.startsWith("/dashboard/settings/");
   const [isSettingsExpanded, setIsSettingsExpanded] = useState(isSettingsSectionActive);
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -153,8 +148,7 @@ const SidebarContent = (input: {
           href: `${input.selectedGeneration.path}/exhibitions`,
           label: "전시",
           Icon: Camera,
-          active:
-            input.selectedGenerationScopedPath?.startsWith("/exhibitions") === true,
+          active: input.selectedGenerationScopedPath?.startsWith("/exhibitions") === true,
         },
         {
           key: "generation-members",
@@ -217,9 +211,13 @@ const SidebarContent = (input: {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-slate-200 px-5 py-5">
-        <Link href="/dashboard" onClick={input.onNavigate} className="flex items-center gap-3">
-          <span className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
+      <div className="border-b border-slate-200 dark:border-slate-700 px-5 py-5">
+        <Link
+          href="/dashboard"
+          onClick={input.onNavigate}
+          className="flex items-center gap-3"
+        >
+          <span className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
             <Image
               src="/yonyoung-logo-black.png"
               alt="연영회 로고"
@@ -230,9 +228,9 @@ const SidebarContent = (input: {
             />
           </span>
           <div className="min-w-0">
-            <p className="text-lg font-bold text-slate-900">연영회 대시보드</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-slate-50">연영회 대시보드</p>
             {currentGeneration ? (
-              <p className="mt-1 text-xs font-semibold text-slate-500">
+              <p className="mt-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
                 현재 기수: {currentGeneration.name}
               </p>
             ) : null}
@@ -240,7 +238,7 @@ const SidebarContent = (input: {
         </Link>
 
         {!currentGeneration && input.generationOptions.length === 0 ? (
-          <p className="mt-2 text-xs leading-relaxed text-slate-500">
+          <p className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
             현재 소속된 기수 정보가 없습니다.
           </p>
         ) : null}
@@ -272,7 +270,7 @@ const SidebarContent = (input: {
                   className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
                     active
                       ? "bg-slate-900 text-white"
-                      : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                      : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-50"
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -285,11 +283,12 @@ const SidebarContent = (input: {
           <motion.li layout={!shouldReduceMotion}>
             <button
               type="button"
+              data-testid="dashboard-settings-toggle"
               onClick={() => setIsSettingsExpanded((previous) => !previous)}
               className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${
                 isSettingsSectionActive
                   ? "bg-slate-900 text-white"
-                  : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                  : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-50"
               }`}
               aria-expanded={isSettingsExpanded}
             >
@@ -343,8 +342,8 @@ const SidebarContent = (input: {
                           onClick={input.onNavigate}
                           className={`block rounded-lg px-3 py-2 text-sm transition ${
                             isSubItemActive
-                              ? "bg-slate-100 font-semibold text-slate-900"
-                              : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                              ? "bg-slate-100 dark:bg-slate-700 font-semibold text-slate-900 dark:text-slate-50"
+                              : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-50"
                           }`}
                         >
                           {settingsSubItem.label}
@@ -359,7 +358,7 @@ const SidebarContent = (input: {
         </ul>
       </nav>
 
-      <div className="border-t border-slate-200 p-3">
+      <div className="border-t border-slate-200 dark:border-slate-700 p-3">
         <div className="relative" ref={profileMenuRef}>
           <AnimatePresence initial={false}>
             {isProfileMenuOpen ? (
@@ -376,21 +375,22 @@ const SidebarContent = (input: {
                     ? { duration: 0 }
                     : { type: "spring", stiffness: 520, damping: 34, mass: 0.64 }
                 }
-                className="absolute bottom-full left-0 right-0 mb-2 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg"
+                className="absolute bottom-full left-0 right-0 mb-2 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg"
               >
                 <Link
                   href="/dashboard/profile"
                   onClick={handleProfileLinkClick}
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   <UserCircle2 className="h-4 w-4" />
                   <span>개인 프로필</span>
                 </Link>
                 <button
                   type="button"
+                  data-testid="dashboard-signout-button"
                   onClick={handleSignOutClick}
                   disabled={input.isSignOutPending}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>{input.isSignOutPending ? "로그아웃 중..." : "로그아웃"}</span>
@@ -401,12 +401,13 @@ const SidebarContent = (input: {
 
           <button
             type="button"
+            data-testid="dashboard-profile-menu-toggle"
             onClick={() => setIsProfileMenuOpen((previous) => !previous)}
-            className="flex w-full items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 text-left transition hover:bg-slate-50"
+            className="flex w-full items-center gap-3 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-left transition hover:bg-slate-50"
             aria-haspopup="menu"
             aria-expanded={isProfileMenuOpen}
           >
-            <div className="h-9 w-9 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+            <div className="h-9 w-9 overflow-hidden rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700">
               {viewerImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -415,21 +416,23 @@ const SidebarContent = (input: {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-500">
+                <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-600 dark:text-slate-300">
                   {avatarFallback}
                 </div>
               )}
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-slate-900">{viewerName}</p>
+              <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">
+                {viewerName}
+              </p>
               {viewerEmail ? (
-                <p className="truncate text-xs text-slate-500">{viewerEmail}</p>
+                <p className="truncate text-xs text-slate-600 dark:text-slate-300">{viewerEmail}</p>
               ) : null}
             </div>
 
             <ChevronDown
-              className={`h-4 w-4 text-slate-500 transition ${
+              className={`h-4 w-4 text-slate-600 dark:text-slate-300 transition ${
                 isProfileMenuOpen ? "rotate-180" : ""
               }`}
             />
@@ -460,8 +463,8 @@ const resolveActiveGenerationFromPath = (
   }
 
   return (
-    generationOptions.find(
-      (generation) => isSameGenerationRouteName(generation.name, routeName),
+    generationOptions.find((generation) =>
+      isSameGenerationRouteName(generation.name, routeName),
     ) ?? null
   );
 };
@@ -600,8 +603,8 @@ export default function DashboardShell({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-slate-200 bg-white md:block">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-50">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 md:block">
         <SidebarContent
           pathname={pathname}
           generationOptions={generationOptions}
@@ -615,12 +618,13 @@ export default function DashboardShell({
       </aside>
 
       <div className="md:pl-72">
-        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur md:hidden">
-          <p className="text-sm font-semibold text-slate-900">{activePageName}</p>
+        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/95 px-4 py-3 backdrop-blur md:hidden">
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{activePageName}</p>
           <button
             type="button"
+            data-testid="dashboard-mobile-sidebar-open"
             onClick={() => setMobileOpen(true)}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 text-slate-700 hover:bg-slate-100"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
             aria-label="사이드바 열기"
           >
             <Menu className="h-4 w-4" />
@@ -641,6 +645,7 @@ export default function DashboardShell({
           >
             <motion.button
               type="button"
+              data-testid="dashboard-mobile-sidebar-backdrop"
               aria-label="사이드바 닫기"
               className="absolute inset-0 bg-slate-900/40"
               onClick={() => setMobileOpen(false)}
@@ -654,7 +659,7 @@ export default function DashboardShell({
               transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2 }}
             />
             <motion.aside
-              className="absolute right-0 top-0 h-full w-[84%] max-w-sm border-l border-slate-200 bg-white shadow-2xl"
+              className="absolute right-0 top-0 h-full w-[84%] max-w-sm border-l border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl"
               initial={shouldReduceMotion ? false : { x: "100%", opacity: 0.98 }}
               animate={{ x: 0, opacity: 1 }}
               exit={
@@ -672,11 +677,12 @@ export default function DashboardShell({
                   : { type: "spring", stiffness: 330, damping: 32, mass: 0.7 }
               }
             >
-              <div className="flex items-center justify-end border-b border-slate-200 px-4 py-3">
+              <div className="flex items-center justify-end border-b border-slate-200 dark:border-slate-700 px-4 py-3">
                 <button
                   type="button"
+                  data-testid="dashboard-mobile-sidebar-close"
                   onClick={() => setMobileOpen(false)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 text-slate-700 hover:bg-slate-100"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                   aria-label="사이드바 닫기"
                 >
                   <X className="h-4 w-4" />

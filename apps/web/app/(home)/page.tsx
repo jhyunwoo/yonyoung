@@ -10,7 +10,7 @@ import {
   listPublicExhibitions,
   listPublicLinktrees,
   safeList,
-} from "@/features/public/api/public-api";
+} from "@/features/public/services/public-read-service";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import { summarizeRichTextHtml } from "@/features/media/rich-text/rich-text";
 import { resolveSiteUrl } from "@/features/seo/metadata/seo";
@@ -38,7 +38,10 @@ const HomeQuickLinksSection = async () => {
       title="자주 찾는 링크"
       description="공식 링크와 커뮤니티 채널을 한 번에 연결합니다."
     >
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="home-quicklinks-grid">
+      <div
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        data-testid="home-quicklinks-grid"
+      >
         {quickLinks.length === 0 ? (
           <div className="border border-(--surface-strong-border) bg-(--surface-elevated) p-6 text-sm text-(--text-muted)">
             공개 링크트리 항목이 없습니다.
@@ -59,9 +62,7 @@ const HomeQuickLinksSection = async () => {
                 <p className="mt-2 text-base font-semibold text-(--text-primary)">
                   {item.name}
                 </p>
-                <p className="mt-1 truncate text-xs text-(--text-muted)">
-                  {item.link}
-                </p>
+                <p className="mt-1 truncate text-xs text-(--text-muted)">{item.link}</p>
               </a>
             </MotionReveal>
           ))
@@ -131,7 +132,10 @@ export default async function HomePage() {
         title="최근 활동 기록"
         description="가장 최근의 연영회 활동을 사진과 함께 확인해보세요."
       >
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3" data-testid="home-activities-grid">
+        <div
+          className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3"
+          data-testid="home-activities-grid"
+        >
           {recentActivities.length === 0 ? (
             <div className="border border-(--surface-strong-border) bg-(--surface-elevated) p-6 text-sm text-(--text-muted)">
               아직 공개된 활동이 없습니다. 관리자에서 활동을 추가하면 여기에 반영됩니다.

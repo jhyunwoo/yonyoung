@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
 import MemberDetailClient from "@/app/(dashboard)/dashboard/[generationName]/members/[memberId]/member-detail-client";
 
@@ -25,8 +25,13 @@ export default async function GenerationMemberDetailPage({
   const [{ memberId: rawMemberId }, generation, session] = await Promise.all([
     params,
     requireDashboardGeneration(params),
-    serverAuthTool.requireSession(),
+    serverAuthGuard.requireSession(),
   ]);
+  const profile = await serverAuthGuard.getCurrentUserProfile(session);
+  const viewerId =
+    profile && typeof profile.id === "string" && profile.id.trim().length > 0
+      ? profile.id.trim()
+      : session.user.id;
 
   const memberId = decodeMemberId(rawMemberId);
   if (!memberId) {
@@ -38,7 +43,7 @@ export default async function GenerationMemberDetailPage({
       generation={generation}
       memberId={memberId}
       viewer={{
-        id: session.user.id,
+        id: viewerId,
         role: session.user.role ?? null,
       }}
     />

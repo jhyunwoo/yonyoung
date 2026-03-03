@@ -1,4 +1,4 @@
-import { isPresidentRole } from "@/features/auth/model/auth-shared";
+import { isPresidentOrVicePresidentRole } from "@/features/auth/model/auth-shared";
 import type { ApiGeneration } from "@/shared/contracts/api-contracts";
 
 type GenerationLike = Pick<ApiGeneration, "id" | "name" | "sortOrder">;
@@ -28,7 +28,7 @@ export const getAccessibleGenerations = <T extends GenerationLike>(
   }
 
   const sorted = sortBySortOrder(generations);
-  if (isPresidentRole(user.role)) {
+  if (isPresidentOrVicePresidentRole(user.role)) {
     return sorted;
   }
 

@@ -1,4 +1,4 @@
-import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { buildDashboardViewerProfile } from "@/features/dashboard/members/user-profile";
 import MarketItemEditPageClient from "@/app/(dashboard)/dashboard/market/[itemId]/edit/market-item-edit-page-client";
 
@@ -7,8 +7,8 @@ export default async function DashboardMarketItemEditPage({
 }: {
   params: Promise<{ itemId: string }>;
 }) {
-  const session = await serverAuthTool.requireSession();
-  const profile = await serverAuthTool.getCurrentUserProfile(session);
+  const session = await serverAuthGuard.requireSession();
+  const profile = await serverAuthGuard.getCurrentUserProfile(session);
   const viewer = buildDashboardViewerProfile(session.user, profile);
   const { itemId } = await params;
 

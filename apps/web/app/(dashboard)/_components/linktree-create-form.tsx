@@ -37,7 +37,10 @@ const createItemDraft = (id: number): LinktreeItemDraft => ({
   link: "",
 });
 
-export default function LinktreeCreateForm({ canWrite, listPath }: LinktreeCreateFormProps) {
+export default function LinktreeCreateForm({
+  canWrite,
+  listPath,
+}: LinktreeCreateFormProps) {
   const router = useRouter();
   const [groupName, setGroupName] = useState("");
   const [itemDrafts, setItemDrafts] = useState<LinktreeItemDraft[]>([createItemDraft(0)]);
@@ -100,7 +103,9 @@ export default function LinktreeCreateForm({ canWrite, listPath }: LinktreeCreat
       }
 
       if (!item.link || !isValidHttpUrl(item.link)) {
-        setErrorMessage(`${itemNumber}번째 링크 주소는 http:// 또는 https://로 시작해야 합니다.`);
+        setErrorMessage(
+          `${itemNumber}번째 링크 주소는 http:// 또는 https://로 시작해야 합니다.`,
+        );
         return;
       }
     }
@@ -128,7 +133,7 @@ export default function LinktreeCreateForm({ canWrite, listPath }: LinktreeCreat
 
   if (!canWrite) {
     return (
-      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
         <div className="space-y-3" aria-hidden="true">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-8 w-36" />
@@ -139,10 +144,14 @@ export default function LinktreeCreateForm({ canWrite, listPath }: LinktreeCreat
   }
 
   return (
-    <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Settings / Linktree</p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">링크 모음 생성</h1>
-      <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
+    <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
+      <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
+        Settings / Linktree
+      </p>
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
+        링크 모음 생성
+      </h1>
+      <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
         링크 분류를 만들고, 분류에 포함할 링크를 함께 등록할 수 있습니다.
       </p>
 
@@ -154,49 +163,57 @@ export default function LinktreeCreateForm({ canWrite, listPath }: LinktreeCreat
 
       <form
         data-testid="linktree-create-form"
-        className="mt-6 space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4"
+        className="mt-6 space-y-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4"
         onSubmit={handleSubmit}
       >
         <label className="block space-y-1">
-          <span className="text-sm font-semibold text-slate-900">분류 이름</span>
+          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">분류 이름</span>
           <input
             data-testid="linktree-group-name-input"
             value={groupName}
             onChange={(event) => setGroupName(event.target.value)}
             disabled={isSaving}
             placeholder="예: 공식 채널"
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
           />
         </label>
 
         <div className="space-y-2">
-          <p className="text-sm font-semibold text-slate-900">링크 목록</p>
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">링크 목록</p>
           {itemDrafts.map((item, index) => (
-            <div key={item.id} className="rounded-lg border border-slate-200 bg-white p-3">
-              <p className="text-xs font-semibold text-slate-500">링크 {index + 1}</p>
+            <div
+              key={item.id}
+              className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3"
+            >
+              <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">링크 {index + 1}</p>
               <div className="mt-2 space-y-2">
                 <input
                   data-testid={`linktree-item-name-input-${index}`}
                   value={item.name}
-                  onChange={(event) => handleUpdateItemDraft(item.id, "name", event.target.value)}
+                  onChange={(event) =>
+                    handleUpdateItemDraft(item.id, "name", event.target.value)
+                  }
                   disabled={isSaving}
                   placeholder="링크 이름"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm"
                 />
                 <input
                   data-testid={`linktree-item-link-input-${index}`}
                   value={item.link}
-                  onChange={(event) => handleUpdateItemDraft(item.id, "link", event.target.value)}
+                  onChange={(event) =>
+                    handleUpdateItemDraft(item.id, "link", event.target.value)
+                  }
                   disabled={isSaving}
                   placeholder="https://example.com"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm"
                 />
               </div>
               <button
                 type="button"
+                data-testid={`linktree-item-delete-button-${index}`}
                 onClick={() => handleRemoveItemDraft(item.id)}
                 disabled={isSaving || itemDrafts.length <= 1}
-                className="mt-2 rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-2 rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1 text-xs font-semibold text-slate-700 dark:text-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 링크 삭제
               </button>
@@ -208,7 +225,7 @@ export default function LinktreeCreateForm({ canWrite, listPath }: LinktreeCreat
             type="button"
             onClick={handleAddItemDraft}
             disabled={isSaving}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             링크 추가
           </button>
@@ -217,6 +234,7 @@ export default function LinktreeCreateForm({ canWrite, listPath }: LinktreeCreat
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="submit"
+            data-testid="linktree-create-submit"
             disabled={isSaving}
             className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
@@ -224,7 +242,7 @@ export default function LinktreeCreateForm({ canWrite, listPath }: LinktreeCreat
           </button>
           <Link
             href={listPath}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+            className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             취소
           </Link>

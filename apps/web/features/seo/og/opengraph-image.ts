@@ -104,9 +104,9 @@ export const decodeOpenGraphImagePayload = (
   encodedValue: string,
 ): OpenGraphImagePayload | null => {
   try {
-    const parsedValue = JSON.parse(fromBase64Url(encodedValue)) as Partial<
-      OpenGraphImagePayload
-    >;
+    const parsedValue = JSON.parse(
+      fromBase64Url(encodedValue),
+    ) as Partial<OpenGraphImagePayload>;
 
     return normalizeOpenGraphImagePayload(parsedValue);
   } catch {

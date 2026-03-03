@@ -79,7 +79,10 @@ export const listCachedActivities = async (
   cookieHeader: string | null,
 ): Promise<ApiActivity[]> => {
   const query = new URLSearchParams({ generationId });
-  return readAdminCollection<ApiActivity>(`/activities?${query.toString()}`, cookieHeader);
+  return readAdminCollection<ApiActivity>(
+    `/activities?${query.toString()}`,
+    cookieHeader,
+  );
 };
 
 export const listCachedExhibitions = async (

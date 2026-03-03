@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { isAdminRole } from "@/features/auth/model/auth-shared";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
 import ExhibitionCreateForm from "@/app/(dashboard)/dashboard/[generationName]/exhibitions/_components/exhibition-create-form";
@@ -11,7 +11,7 @@ export default async function GenerationExhibitionCreatePage({
 }>) {
   const [generation, session] = await Promise.all([
     requireDashboardGeneration(params),
-    serverAuthTool.requireSession(),
+    serverAuthGuard.requireSession(),
   ]);
 
   if (!isAdminRole(session.user.role)) {

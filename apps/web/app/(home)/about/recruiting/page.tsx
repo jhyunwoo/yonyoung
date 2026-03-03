@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
-import { getPublicCurrentRecruitingPlan } from "@/features/public/api/public-api";
+import { getPublicCurrentRecruitingPlan } from "@/features/public/services/public-read-service";
 import {
   HIGH_CONTRAST_RICH_TEXT_CLASS_NAMES,
   RichTextContent,
@@ -101,7 +101,6 @@ export default async function RecruitingPage() {
       <div className="mx-auto max-w-300 px-4 md:px-8">
         <PageTitleHero title="RECRUITING" description="연영회 모집 안내" />
         <main className="mx-auto w-full max-w-300 space-y-10 pb-16 md:pb-20">
-
           <section className="space-y-3 border border-(--surface-border) p-5">
             <h2 className="text-[1.7rem] font-semibold text-(--text-primary)">
               모집 안내
@@ -111,7 +110,10 @@ export default async function RecruitingPage() {
             </p>
           </section>
 
-          <section className="space-y-4 border border-(--surface-border) p-5" data-testid="about-recruiting-plan">
+          <section
+            className="space-y-4 border border-(--surface-border) p-5"
+            data-testid="about-recruiting-plan"
+          >
             <h2 className="text-[1.7rem] font-semibold text-(--text-primary)">
               올해 모집 계획
             </h2>
@@ -197,9 +199,7 @@ export default async function RecruitingPage() {
                     <h3 className="text-base font-semibold text-(--text-primary)">
                       {step.title}
                     </h3>
-                    <p className="text-sm text-(--text-muted)">
-                      {step.description}
-                    </p>
+                    <p className="text-sm text-(--text-muted)">{step.description}</p>
                   </div>
                 </article>
               ))}

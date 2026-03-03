@@ -1,5 +1,7 @@
 import type { AuthUser } from "@/features/auth/model/auth-shared";
-import { compactDisplayName, formatKoreanName } from "@/features/dashboard/members/display-name";
+import {
+  formatKoreanName,
+} from "@/features/dashboard/members/display-name";
 
 type EditableUserProfile = {
   image: string;
@@ -45,6 +47,23 @@ const readTrimmedStringByKey = (
 };
 
 const readTrimmedSessionString = (value: string | null | undefined): string | null => {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmedValue = value.trim();
+  return trimmedValue.length > 0 ? trimmedValue : null;
+};
+
+const readTrimmedRecordString = (
+  source: Record<string, unknown> | null | undefined,
+  key: string,
+): string | null => {
+  if (!source) {
+    return null;
+  }
+
+  const value = source[key];
   if (typeof value !== "string") {
     return null;
   }
@@ -117,9 +136,10 @@ export const buildDashboardViewerProfile = (
     readTrimmedStringByKey(profile, "givenName") ??
     readTrimmedSessionString(sessionUser.givenName);
   const image =
-    readTrimmedStringByKey(profile, "image") ?? readTrimmedSessionString(sessionUser.image);
+    readTrimmedStringByKey(profile, "image") ??
+    readTrimmedSessionString(sessionUser.image);
+  const profileId = readTrimmedRecordString(profile, "id");
 
-  const fallbackName = compactDisplayName(readTrimmedSessionString(sessionUser.name));
   const computedName = formatKoreanName({
     familyName,
     givenName,
@@ -129,11 +149,10 @@ export const buildDashboardViewerProfile = (
   });
 
   return {
-    id: sessionUser.id,
+    id: profileId ?? sessionUser.id,
     email: sessionUser.email,
     image,
     role: sessionUser.role ?? null,
-    displayName:
-      computedName === "이름 미등록" ? fallbackName ?? emailLocalPartName : computedName,
+    displayName: computedName === "이름 미등록" ? emailLocalPartName : computedName,
   };
 };

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Suspense } from "react";
 import { DEFAULT_SITE_SETTINGS } from "@/shared/contracts/api-contracts";
-import { getPublicSiteSettings } from "@/features/public/api/public-api";
+import { getPublicSiteSettings } from "@/features/public/services/public-read-service";
 import CurrentYear from "@/app/(home)/_components/current-year";
 
 const infoLabelClass = "text-[0.85rem] font-bold uppercase text-(--footer-muted)";
@@ -9,9 +9,7 @@ const infoContentClass = "break-all text-[0.9rem] leading-[1.6] text-(--footer-m
 const infoLinkClass = `${infoContentClass} inline-flex min-h-11 w-full items-center`;
 
 export default async function SiteFooter() {
-  const siteSettings = await getPublicSiteSettings().catch(
-    () => DEFAULT_SITE_SETTINGS,
-  );
+  const siteSettings = await getPublicSiteSettings().catch(() => DEFAULT_SITE_SETTINGS);
   const instagramId = siteSettings.footerInstagramId.replace(/^@+/, "");
   const instagramUrl = `https://www.instagram.com/${encodeURIComponent(instagramId)}`;
 
@@ -34,9 +32,7 @@ export default async function SiteFooter() {
               />
             </div>
             <div className="text-left text-[0.8rem] leading-[1.2] font-bold tracking-[-0.02em] text-(--footer-text)">
-              <span className="block tracking-[-0.05em]">
-                연세대학교 중앙사진동아리
-              </span>
+              <span className="block tracking-[-0.05em]">연세대학교 중앙사진동아리</span>
               연영회
             </div>
           </div>
@@ -80,16 +76,12 @@ export default async function SiteFooter() {
 
             <div className="flex flex-col gap-2">
               <span className={infoLabelClass}>HP</span>
-              <span className={infoContentClass}>
-                {siteSettings.footerPhone}
-              </span>
+              <span className={infoContentClass}>{siteSettings.footerPhone}</span>
             </div>
 
             <div className="flex flex-col gap-2">
               <span className={infoLabelClass}>주소</span>
-              <span className={infoContentClass}>
-                {siteSettings.footerAddress}
-              </span>
+              <span className={infoContentClass}>{siteSettings.footerAddress}</span>
             </div>
           </div>
         </div>

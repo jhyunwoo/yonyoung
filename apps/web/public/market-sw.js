@@ -16,19 +16,27 @@ const readPushPayload = (event) => {
 };
 
 const resolveNavigationUrl = (rawUrl) => {
-  const nextUrl = typeof rawUrl === "string" && rawUrl.trim().length > 0 ? rawUrl : DEFAULT_URL;
+  const nextUrl =
+    typeof rawUrl === "string" && rawUrl.trim().length > 0 ? rawUrl : DEFAULT_URL;
 
   try {
     return new URL(nextUrl, self.location?.origin ?? "https://example.com").toString();
   } catch {
-    return new URL(DEFAULT_URL, self.location?.origin ?? "https://example.com").toString();
+    return new URL(
+      DEFAULT_URL,
+      self.location?.origin ?? "https://example.com",
+    ).toString();
   }
 };
 
 self.addEventListener("push", (event) => {
   const payload = readPushPayload(event);
-  const title = typeof payload.title === "string" && payload.title.trim() ? payload.title : DEFAULT_TITLE;
-  const body = typeof payload.body === "string" && payload.body.trim() ? payload.body : DEFAULT_BODY;
+  const title =
+    typeof payload.title === "string" && payload.title.trim()
+      ? payload.title
+      : DEFAULT_TITLE;
+  const body =
+    typeof payload.body === "string" && payload.body.trim() ? payload.body : DEFAULT_BODY;
   const url = resolveNavigationUrl(payload.url);
 
   event.waitUntil(

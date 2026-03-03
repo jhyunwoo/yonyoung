@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { listPublicPhotographers, safeList } from "@/features/public/api/public-api";
+import {
+  listPublicPhotographers,
+  safeList,
+} from "@/features/public/services/public-read-service";
 import { formatKoreanYearRange } from "@/shared/utils/date-formatters";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 import GenerationMembersGrid from "@/app/(home)/about/photographers/generation-members-grid";
@@ -72,17 +75,12 @@ export default async function PhotographersPage() {
                   </div>
                   <p className="sr-only">
                     {generation.name} ·{" "}
-                    {formatKoreanYearRange(
-                      generation.startDate,
-                      generation.endDate,
-                    )}
+                    {formatKoreanYearRange(generation.startDate, generation.endDate)}
                   </p>
                 </header>
 
                 {generation.members.length === 0 ? (
-                  <p className="text-sm text-(--text-muted)">
-                    등록된 멤버가 없습니다.
-                  </p>
+                  <p className="text-sm text-(--text-muted)">등록된 멤버가 없습니다.</p>
                 ) : (
                   <GenerationMembersGrid generation={generation} />
                 )}

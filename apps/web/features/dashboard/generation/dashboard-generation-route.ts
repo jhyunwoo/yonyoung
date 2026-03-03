@@ -32,5 +32,8 @@ export const isSameGenerationRouteName = (
   leftName: string,
   rightRouteName: string,
 ): boolean => {
-  return normalizeGenerationName(leftName) === decodeDashboardGenerationRouteName(rightRouteName);
+  return (
+    normalizeGenerationName(leftName) ===
+    decodeDashboardGenerationRouteName(rightRouteName)
+  );
 };

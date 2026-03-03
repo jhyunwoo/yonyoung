@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
-import { listPublicGenerations, safeList } from "@/features/public/api/public-api";
+import {
+  listPublicGenerations,
+  safeList,
+} from "@/features/public/services/public-read-service";
 import { formatKoreanYearRange } from "@/shared/utils/date-formatters";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 import PageTitleHero from "@/app/(home)/_components/page-title-hero";
@@ -50,12 +53,14 @@ export default async function AboutPage() {
         className="mx-auto w-full max-w-[1200px] space-y-14 px-4 pb-16 md:px-8 md:pb-20"
         data-testid="about-page"
       >
-
         <section className="space-y-6" data-testid="about-annual-activities">
           <h2 className="text-[2rem] font-semibold text-(--text-primary)">연간 활동</h2>
           <div className="grid gap-4 md:grid-cols-2">
             {activityColumns.map((column, index) => (
-              <article key={`about-activities-${index}`} className="border border-(--surface-border) p-5">
+              <article
+                key={`about-activities-${index}`}
+                className="border border-(--surface-border) p-5"
+              >
                 <ul className="space-y-4">
                   {column.map((activity) => (
                     <li
@@ -90,7 +95,9 @@ export default async function AboutPage() {
                 className="border border-(--surface-border) p-4"
                 data-testid={`about-generation-card-${generation.id}`}
               >
-                <p className="text-sm font-semibold text-(--text-primary)">{generation.name}</p>
+                <p className="text-sm font-semibold text-(--text-primary)">
+                  {generation.name}
+                </p>
                 <p className="text-sm text-(--text-muted)">
                   {formatKoreanYearRange(generation.startDate, generation.endDate)}
                 </p>

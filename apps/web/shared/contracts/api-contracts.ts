@@ -23,7 +23,7 @@ export type DataEnvelope<T> = {
   data: T;
 };
 
-export type ApiKnownRole = CoreRole | "member";
+export type ApiKnownRole = CoreRole;
 export type ApiRole = ApiKnownRole | (string & {});
 
 export type ApiAuditResourceType =

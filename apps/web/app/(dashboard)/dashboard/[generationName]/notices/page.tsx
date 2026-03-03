@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import NoticeManager from "@/app/(dashboard)/_components/notice-manager";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
-import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { isAdminRole } from "@/features/auth/model/auth-shared";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -12,7 +12,7 @@ export default async function GenerationNoticesPage({
 }>) {
   const [generation, session] = await Promise.all([
     requireDashboardGeneration(params),
-    serverAuthTool.requireSession(),
+    serverAuthGuard.requireSession(),
   ]);
   const noticesBasePath = `${generation.path}/notices`;
 
@@ -20,14 +20,14 @@ export default async function GenerationNoticesPage({
     <main className="px-4 py-6 md:px-8 md:py-8">
       <Suspense
         fallback={
-          <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+          <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
             <div className="space-y-3" aria-hidden="true">
               <Skeleton className="h-4 w-28" />
               <Skeleton className="h-3 w-full max-w-xl" />
               {Array.from({ length: 4 }).map((_, index) => (
                 <div
                   key={`generation-notice-skeleton-${index + 1}`}
-                  className="rounded-lg border border-slate-200 p-3"
+                  className="rounded-lg border border-slate-200 dark:border-slate-700 p-3"
                 >
                   <Skeleton className="h-4 w-3/4" />
                   <Skeleton className="mt-2 h-3 w-full" />

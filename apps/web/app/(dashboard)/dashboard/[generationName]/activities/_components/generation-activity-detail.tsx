@@ -89,12 +89,16 @@ export default function GenerationActivityDetail({
   }, [activity]);
 
   return (
-    <section className="mx-auto w-full max-w-5xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+    <section className="mx-auto w-full max-w-5xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">Activities</p>
-          <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">{generationName} 활동 상세</h1>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
+            Activities
+          </p>
+          <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
+            {generationName} 활동 상세
+          </h1>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
             활동 내용과 사진을 확인할 수 있습니다.
           </p>
         </div>
@@ -109,7 +113,7 @@ export default function GenerationActivityDetail({
           ) : null}
           <Link
             href={`${generationPath}/activities`}
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
+            className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200"
           >
             목록으로
           </Link>
@@ -118,7 +122,7 @@ export default function GenerationActivityDetail({
 
       {isLoading ? (
         <div className="mt-6 space-y-6" aria-hidden="true">
-          <div className="rounded-xl border border-slate-200 p-4">
+          <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
             <Skeleton className="h-7 w-2/3" />
             <Skeleton className="mt-2 h-4 w-40" />
             <Skeleton className="mt-4 h-4 w-full" />
@@ -145,29 +149,31 @@ export default function GenerationActivityDetail({
         </p>
       ) : activity ? (
         <div className="mt-6 space-y-6">
-          <div className="rounded-xl border border-slate-200 p-4">
-            <p className="text-xl font-semibold text-slate-900">{activity.title}</p>
-            <p className="mt-2 text-sm text-slate-500">
+          <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+            <p className="text-xl font-semibold text-slate-900 dark:text-slate-50">{activity.title}</p>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
               {formatKoreanDateRange(activity.startDate, activity.endDate)}
             </p>
             <div className="mt-3">
               <RichTextContent html={activity.description} />
             </div>
-            <p className="mt-3 text-xs text-slate-500">생성일: {formatKoreanDate(activity.createdAt)}</p>
+            <p className="mt-3 text-xs text-slate-600 dark:text-slate-300">
+              생성일: {formatKoreanDate(activity.createdAt)}
+            </p>
             <LastUpdatedMeta
               updatedAt={activity.updatedAt}
               updatedBy={activity.updatedBy}
-              className="mt-1 text-xs text-slate-500"
+              className="mt-1 text-xs text-slate-600 dark:text-slate-300"
             />
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-slate-900">이미지</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">이미지</p>
             <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {detailImageUrls.map((imageUrl, index) => (
                 <div
                   key={`${activity.id}-${index}-${imageUrl}`}
-                  className="relative aspect-[4/3] overflow-hidden rounded-xl border border-slate-200 bg-slate-100"
+                  className="relative aspect-[4/3] overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700"
                 >
                   <Image
                     src={imageUrl}

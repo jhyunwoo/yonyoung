@@ -7,7 +7,7 @@ import {
   buildDashboardGenerationPath,
   isSameGenerationRouteName,
 } from "@/features/dashboard/generation/dashboard-generation-route";
-import { asRecord, readCookieHeader } from "@/shared/http/http";
+import { asRecord } from "@/shared/http/http";
 
 export type DashboardGenerationOption = Pick<
   ApiGeneration,
@@ -43,12 +43,11 @@ export const getAccessibleDashboardGenerationOptions = async (
       ? Promise.resolve(options.profile)
       : serverAuthGuard.getCurrentUserProfile(session);
 
-  const [cookieHeader, profile] = await Promise.all([
-    readCookieHeader(),
-    profilePromise,
-  ]);
-
-  const generations = await fetchGenerationsFromServer(cookieHeader);
+  let profile = await profilePromise;
+  if (!profile && options?.profile === undefined) {
+    profile = await serverAuthGuard.getCurrentUserProfile(session);
+  }
+  const generations = await fetchGenerationsFromServer();
   const mergedUser = {
     ...session.user,
     ...(asRecord(profile) ?? {}),

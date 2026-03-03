@@ -1,5 +1,6 @@
 import { resolveApiBaseUrl } from "@/shared/http/http";
-import { ADMIN_CACHE_TAGS } from "@/features/dashboard/cache/admin-cache";
+import { cacheTag } from "next/cache";
+import { CACHE_TAGS } from "@/server/cache/tags";
 import type { ApiGeneration, DataEnvelope } from "@/shared/contracts/api-contracts";
 
 const PUBLIC_GENERATIONS_PATH = "/api/public/generations";
@@ -34,19 +35,16 @@ const parseGenerationList = (payload: unknown): ApiGeneration[] => {
   return [];
 };
 
-export const fetchGenerationsFromServer = async (
-  cookieHeader: string | null,
-): Promise<ApiGeneration[]> => {
-  void cookieHeader;
+export const fetchGenerationsFromServer = async (): Promise<ApiGeneration[]> => {
+  "use cache";
+
+  cacheTag(CACHE_TAGS.admin.generations);
 
   try {
     const response = await fetch(`${resolveApiBaseUrl()}${PUBLIC_GENERATIONS_PATH}`, {
       method: "GET",
       headers: {
         Accept: "application/json",
-      },
-      next: {
-        tags: [ADMIN_CACHE_TAGS.generations],
       },
     });
 
@@ -55,7 +53,8 @@ export const fetchGenerationsFromServer = async (
     }
 
     const payload = (await response.json().catch(() => null)) as unknown;
-    return parseGenerationList(payload);
+    const result = parseGenerationList(payload);
+    return result;
   } catch {
     return [];
   }

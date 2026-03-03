@@ -63,10 +63,13 @@ export default function MembersGrid() {
 
   if (isLoading) {
     return (
-      <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-hidden="true">
+      <ul
+        className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        aria-hidden="true"
+      >
         {Array.from({ length: 8 }).map((_, index) => (
           <li key={`settings-members-skeleton-${index + 1}`}>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4">
               <div className="flex items-center gap-3">
                 <Skeleton className="h-12 w-12 shrink-0 rounded-full" />
                 <div className="min-w-0 flex-1 space-y-2">
@@ -95,7 +98,7 @@ export default function MembersGrid() {
 
   if (users.length === 0) {
     return (
-      <p className="mt-6 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+      <p className="mt-6 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 p-4 text-sm text-slate-600 dark:text-slate-300">
         등록된 멤버가 없습니다.
       </p>
     );
@@ -111,10 +114,10 @@ export default function MembersGrid() {
           <li key={user.id}>
             <Link
               href={`/dashboard/settings/members/${encodeURIComponent(user.id)}`}
-              className="block rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white"
+              className="block rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4 transition hover:border-slate-300 hover:bg-white"
             >
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+                <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700">
                   {user.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -123,19 +126,23 @@ export default function MembersGrid() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-500">
+                    <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-600 dark:text-slate-300">
                       {avatarFallback}
                     </div>
                   )}
                 </div>
 
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-900">{displayName}</p>
-                  <p className="truncate text-xs text-slate-500">{user.studentNumber ?? "학번 미등록"}</p>
+                  <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">
+                    {displayName}
+                  </p>
+                  <p className="truncate text-xs text-slate-600 dark:text-slate-300">
+                    {user.studentNumber ?? "학번 미등록"}
+                  </p>
                 </div>
               </div>
 
-              <div className="mt-3 space-y-1 text-xs text-slate-600">
+              <div className="mt-3 space-y-1 text-xs text-slate-600 dark:text-slate-300">
                 <p className="truncate">대학: {user.college?.trim() || "미등록"}</p>
                 <p className="truncate">학과: {user.department?.trim() || "미등록"}</p>
               </div>

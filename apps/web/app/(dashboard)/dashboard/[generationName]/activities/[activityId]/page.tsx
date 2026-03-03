@@ -1,4 +1,4 @@
-import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { isUnverifiedRole } from "@/features/auth/model/auth-shared";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
 import GenerationActivityDetail from "@/app/(dashboard)/dashboard/[generationName]/activities/_components/generation-activity-detail";
@@ -11,7 +11,7 @@ export default async function GenerationActivityDetailPage({
   const [{ activityId }, generation, session] = await Promise.all([
     params,
     requireDashboardGeneration(params),
-    serverAuthTool.requireSession(),
+    serverAuthGuard.requireSession(),
   ]);
 
   return (

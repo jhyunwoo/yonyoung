@@ -12,9 +12,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
-import {
-  PRESIGN_PATHS,
-} from "@/features/dashboard/api/admin-api/upload";
+import { PRESIGN_PATHS } from "@/features/dashboard/api/admin-api/upload";
 import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/upload-batch";
 import { AdminApiError } from "@/shared/http/http";
 import { hasMeaningfulRichTextHtml } from "@/features/media/rich-text/rich-text";
@@ -24,9 +22,7 @@ import RichTextEditor from "@/app/(dashboard)/_components/rich-text-editor";
 import SortableImageGrid from "@/app/(dashboard)/_components/sortable-image-grid";
 import UploadProgressBar from "@/app/(dashboard)/_components/upload-progress-bar";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  createExistingUploadImageItem,
-} from "@/features/media/upload/image-upload-state";
+import { createExistingUploadImageItem } from "@/features/media/upload/image-upload-state";
 import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";
 import {
   NOTICE_MAX_IMAGES,
@@ -68,11 +64,11 @@ export default function NoticeEditForm({
     removeItemById,
     reorderByIds,
   } = useImageUploadState({ maxItems: NOTICE_MAX_IMAGES });
-  const imageUrls = useMemo(
-    () => imageItems.map((item) => item.imageUrl),
-    [imageItems],
-  );
-  const [noticeMeta, setNoticeMeta] = useState<{ updatedAt: number; updatedBy: ReturnType<typeof toNoticeItem>["updatedBy"] } | null>(null);
+  const imageUrls = useMemo(() => imageItems.map((item) => item.imageUrl), [imageItems]);
+  const [noticeMeta, setNoticeMeta] = useState<{
+    updatedAt: number;
+    updatedBy: ReturnType<typeof toNoticeItem>["updatedBy"];
+  } | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -155,9 +151,7 @@ export default function NoticeEditForm({
 
     const remainingSlots = NOTICE_MAX_IMAGES - imageUrls.length;
     if (remainingSlots <= 0) {
-      setErrorMessage(
-        `이미지는 최대 ${NOTICE_MAX_IMAGES}장까지 등록할 수 있습니다.`,
-      );
+      setErrorMessage(`이미지는 최대 ${NOTICE_MAX_IMAGES}장까지 등록할 수 있습니다.`);
       return;
     }
 
@@ -239,7 +233,7 @@ export default function NoticeEditForm({
 
   if (!canWrite) {
     return (
-      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
         <div className="space-y-3" aria-hidden="true">
           <Skeleton className="h-4 w-20" />
           <Skeleton className="h-8 w-44" />
@@ -251,7 +245,7 @@ export default function NoticeEditForm({
 
   if (isLoading) {
     return (
-      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
         <div className="space-y-4" aria-hidden="true">
           <Skeleton className="h-4 w-20" />
           <Skeleton className="h-8 w-44" />
@@ -267,16 +261,14 @@ export default function NoticeEditForm({
 
   if (isNotFound) {
     return (
-      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-        <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">
-          {heading}
-        </h1>
-        <p className="mt-3 text-sm text-slate-600">
+      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">{heading}</h1>
+        <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
           존재하지 않는 공지이거나 접근할 수 없습니다.
         </p>
         <Link
           href={listPath}
-          className="mt-6 inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+          className="mt-6 inline-flex rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"
         >
           목록으로 이동
         </Link>
@@ -285,21 +277,19 @@ export default function NoticeEditForm({
   }
 
   return (
-    <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-      <p className="text-xs font-semibold tracking-[0.12em] text-slate-500 uppercase">
+    <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
+      <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
         Notices
       </p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
-        {heading}
-      </h1>
-      <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">{heading}</h1>
+      <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
         {description}
       </p>
       {noticeMeta ? (
         <LastUpdatedMeta
           updatedAt={noticeMeta.updatedAt}
           updatedBy={noticeMeta.updatedBy}
-          className="mt-2 text-xs text-slate-500"
+          className="mt-2 text-xs text-slate-600 dark:text-slate-300"
         />
       ) : null}
 
@@ -310,20 +300,20 @@ export default function NoticeEditForm({
       ) : null}
 
       <form
-        className="mt-6 space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4"
+        className="mt-6 space-y-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4"
         onSubmit={handleSubmit}
       >
-        <p className="text-sm font-semibold text-slate-900">공지 수정</p>
+        <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">공지 수정</p>
         <input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           disabled={isSaving || isUploadingImage}
           placeholder="공지 제목"
-          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
         />
 
         <div className="space-y-1">
-          <span className="text-sm font-semibold text-slate-900">공지 내용</span>
+          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">공지 내용</span>
           <RichTextEditor
             value={content}
             onChange={setContent}
@@ -331,17 +321,16 @@ export default function NoticeEditForm({
           />
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-3">
-          <p className="text-sm font-semibold text-slate-900">첨부 이미지</p>
-          <p className="mt-1 text-xs text-slate-500">
-            최대 {NOTICE_MAX_IMAGES}장
-          </p>
+        <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3">
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">첨부 이미지</p>
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">최대 {NOTICE_MAX_IMAGES}장</p>
 
           <button
             type="button"
+            data-testid="notice-edit-upload"
             onClick={handleOpenImageFilePicker}
             disabled={isImageUploadDisabled}
-            className="mt-3 inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-3 inline-flex rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             파일 업로드
           </button>
@@ -356,17 +345,22 @@ export default function NoticeEditForm({
           />
 
           {isUploadingImage ? (
-            <p className="mt-2 text-xs text-slate-500">이미지 업로드 중...</p>
+            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">이미지 업로드 중...</p>
           ) : null}
           {!isUploadingImage && imageUrls.length >= NOTICE_MAX_IMAGES ? (
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
               최대 {NOTICE_MAX_IMAGES}장까지 등록되어 추가 업로드가 비활성화되었습니다.
             </p>
           ) : null}
-          <UploadProgressBar progressPercent={uploadProgressPercent} label="첨부 이미지 업로드 진행률" />
+          <UploadProgressBar
+            progressPercent={uploadProgressPercent}
+            label="첨부 이미지 업로드 진행률"
+          />
 
           <div className="mt-3 space-y-2">
-            <p className="text-xs text-slate-500">마우스로 끌어 이미지 순서를 바꿀 수 있습니다.</p>
+            <p className="text-xs text-slate-600 dark:text-slate-300">
+              마우스로 끌어 이미지 순서를 바꿀 수 있습니다.
+            </p>
             <SortableImageGrid
               items={imageItems.map((image, index) => ({
                 id: image.id,
@@ -385,6 +379,7 @@ export default function NoticeEditForm({
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="submit"
+            data-testid="notice-edit-submit"
             disabled={isSaving || isUploadingImage}
             className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
@@ -392,7 +387,7 @@ export default function NoticeEditForm({
           </button>
           <Link
             href={detailPath}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+            className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             취소
           </Link>

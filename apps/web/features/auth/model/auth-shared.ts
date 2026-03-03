@@ -7,9 +7,7 @@ import {
 } from "@/shared/contracts/auth-roles";
 import { hasCompletedRequiredProfileFields } from "@/shared/contracts/auth-profile";
 
-type KnownAuthRole =
-  | CoreRole
-  | "member";
+type KnownAuthRole = CoreRole;
 type AuthRole = KnownAuthRole | (string & {});
 type AdminRole = (typeof ADMIN_ROLE_VALUES)[number];
 
@@ -81,8 +79,7 @@ export const getRoleFromSession = (session: SessionWithRole): AuthRole | null =>
  * @returns 조건 판별 결과(boolean)를 반환합니다.
  * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
  */
-export const isAdminRole = (role: unknown): role is AdminRole =>
-  isAdminRoleValue(role);
+export const isAdminRole = (role: unknown): role is AdminRole => isAdminRoleValue(role);
 
 /**
  * isAdminSession 조건을 평가해 사용 가능 여부를 판별합니다.
@@ -99,8 +96,7 @@ export const isAdminSession = (session: SessionWithRole): boolean =>
  * @returns 조건 판별 결과(boolean)를 반환합니다.
  * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
  */
-export const isUnverifiedRole = (role: unknown): boolean =>
-  isUnverifiedRoleValue(role);
+export const isUnverifiedRole = (role: unknown): boolean => isUnverifiedRoleValue(role);
 
 /**
  * isPresidentRole 조건을 평가해 사용 가능 여부를 판별합니다.

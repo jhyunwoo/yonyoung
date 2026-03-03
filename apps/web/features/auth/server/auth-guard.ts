@@ -1,5 +1,5 @@
 import { forbidden, redirect } from "next/navigation";
-import { fetchSessionFromApi, resolveAuthApiUrl } from "@/features/auth/server/auth-server";
+import { fetchSessionFromApi } from "@/features/auth/server/auth-server";
 import {
   AUTH_PROFILE_PATH,
   DASHBOARD_PATH,
@@ -10,10 +10,16 @@ import {
   resolvePostSignInPath,
 } from "@/features/auth/model/auth-shared";
 import type { AuthSession } from "@/features/auth/model/auth-shared";
-import { asRecord, readCookieHeader, unwrapDataEnvelope } from "@/shared/http/http";
+import {
+  asRecord,
+  readCookieHeader,
+  resolveApiBaseUrl,
+  unwrapDataEnvelope,
+} from "@/shared/http/http";
 
 const SIGN_IN_PATH = "/auth/sign-in";
 const USER_PATH_PREFIX = "/api/users";
+const CURRENT_USER_PATH = `${USER_PATH_PREFIX}/me`;
 
 const getSession = async (): Promise<AuthSession | null> => {
   const cookieHeader = await readCookieHeader();
@@ -32,20 +38,58 @@ const getCurrentUserProfile = async (
   }
 
   try {
-    const response = await fetch(
-      `${resolveAuthApiUrl()}${USER_PATH_PREFIX}/${session.user.id}`,
+    const currentUserResponse = await fetch(`${resolveApiBaseUrl()}${CURRENT_USER_PATH}`, {
+      method: "GET",
+      headers,
+      cache: "no-store",
+    });
+
+    if (currentUserResponse.ok) {
+      const payload = (await currentUserResponse.json().catch(() => null)) as unknown;
+      return asRecord(unwrapDataEnvelope(payload));
+    }
+
+    const userByIdResponse = await fetch(
+      `${resolveApiBaseUrl()}${USER_PATH_PREFIX}/${encodeURIComponent(session.user.id)}`,
       {
         method: "GET",
         headers,
         cache: "no-store",
       },
     );
-    if (!response.ok) {
+
+    if (userByIdResponse.ok) {
+      const payload = (await userByIdResponse.json().catch(() => null)) as unknown;
+      return asRecord(unwrapDataEnvelope(payload));
+    }
+
+    const normalizedEmail = session.user.email.trim().toLowerCase();
+    if (normalizedEmail.length === 0) {
       return null;
     }
 
-    const payload = (await response.json().catch(() => null)) as unknown;
-    return asRecord(unwrapDataEnvelope(payload));
+    const usersResponse = await fetch(`${resolveApiBaseUrl()}${USER_PATH_PREFIX}`, {
+      method: "GET",
+      headers,
+      cache: "no-store",
+    });
+    if (!usersResponse.ok) {
+      return null;
+    }
+
+    const usersPayload = (await usersResponse.json().catch(() => null)) as unknown;
+    const users = unwrapDataEnvelope(usersPayload);
+    if (!Array.isArray(users)) {
+      return null;
+    }
+
+    const matchedUser = users.find((user) => {
+      const userRecord = asRecord(user);
+      const email = userRecord?.email;
+      return typeof email === "string" && email.trim().toLowerCase() === normalizedEmail;
+    });
+
+    return asRecord(matchedUser);
   } catch {
     return null;
   }
@@ -53,9 +97,7 @@ const getCurrentUserProfile = async (
 
 type AccessPredicate = (session: AuthSession) => boolean;
 
-const requireSession = async (
-  redirectTo = SIGN_IN_PATH,
-): Promise<AuthSession> => {
+const requireSession = async (redirectTo = SIGN_IN_PATH): Promise<AuthSession> => {
   const session = await getSession();
 
   if (!session) {
@@ -100,9 +142,7 @@ const redirectIfProfileIncomplete = async (
   }
 };
 
-const resolveAdminLandingPath = async (
-  session: AuthSession,
-): Promise<string> => {
+const resolveAdminLandingPath = async (session: AuthSession): Promise<string> => {
   const profile = (await getCurrentUserProfile(session)) ?? asRecord(session.user);
   const isProfileComplete = hasCompletedRequiredProfile(profile);
 
@@ -142,6 +182,3 @@ export const serverAuthGuard = {
   redirectIfProfileIncomplete,
   resolveAdminLandingPath,
 } as const;
-
-/** @deprecated Use `serverAuthGuard` instead. Alias kept for migration. */
-export const serverAuthTool = serverAuthGuard;

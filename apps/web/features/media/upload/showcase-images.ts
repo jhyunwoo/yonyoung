@@ -1,4 +1,7 @@
-import { createExistingUploadImageItem, type UploadImageItem } from "@/features/media/upload/image-upload-state";
+import {
+  createExistingUploadImageItem,
+  type UploadImageItem,
+} from "@/features/media/upload/image-upload-state";
 
 export const SHOWCASE_MAX_IMAGES = 10;
 

@@ -67,7 +67,10 @@ export const signInWithGoogle = async ({
     if (response.error) {
       return {
         ok: false,
-        errorMessage: getAuthErrorMessage(response.error, "Google 로그인에 실패했습니다."),
+        errorMessage: getAuthErrorMessage(
+          response.error,
+          "Google 로그인에 실패했습니다.",
+        ),
       };
     }
 

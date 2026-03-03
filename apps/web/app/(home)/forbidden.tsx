@@ -2,7 +2,10 @@ import Link from "next/link";
 
 export default function HomeForbiddenPage() {
   return (
-    <section className="px-4 pb-16 pt-10 md:px-8 md:pb-20" data-testid="home-forbidden-page">
+    <section
+      className="px-4 pb-16 pt-10 md:px-8 md:pb-20"
+      data-testid="home-forbidden-page"
+    >
       <div className="mx-auto w-full max-w-[1200px] border border-(--surface-border) p-7 md:p-10">
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-(--text-muted)">
           403 Forbidden
@@ -11,8 +14,8 @@ export default function HomeForbiddenPage() {
           이 페이지에 접근할 수 없습니다.
         </h1>
         <p className="mt-4 text-sm leading-relaxed text-(--text-muted) md:text-base">
-          요청하신 페이지는 현재 계정 권한으로 접근할 수 없습니다. 권한이 필요하다면 운영진에게 문의해
-          주세요.
+          요청하신 페이지는 현재 계정 권한으로 접근할 수 없습니다. 권한이 필요하다면
+          운영진에게 문의해 주세요.
         </p>
 
         <div className="mt-8 flex flex-wrap gap-3">

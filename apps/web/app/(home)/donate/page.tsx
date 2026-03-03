@@ -1,26 +1,18 @@
 import type { Metadata } from "next";
 import { DEFAULT_SITE_SETTINGS } from "@/shared/contracts/api-contracts";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
-import { getPublicSiteSettings } from "@/features/public/api/public-api";
+import { getPublicSiteSettings } from "@/features/public/services/public-read-service";
 import PageTitleHero from "@/app/(home)/_components/page-title-hero";
 
 export const metadata: Metadata = createPageMetadata({
   title: "후원 안내 | 연영회",
-  description:
-    "연영회 후원 안내, 후원 방법, 후원금 사용 내역, 문의 정보를 확인하세요.",
+  description: "연영회 후원 안내, 후원 방법, 후원금 사용 내역, 문의 정보를 확인하세요.",
   path: "/donate",
-  keywords: [
-    "연영회 후원",
-    "DONATE US",
-    "연영회 후원 안내",
-    "후원금 사용 내역",
-  ],
+  keywords: ["연영회 후원", "DONATE US", "연영회 후원 안내", "후원금 사용 내역"],
 });
 
 export default async function DonatePage() {
-  const siteSettings = await getPublicSiteSettings().catch(
-    () => DEFAULT_SITE_SETTINGS,
-  );
+  const siteSettings = await getPublicSiteSettings().catch(() => DEFAULT_SITE_SETTINGS);
 
   return (
     <div className="min-h-screen bg-(--bg-primary)">
@@ -30,8 +22,7 @@ export default async function DonatePage() {
           description={
             <>
               연영회의 활동 후원해 주시면
-              <br />
-              더 좋은 사진과 전시로 보답하겠습니다.
+              <br />더 좋은 사진과 전시로 보답하겠습니다.
             </>
           }
         />
@@ -42,8 +33,8 @@ export default async function DonatePage() {
               후원 안내
             </h2>
             <p className="text-base leading-[1.8] text-(--text-muted)">
-              연영회는 여러분의 후원으로 더 나은 활동을 이어갈 수 있습니다.
-              후원금은 전시회 개최, 장비 구매, 워크샵 운영 등에 사용됩니다.
+              연영회는 여러분의 후원으로 더 나은 활동을 이어갈 수 있습니다. 후원금은
+              전시회 개최, 장비 구매, 워크샵 운영 등에 사용됩니다.
             </p>
           </div>
 
@@ -104,14 +95,10 @@ export default async function DonatePage() {
 
           <div className="mb-16 flex flex-col items-center justify-center gap-2 rounded-xl border border-(--surface-border) bg-(--surface-elevated) p-8 text-sm text-(--text-muted) shadow-[0_2px_4px_var(--shadow-strong)]">
             <p>
-              후원해 주신 분들의 성함은 전시회에 특별히 감사의 말씀과 함께
-              소개됩니다.
+              후원해 주신 분들의 성함은 전시회에 특별히 감사의 말씀과 함께 소개됩니다.
             </p>
             <p>작은 관심과 응원이 저희에게 큰 힘이 됩니다.</p>
-            <p>
-              후원금 사용 내역은 60기 운영진으로 연락주시면 열람하실 수
-              있습니다.
-            </p>
+            <p>후원금 사용 내역은 60기 운영진으로 연락주시면 열람하실 수 있습니다.</p>
           </div>
         </section>
       </div>

@@ -3,81 +3,77 @@
 // ---------------------------------------------------------------------------
 
 type MemberNameLike = {
-    familyName?: string | null;
-    givenName?: string | null;
-    name?: string | null;
-    email?: string | null;
+  familyName?: string | null;
+  givenName?: string | null;
+  email?: string | null;
 };
 
 export const compactDisplayName = (value: string | null | undefined): string | null => {
-    if (typeof value !== "string") {
-        return null;
-    }
+  if (typeof value !== "string") {
+    return null;
+  }
 
-    const compacted = value.replace(/\s+/g, "").trim();
-    return compacted.length > 0 ? compacted : null;
+  const compacted = value.replace(/\s+/g, "").trim();
+  return compacted.length > 0 ? compacted : null;
 };
 
 const toTrimmedOrNull = (value: string | null | undefined): string | null => {
-    if (typeof value !== "string") {
-        return null;
-    }
+  if (typeof value !== "string") {
+    return null;
+  }
 
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
 };
 
 /** 성(familyName) + 이름(givenName) 조합. Email fallback. */
-export const formatKoreanName = (user: Pick<MemberNameLike, "familyName" | "givenName" | "email">): string => {
-    const familyName = compactDisplayName(user.familyName);
-    const givenName = compactDisplayName(user.givenName);
+export const formatKoreanName = (
+  user: Pick<MemberNameLike, "familyName" | "givenName" | "email">,
+): string => {
+  const familyName = compactDisplayName(user.familyName);
+  const givenName = compactDisplayName(user.givenName);
 
-    if (familyName || givenName) {
-        return `${familyName ?? ""}${givenName ?? ""}`;
+  if (familyName || givenName) {
+    return `${familyName ?? ""}${givenName ?? ""}`;
+  }
+
+  const email = toTrimmedOrNull(user.email);
+  if (email) {
+    const localPart = email.split("@")[0]?.trim();
+    if (localPart && localPart.length > 0) {
+      return localPart;
     }
+  }
 
-    const email = toTrimmedOrNull(user.email);
-    if (email) {
-        const localPart = email.split("@")[0]?.trim();
-        if (localPart && localPart.length > 0) {
-            return localPart;
-        }
-    }
-
-    return "이름 미등록";
+  return "이름 미등록";
 };
 
-/** 성+이름 → 레거시 name → email fallback 순서로 표시 이름 생성. */
+/** 성+이름 우선, 미등록 시 email local-part를 표시 이름으로 사용. */
 export const buildMemberDisplayName = (member: MemberNameLike): string => {
-    const familyName = compactDisplayName(member.familyName);
-    const givenName = compactDisplayName(member.givenName);
+  const familyName = compactDisplayName(member.familyName);
+  const givenName = compactDisplayName(member.givenName);
 
-    if (familyName || givenName) {
-        return `${familyName ?? ""}${givenName ?? ""}`;
+  if (familyName || givenName) {
+    return `${familyName ?? ""}${givenName ?? ""}`;
+  }
+
+  const email = compactDisplayName(member.email);
+  if (email) {
+    const localPart = compactDisplayName(email.split("@")[0]);
+    if (localPart) {
+      return localPart;
     }
+  }
 
-    const legacyName = compactDisplayName(member.name);
-    if (legacyName) {
-        return legacyName;
-    }
-
-    const email = compactDisplayName(member.email);
-    if (email) {
-        const localPart = compactDisplayName(email.split("@")[0]);
-        if (localPart) {
-            return localPart;
-        }
-    }
-
-    return "이름 미등록";
+  return "이름 미등록";
 };
 
 /** 표시 이름의 첫 글자를 추출. */
 export const buildMemberDisplayInitial = (displayName: string): string => {
-    const trimmed = displayName.trim();
-    if (trimmed.length === 0) {
-        return "?";
-    }
+  const trimmed = displayName.trim();
+  if (trimmed.length === 0) {
+    return "?";
+  }
 
-    return Array.from(trimmed)[0] ?? "?";
+  return Array.from(trimmed)[0] ?? "?";
 };

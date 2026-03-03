@@ -1,4 +1,7 @@
-import type { ApiActivity, ApiUpdateActivityImageBatchItemInput } from "@/shared/contracts/api-contracts";
+import type {
+  ApiActivity,
+  ApiUpdateActivityImageBatchItemInput,
+} from "@/shared/contracts/api-contracts";
 import { AdminApiError } from "@/shared/http/http";
 import { summarizeRichTextHtml } from "@/features/media/rich-text/rich-text";
 
@@ -32,11 +35,16 @@ export const readActivityErrorMessage = (error: unknown): string => {
   return "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 };
 
-export const sortActivitiesByStartDateDesc = (activities: ApiActivity[]): ApiActivity[] => {
+export const sortActivitiesByStartDateDesc = (
+  activities: ApiActivity[],
+): ApiActivity[] => {
   return [...activities].sort((left, right) => right.startDate - left.startDate);
 };
 
-export const summarizeActivityDescription = (descriptionHtml: string, maxLength = 120): string => {
+export const summarizeActivityDescription = (
+  descriptionHtml: string,
+  maxLength = 120,
+): string => {
   return summarizeRichTextHtml(descriptionHtml, maxLength);
 };
 

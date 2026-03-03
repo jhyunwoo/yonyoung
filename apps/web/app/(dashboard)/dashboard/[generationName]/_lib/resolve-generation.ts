@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import {
   getAccessibleDashboardGenerationOptions,
   resolveGenerationOptionFromRouteName,
@@ -12,9 +12,12 @@ export const requireDashboardGeneration = async (
   params: GenerationRouteParams,
 ): Promise<DashboardGenerationOption> => {
   const { generationName } = await params;
-  const session = await serverAuthTool.requireSession();
+  const session = await serverAuthGuard.requireSession();
   const generationOptions = await getAccessibleDashboardGenerationOptions(session);
-  const generation = resolveGenerationOptionFromRouteName(generationOptions, generationName);
+  const generation = resolveGenerationOptionFromRouteName(
+    generationOptions,
+    generationName,
+  );
 
   if (!generation) {
     redirect("/dashboard");
