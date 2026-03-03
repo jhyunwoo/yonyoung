@@ -1,7 +1,7 @@
 "use client";
 
 import { DEFAULT_SITE_SETTINGS } from "@/shared/contracts/api-contracts";
-import { type FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { AdminApiError } from "@/shared/http/http";
@@ -11,6 +11,7 @@ import {
 } from "@/shared/contracts/api-contracts";
 import { apiUpdateSiteSettingsInputSchema } from "@/shared/contracts/api-schemas";
 import { Skeleton } from "@/components/ui/skeleton";
+import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 
 const inputClassName =
   "w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
@@ -149,8 +150,7 @@ export default function SiteSettingsForm() {
     });
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = async () => {
 
     setErrorMessage(null);
     setSuccessMessage(null);
@@ -219,7 +219,7 @@ export default function SiteSettingsForm() {
         </p>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-6" noValidate>
+      <form action={handleSubmit} className="mt-6 space-y-6" noValidate>
         <div className="grid gap-5 md:grid-cols-2">
           <label className="flex flex-col gap-2">
             <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">오픈 카톡방 링크</span>
@@ -364,14 +364,13 @@ export default function SiteSettingsForm() {
         </section>
 
         <div className="flex justify-end">
-          <button
-            type="submit"
+          <FormSubmitButton
             data-testid="site-settings-submit"
             disabled={isSaving}
             className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
-          >
-            {isSaving ? "저장 중..." : "저장"}
-          </button>
+            idleLabel="저장"
+            pendingLabel="저장 중..."
+          />
         </div>
       </form>
     </section>

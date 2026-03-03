@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -20,6 +20,7 @@ import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import AuditHistoryPanel from "@/app/(dashboard)/_components/audit-history-panel";
+import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import LastUpdatedMeta from "@/app/(dashboard)/_components/last-updated-meta";
 import SortableImageGrid from "@/app/(dashboard)/_components/sortable-image-grid";
 import UploadProgressBar from "@/app/(dashboard)/_components/upload-progress-bar";
@@ -215,8 +216,7 @@ export default function ExhibitionEditForm({
     }
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = async () => {
     setErrorMessage(null);
     setNoticeMessage(null);
 
@@ -433,7 +433,7 @@ export default function ExhibitionEditForm({
           </div>
         </div>
       ) : exhibition ? (
-        <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-6 space-y-6" action={handleSubmit}>
           <label className="block space-y-1">
             <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">전시 제목</span>
             <input
@@ -590,14 +590,13 @@ export default function ExhibitionEditForm({
           />
 
           <div className="flex flex-wrap gap-2">
-            <button
-              type="submit"
+            <FormSubmitButton
               data-testid="exhibition-edit-submit"
               disabled={isSubmitDisabled}
               className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSaving ? "저장 중..." : "수정 저장"}
-            </button>
+              idleLabel="수정 저장"
+              pendingLabel="저장 중..."
+            />
             <Link
               href={`${generationPath}/exhibitions/${exhibition.id}`}
               className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200"

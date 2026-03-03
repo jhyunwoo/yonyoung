@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ApiLinktree } from "@/shared/contracts/api-contracts";
@@ -10,6 +10,7 @@ import { formatAuditActor } from "@/features/dashboard/ui/audit-display";
 import { formatKoreanDate } from "@/shared/utils/date-formatters";
 import { Skeleton } from "@/components/ui/skeleton";
 import AuditHistoryPanel from "@/app/(dashboard)/_components/audit-history-panel";
+import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import LastUpdatedMeta from "@/app/(dashboard)/_components/last-updated-meta";
 import {
   normalizeLinktreeItemInput,
@@ -90,8 +91,7 @@ export default function LinktreeGroupDetail({
     }
   };
 
-  const handleAddItem = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleAddItem = async () => {
 
     if (!canWrite) {
       return;
@@ -240,7 +240,7 @@ export default function LinktreeGroupDetail({
         <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">하위 링크</p>
 
         {canWrite ? (
-          <form onSubmit={handleAddItem} className="mt-3 space-y-2">
+          <form action={handleAddItem} className="mt-3 space-y-2">
             <div className="grid gap-2 md:grid-cols-2">
               <input
                 data-testid="linktree-group-item-name-input"
@@ -259,14 +259,13 @@ export default function LinktreeGroupDetail({
                 className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm"
               />
             </div>
-            <button
-              type="submit"
+            <FormSubmitButton
               data-testid="linktree-group-item-add-submit"
               disabled={isAddingItem || isDeleting}
               className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isAddingItem ? "추가 중..." : "하위 링크 추가"}
-            </button>
+              idleLabel="하위 링크 추가"
+              pendingLabel="추가 중..."
+            />
           </form>
         ) : null}
 

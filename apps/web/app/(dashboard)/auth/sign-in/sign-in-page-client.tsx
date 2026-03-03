@@ -3,6 +3,19 @@
 import { useState } from "react";
 import { signInWithGoogle } from "@/features/auth/client/auth-actions";
 
+const resolveCanonicalSiteOrigin = (): string | null => {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return null;
+  }
+};
+
 export default function SignInPageClient() {
   const [isPending, setIsPending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -11,7 +24,16 @@ export default function SignInPageClient() {
     setIsPending(true);
     setErrorMessage(null);
 
-    const callbackURL = `${window.location.origin}/auth/sign-in`;
+    const canonicalOrigin = resolveCanonicalSiteOrigin();
+    if (canonicalOrigin && new URL(canonicalOrigin).host !== window.location.host) {
+      const canonicalSignInUrl = new URL("/auth/sign-in", canonicalOrigin);
+      canonicalSignInUrl.search = window.location.search;
+      window.location.assign(canonicalSignInUrl.toString());
+      return;
+    }
+
+    const callbackOrigin = canonicalOrigin ?? window.location.origin;
+    const callbackURL = `${callbackOrigin}/auth/sign-in`;
     const signInResult = await signInWithGoogle({
       callbackURL,
       disableRedirect: true,
@@ -30,7 +52,7 @@ export default function SignInPageClient() {
       return;
     }
 
-    window.location.href = redirectUrl;
+    window.location.assign(redirectUrl);
   };
 
   return (

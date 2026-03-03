@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ApiGeneration, ApiUser } from "@/shared/contracts/api-contracts";
 import { AdminApiError } from "@/shared/http/http";
@@ -9,6 +9,7 @@ import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
 import { buildMemberDisplayName } from "@/features/dashboard/members/display-name";
 import { buildMemberRoleLabel } from "@/features/dashboard/members/member-role-label";
 import { Skeleton } from "@/components/ui/skeleton";
+import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import {
   USER_ROLE_FILTER_ALL,
   USER_ROLE_FILTER_NONE,
@@ -202,8 +203,7 @@ export default function GenerationManagementClient() {
 
   const selectedUserIdSet = useMemo(() => new Set(selectedUserIds), [selectedUserIds]);
 
-  const handleCreateGeneration = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleCreateGeneration = async () => {
 
     const validationResult = validateGenerationFormInput({
       name: createName,
@@ -240,8 +240,7 @@ export default function GenerationManagementClient() {
     }
   };
 
-  const handleUpdateGeneration = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleUpdateGeneration = async () => {
     if (!selectedGeneration) {
       return;
     }
@@ -600,7 +599,7 @@ export default function GenerationManagementClient() {
               <h2 className="text-base font-semibold text-slate-900 dark:text-slate-50">
                 기수 생성
               </h2>
-              <form className="mt-3 space-y-3" onSubmit={handleCreateGeneration}>
+              <form className="mt-3 space-y-3" action={handleCreateGeneration}>
                 <label className="block space-y-1">
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
                     기수 이름
@@ -655,14 +654,13 @@ export default function GenerationManagementClient() {
                   </label>
                 </div>
 
-                <button
-                  type="submit"
+                <FormSubmitButton
                   data-testid="generation-create-submit"
                   disabled={isSavingGeneration}
                   className="inline-flex rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isSavingGeneration ? "생성 중..." : "기수 생성"}
-                </button>
+                  idleLabel="기수 생성"
+                  pendingLabel="생성 중..."
+                />
               </form>
             </article>
 
@@ -675,7 +673,7 @@ export default function GenerationManagementClient() {
                   수정할 기수를 먼저 선택해 주세요.
                 </p>
               ) : (
-                <form className="mt-3 space-y-3" onSubmit={handleUpdateGeneration}>
+                <form className="mt-3 space-y-3" action={handleUpdateGeneration}>
                   <label className="block space-y-1">
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
                       기수 이름
@@ -729,14 +727,13 @@ export default function GenerationManagementClient() {
                   </div>
 
                   <div className="flex flex-wrap gap-2">
-                    <button
-                      type="submit"
+                    <FormSubmitButton
                       data-testid="generation-update-submit"
                       disabled={isSavingGeneration}
                       className="inline-flex rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {isSavingGeneration ? "저장 중..." : "기수 수정"}
-                    </button>
+                      idleLabel="기수 수정"
+                      pendingLabel="저장 중..."
+                    />
                     <button
                       type="button"
                       data-testid="generation-delete-button"

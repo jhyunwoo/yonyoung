@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
@@ -14,6 +14,7 @@ import {
   type UploadImageItem,
 } from "@/features/media/upload/image-upload-state";
 import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";
+import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import SortableImageGrid from "@/app/(dashboard)/_components/sortable-image-grid";
 import UploadProgressBar from "@/app/(dashboard)/_components/upload-progress-bar";
 import ExhibitionRichTextEditor from "@/app/(dashboard)/dashboard/[generationName]/exhibitions/_components/exhibition-rich-text-editor";
@@ -123,8 +124,7 @@ export default function ExhibitionCreateForm({
     removeItemById(imageId);
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = async () => {
     setErrorMessage(null);
 
     const trimmedTitle = title.trim();
@@ -248,7 +248,7 @@ export default function ExhibitionCreateForm({
         대표 사진은 꼭 등록해야 하며, 세부 사진은 필요할 때 여러 장 추가할 수 있습니다.
       </p>
 
-      <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+      <form className="mt-6 space-y-4" action={handleSubmit}>
         <label className="block space-y-1">
           <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">전시 제목</span>
           <input
@@ -390,14 +390,13 @@ export default function ExhibitionCreateForm({
         ) : null}
 
         <div className="flex flex-wrap gap-2">
-          <button
-            type="submit"
+          <FormSubmitButton
             data-testid="exhibition-create-submit"
             disabled={isSubmitDisabled}
             className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSaving ? "저장 중..." : "전시 생성"}
-          </button>
+            idleLabel="전시 생성"
+            pendingLabel="저장 중..."
+          />
           <Link
             href={`${generationPath}/exhibitions`}
             className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200"

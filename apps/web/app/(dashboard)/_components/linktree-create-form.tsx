@@ -1,9 +1,10 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
+import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import {
   normalizeLinktreeItemInput,
   normalizeLinktreeName,
@@ -77,8 +78,7 @@ export default function LinktreeCreateForm({
     );
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = async () => {
 
     const normalizedGroupName = normalizeLinktreeName(groupName);
     if (!normalizedGroupName) {
@@ -164,7 +164,7 @@ export default function LinktreeCreateForm({
       <form
         data-testid="linktree-create-form"
         className="mt-6 space-y-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4"
-        onSubmit={handleSubmit}
+        action={handleSubmit}
       >
         <label className="block space-y-1">
           <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">분류 이름</span>
@@ -232,14 +232,13 @@ export default function LinktreeCreateForm({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="submit"
+          <FormSubmitButton
             data-testid="linktree-create-submit"
             disabled={isSaving}
             className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSaving ? "생성 중..." : "링크 모음 생성"}
-          </button>
+            idleLabel="링크 모음 생성"
+            pendingLabel="생성 중..."
+          />
           <Link
             href={listPath}
             className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"

@@ -2,7 +2,6 @@
 
 import {
   type ChangeEvent,
-  type FormEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -21,6 +20,7 @@ import type {
 } from "@/shared/contracts/api-contracts";
 import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";
 import { Skeleton } from "@/components/ui/skeleton";
+import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import SortableImageGrid from "@/app/(dashboard)/_components/sortable-image-grid";
 import UploadProgressBar from "@/app/(dashboard)/_components/upload-progress-bar";
 import {
@@ -136,8 +136,7 @@ export default function MarketItemEditPageClient({
     imageFileInputRef.current?.click();
   };
 
-  const handleUpdateItem = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleUpdateItem = async () => {
 
     if (!item) {
       return;
@@ -231,7 +230,7 @@ export default function MarketItemEditPageClient({
             <form
               data-testid="market-edit-form"
               className="space-y-4"
-              onSubmit={handleUpdateItem}
+              action={handleUpdateItem}
             >
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <input
@@ -340,14 +339,13 @@ export default function MarketItemEditPageClient({
                 </div>
               </div>
 
-              <button
-                type="submit"
+              <FormSubmitButton
                 data-testid="market-edit-submit"
                 disabled={isSavingItem || isUploadingImage}
                 className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isSavingItem ? "저장 중..." : "수정 저장"}
-              </button>
+                idleLabel="수정 저장"
+                pendingLabel="저장 중..."
+              />
             </form>
           </section>
         )}

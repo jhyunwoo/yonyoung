@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterAll } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -11,8 +11,15 @@ vi.mock("@/features/auth/client/auth-actions", () => ({
 import SignInPageClient from "@/app/(dashboard)/auth/sign-in/sign-in-page-client";
 
 describe("SignInPageClient", () => {
+  const originalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
   beforeEach(() => {
     signInWithGoogleMock.mockReset();
+    process.env.NEXT_PUBLIC_SITE_URL = window.location.origin;
+  });
+
+  afterAll(() => {
+    process.env.NEXT_PUBLIC_SITE_URL = originalSiteUrl;
   });
 
   it("shows error when sign-in fails", async () => {
@@ -65,5 +72,16 @@ describe("SignInPageClient", () => {
     expect(
       await screen.findByText("Google 로그인 리다이렉트 URL을 찾을 수 없습니다."),
     ).toBeInTheDocument();
+  });
+
+  it("redirects to canonical domain before oauth when host differs", async () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://yonyoung.moveto.kr";
+
+    const user = userEvent.setup();
+    render(<SignInPageClient />);
+
+    await user.click(screen.getByTestId("auth-signin-google-submit"));
+
+    expect(signInWithGoogleMock).not.toHaveBeenCalled();
   });
 });
