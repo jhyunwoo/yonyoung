@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ApiLinktree } from "@/shared/contracts/api-contracts";
@@ -11,7 +11,10 @@ import { formatKoreanDate } from "@/shared/utils/date-formatters";
 import { Skeleton } from "@/components/ui/skeleton";
 import AuditHistoryPanel from "@/app/(dashboard)/_components/audit-history-panel";
 import LastUpdatedMeta from "@/app/(dashboard)/_components/last-updated-meta";
-import { readLinktreeErrorMessage } from "@/app/(dashboard)/_components/linktree-shared";
+import {
+  normalizeLinktreeItemInput,
+  readLinktreeErrorMessage,
+} from "@/app/(dashboard)/_components/linktree-shared";
 
 type LinktreeGroupDetailProps = {
   linktreeId: string;
@@ -29,7 +32,19 @@ export default function LinktreeGroupDetail({
   const [isLoading, setIsLoading] = useState(true);
   const [isNotFound, setIsNotFound] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isAddingItem, setIsAddingItem] = useState(false);
+  const [newItemName, setNewItemName] = useState("");
+  const [newItemLink, setNewItemLink] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const isValidHttpUrl = (value: string): boolean => {
+    try {
+      const parsed = new URL(value);
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch {
+      return false;
+    }
+  };
 
   const loadLinktree = useCallback(async () => {
     setIsLoading(true);
@@ -72,6 +87,45 @@ export default function LinktreeGroupDetail({
       setErrorMessage(readLinktreeErrorMessage(error));
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleAddItem = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!canWrite) {
+      return;
+    }
+
+    const normalizedItem = normalizeLinktreeItemInput({
+      name: newItemName,
+      link: newItemLink,
+    });
+
+    if (!normalizedItem.name) {
+      setErrorMessage("링크 이름을 입력해 주세요.");
+      return;
+    }
+
+    if (!normalizedItem.link || !isValidHttpUrl(normalizedItem.link)) {
+      setErrorMessage("링크 주소는 http:// 또는 https://로 시작해야 합니다.");
+      return;
+    }
+
+    setIsAddingItem(true);
+    setErrorMessage(null);
+
+    try {
+      await adminResourceApi.addLinktreeItem(linktreeId, normalizedItem);
+      const refreshedLinktree = await adminResourceApi.getLinktreeById(linktreeId);
+      setLinktree(refreshedLinktree);
+      setNewItemName("");
+      setNewItemLink("");
+      router.refresh();
+    } catch (error) {
+      setErrorMessage(readLinktreeErrorMessage(error));
+    } finally {
+      setIsAddingItem(false);
     }
   };
 
@@ -184,6 +238,37 @@ export default function LinktreeGroupDetail({
 
       <div className="mt-4 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
         <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">하위 링크</p>
+
+        {canWrite ? (
+          <form onSubmit={handleAddItem} className="mt-3 space-y-2">
+            <div className="grid gap-2 md:grid-cols-2">
+              <input
+                data-testid="linktree-group-item-name-input"
+                value={newItemName}
+                onChange={(event) => setNewItemName(event.target.value)}
+                disabled={isAddingItem || isDeleting}
+                placeholder="링크 이름"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm"
+              />
+              <input
+                data-testid="linktree-group-item-link-input"
+                value={newItemLink}
+                onChange={(event) => setNewItemLink(event.target.value)}
+                disabled={isAddingItem || isDeleting}
+                placeholder="https://example.com"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm"
+              />
+            </div>
+            <button
+              type="submit"
+              data-testid="linktree-group-item-add-submit"
+              disabled={isAddingItem || isDeleting}
+              className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isAddingItem ? "추가 중..." : "하위 링크 추가"}
+            </button>
+          </form>
+        ) : null}
 
         {linktree.items.length === 0 ? (
           <p className="mt-3 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs text-slate-600 dark:text-slate-300">

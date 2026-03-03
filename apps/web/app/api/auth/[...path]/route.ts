@@ -15,6 +15,8 @@ const HOP_BY_HOP_HEADERS = new Set([
   "transfer-encoding",
   "upgrade",
   "host",
+  "content-encoding",
+  "content-length",
 ]);
 
 const buildUpstreamHeaders = (request: NextRequest): Headers => {
@@ -56,12 +58,14 @@ const handle = async (
   const { path } = await context.params;
   const joinedPath = path.join("/");
   const upstreamUrl = `${getApiBaseUrl()}/api/auth/${joinedPath}${request.nextUrl.search}`;
+  const hasRequestBody = request.method !== "GET" && request.method !== "HEAD";
+  const requestBody = hasRequestBody ? request.body : undefined;
 
   const upstreamResponse = await fetch(upstreamUrl, {
     method: request.method,
     headers: buildUpstreamHeaders(request),
-    body:
-      request.method === "GET" || request.method === "HEAD" ? undefined : request.body,
+    body: requestBody,
+    ...(requestBody ? { duplex: "half" as const } : {}),
     redirect: "manual",
     cache: "no-store",
   });

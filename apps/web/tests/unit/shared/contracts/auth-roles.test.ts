@@ -4,17 +4,9 @@ import {
   isAdminRoleValue,
   isMemberLikeRoleValue,
   isUnverifiedRoleValue,
-  normalizeLegacyRole,
 } from "@/shared/contracts/auth-roles";
 
 describe("shared/contracts/auth-roles", () => {
-  it("normalizes legacy and unknown roles", () => {
-    expect(normalizeLegacyRole("member")).toBe("regular_member");
-    expect(normalizeLegacyRole("president")).toBe("president");
-    expect(normalizeLegacyRole(undefined)).toBe("unverified");
-    expect(normalizeLegacyRole("unknown")).toBe("unverified");
-  });
-
   it("checks admin and member-like roles", () => {
     expect(isAdminRoleValue("manager")).toBe(true);
     expect(isAdminRoleValue("regular_member")).toBe(false);

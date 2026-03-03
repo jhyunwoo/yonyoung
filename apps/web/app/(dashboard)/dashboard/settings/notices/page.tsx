@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import NoticeManager from "@/app/(dashboard)/_components/notice-manager";
-import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { isPresidentOrVicePresidentRole } from "@/features/auth/model/auth-shared";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default async function SettingsNoticesPage() {
-  const session = await serverAuthTool.requireSession();
+  const session = await serverAuthGuard.requireSession();
   const noticesBasePath = "/dashboard/settings/notices";
 
   return (

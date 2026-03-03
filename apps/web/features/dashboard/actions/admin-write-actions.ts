@@ -5,10 +5,13 @@ import { headers } from "next/headers";
 import { updateTag } from "next/cache";
 import { z } from "zod";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
-import { canAccessAdminPage } from "@/features/auth/model/auth-shared";
+import {
+  canAccessAdminPage,
+  canManageGlobalUsers,
+} from "@/features/auth/model/auth-shared";
 import { readCookieHeader } from "@/shared/http/http";
 import { CACHE_TAGS, type AdminCacheTag, type PublicCacheTag } from "@/server/cache/tags";
-import { honoRequest } from "@/server/http/hono-client";
+import { HonoApiError, honoRequest } from "@/server/http/hono-client";
 import {
   apiActivityImageSchema,
   apiActivitySchema,
@@ -34,6 +37,7 @@ import {
   apiMarketCommentSchema,
   apiMarketItemSchema,
   apiMarketPushSubscriptionInputSchema,
+  apiMemberProfileUpdateInputSchema,
   apiRecruitingPlanSchema,
   apiSiteSettingsSchema,
   apiUpdateActivityImageBatchItemInputSchema,
@@ -80,6 +84,7 @@ import type {
   ApiMarketComment,
   ApiMarketItem,
   ApiMarketPushSubscriptionInput,
+  ApiMemberProfileUpdateInput,
   ApiRecruitingPlan,
   ApiSiteSettings,
   ApiUpdateActivityImageBatchItemInput,
@@ -103,6 +108,7 @@ import type {
 } from "@/shared/contracts/api-contracts";
 
 const ADMIN_API_BASE_PATH = "/api";
+const MARKET_PUSH_SUBSCRIPTIONS_PATH = "/market/push-subscriptions";
 
 type CacheTag = AdminCacheTag | PublicCacheTag;
 
@@ -676,7 +682,7 @@ export const upsertMarketPushSubscriptionAction = async (
 ): Promise<void> => {
   const payload = apiMarketPushSubscriptionInputSchema.parse(input);
   return writeRequest({
-    path: "/market/subscriptions",
+    path: MARKET_PUSH_SUBSCRIPTIONS_PATH,
     method: "POST",
     body: payload,
     responseSchema: readNoContentSchema,
@@ -689,7 +695,7 @@ export const deleteMarketPushSubscriptionAction = async (
 ): Promise<void> => {
   const payload = apiMarketPushSubscriptionInputSchema.parse(input);
   return writeRequest({
-    path: "/market/subscriptions",
+    path: MARKET_PUSH_SUBSCRIPTIONS_PATH,
     method: "DELETE",
     body: payload,
     responseSchema: readNoContentSchema,
@@ -700,7 +706,25 @@ export const deleteMarketPushSubscriptionAction = async (
 export const updateSiteSettingsAction = async (
   input: ApiUpdateSiteSettingsInput,
 ): Promise<ApiSiteSettings> => {
-  const payload = apiUpdateSiteSettingsInputSchema.parse(input);
+  const parsedPayload = apiUpdateSiteSettingsInputSchema.safeParse(input);
+  if (!parsedPayload.success) {
+    const firstIssue = parsedPayload.error.issues[0];
+    const firstPath = firstIssue?.path[0];
+    const issueMessage =
+      firstPath === "footerEmail"
+        ? "이메일 형식이 올바르지 않습니다."
+        : firstPath === "donateAccountNumber"
+          ? "계좌번호는 숫자와 -만 입력할 수 있으며 최대 50자입니다."
+        : "기본 설정 입력값 형식을 확인해 주세요.";
+
+    throw new HonoApiError({
+      status: 400,
+      code: "VALIDATION_ERROR",
+      message: issueMessage,
+    });
+  }
+
+  const payload = parsedPayload.data;
   return writeRequest({
     path: "/site-settings",
     method: "PATCH",
@@ -716,7 +740,7 @@ export const upsertCurrentRecruitingPlanAction = async (
   const payload = apiUpsertCurrentRecruitingPlanInputSchema.parse(input);
   return writeRequest({
     path: "/recruiting-plan/current",
-    method: "POST",
+    method: "PATCH",
     body: payload,
     responseSchema: apiRecruitingPlanSchema,
     tags: [CACHE_TAGS.admin.recruitingPlan, CACHE_TAGS.public.recruitingPlan],
@@ -727,7 +751,29 @@ export const updateUserAction = async (
   id: string,
   input: ApiUpdateUserInput,
 ): Promise<ApiUser> => {
-  const payload = apiUpdateUserInputSchema.parse(input);
+  const session = await serverAuthGuard.requireSession();
+  const canManageUsers = canManageGlobalUsers(session);
+  let payload: ApiUpdateUserInput | ApiMemberProfileUpdateInput;
+
+  if (canManageUsers) {
+    payload = apiUpdateUserInputSchema.parse(input);
+  } else {
+    const profile = await serverAuthGuard.getCurrentUserProfile(session);
+    const currentProfileId =
+      profile && typeof profile.id === "string" ? profile.id.trim() : "";
+    const allowedUserIds = new Set(
+      [session.user.id, currentProfileId].filter(
+        (value): value is string => typeof value === "string" && value.length > 0,
+      ),
+    );
+
+    if (!allowedUserIds.has(id)) {
+      forbidden();
+    }
+
+    payload = apiMemberProfileUpdateInputSchema.parse(input);
+  }
+
   return writeRequest({
     path: `/users/${id}`,
     method: "PATCH",

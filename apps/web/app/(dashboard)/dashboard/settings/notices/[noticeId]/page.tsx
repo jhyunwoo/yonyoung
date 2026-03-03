@@ -1,5 +1,5 @@
 import NoticeDetail from "@/app/(dashboard)/_components/notice-detail";
-import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { isPresidentOrVicePresidentRole } from "@/features/auth/model/auth-shared";
 
 export default async function SettingsNoticeDetailPage({
@@ -9,7 +9,7 @@ export default async function SettingsNoticeDetailPage({
 }>) {
   const [{ noticeId }, session] = await Promise.all([
     params,
-    serverAuthTool.requireSession(),
+    serverAuthGuard.requireSession(),
   ]);
   const noticesBasePath = "/dashboard/settings/notices";
   const detailPath = `${noticesBasePath}/${noticeId}`;

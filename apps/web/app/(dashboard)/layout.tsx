@@ -7,7 +7,7 @@ import { createPageMetadata } from "@/features/seo/metadata/seo";
 import DashboardShell, {
   type DashboardViewer,
 } from "@/app/(dashboard)/_components/dashboard-shell";
-import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { getAccessibleDashboardGenerationOptions } from "@/features/dashboard/generation/generation-options";
 import { buildDashboardViewerProfile } from "@/features/dashboard/members/user-profile";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,7 +28,7 @@ const readDashboardLayoutData = async (): Promise<{
   generationOptions: Awaited<ReturnType<typeof getAccessibleDashboardGenerationOptions>>;
   viewer: DashboardViewer | null;
 }> => {
-  const session = await serverAuthTool.getSession();
+  const session = await serverAuthGuard.getSession();
   if (!session) {
     return {
       generationOptions: [],
@@ -36,7 +36,7 @@ const readDashboardLayoutData = async (): Promise<{
     };
   }
 
-  const profile = await serverAuthTool.getCurrentUserProfile(session);
+  const profile = await serverAuthGuard.getCurrentUserProfile(session);
   const generationOptions = await getAccessibleDashboardGenerationOptions(session, {
     profile,
   });

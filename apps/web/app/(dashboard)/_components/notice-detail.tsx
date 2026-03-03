@@ -544,14 +544,29 @@ export default function NoticeDetail({
               </button>
             </>
           )
-        ) : editPath ? (
-          <Link
-            href={editPath}
-            className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
-          >
-            수정 페이지로 이동
-          </Link>
-        ) : null}
+        ) : (
+          <>
+            {editPath ? (
+              <Link
+                href={editPath}
+                className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
+              >
+                수정 페이지로 이동
+              </Link>
+            ) : null}
+            {canWrite ? (
+              <button
+                type="button"
+                data-testid="notice-detail-delete"
+                onClick={() => void handleDeleteNotice()}
+                disabled={isSaving}
+                className="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                삭제
+              </button>
+            ) : null}
+          </>
+        )}
       </div>
 
       <div className="mt-6">

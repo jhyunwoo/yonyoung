@@ -5,7 +5,6 @@
 type MemberNameLike = {
   familyName?: string | null;
   givenName?: string | null;
-  name?: string | null;
   email?: string | null;
 };
 
@@ -49,18 +48,13 @@ export const formatKoreanName = (
   return "이름 미등록";
 };
 
-/** 성+이름 → 레거시 name → email fallback 순서로 표시 이름 생성. */
+/** 성+이름 우선, 미등록 시 email local-part를 표시 이름으로 사용. */
 export const buildMemberDisplayName = (member: MemberNameLike): string => {
   const familyName = compactDisplayName(member.familyName);
   const givenName = compactDisplayName(member.givenName);
 
   if (familyName || givenName) {
     return `${familyName ?? ""}${givenName ?? ""}`;
-  }
-
-  const legacyName = compactDisplayName(member.name);
-  if (legacyName) {
-    return legacyName;
   }
 
   const email = compactDisplayName(member.email);

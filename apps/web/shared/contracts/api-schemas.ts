@@ -3,6 +3,7 @@ import { ADMIN_ROLE_VALUES, CORE_ROLE_VALUES } from "@/shared/contracts/auth-rol
 
 const timestampSchema = z.number().finite();
 const nullableStringSchema = z.string().nullable();
+const donateAccountNumberRegex = /^[0-9-]+$/;
 
 export const apiRoleSchema = z.string();
 
@@ -211,7 +212,13 @@ export const apiSiteSettingsSchema = z.object({
   footerPhone: z.string(),
   footerAddress: z.string(),
   donateBankName: z.string(),
-  donateAccountNumber: z.string(),
+  donateAccountNumber: z
+    .string()
+    .trim()
+    .max(50, { message: "계좌번호는 최대 50자까지 입력할 수 있습니다." })
+    .regex(donateAccountNumberRegex, {
+      message: "계좌번호는 숫자와 -만 입력할 수 있습니다.",
+    }),
   donateAccountHolder: z.string(),
 });
 

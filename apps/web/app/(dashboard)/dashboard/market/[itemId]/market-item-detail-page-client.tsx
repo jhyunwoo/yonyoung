@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import type {
@@ -155,11 +156,13 @@ export default function MarketItemDetailPageClient({
   viewer: MarketViewer;
   itemId: string;
 }) {
+  const router = useRouter();
   const [item, setItem] = useState<ApiMarketItem | null>(null);
   const [comments, setComments] = useState<ApiMarketComment[]>([]);
   const [isLoadingItem, setIsLoadingItem] = useState(true);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [isChangingStatus, setIsChangingStatus] = useState(false);
+  const [isDeletingItem, setIsDeletingItem] = useState(false);
   const [isCommentPending, setIsCommentPending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [commentInput, setCommentInput] = useState("");
@@ -402,6 +405,29 @@ export default function MarketItemDetailPageClient({
     }
   };
 
+  const handleDeleteItem = async () => {
+    if (!item || !isOwnerItem || isDeletingItem) {
+      return;
+    }
+
+    const confirmed = window.confirm("이 게시글을 삭제하시겠습니까?");
+    if (!confirmed) {
+      return;
+    }
+
+    setIsDeletingItem(true);
+    setErrorMessage(null);
+    try {
+      await adminResourceApi.deleteMarketItem(item.id);
+      router.replace("/dashboard/market");
+      router.refresh();
+    } catch (error) {
+      setErrorMessage(readMarketErrorMessage(error));
+    } finally {
+      setIsDeletingItem(false);
+    }
+  };
+
   const handleRegisterPush = async () => {
     if (!isPushSupported || typeof Notification === "undefined") {
       setPushMessage("현재 브라우저는 웹푸시를 지원하지 않습니다.");
@@ -502,13 +528,24 @@ export default function MarketItemDetailPageClient({
                 목록으로
               </Link>
               {isOwnerItem && item ? (
-                <Link
-                  href={`/dashboard/market/${item.id}/edit`}
-                  data-testid="market-edit-link"
-                  className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"
-                >
-                  게시글 수정
-                </Link>
+                <>
+                  <Link
+                    href={`/dashboard/market/${item.id}/edit`}
+                    data-testid="market-edit-link"
+                    className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"
+                  >
+                    게시글 수정
+                  </Link>
+                  <button
+                    type="button"
+                    data-testid="market-delete-button"
+                    onClick={() => void handleDeleteItem()}
+                    disabled={isDeletingItem}
+                    className="inline-flex rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isDeletingItem ? "삭제 중..." : "게시글 삭제"}
+                  </button>
+                </>
               ) : null}
               <Link
                 href="/dashboard/market/new"

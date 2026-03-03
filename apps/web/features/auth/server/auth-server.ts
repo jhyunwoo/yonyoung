@@ -8,9 +8,6 @@ import type { AuthSession } from "@/features/auth/model/auth-shared";
 const SESSION_PATH = "/api/auth/get-session";
 const SESSION_REQUEST_TIMEOUT_MS = 4000;
 
-/** @deprecated Use `resolveApiBaseUrl()` from `@/shared/http/http` instead. */
-export const resolveAuthApiUrl = (): string => resolveApiBaseUrl();
-
 export const fetchSessionFromApi = async (
   cookieHeader: string | null,
 ): Promise<AuthSession | null> => {

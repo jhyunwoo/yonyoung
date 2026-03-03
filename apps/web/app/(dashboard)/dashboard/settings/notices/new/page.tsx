@@ -1,9 +1,9 @@
 import NoticeCreateForm from "@/app/(dashboard)/_components/notice-create-form";
-import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { isPresidentOrVicePresidentRole } from "@/features/auth/model/auth-shared";
 
 export default async function SettingsNoticeCreatePage() {
-  const session = await serverAuthTool.requireSession();
+  const session = await serverAuthGuard.requireSession();
   const noticesBasePath = "/dashboard/settings/notices";
 
   return (

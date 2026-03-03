@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import NoticeManager from "@/app/(dashboard)/_components/notice-manager";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
-import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { isAdminRole } from "@/features/auth/model/auth-shared";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -12,7 +12,7 @@ export default async function GenerationNoticesPage({
 }>) {
   const [generation, session] = await Promise.all([
     requireDashboardGeneration(params),
-    serverAuthTool.requireSession(),
+    serverAuthGuard.requireSession(),
   ]);
   const noticesBasePath = `${generation.path}/notices`;
 

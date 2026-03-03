@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import {
   AUTH_PENDING_APPROVAL_PATH,
   DASHBOARD_PATH,
@@ -10,12 +10,12 @@ import { toEditableUserProfile } from "@/features/dashboard/members/user-profile
 import AuthProfileForm from "@/app/(dashboard)/auth/profile/profile-form";
 
 const readAuthProfileData = async () => {
-  const session = await serverAuthTool.getSession();
+  const session = await serverAuthGuard.getSession();
   if (!session) {
     return null;
   }
 
-  const profile = await serverAuthTool.getCurrentUserProfile(session);
+  const profile = await serverAuthGuard.getCurrentUserProfile(session);
 
   return {
     session,
@@ -42,10 +42,14 @@ export default async function AuthProfilePage() {
   }
 
   const initialProfile = toEditableUserProfile(profileLike);
+  const resolvedUserId =
+    typeof profileLike.id === "string" && profileLike.id.trim().length > 0
+      ? profileLike.id.trim()
+      : session.user.id;
 
   return (
     <AuthProfileForm
-      userId={session.user.id}
+      userId={resolvedUserId}
       role={session.user.role ?? null}
       mode="auth"
       initialProfile={initialProfile}

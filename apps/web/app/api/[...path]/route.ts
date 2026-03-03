@@ -15,6 +15,8 @@ const HOP_BY_HOP_HEADERS = new Set([
   "transfer-encoding",
   "upgrade",
   "host",
+  "content-encoding",
+  "content-length",
 ]);
 
 const EXCLUDED_PREFIXES = new Set(["internal", "auth"]);

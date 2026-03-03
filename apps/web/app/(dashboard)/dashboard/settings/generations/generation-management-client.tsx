@@ -396,6 +396,7 @@ export default function GenerationManagementClient() {
       setSuccessMessage(
         `${updatedUsers.length}명의 사용자를 ${selectedGeneration.name}에 추가했습니다.`,
       );
+      router.refresh();
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {

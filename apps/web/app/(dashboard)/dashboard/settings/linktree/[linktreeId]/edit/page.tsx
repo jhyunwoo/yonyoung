@@ -1,5 +1,5 @@
 import LinktreeGroupEditForm from "@/app/(dashboard)/_components/linktree-group-edit-form";
-import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { isAdminRole } from "@/features/auth/model/auth-shared";
 
 export default async function SettingsLinktreeEditPage({
@@ -9,7 +9,7 @@ export default async function SettingsLinktreeEditPage({
 }>) {
   const [{ linktreeId }, session] = await Promise.all([
     params,
-    serverAuthTool.requireSession(),
+    serverAuthGuard.requireSession(),
   ]);
 
   return (

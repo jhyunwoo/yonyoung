@@ -323,6 +323,7 @@ export default function AuthProfileForm({
       }
 
       const normalizedShowcaseImageUrls = normalizeShowcaseImageUrls(showcaseImageUrls);
+      const trimmedPersonalLink = personalLink.trim();
 
       const payload: ApiMemberProfileUpdateInput = {
         familyName: familyName.trim(),
@@ -332,8 +333,10 @@ export default function AuthProfileForm({
         studentNumber: studentNumber.trim(),
         phoneNumber: phoneNumber.trim(),
         collaborationAvailable,
-        personalLink: personalLink.trim().length > 0 ? personalLink.trim() : null,
       };
+      if (trimmedPersonalLink.length > 0) {
+        payload.personalLink = trimmedPersonalLink;
+      }
 
       if (canEditProfileImage) {
         payload.image = nextImageValue.length > 0 ? nextImageValue : null;
@@ -623,7 +626,7 @@ export default function AuthProfileForm({
             </label>
 
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium">개인 링크</span>
+              <span className="font-medium">개인 링크 (선택)</span>
               <input
                 value={personalLink}
                 onChange={(event) => setPersonalLink(event.target.value)}

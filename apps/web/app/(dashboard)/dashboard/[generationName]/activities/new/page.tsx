@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { isUnverifiedRole } from "@/features/auth/model/auth-shared";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
 import ActivityCreateForm from "@/app/(dashboard)/dashboard/[generationName]/activities/_components/activity-create-form";
@@ -11,7 +11,7 @@ export default async function GenerationActivityCreatePage({
 }>) {
   const [generation, session] = await Promise.all([
     requireDashboardGeneration(params),
-    serverAuthTool.requireSession(),
+    serverAuthGuard.requireSession(),
   ]);
 
   if (isUnverifiedRole(session.user.role)) {

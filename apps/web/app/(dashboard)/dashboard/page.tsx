@@ -1,13 +1,13 @@
 import { Suspense } from "react";
 import RecentGlobalNotices from "@/app/(dashboard)/_components/recent-global-notices";
 import DashboardR2StorageUsage from "@/app/(dashboard)/_components/dashboard-r2-storage-usage";
-import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const YEONYOUNG_NAS_URL = "https://165.132.176.27:8080";
 
 export default async function DashboardPage() {
-  await serverAuthTool.requireSession();
+  await serverAuthGuard.requireSession();
 
   return (
     <main className="px-4 py-6 md:px-8 md:py-8">

@@ -1,6 +1,6 @@
 import NoticeDetail from "@/app/(dashboard)/_components/notice-detail";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
-import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { isAdminRole } from "@/features/auth/model/auth-shared";
 
 export default async function GenerationNoticeDetailPage({
@@ -15,7 +15,7 @@ export default async function GenerationNoticeDetailPage({
         generationName: resolvedParams.generationName,
       }),
     ),
-    serverAuthTool.requireSession(),
+    serverAuthGuard.requireSession(),
   ]);
   const noticesBasePath = `${generation.path}/notices`;
 

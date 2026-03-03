@@ -7,7 +7,7 @@ import {
 } from "@/shared/contracts/auth-roles";
 import { hasCompletedRequiredProfileFields } from "@/shared/contracts/auth-profile";
 
-type KnownAuthRole = CoreRole | "member";
+type KnownAuthRole = CoreRole;
 type AuthRole = KnownAuthRole | (string & {});
 type AdminRole = (typeof ADMIN_ROLE_VALUES)[number];
 

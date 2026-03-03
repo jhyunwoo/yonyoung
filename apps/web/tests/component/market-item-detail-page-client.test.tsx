@@ -2,10 +2,20 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+const replaceMock = vi.hoisted(() => vi.fn());
+const refreshMock = vi.hoisted(() => vi.fn());
 const getMarketItemByIdMock = vi.hoisted(() => vi.fn());
 const listMarketCommentsByItemIdMock = vi.hoisted(() => vi.fn());
 const updateMarketItemStatusMock = vi.hoisted(() => vi.fn());
 const createMarketCommentMock = vi.hoisted(() => vi.fn());
+const deleteMarketItemMock = vi.hoisted(() => vi.fn());
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    replace: replaceMock,
+    refresh: refreshMock,
+  }),
+}));
 
 vi.mock("@/features/dashboard/api/admin-api/resources", () => ({
   adminResourceApi: {
@@ -13,6 +23,7 @@ vi.mock("@/features/dashboard/api/admin-api/resources", () => ({
     listMarketCommentsByItemId: listMarketCommentsByItemIdMock,
     updateMarketItemStatus: updateMarketItemStatusMock,
     createMarketComment: createMarketCommentMock,
+    deleteMarketItem: deleteMarketItemMock,
     upsertMarketPushSubscription: vi.fn(),
     deleteMarketPushSubscription: vi.fn(),
   },
@@ -22,10 +33,13 @@ import MarketItemDetailPageClient from "@/app/(dashboard)/dashboard/market/[item
 
 describe("MarketItemDetailPageClient", () => {
   beforeEach(() => {
+    replaceMock.mockReset();
+    refreshMock.mockReset();
     getMarketItemByIdMock.mockReset();
     listMarketCommentsByItemIdMock.mockReset();
     updateMarketItemStatusMock.mockReset();
     createMarketCommentMock.mockReset();
+    deleteMarketItemMock.mockReset();
 
     getMarketItemByIdMock.mockResolvedValue({
       id: "market-1",
@@ -110,5 +124,41 @@ describe("MarketItemDetailPageClient", () => {
       });
     });
     expect(await screen.findByText("채팅 주세요")).toBeInTheDocument();
+  });
+
+  it("shows delete button only for owner and deletes item", async () => {
+    deleteMarketItemMock.mockResolvedValue(undefined);
+    const confirmMock = vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    const user = userEvent.setup();
+    render(
+      <MarketItemDetailPageClient
+        itemId="market-1"
+        viewer={{ id: "user-member", displayName: "최부원", role: "regular_member" }}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "필름 카메라" });
+    await user.click(screen.getByTestId("market-delete-button"));
+
+    await waitFor(() => {
+      expect(deleteMarketItemMock).toHaveBeenCalledWith("market-1");
+      expect(replaceMock).toHaveBeenCalledWith("/dashboard/market");
+      expect(refreshMock).toHaveBeenCalled();
+    });
+
+    confirmMock.mockRestore();
+  });
+
+  it("hides delete button for non-owner", async () => {
+    render(
+      <MarketItemDetailPageClient
+        itemId="market-1"
+        viewer={{ id: "user-other", displayName: "다른 사용자", role: "regular_member" }}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "필름 카메라" });
+    expect(screen.queryByTestId("market-delete-button")).not.toBeInTheDocument();
   });
 });

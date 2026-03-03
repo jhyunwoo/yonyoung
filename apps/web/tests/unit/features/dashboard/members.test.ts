@@ -25,7 +25,6 @@ describe("features/dashboard/members", () => {
     expect(formatKoreanName({ email: "hello@example.com" })).toBe("hello");
 
     expect(buildMemberDisplayName({ familyName: "김", givenName: "연영" })).toBe("김연영");
-    expect(buildMemberDisplayName({ name: "  Legacy Name " })).toBe("LegacyName");
     expect(buildMemberDisplayName({ email: "member@example.com" })).toBe("member");
     expect(buildMemberDisplayName({})).toBe("이름 미등록");
 
@@ -106,6 +105,6 @@ describe("features/dashboard/members", () => {
       null,
     );
 
-    expect(fallbackViewer.displayName).toBe("LegacyUser");
+    expect(fallbackViewer.displayName).toBe("fallback");
   });
 });

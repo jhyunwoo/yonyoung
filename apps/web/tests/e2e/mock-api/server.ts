@@ -665,6 +665,12 @@ const server = createServer(async (request, response) => {
     }
 
     // Users
+    if (pathname === "/api/users/me" && method === "GET") {
+      const shouldMaskProfile = profileMode === "incomplete";
+      sendData(response, shouldMaskProfile ? withIncompleteProfileFields(actorUser) : actorUser);
+      return;
+    }
+
     if (pathname === "/api/users" && method === "GET") {
       sendData(response, state.users);
       return;
@@ -1730,7 +1736,7 @@ const server = createServer(async (request, response) => {
       }
     }
 
-    if (pathname === "/api/market/subscriptions" && method === "POST") {
+    if (pathname === "/api/market/push-subscriptions" && method === "POST") {
       if (!requireWritableRole(response, role)) {
         return;
       }
@@ -1752,7 +1758,7 @@ const server = createServer(async (request, response) => {
       return;
     }
 
-    if (pathname === "/api/market/subscriptions" && method === "DELETE") {
+    if (pathname === "/api/market/push-subscriptions" && method === "DELETE") {
       if (!requireWritableRole(response, role)) {
         return;
       }

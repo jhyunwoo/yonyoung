@@ -1,8 +1,8 @@
-import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import MembersGrid from "@/app/(dashboard)/dashboard/settings/members/members-grid";
 
 export default async function SettingsMembersPage() {
-  await serverAuthTool.requireGlobalUserManagementAccess();
+  await serverAuthGuard.requireGlobalUserManagementAccess();
 
   return (
     <main className="px-4 py-6 md:px-8 md:py-8">

@@ -9,6 +9,7 @@ import {
   type ApiSiteSettings,
   type ApiUpdateSiteSettingsInput,
 } from "@/shared/contracts/api-contracts";
+import { apiUpdateSiteSettingsInputSchema } from "@/shared/contracts/api-schemas";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const inputClassName =
@@ -37,6 +38,58 @@ const normalizeInput = (state: ApiSiteSettings): ApiUpdateSiteSettingsInput => (
   donateAccountHolder: state.donateAccountHolder.trim(),
 });
 
+type SiteSettingsFieldKey = keyof ApiSiteSettings;
+type SiteSettingsFieldErrors = Partial<Record<SiteSettingsFieldKey, string>>;
+
+const FIELD_LABELS: Record<SiteSettingsFieldKey, string> = {
+  footerOpenChatUrl: "오픈 카톡방 링크",
+  footerInstagramId: "인스타그램 아이디",
+  footerEmail: "이메일",
+  footerPhone: "전화번호",
+  footerAddress: "주소",
+  donateBankName: "은행",
+  donateAccountNumber: "계좌번호",
+  donateAccountHolder: "예금주",
+};
+
+const buildSiteSettingsFieldErrors = (
+  payload: ApiUpdateSiteSettingsInput,
+): SiteSettingsFieldErrors => {
+  const parsed = apiUpdateSiteSettingsInputSchema.safeParse(payload);
+  if (parsed.success) {
+    return {};
+  }
+
+  const errors: SiteSettingsFieldErrors = {};
+  for (const issue of parsed.error.issues) {
+    const fieldKey = issue.path[0];
+    if (typeof fieldKey !== "string") {
+      continue;
+    }
+    if (!(fieldKey in FIELD_LABELS)) {
+      continue;
+    }
+
+    const typedFieldKey = fieldKey as SiteSettingsFieldKey;
+    if (errors[typedFieldKey]) {
+      continue;
+    }
+
+    if (typedFieldKey === "footerEmail" && issue.code === "invalid_format") {
+      errors[typedFieldKey] = "이메일 형식이 올바르지 않습니다.";
+      continue;
+    }
+    if (typedFieldKey === "donateAccountNumber") {
+      errors[typedFieldKey] = "계좌번호는 숫자와 -만 입력할 수 있으며 최대 50자입니다.";
+      continue;
+    }
+
+    errors[typedFieldKey] = `${FIELD_LABELS[typedFieldKey]} 입력값을 확인해 주세요.`;
+  }
+
+  return errors;
+};
+
 export default function SiteSettingsForm() {
   const router = useRouter();
   const [formState, setFormState] = useState<ApiSiteSettings>({
@@ -46,6 +99,7 @@ export default function SiteSettingsForm() {
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<SiteSettingsFieldErrors>({});
 
   useEffect(() => {
     let isMounted = true;
@@ -84,17 +138,33 @@ export default function SiteSettingsForm() {
       ...previous,
       [field]: value,
     }));
+    setFieldErrors((previous) => {
+      if (!previous[field]) {
+        return previous;
+      }
+
+      const nextErrors = { ...previous };
+      delete nextErrors[field];
+      return nextErrors;
+    });
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    setIsSaving(true);
     setErrorMessage(null);
     setSuccessMessage(null);
+    const payload = normalizeInput(formState);
+    const nextFieldErrors = buildSiteSettingsFieldErrors(payload);
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setFieldErrors(nextFieldErrors);
+      setErrorMessage("입력값 형식을 확인해 주세요.");
+      return;
+    }
 
+    setFieldErrors({});
+    setIsSaving(true);
     try {
-      const payload = normalizeInput(formState);
       const updated = await adminResourceApi.updateSiteSettings(payload);
       setFormState(updated);
       setSuccessMessage("기본 설정을 저장했습니다.");
@@ -149,7 +219,7 @@ export default function SiteSettingsForm() {
         </p>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+      <form onSubmit={handleSubmit} className="mt-6 space-y-6" noValidate>
         <div className="grid gap-5 md:grid-cols-2">
           <label className="flex flex-col gap-2">
             <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">오픈 카톡방 링크</span>
@@ -157,10 +227,14 @@ export default function SiteSettingsForm() {
               type="url"
               value={formState.footerOpenChatUrl}
               onChange={(event) => updateField("footerOpenChatUrl", event.target.value)}
+              aria-invalid={Boolean(fieldErrors.footerOpenChatUrl)}
               className={inputClassName}
               placeholder="https://open.kakao.com/..."
               required
             />
+            {fieldErrors.footerOpenChatUrl ? (
+              <span className="text-xs text-red-600">{fieldErrors.footerOpenChatUrl}</span>
+            ) : null}
           </label>
 
           <label className="flex flex-col gap-2">
@@ -173,11 +247,15 @@ export default function SiteSettingsForm() {
                 type="text"
                 value={formState.footerInstagramId}
                 onChange={(event) => updateField("footerInstagramId", event.target.value)}
+                aria-invalid={Boolean(fieldErrors.footerInstagramId)}
                 className={inputClassName}
                 placeholder="yonyoungpage"
                 required
               />
             </div>
+            {fieldErrors.footerInstagramId ? (
+              <span className="text-xs text-red-600">{fieldErrors.footerInstagramId}</span>
+            ) : null}
             <span className="text-xs text-slate-600 dark:text-slate-300">
               @ 없이 아이디만 입력하면 됩니다.
             </span>
@@ -189,10 +267,14 @@ export default function SiteSettingsForm() {
               type="email"
               value={formState.footerEmail}
               onChange={(event) => updateField("footerEmail", event.target.value)}
+              aria-invalid={Boolean(fieldErrors.footerEmail)}
               className={inputClassName}
               placeholder="example@yonyoung.com"
               required
             />
+            {fieldErrors.footerEmail ? (
+              <span className="text-xs text-red-600">{fieldErrors.footerEmail}</span>
+            ) : null}
           </label>
 
           <label className="flex flex-col gap-2">
@@ -201,10 +283,14 @@ export default function SiteSettingsForm() {
               type="text"
               value={formState.footerPhone}
               onChange={(event) => updateField("footerPhone", event.target.value)}
+              aria-invalid={Boolean(fieldErrors.footerPhone)}
               className={inputClassName}
               placeholder="010-0000-0000"
               required
             />
+            {fieldErrors.footerPhone ? (
+              <span className="text-xs text-red-600">{fieldErrors.footerPhone}</span>
+            ) : null}
           </label>
         </div>
 
@@ -213,10 +299,14 @@ export default function SiteSettingsForm() {
           <textarea
             value={formState.footerAddress}
             onChange={(event) => updateField("footerAddress", event.target.value)}
+            aria-invalid={Boolean(fieldErrors.footerAddress)}
             className={`${inputClassName} min-h-24 resize-y`}
             placeholder="주소를 입력하세요."
             required
           />
+          {fieldErrors.footerAddress ? (
+            <span className="text-xs text-red-600">{fieldErrors.footerAddress}</span>
+          ) : null}
         </label>
 
         <section className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4 md:p-5">
@@ -228,9 +318,13 @@ export default function SiteSettingsForm() {
                 type="text"
                 value={formState.donateBankName}
                 onChange={(event) => updateField("donateBankName", event.target.value)}
+                aria-invalid={Boolean(fieldErrors.donateBankName)}
                 className={inputClassName}
                 required
               />
+              {fieldErrors.donateBankName ? (
+                <span className="text-xs text-red-600">{fieldErrors.donateBankName}</span>
+              ) : null}
             </label>
 
             <label className="flex flex-col gap-2">
@@ -241,9 +335,13 @@ export default function SiteSettingsForm() {
                 onChange={(event) =>
                   updateField("donateAccountNumber", event.target.value)
                 }
+                aria-invalid={Boolean(fieldErrors.donateAccountNumber)}
                 className={inputClassName}
                 required
               />
+              {fieldErrors.donateAccountNumber ? (
+                <span className="text-xs text-red-600">{fieldErrors.donateAccountNumber}</span>
+              ) : null}
             </label>
 
             <label className="flex flex-col gap-2">
@@ -254,9 +352,13 @@ export default function SiteSettingsForm() {
                 onChange={(event) =>
                   updateField("donateAccountHolder", event.target.value)
                 }
+                aria-invalid={Boolean(fieldErrors.donateAccountHolder)}
                 className={inputClassName}
                 required
               />
+              {fieldErrors.donateAccountHolder ? (
+                <span className="text-xs text-red-600">{fieldErrors.donateAccountHolder}</span>
+              ) : null}
             </label>
           </div>
         </section>

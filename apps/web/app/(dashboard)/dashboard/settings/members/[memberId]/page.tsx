@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import MemberDetailClient from "@/app/(dashboard)/dashboard/settings/members/[memberId]/member-detail-client";
 
 const decodeMemberId = (rawMemberId: string): string | null => {
@@ -23,7 +23,7 @@ export default async function SettingsMemberDetailPage({
 }>) {
   const [{ memberId: rawMemberId }, session] = await Promise.all([
     params,
-    serverAuthTool.requireGlobalUserManagementAccess(),
+    serverAuthGuard.requireGlobalUserManagementAccess(),
   ]);
 
   const memberId = decodeMemberId(rawMemberId);

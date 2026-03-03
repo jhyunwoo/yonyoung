@@ -123,7 +123,7 @@ describe("AuthProfileForm", () => {
     await user.type(screen.getByLabelText("학과명"), "컴퓨터과학과");
     await user.type(screen.getByLabelText(/학번/), "2023000001");
     await user.type(screen.getByLabelText("핸드폰 번호"), "01012345678");
-    await user.type(screen.getByLabelText("개인 링크"), "https://instagram.com/test");
+    await user.type(screen.getByLabelText(/개인 링크/), "https://instagram.com/test");
 
     await user.click(screen.getByTestId("auth-profile-submit"));
 
@@ -137,6 +137,67 @@ describe("AuthProfileForm", () => {
         phoneNumber: "010-1234-5678",
         collaborationAvailable: false,
         personalLink: "https://instagram.com/test",
+      });
+      expect(replaceMock).toHaveBeenCalledWith("/auth/pending-approval");
+      expect(refreshMock).toHaveBeenCalled();
+    });
+  });
+
+  it("submits profile without personal link", async () => {
+    updateUserMock.mockResolvedValue({
+      id: "user-unverified",
+      role: "unverified",
+      familyName: "김",
+      givenName: "연영",
+      college: "공과대학",
+      department: "컴퓨터과학과",
+      studentNumber: "2023000001",
+      phoneNumber: "010-1234-5678",
+      collaborationAvailable: true,
+      personalLink: null,
+      image: null,
+      showcaseImageUrls: [],
+    });
+
+    const user = userEvent.setup();
+    render(
+      <AuthProfileForm
+        userId="user-unverified"
+        role="unverified"
+        mode="auth"
+        initialProfile={{
+          image: "",
+          showcaseImageUrls: [],
+          familyName: "",
+          givenName: "",
+          college: "",
+          department: "",
+          studentNumber: "",
+          phoneNumber: "",
+          collaborationAvailable: false,
+          personalLink: "",
+        }}
+      />,
+    );
+
+    await user.type(screen.getByLabelText("성"), "김");
+    await user.type(screen.getByLabelText("이름"), "연영");
+    await user.type(screen.getByLabelText("대학명"), "공과대학");
+    await user.type(screen.getByLabelText("학과명"), "컴퓨터과학과");
+    await user.type(screen.getByLabelText(/학번/), "2023000001");
+    await user.type(screen.getByLabelText("핸드폰 번호"), "01012345678");
+
+    await user.click(screen.getByTestId("auth-profile-submit"));
+
+    await waitFor(() => {
+      expect(updateUserMock).toHaveBeenCalledWith("user-unverified", {
+        familyName: "김",
+        givenName: "연영",
+        college: "공과대학",
+        department: "컴퓨터과학과",
+        studentNumber: "2023000001",
+        phoneNumber: "010-1234-5678",
+        collaborationAvailable: false,
       });
       expect(replaceMock).toHaveBeenCalledWith("/auth/pending-approval");
       expect(refreshMock).toHaveBeenCalled();

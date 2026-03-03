@@ -1,4 +1,4 @@
-import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { isAdminRole, isPresidentRole } from "@/features/auth/model/auth-shared";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
 import GenerationExhibitionDetail from "@/app/(dashboard)/dashboard/[generationName]/exhibitions/_components/generation-exhibition-detail";
@@ -11,7 +11,7 @@ export default async function GenerationExhibitionDetailPage({
   const [{ id }, generation, session] = await Promise.all([
     params,
     requireDashboardGeneration(params),
-    serverAuthTool.requireSession(),
+    serverAuthGuard.requireSession(),
   ]);
 
   return (

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import {
   hasCompletedRequiredProfile,
   isUnverifiedRole,
@@ -15,8 +15,8 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 export default async function PendingApprovalPage() {
-  const session = await serverAuthTool.requireSession();
-  const profile = await serverAuthTool.getCurrentUserProfile(session);
+  const session = await serverAuthGuard.requireSession();
+  const profile = await serverAuthGuard.getCurrentUserProfile(session);
   const profileLike = (profile ?? session.user) as Record<string, unknown>;
   const isProfileComplete = hasCompletedRequiredProfile(profileLike);
 

@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import LinktreeManager from "@/app/(dashboard)/_components/linktree-manager";
-import { serverAuthTool } from "@/features/auth/server/auth-guard";
+import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { isAdminRole } from "@/features/auth/model/auth-shared";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default async function SettingsLinktreePage() {
-  const session = await serverAuthTool.requireSession();
+  const session = await serverAuthGuard.requireSession();
 
   return (
     <main className="px-4 py-6 md:px-8 md:py-8">
