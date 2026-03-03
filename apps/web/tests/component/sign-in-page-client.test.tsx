@@ -84,4 +84,23 @@ describe("SignInPageClient", () => {
 
     expect(signInWithGoogleMock).not.toHaveBeenCalled();
   });
+
+  it("prioritizes auth canonical origin prop over NEXT_PUBLIC_SITE_URL", async () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://yonyoung.yonsei.ac.kr";
+    signInWithGoogleMock.mockResolvedValue({
+      ok: false,
+      errorMessage: "Google 로그인 실패",
+    });
+
+    const user = userEvent.setup();
+    render(<SignInPageClient authCanonicalOrigin={window.location.origin} />);
+
+    await user.click(screen.getByTestId("auth-signin-google-submit"));
+
+    expect(await screen.findByText("Google 로그인 실패")).toBeInTheDocument();
+    expect(signInWithGoogleMock).toHaveBeenCalledWith({
+      callbackURL: `${window.location.origin}/auth/sign-in`,
+      disableRedirect: true,
+    });
+  });
 });
