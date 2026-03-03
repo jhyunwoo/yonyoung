@@ -3,8 +3,12 @@
 import { useState } from "react";
 import { signInWithGoogle } from "@/features/auth/client/auth-actions";
 
-const resolveCanonicalSiteOrigin = (): string | null => {
-  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+type SignInPageClientProps = {
+  authCanonicalOrigin?: string | null;
+};
+
+const parseOrigin = (value: string | null | undefined): string | null => {
+  const raw = value?.trim();
   if (!raw) {
     return null;
   }
@@ -16,7 +20,25 @@ const resolveCanonicalSiteOrigin = (): string | null => {
   }
 };
 
-export default function SignInPageClient() {
+const resolveCanonicalSiteOrigin = (
+  authCanonicalOrigin?: string | null,
+): string | null => {
+  const explicitOrigin = parseOrigin(authCanonicalOrigin);
+  if (explicitOrigin) {
+    return explicitOrigin;
+  }
+
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!raw) {
+    return null;
+  }
+
+  return parseOrigin(raw);
+};
+
+export default function SignInPageClient({
+  authCanonicalOrigin,
+}: SignInPageClientProps) {
   const [isPending, setIsPending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -24,7 +46,7 @@ export default function SignInPageClient() {
     setIsPending(true);
     setErrorMessage(null);
 
-    const canonicalOrigin = resolveCanonicalSiteOrigin();
+    const canonicalOrigin = resolveCanonicalSiteOrigin(authCanonicalOrigin);
     if (canonicalOrigin && new URL(canonicalOrigin).host !== window.location.host) {
       const canonicalSignInUrl = new URL("/auth/sign-in", canonicalOrigin);
       canonicalSignInUrl.search = window.location.search;
