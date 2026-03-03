@@ -43,7 +43,10 @@ export const getAccessibleDashboardGenerationOptions = async (
       ? Promise.resolve(options.profile)
       : serverAuthGuard.getCurrentUserProfile(session);
 
-  const profile = await profilePromise;
+  let profile = await profilePromise;
+  if (!profile && options?.profile === undefined) {
+    profile = await serverAuthGuard.getCurrentUserProfile(session);
+  }
   const generations = await fetchGenerationsFromServer();
   const mergedUser = {
     ...session.user,

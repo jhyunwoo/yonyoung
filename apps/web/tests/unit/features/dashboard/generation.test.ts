@@ -154,4 +154,31 @@ describe("features/dashboard/generation", () => {
     expect(getCurrentUserProfileMock).not.toHaveBeenCalled();
     expect(options.map((option) => option.id)).toEqual(["gen-58"]);
   });
+
+  it("retries profile fetch when implicit fetch returns null", async () => {
+    fetchGenerationsFromServerMock.mockResolvedValue(generations);
+    getCurrentUserProfileMock
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        generationIds: ["gen-59"],
+      });
+
+    const options = await getAccessibleDashboardGenerationOptions({
+      session: {
+        id: "s",
+        userId: "u",
+        token: "t",
+        expiresAt: 0,
+      },
+      user: {
+        id: "u",
+        email: "u@test.com",
+        name: "홍길동",
+        role: "regular_member",
+      },
+    });
+
+    expect(getCurrentUserProfileMock).toHaveBeenCalledTimes(2);
+    expect(options.map((option) => option.id)).toEqual(["gen-59"]);
+  });
 });

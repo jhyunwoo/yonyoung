@@ -35,7 +35,6 @@ const readPublic = async <T>(path: string, schema: z.ZodType<T>): Promise<T> => 
   return honoRequest<T>({
     path,
     method: "GET",
-    cache: "force-cache",
     responseSchema: schema,
     timeoutMs: 10_000,
   });
@@ -58,13 +57,13 @@ const readPublicWithFallback = async <T>(input: {
       error:
         error instanceof HonoApiError
           ? {
-              code: error.code,
-              requestId: error.requestId,
-              message: error.message,
-            }
+            code: error.code,
+            requestId: error.requestId,
+            message: error.message,
+          }
           : {
-              message: error instanceof Error ? error.message : "Unknown error",
-            },
+            message: error instanceof Error ? error.message : "Unknown error",
+          },
     });
 
     return input.fallback;

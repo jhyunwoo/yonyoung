@@ -37,9 +37,12 @@ const readDashboardLayoutData = async (): Promise<{
   }
 
   const profile = await serverAuthGuard.getCurrentUserProfile(session);
+
   const generationOptions = await getAccessibleDashboardGenerationOptions(session, {
-    profile,
+    ...(profile !== null ? { profile } : {}),
   });
+
+
   const viewer = buildDashboardViewerProfile(session.user, profile);
 
   return {

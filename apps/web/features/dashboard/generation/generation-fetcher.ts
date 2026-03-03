@@ -46,7 +46,6 @@ export const fetchGenerationsFromServer = async (): Promise<ApiGeneration[]> => 
       headers: {
         Accept: "application/json",
       },
-      cache: "force-cache",
     });
 
     if (!response.ok) {
@@ -54,7 +53,8 @@ export const fetchGenerationsFromServer = async (): Promise<ApiGeneration[]> => 
     }
 
     const payload = (await response.json().catch(() => null)) as unknown;
-    return parseGenerationList(payload);
+    const result = parseGenerationList(payload);
+    return result;
   } catch {
     return [];
   }

@@ -141,6 +141,20 @@ export const mergeGenerationId = (
   return [...nextGenerationIds];
 };
 
+export const removeGenerationId = (
+  currentGenerationIds: readonly string[],
+  generationId: string,
+): string[] => {
+  const trimmedTarget = generationId.trim();
+  if (trimmedTarget.length === 0) {
+    return [...currentGenerationIds];
+  }
+
+  return currentGenerationIds
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0 && id !== trimmedTarget);
+};
+
 export const filterAssignableUsers = (input: {
   users: ApiUser[];
   nameQuery: string;
