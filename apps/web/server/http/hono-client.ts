@@ -1,6 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import { env } from "@/server/env";
+import { getApiBaseUrl } from "@/server/env";
 import { fetchWithTimeout, FetchTimeoutError } from "@/server/http/fetch-with-timeout";
 
 const DataEnvelopeSchema = z.object({
@@ -71,7 +71,7 @@ const extractData = <T>(payload: unknown, schema: z.ZodType<T>): T => {
 export const honoRequest = async <TResponse>(
   options: HonoRequestOptions<TResponse>,
 ): Promise<TResponse> => {
-  const targetUrl = `${env.API_BASE_URL}${normalizePath(options.path)}`;
+  const targetUrl = `${getApiBaseUrl()}${normalizePath(options.path)}`;
 
   const headers = new Headers({
     Accept: "application/json",

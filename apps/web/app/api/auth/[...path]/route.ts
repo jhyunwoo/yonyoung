@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { env } from "@/server/env";
+import { getApiBaseUrl } from "@/server/env";
 
 type RouteContext = {
   params: Promise<{ path: string[] }>;
@@ -55,7 +55,7 @@ const handle = async (
 ): Promise<NextResponse> => {
   const { path } = await context.params;
   const joinedPath = path.join("/");
-  const upstreamUrl = `${env.API_BASE_URL}/api/auth/${joinedPath}${request.nextUrl.search}`;
+  const upstreamUrl = `${getApiBaseUrl()}/api/auth/${joinedPath}${request.nextUrl.search}`;
 
   const upstreamResponse = await fetch(upstreamUrl, {
     method: request.method,

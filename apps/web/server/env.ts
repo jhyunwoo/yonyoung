@@ -9,14 +9,27 @@ const EnvSchema = z.object({
   NEXT_PUBLIC_SITE_URL: z.string().optional(),
 });
 
-const parsed = EnvSchema.safeParse(process.env);
+type Env = z.infer<typeof EnvSchema>;
 
-if (!parsed.success) {
-  const details = parsed.error.issues
-    .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
-    .join(", ");
+let cachedEnv: Env | null = null;
 
-  throw new Error(`Invalid environment variables: ${details}`);
-}
+const formatZodIssues = (issues: z.core.$ZodIssue[]): string =>
+  issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join(", ");
 
-export const env = parsed.data;
+export const getEnv = (): Env => {
+  if (cachedEnv) {
+    return cachedEnv;
+  }
+
+  const parsed = EnvSchema.safeParse(process.env);
+  if (!parsed.success) {
+    throw new Error(
+      `Invalid environment variables: ${formatZodIssues(parsed.error.issues)}`,
+    );
+  }
+
+  cachedEnv = parsed.data;
+  return cachedEnv;
+};
+
+export const getApiBaseUrl = (): string => getEnv().API_BASE_URL;
