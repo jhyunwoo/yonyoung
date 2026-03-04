@@ -19,6 +19,10 @@ const HOP_BY_HOP_HEADERS = new Set([
   "content-length",
 ]);
 
+const resolveForwardedProtocol = (request: NextRequest): "http" | "https" => {
+  return request.nextUrl.protocol === "http:" ? "http" : "https";
+};
+
 const buildUpstreamHeaders = (request: NextRequest): Headers => {
   const headers = new Headers();
 
@@ -30,6 +34,12 @@ const buildUpstreamHeaders = (request: NextRequest): Headers => {
 
     headers.set(key, value);
   });
+
+  const forwardedHost = request.headers.get("host")?.trim() || request.nextUrl.host;
+  if (forwardedHost) {
+    headers.set("x-forwarded-host", forwardedHost);
+  }
+  headers.set("x-forwarded-proto", resolveForwardedProtocol(request));
 
   return headers;
 };
