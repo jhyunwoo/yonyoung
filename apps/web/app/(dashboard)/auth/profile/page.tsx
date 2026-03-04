@@ -9,17 +9,50 @@ import {
 import { toEditableUserProfile } from "@/features/dashboard/members/user-profile";
 import AuthProfileForm from "@/app/(dashboard)/auth/profile/profile-form";
 
-const readAuthProfileData = async () => {
+const normalizeRole = (value: unknown): string | null => {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const resolveProfileUserId = (
+  profile: Record<string, unknown> | null,
+  fallbackUserId: string,
+): string => {
+  if (!profile) {
+    return fallbackUserId;
+  }
+
+  const rawId = profile.id;
+  if (typeof rawId !== "string") {
+    return fallbackUserId;
+  }
+
+  const trimmed = rawId.trim();
+  return trimmed.length > 0 ? trimmed : fallbackUserId;
+};
+
+const readAuthProfileData = async (): Promise<{
+  role: string | null;
+  isProfileComplete: boolean;
+  initialProfile: ReturnType<typeof toEditableUserProfile>;
+  resolvedUserId: string;
+} | null> => {
   const session = await serverAuthGuard.getSession();
   if (!session) {
     return null;
   }
 
   const profile = await serverAuthGuard.getCurrentUserProfile(session);
+  const initialProfile = toEditableUserProfile(profile ?? session.user);
 
   return {
-    session,
-    profileLike: (profile ?? session.user) as Record<string, unknown>,
+    role: normalizeRole(session.user.role),
+    isProfileComplete: hasCompletedRequiredProfile(initialProfile),
+    initialProfile,
+    resolvedUserId: resolveProfileUserId(profile, session.user.id),
   };
 };
 
@@ -29,9 +62,8 @@ export default async function AuthProfilePage() {
     redirect("/auth/sign-in");
   }
 
-  const { session, profileLike } = data;
-  const isProfileComplete = hasCompletedRequiredProfile(profileLike);
-  const unverifiedRole = isUnverifiedRole(session.user.role);
+  const { role, isProfileComplete, initialProfile, resolvedUserId } = data;
+  const unverifiedRole = isUnverifiedRole(role);
 
   if (unverifiedRole && isProfileComplete) {
     redirect(AUTH_PENDING_APPROVAL_PATH);
@@ -41,16 +73,10 @@ export default async function AuthProfilePage() {
     redirect(DASHBOARD_PATH);
   }
 
-  const initialProfile = toEditableUserProfile(profileLike);
-  const resolvedUserId =
-    typeof profileLike.id === "string" && profileLike.id.trim().length > 0
-      ? profileLike.id.trim()
-      : session.user.id;
-
   return (
     <AuthProfileForm
       userId={resolvedUserId}
-      role={session.user.role ?? null}
+      role={role}
       mode="auth"
       initialProfile={initialProfile}
     />

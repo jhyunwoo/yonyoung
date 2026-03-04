@@ -3,6 +3,7 @@ import {
   type ApiAuditActor,
   type ApiGenerationNotice,
   type ApiGlobalNotice,
+  type ApiNoticeAuthor,
 } from "@/shared/contracts/api-contracts";
 import { summarizeRichTextHtml } from "@/features/media/rich-text/rich-text";
 
@@ -18,12 +19,7 @@ export type NoticeItem = {
   createdAt: number;
   updatedAt: number;
   updatedBy: ApiAuditActor | null;
-  author: {
-    id: string;
-    name: string;
-    image: string | null;
-    role: string | null;
-  };
+  author: ApiNoticeAuthor;
 };
 
 type NoticeLike = ApiGenerationNotice | ApiGlobalNotice;

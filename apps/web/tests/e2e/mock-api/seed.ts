@@ -8,7 +8,9 @@ const actor = (
   id: string,
   name: string,
   role: string | null,
-): ApiAuditActor => ({ id, name, role });
+  familyName: string | null = null,
+  givenName: string | null = null,
+): ApiAuditActor => ({ id, name, familyName, givenName, role });
 
 const users = [
   {
@@ -127,7 +129,7 @@ const generations = [
     endDate: new Date("2024-02-29").getTime(),
     createdAt: now - 1000 * 60 * 60 * 24 * 700,
     updatedAt: now - 1000 * 60 * 60 * 24,
-    updatedBy: actor("user-president", "김회장", "president"),
+    updatedBy: actor("user-president", "김회장", "president", "김", "회장"),
   },
   {
     id: "gen-59",
@@ -137,7 +139,7 @@ const generations = [
     endDate: new Date("2025-02-28").getTime(),
     createdAt: now - 1000 * 60 * 60 * 24 * 300,
     updatedAt: now - 1000 * 60 * 60 * 24,
-    updatedBy: actor("user-president", "김회장", "president"),
+    updatedBy: actor("user-president", "김회장", "president", "김", "회장"),
   },
 ];
 
@@ -152,7 +154,7 @@ const activities = [
     generationId: "gen-59",
     createdAt: now - 1000 * 60 * 60 * 48,
     updatedAt: now - 1000 * 60 * 60 * 24,
-    updatedBy: actor("user-manager", "박부장", "manager"),
+    updatedBy: actor("user-manager", "박부장", "manager", "박", "부장"),
     detailImages: [
       {
         id: "act-1-img-1",
@@ -174,7 +176,7 @@ const activities = [
     generationId: "gen-58",
     createdAt: now - 1000 * 60 * 60 * 72,
     updatedAt: now - 1000 * 60 * 60 * 48,
-    updatedBy: actor("user-manager", "박부장", "manager"),
+    updatedBy: actor("user-manager", "박부장", "manager", "박", "부장"),
     detailImages: [],
   },
 ];
@@ -191,7 +193,7 @@ const exhibitions = [
     description: "<p>59기 정기 사진전입니다.</p>",
     createdAt: now - 1000 * 60 * 60 * 96,
     updatedAt: now - 1000 * 60 * 60 * 48,
-    updatedBy: actor("user-vice", "이부회장", "vice_president"),
+    updatedBy: actor("user-vice", "이부회장", "vice_president", "이", "부회장"),
     detailImages: [
       {
         id: "exh-1-img-1",
@@ -215,12 +217,14 @@ const generationNotices = [
     author: {
       id: "user-manager",
       name: "박부장",
+      familyName: "박",
+      givenName: "부장",
       image: "https://images.mock.local/users/manager.jpg",
       role: "manager",
     },
     createdAt: now - 1000 * 60 * 60 * 24,
     updatedAt: now - 1000 * 60 * 60 * 24,
-    updatedBy: actor("user-manager", "박부장", "manager"),
+    updatedBy: actor("user-manager", "박부장", "manager", "박", "부장"),
   },
 ];
 
@@ -233,12 +237,14 @@ const globalNotices = [
     author: {
       id: "user-president",
       name: "김회장",
+      familyName: "김",
+      givenName: "회장",
       image: "https://images.mock.local/users/president.jpg",
       role: "president",
     },
     createdAt: now - 1000 * 60 * 60 * 12,
     updatedAt: now - 1000 * 60 * 60 * 12,
-    updatedBy: actor("user-president", "김회장", "president"),
+    updatedBy: actor("user-president", "김회장", "president", "김", "회장"),
   },
 ];
 
@@ -248,7 +254,7 @@ const linktrees = [
     name: "공식 채널",
     createdAt: now - 1000 * 60 * 60 * 100,
     updatedAt: now - 1000 * 60 * 60 * 20,
-    updatedBy: actor("user-manager", "박부장", "manager"),
+    updatedBy: actor("user-manager", "박부장", "manager", "박", "부장"),
     items: [
       {
         id: "linktree-item-1",
@@ -257,7 +263,7 @@ const linktrees = [
         link: "https://instagram.com/yonyongpage",
         createdAt: now - 1000 * 60 * 60 * 100,
         updatedAt: now - 1000 * 60 * 60 * 20,
-        updatedBy: actor("user-manager", "박부장", "manager"),
+        updatedBy: actor("user-manager", "박부장", "manager", "박", "부장"),
       },
     ],
   },
@@ -281,12 +287,14 @@ const marketItems = [
     seller: {
       id: "user-member",
       name: "최부원",
+      familyName: "최",
+      givenName: "부원",
       image: "https://images.mock.local/users/member.jpg",
       role: "regular_member",
     },
     createdAt: now - 1000 * 60 * 60 * 10,
     updatedAt: now - 1000 * 60 * 60 * 10,
-    updatedBy: actor("user-member", "최부원", "regular_member"),
+    updatedBy: actor("user-member", "최부원", "regular_member", "최", "부원"),
   },
 ];
 
@@ -297,13 +305,15 @@ const marketComments = [
     author: {
       id: "user-manager",
       name: "박부장",
+      familyName: "박",
+      givenName: "부장",
       image: "https://images.mock.local/users/manager.jpg",
       role: "manager",
     },
     content: "관심 있습니다!",
     createdAt: now - 1000 * 60 * 60 * 5,
     updatedAt: now - 1000 * 60 * 60 * 5,
-    updatedBy: actor("user-manager", "박부장", "manager"),
+    updatedBy: actor("user-manager", "박부장", "manager", "박", "부장"),
   },
 ];
 
@@ -324,7 +334,7 @@ const auditLogs = [
     resourceType: "global_notice",
     resourceId: "notice-1",
     action: "create",
-    actor: actor("user-president", "김회장", "president"),
+    actor: actor("user-president", "김회장", "president", "김", "회장"),
     changedFields: ["title", "content"],
     createdAt: now - 1000 * 60 * 60 * 12,
   },

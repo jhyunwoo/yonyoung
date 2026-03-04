@@ -34,7 +34,6 @@ export type AuthSession = {
   session: {
     id: string;
     userId: string;
-    token: string;
     expiresAt: string | number;
   };
   user: AuthUser;

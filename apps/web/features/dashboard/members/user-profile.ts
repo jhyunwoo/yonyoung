@@ -135,16 +135,18 @@ export const buildDashboardViewerProfile = (
   const givenName =
     readTrimmedStringByKey(profile, "givenName") ??
     readTrimmedSessionString(sessionUser.givenName);
+  const name =
+    readTrimmedRecordString(profile, "name") ??
+    readTrimmedSessionString(sessionUser.name);
   const image =
     readTrimmedStringByKey(profile, "image") ??
     readTrimmedSessionString(sessionUser.image);
   const profileId = readTrimmedRecordString(profile, "id");
 
-  const computedName = formatKoreanName({
+  const displayName = formatKoreanName({
     familyName,
     givenName,
-  });
-  const emailLocalPartName = formatKoreanName({
+    name,
     email: sessionUser.email,
   });
 
@@ -153,6 +155,6 @@ export const buildDashboardViewerProfile = (
     email: sessionUser.email,
     image,
     role: sessionUser.role ?? null,
-    displayName: computedName === "이름 미등록" ? emailLocalPartName : computedName,
+    displayName,
   };
 };

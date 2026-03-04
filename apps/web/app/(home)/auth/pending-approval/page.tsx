@@ -7,6 +7,7 @@ import {
   isUnverifiedRole,
 } from "@/features/auth/model/auth-shared";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
+import { toEditableUserProfile } from "@/features/dashboard/members/user-profile";
 
 export const metadata: Metadata = createPageMetadata({
   title: "승인 대기 | 연영회",
@@ -17,8 +18,9 @@ export const metadata: Metadata = createPageMetadata({
 export default async function PendingApprovalPage() {
   const session = await serverAuthGuard.requireSession();
   const profile = await serverAuthGuard.getCurrentUserProfile(session);
-  const profileLike = (profile ?? session.user) as Record<string, unknown>;
-  const isProfileComplete = hasCompletedRequiredProfile(profileLike);
+  const initialProfile = toEditableUserProfile(profile ?? session.user);
+  const isProfileComplete = hasCompletedRequiredProfile(initialProfile);
+  const sessionEmail = typeof session.user.email === "string" ? session.user.email : "";
 
   if (!isUnverifiedRole(session.user.role)) {
     redirect(isProfileComplete ? "/dashboard" : "/auth/profile");
@@ -47,7 +49,7 @@ export default async function PendingApprovalPage() {
 
         <div className="mt-8 border border-(--surface-border) bg-(--surface-muted) p-4 text-sm text-(--text-muted)">
           계정:{" "}
-          <span className="font-medium text-(--text-primary)">{session.user.email}</span>
+          <span className="font-medium text-(--text-primary)">{sessionEmail}</span>
         </div>
 
         <div className="mt-8 flex flex-wrap gap-3">

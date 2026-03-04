@@ -5,6 +5,7 @@
 type MemberNameLike = {
   familyName?: string | null;
   givenName?: string | null;
+  name?: string | null;
   email?: string | null;
 };
 
@@ -26,15 +27,20 @@ const toTrimmedOrNull = (value: string | null | undefined): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
-/** 성(familyName) + 이름(givenName) 조합. Email fallback. */
+/** 성(familyName)+이름(givenName) 우선, 없으면 name, 그다음 email local-part fallback. */
 export const formatKoreanName = (
-  user: Pick<MemberNameLike, "familyName" | "givenName" | "email">,
+  user: Pick<MemberNameLike, "familyName" | "givenName" | "name" | "email">,
 ): string => {
   const familyName = compactDisplayName(user.familyName);
   const givenName = compactDisplayName(user.givenName);
 
-  if (familyName || givenName) {
-    return `${familyName ?? ""}${givenName ?? ""}`;
+  if (familyName && givenName) {
+    return `${familyName}${givenName}`;
+  }
+
+  const name = toTrimmedOrNull(user.name);
+  if (name) {
+    return name;
   }
 
   const email = toTrimmedOrNull(user.email);
@@ -48,18 +54,23 @@ export const formatKoreanName = (
   return "이름 미등록";
 };
 
-/** 성+이름 우선, 미등록 시 email local-part를 표시 이름으로 사용. */
+/** 성+이름 우선, 미등록 시 name, email local-part 순으로 표시 이름을 결정. */
 export const buildMemberDisplayName = (member: MemberNameLike): string => {
   const familyName = compactDisplayName(member.familyName);
   const givenName = compactDisplayName(member.givenName);
 
-  if (familyName || givenName) {
-    return `${familyName ?? ""}${givenName ?? ""}`;
+  if (familyName && givenName) {
+    return `${familyName}${givenName}`;
   }
 
-  const email = compactDisplayName(member.email);
+  const name = toTrimmedOrNull(member.name);
+  if (name) {
+    return name;
+  }
+
+  const email = toTrimmedOrNull(member.email);
   if (email) {
-    const localPart = compactDisplayName(email.split("@")[0]);
+    const localPart = toTrimmedOrNull(email.split("@")[0]);
     if (localPart) {
       return localPart;
     }

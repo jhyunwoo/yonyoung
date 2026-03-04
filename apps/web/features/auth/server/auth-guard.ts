@@ -21,6 +21,77 @@ const SIGN_IN_PATH = "/auth/sign-in";
 const USER_PATH_PREFIX = "/api/users";
 const CURRENT_USER_PATH = `${USER_PATH_PREFIX}/me`;
 
+const readTrimmedString = (value: unknown): string | null => {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const sanitizeProfileRecord = (value: unknown): Record<string, unknown> | null => {
+  const source = asRecord(value);
+  if (!source) {
+    return null;
+  }
+
+  const output: Record<string, unknown> = {};
+
+  const id = readTrimmedString(source.id);
+  if (id) {
+    output.id = id;
+  }
+
+  const stringOrNullFields = [
+    "email",
+    "name",
+    "image",
+    "familyName",
+    "givenName",
+    "college",
+    "department",
+    "studentNumber",
+    "phoneNumber",
+    "personalLink",
+    "role",
+    "generationId",
+  ] as const;
+  for (const key of stringOrNullFields) {
+    const fieldValue = source[key];
+    if (typeof fieldValue === "string" || fieldValue === null) {
+      output[key] = fieldValue;
+    }
+  }
+
+  if (typeof source.collaborationAvailable === "boolean") {
+    output.collaborationAvailable = source.collaborationAvailable;
+  }
+
+  const showcaseImageUrls = source.showcaseImageUrls;
+  if (Array.isArray(showcaseImageUrls)) {
+    output.showcaseImageUrls = showcaseImageUrls.filter(
+      (item): item is string => typeof item === "string",
+    );
+  }
+
+  const generationIds = source.generationIds;
+  if (Array.isArray(generationIds)) {
+    output.generationIds = generationIds
+      .filter((item): item is string => typeof item === "string")
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+  }
+
+  if (
+    typeof source.latestGenerationSortOrder === "number" &&
+    Number.isFinite(source.latestGenerationSortOrder)
+  ) {
+    output.latestGenerationSortOrder = source.latestGenerationSortOrder;
+  }
+
+  return Object.keys(output).length > 0 ? output : null;
+};
+
 const getSession = async (): Promise<AuthSession | null> => {
   const cookieHeader = await readCookieHeader();
   return fetchSessionFromApi(cookieHeader);
@@ -46,7 +117,7 @@ const getCurrentUserProfile = async (
 
     if (currentUserResponse.ok) {
       const payload = (await currentUserResponse.json().catch(() => null)) as unknown;
-      return asRecord(unwrapDataEnvelope(payload));
+      return sanitizeProfileRecord(unwrapDataEnvelope(payload));
     }
 
     const userByIdResponse = await fetch(
@@ -60,7 +131,7 @@ const getCurrentUserProfile = async (
 
     if (userByIdResponse.ok) {
       const payload = (await userByIdResponse.json().catch(() => null)) as unknown;
-      return asRecord(unwrapDataEnvelope(payload));
+      return sanitizeProfileRecord(unwrapDataEnvelope(payload));
     }
 
     const normalizedEmail = session.user.email.trim().toLowerCase();
@@ -89,7 +160,7 @@ const getCurrentUserProfile = async (
       return typeof email === "string" && email.trim().toLowerCase() === normalizedEmail;
     });
 
-    return asRecord(matchedUser);
+    return sanitizeProfileRecord(matchedUser);
   } catch {
     return null;
   }
@@ -136,14 +207,14 @@ const redirectIfProfileIncomplete = async (
   session: AuthSession,
   redirectTo = AUTH_PROFILE_PATH,
 ): Promise<void> => {
-  const profile = (await getCurrentUserProfile(session)) ?? asRecord(session.user);
+  const profile = (await getCurrentUserProfile(session)) ?? sanitizeProfileRecord(session.user);
   if (!hasCompletedRequiredProfile(profile)) {
     redirect(redirectTo);
   }
 };
 
 const resolveAdminLandingPath = async (session: AuthSession): Promise<string> => {
-  const profile = (await getCurrentUserProfile(session)) ?? asRecord(session.user);
+  const profile = (await getCurrentUserProfile(session)) ?? sanitizeProfileRecord(session.user);
   const isProfileComplete = hasCompletedRequiredProfile(profile);
 
   return resolvePostSignInPath({

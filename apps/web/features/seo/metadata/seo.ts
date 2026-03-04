@@ -34,6 +34,7 @@ export const createPageMetadata = (input: {
     description: input.description,
     keywords: input.keywords,
     metadataBase: new URL(siteUrl),
+    manifest: "/manifest.webmanifest",
     alternates: {
       canonical: canonicalUrl,
     },

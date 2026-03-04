@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { listCachedGlobalNotices } from "@/features/dashboard/cache/admin-dashboard-cache";
+import { buildMemberDisplayName } from "@/features/dashboard/members/display-name";
 import { readCookieHeader } from "@/shared/http/http";
 import { formatKoreanDate } from "@/shared/utils/date-formatters";
 import { normalizeNotices } from "@/app/(dashboard)/_components/notice-shared";
@@ -41,7 +42,7 @@ export default async function RecentGlobalNotices() {
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{notice.title}</p>
                 <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
                   작성일: {formatKoreanDate(notice.createdAt)} · 작성자:{" "}
-                  {notice.author.name}
+                  {buildMemberDisplayName(notice.author)}
                 </p>
               </Link>
             </li>
