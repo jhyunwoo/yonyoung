@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { signInWithGoogle } from "../../../../features/auth/client/auth-actions";
 
 const signInSocialMock = vi.hoisted(() => vi.fn());
 const signOutMock = vi.hoisted(() => vi.fn());
@@ -12,7 +13,6 @@ vi.mock("@/features/auth/client/auth-client", () => ({
   },
 }));
 
-import { signInWithGoogle } from "@/features/auth/client/auth-actions";
 
 describe("signInWithGoogle", () => {
   beforeEach(() => {
@@ -36,7 +36,7 @@ describe("signInWithGoogle", () => {
   });
 
   it("preserves explicit callbackURL", async () => {
-    const callbackURL = "https://yonyoung.moveto.kr/auth/sign-in";
+    const callbackURL = "https://yonyoung.yonsei.ac.kr/auth/sign-in";
     signInSocialMock.mockResolvedValue({
       data: { url: "https://accounts.google.com/o/oauth2/v2/auth?state=test" },
       error: null,
