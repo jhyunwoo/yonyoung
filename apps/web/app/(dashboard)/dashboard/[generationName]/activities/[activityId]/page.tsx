@@ -1,5 +1,5 @@
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
-import { isUnverifiedRole } from "@/features/auth/model/auth-shared";
+import { isAdminRole, isUnverifiedRole } from "@/features/auth/model/auth-shared";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
 import GenerationActivityDetail from "@/app/(dashboard)/dashboard/[generationName]/activities/_components/generation-activity-detail";
 
@@ -22,6 +22,7 @@ export default async function GenerationActivityDetailPage({
         generationName={generation.name}
         generationPath={generation.path}
         canManage={!isUnverifiedRole(session.user.role)}
+        canDelete={isAdminRole(session.user.role)}
       />
     </main>
   );
