@@ -225,7 +225,7 @@ const SidebarContent = (input: {
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <div className="border-b border-slate-200 dark:border-slate-700 px-5 py-5">
         <Link
           href="/dashboard"
@@ -259,7 +259,7 @@ const SidebarContent = (input: {
         ) : null}
       </div>
 
-      <nav className="flex-1 px-3 py-4">
+      <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
         <ul className="space-y-1">
           <AnimatePresence initial={false} mode="popLayout">
             {navigationItems.map(({ key, href, label, Icon, active }) => (
@@ -674,7 +674,7 @@ export default function DashboardShell({
               transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2 }}
             />
             <motion.aside
-              className="absolute right-0 top-0 h-full w-[84%] max-w-sm border-l border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl"
+              className="absolute right-0 top-0 flex h-full w-[84%] max-w-sm flex-col border-l border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl"
               initial={shouldReduceMotion ? false : { x: "100%", opacity: 0.98 }}
               animate={{ x: 0, opacity: 1 }}
               exit={
@@ -704,16 +704,18 @@ export default function DashboardShell({
                 </button>
               </div>
 
-              <SidebarContent
-                pathname={pathname}
-                generationOptions={generationOptions}
-                selectedGeneration={selectedGeneration}
-                selectedGenerationScopedPath={selectedGenerationScopedPath}
-                viewer={viewer}
-                onNavigate={() => setMobileOpen(false)}
-                onSignOut={handleSignOut}
-                isSignOutPending={isSignOutPending}
-              />
+              <div className="min-h-0 flex-1">
+                <SidebarContent
+                  pathname={pathname}
+                  generationOptions={generationOptions}
+                  selectedGeneration={selectedGeneration}
+                  selectedGenerationScopedPath={selectedGenerationScopedPath}
+                  viewer={viewer}
+                  onNavigate={() => setMobileOpen(false)}
+                  onSignOut={handleSignOut}
+                  isSignOutPending={isSignOutPending}
+                />
+              </div>
             </motion.aside>
           </div>
         ) : null}
