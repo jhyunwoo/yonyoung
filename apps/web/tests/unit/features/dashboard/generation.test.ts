@@ -106,7 +106,6 @@ describe("features/dashboard/generation", () => {
       session: {
         id: "s",
         userId: "u",
-        token: "t",
         expiresAt: 0,
       },
       user: {
@@ -133,7 +132,6 @@ describe("features/dashboard/generation", () => {
         session: {
           id: "s",
           userId: "u",
-          token: "t",
           expiresAt: 0,
         },
         user: {
@@ -167,7 +165,6 @@ describe("features/dashboard/generation", () => {
       session: {
         id: "s",
         userId: "u",
-        token: "t",
         expiresAt: 0,
       },
       user: {

@@ -19,7 +19,7 @@ export default function robots(): MetadataRoute.Robots {
           "/donate",
           "/linktree",
         ],
-        disallow: ["/dashboard", "/admin", "/auth", "/api/internal"],
+        disallow: ["/dashboard", "/auth", "/api/internal"],
       },
     ],
     sitemap: `${siteUrl}/sitemap.xml`,

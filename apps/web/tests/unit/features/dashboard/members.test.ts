@@ -21,10 +21,27 @@ describe("features/dashboard/members", () => {
     expect(compactDisplayName("  김 연 영  ")).toBe("김연영");
     expect(compactDisplayName(undefined)).toBeNull();
 
-    expect(formatKoreanName({ familyName: "김", givenName: "연영" })).toBe("김연영");
+    expect(
+      formatKoreanName({ familyName: "김", givenName: "연영", name: "legacy" }),
+    ).toBe("김연영");
+    expect(
+      formatKoreanName({ familyName: "김", givenName: null, name: "legacy" }),
+    ).toBe("legacy");
+    expect(
+      formatKoreanName({ familyName: null, givenName: "연영", name: "legacy" }),
+    ).toBe("legacy");
     expect(formatKoreanName({ email: "hello@example.com" })).toBe("hello");
+    expect(formatKoreanName({})).toBe("이름 미등록");
 
-    expect(buildMemberDisplayName({ familyName: "김", givenName: "연영" })).toBe("김연영");
+    expect(
+      buildMemberDisplayName({ familyName: "김", givenName: "연영", name: "legacy" }),
+    ).toBe("김연영");
+    expect(
+      buildMemberDisplayName({ familyName: "김", givenName: null, name: "legacy" }),
+    ).toBe("legacy");
+    expect(
+      buildMemberDisplayName({ familyName: null, givenName: "연영", name: "legacy" }),
+    ).toBe("legacy");
     expect(buildMemberDisplayName({ email: "member@example.com" })).toBe("member");
     expect(buildMemberDisplayName({})).toBe("이름 미등록");
 
@@ -105,6 +122,18 @@ describe("features/dashboard/members", () => {
       null,
     );
 
-    expect(fallbackViewer.displayName).toBe("fallback");
+    expect(fallbackViewer.displayName).toBe("Legacy User");
+
+    const emailFallbackViewer = buildDashboardViewerProfile(
+      {
+        id: "u3",
+        email: "fallback@example.com",
+        name: null,
+        role: null,
+      },
+      null,
+    );
+
+    expect(emailFallbackViewer.displayName).toBe("fallback");
   });
 });

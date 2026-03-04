@@ -44,7 +44,6 @@ const createSession = (): AuthSession => ({
   session: {
     id: "session-id",
     userId: "user-id",
-    token: "session-token",
     expiresAt: 0,
   },
   user: {

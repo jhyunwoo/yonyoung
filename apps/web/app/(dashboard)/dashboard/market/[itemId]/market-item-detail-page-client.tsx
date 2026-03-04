@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
+import { buildMemberDisplayName } from "@/features/dashboard/members/display-name";
 import type {
   ApiMarketComment,
   ApiMarketItem,
@@ -203,7 +204,7 @@ export default function MarketItemDetailPageClient({
     }
 
     return [
-      { label: "판매자", value: item.seller.name },
+      { label: "판매자", value: buildMemberDisplayName(item.seller) },
       { label: "게시일", value: formatPostedDate(item.createdAt) },
       { label: "판매상태", value: STATUS_LABEL[item.status] },
       { label: "제품 상태 등급", value: item.conditionGrade ?? "-" },
@@ -801,7 +802,9 @@ export default function MarketItemDetailPageClient({
                         key={comment.id}
                         className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3"
                       >
-                        <p className="text-xs text-slate-600 dark:text-slate-300">{comment.author.name}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-300">
+                          {buildMemberDisplayName(comment.author)}
+                        </p>
                         <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">{comment.content}</p>
                       </li>
                     ))}

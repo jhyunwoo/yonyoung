@@ -316,6 +316,23 @@ const buildMemberSummary = (user: ApiUser, generationId: string): ApiGenerationM
   role: user.role,
 });
 
+const buildAuditActor = (user: ApiUser): NonNullable<ApiAuditLog["actor"]> => ({
+  id: user.id,
+  name: user.name,
+  familyName: user.familyName,
+  givenName: user.givenName,
+  role: user.role,
+});
+
+const buildUserDisplayProfile = (user: ApiUser): ApiMarketItem["seller"] => ({
+  id: user.id,
+  name: user.name,
+  familyName: user.familyName,
+  givenName: user.givenName,
+  image: user.image,
+  role: user.role,
+});
+
 const trackAudit = (
   state: MockState,
   input: {
@@ -331,11 +348,7 @@ const trackAudit = (
     resourceType: input.resourceType,
     resourceId: input.resourceId,
     action: input.action,
-    actor: {
-      id: input.actor.id,
-      name: input.actor.name,
-      role: input.actor.role,
-    },
+    actor: buildAuditActor(input.actor),
     changedFields: input.changedFields,
     createdAt: now(),
   });
@@ -485,11 +498,7 @@ const upsertGeneration = (
       ...payload,
       id,
       updatedAt: now(),
-      updatedBy: {
-        id: actorUser.id,
-        name: actorUser.name,
-        role: actorUser.role,
-      },
+      updatedBy: buildAuditActor(actorUser),
     });
     return existing;
   }
@@ -502,11 +511,7 @@ const upsertGeneration = (
     endDate: typeof payload.endDate === "number" ? payload.endDate : now(),
     createdAt: now(),
     updatedAt: now(),
-    updatedBy: {
-      id: actorUser.id,
-      name: actorUser.name,
-      role: actorUser.role,
-    },
+    updatedBy: buildAuditActor(actorUser),
   };
   state.generations.push(created);
   return created;
@@ -695,7 +700,7 @@ const server = createServer(async (request, response) => {
         }
         user.role = nextRole;
         user.updatedAt = now();
-        user.updatedBy = { id: actorUser.id, name: actorUser.name, role: actorUser.role };
+        user.updatedBy = buildAuditActor(actorUser);
         updatedUsers.push(user);
       }
       trackAudit(state, {
@@ -741,11 +746,7 @@ const server = createServer(async (request, response) => {
         const patch = body ?? {};
         Object.assign(user, patch, {
           updatedAt: now(),
-          updatedBy: {
-            id: actorUser.id,
-            name: actorUser.name,
-            role: actorUser.role,
-          },
+          updatedBy: buildAuditActor(actorUser),
         });
         if (Array.isArray(patch.generationIds) && patch.generationIds.length > 0) {
           user.generationIds = [...patch.generationIds] as string[];
@@ -829,7 +830,7 @@ const server = createServer(async (request, response) => {
         }
         Object.assign(generation, body ?? {}, {
           updatedAt: now(),
-          updatedBy: { id: actorUser.id, name: actorUser.name, role: actorUser.role },
+          updatedBy: buildAuditActor(actorUser),
         });
         trackAudit(state, {
           resourceType: "generation",
@@ -884,15 +885,10 @@ const server = createServer(async (request, response) => {
           title: typeof body?.title === "string" ? body.title : "신규 공지",
           content: typeof body?.content === "string" ? body.content : "",
           imageUrls: ensureArray(body?.imageUrls as string[]),
-          author: {
-            id: actorUser.id,
-            name: actorUser.name,
-            image: actorUser.image,
-            role: actorUser.role,
-          },
+          author: buildUserDisplayProfile(actorUser),
           createdAt: now(),
           updatedAt: now(),
-          updatedBy: { id: actorUser.id, name: actorUser.name, role: actorUser.role },
+          updatedBy: buildAuditActor(actorUser),
         };
         state.notices.generation.unshift(created);
         trackAudit(state, {
@@ -925,7 +921,7 @@ const server = createServer(async (request, response) => {
           }
           Object.assign(notice, body ?? {}, {
             updatedAt: now(),
-            updatedBy: { id: actorUser.id, name: actorUser.name, role: actorUser.role },
+            updatedBy: buildAuditActor(actorUser),
           });
           trackAudit(state, {
             resourceType: "generation_notice",
@@ -987,7 +983,7 @@ const server = createServer(async (request, response) => {
             : state.generations[0]?.id ?? "gen-59",
         createdAt: now(),
         updatedAt: now(),
-        updatedBy: { id: actorUser.id, name: actorUser.name, role: actorUser.role },
+        updatedBy: buildAuditActor(actorUser),
         detailImages: [],
       };
       state.activities.unshift(created);
@@ -1021,7 +1017,7 @@ const server = createServer(async (request, response) => {
         }
         Object.assign(activity, body ?? {}, {
           updatedAt: now(),
-          updatedBy: { id: actorUser.id, name: actorUser.name, role: actorUser.role },
+          updatedBy: buildAuditActor(actorUser),
         });
         trackAudit(state, {
           resourceType: "activity",
@@ -1181,7 +1177,7 @@ const server = createServer(async (request, response) => {
         description: typeof body?.description === "string" ? body.description : "",
         createdAt: now(),
         updatedAt: now(),
-        updatedBy: { id: actorUser.id, name: actorUser.name, role: actorUser.role },
+        updatedBy: buildAuditActor(actorUser),
         detailImages: [],
       };
       state.exhibitions.unshift(created);
@@ -1215,7 +1211,7 @@ const server = createServer(async (request, response) => {
         }
         Object.assign(exhibition, body ?? {}, {
           updatedAt: now(),
-          updatedBy: { id: actorUser.id, name: actorUser.name, role: actorUser.role },
+          updatedBy: buildAuditActor(actorUser),
         });
         trackAudit(state, {
           resourceType: "exhibition",
@@ -1361,15 +1357,10 @@ const server = createServer(async (request, response) => {
         title: typeof body?.title === "string" ? body.title : "신규 전체 공지",
         content: typeof body?.content === "string" ? body.content : "",
         imageUrls: ensureArray(body?.imageUrls as string[]),
-        author: {
-          id: actorUser.id,
-          name: actorUser.name,
-          image: actorUser.image,
-          role: actorUser.role,
-        },
+        author: buildUserDisplayProfile(actorUser),
         createdAt: now(),
         updatedAt: now(),
-        updatedBy: { id: actorUser.id, name: actorUser.name, role: actorUser.role },
+        updatedBy: buildAuditActor(actorUser),
       };
       state.notices.global.unshift(created);
       trackAudit(state, {
@@ -1401,7 +1392,7 @@ const server = createServer(async (request, response) => {
         }
         Object.assign(notice, body ?? {}, {
           updatedAt: now(),
-          updatedBy: { id: actorUser.id, name: actorUser.name, role: actorUser.role },
+          updatedBy: buildAuditActor(actorUser),
         });
         trackAudit(state, {
           resourceType: "global_notice",
@@ -1445,7 +1436,7 @@ const server = createServer(async (request, response) => {
         name: typeof body?.name === "string" ? body.name : "신규 링크 그룹",
         createdAt: now(),
         updatedAt: now(),
-        updatedBy: { id: actorUser.id, name: actorUser.name, role: actorUser.role },
+        updatedBy: buildAuditActor(actorUser),
         items: [],
       };
       state.linktrees.unshift(created);
@@ -1481,11 +1472,7 @@ const server = createServer(async (request, response) => {
           linktree.name = body.name;
         }
         linktree.updatedAt = now();
-        linktree.updatedBy = {
-          id: actorUser.id,
-          name: actorUser.name,
-          role: actorUser.role,
-        };
+        linktree.updatedBy = buildAuditActor(actorUser);
         trackAudit(state, {
           resourceType: "linktree",
           resourceId: linktree.id,
@@ -1527,7 +1514,7 @@ const server = createServer(async (request, response) => {
               : "https://example.com/new-link",
           createdAt: now(),
           updatedAt: now(),
-          updatedBy: { id: actorUser.id, name: actorUser.name, role: actorUser.role },
+          updatedBy: buildAuditActor(actorUser),
         };
         linktree.items.push(created);
         linktree.updatedAt = now();
@@ -1554,7 +1541,7 @@ const server = createServer(async (request, response) => {
             item.link = body.link;
           }
           item.updatedAt = now();
-          item.updatedBy = { id: actorUser.id, name: actorUser.name, role: actorUser.role };
+          item.updatedBy = buildAuditActor(actorUser);
           linktree.updatedAt = now();
           sendData(response, item);
           return;
@@ -1605,15 +1592,10 @@ const server = createServer(async (request, response) => {
         description: typeof body?.description === "string" ? body.description : null,
         price: typeof body?.price === "number" ? body.price : 0,
         status: "selling",
-        seller: {
-          id: actorUser.id,
-          name: actorUser.name,
-          image: actorUser.image,
-          role: actorUser.role,
-        },
+        seller: buildUserDisplayProfile(actorUser),
         createdAt: now(),
         updatedAt: now(),
-        updatedBy: { id: actorUser.id, name: actorUser.name, role: actorUser.role },
+        updatedBy: buildAuditActor(actorUser),
       };
       state.marketItems.unshift(created);
       trackAudit(state, {
@@ -1646,7 +1628,7 @@ const server = createServer(async (request, response) => {
         }
         Object.assign(item, body ?? {}, {
           updatedAt: now(),
-          updatedBy: { id: actorUser.id, name: actorUser.name, role: actorUser.role },
+          updatedBy: buildAuditActor(actorUser),
         });
         sendData(response, item);
         return;
@@ -1673,7 +1655,7 @@ const server = createServer(async (request, response) => {
         }
         item.status = status;
         item.updatedAt = now();
-        item.updatedBy = { id: actorUser.id, name: actorUser.name, role: actorUser.role };
+        item.updatedBy = buildAuditActor(actorUser);
         sendData(response, item);
         return;
       }
@@ -1691,16 +1673,11 @@ const server = createServer(async (request, response) => {
         const created: ApiMarketComment = {
           id: `market-comment-${crypto.randomUUID()}`,
           itemId,
-          author: {
-            id: actorUser.id,
-            name: actorUser.name,
-            image: actorUser.image,
-            role: actorUser.role,
-          },
+          author: buildUserDisplayProfile(actorUser),
           content: typeof body?.content === "string" ? body.content : "",
           createdAt: now(),
           updatedAt: now(),
-          updatedBy: { id: actorUser.id, name: actorUser.name, role: actorUser.role },
+          updatedBy: buildAuditActor(actorUser),
         };
         state.comments.push(created);
         sendData(response, created);
@@ -1724,7 +1701,7 @@ const server = createServer(async (request, response) => {
           comment.content = body.content;
         }
         comment.updatedAt = now();
-        comment.updatedBy = { id: actorUser.id, name: actorUser.name, role: actorUser.role };
+        comment.updatedBy = buildAuditActor(actorUser);
         sendData(response, comment);
         return;
       }

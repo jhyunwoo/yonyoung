@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
+import { buildMemberDisplayName } from "@/features/dashboard/members/display-name";
 import type {
   ApiMarketItem,
   ApiMarketItemStatus,
@@ -154,7 +155,9 @@ export default function MarketPageClient({ viewer }: { viewer: MarketViewer }) {
                         {item.name}
                       </p>
                       <p className="text-sm text-slate-700 dark:text-slate-200">{formatPrice(item.price)}</p>
-                      <p className="text-xs text-slate-600 dark:text-slate-300">판매자: {item.seller.name}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-300">
+                        판매자: {buildMemberDisplayName(item.seller)}
+                      </p>
                       <p className="text-xs text-slate-600 dark:text-slate-300">
                         게시일: {formatPostedDate(item.createdAt)}
                       </p>

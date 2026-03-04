@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { PRESIGN_PATHS } from "@/features/dashboard/api/admin-api/upload";
 import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/upload-batch";
+import { buildMemberDisplayName } from "@/features/dashboard/members/display-name";
 import { AdminApiError } from "@/shared/http/http";
 import { formatKoreanDate } from "@/shared/utils/date-formatters";
 import { createExistingUploadImageItem } from "@/features/media/upload/image-upload-state";
@@ -396,7 +397,7 @@ export default function NoticeDetail({
           <>
             <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">{notice.title}</h2>
             <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
-              작성자: {notice.author.name} ({buildRoleLabel(notice.author.role)}) ·
+              작성자: {buildMemberDisplayName(notice.author)} ({buildRoleLabel(notice.author.role)}) ·
               작성일: {formatKoreanDate(notice.createdAt)}
             </p>
             <LastUpdatedMeta

@@ -10,6 +10,8 @@ export const apiRoleSchema = z.string();
 export const apiAuditActorSchema = z.object({
   id: z.string(),
   name: z.string(),
+  familyName: nullableStringSchema,
+  givenName: nullableStringSchema,
   role: apiRoleSchema.nullable(),
 });
 
@@ -134,6 +136,8 @@ export const apiUpdateExhibitionImageBatchItemInputSchema = z.object({
 export const apiNoticeAuthorSchema = z.object({
   id: z.string(),
   name: z.string(),
+  familyName: nullableStringSchema,
+  givenName: nullableStringSchema,
   image: nullableStringSchema,
   role: apiRoleSchema.nullable(),
 });
@@ -249,6 +253,8 @@ export const apiMarketConditionGradeSchema = z.enum(["A", "B", "C", "D"]);
 export const apiMarketSellerSchema = z.object({
   id: z.string(),
   name: z.string(),
+  familyName: nullableStringSchema,
+  givenName: nullableStringSchema,
   image: nullableStringSchema,
   role: apiRoleSchema.nullable(),
 });
