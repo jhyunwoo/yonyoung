@@ -207,7 +207,7 @@ export const adminResourceApi = {
   getUserResourceHistory: (id: string, limit = 100) => {
     const safeLimit = Math.max(1, Math.min(200, Math.floor(limit)));
     return apiRequest.get<ApiUserResourceHistory>(
-      `/users/${id}/history?limit=${safeLimit}`,
+      `/users/${id}/resource-history?limit=${safeLimit}`,
     );
   },
   updateUser: updateUserAction,

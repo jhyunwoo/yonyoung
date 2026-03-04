@@ -718,7 +718,10 @@ const server = createServer(async (request, response) => {
         return;
       }
 
-      if (segments[3] === "history" && method === "GET") {
+      if (
+        (segments[3] === "history" || segments[3] === "resource-history") &&
+        method === "GET"
+      ) {
         sendData(response, buildUserHistory(state, userId));
         return;
       }

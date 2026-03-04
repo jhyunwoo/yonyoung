@@ -369,7 +369,6 @@ export default function AuthProfileForm({
 
         if (redirectPath !== AUTH_PROFILE_PATH) {
           router.replace(redirectPath);
-          router.refresh();
           return;
         }
       }
