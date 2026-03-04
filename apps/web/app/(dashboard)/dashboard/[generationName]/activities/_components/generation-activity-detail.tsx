@@ -20,6 +20,7 @@ type GenerationActivityDetailProps = {
   generationName: string;
   generationPath: string;
   canManage: boolean;
+  canDelete: boolean;
 };
 
 export default function GenerationActivityDetail({
@@ -28,10 +29,12 @@ export default function GenerationActivityDetail({
   generationName,
   generationPath,
   canManage,
+  canDelete,
 }: GenerationActivityDetailProps) {
   const router = useRouter();
   const [activity, setActivity] = useState<ApiActivity | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -88,6 +91,28 @@ export default function GenerationActivityDetail({
       .map((image) => image.imageUrl);
   }, [activity]);
 
+  const handleDelete = async () => {
+    if (!activity || !canDelete || isDeleting) {
+      return;
+    }
+
+    const confirmed = window.confirm("정말 이 활동을 삭제하시겠습니까?");
+    if (!confirmed) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setErrorMessage(null);
+
+    try {
+      await adminResourceApi.deleteActivity(activity.id);
+      router.push(`${generationPath}/activities`);
+    } catch (error) {
+      setErrorMessage(readActivityErrorMessage(error));
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <section className="mx-auto w-full max-w-5xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -102,7 +127,7 @@ export default function GenerationActivityDetail({
             활동 내용과 사진을 확인할 수 있습니다.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {canManage ? (
             <Link
               href={`${generationPath}/activities/${activityId}/edit`}
@@ -110,6 +135,17 @@ export default function GenerationActivityDetail({
             >
               수정
             </Link>
+          ) : null}
+          {canDelete ? (
+            <button
+              type="button"
+              data-testid="generation-activity-delete"
+              onClick={handleDelete}
+              disabled={isLoading || isDeleting || activity === null}
+              className="rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isDeleting ? "삭제 중..." : "삭제"}
+            </button>
           ) : null}
           <Link
             href={`${generationPath}/activities`}
