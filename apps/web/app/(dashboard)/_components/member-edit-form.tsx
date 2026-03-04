@@ -356,7 +356,7 @@ export default function MemberEditForm({
       <form className="mt-5 space-y-4" action={handleSubmit} noValidate>
         <div className="grid gap-4 md:grid-cols-2">
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium">이름</span>
+            <span className="font-medium">Google 이름</span>
             <input
               value={name}
               onChange={(event) => setName(event.target.value)}
@@ -492,7 +492,7 @@ export default function MemberEditForm({
           </label>
 
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium">이름(Given)</span>
+            <span className="font-medium">이름</span>
             <input
               value={givenName}
               onChange={(event) => setGivenName(event.target.value)}

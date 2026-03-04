@@ -139,7 +139,7 @@ describe("AuthProfileForm", () => {
         personalLink: "https://instagram.com/test",
       });
       expect(replaceMock).toHaveBeenCalledWith("/auth/pending-approval");
-      expect(refreshMock).toHaveBeenCalled();
+      expect(refreshMock).not.toHaveBeenCalled();
     });
   });
 
@@ -200,7 +200,7 @@ describe("AuthProfileForm", () => {
         collaborationAvailable: false,
       });
       expect(replaceMock).toHaveBeenCalledWith("/auth/pending-approval");
-      expect(refreshMock).toHaveBeenCalled();
+      expect(refreshMock).not.toHaveBeenCalled();
     });
   });
 });
