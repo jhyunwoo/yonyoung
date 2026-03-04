@@ -10,6 +10,7 @@ import {
   Camera,
   ChevronDown,
   FolderKanban,
+  House,
   Image as ImageIcon,
   LogOut,
   Megaphone,
@@ -166,6 +167,13 @@ const SidebarContent = (input: {
             input.pathname === "/dashboard/market" ||
             input.pathname.startsWith("/dashboard/market/"),
         },
+        {
+          key: "homepage",
+          href: "/",
+          label: "홈페이지",
+          Icon: House,
+          active: input.pathname === "/",
+        },
       ]
     : [
         ...input.generationOptions.map((generation) => ({
@@ -185,6 +193,13 @@ const SidebarContent = (input: {
           active:
             input.pathname === "/dashboard/market" ||
             input.pathname.startsWith("/dashboard/market/"),
+        },
+        {
+          key: "homepage",
+          href: "/",
+          label: "홈페이지",
+          Icon: House,
+          active: input.pathname === "/",
         },
       ];
 
