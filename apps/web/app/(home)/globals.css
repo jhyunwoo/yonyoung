@@ -136,6 +136,8 @@ body {
 
 .recruiting-rich-text-contrast a {
   color: #1447e6 !important;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .dark .recruiting-rich-text-contrast a {
