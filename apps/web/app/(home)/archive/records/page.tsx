@@ -37,7 +37,7 @@ export default async function ArchiveRecordsPage() {
           </div>
         ) : (
           <div
-            className="mx-auto grid max-w-[1400px] [grid-template-columns:repeat(4,minmax(0,1fr))] gap-6 px-4 md:px-8 max-[1024px]:[grid-template-columns:repeat(auto-fit,minmax(180px,1fr))] max-[768px]:[grid-template-columns:repeat(auto-fit,minmax(140px,1fr))] max-[768px]:gap-3"
+            className="mx-auto grid max-w-[1400px] [grid-template-columns:repeat(4,minmax(0,1fr))] gap-6 px-4 md:px-8 max-[1024px]:[grid-template-columns:repeat(auto-fit,minmax(180px,1fr))] max-[768px]:grid-cols-1 max-[768px]:gap-3"
             data-testid="archive-records-grid"
           >
             {activities.map((activity) => (
