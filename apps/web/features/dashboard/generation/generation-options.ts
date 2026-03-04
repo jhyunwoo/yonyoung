@@ -16,6 +16,50 @@ export type DashboardGenerationOption = Pick<
   path: string;
 };
 
+const readTrimmedOrNull = (value: unknown): string | null => {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const withCurrentUserUpdatedByFallback = (
+  generation: Pick<
+    ApiGeneration,
+    "id" | "name" | "sortOrder" | "startDate" | "endDate" | "updatedAt" | "updatedBy"
+  >,
+  currentUser: {
+    id: string;
+    name: string | null;
+    familyName: string | null;
+    givenName: string | null;
+  },
+): Pick<
+  ApiGeneration,
+  "id" | "name" | "sortOrder" | "startDate" | "endDate" | "updatedAt" | "updatedBy"
+> => {
+  if (!generation.updatedBy || generation.updatedBy.id !== currentUser.id) {
+    return generation;
+  }
+
+  const resolvedName =
+    readTrimmedOrNull(generation.updatedBy.name) ??
+    currentUser.name ??
+    generation.updatedBy.name;
+
+  return {
+    ...generation,
+    updatedBy: {
+      ...generation.updatedBy,
+      name: resolvedName,
+      familyName: generation.updatedBy.familyName ?? currentUser.familyName,
+      givenName: generation.updatedBy.givenName ?? currentUser.givenName,
+    },
+  };
+};
+
 const toGenerationOption = (
   generation: Pick<
     ApiGeneration,
@@ -52,6 +96,12 @@ export const getAccessibleDashboardGenerationOptions = async (
     ...session.user,
     ...(asRecord(profile) ?? {}),
   };
+  const currentUserProfile = {
+    id: session.user.id,
+    name: readTrimmedOrNull(mergedUser.name),
+    familyName: readTrimmedOrNull(mergedUser.familyName),
+    givenName: readTrimmedOrNull(mergedUser.givenName),
+  };
 
   const accessibleGenerations = getAccessibleGenerations(
     {
@@ -60,7 +110,11 @@ export const getAccessibleDashboardGenerationOptions = async (
     generations,
   );
 
-  return accessibleGenerations.map(toGenerationOption);
+  return accessibleGenerations
+    .map((generation) =>
+      withCurrentUserUpdatedByFallback(generation, currentUserProfile),
+    )
+    .map(toGenerationOption);
 };
 
 export const resolveGenerationOptionFromRouteName = (

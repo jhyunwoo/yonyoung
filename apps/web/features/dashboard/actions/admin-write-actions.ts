@@ -152,8 +152,11 @@ const writeRequest = async <TResponse>(input: {
   responseSchema: z.ZodType<TResponse>;
   tags: readonly CacheTag[];
   timeoutMs?: number;
+  requireAdminAccess?: boolean;
 }): Promise<TResponse> => {
-  await requireAdminAccess();
+  if (input.requireAdminAccess !== false) {
+    await requireAdminAccess();
+  }
 
   const cookieHeader = await readCookieHeader();
   const { requestId, traceId } = await readCorrelationHeaders();
@@ -779,6 +782,7 @@ export const updateUserAction = async (
     method: "PATCH",
     body: payload,
     responseSchema: apiUserSchema,
+    requireAdminAccess: canManageUsers,
     tags: [
       CACHE_TAGS.admin.users,
       CACHE_TAGS.admin.generations,
