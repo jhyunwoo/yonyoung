@@ -41,12 +41,18 @@ const createProxyResponse = (response: Response): NextResponse => {
   });
 
   response.headers.forEach((value, key) => {
-    if (HOP_BY_HOP_HEADERS.has(key.toLowerCase())) {
+    const normalized = key.toLowerCase();
+    if (HOP_BY_HOP_HEADERS.has(normalized) || normalized === "set-cookie") {
       return;
     }
 
     nextResponse.headers.set(key, value);
   });
+
+  const setCookies = response.headers.getSetCookie();
+  for (const cookie of setCookies) {
+    nextResponse.headers.append("set-cookie", cookie);
+  }
 
   return nextResponse;
 };
