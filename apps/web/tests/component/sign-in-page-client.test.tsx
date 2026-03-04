@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterAll } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import SignInPageClient from "../../app/(dashboard)/auth/sign-in/sign-in-page-client";
 
 const signInWithGoogleMock = vi.hoisted(() => vi.fn());
 
@@ -8,7 +9,6 @@ vi.mock("@/features/auth/client/auth-actions", () => ({
   signInWithGoogle: signInWithGoogleMock,
 }));
 
-import SignInPageClient from "@/app/(dashboard)/auth/sign-in/sign-in-page-client";
 
 describe("SignInPageClient", () => {
   const originalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
@@ -75,7 +75,7 @@ describe("SignInPageClient", () => {
   });
 
   it("redirects to canonical domain before oauth when host differs", async () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://yonyoung.moveto.kr";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://yonyoung.yonsei.ac.kr";
 
     const user = userEvent.setup();
     render(<SignInPageClient />);

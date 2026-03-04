@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { buildOpenGraphImagePath } from "@/features/seo/og/opengraph-image";
 
-const DEFAULT_PROD_SITE_URL = "https://yonyoung.moveto.kr";
+const DEFAULT_PROD_SITE_URL = "https://yonyoung.yonsei.ac.kr";
 
 export const resolveSiteUrl = (): string => {
   if (process.env.NODE_ENV !== "production") {
