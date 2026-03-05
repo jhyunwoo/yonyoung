@@ -143,7 +143,9 @@ export default async function HomePage() {
           ) : (
             recentActivities.map((activity, index) => (
               <MotionReveal key={activity.id} delay={index * 0.04}>
-                <article
+                <Link
+                  href={`/archive/records/${activity.id}`}
+                  aria-label={`${activity.title} 상세 보기`}
                   className="group overflow-hidden border border-(--surface-strong-border) bg-(--surface-elevated) transition-transform duration-300 hover:scale-[1.03]"
                   data-testid={`home-activity-card-${activity.id}`}
                 >
@@ -168,7 +170,7 @@ export default async function HomePage() {
                       {summarizeRichTextHtml(activity.description, 90)}
                     </p>
                   </div>
-                </article>
+                </Link>
               </MotionReveal>
             ))
           )}
