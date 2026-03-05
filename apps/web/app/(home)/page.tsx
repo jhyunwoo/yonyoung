@@ -56,7 +56,7 @@ const HomeQuickLinksSection = async () => {
                 data-testid={`home-quicklink-card-${item.id}`}
                 className="group block min-w-0 border border-(--surface-border) bg-(--surface-elevated) p-4 transition hover:border-(--surface-strong-border) hover:bg-(--surface-muted)"
               >
-                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-(--text-muted)">
+                <p className="text-xs font-semibold uppercase tracking-widest text-(--text-muted)">
                   {item.groupName}
                 </p>
                 <p className="mt-2 text-base font-semibold text-(--text-primary)">
@@ -143,13 +143,11 @@ export default async function HomePage() {
           ) : (
             recentActivities.map((activity, index) => (
               <MotionReveal key={activity.id} delay={index * 0.04}>
-                <Link
-                  href={`/archive/records/${activity.id}`}
-                  aria-label={`${activity.title} 상세 보기`}
+                <article
                   className="group overflow-hidden border border-(--surface-strong-border) bg-(--surface-elevated) transition-transform duration-300 hover:scale-[1.03]"
                   data-testid={`home-activity-card-${activity.id}`}
                 >
-                  <div className="relative aspect-[4/3] overflow-hidden">
+                  <div className="relative aspect-4/3 overflow-hidden">
                     <Image
                       src={activity.coverImageUrl}
                       alt={activity.title}
@@ -160,7 +158,7 @@ export default async function HomePage() {
                     />
                   </div>
                   <div className="space-y-2 p-5">
-                    <p className="text-xs font-semibold uppercase tracking-[0.1em] text-(--text-muted)">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-(--text-muted)">
                       {formatKoreanDateRange(activity.startDate, activity.endDate)}
                     </p>
                     <h3 className="text-[1.3rem] leading-tight tracking-[-0.02em] text-(--text-primary)">
@@ -170,7 +168,7 @@ export default async function HomePage() {
                       {summarizeRichTextHtml(activity.description, 90)}
                     </p>
                   </div>
-                </Link>
+                </article>
               </MotionReveal>
             ))
           )}
