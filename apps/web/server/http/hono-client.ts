@@ -2,6 +2,8 @@ import "server-only";
 import { z } from "zod";
 import { getApiBaseUrl } from "@/server/env";
 import { fetchWithTimeout, FetchTimeoutError } from "@/server/http/fetch-with-timeout";
+import { readServerForwardedRequestContext } from "@/server/http/request-context";
+import { applyForwardedRequestContextHeaders } from "@/shared/http/http";
 
 const DataEnvelopeSchema = z.object({
   data: z.unknown(),
@@ -91,6 +93,10 @@ export const honoRequest = async <TResponse>(
 
   if (options.cookieHeader) {
     headers.set("cookie", options.cookieHeader);
+    applyForwardedRequestContextHeaders(
+      headers,
+      await readServerForwardedRequestContext(),
+    );
   }
 
   try {

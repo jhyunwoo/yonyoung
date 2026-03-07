@@ -1,3 +1,5 @@
+import { sanitizeRichTextHtml } from "@/features/media/rich-text/rich-text";
+
 type RichTextContentProps = {
   html: string;
   className?: string;
@@ -39,6 +41,12 @@ export const RichTextContent = ({ html, className }: RichTextContentProps) => {
   const mergedClassName = className
     ? `${BASE_CLASS_NAMES} ${className}`
     : BASE_CLASS_NAMES;
+  const sanitizedHtml = sanitizeRichTextHtml(html);
 
-  return <div className={mergedClassName} dangerouslySetInnerHTML={{ __html: html }} />;
+  return (
+    <div
+      className={mergedClassName}
+      dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+    />
+  );
 };

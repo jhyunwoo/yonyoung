@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ReactNode, Suspense } from "react";
-import { Noto_Sans_KR } from "next/font/google";
 
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 import DashboardShell, {
@@ -12,11 +11,8 @@ import { getAccessibleDashboardGenerationOptions } from "@/features/dashboard/ge
 import { buildDashboardViewerProfile } from "@/features/dashboard/members/user-profile";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const notoSansKr = Noto_Sans_KR({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  display: "swap",
-});
+const ROOT_FONT_FAMILY =
+  '"Pretendard Variable", "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
 
 export const metadata: Metadata = createPageMetadata({
   title: "연영회 Dashboard",
@@ -72,7 +68,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body className={notoSansKr.className}>
+      <body style={{ fontFamily: ROOT_FONT_FAMILY }}>
         <Suspense
           fallback={
             <main

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { logger } from "@/server/observability/logger";
+import {
+  applyForwardedRequestContextHeaders,
+  resolveForwardedRequestContext,
+} from "@/shared/http/http";
 
 const sessionSchema = z.object({
   session: z.object({
@@ -78,14 +82,25 @@ const createForbiddenResponse = (requestId: string, traceId: string): NextRespon
   );
 
 const fetchSession = async (request: NextRequest, requestId: string, traceId: string) => {
+  const headers = new Headers({
+    Accept: "application/json",
+    cookie: request.headers.get("cookie") ?? "",
+    "x-request-id": requestId,
+    "x-trace-id": traceId,
+  });
+
+  applyForwardedRequestContextHeaders(
+    headers,
+    resolveForwardedRequestContext({
+      host: request.nextUrl.host,
+      forwardedProto: request.nextUrl.protocol,
+      origin: request.nextUrl.origin,
+    }),
+  );
+
   const response = await fetch(`${getApiBaseUrl()}/api/auth/get-session`, {
     method: "GET",
-    headers: {
-      Accept: "application/json",
-      cookie: request.headers.get("cookie") ?? "",
-      "x-request-id": requestId,
-      "x-trace-id": traceId,
-    },
+    headers,
     cache: "no-store",
   });
 

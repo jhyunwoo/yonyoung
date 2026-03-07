@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApiBaseUrl } from "@/server/env";
+import {
+  API_PROXY_BODY_LIMIT_BYTES,
+  buildUpstreamProxyHeaders,
+  enforceRequestBodyLimit,
+  enforceSameOriginProtection,
+  normalizeProxyPath,
+} from "@/server/security/request-guards";
 
 type RouteContext = {
   params: Promise<{ path: string[] }>;
@@ -19,22 +26,25 @@ const HOP_BY_HOP_HEADERS = new Set([
   "content-length",
 ]);
 
-const EXCLUDED_PREFIXES = new Set(["internal", "auth"]);
-
-const buildUpstreamHeaders = (request: NextRequest): Headers => {
-  const headers = new Headers();
-
-  request.headers.forEach((value, key) => {
-    const normalized = key.toLowerCase();
-    if (HOP_BY_HOP_HEADERS.has(normalized)) {
-      return;
-    }
-
-    headers.set(key, value);
-  });
-
-  return headers;
+const resolveForwardedProtocol = (request: NextRequest): "http" | "https" => {
+  return request.nextUrl.protocol === "http:" ? "http" : "https";
 };
+
+const ALLOWED_PROXY_PREFIXES = [
+  "activities",
+  "admin",
+  "exhibitions",
+  "generations",
+  "global-notices",
+  "health",
+  "linktree",
+  "market",
+  "public",
+  "recruiting-plan",
+  "site-settings",
+  "users",
+] as const;
+const BLOCKED_PROXY_PREFIXES = ["internal", "auth"] as const;
 
 const copyResponse = (upstream: Response): NextResponse => {
   const response = new NextResponse(upstream.body, {
@@ -57,19 +67,39 @@ const handle = async (
   context: RouteContext,
 ): Promise<NextResponse> => {
   const { path } = await context.params;
-
-  if (path.length === 0 || EXCLUDED_PREFIXES.has(path[0])) {
+  const upstreamPath = normalizeProxyPath({
+    pathSegments: path,
+    allowedPrefixes: ALLOWED_PROXY_PREFIXES,
+    blockedPrefixes: BLOCKED_PROXY_PREFIXES,
+  });
+  if (!upstreamPath) {
     return NextResponse.json({ ok: false, message: "Not Found" }, { status: 404 });
   }
 
-  const upstreamPath = path.join("/");
+  const csrfProtectionResponse = enforceSameOriginProtection(request, {
+    requireCsrfHeader: true,
+  });
+  if (csrfProtectionResponse) {
+    return csrfProtectionResponse;
+  }
+
+  const bodyLimitResponse = enforceRequestBodyLimit(request, API_PROXY_BODY_LIMIT_BYTES);
+  if (bodyLimitResponse) {
+    return bodyLimitResponse;
+  }
+
   const upstreamUrl = `${getApiBaseUrl()}/api/${upstreamPath}${request.nextUrl.search}`;
   const hasRequestBody = request.method !== "GET" && request.method !== "HEAD";
   const requestBody = hasRequestBody ? request.body : undefined;
 
   const upstreamResponse = await fetch(upstreamUrl, {
     method: request.method,
-    headers: buildUpstreamHeaders(request),
+    headers: buildUpstreamProxyHeaders(request, {
+      extraHeaders: {
+        "x-forwarded-host": request.nextUrl.host,
+        "x-forwarded-proto": resolveForwardedProtocol(request),
+      },
+    }),
     body: requestBody,
     ...(requestBody ? { duplex: "half" as const } : {}),
     cache: "no-store",

@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { logger } from "@/server/observability/logger";
+import {
+  normalizeObservedRoute,
+  summarizeWebVitalForLog,
+} from "@/server/observability/client-telemetry";
+import {
+  INTERNAL_EVENT_BODY_LIMIT_BYTES,
+  enforceRequestBodyLimit,
+  enforceSameOriginProtection,
+} from "@/server/security/request-guards";
 
 const webVitalsPayloadSchema = z.object({
   id: z.string().min(1),
@@ -32,6 +41,19 @@ const parseBody = async (request: NextRequest): Promise<unknown> => {
 };
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const csrfProtectionResponse = enforceSameOriginProtection(request);
+  if (csrfProtectionResponse) {
+    return csrfProtectionResponse;
+  }
+
+  const bodyLimitResponse = enforceRequestBodyLimit(
+    request,
+    INTERNAL_EVENT_BODY_LIMIT_BYTES,
+  );
+  if (bodyLimitResponse) {
+    return bodyLimitResponse;
+  }
+
   const body = await parseBody(request);
   const parsed = webVitalsPayloadSchema.safeParse(body);
   if (!parsed.success) {
@@ -40,15 +62,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const requestId = request.headers.get("x-request-id")?.trim();
   const traceId = request.headers.get("x-trace-id")?.trim();
+  const route = normalizeObservedRoute(parsed.data.path);
 
   logger.info({
     event: "web-vitals",
-    route: parsed.data.path,
+    route,
     method: request.method,
     status: 202,
     requestId: requestId || undefined,
     traceId: traceId || undefined,
-    metric: parsed.data,
+    metric: summarizeWebVitalForLog(parsed.data),
   });
 
   return NextResponse.json(

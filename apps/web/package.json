@@ -13,7 +13,7 @@
     "test:unit": "vitest run",
     "test:unit:coverage": "vitest run --coverage",
     "test:unit:watch": "vitest",
-    "test:e2e": "playwright test tests/e2e/smoke",
+    "test:e2e": "playwright test tests/e2e/home.spec.ts tests/e2e/dashboard-auth.spec.ts --grep \"home renders and contains main text|unauthenticated dashboard access is redirected or forbidden\"",
     "test:e2e:full": "playwright test",
     "test:e2e:full:repeat": "playwright test --repeat-each=2",
     "test": "pnpm test:unit && pnpm test:e2e:full",
@@ -42,6 +42,7 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "server-only": "^0.0.1",
+    "xss": "^1.0.15",
     "zod": "^4.3.6"
   },
   "devDependencies": {

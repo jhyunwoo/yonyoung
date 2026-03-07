@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ReactNode, Suspense } from "react";
-import { Noto_Sans_KR } from "next/font/google";
+import Script from "next/script";
 import SiteHeader from "@/app/(home)/_components/site-header";
 import SiteFooter from "@/app/(home)/_components/site-footer";
 import PublicHeaderSafeArea from "@/app/(home)/_components/public-header-safe-area";
@@ -10,11 +10,8 @@ import { WebVitalsReporter } from "@/app/_components/web-vitals-reporter";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 
-const notoSansKr = Noto_Sans_KR({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  display: "swap",
-});
+const ROOT_FONT_FAMILY =
+  '"Pretendard Variable", "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
 
 export const metadata: Metadata = createPageMetadata({
   title: "연영회 | 연세대학교 중앙사진동아리",
@@ -35,30 +32,6 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-const INLINE_THEME_INIT_SCRIPT = `(() => {
-  const root = document.documentElement;
-  const resolveSystemDark = () =>
-    typeof window.matchMedia === "function" &&
-    window.matchMedia("(prefers-color-scheme: dark)").matches;
-
-  try {
-    const stored = localStorage.getItem("theme");
-    const mode =
-      stored === "light" || stored === "dark" || stored === "system"
-        ? stored
-        : "system";
-    const resolvedTheme = mode === "system" ? (resolveSystemDark() ? "dark" : "light") : mode;
-    root.classList.toggle("dark", resolvedTheme === "dark");
-    root.dataset.theme = resolvedTheme;
-    root.dataset.themeMode = mode;
-  } catch {
-    const fallbackTheme = resolveSystemDark() ? "dark" : "light";
-    root.classList.toggle("dark", fallbackTheme === "dark");
-    root.dataset.theme = fallbackTheme;
-    root.dataset.themeMode = "system";
-  }
-})();`;
-
 /**
  * RootLayout 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
  * @param {
@@ -75,10 +48,11 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: INLINE_THEME_INIT_SCRIPT }} />
+        <Script src="/theme-init.js" strategy="beforeInteractive" />
       </head>
       <body
-        className={`${notoSansKr.className} min-h-screen bg-(--bg-primary) text-(--text-primary) antialiased`}
+        className="min-h-screen bg-(--bg-primary) text-(--text-primary) antialiased"
+        style={{ fontFamily: ROOT_FONT_FAMILY }}
       >
         <Suspense fallback={null}>
           <WebVitalsReporter />

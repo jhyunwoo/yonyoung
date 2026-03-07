@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { logger } from "@/server/observability/logger";
+import {
+  normalizeObservedRoute,
+  summarizeClientErrorForLog,
+} from "@/server/observability/client-telemetry";
+import {
+  INTERNAL_EVENT_BODY_LIMIT_BYTES,
+  enforceRequestBodyLimit,
+  enforceSameOriginProtection,
+} from "@/server/security/request-guards";
 
 const clientErrorPayloadSchema = z.object({
   event: z.enum(["client.error", "client.unhandledrejection", "router.transition.start"]),
@@ -30,6 +39,19 @@ const parseBody = async (request: NextRequest): Promise<unknown> => {
 };
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const csrfProtectionResponse = enforceSameOriginProtection(request);
+  if (csrfProtectionResponse) {
+    return csrfProtectionResponse;
+  }
+
+  const bodyLimitResponse = enforceRequestBodyLimit(
+    request,
+    INTERNAL_EVENT_BODY_LIMIT_BYTES,
+  );
+  if (bodyLimitResponse) {
+    return bodyLimitResponse;
+  }
+
   const body = await parseBody(request);
   const parsed = clientErrorPayloadSchema.safeParse(body);
 
@@ -39,19 +61,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const requestId = request.headers.get("x-request-id")?.trim();
   const traceId = request.headers.get("x-trace-id")?.trim();
+  const route = normalizeObservedRoute(parsed.data.path);
 
   logger.warn({
     event: parsed.data.event,
-    route: parsed.data.path,
+    route,
     method: request.method,
     status: 202,
     requestId: requestId || undefined,
     traceId: traceId || undefined,
-    error: {
-      message: parsed.data.message,
-      stack: parsed.data.stack,
-      metadata: parsed.data.metadata,
-    },
+    error: summarizeClientErrorForLog(parsed.data),
   });
 
   return NextResponse.json(

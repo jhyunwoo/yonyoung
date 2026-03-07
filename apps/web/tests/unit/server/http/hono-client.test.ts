@@ -3,6 +3,13 @@ import { z } from "zod";
 
 const fetchWithTimeoutMock = vi.hoisted(() => vi.fn());
 const getApiBaseUrlMock = vi.hoisted(() => vi.fn(() => "http://127.0.0.1:4010"));
+const readServerForwardedRequestContextMock = vi.hoisted(() =>
+  vi.fn(async () => ({
+    host: "yonyoung.yonsei.ac.kr",
+    protocol: "https" as const,
+    origin: "https://yonyoung.yonsei.ac.kr",
+  })),
+);
 
 vi.mock("@/server/env", () => ({
   getApiBaseUrl: getApiBaseUrlMock,
@@ -25,6 +32,10 @@ vi.mock("@/server/http/fetch-with-timeout", () => {
   };
 });
 
+vi.mock("@/server/http/request-context", () => ({
+  readServerForwardedRequestContext: readServerForwardedRequestContextMock,
+}));
+
 import { HonoApiError, honoRequest } from "@/server/http/hono-client";
 
 const responseSchema = z.object({ id: z.string(), name: z.string() });
@@ -34,6 +45,7 @@ describe("server/http/hono-client", () => {
     fetchWithTimeoutMock.mockReset();
     getApiBaseUrlMock.mockReset();
     getApiBaseUrlMock.mockReturnValue("http://127.0.0.1:4010");
+    readServerForwardedRequestContextMock.mockClear();
   });
 
   it("sends request and extracts data envelope", async () => {
@@ -64,6 +76,10 @@ describe("server/http/hono-client", () => {
     expect(headers.get("x-request-id")).toBe("req-1");
     expect(headers.get("x-trace-id")).toBe("trace-1");
     expect(headers.get("cookie")).toBe("mock_role=member");
+    expect(headers.get("x-forwarded-host")).toBe("yonyoung.yonsei.ac.kr");
+    expect(headers.get("x-forwarded-proto")).toBe("https");
+    expect(headers.get("origin")).toBe("https://yonyoung.yonsei.ac.kr");
+    expect(readServerForwardedRequestContextMock).toHaveBeenCalledOnce();
   });
 
   it("throws parsed API error on non-2xx responses", async () => {
@@ -80,9 +96,7 @@ describe("server/http/hono-client", () => {
       ),
     );
 
-    await expect(
-      honoRequest({ path: "/secure", responseSchema }),
-    ).rejects.toMatchObject({
+    await expect(honoRequest({ path: "/secure", responseSchema })).rejects.toMatchObject({
       name: "HonoApiError",
       status: 403,
       code: "FORBIDDEN",
@@ -94,9 +108,7 @@ describe("server/http/hono-client", () => {
   it("throws generic API status error when error envelope is absent", async () => {
     fetchWithTimeoutMock.mockResolvedValue(new Response("no-json", { status: 500 }));
 
-    await expect(
-      honoRequest({ path: "/broken", responseSchema }),
-    ).rejects.toMatchObject({
+    await expect(honoRequest({ path: "/broken", responseSchema })).rejects.toMatchObject({
       name: "HonoApiError",
       status: 500,
       code: "UNKNOWN",
@@ -117,9 +129,7 @@ describe("server/http/hono-client", () => {
       ),
     );
 
-    await expect(
-      honoRequest({ path: "/secure", responseSchema }),
-    ).rejects.toMatchObject({
+    await expect(honoRequest({ path: "/secure", responseSchema })).rejects.toMatchObject({
       status: 403,
       code: "FORBIDDEN",
       requestId: null,
@@ -130,9 +140,7 @@ describe("server/http/hono-client", () => {
     const { FetchTimeoutError } = await import("@/server/http/fetch-with-timeout");
     fetchWithTimeoutMock.mockRejectedValue(new FetchTimeoutError(1000));
 
-    await expect(
-      honoRequest({ path: "/slow", responseSchema }),
-    ).rejects.toMatchObject({
+    await expect(honoRequest({ path: "/slow", responseSchema })).rejects.toMatchObject({
       status: 408,
       code: "TIMEOUT",
     });
@@ -148,18 +156,18 @@ describe("server/http/hono-client", () => {
     ).rejects.toMatchObject({ status: 409, code: "CONFLICT", message: "Conflict" });
 
     fetchWithTimeoutMock.mockRejectedValue(new Error("network"));
-    await expect(
-      honoRequest({ path: "/network", responseSchema }),
-    ).rejects.toMatchObject({ status: 500, code: "UNKNOWN", message: "network" });
+    await expect(honoRequest({ path: "/network", responseSchema })).rejects.toMatchObject(
+      { status: 500, code: "UNKNOWN", message: "network" },
+    );
 
     fetchWithTimeoutMock.mockRejectedValue("boom");
-    await expect(
-      honoRequest({ path: "/network", responseSchema }),
-    ).rejects.toMatchObject({
-      status: 500,
-      code: "UNKNOWN",
-      message: "알 수 없는 오류가 발생했습니다.",
-    });
+    await expect(honoRequest({ path: "/network", responseSchema })).rejects.toMatchObject(
+      {
+        status: 500,
+        code: "UNKNOWN",
+        message: "알 수 없는 오류가 발생했습니다.",
+      },
+    );
   });
 
   it("sends JSON body and content-type for mutation requests", async () => {
@@ -178,7 +186,11 @@ describe("server/http/hono-client", () => {
       timeoutMs: 55,
     });
 
-    const [, init, timeoutMs] = fetchWithTimeoutMock.mock.calls[0] as [string, RequestInit, number];
+    const [, init, timeoutMs] = fetchWithTimeoutMock.mock.calls[0] as [
+      string,
+      RequestInit,
+      number,
+    ];
     expect(init.method).toBe("POST");
     expect(init.body).toBe(JSON.stringify({ name: "Lee" }));
     const headers = init.headers as Headers;
