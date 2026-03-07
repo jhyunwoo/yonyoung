@@ -12,6 +12,9 @@ describe("next.config security headers", () => {
     const headers = new Map(routeConfig?.headers.map((header) => [header.key, header.value]));
     expect(headers.get("Content-Security-Policy")).toContain("frame-ancestors 'none'");
     expect(headers.get("Content-Security-Policy")).toContain("object-src 'none'");
+    expect(headers.get("Content-Security-Policy")).toContain(
+      "connect-src 'self' https://vitals.vercel-insights.com https://va.vercel-scripts.com https://*.r2.cloudflarestorage.com",
+    );
     expect(headers.get("X-Content-Type-Options")).toBe("nosniff");
     expect(headers.get("Referrer-Policy")).toBe("strict-origin-when-cross-origin");
     expect(headers.get("Cross-Origin-Opener-Policy")).toBe("same-origin");
