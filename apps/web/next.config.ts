@@ -1,12 +1,49 @@
 import type { NextConfig } from "next";
 
 const isProduction = process.env.NODE_ENV === "production";
+const DEFAULT_PUBLIC_MEDIA_IMAGE_ORIGINS = [
+  "https://yonyoung.yonsei.ac.kr",
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+] as const;
+type RemoteImagePattern = {
+  protocol: "http" | "https";
+  hostname: string;
+  pathname: string;
+  port?: string;
+};
 const CSP_CONNECT_SOURCES = [
   "'self'",
   "https://vitals.vercel-insights.com",
   "https://va.vercel-scripts.com",
   "https://*.r2.cloudflarestorage.com",
 ] as const;
+
+const buildPublicMediaRemotePatterns = (): RemoteImagePattern[] => {
+  const candidateOrigins = new Set<string>(DEFAULT_PUBLIC_MEDIA_IMAGE_ORIGINS);
+  const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+
+  if (configuredSiteUrl) {
+    candidateOrigins.add(configuredSiteUrl);
+  }
+
+  return [...candidateOrigins].flatMap((origin) => {
+    try {
+      const url = new URL(origin);
+
+      return [
+        {
+          protocol: url.protocol.replace(":", "") as "http" | "https",
+          hostname: url.hostname,
+          pathname: "/api/public/media/**",
+          ...(url.port ? { port: url.port } : {}),
+        },
+      ];
+    } catch {
+      return [];
+    }
+  });
+};
 
 const contentSecurityPolicy = [
   "default-src 'self'",
@@ -68,6 +105,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
     remotePatterns: [
+      ...buildPublicMediaRemotePatterns(),
       {
         protocol: "https",
         hostname: "storage.yonyoung.moveto.kr",
