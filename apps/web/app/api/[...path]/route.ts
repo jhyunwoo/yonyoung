@@ -7,6 +7,10 @@ import {
   enforceSameOriginProtection,
   normalizeProxyPath,
 } from "@/server/security/request-guards";
+import {
+  API_PROXY_ALLOWED_PREFIXES,
+  API_PROXY_BLOCKED_PREFIXES,
+} from "@/server/security/api-proxy-prefixes";
 
 type RouteContext = {
   params: Promise<{ path: string[] }>;
@@ -29,23 +33,6 @@ const HOP_BY_HOP_HEADERS = new Set([
 const resolveForwardedProtocol = (request: NextRequest): "http" | "https" => {
   return request.nextUrl.protocol === "http:" ? "http" : "https";
 };
-
-const ALLOWED_PROXY_PREFIXES = [
-  "activities",
-  "admin",
-  "audit",
-  "exhibitions",
-  "generations",
-  "global-notices",
-  "health",
-  "linktree",
-  "market",
-  "public",
-  "recruiting-plan",
-  "site-settings",
-  "users",
-] as const;
-const BLOCKED_PROXY_PREFIXES = ["internal", "auth"] as const;
 
 const copyResponse = (upstream: Response): NextResponse => {
   const response = new NextResponse(upstream.body, {
@@ -70,8 +57,8 @@ const handle = async (
   const { path } = await context.params;
   const upstreamPath = normalizeProxyPath({
     pathSegments: path,
-    allowedPrefixes: ALLOWED_PROXY_PREFIXES,
-    blockedPrefixes: BLOCKED_PROXY_PREFIXES,
+    allowedPrefixes: API_PROXY_ALLOWED_PREFIXES,
+    blockedPrefixes: API_PROXY_BLOCKED_PREFIXES,
   });
   if (!upstreamPath) {
     return NextResponse.json({ ok: false, message: "Not Found" }, { status: 404 });

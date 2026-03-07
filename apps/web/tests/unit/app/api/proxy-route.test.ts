@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { CSRF_HEADER_NAME, CSRF_HEADER_VALUE } from "@/shared/security/csrf";
 
 describe("app/api/[...path]/route", () => {
   const originalApiBaseUrl = process.env.API_BASE_URL;
@@ -15,7 +16,30 @@ describe("app/api/[...path]/route", () => {
     vi.restoreAllMocks();
   });
 
-  it("forwards audit GET requests to the upstream API", async () => {
+  it.each([
+    {
+      label: "audit GET requests",
+      method: "GET",
+      url: "https://yonyoung.yonsei.ac.kr/api/audit/activity/fd3f8274-4f0a-4b5b-be59-0ca7918f710a?limit=20",
+      path: ["audit", "activity", "fd3f8274-4f0a-4b5b-be59-0ca7918f710a"],
+      upstreamUrl:
+        "https://api.example.com/api/audit/activity/fd3f8274-4f0a-4b5b-be59-0ca7918f710a?limit=20",
+    },
+    {
+      label: "notice image presign requests",
+      method: "POST",
+      url: "https://yonyoung.yonsei.ac.kr/api/notices/presign/image",
+      path: ["notices", "presign", "image"],
+      upstreamUrl: "https://api.example.com/api/notices/presign/image",
+    },
+    {
+      label: "recruiting image presign requests",
+      method: "POST",
+      url: "https://yonyoung.yonsei.ac.kr/api/recruiting/presign/image",
+      path: ["recruiting", "presign", "image"],
+      upstreamUrl: "https://api.example.com/api/recruiting/presign/image",
+    },
+  ])("forwards $label to the upstream API", async ({ method, path, upstreamUrl, url }) => {
     const fetchSpy = vi.fn(async () =>
       new Response(JSON.stringify({ data: [] }), {
         status: 200,
@@ -27,29 +51,28 @@ describe("app/api/[...path]/route", () => {
     );
     vi.stubGlobal("fetch", fetchSpy);
 
-    const { GET } = await import("@/app/api/[...path]/route");
-    const request = new NextRequest(
-      "https://yonyoung.yonsei.ac.kr/api/audit/activity/fd3f8274-4f0a-4b5b-be59-0ca7918f710a?limit=20",
-      {
-        method: "GET",
-        headers: {
-          cookie: "__Secure-better-auth.session_token=session-token",
-          "x-request-id": "req-1",
-        },
+    const handlers = await import("@/app/api/[...path]/route");
+    const request = new NextRequest(url, {
+      method,
+      headers: {
+        cookie: "__Secure-better-auth.session_token=session-token",
+        origin: "https://yonyoung.yonsei.ac.kr",
+        "sec-fetch-site": "same-origin",
+        "x-request-id": "req-1",
+        ...(method === "POST" ? { [CSRF_HEADER_NAME]: CSRF_HEADER_VALUE } : {}),
       },
-    );
+    });
 
-    const response = await GET(request, {
-      params: Promise.resolve({
-        path: ["audit", "activity", "fd3f8274-4f0a-4b5b-be59-0ca7918f710a"],
-      }),
+    const handler = method === "POST" ? handlers.POST : handlers.GET;
+    const response = await handler(request, {
+      params: Promise.resolve({ path }),
     });
 
     expect(response.status).toBe(200);
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://api.example.com/api/audit/activity/fd3f8274-4f0a-4b5b-be59-0ca7918f710a?limit=20",
+      upstreamUrl,
       expect.objectContaining({
-        method: "GET",
+        method,
         cache: "no-store",
         redirect: "manual",
       }),
