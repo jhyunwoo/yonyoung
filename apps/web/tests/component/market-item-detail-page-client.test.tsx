@@ -9,6 +9,7 @@ const listMarketCommentsByItemIdMock = vi.hoisted(() => vi.fn());
 const updateMarketItemStatusMock = vi.hoisted(() => vi.fn());
 const createMarketCommentMock = vi.hoisted(() => vi.fn());
 const deleteMarketItemMock = vi.hoisted(() => vi.fn());
+const shouldUseUnoptimizedImageMock = vi.hoisted(() => vi.fn(() => true));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -29,6 +30,10 @@ vi.mock("@/features/dashboard/api/admin-api/resources", () => ({
   },
 }));
 
+vi.mock("@/features/media/images/image-utils", () => ({
+  shouldUseUnoptimizedImage: shouldUseUnoptimizedImageMock,
+}));
+
 import MarketItemDetailPageClient from "@/app/(dashboard)/dashboard/market/[itemId]/market-item-detail-page-client";
 
 describe("MarketItemDetailPageClient", () => {
@@ -40,6 +45,7 @@ describe("MarketItemDetailPageClient", () => {
     updateMarketItemStatusMock.mockReset();
     createMarketCommentMock.mockReset();
     deleteMarketItemMock.mockReset();
+    shouldUseUnoptimizedImageMock.mockClear();
 
     getMarketItemByIdMock.mockResolvedValue({
       id: "market-1",
@@ -107,6 +113,9 @@ describe("MarketItemDetailPageClient", () => {
 
     expect(await screen.findByRole("heading", { name: "필름 카메라" })).toBeInTheDocument();
     expect(await screen.findByText("관심 있습니다!")).toBeInTheDocument();
+    expect(shouldUseUnoptimizedImageMock).toHaveBeenCalledWith(
+      "https://cdn.mock.local/market-1.jpg",
+    );
 
     await user.click(screen.getByTestId("market-status-reserved"));
     await waitFor(() => {

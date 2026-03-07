@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { buildMemberDisplayName } from "@/features/dashboard/members/display-name";
+import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import type {
   ApiMarketItem,
   ApiMarketItemStatus,
@@ -138,6 +139,7 @@ export default function MarketPageClient({ viewer }: { viewer: MarketViewer }) {
                           fill
                           sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
                           className="object-cover"
+                          unoptimized={shouldUseUnoptimizedImage(item.imageUrls[0])}
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-sm text-slate-600 dark:text-slate-300">

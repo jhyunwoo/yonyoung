@@ -25,6 +25,11 @@ describe("next.config security headers", () => {
 
     expect(remotePatterns).toEqual(
       expect.arrayContaining([
+        expect.objectContaining({
+          protocol: "https",
+          hostname: "yonyoung.yonsei.ac.kr",
+          pathname: "/api/public/media/**",
+        }),
         expect.objectContaining({ hostname: "storage.yonyoung.moveto.kr" }),
         expect.objectContaining({ hostname: "**.googleusercontent.com" }),
       ]),

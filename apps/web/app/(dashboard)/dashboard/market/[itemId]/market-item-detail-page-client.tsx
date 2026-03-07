@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { buildMemberDisplayName } from "@/features/dashboard/members/display-name";
+import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import type {
   ApiMarketComment,
   ApiMarketItem,
@@ -187,6 +188,9 @@ export default function MarketItemDetailPageClient({
   const isOwnerItem = item !== null && item.sellerId === viewer.id;
   const imageUrls = item?.imageUrls ?? EMPTY_IMAGE_URLS;
   const selectedImageUrl = imageUrls[selectedImageIndex] ?? null;
+  const shouldUseUnoptimizedSelectedImage = selectedImageUrl
+    ? shouldUseUnoptimizedImage(selectedImageUrl)
+    : false;
   const selectedImageAspectRatio = selectedImageUrl
     ? (imageAspectRatios[selectedImageUrl] ?? 1)
     : 1;
@@ -586,6 +590,7 @@ export default function MarketItemDetailPageClient({
                         fill
                         sizes="(min-width: 768px) 50vw, 100vw"
                         className="object-cover object-center"
+                        unoptimized={shouldUseUnoptimizedSelectedImage}
                         onLoad={(event) =>
                           updateImageAspectRatio(
                             selectedImageUrl,
@@ -644,6 +649,7 @@ export default function MarketItemDetailPageClient({
                                 ? "brightness-50"
                                 : "brightness-100"
                             }`}
+                            unoptimized={shouldUseUnoptimizedImage(url)}
                             onLoad={(event) =>
                               updateImageAspectRatio(
                                 url,
@@ -864,6 +870,7 @@ export default function MarketItemDetailPageClient({
                     fill
                     sizes="(min-width: 1024px) 80vw, 94vw"
                     className="object-contain object-center"
+                    unoptimized={shouldUseUnoptimizedSelectedImage}
                     onLoad={(event) =>
                       updateImageAspectRatio(
                         selectedImageUrl,
