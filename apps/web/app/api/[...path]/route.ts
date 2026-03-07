@@ -33,6 +33,7 @@ const resolveForwardedProtocol = (request: NextRequest): "http" | "https" => {
 const ALLOWED_PROXY_PREFIXES = [
   "activities",
   "admin",
+  "audit",
   "exhibitions",
   "generations",
   "global-notices",
