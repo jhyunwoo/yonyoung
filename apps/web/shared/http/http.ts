@@ -7,6 +7,104 @@ export const normalizeBaseUrl = (value: string): string => value.replace(/\/+$/,
 export const normalizePath = (path: string): string =>
   path.startsWith("/") ? path : `/${path}`;
 
+export type ForwardedRequestContext = {
+  host: string | null;
+  protocol: "http" | "https";
+  origin: string | null;
+};
+
+const readPrimaryHeaderValue = (value: string | null | undefined): string | null => {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const [first] = value.split(",");
+  const trimmed = first?.trim();
+  return trimmed && trimmed.length > 0 ? trimmed : null;
+};
+
+const isLoopbackHost = (value: string): boolean => {
+  let normalized: string;
+  try {
+    normalized = new URL(`http://${value}`).hostname.trim().toLowerCase();
+  } catch {
+    normalized = value.trim().toLowerCase();
+  }
+
+  return (
+    normalized === "localhost" ||
+    normalized === "127.0.0.1" ||
+    normalized === "::1" ||
+    normalized?.endsWith(".localhost") === true
+  );
+};
+
+const normalizeProtocol = (value: string | null): "http" | "https" | null => {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "http" || normalized === "http:") {
+    return "http";
+  }
+
+  if (normalized === "https" || normalized === "https:") {
+    return "https";
+  }
+
+  return null;
+};
+
+export const resolveForwardedRequestContext = (input: {
+  host?: string | null;
+  forwardedHost?: string | null;
+  forwardedProto?: string | null;
+  origin?: string | null;
+}): ForwardedRequestContext => {
+  const host =
+    readPrimaryHeaderValue(input.forwardedHost) ?? readPrimaryHeaderValue(input.host);
+  const protocol =
+    normalizeProtocol(readPrimaryHeaderValue(input.forwardedProto)) ??
+    (host && isLoopbackHost(host) ? "http" : "https");
+
+  const originCandidate = readPrimaryHeaderValue(input.origin);
+  if (originCandidate) {
+    try {
+      return {
+        host,
+        protocol,
+        origin: new URL(originCandidate).origin,
+      };
+    } catch {
+      // Ignore malformed Origin headers and fall back to the current host context.
+    }
+  }
+
+  return {
+    host,
+    protocol,
+    origin: host ? `${protocol}://${host}` : null,
+  };
+};
+
+export const applyForwardedRequestContextHeaders = (
+  headers: Headers,
+  context: ForwardedRequestContext,
+): Headers => {
+  if (context.host) {
+    headers.set("x-forwarded-host", context.host);
+  }
+
+  headers.set("x-forwarded-proto", context.protocol);
+
+  if (context.origin) {
+    headers.set("origin", context.origin);
+  }
+
+  return headers;
+};
+
 export const resolveBaseUrl = (
   candidates: Array<string | undefined | null>,
   fallback: string,

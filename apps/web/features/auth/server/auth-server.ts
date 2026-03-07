@@ -3,6 +3,8 @@ import {
   createTimeoutController,
   resolveApiBaseUrl,
 } from "@/shared/http/http";
+import { applyForwardedRequestContextHeaders } from "@/shared/http/http";
+import { readServerForwardedRequestContext } from "@/server/http/request-context";
 import type { AuthSession } from "@/features/auth/model/auth-shared";
 
 const SESSION_PATH = "/api/auth/get-session";
@@ -118,7 +120,10 @@ const parseSessionPayload = (payload: unknown): AuthSession | null => {
       role: readNonEmptyString(userRecord, "role"),
       generationId: readNonEmptyString(userRecord, "generationId"),
       generationIds: readOptionalStringArray(userRecord, "generationIds"),
-      latestGenerationSortOrder: readNullableNumber(userRecord, "latestGenerationSortOrder"),
+      latestGenerationSortOrder: readNullableNumber(
+        userRecord,
+        "latestGenerationSortOrder",
+      ),
     },
   };
 };
@@ -132,6 +137,10 @@ export const fetchSessionFromApi = async (
 
   if (cookieHeader) {
     headers.set("cookie", cookieHeader);
+    applyForwardedRequestContextHeaders(
+      headers,
+      await readServerForwardedRequestContext(),
+    );
   }
 
   const { controller, timeoutId } = createTimeoutController(SESSION_REQUEST_TIMEOUT_MS);

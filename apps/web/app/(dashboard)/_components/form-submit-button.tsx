@@ -27,6 +27,7 @@ export default function FormSubmitButton({
       className={className}
       disabled={isDisabled}
       aria-busy={pending}
+      data-testid="form-submit"
       {...props}
     >
       <span className="inline-flex items-center gap-2">

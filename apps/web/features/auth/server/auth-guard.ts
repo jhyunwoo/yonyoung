@@ -12,10 +12,12 @@ import {
 import type { AuthSession } from "@/features/auth/model/auth-shared";
 import {
   asRecord,
+  applyForwardedRequestContextHeaders,
   readCookieHeader,
   resolveApiBaseUrl,
   unwrapDataEnvelope,
 } from "@/shared/http/http";
+import { readServerForwardedRequestContext } from "@/server/http/request-context";
 
 const SIGN_IN_PATH = "/auth/sign-in";
 const USER_PATH_PREFIX = "/api/users";
@@ -106,14 +108,21 @@ const getCurrentUserProfile = async (
   });
   if (cookieHeader) {
     headers.set("cookie", cookieHeader);
+    applyForwardedRequestContextHeaders(
+      headers,
+      await readServerForwardedRequestContext(),
+    );
   }
 
   try {
-    const currentUserResponse = await fetch(`${resolveApiBaseUrl()}${CURRENT_USER_PATH}`, {
-      method: "GET",
-      headers,
-      cache: "no-store",
-    });
+    const currentUserResponse = await fetch(
+      `${resolveApiBaseUrl()}${CURRENT_USER_PATH}`,
+      {
+        method: "GET",
+        headers,
+        cache: "no-store",
+      },
+    );
 
     if (currentUserResponse.ok) {
       const payload = (await currentUserResponse.json().catch(() => null)) as unknown;
@@ -207,14 +216,16 @@ const redirectIfProfileIncomplete = async (
   session: AuthSession,
   redirectTo = AUTH_PROFILE_PATH,
 ): Promise<void> => {
-  const profile = (await getCurrentUserProfile(session)) ?? sanitizeProfileRecord(session.user);
+  const profile =
+    (await getCurrentUserProfile(session)) ?? sanitizeProfileRecord(session.user);
   if (!hasCompletedRequiredProfile(profile)) {
     redirect(redirectTo);
   }
 };
 
 const resolveAdminLandingPath = async (session: AuthSession): Promise<string> => {
-  const profile = (await getCurrentUserProfile(session)) ?? sanitizeProfileRecord(session.user);
+  const profile =
+    (await getCurrentUserProfile(session)) ?? sanitizeProfileRecord(session.user);
   const isProfileComplete = hasCompletedRequiredProfile(profile);
 
   return resolvePostSignInPath({

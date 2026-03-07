@@ -1,4 +1,5 @@
 import { resolveApiBaseUrl } from "@/shared/http/http";
+import { applyForwardedRequestContextHeaders } from "@/shared/http/http";
 import type {
   ApiActivity,
   ApiAdminDashboardStats,
@@ -9,6 +10,7 @@ import type {
   ApiLinktree,
 } from "@/shared/contracts/api-contracts";
 import { unwrapDataEnvelope } from "@/shared/http/http";
+import { readServerForwardedRequestContext } from "@/server/http/request-context";
 
 const ADMIN_API_BASE_PATH = "/api";
 
@@ -22,6 +24,10 @@ const readAdminCollection = async <T>(
 
   if (cookieHeader) {
     headers.set("cookie", cookieHeader);
+    applyForwardedRequestContextHeaders(
+      headers,
+      await readServerForwardedRequestContext(),
+    );
   }
 
   try {
@@ -54,6 +60,10 @@ const readAdminData = async <T>(
 
   if (cookieHeader) {
     headers.set("cookie", cookieHeader);
+    applyForwardedRequestContextHeaders(
+      headers,
+      await readServerForwardedRequestContext(),
+    );
   }
 
   try {

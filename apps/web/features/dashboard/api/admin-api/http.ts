@@ -9,6 +9,11 @@ import {
   parseJsonBody,
   resolveApiBaseUrl,
 } from "@/shared/http/http";
+import {
+  CSRF_HEADER_NAME,
+  CSRF_HEADER_VALUE,
+  isStateChangingMethod,
+} from "@/shared/security/csrf";
 
 const ADMIN_API_BASE_PATH = "/api";
 const REQUEST_TIMEOUT_MS = 45_000;
@@ -26,6 +31,18 @@ export const adminRequest = async <T>(
 
   try {
     const hasBody = body !== undefined;
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+    };
+
+    if (hasBody) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    if (isStateChangingMethod(method)) {
+      headers[CSRF_HEADER_NAME] = CSRF_HEADER_VALUE;
+    }
+
     const response = await fetch(
       `${resolveApiBaseUrl()}${ADMIN_API_BASE_PATH}${normalizePath(path)}`,
       {
@@ -33,14 +50,7 @@ export const adminRequest = async <T>(
         credentials: "include",
         cache: "no-store",
         signal: controller.signal,
-        headers: hasBody
-          ? {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            }
-          : {
-              Accept: "application/json",
-            },
+        headers,
         body: hasBody ? JSON.stringify(body) : undefined,
       },
     );

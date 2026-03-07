@@ -35,3 +35,43 @@ if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
     }),
   });
 }
+
+if (
+  typeof window !== "undefined" &&
+  (typeof window.localStorage === "undefined" ||
+    typeof window.localStorage.clear !== "function")
+) {
+  const storage = (() => {
+    const entries = new Map<string, string>();
+
+    return {
+      get length() {
+        return entries.size;
+      },
+      clear: () => {
+        entries.clear();
+      },
+      getItem: (key: string) => {
+        return entries.get(String(key)) ?? null;
+      },
+      key: (index: number) => {
+        return [...entries.keys()][index] ?? null;
+      },
+      removeItem: (key: string) => {
+        entries.delete(String(key));
+      },
+      setItem: (key: string, value: string) => {
+        entries.set(String(key), String(value));
+      },
+    } satisfies Storage;
+  })();
+
+  Object.defineProperty(window, "localStorage", {
+    configurable: true,
+    value: storage,
+  });
+  Object.defineProperty(globalThis, "localStorage", {
+    configurable: true,
+    value: storage,
+  });
+}

@@ -2,6 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const readCookieHeaderMock = vi.hoisted(() => vi.fn());
 const resolveApiBaseUrlMock = vi.hoisted(() => vi.fn());
+const readServerForwardedRequestContextMock = vi.hoisted(() =>
+  vi.fn(async () => ({
+    host: "yonyoung.yonsei.ac.kr",
+    protocol: "https" as const,
+    origin: "https://yonyoung.yonsei.ac.kr",
+  })),
+);
 
 vi.mock("@/features/auth/server/auth-server", () => ({
   fetchSessionFromApi: vi.fn(),
@@ -17,6 +24,19 @@ vi.mock("@/shared/http/http", () => {
 
   return {
     asRecord,
+    applyForwardedRequestContextHeaders: (
+      headers: Headers,
+      context: { host: string | null; protocol: "http" | "https"; origin: string | null },
+    ) => {
+      if (context.host) {
+        headers.set("x-forwarded-host", context.host);
+      }
+      headers.set("x-forwarded-proto", context.protocol);
+      if (context.origin) {
+        headers.set("origin", context.origin);
+      }
+      return headers;
+    },
     unwrapDataEnvelope: <T>(payload: unknown): T | null => {
       const record = asRecord(payload);
       if (record && "data" in record) {
@@ -28,6 +48,10 @@ vi.mock("@/shared/http/http", () => {
     resolveApiBaseUrl: resolveApiBaseUrlMock,
   };
 });
+
+vi.mock("@/server/http/request-context", () => ({
+  readServerForwardedRequestContext: readServerForwardedRequestContextMock,
+}));
 
 import type { AuthSession } from "@/features/auth/model/auth-shared";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
@@ -60,6 +84,7 @@ describe("features/auth/server/auth-guard", () => {
     readCookieHeaderMock.mockResolvedValue("better-auth.session_token=session-token");
     resolveApiBaseUrlMock.mockReset();
     resolveApiBaseUrlMock.mockReturnValue("https://api.example.com");
+    readServerForwardedRequestContextMock.mockClear();
   });
 
   afterEach(() => {
@@ -113,9 +138,7 @@ describe("features/auth/server/auth-guard", () => {
       generationIds: ["gen-59", "gen-58"],
     });
     expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(fetchMock.mock.calls[0]?.[0]).toBe(
-      "https://api.example.com/api/users/me",
-    );
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.example.com/api/users/me");
     expect(fetchMock.mock.calls[1]?.[0]).toBe(
       "https://api.example.com/api/users/non-uuid-user-id",
     );
@@ -144,5 +167,10 @@ describe("features/auth/server/auth-guard", () => {
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.example.com/api/users/me");
+    const requestHeaders = (fetchMock.mock.calls[0]?.[1] as RequestInit | undefined)
+      ?.headers as Headers;
+    expect(requestHeaders.get("x-forwarded-host")).toBe("yonyoung.yonsei.ac.kr");
+    expect(requestHeaders.get("x-forwarded-proto")).toBe("https");
+    expect(requestHeaders.get("origin")).toBe("https://yonyoung.yonsei.ac.kr");
   });
 });

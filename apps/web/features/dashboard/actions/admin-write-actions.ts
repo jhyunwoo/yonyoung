@@ -5,10 +5,11 @@ import { headers } from "next/headers";
 import { updateTag } from "next/cache";
 import { z } from "zod";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
+import { canManageGlobalUsers } from "@/features/auth/model/auth-shared";
 import {
-  canAccessAdminPage,
-  canManageGlobalUsers,
-} from "@/features/auth/model/auth-shared";
+  assertAdminWriteAccess,
+  type AdminWriteAccessScope,
+} from "@/features/dashboard/actions/admin-write-access";
 import { readCookieHeader } from "@/shared/http/http";
 import { CACHE_TAGS, type AdminCacheTag, type PublicCacheTag } from "@/server/cache/tags";
 import { HonoApiError, honoRequest } from "@/server/http/hono-client";
@@ -132,11 +133,11 @@ const readCorrelationHeaders = async (): Promise<{
   };
 };
 
-const requireAdminAccess = async () => {
+const requireAdminAccess = async (
+  scope: AdminWriteAccessScope = "verified_member",
+) => {
   const session = await serverAuthGuard.requireSession();
-  if (!canAccessAdminPage(session)) {
-    forbidden();
-  }
+  assertAdminWriteAccess(session, scope);
 };
 
 const readNoContentSchema = z
@@ -153,9 +154,10 @@ const writeRequest = async <TResponse>(input: {
   tags: readonly CacheTag[];
   timeoutMs?: number;
   requireAdminAccess?: boolean;
+  accessScope?: AdminWriteAccessScope;
 }): Promise<TResponse> => {
   if (input.requireAdminAccess !== false) {
-    await requireAdminAccess();
+    await requireAdminAccess(input.accessScope);
   }
 
   const cookieHeader = await readCookieHeader();
@@ -187,6 +189,7 @@ export const createGenerationAction = async (
     method: "POST",
     body: payload,
     responseSchema: apiGenerationSchema,
+    accessScope: "leadership",
     tags: [
       CACHE_TAGS.admin.generations,
       CACHE_TAGS.admin.users,
@@ -206,6 +209,7 @@ export const updateGenerationAction = async (
     method: "PATCH",
     body: payload,
     responseSchema: apiGenerationSchema,
+    accessScope: "leadership",
     tags: [
       CACHE_TAGS.admin.generations,
       CACHE_TAGS.admin.users,
@@ -220,6 +224,7 @@ export const deleteGenerationAction = async (id: string): Promise<void> => {
     path: `/generations/${id}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
+    accessScope: "leadership",
     tags: [
       CACHE_TAGS.admin.generations,
       CACHE_TAGS.admin.users,
@@ -261,6 +266,7 @@ export const deleteActivityAction = async (id: string): Promise<void> => {
     path: `/activities/${id}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.activities, CACHE_TAGS.public.activities],
   });
 };
@@ -330,6 +336,7 @@ export const deleteActivityImageAction = async (
     path: `/activities/${id}/images/${imageId}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.activities, CACHE_TAGS.public.activities],
   });
 };
@@ -343,6 +350,7 @@ export const createExhibitionAction = async (
     method: "POST",
     body: payload,
     responseSchema: apiExhibitionSchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.exhibitions, CACHE_TAGS.public.exhibitions],
   });
 };
@@ -357,6 +365,7 @@ export const updateExhibitionAction = async (
     method: "PATCH",
     body: payload,
     responseSchema: apiExhibitionSchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.exhibitions, CACHE_TAGS.public.exhibitions],
   });
 };
@@ -366,6 +375,7 @@ export const deleteExhibitionAction = async (id: string): Promise<void> => {
     path: `/exhibitions/${id}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
+    accessScope: "leadership",
     tags: [CACHE_TAGS.admin.exhibitions, CACHE_TAGS.public.exhibitions],
   });
 };
@@ -380,6 +390,7 @@ export const addExhibitionImageAction = async (
     method: "POST",
     body: payload,
     responseSchema: apiExhibitionImageSchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.exhibitions, CACHE_TAGS.public.exhibitions],
   });
 };
@@ -394,6 +405,7 @@ export const addExhibitionImagesAction = async (
     method: "POST",
     body: payload,
     responseSchema: z.array(apiExhibitionImageSchema),
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.exhibitions, CACHE_TAGS.public.exhibitions],
   });
 };
@@ -409,6 +421,7 @@ export const updateExhibitionImageAction = async (
     method: "PATCH",
     body: payload,
     responseSchema: apiExhibitionImageSchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.exhibitions, CACHE_TAGS.public.exhibitions],
   });
 };
@@ -423,6 +436,7 @@ export const updateExhibitionImagesAction = async (
     method: "PATCH",
     body: payload,
     responseSchema: z.array(apiExhibitionImageSchema),
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.exhibitions, CACHE_TAGS.public.exhibitions],
   });
 };
@@ -435,6 +449,7 @@ export const deleteExhibitionImageAction = async (
     path: `/exhibitions/${id}/images/${imageId}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.exhibitions, CACHE_TAGS.public.exhibitions],
   });
 };
@@ -448,6 +463,7 @@ export const createLinktreeAction = async (
     method: "POST",
     body: payload,
     responseSchema: apiLinktreeSchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.linktree, CACHE_TAGS.public.linktree],
   });
 };
@@ -462,6 +478,7 @@ export const updateLinktreeAction = async (
     method: "PATCH",
     body: payload,
     responseSchema: apiLinktreeSchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.linktree, CACHE_TAGS.public.linktree],
   });
 };
@@ -471,6 +488,7 @@ export const deleteLinktreeAction = async (id: string): Promise<void> => {
     path: `/linktree/${id}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.linktree, CACHE_TAGS.public.linktree],
   });
 };
@@ -485,6 +503,7 @@ export const addLinktreeItemAction = async (
     method: "POST",
     body: payload,
     responseSchema: apiLinktreeItemSchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.linktree, CACHE_TAGS.public.linktree],
   });
 };
@@ -500,6 +519,7 @@ export const updateLinktreeItemAction = async (
     method: "PATCH",
     body: payload,
     responseSchema: apiLinktreeItemSchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.linktree, CACHE_TAGS.public.linktree],
   });
 };
@@ -512,6 +532,7 @@ export const deleteLinktreeItemAction = async (
     path: `/linktree/${id}/items/${itemId}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.linktree, CACHE_TAGS.public.linktree],
   });
 };
@@ -526,6 +547,7 @@ export const createGenerationNoticeAction = async (
     method: "POST",
     body: payload,
     responseSchema: apiGenerationNoticeSchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.notices],
   });
 };
@@ -541,6 +563,7 @@ export const updateGenerationNoticeAction = async (
     method: "PATCH",
     body: payload,
     responseSchema: apiGenerationNoticeSchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.notices],
   });
 };
@@ -553,6 +576,7 @@ export const deleteGenerationNoticeAction = async (
     path: `/generations/${generationId}/notices/${noticeId}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.notices],
   });
 };
@@ -566,6 +590,7 @@ export const createGlobalNoticeAction = async (
     method: "POST",
     body: payload,
     responseSchema: apiGlobalNoticeSchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.notices],
   });
 };
@@ -580,6 +605,7 @@ export const updateGlobalNoticeAction = async (
     method: "PATCH",
     body: payload,
     responseSchema: apiGlobalNoticeSchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.notices],
   });
 };
@@ -589,6 +615,7 @@ export const deleteGlobalNoticeAction = async (id: string): Promise<void> => {
     path: `/global-notices/${id}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.notices],
   });
 };
@@ -733,6 +760,7 @@ export const updateSiteSettingsAction = async (
     method: "PATCH",
     body: payload,
     responseSchema: apiSiteSettingsSchema,
+    accessScope: "leadership",
     tags: [CACHE_TAGS.admin.siteSettings, CACHE_TAGS.public.siteSettings],
   });
 };
@@ -746,6 +774,7 @@ export const upsertCurrentRecruitingPlanAction = async (
     method: "PATCH",
     body: payload,
     responseSchema: apiRecruitingPlanSchema,
+    accessScope: "leadership",
     tags: [CACHE_TAGS.admin.recruitingPlan, CACHE_TAGS.public.recruitingPlan],
   });
 };
@@ -800,6 +829,7 @@ export const bulkUpdateUsersRoleAction = async (
     method: "PATCH",
     body: payload,
     responseSchema: readNoContentSchema,
+    accessScope: "user_manager",
     tags: [
       CACHE_TAGS.admin.users,
       CACHE_TAGS.admin.generations,
@@ -813,6 +843,7 @@ export const deleteUserAction = async (id: string): Promise<void> => {
     path: `/users/${id}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
+    accessScope: "user_manager",
     tags: [
       CACHE_TAGS.admin.users,
       CACHE_TAGS.admin.generations,

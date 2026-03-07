@@ -8,6 +8,7 @@ vi.mock("next/headers", () => ({
 
 import {
   AdminApiError,
+  applyForwardedRequestContextHeaders,
   asRecord,
   clearTimeoutController,
   createTimeoutController,
@@ -19,6 +20,7 @@ import {
   readCookieHeader,
   resolveApiBaseUrl,
   resolveBaseUrl,
+  resolveForwardedRequestContext,
   unwrapDataEnvelope,
 } from "@/shared/http/http";
 
@@ -51,7 +53,10 @@ describe("shared/http/http", () => {
   });
 
   it("resolves first non-empty base URL candidate", () => {
-    const resolved = resolveBaseUrl(["", undefined, "  ", " https://a.com/ ", "https://b.com"], "https://fallback.com/");
+    const resolved = resolveBaseUrl(
+      ["", undefined, "  ", " https://a.com/ ", "https://b.com"],
+      "https://fallback.com/",
+    );
     expect(resolved).toBe("https://a.com");
 
     expect(resolveBaseUrl([undefined, ""], "https://fallback.com///")).toBe(
@@ -68,14 +73,21 @@ describe("shared/http/http", () => {
       error: { code: "BAD_REQUEST", message: "bad", requestId: "req-1" },
     });
 
-    expect(parseApiErrorEnvelope({ error: { code: 1, message: "bad", requestId: "r" } })).toBeNull();
+    expect(
+      parseApiErrorEnvelope({ error: { code: 1, message: "bad", requestId: "r" } }),
+    ).toBeNull();
     expect(parseApiErrorEnvelope(null)).toBeNull();
     expect(isRecord({})).toBe(true);
     expect(isRecord(null)).toBe(false);
   });
 
   it("provides AdminApiError fields", () => {
-    const error = new AdminApiError({ status: 400, code: "BAD_REQUEST", message: "x", requestId: "rid" });
+    const error = new AdminApiError({
+      status: 400,
+      code: "BAD_REQUEST",
+      message: "x",
+      requestId: "rid",
+    });
     expect(error).toBeInstanceOf(Error);
     expect(error.name).toBe("AdminApiError");
     expect(error.status).toBe(400);
@@ -119,12 +131,56 @@ describe("shared/http/http", () => {
   it("unwraps data envelopes", () => {
     expect(asRecord({ a: 1 })).toEqual({ a: 1 });
     expect(asRecord(null)).toBeNull();
-    expect(unwrapDataEnvelope<{ id: string }>({ data: { id: "1" } })).toEqual({ id: "1" });
+    expect(unwrapDataEnvelope<{ id: string }>({ data: { id: "1" } })).toEqual({
+      id: "1",
+    });
     expect(unwrapDataEnvelope<{ id: string }>({ id: "2" })).toEqual({ id: "2" });
   });
 
   it("reads cookie headers from next/headers", async () => {
     await expect(readCookieHeader()).resolves.toBe("mock_session=abc123");
+  });
+
+  it("resolves forwarded request context from proxy-aware headers", () => {
+    expect(
+      resolveForwardedRequestContext({
+        host: "api.yonyoung.moveto.kr",
+        forwardedHost: "yonyoung.yonsei.ac.kr",
+        forwardedProto: "https",
+        origin: "https://yonyoung.yonsei.ac.kr/dashboard",
+      }),
+    ).toEqual({
+      host: "yonyoung.yonsei.ac.kr",
+      protocol: "https",
+      origin: "https://yonyoung.yonsei.ac.kr",
+    });
+
+    expect(
+      resolveForwardedRequestContext({
+        host: "localhost:3000",
+      }),
+    ).toEqual({
+      host: "localhost:3000",
+      protocol: "http",
+      origin: "http://localhost:3000",
+    });
+  });
+
+  it("applies forwarded request context headers for upstream auth checks", () => {
+    const headers = applyForwardedRequestContextHeaders(
+      new Headers({
+        Accept: "application/json",
+      }),
+      {
+        host: "yonyoung.yonsei.ac.kr",
+        protocol: "https",
+        origin: "https://yonyoung.yonsei.ac.kr",
+      },
+    );
+
+    expect(headers.get("x-forwarded-host")).toBe("yonyoung.yonsei.ac.kr");
+    expect(headers.get("x-forwarded-proto")).toBe("https");
+    expect(headers.get("origin")).toBe("https://yonyoung.yonsei.ac.kr");
   });
 
   it("resolves API base URL for client and server", () => {
