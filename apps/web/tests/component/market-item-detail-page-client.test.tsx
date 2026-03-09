@@ -55,7 +55,7 @@ describe("MarketItemDetailPageClient", () => {
       manufacturer: "Canon",
       productCode: "AE-1",
       conditionGrade: "B",
-      description: "정상 작동",
+      description: "<p>정상 작동</p>",
       price: 120000,
       status: "selling",
       seller: { id: "user-member", name: "최부원", image: null, role: "regular_member" },
@@ -85,7 +85,7 @@ describe("MarketItemDetailPageClient", () => {
       manufacturer: "Canon",
       productCode: "AE-1",
       conditionGrade: "B",
-      description: "정상 작동",
+      description: "<p>정상 작동</p>",
       price: 120000,
       status: "reserved",
       seller: { id: "user-member", name: "최부원", image: null, role: "regular_member" },
@@ -112,6 +112,10 @@ describe("MarketItemDetailPageClient", () => {
     );
 
     expect(await screen.findByRole("heading", { name: "필름 카메라" })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(document.body.textContent).toContain("정상 작동");
+    });
+    expect(screen.queryByText("<p>정상 작동</p>")).not.toBeInTheDocument();
     expect(await screen.findByText("관심 있습니다!")).toBeInTheDocument();
     expect(shouldUseUnoptimizedImageMock).toHaveBeenCalledWith(
       "https://cdn.mock.local/market-1.jpg",

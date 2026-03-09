@@ -10,7 +10,11 @@ import type {
   ApiCreateMarketItemInput,
   ApiMarketConditionGrade,
 } from "@/shared/contracts/api-contracts";
+import { hasMeaningfulRichTextHtml } from "@/features/media/rich-text/rich-text";
 import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";
+import RichTextEditor, {
+  EMPTY_RICH_TEXT_HTML,
+} from "@/app/(dashboard)/_components/rich-text-editor";
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import SortableImageGrid from "@/app/(dashboard)/_components/sortable-image-grid";
 import UploadProgressBar from "@/app/(dashboard)/_components/upload-progress-bar";
@@ -33,7 +37,7 @@ export default function MarketCreatePageClient({ viewer }: { viewer: MarketViewe
   const [manufacturer, setManufacturer] = useState("");
   const [productCode, setProductCode] = useState("");
   const [conditionGrade, setConditionGrade] = useState<"" | ApiMarketConditionGrade>("");
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState(EMPTY_RICH_TEXT_HTML);
   const [price, setPrice] = useState("");
 
   const {
@@ -116,7 +120,7 @@ export default function MarketCreatePageClient({ viewer }: { viewer: MarketViewe
       manufacturer: manufacturer.trim() || null,
       productCode: productCode.trim() || null,
       conditionGrade: conditionGrade || null,
-      description: description.trim() || null,
+      description: hasMeaningfulRichTextHtml(description) ? description : null,
       price: numericPrice,
     };
 
@@ -209,13 +213,22 @@ export default function MarketCreatePageClient({ viewer }: { viewer: MarketViewe
               </select>
             </div>
 
-            <textarea
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="제품 설명 (선택)"
-              className="min-h-24 w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
-              disabled={isSavingItem || isUploadingImage}
-            />
+            <div className="space-y-2">
+              <div>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  제품 설명
+                </p>
+                <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                  선택 항목입니다. 강조, 목록, 링크 등 서식을 사용할 수 있습니다.
+                </p>
+              </div>
+              <RichTextEditor
+                value={description}
+                onChange={setDescription}
+                disabled={isSavingItem || isUploadingImage}
+                minHeight={180}
+              />
+            </div>
 
             <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4">
               <div className="flex flex-wrap items-center gap-3">
