@@ -1,3 +1,4 @@
+import { createElement } from "react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -38,6 +39,16 @@ vi.mock("@/features/media/upload/use-image-upload-state", () => ({
   }),
 }));
 
+vi.mock("@/app/(dashboard)/_components/rich-text-editor", () => ({
+  EMPTY_RICH_TEXT_HTML: "<p></p>",
+  default: ({ value, onChange }: { value: string; onChange: (value: string) => void }) =>
+    createElement("textarea", {
+      "data-testid": "mock-rich-text-editor",
+      value,
+      onChange: (event: { target: { value: string } }) => onChange(event.target.value),
+    }),
+}));
+
 import MarketItemEditPageClient from "@/app/(dashboard)/dashboard/market/[itemId]/edit/market-item-edit-page-client";
 
 describe("MarketItemEditPageClient", () => {
@@ -57,7 +68,7 @@ describe("MarketItemEditPageClient", () => {
       manufacturer: "Canon",
       productCode: "AE-1",
       conditionGrade: "B",
-      description: "기존 설명",
+      description: "<p>기존 설명</p>",
       price: 120000,
       status: "selling",
       seller: { id: "user-member", name: "최부원", image: null, role: "regular_member" },
@@ -96,7 +107,7 @@ describe("MarketItemEditPageClient", () => {
         manufacturer: "Canon",
         productCode: "AE-1",
         conditionGrade: "B",
-        description: "기존 설명",
+        description: "<p>기존 설명</p>",
         price: 130000,
       });
       expect(pushMock).toHaveBeenCalledWith("/dashboard/market/market-1");

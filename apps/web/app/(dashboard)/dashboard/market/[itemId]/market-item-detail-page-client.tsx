@@ -7,6 +7,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { buildMemberDisplayName } from "@/features/dashboard/members/display-name";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
+import { hasMeaningfulRichTextHtml } from "@/features/media/rich-text/rich-text";
+import { RichTextContent } from "@/features/media/rich-text/rich-text-content";
 import type {
   ApiMarketComment,
   ApiMarketItem,
@@ -700,14 +702,15 @@ export default function MarketItemDetailPageClient({
                   ))}
                 </div>
 
-                {item.description ? (
+                {item.description && hasMeaningfulRichTextHtml(item.description) ? (
                   <div className="mt-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-3">
                     <p className="text-xs font-semibold tracking-wide text-slate-600 dark:text-slate-300 uppercase">
                       제품 설명
                     </p>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
-                      {item.description}
-                    </p>
+                    <RichTextContent
+                      html={item.description}
+                      className="mt-2 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0"
+                    />
                   </div>
                 ) : null}
 

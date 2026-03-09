@@ -1,3 +1,4 @@
+import { createElement } from "react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -31,6 +32,16 @@ vi.mock("@/features/media/upload/use-image-upload-state", () => ({
     removeItemById: vi.fn(),
     reorderByIds: vi.fn(),
   }),
+}));
+
+vi.mock("@/app/(dashboard)/_components/rich-text-editor", () => ({
+  EMPTY_RICH_TEXT_HTML: "<p></p>",
+  default: ({ value, onChange }: { value: string; onChange: (value: string) => void }) =>
+    createElement("textarea", {
+      "data-testid": "mock-rich-text-editor",
+      value,
+      onChange: (event: { target: { value: string } }) => onChange(event.target.value),
+    }),
 }));
 
 import MarketCreatePageClient from "@/app/(dashboard)/dashboard/market/new/market-create-page-client";
@@ -68,7 +79,8 @@ describe("MarketCreatePageClient", () => {
     await user.type(screen.getByPlaceholderText("가격(원)"), "150000");
     await user.type(screen.getByPlaceholderText("제조사 (선택)"), "Nikon");
     await user.type(screen.getByPlaceholderText("제품 코드 (선택)"), "FM2");
-    await user.type(screen.getByPlaceholderText("제품 설명 (선택)"), "상태 양호");
+    await user.clear(screen.getByTestId("mock-rich-text-editor"));
+    await user.type(screen.getByTestId("mock-rich-text-editor"), "<p>상태 양호</p>");
 
     await user.click(screen.getByTestId("market-create-submit"));
 
@@ -79,7 +91,7 @@ describe("MarketCreatePageClient", () => {
         manufacturer: "Nikon",
         productCode: "FM2",
         conditionGrade: null,
-        description: "상태 양호",
+        description: "<p>상태 양호</p>",
         price: 150000,
       });
       expect(pushMock).toHaveBeenCalledWith("/dashboard/market");
