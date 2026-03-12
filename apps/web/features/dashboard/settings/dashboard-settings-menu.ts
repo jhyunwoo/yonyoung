@@ -4,20 +4,29 @@ type DashboardSettingsMenuItem = {
   description: string;
   href: string;
   privilegedOnly?: boolean;
+  hiddenForMemberLikeRole?: boolean;
 };
 
 const SETTINGS_MENU_ITEMS: DashboardSettingsMenuItem[] = [
+  {
+    key: "settings-profile",
+    label: "개인 프로필 설정",
+    description: "프로필 사진과 기본 정보, 개인 링크를 직접 수정할 수 있습니다.",
+    href: "/dashboard/profile",
+  },
   {
     key: "settings-notices",
     label: "전체 공지 관리",
     description: "모든 공지를 확인하고 새로 올리거나 고칠 수 있습니다.",
     href: "/dashboard/settings/notices",
+    hiddenForMemberLikeRole: true,
   },
   {
     key: "settings-linktree",
     label: "링크 모음 관리",
     description: "홈페이지에 보여 줄 링크 목록을 정리할 수 있습니다.",
     href: "/dashboard/settings/linktree",
+    hiddenForMemberLikeRole: true,
   },
   {
     key: "settings-site",
@@ -39,6 +48,7 @@ const SETTINGS_MENU_ITEMS: DashboardSettingsMenuItem[] = [
     label: "전체 멤버 관리",
     description: "모든 기수 멤버 정보를 한곳에서 확인하고 수정할 수 있습니다.",
     href: "/dashboard/settings/members",
+    hiddenForMemberLikeRole: true,
   },
   {
     key: "settings-generations",
@@ -51,10 +61,12 @@ const SETTINGS_MENU_ITEMS: DashboardSettingsMenuItem[] = [
 
 export const buildDashboardSettingsMenuItems = (input: {
   canManagePrivilegedSettings: boolean;
+  isMemberLikeRole: boolean;
 }): DashboardSettingsMenuItem[] =>
   SETTINGS_MENU_ITEMS.filter((item) => {
     if (item.privilegedOnly && !input.canManagePrivilegedSettings) {
       return false;
     }
-    return true;
+    return !(item.hiddenForMemberLikeRole && input.isMemberLikeRole);
+
   });

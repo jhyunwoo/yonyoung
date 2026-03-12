@@ -3,12 +3,23 @@ import { expect, test } from "@playwright/test";
 import { setMockSession } from "./support/session";
 import { resetMockState } from "./support/state-assert";
 
-const namespace = (testName: string, projectName: string, parallelIndex: number): string =>
-  `${projectName}-w${parallelIndex}-${testName}`;
+const namespace = (
+  testName: string,
+  projectName: string,
+  parallelIndex: number,
+): string => `${projectName}-w${parallelIndex}-${testName}`;
 
 test.describe("authz matrix", () => {
-  test("guest dashboard access is blocked", async ({ page, context, request }, testInfo) => {
-    const ns = namespace("guest-dashboard", testInfo.project.name, testInfo.parallelIndex);
+  test("guest dashboard access is blocked", async ({
+    page,
+    context,
+    request,
+  }, testInfo) => {
+    const ns = namespace(
+      "guest-dashboard",
+      testInfo.project.name,
+      testInfo.parallelIndex,
+    );
     await resetMockState(request, ns);
     await setMockSession(context, { role: "guest", namespace: ns });
 
@@ -21,10 +32,14 @@ test.describe("authz matrix", () => {
     }
 
     expect(response?.status()).toBe(403);
-    await expect(page.getByTestId("home-forbidden-page")).toBeVisible();
+    await expect(page.getByTestId("dashboard-forbidden-page")).toBeVisible();
   });
 
-  test("unverified user is routed to profile and pending approval paths", async ({ page, context, request }, testInfo) => {
+  test("unverified user is routed to profile and pending approval paths", async ({
+    page,
+    context,
+    request,
+  }, testInfo) => {
     const ns = namespace("unverified", testInfo.project.name, testInfo.parallelIndex);
     await resetMockState(request, ns);
 
@@ -45,7 +60,11 @@ test.describe("authz matrix", () => {
     await expect(page.getByTestId("auth-pending-approval-page")).toBeVisible();
   });
 
-  test("member can access dashboard, but manager cannot access president-only settings", async ({ page, context, request }, testInfo) => {
+  test("member can access dashboard, but manager cannot access president-only settings", async ({
+    page,
+    context,
+    request,
+  }, testInfo) => {
     const ns = namespace("member-manager", testInfo.project.name, testInfo.parallelIndex);
     await resetMockState(request, ns);
 
@@ -60,7 +79,7 @@ test.describe("authz matrix", () => {
     expect(response).not.toBeNull();
 
     if (response!.status() === 403) {
-      await expect(page.getByTestId("home-forbidden-page")).toBeVisible();
+      await expect(page.getByTestId("dashboard-forbidden-page")).toBeVisible();
       return;
     }
 
@@ -68,7 +87,11 @@ test.describe("authz matrix", () => {
     await expect(page.getByText("연영회에 오신 것을 환영합니다.")).toBeVisible();
   });
 
-  test("president can access president-only settings", async ({ page, context, request }, testInfo) => {
+  test("president can access president-only settings", async ({
+    page,
+    context,
+    request,
+  }, testInfo) => {
     const ns = namespace("president", testInfo.project.name, testInfo.parallelIndex);
     await resetMockState(request, ns);
     await setMockSession(context, { role: "president", namespace: ns });

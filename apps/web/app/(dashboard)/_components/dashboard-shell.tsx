@@ -27,6 +27,7 @@ import { isPresidentOrVicePresidentRole } from "@/features/auth/model/auth-share
 import { buildDashboardSettingsMenuItems } from "@/features/dashboard/settings/dashboard-settings-menu";
 import type { DashboardGenerationOption } from "@/features/dashboard/generation/generation-options";
 import { isSameGenerationRouteName } from "@/features/dashboard/generation/dashboard-generation-route";
+import { isMemberLikeRoleValue } from "@/shared/contracts/auth-roles";
 
 export type DashboardViewer = {
   id: string;
@@ -64,8 +65,11 @@ const SidebarContent = (input: {
   const shouldReduceMotion = useReducedMotion();
   const settingsSubItems = buildDashboardSettingsMenuItems({
     canManagePrivilegedSettings: isPresidentOrVicePresidentRole(input.viewer?.role),
+    isMemberLikeRole: isMemberLikeRoleValue(input.viewer?.role),
   });
   const isSettingsSectionActive =
+    input.pathname === "/dashboard/profile" ||
+    input.pathname.startsWith("/dashboard/profile/") ||
     input.pathname === "/dashboard/settings" ||
     input.pathname.startsWith("/dashboard/settings/");
   const [isSettingsExpanded, setIsSettingsExpanded] = useState(isSettingsSectionActive);

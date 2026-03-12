@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  type ChangeEvent,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import type {
   ApiAdminUpdateUserInput,
   ApiGeneration,
@@ -20,7 +14,11 @@ import {
   uploadWithPresign,
 } from "@/features/dashboard/api/admin-api/upload";
 import { readFileList } from "@/features/media/upload/image-upload-state";
-import { buildMemberRoleLabel } from "@/features/dashboard/members/member-role-label";
+import {
+  MEMBER_ROLE_OPTIONS,
+  coerceMemberRoleValue,
+  type MemberRoleValue,
+} from "@/features/dashboard/members/member-role-options";
 import {
   SHOWCASE_MAX_IMAGES,
   normalizeShowcaseImageUrls,
@@ -38,16 +36,6 @@ type MemberEditFormProps = {
   onCancel?: () => void;
   inline?: boolean;
 };
-
-const ROLE_OPTIONS: Array<{ value: ApiAdminUpdateUserInput["role"]; label: string }> = [
-  { value: "president", label: buildMemberRoleLabel("president") },
-  { value: "vice_president", label: buildMemberRoleLabel("vice_president") },
-  { value: "manager", label: buildMemberRoleLabel("manager") },
-  { value: "new_member", label: buildMemberRoleLabel("new_member") },
-  { value: "associate_member", label: buildMemberRoleLabel("associate_member") },
-  { value: "regular_member", label: buildMemberRoleLabel("regular_member") },
-  { value: "unverified", label: buildMemberRoleLabel("unverified") },
-];
 
 const toNullableText = (value: string): string | null => {
   const trimmed = value.trim();
@@ -80,9 +68,7 @@ export default function MemberEditForm({
   const [department, setDepartment] = useState(user.department ?? "");
   const [studentNumber, setStudentNumber] = useState(user.studentNumber ?? "");
   const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber ?? "");
-  const [role, setRole] = useState<ApiAdminUpdateUserInput["role"]>(
-    (user.role as ApiAdminUpdateUserInput["role"]) ?? "regular_member",
-  );
+  const [role, setRole] = useState<MemberRoleValue>(coerceMemberRoleValue(user.role));
   const [generationIds, setGenerationIds] = useState<string[]>(
     user.generationIds ?? (user.generationId ? [user.generationId] : []),
   );
@@ -123,7 +109,7 @@ export default function MemberEditForm({
     setDepartment(user.department ?? "");
     setStudentNumber(user.studentNumber ?? "");
     setPhoneNumber(user.phoneNumber ?? "");
-    setRole((user.role as ApiAdminUpdateUserInput["role"]) ?? "regular_member");
+    setRole(coerceMemberRoleValue(user.role));
     setGenerationIds(
       user.generationIds ?? (user.generationId ? [user.generationId] : []),
     );
@@ -258,7 +244,6 @@ export default function MemberEditForm({
   };
 
   const handleSubmit = async () => {
-
     if (isUploadingShowcaseImages) {
       setErrorMessage("대표 작품 사진 업로드가 완료된 후 저장해 주세요.");
       setSuccessMessage(null);
@@ -348,7 +333,9 @@ export default function MemberEditForm({
           : "rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8"
       }
     >
-      <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">사용자 정보 수정</h2>
+      <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">
+        사용자 정보 수정
+      </h2>
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
         권한이 있는 운영자는 사용자 정보를 수정할 수 있습니다.
       </p>
@@ -369,13 +356,11 @@ export default function MemberEditForm({
             <span className="font-medium">역할</span>
             <select
               value={role}
-              onChange={(event) =>
-                setRole(event.target.value as ApiAdminUpdateUserInput["role"])
-              }
+              onChange={(event) => setRole(coerceMemberRoleValue(event.target.value))}
               disabled={isSaving}
               className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
             >
-              {ROLE_OPTIONS.map((option) => (
+              {MEMBER_ROLE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -385,7 +370,9 @@ export default function MemberEditForm({
         </div>
 
         <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
-          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">프로필 이미지</p>
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            프로필 이미지
+          </p>
           <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
             사진 파일을 선택해 프로필 이미지를 바꿀 수 있습니다.
           </p>
@@ -429,8 +416,12 @@ export default function MemberEditForm({
         </div>
 
         <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
-          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">대표 작품 사진</p>
-          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">최대 {SHOWCASE_MAX_IMAGES}장</p>
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            대표 작품 사진
+          </p>
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+            최대 {SHOWCASE_MAX_IMAGES}장
+          </p>
 
           <button
             type="button"
@@ -452,7 +443,9 @@ export default function MemberEditForm({
           />
 
           {isUploadingShowcaseImages ? (
-            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">대표 작품 사진 업로드 중...</p>
+            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+              대표 작품 사진 업로드 중...
+            </p>
           ) : null}
           <UploadProgressBar
             progressPercent={showcaseUploadProgressPercent}
@@ -547,7 +540,9 @@ export default function MemberEditForm({
         </div>
 
         <fieldset className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-          <legend className="px-1 text-sm font-medium text-slate-700 dark:text-slate-200">소속 기수</legend>
+          <legend className="px-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+            소속 기수
+          </legend>
           {isLoadingGenerations ? (
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
               {Array.from({ length: 6 }).map((_, index) => (
@@ -558,7 +553,9 @@ export default function MemberEditForm({
               ))}
             </div>
           ) : allGenerations.length === 0 ? (
-            <p className="text-sm text-slate-600 dark:text-slate-300">선택 가능한 기수가 없습니다.</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              선택 가능한 기수가 없습니다.
+            </p>
           ) : (
             <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {allGenerations.map((generation) => (
