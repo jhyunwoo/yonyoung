@@ -2,10 +2,12 @@ import Link from "next/link";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { isPresidentOrVicePresidentRole } from "@/features/auth/model/auth-shared";
 import { buildDashboardSettingsMenuItems } from "@/features/dashboard/settings/dashboard-settings-menu";
+import { isMemberLikeRoleValue } from "@/shared/contracts/auth-roles";
 export default async function SettingsPage() {
   const session = await serverAuthGuard.requireSession();
   const settingsItems = buildDashboardSettingsMenuItems({
     canManagePrivilegedSettings: isPresidentOrVicePresidentRole(session.user.role),
+    isMemberLikeRole: isMemberLikeRoleValue(session.user.role),
   });
 
   return (
@@ -18,7 +20,7 @@ export default async function SettingsPage() {
           대시보드 설정
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
-          이곳에서 공지, 링크 모음, 멤버, 기수 등 운영에 필요한 항목을 한 번에 관리할 수
+          이곳에서 개인 프로필과 운영에 필요한 설정 항목을 한 번에 확인하고 이동할 수
           있습니다.
         </p>
 

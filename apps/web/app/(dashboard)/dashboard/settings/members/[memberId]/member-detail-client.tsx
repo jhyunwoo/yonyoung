@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import type {
   ApiUser,
+  ApiUserResourceHistory,
   ApiUserResourceHistoryItem,
 } from "@/shared/contracts/api-contracts";
 import { AdminApiError } from "@/shared/http/http";
@@ -14,6 +15,7 @@ import {
   buildMemberDisplayInitial,
   buildMemberDisplayName,
 } from "@/features/dashboard/members/display-name";
+import { readMemberGenerationNameText } from "@/features/dashboard/members/member-directory";
 import {
   buildMemberRoleLabel,
   canEditMemberProfile,
@@ -27,6 +29,8 @@ type MemberDetailClientProps = {
   viewerRole: string | null;
 };
 
+const HISTORY_PAGE_SIZE = 10;
+
 const readErrorMessage = (error: unknown): string => {
   if (error instanceof AdminApiError) {
     return error.message;
@@ -37,20 +41,6 @@ const readErrorMessage = (error: unknown): string => {
   }
 
   return "멤버 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
-};
-
-const readGenerationNameText = (
-  user: ApiUser,
-  generationNamesById: Record<string, string>,
-): string => {
-  const ids = user.generationIds ?? (user.generationId ? [user.generationId] : []);
-  if (ids.length === 0) {
-    return "없음";
-  }
-
-  const uniqueIds = Array.from(new Set(ids));
-  const names = uniqueIds.map((id) => generationNamesById[id] ?? "알 수 없는 기수");
-  return names.join(", ");
 };
 
 const readHistoryResourceLabel = (
@@ -155,7 +145,9 @@ const HistoryList = (input: {
               <span className="rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2 py-0.5 text-xs font-semibold text-slate-700 dark:text-slate-200">
                 {resourceLabel}
               </span>
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">{actionLabel}</span>
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                {actionLabel}
+              </span>
               <span className="text-xs text-slate-600 dark:text-slate-300">
                 {formatKoreanDate(item.createdAt)}
               </span>
@@ -190,12 +182,174 @@ const HistoryList = (input: {
   );
 };
 
+const HistoryListSkeleton = () => (
+  <div className="mt-3 space-y-2" aria-hidden="true">
+    {Array.from({ length: 3 }).map((_, index) => (
+      <div
+        key={`settings-member-history-skeleton-${index + 1}`}
+        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-3"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <Skeleton className="h-5 w-16 rounded-full" />
+          <Skeleton className="h-4 w-12" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+        <Skeleton className="mt-3 h-5 w-2/3" />
+        <Skeleton className="mt-2 h-4 w-1/2" />
+      </div>
+    ))}
+  </div>
+);
+
+type PaginatedHistorySectionProps = {
+  memberId: string;
+  title: string;
+  emptyMessage: string;
+  generationNamesById: Record<string, string>;
+  action?: ApiUserResourceHistoryItem["action"];
+  description: string;
+  testId: string;
+};
+
+const PaginatedHistorySection = ({
+  memberId,
+  title,
+  emptyMessage,
+  generationNamesById,
+  action,
+  description,
+  testId,
+}: PaginatedHistorySectionProps) => {
+  const [history, setHistory] = useState<ApiUserResourceHistory | null>(null);
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const load = async () => {
+      setIsLoading(true);
+      setErrorMessage(null);
+
+      try {
+        const response = await adminResourceApi.getUserResourceHistory(memberId, {
+          page,
+          pageSize: HISTORY_PAGE_SIZE,
+          ...(action ? { action } : {}),
+        });
+
+        if (!isMounted) {
+          return;
+        }
+
+        setHistory(response);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        setErrorMessage(readErrorMessage(error));
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void load();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [action, memberId, page]);
+
+  const items = history?.items ?? [];
+  const total = history?.total ?? 0;
+  const totalPages = history?.totalPages ?? 0;
+  const startItemNumber = total === 0 ? 0 : (page - 1) * HISTORY_PAGE_SIZE + 1;
+  const endItemNumber = total === 0 ? 0 : startItemNumber + Math.max(0, items.length - 1);
+
+  return (
+    <section
+      className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4"
+      data-testid={testId}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            {title}
+          </h2>
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{description}</p>
+        </div>
+        {history ? (
+          <p className="text-xs text-slate-600 dark:text-slate-300">
+            총 {total}건
+            {items.length > 0 ? ` · ${startItemNumber}-${endItemNumber}건 표시 중` : ""}
+          </p>
+        ) : null}
+      </div>
+
+      {isLoading && !history ? <HistoryListSkeleton /> : null}
+
+      {errorMessage ? (
+        <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {errorMessage}
+        </p>
+      ) : null}
+
+      {!errorMessage && history ? (
+        <>
+          <HistoryList
+            items={items}
+            generationNamesById={generationNamesById}
+            emptyMessage={emptyMessage}
+          />
+
+          {items.length > 0 && totalPages > 1 ? (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4 dark:border-slate-700">
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                페이지 {page} / {totalPages}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
+                  disabled={page <= 1 || isLoading}
+                  className="inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  이전
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPage((currentPage) => Math.min(totalPages, currentPage + 1))
+                  }
+                  disabled={page >= totalPages || isLoading}
+                  className="inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  다음
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {isLoading ? (
+            <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+              페이지를 불러오는 중입니다.
+            </p>
+          ) : null}
+        </>
+      ) : null}
+    </section>
+  );
+};
+
 export default function MemberDetailClient({
   memberId,
   viewerRole,
 }: MemberDetailClientProps) {
   const [user, setUser] = useState<ApiUser | null>(null);
-  const [historyItems, setHistoryItems] = useState<ApiUserResourceHistoryItem[]>([]);
   const [generationNamesById, setGenerationNamesById] = useState<Record<string, string>>(
     {},
   );
@@ -213,9 +367,8 @@ export default function MemberDetailClient({
       setErrorMessage(null);
 
       try {
-        const [targetUser, history, generations] = await Promise.all([
+        const [targetUser, generations] = await Promise.all([
           adminResourceApi.getUserById(memberId),
-          adminResourceApi.getUserResourceHistory(memberId, 100),
           adminResourceApi.listGenerations(),
         ]);
 
@@ -232,7 +385,6 @@ export default function MemberDetailClient({
         );
 
         setUser(targetUser);
-        setHistoryItems(history.items);
         setGenerationNamesById(nextGenerationNamesById);
         setIsEditing(false);
       } catch (error) {
@@ -240,7 +392,6 @@ export default function MemberDetailClient({
           return;
         }
         setUser(null);
-        setHistoryItems([]);
         setErrorMessage(readErrorMessage(error));
       } finally {
         if (isMounted) {
@@ -255,12 +406,6 @@ export default function MemberDetailClient({
       isMounted = false;
     };
   }, [memberId]);
-
-  const writtenItems = useMemo(
-    () => historyItems.filter((item) => item.action === "create"),
-    [historyItems],
-  );
-  const modifiedItems = historyItems;
 
   if (isLoading) {
     return (
@@ -347,7 +492,9 @@ export default function MemberDetailClient({
               <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
                 {displayName}
               </h1>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">전체 멤버 상세</p>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                전체 멤버 상세
+              </p>
             </div>
 
             {canEdit && !isEditing ? (
@@ -374,68 +521,102 @@ export default function MemberDetailClient({
             />
           ) : (
             <div className="mt-6 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">전체 정보</h2>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                전체 정보
+              </h2>
               <dl className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 <div>
-                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">회원 구분</dt>
-                  <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">{roleLabel}</dd>
+                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    회원 구분
+                  </dt>
+                  <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">
+                    {roleLabel}
+                  </dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">이메일</dt>
-                  <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">{user.email}</dd>
+                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    이메일
+                  </dt>
+                  <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">
+                    {user.email}
+                  </dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">성</dt>
+                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    성
+                  </dt>
                   <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">
                     {user.familyName ?? "-"}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">이름</dt>
-                  <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">{user.givenName ?? "-"}</dd>
+                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    이름
+                  </dt>
+                  <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">
+                    {user.givenName ?? "-"}
+                  </dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">대학</dt>
-                  <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">{user.college ?? "-"}</dd>
+                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    대학
+                  </dt>
+                  <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">
+                    {user.college ?? "-"}
+                  </dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">학과</dt>
+                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    학과
+                  </dt>
                   <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">
                     {user.department ?? "-"}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">학번</dt>
+                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    학번
+                  </dt>
                   <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">
                     {user.studentNumber ?? "-"}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">전화번호</dt>
+                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    전화번호
+                  </dt>
                   <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">
                     {user.phoneNumber ?? "-"}
                   </dd>
                 </div>
                 <div className="md:col-span-2 xl:col-span-3">
-                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">소속 기수</dt>
+                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    소속 기수
+                  </dt>
                   <dd className="mt-1 break-all text-sm text-slate-900 dark:text-slate-50">
-                    {readGenerationNameText(user, generationNamesById)}
+                    {readMemberGenerationNameText(user, generationNamesById)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">생성일</dt>
+                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    생성일
+                  </dt>
                   <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">
                     {formatKoreanDate(user.createdAt)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">수정일</dt>
+                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    수정일
+                  </dt>
                   <dd className="mt-1 text-sm text-slate-900 dark:text-slate-50">
                     {formatKoreanDate(user.updatedAt)}
                   </dd>
                 </div>
                 <div className="md:col-span-2 xl:col-span-3">
-                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">최근 수정</dt>
+                  <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    최근 수정
+                  </dt>
                   <dd className="mt-1">
                     <LastUpdatedMeta
                       updatedAt={user.updatedAt}
@@ -449,23 +630,26 @@ export default function MemberDetailClient({
           )}
         </section>
 
-        <section className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">작성한 글</h2>
-          <HistoryList
-            items={writtenItems}
-            generationNamesById={generationNamesById}
-            emptyMessage="작성한 글 이력이 없습니다."
-          />
-        </section>
+        <PaginatedHistorySection
+          key={`written-history-${memberId}`}
+          memberId={memberId}
+          title="작성한 글"
+          description="작성 이력을 최신순으로 10개씩 확인할 수 있습니다."
+          generationNamesById={generationNamesById}
+          action="create"
+          emptyMessage="작성한 글 이력이 없습니다."
+          testId="settings-member-detail-written-history"
+        />
 
-        <section className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">수정한 게시물 목록</h2>
-          <HistoryList
-            items={modifiedItems}
-            generationNamesById={generationNamesById}
-            emptyMessage="수정/생성/삭제 이력이 없습니다."
-          />
-        </section>
+        <PaginatedHistorySection
+          key={`modified-history-${memberId}`}
+          memberId={memberId}
+          title="수정한 게시물 목록"
+          description="수정/생성/삭제 이력을 최신순으로 10개씩 넘겨 볼 수 있습니다."
+          generationNamesById={generationNamesById}
+          emptyMessage="수정/생성/삭제 이력이 없습니다."
+          testId="settings-member-detail-modified-history"
+        />
       </div>
     </main>
   );

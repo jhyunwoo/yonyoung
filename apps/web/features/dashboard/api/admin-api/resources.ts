@@ -204,10 +204,30 @@ export const adminResourceApi = {
 
   listUsers: () => apiRequest.get<ApiUser[]>("/users"),
   getUserById: (id: string) => apiRequest.get<ApiUser>(`/users/${id}`),
-  getUserResourceHistory: (id: string, limit = 100) => {
-    const safeLimit = Math.max(1, Math.min(200, Math.floor(limit)));
+  getUserResourceHistory: (
+    id: string,
+    input: {
+      page?: number;
+      pageSize?: number;
+      action?: "create" | "update" | "delete";
+    } = {},
+  ) => {
+    const safePage =
+      typeof input.page === "number" && Number.isFinite(input.page) && input.page > 0
+        ? Math.floor(input.page)
+        : 1;
+    const safePageSize =
+      typeof input.pageSize === "number" &&
+      Number.isFinite(input.pageSize) &&
+      input.pageSize > 0
+        ? Math.min(100, Math.floor(input.pageSize))
+        : 10;
     return apiRequest.get<ApiUserResourceHistory>(
-      `/users/${id}/resource-history?limit=${safeLimit}`,
+      withOptionalQuery(`/users/${id}/resource-history`, {
+        page: String(safePage),
+        pageSize: String(safePageSize),
+        action: input.action,
+      }),
     );
   },
   updateUser: updateUserAction,

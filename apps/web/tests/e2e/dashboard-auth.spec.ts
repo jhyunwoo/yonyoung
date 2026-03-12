@@ -9,4 +9,5 @@ test("unauthenticated dashboard access is redirected or forbidden", async ({ pag
   }
 
   expect(response?.status()).toBe(403);
+  await expect(page.getByTestId("dashboard-forbidden-page")).toBeVisible();
 });

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ADMIN_ROLE_VALUES, CORE_ROLE_VALUES } from "@/shared/contracts/auth-roles";
+import { CORE_ROLE_VALUES } from "@/shared/contracts/auth-roles";
 
 const timestampSchema = z.number().finite();
 const nullableStringSchema = z.string().nullable();
@@ -378,7 +378,7 @@ export const apiPublicGenerationWithMembersSchema = z.object({
 
 export const apiBulkUpdateUserRoleInputSchema = z.object({
   userIds: z.array(z.string()).min(1),
-  role: z.enum(ADMIN_ROLE_VALUES),
+  role: z.enum(CORE_ROLE_VALUES),
 });
 
 export const apiAdminUpdateUserInputSchema = z.object({

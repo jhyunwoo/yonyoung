@@ -14,7 +14,8 @@ export default async function SettingsMembersPage() {
           전체 멤버 관리
         </h1>
         <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
-          전체 멤버를 한눈에 확인하고, 상세 화면에서 정보를 수정할 수 있습니다.
+          전체 멤버의 권한, 소속 기수, 기본 정보를 보고 검색과 필터로 원하는 사용자를
+          빠르게 찾을 수 있으며, 여러 명을 선택해 권한을 한 번에 수정할 수 있습니다.
         </p>
         <MembersGrid />
       </section>

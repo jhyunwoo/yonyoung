@@ -133,9 +133,7 @@ const readCorrelationHeaders = async (): Promise<{
   };
 };
 
-const requireAdminAccess = async (
-  scope: AdminWriteAccessScope = "verified_member",
-) => {
+const requireAdminAccess = async (scope: AdminWriteAccessScope = "verified_member") => {
   const session = await serverAuthGuard.requireSession();
   assertAdminWriteAccess(session, scope);
 };
@@ -745,7 +743,7 @@ export const updateSiteSettingsAction = async (
         ? "이메일 형식이 올바르지 않습니다."
         : firstPath === "donateAccountNumber"
           ? "계좌번호는 숫자와 -만 입력할 수 있으며 최대 50자입니다."
-        : "기본 설정 입력값 형식을 확인해 주세요.";
+          : "기본 설정 입력값 형식을 확인해 주세요.";
 
     throw new HonoApiError({
       status: 400,
@@ -822,13 +820,13 @@ export const updateUserAction = async (
 
 export const bulkUpdateUsersRoleAction = async (
   input: ApiBulkUpdateUserRoleInput,
-): Promise<void> => {
+): Promise<ApiUser[]> => {
   const payload = apiBulkUpdateUserRoleInputSchema.parse(input);
   return writeRequest({
-    path: "/users/bulk/role",
+    path: "/users/bulk-role",
     method: "PATCH",
     body: payload,
-    responseSchema: readNoContentSchema,
+    responseSchema: apiUserSchema.array(),
     accessScope: "user_manager",
     tags: [
       CACHE_TAGS.admin.users,

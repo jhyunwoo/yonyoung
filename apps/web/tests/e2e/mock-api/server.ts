@@ -138,10 +138,7 @@ const setJsonHeaders = (response: ServerResponse, status: number): void => {
   response.setHeader("cache-control", "no-store");
 };
 
-const applyCorsHeaders = (
-  request: IncomingMessage,
-  response: ServerResponse,
-): void => {
+const applyCorsHeaders = (request: IncomingMessage, response: ServerResponse): void => {
   const originHeader = request.headers.origin;
   const allowOrigin = typeof originHeader === "string" ? originHeader : "*";
   response.setHeader("access-control-allow-origin", allowOrigin);
@@ -263,10 +260,7 @@ const requireAuthenticatedUser = (
   return user;
 };
 
-const requireWritableRole = (
-  response: ServerResponse,
-  role: MockRole,
-): boolean => {
+const requireWritableRole = (response: ServerResponse, role: MockRole): boolean => {
   if (role === "guest") {
     sendError(response, 401, "UNAUTHORIZED", "Authentication required.");
     return false;
@@ -303,7 +297,10 @@ const normalizeRole = (value: unknown): string | null => {
   return value.trim();
 };
 
-const buildMemberSummary = (user: ApiUser, generationId: string): ApiGenerationMemberSummary => ({
+const buildMemberSummary = (
+  user: ApiUser,
+  generationId: string,
+): ApiGenerationMemberSummary => ({
   id: user.id,
   generationId,
   name: user.name,
@@ -354,13 +351,16 @@ const trackAudit = (
   });
 };
 
-const buildAdminDashboardStats = (state: MockState, generationSortOrder: number | null) => {
+const buildAdminDashboardStats = (
+  state: MockState,
+  generationSortOrder: number | null,
+) => {
   const selectedGeneration =
     typeof generationSortOrder === "number"
-      ? state.generations.find((item) => item.sortOrder === generationSortOrder) ?? null
-      : state.generations
+      ? (state.generations.find((item) => item.sortOrder === generationSortOrder) ?? null)
+      : (state.generations
           .slice()
-          .sort((left, right) => right.sortOrder - left.sortOrder)[0] ?? null;
+          .sort((left, right) => right.sortOrder - left.sortOrder)[0] ?? null);
 
   const selectedGenerationId = selectedGeneration?.id ?? null;
 
@@ -374,12 +374,14 @@ const buildAdminDashboardStats = (state: MockState, generationSortOrder: number 
         ).length
       : 0,
     selectedGenerationActivitiesTotal: selectedGenerationId
-      ? state.activities.filter((activity) => activity.generationId === selectedGenerationId)
-          .length
+      ? state.activities.filter(
+          (activity) => activity.generationId === selectedGenerationId,
+        ).length
       : 0,
     selectedGenerationExhibitionsTotal: selectedGenerationId
-      ? state.exhibitions.filter((exhibition) => exhibition.generationId === selectedGenerationId)
-          .length
+      ? state.exhibitions.filter(
+          (exhibition) => exhibition.generationId === selectedGenerationId,
+        ).length
       : 0,
     linktreeLinksTotal: state.linktrees.reduce(
       (total, linktree) => total + linktree.items.length,
@@ -391,13 +393,24 @@ const buildAdminDashboardStats = (state: MockState, generationSortOrder: number 
   };
 };
 
-const buildUserHistory = (state: MockState, userId: string): ApiUserResourceHistory => {
-  const items = state.auditLogs
+const buildUserHistory = (
+  state: MockState,
+  userId: string,
+  input: {
+    page: number;
+    pageSize: number;
+    action?: "create" | "update" | "delete";
+  },
+): ApiUserResourceHistory => {
+  const filteredItems = state.auditLogs
     .filter((log) => log.actor?.id === userId)
+    .filter((log) => (input.action ? log.action === input.action : true))
     .map((log) => ({
       id: log.id,
       resourceType:
-        log.resourceType === "generation" || log.resourceType === "market_item" || log.resourceType === "market_comment"
+        log.resourceType === "generation" ||
+        log.resourceType === "market_item" ||
+        log.resourceType === "market_comment"
           ? "activity"
           : (log.resourceType as ApiUserResourceHistory["items"][number]["resourceType"]),
       resourceId: log.resourceId,
@@ -408,9 +421,19 @@ const buildUserHistory = (state: MockState, userId: string): ApiUserResourceHist
       generationId: null,
       linktreeId: null,
       createdAt: log.createdAt,
-    }));
+    }))
+    .sort((left, right) => right.createdAt - left.createdAt);
+  const total = filteredItems.length;
+  const totalPages = total === 0 ? 0 : Math.ceil(total / input.pageSize);
+  const startIndex = (input.page - 1) * input.pageSize;
 
-  return { items };
+  return {
+    items: filteredItems.slice(startIndex, startIndex + input.pageSize),
+    page: input.page,
+    pageSize: input.pageSize,
+    total,
+    totalPages,
+  };
 };
 
 const readNumberQuery = (value: string | null): number | null => {
@@ -672,7 +695,10 @@ const server = createServer(async (request, response) => {
     // Users
     if (pathname === "/api/users/me" && method === "GET") {
       const shouldMaskProfile = profileMode === "incomplete";
-      sendData(response, shouldMaskProfile ? withIncompleteProfileFields(actorUser) : actorUser);
+      sendData(
+        response,
+        shouldMaskProfile ? withIncompleteProfileFields(actorUser) : actorUser,
+      );
       return;
     }
 
@@ -681,7 +707,7 @@ const server = createServer(async (request, response) => {
       return;
     }
 
-    if (pathname === "/api/users/bulk/role" && method === "PATCH") {
+    if (pathname === "/api/users/bulk-role" && method === "PATCH") {
       if (!requireWritableRole(response, role)) {
         return;
       }
@@ -727,7 +753,20 @@ const server = createServer(async (request, response) => {
         (segments[3] === "history" || segments[3] === "resource-history") &&
         method === "GET"
       ) {
-        sendData(response, buildUserHistory(state, userId));
+        const page = Math.max(
+          1,
+          readNumberQuery(requestUrl.searchParams.get("page")) ?? 1,
+        );
+        const pageSize = Math.max(
+          1,
+          Math.min(100, readNumberQuery(requestUrl.searchParams.get("pageSize")) ?? 10),
+        );
+        const actionParam = requestUrl.searchParams.get("action");
+        const action =
+          actionParam === "create" || actionParam === "update" || actionParam === "delete"
+            ? actionParam
+            : undefined;
+        sendData(response, buildUserHistory(state, userId, { page, pageSize, action }));
         return;
       }
 
@@ -980,7 +1019,7 @@ const server = createServer(async (request, response) => {
         generationId:
           typeof body?.generationId === "string"
             ? body.generationId
-            : state.generations[0]?.id ?? "gen-59",
+            : (state.generations[0]?.id ?? "gen-59"),
         createdAt: now(),
         updatedAt: now(),
         updatedBy: buildAuditActor(actorUser),
@@ -1140,7 +1179,9 @@ const server = createServer(async (request, response) => {
           return;
         }
         const imageId = decodeURIComponent(segments[4]);
-        activity.detailImages = activity.detailImages.filter((item) => item.id !== imageId);
+        activity.detailImages = activity.detailImages.filter(
+          (item) => item.id !== imageId,
+        );
         sendData(response, null);
         return;
       }
@@ -1168,7 +1209,7 @@ const server = createServer(async (request, response) => {
         generationId:
           typeof body?.generationId === "string"
             ? body.generationId
-            : state.generations[0]?.id ?? "gen-59",
+            : (state.generations[0]?.id ?? "gen-59"),
         place: typeof body?.place === "string" ? body.place : "장소 미정",
         coverImageUrl:
           typeof body?.coverImageUrl === "string"
@@ -1408,7 +1449,9 @@ const server = createServer(async (request, response) => {
         if (!requireWritableRole(response, role)) {
           return;
         }
-        state.notices.global = state.notices.global.filter((item) => item.id !== noticeId);
+        state.notices.global = state.notices.global.filter(
+          (item) => item.id !== noticeId,
+        );
         trackAudit(state, {
           resourceType: "global_notice",
           resourceId: noticeId,
@@ -1509,9 +1552,7 @@ const server = createServer(async (request, response) => {
           linktreeId,
           name: typeof body?.name === "string" ? body.name : "신규 링크",
           link:
-            typeof body?.link === "string"
-              ? body.link
-              : "https://example.com/new-link",
+            typeof body?.link === "string" ? body.link : "https://example.com/new-link",
           createdAt: now(),
           updatedAt: now(),
           updatedBy: buildAuditActor(actorUser),
@@ -1727,7 +1768,9 @@ const server = createServer(async (request, response) => {
         sendError(response, 400, "BAD_REQUEST", "Invalid push subscription payload.");
         return;
       }
-      const existing = state.subscriptions.find((subscription) => subscription.endpoint === endpoint);
+      const existing = state.subscriptions.find(
+        (subscription) => subscription.endpoint === endpoint,
+      );
       if (existing) {
         existing.p256dh = p256dh;
         existing.auth = auth;
@@ -1777,20 +1820,23 @@ const server = createServer(async (request, response) => {
       }
       const nextPlan: ApiRecruitingPlan = {
         year: new Date().getFullYear(),
-        title: typeof body?.title === "string" ? body.title : state.recruitingPlan?.title ?? "",
+        title:
+          typeof body?.title === "string"
+            ? body.title
+            : (state.recruitingPlan?.title ?? ""),
         content:
           typeof body?.content === "string"
             ? body.content
-            : state.recruitingPlan?.content ?? "",
+            : (state.recruitingPlan?.content ?? ""),
         promotionImageUrls: ensureArray(body?.promotionImageUrls as string[]),
         recruitmentStartAt:
           typeof body?.recruitmentStartAt === "number"
             ? body.recruitmentStartAt
-            : state.recruitingPlan?.recruitmentStartAt ?? now(),
+            : (state.recruitingPlan?.recruitmentStartAt ?? now()),
         recruitmentEndAt:
           typeof body?.recruitmentEndAt === "number"
             ? body.recruitmentEndAt
-            : state.recruitingPlan?.recruitmentEndAt ?? now(),
+            : (state.recruitingPlan?.recruitmentEndAt ?? now()),
         createdAt: state.recruitingPlan?.createdAt ?? now(),
         updatedAt: now(),
       };
@@ -1801,7 +1847,9 @@ const server = createServer(async (request, response) => {
 
     // Admin dashboard stats
     if (pathname === "/api/admin/dashboard" && method === "GET") {
-      const generationSortOrder = readNumberQuery(requestUrl.searchParams.get("generationSortOrder"));
+      const generationSortOrder = readNumberQuery(
+        requestUrl.searchParams.get("generationSortOrder"),
+      );
       sendData(response, buildAdminDashboardStats(state, generationSortOrder));
       return;
     }
@@ -1810,9 +1858,14 @@ const server = createServer(async (request, response) => {
     if (segments[1] === "audit" && segments[2] && segments[3] && method === "GET") {
       const resourceType = decodeURIComponent(segments[2]);
       const resourceId = decodeURIComponent(segments[3]);
-      const limit = Math.max(1, Math.min(200, Number(requestUrl.searchParams.get("limit") ?? "20")));
+      const limit = Math.max(
+        1,
+        Math.min(200, Number(requestUrl.searchParams.get("limit") ?? "20")),
+      );
       const logs = state.auditLogs
-        .filter((log) => log.resourceType === resourceType && log.resourceId === resourceId)
+        .filter(
+          (log) => log.resourceType === resourceType && log.resourceId === resourceId,
+        )
         .slice(0, limit);
       sendData(response, logs);
       return;
