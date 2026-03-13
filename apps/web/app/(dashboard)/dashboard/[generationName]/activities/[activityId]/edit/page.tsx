@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
-import { isUnverifiedRole } from "@/features/auth/model/auth-shared";
+import { isAdminRole } from "@/features/auth/model/auth-shared";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
 import ActivityEditForm from "@/app/(dashboard)/dashboard/[generationName]/activities/_components/activity-edit-form";
 
@@ -36,7 +36,7 @@ export default async function GenerationActivityEditPage({
     resolveInitialNoticeMessage(searchParams),
   ]);
 
-  if (isUnverifiedRole(session.user.role)) {
+  if (!isAdminRole(session.user.role)) {
     redirect(`${generation.path}/activities/${activityId}`);
   }
 

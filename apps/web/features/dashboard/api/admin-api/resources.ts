@@ -20,6 +20,7 @@ import type {
   ApiUserResourceHistory,
 } from "@/shared/contracts/api-contracts";
 import { adminRequest } from "@/features/dashboard/api/admin-api/http";
+import { bindAdminWriteAction } from "@/features/dashboard/api/admin-api/action-results";
 import {
   addActivityImageAction,
   addActivityImagesAction,
@@ -112,66 +113,66 @@ export const adminResourceApi = {
   },
 
   listGenerations: () => apiRequest.get<ApiGeneration[]>("/generations"),
-  createGeneration: createGenerationAction,
+  createGeneration: bindAdminWriteAction(createGenerationAction),
   getGenerationById: (id: string) => apiRequest.get<ApiGeneration>(`/generations/${id}`),
   listGenerationMembers: (generationId: string) =>
     apiRequest.get<ApiGenerationMemberSummary[]>(`/generations/${generationId}/members`),
-  updateGeneration: updateGenerationAction,
-  deleteGeneration: deleteGenerationAction,
+  updateGeneration: bindAdminWriteAction(updateGenerationAction),
+  deleteGeneration: bindAdminWriteAction(deleteGenerationAction),
 
   listActivities: (input: ApiListActivitiesQuery = {}) =>
     apiRequest.get<ApiActivity[]>(
       withOptionalQuery("/activities", { generationId: input.generationId }),
     ),
-  createActivity: createActivityAction,
+  createActivity: bindAdminWriteAction(createActivityAction),
   getActivityById: (id: string) => apiRequest.get<ApiActivity>(`/activities/${id}`),
-  updateActivity: updateActivityAction,
-  deleteActivity: deleteActivityAction,
-  addActivityImage: addActivityImageAction,
-  addActivityImages: addActivityImagesAction,
-  updateActivityImage: updateActivityImageAction,
-  updateActivityImages: updateActivityImagesAction,
-  deleteActivityImage: deleteActivityImageAction,
+  updateActivity: bindAdminWriteAction(updateActivityAction),
+  deleteActivity: bindAdminWriteAction(deleteActivityAction),
+  addActivityImage: bindAdminWriteAction(addActivityImageAction),
+  addActivityImages: bindAdminWriteAction(addActivityImagesAction),
+  updateActivityImage: bindAdminWriteAction(updateActivityImageAction),
+  updateActivityImages: bindAdminWriteAction(updateActivityImagesAction),
+  deleteActivityImage: bindAdminWriteAction(deleteActivityImageAction),
 
   listExhibitions: (input: ApiListExhibitionsQuery = {}) =>
     apiRequest.get<ApiExhibition[]>(
       withOptionalQuery("/exhibitions", { generationId: input.generationId }),
     ),
-  createExhibition: createExhibitionAction,
+  createExhibition: bindAdminWriteAction(createExhibitionAction),
   getExhibitionById: (id: string) => apiRequest.get<ApiExhibition>(`/exhibitions/${id}`),
-  updateExhibition: updateExhibitionAction,
-  deleteExhibition: deleteExhibitionAction,
-  addExhibitionImage: addExhibitionImageAction,
-  addExhibitionImages: addExhibitionImagesAction,
-  updateExhibitionImage: updateExhibitionImageAction,
-  updateExhibitionImages: updateExhibitionImagesAction,
-  deleteExhibitionImage: deleteExhibitionImageAction,
+  updateExhibition: bindAdminWriteAction(updateExhibitionAction),
+  deleteExhibition: bindAdminWriteAction(deleteExhibitionAction),
+  addExhibitionImage: bindAdminWriteAction(addExhibitionImageAction),
+  addExhibitionImages: bindAdminWriteAction(addExhibitionImagesAction),
+  updateExhibitionImage: bindAdminWriteAction(updateExhibitionImageAction),
+  updateExhibitionImages: bindAdminWriteAction(updateExhibitionImagesAction),
+  deleteExhibitionImage: bindAdminWriteAction(deleteExhibitionImageAction),
 
   listLinktrees: () => apiRequest.get<ApiLinktree[]>("/linktree"),
-  createLinktree: createLinktreeAction,
+  createLinktree: bindAdminWriteAction(createLinktreeAction),
   getLinktreeById: (id: string) => apiRequest.get<ApiLinktree>(`/linktree/${id}`),
-  updateLinktree: updateLinktreeAction,
-  deleteLinktree: deleteLinktreeAction,
-  addLinktreeItem: addLinktreeItemAction,
-  updateLinktreeItem: updateLinktreeItemAction,
-  deleteLinktreeItem: deleteLinktreeItemAction,
+  updateLinktree: bindAdminWriteAction(updateLinktreeAction),
+  deleteLinktree: bindAdminWriteAction(deleteLinktreeAction),
+  addLinktreeItem: bindAdminWriteAction(addLinktreeItemAction),
+  updateLinktreeItem: bindAdminWriteAction(updateLinktreeItemAction),
+  deleteLinktreeItem: bindAdminWriteAction(deleteLinktreeItemAction),
 
   listGenerationNotices: (generationId: string) =>
     apiRequest.get<ApiGenerationNotice[]>(`/generations/${generationId}/notices`),
-  createGenerationNotice: createGenerationNoticeAction,
+  createGenerationNotice: bindAdminWriteAction(createGenerationNoticeAction),
   getGenerationNoticeById: (generationId: string, noticeId: string) =>
     apiRequest.get<ApiGenerationNotice>(
       `/generations/${generationId}/notices/${noticeId}`,
     ),
-  updateGenerationNotice: updateGenerationNoticeAction,
-  deleteGenerationNotice: deleteGenerationNoticeAction,
+  updateGenerationNotice: bindAdminWriteAction(updateGenerationNoticeAction),
+  deleteGenerationNotice: bindAdminWriteAction(deleteGenerationNoticeAction),
 
   listGlobalNotices: () => apiRequest.get<ApiGlobalNotice[]>("/global-notices"),
-  createGlobalNotice: createGlobalNoticeAction,
+  createGlobalNotice: bindAdminWriteAction(createGlobalNoticeAction),
   getGlobalNoticeById: (id: string) =>
     apiRequest.get<ApiGlobalNotice>(`/global-notices/${id}`),
-  updateGlobalNotice: updateGlobalNoticeAction,
-  deleteGlobalNotice: deleteGlobalNoticeAction,
+  updateGlobalNotice: bindAdminWriteAction(updateGlobalNoticeAction),
+  deleteGlobalNotice: bindAdminWriteAction(deleteGlobalNoticeAction),
 
   listMarketItems: (input: ApiListMarketItemsQuery = {}) =>
     apiRequest.get<ApiMarketItem[]>(
@@ -182,25 +183,25 @@ export const adminResourceApi = {
         pageSize: typeof input.pageSize === "number" ? String(input.pageSize) : undefined,
       }),
     ),
-  createMarketItem: createMarketItemAction,
+  createMarketItem: bindAdminWriteAction(createMarketItemAction),
   getMarketItemById: (id: string) => apiRequest.get<ApiMarketItem>(`/market/items/${id}`),
-  updateMarketItem: updateMarketItemAction,
-  updateMarketItemStatus: updateMarketItemStatusAction,
-  deleteMarketItem: deleteMarketItemAction,
+  updateMarketItem: bindAdminWriteAction(updateMarketItemAction),
+  updateMarketItemStatus: bindAdminWriteAction(updateMarketItemStatusAction),
+  deleteMarketItem: bindAdminWriteAction(deleteMarketItemAction),
   listMarketCommentsByItemId: (id: string) =>
     apiRequest.get<ApiMarketComment[]>(`/market/items/${id}/comments`),
-  createMarketComment: createMarketCommentAction,
-  updateMarketComment: updateMarketCommentAction,
-  deleteMarketComment: deleteMarketCommentAction,
-  upsertMarketPushSubscription: upsertMarketPushSubscriptionAction,
-  deleteMarketPushSubscription: deleteMarketPushSubscriptionAction,
+  createMarketComment: bindAdminWriteAction(createMarketCommentAction),
+  updateMarketComment: bindAdminWriteAction(updateMarketCommentAction),
+  deleteMarketComment: bindAdminWriteAction(deleteMarketCommentAction),
+  upsertMarketPushSubscription: bindAdminWriteAction(upsertMarketPushSubscriptionAction),
+  deleteMarketPushSubscription: bindAdminWriteAction(deleteMarketPushSubscriptionAction),
 
   getSiteSettings: () => apiRequest.get<ApiSiteSettings>("/site-settings"),
-  updateSiteSettings: updateSiteSettingsAction,
+  updateSiteSettings: bindAdminWriteAction(updateSiteSettingsAction),
 
   getCurrentRecruitingPlan: () =>
     apiRequest.get<ApiRecruitingPlan | null>("/recruiting-plan/current"),
-  upsertCurrentRecruitingPlan: upsertCurrentRecruitingPlanAction,
+  upsertCurrentRecruitingPlan: bindAdminWriteAction(upsertCurrentRecruitingPlanAction),
 
   listUsers: () => apiRequest.get<ApiUser[]>("/users"),
   getUserById: (id: string) => apiRequest.get<ApiUser>(`/users/${id}`),
@@ -230,8 +231,8 @@ export const adminResourceApi = {
       }),
     );
   },
-  updateUser: updateUserAction,
-  bulkUpdateUsersRole: bulkUpdateUsersRoleAction,
+  updateUser: bindAdminWriteAction(updateUserAction),
+  bulkUpdateUsersRole: bindAdminWriteAction(bulkUpdateUsersRoleAction),
 
   getAdminDashboardStats: (generationSortOrder: number | null = null) => {
     const search = new URLSearchParams();
@@ -243,7 +244,7 @@ export const adminResourceApi = {
     return apiRequest.get<ApiAdminDashboardStats>(`/admin/dashboard${suffix}`);
   },
 
-  deleteUser: deleteUserAction,
+  deleteUser: bindAdminWriteAction(deleteUserAction),
 } as const;
 
 type AdminResourceApi = typeof adminResourceApi;

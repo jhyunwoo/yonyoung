@@ -3,7 +3,6 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ApiGeneration, ApiUser } from "@/shared/contracts/api-contracts";
 import { AdminApiError } from "@/shared/http/http";
-
 const listUsersMock = vi.hoisted(() => vi.fn());
 const listGenerationsMock = vi.hoisted(() => vi.fn());
 const bulkUpdateUsersRoleMock = vi.hoisted(() => vi.fn());

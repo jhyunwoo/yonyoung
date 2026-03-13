@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
-import { isUnverifiedRole } from "@/features/auth/model/auth-shared";
+import { isAdminRole } from "@/features/auth/model/auth-shared";
 import { Skeleton } from "@/components/ui/skeleton";
 import GenerationActivitiesList from "@/app/(dashboard)/dashboard/[generationName]/activities/_components/generation-activities-list";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
@@ -14,7 +14,7 @@ export default async function GenerationActivitiesPage({
     requireDashboardGeneration(params),
     serverAuthGuard.requireSession(),
   ]);
-  const canManage = !isUnverifiedRole(session.user.role);
+  const canManage = isAdminRole(session.user.role);
 
   return (
     <main className="px-4 py-6 md:px-8 md:py-8">
