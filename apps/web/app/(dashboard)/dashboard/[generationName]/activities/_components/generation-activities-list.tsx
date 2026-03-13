@@ -39,7 +39,9 @@ export default async function GenerationActivitiesList({
             {generationName} 활동 관리
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
-            이 기수의 활동을 확인하고 필요할 때 새 활동을 등록할 수 있습니다.
+            {canManage
+              ? "이 기수의 활동을 확인하고 필요할 때 새 활동을 등록할 수 있습니다."
+              : "이 기수의 활동을 조회할 수 있습니다."}
           </p>
         </div>
         {canManage ? (
@@ -54,7 +56,7 @@ export default async function GenerationActivitiesList({
 
       {!canManage ? (
         <p className="mt-6 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-          활동을 등록하거나 수정할 권한이 없습니다.
+          일반 멤버는 활동을 조회만 할 수 있습니다.
         </p>
       ) : null}
 

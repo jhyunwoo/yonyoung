@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
-import { isUnverifiedRole } from "@/features/auth/model/auth-shared";
+import { isAdminRole } from "@/features/auth/model/auth-shared";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
 import ActivityCreateForm from "@/app/(dashboard)/dashboard/[generationName]/activities/_components/activity-create-form";
 
@@ -14,7 +14,7 @@ export default async function GenerationActivityCreatePage({
     serverAuthGuard.requireSession(),
   ]);
 
-  if (isUnverifiedRole(session.user.role)) {
+  if (!isAdminRole(session.user.role)) {
     redirect(`${generation.path}/activities`);
   }
 

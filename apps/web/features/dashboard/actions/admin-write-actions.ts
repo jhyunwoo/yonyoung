@@ -113,6 +113,23 @@ const MARKET_PUSH_SUBSCRIPTIONS_PATH = "/market/push-subscriptions";
 
 type CacheTag = AdminCacheTag | PublicCacheTag;
 
+export type AdminWriteActionFailure = {
+  ok: false;
+  errorMessage: string;
+  status: number;
+  code: string;
+  requestId: string | null;
+};
+
+export type AdminWriteActionResult<T> =
+  | {
+      ok: true;
+      data: T;
+    }
+  | AdminWriteActionFailure;
+
+export type BulkUpdateUsersRoleActionResult = AdminWriteActionResult<ApiUser[]>;
+
 const tagsToUpdate = (tags: readonly CacheTag[]): void => {
   for (const tag of tags) {
     updateTag(tag);
@@ -144,6 +161,16 @@ const readNoContentSchema = z
   .nullable()
   .transform(() => undefined);
 
+const toAdminWriteActionFailure = (
+  error: HonoApiError,
+): AdminWriteActionFailure => ({
+  ok: false,
+  errorMessage: error.message,
+  status: error.status,
+  code: error.code,
+  requestId: error.requestId,
+});
+
 const writeRequest = async <TResponse>(input: {
   path: string;
   method: "POST" | "PATCH" | "DELETE";
@@ -153,7 +180,7 @@ const writeRequest = async <TResponse>(input: {
   timeoutMs?: number;
   requireAdminAccess?: boolean;
   accessScope?: AdminWriteAccessScope;
-}): Promise<TResponse> => {
+}): Promise<AdminWriteActionResult<TResponse>> => {
   if (input.requireAdminAccess !== false) {
     await requireAdminAccess(input.accessScope);
   }
@@ -161,26 +188,37 @@ const writeRequest = async <TResponse>(input: {
   const cookieHeader = await readCookieHeader();
   const { requestId, traceId } = await readCorrelationHeaders();
 
-  const result = await honoRequest<TResponse>({
-    path: `${ADMIN_API_BASE_PATH}${input.path}`,
-    method: input.method,
-    body: input.body,
-    cache: "no-store",
-    responseSchema: input.responseSchema,
-    timeoutMs: input.timeoutMs ?? 45_000,
-    requestId,
-    traceId,
-    cookieHeader,
-  });
+  try {
+    const result = await honoRequest<TResponse>({
+      path: `${ADMIN_API_BASE_PATH}${input.path}`,
+      method: input.method,
+      body: input.body,
+      cache: "no-store",
+      responseSchema: input.responseSchema,
+      timeoutMs: input.timeoutMs ?? 45_000,
+      requestId,
+      traceId,
+      cookieHeader,
+    });
 
-  tagsToUpdate(input.tags);
+    tagsToUpdate(input.tags);
 
-  return result;
+    return {
+      ok: true,
+      data: result,
+    };
+  } catch (error) {
+    if (error instanceof HonoApiError) {
+      return toAdminWriteActionFailure(error);
+    }
+
+    throw error;
+  }
 };
 
 export const createGenerationAction = async (
   input: ApiCreateGenerationInput,
-): Promise<ApiGeneration> => {
+): Promise<AdminWriteActionResult<ApiGeneration>> => {
   const payload = apiCreateGenerationInputSchema.parse(input);
   return writeRequest({
     path: "/generations",
@@ -200,7 +238,7 @@ export const createGenerationAction = async (
 export const updateGenerationAction = async (
   id: string,
   input: ApiUpdateGenerationInput,
-): Promise<ApiGeneration> => {
+): Promise<AdminWriteActionResult<ApiGeneration>> => {
   const payload = apiUpdateGenerationInputSchema.parse(input);
   return writeRequest({
     path: `/generations/${id}`,
@@ -217,7 +255,9 @@ export const updateGenerationAction = async (
   });
 };
 
-export const deleteGenerationAction = async (id: string): Promise<void> => {
+export const deleteGenerationAction = async (
+  id: string,
+): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
     path: `/generations/${id}`,
     method: "DELETE",
@@ -234,13 +274,14 @@ export const deleteGenerationAction = async (id: string): Promise<void> => {
 
 export const createActivityAction = async (
   input: ApiCreateActivityInput,
-): Promise<ApiActivity> => {
+): Promise<AdminWriteActionResult<ApiActivity>> => {
   const payload = apiCreateActivityInputSchema.parse(input);
   return writeRequest({
     path: "/activities",
     method: "POST",
     body: payload,
     responseSchema: apiActivitySchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.activities, CACHE_TAGS.public.activities],
   });
 };
@@ -248,18 +289,21 @@ export const createActivityAction = async (
 export const updateActivityAction = async (
   id: string,
   input: ApiUpdateActivityInput,
-): Promise<ApiActivity> => {
+): Promise<AdminWriteActionResult<ApiActivity>> => {
   const payload = apiUpdateActivityInputSchema.parse(input);
   return writeRequest({
     path: `/activities/${id}`,
     method: "PATCH",
     body: payload,
     responseSchema: apiActivitySchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.activities, CACHE_TAGS.public.activities],
   });
 };
 
-export const deleteActivityAction = async (id: string): Promise<void> => {
+export const deleteActivityAction = async (
+  id: string,
+): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
     path: `/activities/${id}`,
     method: "DELETE",
@@ -272,13 +316,14 @@ export const deleteActivityAction = async (id: string): Promise<void> => {
 export const addActivityImageAction = async (
   id: string,
   input: ApiCreateActivityImageInput,
-): Promise<ApiActivityImage> => {
+): Promise<AdminWriteActionResult<ApiActivityImage>> => {
   const payload = apiCreateActivityImageInputSchema.parse(input);
   return writeRequest({
     path: `/activities/${id}/images`,
     method: "POST",
     body: payload,
     responseSchema: apiActivityImageSchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.activities, CACHE_TAGS.public.activities],
   });
 };
@@ -286,13 +331,14 @@ export const addActivityImageAction = async (
 export const addActivityImagesAction = async (
   id: string,
   inputs: ApiCreateActivityImageInput[],
-): Promise<ApiActivityImage[]> => {
+): Promise<AdminWriteActionResult<ApiActivityImage[]>> => {
   const payload = z.array(apiCreateActivityImageInputSchema).parse(inputs);
   return writeRequest({
     path: `/activities/${id}/images/batch`,
     method: "POST",
     body: payload,
     responseSchema: z.array(apiActivityImageSchema),
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.activities, CACHE_TAGS.public.activities],
   });
 };
@@ -301,13 +347,14 @@ export const updateActivityImageAction = async (
   id: string,
   imageId: string,
   input: ApiUpdateActivityImageInput,
-): Promise<ApiActivityImage> => {
+): Promise<AdminWriteActionResult<ApiActivityImage>> => {
   const payload = apiUpdateActivityImageInputSchema.parse(input);
   return writeRequest({
     path: `/activities/${id}/images/${imageId}`,
     method: "PATCH",
     body: payload,
     responseSchema: apiActivityImageSchema,
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.activities, CACHE_TAGS.public.activities],
   });
 };
@@ -315,13 +362,14 @@ export const updateActivityImageAction = async (
 export const updateActivityImagesAction = async (
   id: string,
   inputs: ApiUpdateActivityImageBatchItemInput[],
-): Promise<ApiActivityImage[]> => {
+): Promise<AdminWriteActionResult<ApiActivityImage[]>> => {
   const payload = z.array(apiUpdateActivityImageBatchItemInputSchema).parse(inputs);
   return writeRequest({
     path: `/activities/${id}/images/batch`,
     method: "PATCH",
     body: payload,
     responseSchema: z.array(apiActivityImageSchema),
+    accessScope: "manager",
     tags: [CACHE_TAGS.admin.activities, CACHE_TAGS.public.activities],
   });
 };
@@ -329,7 +377,7 @@ export const updateActivityImagesAction = async (
 export const deleteActivityImageAction = async (
   id: string,
   imageId: string,
-): Promise<void> => {
+): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
     path: `/activities/${id}/images/${imageId}`,
     method: "DELETE",
@@ -341,7 +389,7 @@ export const deleteActivityImageAction = async (
 
 export const createExhibitionAction = async (
   input: ApiCreateExhibitionInput,
-): Promise<ApiExhibition> => {
+): Promise<AdminWriteActionResult<ApiExhibition>> => {
   const payload = apiCreateExhibitionInputSchema.parse(input);
   return writeRequest({
     path: "/exhibitions",
@@ -356,7 +404,7 @@ export const createExhibitionAction = async (
 export const updateExhibitionAction = async (
   id: string,
   input: ApiUpdateExhibitionInput,
-): Promise<ApiExhibition> => {
+): Promise<AdminWriteActionResult<ApiExhibition>> => {
   const payload = apiUpdateExhibitionInputSchema.parse(input);
   return writeRequest({
     path: `/exhibitions/${id}`,
@@ -368,7 +416,9 @@ export const updateExhibitionAction = async (
   });
 };
 
-export const deleteExhibitionAction = async (id: string): Promise<void> => {
+export const deleteExhibitionAction = async (
+  id: string,
+): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
     path: `/exhibitions/${id}`,
     method: "DELETE",
@@ -381,7 +431,7 @@ export const deleteExhibitionAction = async (id: string): Promise<void> => {
 export const addExhibitionImageAction = async (
   id: string,
   input: ApiCreateExhibitionImageInput,
-): Promise<ApiExhibitionImage> => {
+): Promise<AdminWriteActionResult<ApiExhibitionImage>> => {
   const payload = apiCreateExhibitionImageInputSchema.parse(input);
   return writeRequest({
     path: `/exhibitions/${id}/images`,
@@ -396,7 +446,7 @@ export const addExhibitionImageAction = async (
 export const addExhibitionImagesAction = async (
   id: string,
   inputs: ApiCreateExhibitionImageInput[],
-): Promise<ApiExhibitionImage[]> => {
+): Promise<AdminWriteActionResult<ApiExhibitionImage[]>> => {
   const payload = z.array(apiCreateExhibitionImageInputSchema).parse(inputs);
   return writeRequest({
     path: `/exhibitions/${id}/images/batch`,
@@ -412,7 +462,7 @@ export const updateExhibitionImageAction = async (
   id: string,
   imageId: string,
   input: ApiUpdateExhibitionImageInput,
-): Promise<ApiExhibitionImage> => {
+): Promise<AdminWriteActionResult<ApiExhibitionImage>> => {
   const payload = apiUpdateExhibitionImageInputSchema.parse(input);
   return writeRequest({
     path: `/exhibitions/${id}/images/${imageId}`,
@@ -427,7 +477,7 @@ export const updateExhibitionImageAction = async (
 export const updateExhibitionImagesAction = async (
   id: string,
   inputs: ApiUpdateExhibitionImageBatchItemInput[],
-): Promise<ApiExhibitionImage[]> => {
+): Promise<AdminWriteActionResult<ApiExhibitionImage[]>> => {
   const payload = z.array(apiUpdateExhibitionImageBatchItemInputSchema).parse(inputs);
   return writeRequest({
     path: `/exhibitions/${id}/images/batch`,
@@ -442,7 +492,7 @@ export const updateExhibitionImagesAction = async (
 export const deleteExhibitionImageAction = async (
   id: string,
   imageId: string,
-): Promise<void> => {
+): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
     path: `/exhibitions/${id}/images/${imageId}`,
     method: "DELETE",
@@ -454,7 +504,7 @@ export const deleteExhibitionImageAction = async (
 
 export const createLinktreeAction = async (
   input: ApiCreateLinktreeInput,
-): Promise<ApiLinktree> => {
+): Promise<AdminWriteActionResult<ApiLinktree>> => {
   const payload = apiCreateLinktreeInputSchema.parse(input);
   return writeRequest({
     path: "/linktree",
@@ -469,7 +519,7 @@ export const createLinktreeAction = async (
 export const updateLinktreeAction = async (
   id: string,
   input: ApiUpdateLinktreeInput,
-): Promise<ApiLinktree> => {
+): Promise<AdminWriteActionResult<ApiLinktree>> => {
   const payload = apiUpdateLinktreeInputSchema.parse(input);
   return writeRequest({
     path: `/linktree/${id}`,
@@ -481,7 +531,9 @@ export const updateLinktreeAction = async (
   });
 };
 
-export const deleteLinktreeAction = async (id: string): Promise<void> => {
+export const deleteLinktreeAction = async (
+  id: string,
+): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
     path: `/linktree/${id}`,
     method: "DELETE",
@@ -494,7 +546,7 @@ export const deleteLinktreeAction = async (id: string): Promise<void> => {
 export const addLinktreeItemAction = async (
   id: string,
   input: ApiCreateLinktreeItemInput,
-): Promise<ApiLinktreeItem> => {
+): Promise<AdminWriteActionResult<ApiLinktreeItem>> => {
   const payload = apiCreateLinktreeItemInputSchema.parse(input);
   return writeRequest({
     path: `/linktree/${id}/items`,
@@ -510,7 +562,7 @@ export const updateLinktreeItemAction = async (
   id: string,
   itemId: string,
   input: ApiUpdateLinktreeItemInput,
-): Promise<ApiLinktreeItem> => {
+): Promise<AdminWriteActionResult<ApiLinktreeItem>> => {
   const payload = apiUpdateLinktreeItemInputSchema.parse(input);
   return writeRequest({
     path: `/linktree/${id}/items/${itemId}`,
@@ -525,7 +577,7 @@ export const updateLinktreeItemAction = async (
 export const deleteLinktreeItemAction = async (
   id: string,
   itemId: string,
-): Promise<void> => {
+): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
     path: `/linktree/${id}/items/${itemId}`,
     method: "DELETE",
@@ -538,7 +590,7 @@ export const deleteLinktreeItemAction = async (
 export const createGenerationNoticeAction = async (
   generationId: string,
   input: ApiCreateGenerationNoticeInput,
-): Promise<ApiGenerationNotice> => {
+): Promise<AdminWriteActionResult<ApiGenerationNotice>> => {
   const payload = apiCreateGenerationNoticeInputSchema.parse(input);
   return writeRequest({
     path: `/generations/${generationId}/notices`,
@@ -554,7 +606,7 @@ export const updateGenerationNoticeAction = async (
   generationId: string,
   noticeId: string,
   input: ApiUpdateGenerationNoticeInput,
-): Promise<ApiGenerationNotice> => {
+): Promise<AdminWriteActionResult<ApiGenerationNotice>> => {
   const payload = apiUpdateGenerationNoticeInputSchema.parse(input);
   return writeRequest({
     path: `/generations/${generationId}/notices/${noticeId}`,
@@ -569,7 +621,7 @@ export const updateGenerationNoticeAction = async (
 export const deleteGenerationNoticeAction = async (
   generationId: string,
   noticeId: string,
-): Promise<void> => {
+): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
     path: `/generations/${generationId}/notices/${noticeId}`,
     method: "DELETE",
@@ -581,7 +633,7 @@ export const deleteGenerationNoticeAction = async (
 
 export const createGlobalNoticeAction = async (
   input: ApiCreateGlobalNoticeInput,
-): Promise<ApiGlobalNotice> => {
+): Promise<AdminWriteActionResult<ApiGlobalNotice>> => {
   const payload = apiCreateGlobalNoticeInputSchema.parse(input);
   return writeRequest({
     path: "/global-notices",
@@ -596,7 +648,7 @@ export const createGlobalNoticeAction = async (
 export const updateGlobalNoticeAction = async (
   id: string,
   input: ApiUpdateGlobalNoticeInput,
-): Promise<ApiGlobalNotice> => {
+): Promise<AdminWriteActionResult<ApiGlobalNotice>> => {
   const payload = apiUpdateGlobalNoticeInputSchema.parse(input);
   return writeRequest({
     path: `/global-notices/${id}`,
@@ -608,7 +660,9 @@ export const updateGlobalNoticeAction = async (
   });
 };
 
-export const deleteGlobalNoticeAction = async (id: string): Promise<void> => {
+export const deleteGlobalNoticeAction = async (
+  id: string,
+): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
     path: `/global-notices/${id}`,
     method: "DELETE",
@@ -620,7 +674,7 @@ export const deleteGlobalNoticeAction = async (id: string): Promise<void> => {
 
 export const createMarketItemAction = async (
   input: ApiCreateMarketItemInput,
-): Promise<ApiMarketItem> => {
+): Promise<AdminWriteActionResult<ApiMarketItem>> => {
   const payload = apiCreateMarketItemInputSchema.parse(input);
   return writeRequest({
     path: "/market/items",
@@ -634,7 +688,7 @@ export const createMarketItemAction = async (
 export const updateMarketItemAction = async (
   id: string,
   input: ApiUpdateMarketItemInput,
-): Promise<ApiMarketItem> => {
+): Promise<AdminWriteActionResult<ApiMarketItem>> => {
   const payload = apiUpdateMarketItemInputSchema.parse(input);
   return writeRequest({
     path: `/market/items/${id}`,
@@ -648,7 +702,7 @@ export const updateMarketItemAction = async (
 export const updateMarketItemStatusAction = async (
   id: string,
   input: ApiUpdateMarketItemStatusInput,
-): Promise<ApiMarketItem> => {
+): Promise<AdminWriteActionResult<ApiMarketItem>> => {
   const payload = apiUpdateMarketItemStatusInputSchema.parse(input);
   return writeRequest({
     path: `/market/items/${id}/status`,
@@ -659,7 +713,9 @@ export const updateMarketItemStatusAction = async (
   });
 };
 
-export const deleteMarketItemAction = async (id: string): Promise<void> => {
+export const deleteMarketItemAction = async (
+  id: string,
+): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
     path: `/market/items/${id}`,
     method: "DELETE",
@@ -671,7 +727,7 @@ export const deleteMarketItemAction = async (id: string): Promise<void> => {
 export const createMarketCommentAction = async (
   id: string,
   input: ApiCreateMarketCommentInput,
-): Promise<ApiMarketComment> => {
+): Promise<AdminWriteActionResult<ApiMarketComment>> => {
   const payload = apiCreateMarketCommentInputSchema.parse(input);
   return writeRequest({
     path: `/market/items/${id}/comments`,
@@ -685,7 +741,7 @@ export const createMarketCommentAction = async (
 export const updateMarketCommentAction = async (
   id: string,
   input: ApiUpdateMarketCommentInput,
-): Promise<ApiMarketComment> => {
+): Promise<AdminWriteActionResult<ApiMarketComment>> => {
   const payload = apiUpdateMarketCommentInputSchema.parse(input);
   return writeRequest({
     path: `/market/comments/${id}`,
@@ -696,7 +752,9 @@ export const updateMarketCommentAction = async (
   });
 };
 
-export const deleteMarketCommentAction = async (id: string): Promise<void> => {
+export const deleteMarketCommentAction = async (
+  id: string,
+): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
     path: `/market/comments/${id}`,
     method: "DELETE",
@@ -707,7 +765,7 @@ export const deleteMarketCommentAction = async (id: string): Promise<void> => {
 
 export const upsertMarketPushSubscriptionAction = async (
   input: ApiMarketPushSubscriptionInput,
-): Promise<void> => {
+): Promise<AdminWriteActionResult<void>> => {
   const payload = apiMarketPushSubscriptionInputSchema.parse(input);
   return writeRequest({
     path: MARKET_PUSH_SUBSCRIPTIONS_PATH,
@@ -720,7 +778,7 @@ export const upsertMarketPushSubscriptionAction = async (
 
 export const deleteMarketPushSubscriptionAction = async (
   input: ApiMarketPushSubscriptionInput,
-): Promise<void> => {
+): Promise<AdminWriteActionResult<void>> => {
   const payload = apiMarketPushSubscriptionInputSchema.parse(input);
   return writeRequest({
     path: MARKET_PUSH_SUBSCRIPTIONS_PATH,
@@ -733,7 +791,7 @@ export const deleteMarketPushSubscriptionAction = async (
 
 export const updateSiteSettingsAction = async (
   input: ApiUpdateSiteSettingsInput,
-): Promise<ApiSiteSettings> => {
+): Promise<AdminWriteActionResult<ApiSiteSettings>> => {
   const parsedPayload = apiUpdateSiteSettingsInputSchema.safeParse(input);
   if (!parsedPayload.success) {
     const firstIssue = parsedPayload.error.issues[0];
@@ -745,11 +803,13 @@ export const updateSiteSettingsAction = async (
           ? "계좌번호는 숫자와 -만 입력할 수 있으며 최대 50자입니다."
           : "기본 설정 입력값 형식을 확인해 주세요.";
 
-    throw new HonoApiError({
+    return {
+      ok: false,
+      errorMessage: issueMessage,
       status: 400,
       code: "VALIDATION_ERROR",
-      message: issueMessage,
-    });
+      requestId: null,
+    };
   }
 
   const payload = parsedPayload.data;
@@ -765,7 +825,7 @@ export const updateSiteSettingsAction = async (
 
 export const upsertCurrentRecruitingPlanAction = async (
   input: ApiUpsertCurrentRecruitingPlanInput,
-): Promise<ApiRecruitingPlan> => {
+): Promise<AdminWriteActionResult<ApiRecruitingPlan>> => {
   const payload = apiUpsertCurrentRecruitingPlanInputSchema.parse(input);
   return writeRequest({
     path: "/recruiting-plan/current",
@@ -780,7 +840,7 @@ export const upsertCurrentRecruitingPlanAction = async (
 export const updateUserAction = async (
   id: string,
   input: ApiUpdateUserInput,
-): Promise<ApiUser> => {
+): Promise<AdminWriteActionResult<ApiUser>> => {
   const session = await serverAuthGuard.requireSession();
   const canManageUsers = canManageGlobalUsers(session);
   let payload: ApiUpdateUserInput | ApiMemberProfileUpdateInput;
@@ -820,7 +880,7 @@ export const updateUserAction = async (
 
 export const bulkUpdateUsersRoleAction = async (
   input: ApiBulkUpdateUserRoleInput,
-): Promise<ApiUser[]> => {
+): Promise<BulkUpdateUsersRoleActionResult> => {
   const payload = apiBulkUpdateUserRoleInputSchema.parse(input);
   return writeRequest({
     path: "/users/bulk-role",
@@ -836,7 +896,9 @@ export const bulkUpdateUsersRoleAction = async (
   });
 };
 
-export const deleteUserAction = async (id: string): Promise<void> => {
+export const deleteUserAction = async (
+  id: string,
+): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
     path: `/users/${id}`,
     method: "DELETE",
