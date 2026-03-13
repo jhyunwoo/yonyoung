@@ -4,6 +4,7 @@ import { logger } from "@/server/observability/logger";
 import {
   normalizeObservedRoute,
   summarizeClientErrorForLog,
+  summarizeRouterTransitionForLog,
 } from "@/server/observability/client-telemetry";
 import {
   INTERNAL_EVENT_BODY_LIMIT_BYTES,
@@ -63,15 +64,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const traceId = request.headers.get("x-trace-id")?.trim();
   const route = normalizeObservedRoute(parsed.data.path);
 
-  logger.warn({
+  const baseLogPayload = {
     event: parsed.data.event,
     route,
-    method: request.method,
     status: 202,
     requestId: requestId || undefined,
     traceId: traceId || undefined,
-    error: summarizeClientErrorForLog(parsed.data),
-  });
+    ingestPath: request.nextUrl.pathname,
+    ingestMethod: request.method,
+  };
+
+  if (parsed.data.event === "router.transition.start") {
+    logger.info({
+      ...baseLogPayload,
+      transition: summarizeRouterTransitionForLog(parsed.data),
+    });
+  } else {
+    logger.warn({
+      ...baseLogPayload,
+      error: summarizeClientErrorForLog(parsed.data),
+    });
+  }
 
   return NextResponse.json(
     { ok: true },

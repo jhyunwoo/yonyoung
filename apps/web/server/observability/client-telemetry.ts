@@ -40,6 +40,26 @@ export const summarizeClientErrorForLog = (input: {
   };
 };
 
+const readMetadataString = (
+  metadata: Record<string, unknown> | undefined,
+  key: string,
+): string | null => {
+  const value = metadata?.[key];
+  return typeof value === "string" ? trimToNull(value) : null;
+};
+
+export const summarizeRouterTransitionForLog = (input: {
+  metadata?: Record<string, unknown>;
+}) => {
+  const navigationType = readMetadataString(input.metadata, "navigationType");
+  const targetUrl = readMetadataString(input.metadata, "url");
+
+  return {
+    navigationType,
+    targetRoute: targetUrl ? normalizeObservedRoute(targetUrl) : UNKNOWN_ROUTE,
+  };
+};
+
 export const summarizeWebVitalForLog = (input: {
   id: string;
   name: string;
