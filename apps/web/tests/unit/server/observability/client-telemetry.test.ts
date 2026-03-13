@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   normalizeObservedRoute,
   summarizeClientErrorForLog,
+  summarizeRouterTransitionForLog,
   summarizeWebVitalForLog,
 } from "@/server/observability/client-telemetry";
 
@@ -33,6 +34,31 @@ describe("server/observability/client-telemetry", () => {
     });
     expect(JSON.stringify(summary)).not.toContain("user@example.com");
     expect(JSON.stringify(summary)).not.toContain("secret-token");
+  });
+
+  it("summarizes router transitions with sanitized target routes", () => {
+    expect(
+      summarizeRouterTransitionForLog({
+        metadata: {
+          url: "/dashboard/members?email=user@example.com#frag",
+          navigationType: "push",
+        },
+      }),
+    ).toEqual({
+      navigationType: "push",
+      targetRoute: "/dashboard/members",
+    });
+
+    expect(
+      summarizeRouterTransitionForLog({
+        metadata: {
+          url: "https://evil.example.com/not-a-path",
+        },
+      }),
+    ).toEqual({
+      navigationType: null,
+      targetRoute: "/unknown",
+    });
   });
 
   it("preserves numeric web-vitals fields while leaving path handling to the caller", () => {
