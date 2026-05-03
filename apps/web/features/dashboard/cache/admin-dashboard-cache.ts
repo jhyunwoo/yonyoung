@@ -8,6 +8,7 @@ import type {
   ApiGenerationNotice,
   ApiGlobalNotice,
   ApiLinktree,
+  ApiPageViewStats,
 } from "@/shared/contracts/api-contracts";
 import { unwrapDataEnvelope } from "@/shared/http/http";
 import { readServerForwardedRequestContext } from "@/server/http/request-context";
@@ -149,4 +150,10 @@ export const getCachedAdminDashboardStats = async (
 
   const suffix = search.size > 0 ? `?${search.toString()}` : "";
   return readAdminData<ApiAdminDashboardStats>(`/admin/dashboard${suffix}`, cookieHeader);
+};
+
+export const getCachedPageViewStats = async (
+  cookieHeader: string | null,
+): Promise<ApiPageViewStats | null> => {
+  return readAdminData<ApiPageViewStats>("/admin/page-views/stats", cookieHeader);
 };

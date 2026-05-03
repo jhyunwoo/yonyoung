@@ -581,3 +581,13 @@ export type ApiMultipartUploadAbortRequest = {
   uploadId: string;
   objectKey: string;
 };
+
+export type ApiPageViewStats = {
+  totalViews: number;
+  homeViews: number;
+  activityViews: number;
+  exhibitionViews: number;
+  topActivities: Array<{ resourceId: string; count: number }>;
+  topExhibitions: Array<{ resourceId: string; count: number }>;
+  dailyTrend: Array<{ date: string; count: number }>;
+};

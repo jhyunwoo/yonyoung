@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import RecentGlobalNotices from "@/app/(dashboard)/_components/recent-global-notices";
 import DashboardLinktreeOverview from "@/app/(dashboard)/_components/dashboard-linktree-overview";
 import DashboardR2StorageUsage from "@/app/(dashboard)/_components/dashboard-r2-storage-usage";
+import DashboardPageViews from "@/app/(dashboard)/_components/dashboard-page-views";
 import DashboardRuntimeMeta from "@/app/(dashboard)/_components/dashboard-runtime-meta";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -105,6 +106,31 @@ export default async function DashboardPage() {
             }
           >
             <DashboardLinktreeOverview />
+          </Suspense>
+        </div>
+
+        <div className="lg:col-span-2">
+          <Suspense
+            fallback={
+              <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:p-8">
+                <div className="space-y-4" aria-hidden="true">
+                  <Skeleton className="h-4 w-24" />
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                    {Array.from({ length: 4 }).map((_, index) => (
+                      <div
+                        key={`dashboard-page-views-stat-skeleton-${index + 1}`}
+                        className="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                      >
+                        <Skeleton className="h-3 w-12" />
+                        <Skeleton className="mt-2 h-7 w-16" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            }
+          >
+            <DashboardPageViews />
           </Suspense>
         </div>
       </div>

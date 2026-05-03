@@ -9,6 +9,7 @@ export const API_PROXY_ALLOWED_PREFIXES = [
   "linktree",
   "market",
   "notices",
+  "page-views",
   "public",
   "recruiting",
   "recruiting-plan",

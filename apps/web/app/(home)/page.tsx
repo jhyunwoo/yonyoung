@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import MotionReveal from "@/app/(home)/_components/motion-reveal";
 import SectionShell from "@/app/(home)/_components/section-shell";
 import HeroShowcase from "@/app/(home)/_components/hero-showcase";
+import PageViewTracker from "@/app/_components/page-view-tracker";
 import {
   flattenLinktreeItems,
   listPublicActivities,
@@ -108,6 +109,7 @@ export default async function HomePage() {
 
   return (
     <div className="pb-14 md:pb-20">
+      <PageViewTracker pageType="home" />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
