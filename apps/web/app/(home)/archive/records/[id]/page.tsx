@@ -7,6 +7,7 @@ import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import { RichTextContent } from "@/features/media/rich-text/rich-text-content";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
+import PageViewTracker from "@/app/_components/page-view-tracker";
 
 export const metadata: Metadata = createPageMetadata({
   title: "활동 기록 상세 | 연영회",
@@ -38,6 +39,7 @@ export default async function RecordDetailPage({ params }: RecordDetailPageProps
 
   return (
     <div className="min-h-screen bg-(--bg-primary) pb-9 pt-3 md:pb-12 md:pt-4">
+      <PageViewTracker pageType="activity" resourceId={id} />
       <div className="mx-auto max-w-[1200px] px-4 md:px-8">
         <header className="mb-8">
           <Link

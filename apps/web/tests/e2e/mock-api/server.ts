@@ -621,6 +621,11 @@ const server = createServer(async (request, response) => {
       return;
     }
 
+    if (pathname === "/api/public/page-views" && method === "POST") {
+      sendJson(response, 200, { ok: true });
+      return;
+    }
+
     if (segments[1] === "public") {
       if (pathname === "/api/public/activities" && method === "GET") {
         sendData(response, state.activities);
@@ -1842,6 +1847,28 @@ const server = createServer(async (request, response) => {
       };
       state.recruitingPlan = nextPlan;
       sendData(response, nextPlan);
+      return;
+    }
+
+    // Page view stats
+    if (pathname === "/api/admin/page-views/stats" && method === "GET") {
+      sendData(response, {
+        totalViews: 42,
+        homeViews: 20,
+        activityViews: 15,
+        exhibitionViews: 7,
+        topActivities: [
+          { resourceId: "act-1", count: 10 },
+          { resourceId: "act-2", count: 5 },
+        ],
+        topExhibitions: [
+          { resourceId: "exh-1", count: 7 },
+        ],
+        dailyTrend: [
+          { date: "2025-05-01", count: 5 },
+          { date: "2025-05-02", count: 8 },
+        ],
+      });
       return;
     }
 
