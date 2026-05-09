@@ -104,4 +104,32 @@ describe("app/api/[...path]/route", () => {
     expect(response.status).toBe(404);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
+
+  it("returns a stable gateway error when the upstream API request fails", async () => {
+    const fetchSpy = vi.fn(async () => {
+      throw new Error("network down");
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const { GET } = await import("@/app/api/[...path]/route");
+    const request = new NextRequest("https://yonyoung.yonsei.ac.kr/api/users", {
+      method: "GET",
+      headers: {
+        cookie: "__Secure-better-auth.session_token=session-token",
+      },
+    });
+
+    const response = await GET(request, {
+      params: Promise.resolve({
+        path: ["users"],
+      }),
+    });
+
+    await expect(response.json()).resolves.toEqual({
+      ok: false,
+      message: "Upstream API request failed.",
+    });
+    expect(response.status).toBe(502);
+    expect(response.headers.get("cache-control")).toBe("private, no-store, max-age=0");
+  });
 });

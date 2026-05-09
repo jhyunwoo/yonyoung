@@ -7,8 +7,27 @@ afterEach(() => {
   cleanup();
 });
 
+type MockNextImageProps = ImgHTMLAttributes<HTMLImageElement> & {
+  fill?: boolean;
+  priority?: boolean;
+  unoptimized?: boolean;
+  quality?: number | `${number}`;
+  placeholder?: "blur" | "empty" | `data:image/${string}`;
+  blurDataURL?: string;
+};
+
 vi.mock("next/image", () => ({
-  default: (props: ImgHTMLAttributes<HTMLImageElement>) => createElement("img", props),
+  default: (props: MockNextImageProps) => {
+    const imageProps = { ...props };
+    delete imageProps.fill;
+    delete imageProps.priority;
+    delete imageProps.unoptimized;
+    delete imageProps.quality;
+    delete imageProps.placeholder;
+    delete imageProps.blurDataURL;
+
+    return createElement("img", imageProps);
+  },
 }));
 
 vi.mock("next/link", () => ({

@@ -158,7 +158,7 @@ const ROUTES: RouteCase[] = [
     requiredRole: "guest",
     modeSet: ALL_MODES,
     deviceSet: ALL_DEVICES,
-    readyLocator: { kind: "text", value: "Dashboard 로그인" },
+    readyLocator: { kind: "testid", value: "auth-signin-page" },
     buttonSpecs: [],
   },
   {

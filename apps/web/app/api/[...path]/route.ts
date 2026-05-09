@@ -11,10 +11,13 @@ import {
   API_PROXY_ALLOWED_PREFIXES,
   API_PROXY_BLOCKED_PREFIXES,
 } from "@/server/security/api-proxy-prefixes";
+import { fetchWithTimeout, FetchTimeoutError } from "@/server/http/fetch-with-timeout";
 
 type RouteContext = {
   params: Promise<{ path: string[] }>;
 };
+
+const UPSTREAM_REQUEST_TIMEOUT_MS = 45_000;
 
 const HOP_BY_HOP_HEADERS = new Set([
   "connection",
@@ -50,6 +53,30 @@ const copyResponse = (upstream: Response): NextResponse => {
   return response;
 };
 
+const createUpstreamErrorResponse = (error: unknown): NextResponse => {
+  if (error instanceof FetchTimeoutError) {
+    return NextResponse.json(
+      { ok: false, message: "Upstream API request timed out." },
+      {
+        status: 504,
+        headers: {
+          "Cache-Control": "private, no-store, max-age=0",
+        },
+      },
+    );
+  }
+
+  return NextResponse.json(
+    { ok: false, message: "Upstream API request failed." },
+    {
+      status: 502,
+      headers: {
+        "Cache-Control": "private, no-store, max-age=0",
+      },
+    },
+  );
+};
+
 const handle = async (
   request: NextRequest,
   context: RouteContext,
@@ -80,19 +107,29 @@ const handle = async (
   const hasRequestBody = request.method !== "GET" && request.method !== "HEAD";
   const requestBody = hasRequestBody ? request.body : undefined;
 
-  const upstreamResponse = await fetch(upstreamUrl, {
-    method: request.method,
-    headers: buildUpstreamProxyHeaders(request, {
-      extraHeaders: {
-        "x-forwarded-host": request.nextUrl.host,
-        "x-forwarded-proto": resolveForwardedProtocol(request),
+  let upstreamResponse: Response;
+  try {
+    upstreamResponse = await fetchWithTimeout(
+      upstreamUrl,
+      {
+        method: request.method,
+        headers: buildUpstreamProxyHeaders(request, {
+          extraHeaders: {
+            "x-forwarded-host": request.nextUrl.host,
+            "x-forwarded-proto": resolveForwardedProtocol(request),
+          },
+        }),
+        body: requestBody,
+        ...(requestBody ? { duplex: "half" as const } : {}),
+        cache: "no-store",
+        redirect: "manual",
+        signal: request.signal,
       },
-    }),
-    body: requestBody,
-    ...(requestBody ? { duplex: "half" as const } : {}),
-    cache: "no-store",
-    redirect: "manual",
-  });
+      UPSTREAM_REQUEST_TIMEOUT_MS,
+    );
+  } catch (error) {
+    return createUpstreamErrorResponse(error);
+  }
 
   return copyResponse(upstreamResponse);
 };

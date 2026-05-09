@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { ApiGeneration, ApiUser } from "@/shared/contracts/api-contracts";
 import { AdminApiError } from "@/shared/http/http";
 const listUsersMock = vi.hoisted(() => vi.fn());
@@ -134,7 +133,6 @@ describe("MembersGrid", () => {
           })),
     );
 
-    const user = userEvent.setup();
     render(<MembersGrid />);
 
     await screen.findByText("김연영");
@@ -156,21 +154,23 @@ describe("MembersGrid", () => {
         name: "부회장",
       }),
     ).not.toBeInTheDocument();
-    await user.type(screen.getByTestId("settings-members-search-input"), "김");
+    fireEvent.change(screen.getByTestId("settings-members-search-input"), {
+      target: { value: "김" },
+    });
 
     await waitFor(() => {
       expect(screen.queryByText("최부원")).not.toBeInTheDocument();
     });
 
-    await user.click(screen.getByTestId("settings-members-select-visible-users"));
+    fireEvent.click(screen.getByTestId("settings-members-select-visible-users"));
     expect(screen.getByTestId("settings-members-selection-summary")).toHaveTextContent(
       "선택된 멤버 1명",
     );
 
-    await user.selectOptions(screen.getByTestId("settings-members-bulk-role-select"), [
-      "manager",
-    ]);
-    await user.click(screen.getByTestId("settings-members-bulk-role-submit"));
+    fireEvent.change(screen.getByTestId("settings-members-bulk-role-select"), {
+      target: { value: "manager" },
+    });
+    fireEvent.click(screen.getByTestId("settings-members-bulk-role-submit"));
 
     await waitFor(() => {
       expect(confirmMock).toHaveBeenCalledWith(
@@ -207,12 +207,11 @@ describe("MembersGrid", () => {
       }),
     );
 
-    const user = userEvent.setup();
     render(<MembersGrid />);
 
     await screen.findByText("김연영");
-    await user.click(screen.getByTestId("settings-members-select-user-1"));
-    await user.click(screen.getByTestId("settings-members-bulk-role-submit"));
+    fireEvent.click(screen.getByTestId("settings-members-select-user-1"));
+    fireEvent.click(screen.getByTestId("settings-members-bulk-role-submit"));
 
     expect(
       await screen.findByText("본인보다 높거나 같은 등급의 사용자는 변경할 수 없습니다."),

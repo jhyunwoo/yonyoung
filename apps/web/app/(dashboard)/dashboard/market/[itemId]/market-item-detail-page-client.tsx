@@ -548,7 +548,7 @@ export default function MarketItemDetailPageClient({
                     data-testid="market-delete-button"
                     onClick={() => void handleDeleteItem()}
                     disabled={isDeletingItem}
-                    className="inline-flex rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex rounded-lg border border-red-300 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-500 dark:text-red-300 dark:hover:bg-red-950/30"
                   >
                     {isDeletingItem ? "삭제 중..." : "게시글 삭제"}
                   </button>
