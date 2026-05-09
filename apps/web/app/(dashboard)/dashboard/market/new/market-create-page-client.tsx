@@ -96,7 +96,6 @@ export default function MarketCreatePageClient({ viewer }: { viewer: MarketViewe
   };
 
   const handleCreateItem = async () => {
-
     const trimmedName = name.trim();
     const numericPrice = Number(price);
     if (!trimmedName) {
@@ -150,7 +149,9 @@ export default function MarketCreatePageClient({ viewer }: { viewer: MarketViewe
           <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
             판매글은 인증된 연영회 구성원만 등록할 수 있습니다.
           </p>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">작성자: {viewer.displayName}</p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+            작성자: {viewer.displayName}
+          </p>
           <div className="mt-4">
             <Link
               href="/dashboard/market"

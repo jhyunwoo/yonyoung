@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 const replaceMock = vi.hoisted(() => vi.fn());
@@ -26,6 +26,12 @@ vi.mock("@/features/dashboard/api/admin-api/resources", () => ({
 }));
 
 import LinktreeGroupDetail from "@/app/(dashboard)/_components/linktree-group-detail";
+
+const setInputValue = (testId: string, value: string) => {
+  fireEvent.change(screen.getByTestId(testId), {
+    target: { value },
+  });
+};
 
 const createLinktree = (items: Array<{ id: string; name: string; link: string }>) => ({
   id: "linktree-1",
@@ -85,11 +91,8 @@ describe("LinktreeGroupDetail", () => {
     );
 
     await screen.findByText("링크 0개");
-    await user.type(screen.getByTestId("linktree-group-item-name-input"), "Instagram");
-    await user.type(
-      screen.getByTestId("linktree-group-item-link-input"),
-      "https://instagram.com/yonyoung",
-    );
+    setInputValue("linktree-group-item-name-input", "Instagram");
+    setInputValue("linktree-group-item-link-input", "https://instagram.com/yonyoung");
     await user.click(screen.getByTestId("linktree-group-item-add-submit"));
 
     await waitFor(() => {
@@ -116,8 +119,8 @@ describe("LinktreeGroupDetail", () => {
     );
 
     await screen.findByText("링크 0개");
-    await user.type(screen.getByTestId("linktree-group-item-name-input"), "Instagram");
-    await user.type(screen.getByTestId("linktree-group-item-link-input"), "instagram.com/yonyoung");
+    setInputValue("linktree-group-item-name-input", "Instagram");
+    setInputValue("linktree-group-item-link-input", "instagram.com/yonyoung");
     await user.click(screen.getByTestId("linktree-group-item-add-submit"));
 
     expect(

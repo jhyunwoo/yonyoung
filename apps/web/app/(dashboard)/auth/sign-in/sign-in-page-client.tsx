@@ -100,7 +100,10 @@ export default function SignInPageClient({ authCanonicalOrigin }: SignInPageClie
   };
 
   return (
-    <main className="relative isolate min-h-screen overflow-hidden  text-[#2c3357]">
+    <main
+      data-testid="auth-signin-page"
+      className="relative isolate min-h-screen overflow-hidden text-[#2c3357]"
+    >
       <div className="relative mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
         <section className="w-full max-w-xl overflow-hidden rounded-4xl border border-[#2c3357] bg-[#2c3357] p-px shadow-[0_32px_80px_rgba(44,51,87,0.2)]">
           <div className="rounded-[calc(2rem-1px)] bg-white px-6 py-7 sm:px-8 sm:py-9">

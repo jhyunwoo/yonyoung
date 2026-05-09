@@ -16,20 +16,42 @@ export const fetchWithTimeout = async (
   timeoutMs = 10_000,
 ): Promise<Response> => {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const upstreamSignal = init.signal;
+  const requestInit = { ...init };
+  let didTimeout = false;
+
+  delete requestInit.signal;
+
+  const abortFromUpstreamSignal = () => {
+    controller.abort(upstreamSignal?.reason);
+  };
+
+  if (upstreamSignal) {
+    if (upstreamSignal.aborted) {
+      abortFromUpstreamSignal();
+    } else {
+      upstreamSignal.addEventListener("abort", abortFromUpstreamSignal, { once: true });
+    }
+  }
+
+  const timeoutId = setTimeout(() => {
+    didTimeout = true;
+    controller.abort();
+  }, timeoutMs);
 
   try {
     return await fetch(input, {
-      ...init,
+      ...requestInit,
       signal: controller.signal,
     });
   } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
+    if (didTimeout && error instanceof Error && error.name === "AbortError") {
       throw new FetchTimeoutError(timeoutMs);
     }
 
     throw error;
   } finally {
     clearTimeout(timeoutId);
+    upstreamSignal?.removeEventListener("abort", abortFromUpstreamSignal);
   }
 };

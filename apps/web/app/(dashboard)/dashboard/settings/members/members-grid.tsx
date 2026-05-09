@@ -326,6 +326,7 @@ export default function MembersGrid() {
           {hasActiveFilters ? (
             <button
               type="button"
+              data-testid="settings-members-filters-reset"
               onClick={() => {
                 setSearchQuery("");
                 setSelectedCollege("");

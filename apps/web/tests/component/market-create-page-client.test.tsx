@@ -1,7 +1,6 @@
 import { createElement } from "react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 const pushMock = vi.hoisted(() => vi.fn());
 const refreshMock = vi.hoisted(() => vi.fn());
@@ -54,35 +53,42 @@ describe("MarketCreatePageClient", () => {
   });
 
   it("validates required fields", async () => {
-    const user = userEvent.setup();
     render(
       <MarketCreatePageClient
         viewer={{ id: "user-member", displayName: "최부원", role: "regular_member" }}
       />,
     );
 
-    await user.click(screen.getByTestId("market-create-submit"));
+    fireEvent.click(screen.getByTestId("market-create-submit"));
     expect(await screen.findByText("판매물건 이름은 필수입니다.")).toBeInTheDocument();
   });
 
   it("submits payload and navigates on success", async () => {
     createMarketItemMock.mockResolvedValue({ id: "market-2" });
 
-    const user = userEvent.setup();
     render(
       <MarketCreatePageClient
         viewer={{ id: "user-member", displayName: "최부원", role: "regular_member" }}
       />,
     );
 
-    await user.type(screen.getByPlaceholderText("판매물건 이름"), "테스트 카메라");
-    await user.type(screen.getByPlaceholderText("가격(원)"), "150000");
-    await user.type(screen.getByPlaceholderText("제조사 (선택)"), "Nikon");
-    await user.type(screen.getByPlaceholderText("제품 코드 (선택)"), "FM2");
-    await user.clear(screen.getByTestId("mock-rich-text-editor"));
-    await user.type(screen.getByTestId("mock-rich-text-editor"), "<p>상태 양호</p>");
+    fireEvent.change(screen.getByPlaceholderText("판매물건 이름"), {
+      target: { value: "테스트 카메라" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("가격(원)"), {
+      target: { value: "150000" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("제조사 (선택)"), {
+      target: { value: "Nikon" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("제품 코드 (선택)"), {
+      target: { value: "FM2" },
+    });
+    fireEvent.change(screen.getByTestId("mock-rich-text-editor"), {
+      target: { value: "<p>상태 양호</p>" },
+    });
 
-    await user.click(screen.getByTestId("market-create-submit"));
+    fireEvent.click(screen.getByTestId("market-create-submit"));
 
     await waitFor(() => {
       expect(createMarketItemMock).toHaveBeenCalledWith({

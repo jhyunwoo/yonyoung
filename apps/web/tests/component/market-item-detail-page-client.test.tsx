@@ -1,6 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 const replaceMock = vi.hoisted(() => vi.fn());
 const refreshMock = vi.hoisted(() => vi.fn());
@@ -103,7 +102,6 @@ describe("MarketItemDetailPageClient", () => {
       updatedBy: null,
     });
 
-    const user = userEvent.setup();
     render(
       <MarketItemDetailPageClient
         itemId="market-1"
@@ -121,15 +119,17 @@ describe("MarketItemDetailPageClient", () => {
       "https://cdn.mock.local/market-1.jpg",
     );
 
-    await user.click(screen.getByTestId("market-status-reserved"));
+    fireEvent.click(screen.getByTestId("market-status-reserved"));
     await waitFor(() => {
       expect(updateMarketItemStatusMock).toHaveBeenCalledWith("market-1", {
         status: "reserved",
       });
     });
 
-    await user.type(screen.getByPlaceholderText("댓글 작성"), "채팅 주세요");
-    await user.click(screen.getByTestId("market-comment-submit"));
+    fireEvent.change(screen.getByPlaceholderText("댓글 작성"), {
+      target: { value: "채팅 주세요" },
+    });
+    fireEvent.click(screen.getByTestId("market-comment-submit"));
 
     await waitFor(() => {
       expect(createMarketCommentMock).toHaveBeenCalledWith("market-1", {
@@ -143,7 +143,6 @@ describe("MarketItemDetailPageClient", () => {
     deleteMarketItemMock.mockResolvedValue(undefined);
     const confirmMock = vi.spyOn(window, "confirm").mockReturnValue(true);
 
-    const user = userEvent.setup();
     render(
       <MarketItemDetailPageClient
         itemId="market-1"
@@ -152,7 +151,7 @@ describe("MarketItemDetailPageClient", () => {
     );
 
     await screen.findByRole("heading", { name: "필름 카메라" });
-    await user.click(screen.getByTestId("market-delete-button"));
+    fireEvent.click(screen.getByTestId("market-delete-button"));
 
     await waitFor(() => {
       expect(deleteMarketItemMock).toHaveBeenCalledWith("market-1");

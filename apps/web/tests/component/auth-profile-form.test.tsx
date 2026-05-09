@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 const replaceMock = vi.hoisted(() => vi.fn());
@@ -41,6 +41,12 @@ vi.mock("@/features/media/upload/use-image-upload-state", () => ({
 }));
 
 import AuthProfileForm from "@/app/(dashboard)/auth/profile/profile-form";
+
+const setInputValue = (label: string | RegExp, value: string) => {
+  fireEvent.change(screen.getByLabelText(label), {
+    target: { value },
+  });
+};
 
 describe("AuthProfileForm", () => {
   beforeEach(() => {
@@ -117,13 +123,13 @@ describe("AuthProfileForm", () => {
       />,
     );
 
-    await user.type(screen.getByLabelText("성"), "김");
-    await user.type(screen.getByLabelText("이름"), "연영");
-    await user.type(screen.getByLabelText("대학명"), "공과대학");
-    await user.type(screen.getByLabelText("학과명"), "컴퓨터과학과");
-    await user.type(screen.getByLabelText(/학번/), "2023000001");
-    await user.type(screen.getByLabelText("핸드폰 번호"), "01012345678");
-    await user.type(screen.getByLabelText(/개인 링크/), "https://instagram.com/test");
+    setInputValue("성", "김");
+    setInputValue("이름", "연영");
+    setInputValue("대학명", "공과대학");
+    setInputValue("학과명", "컴퓨터과학과");
+    setInputValue(/학번/, "2023000001");
+    setInputValue("핸드폰 번호", "01012345678");
+    setInputValue(/개인 링크/, "https://instagram.com/test");
 
     await user.click(screen.getByTestId("auth-profile-submit"));
 
@@ -180,12 +186,12 @@ describe("AuthProfileForm", () => {
       />,
     );
 
-    await user.type(screen.getByLabelText("성"), "김");
-    await user.type(screen.getByLabelText("이름"), "연영");
-    await user.type(screen.getByLabelText("대학명"), "공과대학");
-    await user.type(screen.getByLabelText("학과명"), "컴퓨터과학과");
-    await user.type(screen.getByLabelText(/학번/), "2023000001");
-    await user.type(screen.getByLabelText("핸드폰 번호"), "01012345678");
+    setInputValue("성", "김");
+    setInputValue("이름", "연영");
+    setInputValue("대학명", "공과대학");
+    setInputValue("학과명", "컴퓨터과학과");
+    setInputValue(/학번/, "2023000001");
+    setInputValue("핸드폰 번호", "01012345678");
 
     await user.click(screen.getByTestId("auth-profile-submit"));
 

@@ -314,6 +314,7 @@ const PaginatedHistorySection = ({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
+                  data-testid="settings-member-history-previous-page"
                   onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
                   disabled={page <= 1 || isLoading}
                   className="inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
@@ -322,6 +323,7 @@ const PaginatedHistorySection = ({
                 </button>
                 <button
                   type="button"
+                  data-testid="settings-member-history-next-page"
                   onClick={() =>
                     setPage((currentPage) => Math.min(totalPages, currentPage + 1))
                   }

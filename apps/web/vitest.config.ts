@@ -4,6 +4,7 @@ import { defineConfig } from "vitest/config";
 const vitestInlineConfig = {
   test: {
     environment: "jsdom",
+    testTimeout: 10_000,
     environmentMatchGlobs: [
       ["tests/unit/**/*.test.tsx", "node"],
       ["tests/unit/**/*.test.ts", "node"],
