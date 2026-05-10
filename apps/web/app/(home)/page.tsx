@@ -49,13 +49,13 @@ const HomeQuickLinksSection = async () => {
           </div>
         ) : (
           quickLinks.map((item, index) => (
-            <MotionReveal key={item.id} delay={index * 0.04} className="min-w-0">
+            <MotionReveal key={item.id} delay={index * 0.04} className="min-w-0 h-full">
               <a
                 href={item.link}
                 target="_blank"
                 rel="noopener noreferrer"
                 data-testid={`home-quicklink-card-${item.id}`}
-                className="group block min-w-0 border border-(--surface-border) bg-(--surface-elevated) p-4 transition hover:border-(--surface-strong-border) hover:bg-(--surface-muted)"
+                className="group flex flex-col h-full min-w-0 border border-(--surface-border) bg-(--surface-elevated) p-4 transition hover:border-(--surface-strong-border) hover:bg-(--surface-muted)"
               >
                 <p className="text-xs font-semibold uppercase tracking-widest text-(--text-muted)">
                   {item.groupName}
@@ -144,14 +144,14 @@ export default async function HomePage() {
             </div>
           ) : (
             recentActivities.map((activity, index) => (
-              <MotionReveal key={activity.id} delay={index * 0.04}>
+              <MotionReveal key={activity.id} delay={index * 0.04} className="h-full">
                 <Link
                   href={`/archive/records/${activity.id}`}
-                  className="group overflow-hidden border border-(--surface-strong-border) bg-(--surface-elevated) transition-transform duration-300 hover:scale-[1.03]"
+                  className="group flex flex-col h-full overflow-hidden border border-(--surface-strong-border) bg-(--surface-elevated) transition-transform duration-300 hover:scale-[1.03]"
                   data-testid={`home-activity-card-${activity.id}`}
                   aria-label={`${activity.title} 상세 보기`}
                 >
-                  <div className="relative aspect-4/3 overflow-hidden">
+                  <div className="relative shrink-0 aspect-4/3 overflow-hidden">
                     <Image
                       src={activity.coverImageUrl}
                       alt={activity.title}
