@@ -9,6 +9,7 @@ import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 import PageTitleHero from "@/app/(home)/_components/page-title-hero";
+import ArchiveViewCounts from "@/app/(home)/_components/archive-view-counts";
 
 export const metadata: Metadata = createPageMetadata({
   title: "활동 기록 | 연영회",
@@ -23,6 +24,7 @@ const getArchiveRecords = async () => {
 
 export default async function ArchiveRecordsPage() {
   const activities = await getArchiveRecords();
+  const activityIds = activities.map((a) => a.id);
 
   return (
     <div className="min-h-screen bg-(--bg-primary)">
@@ -60,9 +62,17 @@ export default async function ArchiveRecordsPage() {
                 </div>
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgba(0,0,0,0.7)] to-transparent p-4 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 max-[768px]:opacity-100 md:p-6">
                   <div className="flex flex-col gap-1">
-                    <h3 className="m-0 text-[0.9rem] leading-[1.4] font-semibold text-white md:text-[1.1rem]">
-                      {activity.title}
-                    </h3>
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="m-0 text-[0.9rem] leading-[1.4] font-semibold text-white md:text-[1.1rem] truncate">
+                        {activity.title}
+                      </h3>
+                      <ArchiveViewCounts
+                        resourceType="activity"
+                        resourceIds={activityIds}
+                        resourceId={activity.id}
+                        className="shrink-0"
+                      />
+                    </div>
                     <span className="text-[0.85rem] opacity-80">
                       {formatKoreanDateRange(activity.startDate, activity.endDate)}
                     </span>

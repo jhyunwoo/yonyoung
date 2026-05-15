@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 
 type PageViewTrackerProps = {
-  pageType: "home" | "activity" | "exhibition";
+  pageType: "home" | "activity" | "exhibition" | "about" | "donate" | "linktree";
   resourceId?: string;
 };
 

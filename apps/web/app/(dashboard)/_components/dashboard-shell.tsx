@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowLeft,
+  BarChart3,
   Camera,
   ChevronDown,
   FolderKanban,
@@ -172,6 +173,15 @@ const SidebarContent = (input: {
             input.pathname.startsWith("/dashboard/market/"),
         },
         {
+          key: "stats",
+          href: "/dashboard/stats",
+          label: "방문 통계",
+          Icon: BarChart3,
+          active:
+            input.pathname === "/dashboard/stats" ||
+            input.pathname.startsWith("/dashboard/stats/"),
+        },
+        {
           key: "homepage",
           href: "/",
           label: "홈페이지",
@@ -197,6 +207,15 @@ const SidebarContent = (input: {
           active:
             input.pathname === "/dashboard/market" ||
             input.pathname.startsWith("/dashboard/market/"),
+        },
+        {
+          key: "stats",
+          href: "/dashboard/stats",
+          label: "방문 통계",
+          Icon: BarChart3,
+          active:
+            input.pathname === "/dashboard/stats" ||
+            input.pathname.startsWith("/dashboard/stats/"),
         },
         {
           key: "homepage",
