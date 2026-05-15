@@ -15,6 +15,31 @@ export default async function DashboardPage() {
   return (
     <main className="px-4 py-6 md:px-8 md:py-8">
       <div className="mx-auto grid w-full max-w-6xl gap-4 lg:grid-cols-2 lg:auto-rows-[minmax(8rem,auto)]">
+        <div className="lg:col-span-2">
+          <Suspense
+            fallback={
+              <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:p-8">
+                <div className="space-y-4" aria-hidden="true">
+                  <Skeleton className="h-4 w-24" />
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                    {Array.from({ length: 4 }).map((_, index) => (
+                      <div
+                        key={`dashboard-page-views-stat-skeleton-${index + 1}`}
+                        className="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                      >
+                        <Skeleton className="h-3 w-12" />
+                        <Skeleton className="mt-2 h-7 w-16" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            }
+          >
+            <DashboardPageViews />
+          </Suspense>
+        </div>
+
         <aside className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:p-8 lg:row-span-2">
           <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
             Welcome
@@ -106,31 +131,6 @@ export default async function DashboardPage() {
             }
           >
             <DashboardLinktreeOverview />
-          </Suspense>
-        </div>
-
-        <div className="lg:col-span-2">
-          <Suspense
-            fallback={
-              <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:p-8">
-                <div className="space-y-4" aria-hidden="true">
-                  <Skeleton className="h-4 w-24" />
-                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                    {Array.from({ length: 4 }).map((_, index) => (
-                      <div
-                        key={`dashboard-page-views-stat-skeleton-${index + 1}`}
-                        className="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
-                      >
-                        <Skeleton className="h-3 w-12" />
-                        <Skeleton className="mt-2 h-7 w-16" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </section>
-            }
-          >
-            <DashboardPageViews />
           </Suspense>
         </div>
       </div>

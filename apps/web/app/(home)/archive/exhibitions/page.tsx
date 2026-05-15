@@ -9,6 +9,7 @@ import { formatKoreanDateCompact } from "@/shared/utils/date-formatters";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 import PageTitleHero from "@/app/(home)/_components/page-title-hero";
+import ArchiveViewCounts from "@/app/(home)/_components/archive-view-counts";
 
 export const metadata: Metadata = createPageMetadata({
   title: "전시회 | 연영회",
@@ -23,6 +24,7 @@ const getArchiveExhibitions = async () => {
 
 export default async function ArchiveExhibitionsPage() {
   const exhibitions = await getArchiveExhibitions();
+  const exhibitionIds = exhibitions.map((e) => e.id);
 
   return (
     <div className="min-h-screen bg-(--bg-primary)">
@@ -57,6 +59,14 @@ export default async function ArchiveExhibitionsPage() {
                       unoptimized={shouldUseUnoptimizedImage(exhibition.coverImageUrl)}
                       sizes="(max-width: 768px) 100vw, 50vw"
                       className="object-cover"
+                    />
+                  </div>
+                  <div className="absolute top-4 right-4 z-[3] opacity-0 transition-opacity duration-300 group-hover:opacity-100 max-[768px]:opacity-100">
+                    <ArchiveViewCounts
+                      resourceType="exhibition"
+                      resourceIds={exhibitionIds}
+                      resourceId={exhibition.id}
+                      className="rounded-full bg-black/40 px-2.5 py-1 backdrop-blur-sm"
                     />
                   </div>
                   <div className="absolute inset-x-0 bottom-0 z-[2] flex min-h-1/2 flex-col justify-end bg-gradient-to-t from-[rgba(0,0,0,0.9)] via-[rgba(0,0,0,0.6)] to-transparent px-6 pb-6 pt-12 text-white">
