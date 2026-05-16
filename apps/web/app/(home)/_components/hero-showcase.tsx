@@ -82,52 +82,68 @@ export default function HeroShowcase({
           style={shouldReduceMotion ? undefined : { y: imageOffset }}
           className="space-y-4"
         >
-          <motion.article
+          <motion.div
             whileHover={shouldReduceMotion ? undefined : { y: -4, scale: 1.01 }}
             transition={{ type: "spring", damping: 20, stiffness: 260 }}
-            className="overflow-hidden border border-(--surface-strong-border) bg-(--surface-elevated)"
           >
-            <div className="relative aspect-4/3">
-              {resolvedFeaturedExhibition ? (
-                <Image
-                  src={resolvedFeaturedExhibition.coverImageUrl}
-                  alt={resolvedFeaturedExhibition.title}
-                  fill
-                  unoptimized={shouldUseUnoptimizedImage(
-                    resolvedFeaturedExhibition.coverImageUrl,
-                  )}
-                  sizes="(min-width: 768px) 40vw, 100vw"
-                  className="h-full w-full object-cover"
-                  data-testid="home-hero-exhibition-image"
-                  fetchPriority="high"
-                  preload
-                />
-              ) : (
-                <div className="h-full w-full bg-(--surface-muted) p-6">
-                  <div className="h-3 w-24 animate-pulse bg-(--surface-border)" />
-                  <div className="mt-3 h-8 w-3/4 animate-pulse bg-(--surface-border)" />
-                  <div className="mt-2 h-4 w-4/5 animate-pulse bg-(--surface-border)" />
+            {resolvedFeaturedExhibition ? (
+              <Link
+                href={`/archive/exhibitions/${resolvedFeaturedExhibition.id}`}
+                className="group block overflow-hidden border border-(--surface-strong-border) bg-(--surface-elevated) focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-(--text-primary)"
+                data-testid={`home-hero-exhibition-card-${resolvedFeaturedExhibition.id}`}
+                aria-label={`${resolvedFeaturedExhibition.title} 상세 보기`}
+              >
+                <div className="relative aspect-4/3">
+                  <Image
+                    src={resolvedFeaturedExhibition.coverImageUrl}
+                    alt={resolvedFeaturedExhibition.title}
+                    fill
+                    unoptimized={shouldUseUnoptimizedImage(
+                      resolvedFeaturedExhibition.coverImageUrl,
+                    )}
+                    sizes="(min-width: 768px) 40vw, 100vw"
+                    className="h-full w-full object-cover"
+                    data-testid="home-hero-exhibition-image"
+                    fetchPriority="high"
+                    preload
+                  />
                 </div>
-              )}
-            </div>
-            <div className="space-y-2 p-5" data-testid="home-hero-exhibition-meta">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-(--text-muted)">
-                Latest Exhibition
-              </p>
-              <h2 className="text-[1.7rem] tracking-[-0.02em] text-(--text-primary)">
-                {resolvedFeaturedExhibition?.title ?? "준비 중"}
-              </h2>
-              {resolvedFeaturedExhibition ? (
-                <p className="text-sm text-(--text-muted)">
-                  {formatKoreanDateRange(
-                    resolvedFeaturedExhibition.startDate,
-                    resolvedFeaturedExhibition.endDate,
-                  )}{" "}
-                  · {resolvedFeaturedExhibition.place}
-                </p>
-              ) : null}
-            </div>
-          </motion.article>
+                <div className="space-y-2 p-5" data-testid="home-hero-exhibition-meta">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-(--text-muted)">
+                    Latest Exhibition
+                  </p>
+                  <h2 className="text-[1.7rem] tracking-[-0.02em] text-(--text-primary)">
+                    {resolvedFeaturedExhibition.title}
+                  </h2>
+                  <p className="text-sm text-(--text-muted)">
+                    {formatKoreanDateRange(
+                      resolvedFeaturedExhibition.startDate,
+                      resolvedFeaturedExhibition.endDate,
+                    )}{" "}
+                    · {resolvedFeaturedExhibition.place}
+                  </p>
+                </div>
+              </Link>
+            ) : (
+              <article className="overflow-hidden border border-(--surface-strong-border) bg-(--surface-elevated)">
+                <div className="relative aspect-4/3">
+                  <div className="h-full w-full bg-(--surface-muted) p-6">
+                    <div className="h-3 w-24 animate-pulse bg-(--surface-border)" />
+                    <div className="mt-3 h-8 w-3/4 animate-pulse bg-(--surface-border)" />
+                    <div className="mt-2 h-4 w-4/5 animate-pulse bg-(--surface-border)" />
+                  </div>
+                </div>
+                <div className="space-y-2 p-5" data-testid="home-hero-exhibition-meta">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-(--text-muted)">
+                    Latest Exhibition
+                  </p>
+                  <h2 className="text-[1.7rem] tracking-[-0.02em] text-(--text-primary)">
+                    준비 중
+                  </h2>
+                </div>
+              </article>
+            )}
+          </motion.div>
 
           <div className="grid grid-cols-2 gap-3">
             <motion.div
