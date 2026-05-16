@@ -17,3 +17,20 @@ test("home recent activity card navigates to the record detail page", async ({ p
   await expect(page).toHaveURL(/\/archive\/records\/[^/]+$/);
   await expect(page.getByTestId("record-detail-gallery")).toBeVisible();
 });
+
+test("home latest exhibition card navigates to the exhibition detail page", async ({ page }) => {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+
+  const latestExhibitionCard = page
+    .locator("[data-testid^='home-hero-exhibition-card-']")
+    .first();
+  await expect(latestExhibitionCard).toHaveAttribute(
+    "href",
+    /\/archive\/exhibitions\/[^/]+$/,
+  );
+
+  await latestExhibitionCard.click();
+
+  await expect(page).toHaveURL(/\/archive\/exhibitions\/[^/]+$/);
+  await expect(page.getByTestId("exhibition-detail-gallery")).toBeVisible();
+});
