@@ -155,5 +155,5 @@ export const getCachedAdminDashboardStats = async (
 export const getCachedPageViewStats = async (
   cookieHeader: string | null,
 ): Promise<ApiPageViewStats | null> => {
-  return readAdminData<ApiPageViewStats>("/admin/page-views/stats", cookieHeader);
+  return readAdminData<ApiPageViewStats>("/admin/page-views/dashboard", cookieHeader);
 };

@@ -1851,22 +1851,20 @@ const server = createServer(async (request, response) => {
     }
 
     // Page view stats
-    if (pathname === "/api/admin/page-views/stats" && method === "GET") {
+    if (pathname === "/api/admin/page-views/dashboard" && method === "GET") {
       sendData(response, {
-        totalViews: 42,
-        homeViews: 20,
-        activityViews: 15,
-        exhibitionViews: 7,
-        topActivities: [
-          { resourceId: "act-1", count: 10 },
-          { resourceId: "act-2", count: 5 },
-        ],
-        topExhibitions: [
-          { resourceId: "exh-1", count: 7 },
-        ],
+        today: {
+          count: 150,
+          prevCount: 120
+        },
+        thisWeek: {
+          count: 850,
+          prevCount: 780
+        },
         dailyTrend: [
-          { date: "2025-05-01", count: 5 },
-          { date: "2025-05-02", count: 8 },
+          { date: "2026-05-10", count: 110 },
+          { date: "2026-05-11", count: 130 },
+          { date: "2026-05-12", count: 120 }
         ],
       });
       return;
