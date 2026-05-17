@@ -6,8 +6,6 @@ import PageViewChart from "@/app/(dashboard)/_components/dashboard-page-views-ch
 import { 
   BarChart3Icon, 
   CalendarIcon, 
-  FilterIcon, 
-  LayoutIcon, 
   MonitorIcon 
 } from "lucide-react";
 
@@ -50,6 +48,7 @@ export default function StatsView({ stats }: StatsViewProps) {
         
         <div className="flex items-center gap-2 rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
           <button
+            data-testid="btn-stats-period-7"
             onClick={() => setPeriod(7)}
             className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
               period === 7 
@@ -60,6 +59,7 @@ export default function StatsView({ stats }: StatsViewProps) {
             최근 7일
           </button>
           <button
+            data-testid="btn-stats-period-30"
             onClick={() => setPeriod(30)}
             className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
               period === 30 
@@ -94,10 +94,10 @@ export default function StatsView({ stats }: StatsViewProps) {
         <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
           <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
             <MonitorIcon className="h-4 w-4" />
-            <span className="text-xs font-semibold uppercase tracking-wider">누적 총 방문</span>
+            <span className="text-xs font-semibold uppercase tracking-wider">오늘 총 방문</span>
           </div>
           <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-slate-50">
-            {stats.totalViews.toLocaleString()}
+            {stats.today.count.toLocaleString()}
           </p>
         </div>
       </div>
@@ -111,69 +111,6 @@ export default function StatsView({ stats }: StatsViewProps) {
           </div>
         </div>
         <PageViewChart data={filteredTrend} />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:p-8">
-          <div className="mb-6 flex items-center gap-2">
-            <LayoutIcon className="h-5 w-5 text-slate-400" />
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">페이지별 분포</h2>
-          </div>
-          <div className="space-y-4">
-            <DistributionItem label="홈" count={stats.homeViews} total={stats.totalViews} color="bg-slate-900 dark:bg-slate-100" />
-            <DistributionItem label="활동" count={stats.activityViews} total={stats.totalViews} color="bg-slate-600 dark:bg-slate-400" />
-            <DistributionItem label="전시" count={stats.exhibitionViews} total={stats.totalViews} color="bg-slate-400 dark:bg-slate-600" />
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:p-8">
-          <div className="mb-6 flex items-center gap-2">
-            <FilterIcon className="h-5 w-5 text-slate-400" />
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">인기 콘텐츠</h2>
-          </div>
-          <div className="space-y-6">
-            <div>
-              <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500">인기 활동</h3>
-              <ul className="space-y-2">
-                {stats.topActivities.slice(0, 5).map(item => (
-                  <li key={item.resourceId} className="flex items-center justify-between text-sm">
-                    <span className="truncate text-slate-600 dark:text-slate-300 font-mono text-xs">{item.resourceId}</span>
-                    <span className="font-semibold text-slate-900 dark:text-slate-50">{item.count.toLocaleString()}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500">인기 전시</h3>
-              <ul className="space-y-2">
-                {stats.topExhibitions.slice(0, 5).map(item => (
-                  <li key={item.resourceId} className="flex items-center justify-between text-sm">
-                    <span className="truncate text-slate-600 dark:text-slate-300 font-mono text-xs">{item.resourceId}</span>
-                    <span className="font-semibold text-slate-900 dark:text-slate-50">{item.count.toLocaleString()}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function DistributionItem({ label, count, total, color }: { label: string, count: number, total: number, color: string }) {
-  const percentage = total > 0 ? (count / total) * 100 : 0;
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between text-sm">
-        <span className="font-medium text-slate-700 dark:text-slate-200">{label}</span>
-        <span className="text-slate-500">{count.toLocaleString()} ({percentage.toFixed(1)}%)</span>
-      </div>
-      <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-        <div 
-          className={`h-full rounded-full ${color}`} 
-          style={{ width: `${percentage}%` }}
-        />
       </div>
     </div>
   );

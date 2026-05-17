@@ -55,58 +55,18 @@ const StatCard = ({ label, value, growth, description }: StatCardProps) => (
   </div>
 );
 
-type RankingListProps = {
-  title: string;
-  items: Array<{ resourceId: string; count: number }>;
-  emptyLabel: string;
-};
-
-const RankingList = ({ title, items, emptyLabel }: RankingListProps) => (
-  <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-      {title}
-    </h3>
-    {items.length === 0 ? (
-      <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-        {emptyLabel}
-      </p>
-    ) : (
-      <ol className="mt-3 space-y-2">
-        {items.map((item, index) => (
-          <li
-            key={`${title}-${item.resourceId}`}
-            className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-          >
-            <span className="flex min-w-0 items-center gap-2">
-              <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-900 text-[10px] font-semibold text-white dark:bg-slate-200 dark:text-slate-900">
-                {index + 1}
-              </span>
-              <span className="truncate font-mono text-xs text-slate-700 dark:text-slate-200">
-                {item.resourceId}
-              </span>
-            </span>
-            <span className="shrink-0 text-xs font-semibold text-slate-900 dark:text-slate-50">
-              {formatNumber(item.count)}
-            </span>
-          </li>
-        ))}
-      </ol>
-    )}
-  </div>
-);
-
 type DashboardPageViewsCardProps = {
   stats: ApiPageViewStats | null;
 };
 
 const DashboardPageViewsCard = ({ stats }: DashboardPageViewsCardProps) => {
   const trend = stats?.dailyTrend ?? [];
-  const todayViews = trend[trend.length - 1]?.count ?? 0;
-  const yesterdayViews = trend[trend.length - 2]?.count ?? 0;
+  const todayViews = stats?.today.count ?? 0;
+  const yesterdayViews = stats?.today.prevCount ?? 0;
   const dayGrowth = calculateGrowth(todayViews, yesterdayViews);
 
-  const thisWeekViews = trend.slice(-7).reduce((acc, curr) => acc + curr.count, 0);
-  const lastWeekViews = trend.slice(-14, -7).reduce((acc, curr) => acc + curr.count, 0);
+  const thisWeekViews = stats?.thisWeek.count ?? 0;
+  const lastWeekViews = stats?.thisWeek.prevCount ?? 0;
   const weekGrowth = calculateGrowth(thisWeekViews, lastWeekViews);
 
   return (
@@ -128,7 +88,7 @@ const DashboardPageViewsCard = ({ stats }: DashboardPageViewsCardProps) => {
         </p>
       ) : (
         <div className="mt-4 flex flex-1 flex-col gap-6">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <StatCard
               label="오늘 방문"
               value={todayViews}
@@ -141,8 +101,6 @@ const DashboardPageViewsCard = ({ stats }: DashboardPageViewsCardProps) => {
               growth={weekGrowth}
               description="지난 주 대비"
             />
-            <StatCard label="활동 총 조회" value={stats.activityViews} />
-            <StatCard label="전시 총 조회" value={stats.exhibitionViews} />
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
@@ -158,19 +116,6 @@ const DashboardPageViewsCard = ({ stats }: DashboardPageViewsCardProps) => {
               </div>
             </div>
             <PageViewChart data={trend} />
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-2">
-            <RankingList
-              title="인기 활동 TOP 10"
-              items={stats.topActivities}
-              emptyLabel="아직 기록된 활동 방문이 없습니다."
-            />
-            <RankingList
-              title="인기 전시 TOP 10"
-              items={stats.topExhibitions}
-              emptyLabel="아직 기록된 전시 방문이 없습니다."
-            />
           </div>
         </div>
       )}

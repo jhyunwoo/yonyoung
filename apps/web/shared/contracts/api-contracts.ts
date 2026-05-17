@@ -583,11 +583,13 @@ export type ApiMultipartUploadAbortRequest = {
 };
 
 export type ApiPageViewStats = {
-  totalViews: number;
-  homeViews: number;
-  activityViews: number;
-  exhibitionViews: number;
-  topActivities: Array<{ resourceId: string; count: number }>;
-  topExhibitions: Array<{ resourceId: string; count: number }>;
+  today: {
+    count: number;
+    prevCount: number;
+  };
+  thisWeek: {
+    count: number;
+    prevCount: number;
+  };
   dailyTrend: Array<{ date: string; count: number }>;
 };
