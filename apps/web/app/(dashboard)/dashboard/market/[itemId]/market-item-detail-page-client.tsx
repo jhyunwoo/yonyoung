@@ -525,7 +525,11 @@ export default function MarketItemDetailPageClient({
               <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
                 판매글 상세
               </h1>
-              {item ? <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{item.name}</p> : null}
+              {item ? (
+                <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+                  {item.name}
+                </p>
+              ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Link
@@ -675,7 +679,9 @@ export default function MarketItemDetailPageClient({
             <article className="space-y-6">
               <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-50">{item.name}</h2>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-50">
+                    {item.name}
+                  </h2>
                   <span
                     className={`rounded-full border px-2 py-1 text-xs font-semibold ${STATUS_BADGE_CLASS[item.status]}`}
                   >
@@ -783,12 +789,16 @@ export default function MarketItemDetailPageClient({
                   </p>
                 </div>
                 {pushMessage ? (
-                  <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{pushMessage}</p>
+                  <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+                    {pushMessage}
+                  </p>
                 ) : null}
               </div>
 
               <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">댓글</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                  댓글
+                </h3>
                 {isLoadingComments ? (
                   <div className="mt-3 space-y-2" aria-hidden="true">
                     {Array.from({ length: 3 }).map((_, index) => (
@@ -803,7 +813,9 @@ export default function MarketItemDetailPageClient({
                     ))}
                   </div>
                 ) : comments.length === 0 ? (
-                  <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">아직 댓글이 없습니다.</p>
+                  <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+                    아직 댓글이 없습니다.
+                  </p>
                 ) : (
                   <ul className="mt-3 space-y-2">
                     {comments.map((comment) => (
@@ -814,7 +826,9 @@ export default function MarketItemDetailPageClient({
                         <p className="text-xs text-slate-600 dark:text-slate-300">
                           {buildMemberDisplayName(comment.author)}
                         </p>
-                        <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">{comment.content}</p>
+                        <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">
+                          {comment.content}
+                        </p>
                       </li>
                     ))}
                   </ul>
@@ -841,7 +855,9 @@ export default function MarketItemDetailPageClient({
           </section>
         ) : (
           <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
-            <p className="text-sm text-slate-600 dark:text-slate-300">판매글을 찾을 수 없습니다.</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              판매글을 찾을 수 없습니다.
+            </p>
           </section>
         )}
 

@@ -340,7 +340,9 @@ export default function NoticeDetail({
   if (isNotFound) {
     return (
       <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">{heading}</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
+          {heading}
+        </h1>
         <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
           존재하지 않는 공지이거나 접근할 수 없습니다.
         </p>
@@ -357,7 +359,9 @@ export default function NoticeDetail({
   if (!notice) {
     return (
       <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-        <p className="text-sm text-slate-600 dark:text-slate-300">공지 데이터를 불러올 수 없습니다.</p>
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          공지 데이터를 불러올 수 없습니다.
+        </p>
       </section>
     );
   }
@@ -367,7 +371,9 @@ export default function NoticeDetail({
       <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
         Notices
       </p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">{heading}</h1>
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
+        {heading}
+      </h1>
       <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
         {description}
       </p>
@@ -395,10 +401,13 @@ export default function NoticeDetail({
           </div>
         ) : (
           <>
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">{notice.title}</h2>
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">
+              {notice.title}
+            </h2>
             <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
-              작성자: {buildMemberDisplayName(notice.author)} ({buildRoleLabel(notice.author.role)}) ·
-              작성일: {formatKoreanDate(notice.createdAt)}
+              작성자: {buildMemberDisplayName(notice.author)} (
+              {buildRoleLabel(notice.author.role)}) · 작성일:{" "}
+              {formatKoreanDate(notice.createdAt)}
             </p>
             <LastUpdatedMeta
               updatedAt={notice.updatedAt}
@@ -417,8 +426,12 @@ export default function NoticeDetail({
 
       {isEditing ? (
         <div className="mt-4 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">첨부 이미지</p>
-          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">최대 {NOTICE_MAX_IMAGES}장</p>
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            첨부 이미지
+          </p>
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+            최대 {NOTICE_MAX_IMAGES}장
+          </p>
 
           <button
             type="button"
@@ -440,7 +453,9 @@ export default function NoticeDetail({
           />
 
           {isUploadingImage ? (
-            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">이미지 업로드 중...</p>
+            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+              이미지 업로드 중...
+            </p>
           ) : null}
           {!isUploadingImage && editingImageUrls.length >= NOTICE_MAX_IMAGES ? (
             <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
@@ -474,7 +489,9 @@ export default function NoticeDetail({
         </div>
       ) : renderedImageUrls.length > 0 ? (
         <div className="mt-4">
-          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">첨부 이미지</p>
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            첨부 이미지
+          </p>
           <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {renderedImageUrls.map((imageUrl, index) => (
               <div

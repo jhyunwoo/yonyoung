@@ -9,11 +9,7 @@ type MockSessionOptions = {
   namespace?: string;
 };
 
-const createCookie = (input: {
-  name: string;
-  value: string;
-  path?: string;
-}) => ({
+const createCookie = (input: { name: string; value: string; path?: string }) => ({
   name: input.name,
   value: input.value,
   domain: BASE_DOMAIN,

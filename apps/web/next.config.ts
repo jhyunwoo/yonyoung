@@ -119,7 +119,8 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/:path((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
+        source:
+          "/:path((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
         headers: securityHeaders,
       },
     ];

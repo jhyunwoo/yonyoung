@@ -173,10 +173,9 @@ const matchesSearchQuery = (user: ApiUser, query: string): boolean => {
       return true;
     }
 
-    return token.digits.length > 0 &&
-      digitFields.some((field) => field.includes(token.digits));
-
-
+    return (
+      token.digits.length > 0 && digitFields.some((field) => field.includes(token.digits))
+    );
   });
 };
 

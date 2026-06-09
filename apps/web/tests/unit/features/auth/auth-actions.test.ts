@@ -13,7 +13,6 @@ vi.mock("@/features/auth/client/auth-client", () => ({
   },
 }));
 
-
 describe("signInWithGoogle", () => {
   beforeEach(() => {
     signInSocialMock.mockReset();

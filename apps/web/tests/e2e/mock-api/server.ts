@@ -1855,16 +1855,16 @@ const server = createServer(async (request, response) => {
       sendData(response, {
         today: {
           count: 150,
-          prevCount: 120
+          prevCount: 120,
         },
         thisWeek: {
           count: 850,
-          prevCount: 780
+          prevCount: 780,
         },
         dailyTrend: [
           { date: "2026-05-10", count: 110 },
           { date: "2026-05-11", count: 130 },
-          { date: "2026-05-12", count: 120 }
+          { date: "2026-05-12", count: 120 },
         ],
       });
       return;

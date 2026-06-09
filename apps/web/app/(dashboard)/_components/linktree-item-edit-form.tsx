@@ -99,7 +99,6 @@ export default function LinktreeItemEditForm({
   }, [canWrite, loadItem]);
 
   const handleSubmit = async () => {
-
     const normalized = normalizeLinktreeItemInput({ name, link });
     if (!normalized.name) {
       setErrorMessage("링크 이름을 입력해 주세요.");
@@ -155,7 +154,9 @@ export default function LinktreeItemEditForm({
   if (isGroupNotFound) {
     return (
       <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">링크 수정</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
+          링크 수정
+        </h1>
         <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
           존재하지 않는 분류이거나 접근할 수 없습니다.
         </p>
@@ -172,7 +173,9 @@ export default function LinktreeItemEditForm({
   if (isItemNotFound) {
     return (
       <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">링크 수정</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
+          링크 수정
+        </h1>
         <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
           존재하지 않는 링크이거나 접근할 수 없습니다.
         </p>
@@ -197,7 +200,9 @@ export default function LinktreeItemEditForm({
   if (!linktree || !item) {
     return (
       <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-        <p className="text-sm text-slate-600 dark:text-slate-300">링크 데이터를 불러올 수 없습니다.</p>
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          링크 데이터를 불러올 수 없습니다.
+        </p>
       </section>
     );
   }
@@ -207,7 +212,9 @@ export default function LinktreeItemEditForm({
       <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
         Settings / Linktree
       </p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">링크 수정</h1>
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
+        링크 수정
+      </h1>
       <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
         링크 이름과 링크 주소를 수정할 수 있습니다.
       </p>
@@ -222,10 +229,14 @@ export default function LinktreeItemEditForm({
         className="mt-6 space-y-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4"
         action={handleSubmit}
       >
-        <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">분류: {linktree.name}</p>
+        <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+          분류: {linktree.name}
+        </p>
 
         <label className="block space-y-1">
-          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">링크 이름</span>
+          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            링크 이름
+          </span>
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
@@ -235,7 +246,9 @@ export default function LinktreeItemEditForm({
         </label>
 
         <label className="block space-y-1">
-          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">링크 주소</span>
+          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            링크 주소
+          </span>
           <input
             value={link}
             onChange={(event) => setLink(event.target.value)}

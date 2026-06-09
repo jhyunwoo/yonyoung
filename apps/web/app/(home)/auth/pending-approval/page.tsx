@@ -48,8 +48,7 @@ export default async function PendingApprovalPage() {
         </p>
 
         <div className="mt-8 border border-(--surface-border) bg-(--surface-muted) p-4 text-sm text-(--text-muted)">
-          계정:{" "}
-          <span className="font-medium text-(--text-primary)">{sessionEmail}</span>
+          계정: <span className="font-medium text-(--text-primary)">{sessionEmail}</span>
         </div>
 
         <div className="mt-8 flex flex-wrap gap-3">

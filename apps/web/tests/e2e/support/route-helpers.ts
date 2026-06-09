@@ -56,10 +56,7 @@ const readTargetButton = (page: Page, testId: string): Locator => {
   return page.getByTestId(testId).first();
 };
 
-export const verifyButtonSpec = async (
-  page: Page,
-  spec: ButtonSpec,
-): Promise<void> => {
+export const verifyButtonSpec = async (page: Page, spec: ButtonSpec): Promise<void> => {
   const button = readTargetButton(page, spec.testId);
   await expect(button).toBeVisible();
 

@@ -1,15 +1,16 @@
 import { expect, test } from "@playwright/test";
 
 import { setMockSession } from "./support/session";
-import { expectCollectionDelta, getMockState, resetMockState } from "./support/state-assert";
+import {
+  expectCollectionDelta,
+  getMockState,
+  resetMockState,
+} from "./support/state-assert";
 
 const MOCK_API_BASE_URL = "http://127.0.0.1:4010";
 
-const makeNamespace = (
-  projectName: string,
-  parallelIndex: number,
-  key: string,
-): string => `${projectName}-w${parallelIndex}-${key}`;
+const makeNamespace = (projectName: string, parallelIndex: number, key: string): string =>
+  `${projectName}-w${parallelIndex}-${key}`;
 
 test.describe("domain CRUD journeys", () => {
   test("market detail actions and edit update mock state", async ({
@@ -17,7 +18,11 @@ test.describe("domain CRUD journeys", () => {
     context,
     request,
   }, testInfo) => {
-    const namespace = makeNamespace(testInfo.project.name, testInfo.parallelIndex, "market");
+    const namespace = makeNamespace(
+      testInfo.project.name,
+      testInfo.parallelIndex,
+      "market",
+    );
     await resetMockState(request, namespace);
     await setMockSession(context, { role: "member", namespace });
 
@@ -46,10 +51,14 @@ test.describe("domain CRUD journeys", () => {
       delta: 1,
     });
 
-    const createdItem = createdState.marketItems.find((item) => item.name === "E2E 판매글 카메라");
+    const createdItem = createdState.marketItems.find(
+      (item) => item.name === "E2E 판매글 카메라",
+    );
     expect(createdItem).toBeDefined();
 
-    await page.goto(`/dashboard/market/${createdItem!.id}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`/dashboard/market/${createdItem!.id}`, {
+      waitUntil: "domcontentloaded",
+    });
     await expect(page.getByRole("heading", { name: "E2E 판매글 카메라" })).toBeVisible();
 
     await page.getByPlaceholder("댓글 작성").fill("E2E 댓글");
@@ -91,8 +100,16 @@ test.describe("domain CRUD journeys", () => {
     expect(finalItem?.status).toBe("reserved");
   });
 
-  test("linktree create and delete mutate state", async ({ page, context, request }, testInfo) => {
-    const namespace = makeNamespace(testInfo.project.name, testInfo.parallelIndex, "linktree");
+  test("linktree create and delete mutate state", async ({
+    page,
+    context,
+    request,
+  }, testInfo) => {
+    const namespace = makeNamespace(
+      testInfo.project.name,
+      testInfo.parallelIndex,
+      "linktree",
+    );
     await resetMockState(request, namespace);
     await setMockSession(context, { role: "president", namespace });
 
@@ -108,7 +125,9 @@ test.describe("domain CRUD journeys", () => {
       },
     });
     expect(createGroupResponse.ok()).toBe(true);
-    const createGroupJson = (await createGroupResponse.json()) as { data: { id: string } };
+    const createGroupJson = (await createGroupResponse.json()) as {
+      data: { id: string };
+    };
     const createdLinktreeId = createGroupJson.data.id;
 
     const createItemResponse = await request.post(
@@ -140,14 +159,20 @@ test.describe("domain CRUD journeys", () => {
       .toBe(createdLength);
 
     const created = await getMockState(request, namespace);
-    expectCollectionDelta({ before: before.linktrees, after: created.linktrees, delta: 1 });
+    expectCollectionDelta({
+      before: before.linktrees,
+      after: created.linktrees,
+      delta: 1,
+    });
 
     const newLinktree = created.linktrees.find((item) => item.name === "E2E 링크모음");
     expect(newLinktree).toBeDefined();
     await page.goto(`/dashboard/settings/linktree/${newLinktree!.id}`, {
       waitUntil: "domcontentloaded",
     });
-    await expect(page).toHaveURL(new RegExp(`/dashboard/settings/linktree/${newLinktree!.id}$`));
+    await expect(page).toHaveURL(
+      new RegExp(`/dashboard/settings/linktree/${newLinktree!.id}$`),
+    );
 
     page.once("dialog", (dialog) => dialog.accept());
     await page.getByTestId("linktree-group-delete").click();
@@ -167,7 +192,11 @@ test.describe("domain CRUD journeys", () => {
       .toBe(deletedLength);
 
     const afterDelete = await getMockState(request, namespace);
-    expectCollectionDelta({ before: created.linktrees, after: afterDelete.linktrees, delta: -1 });
+    expectCollectionDelta({
+      before: created.linktrees,
+      after: afterDelete.linktrees,
+      delta: -1,
+    });
   });
 
   test("global notice create and detail view mutate state", async ({
@@ -175,7 +204,11 @@ test.describe("domain CRUD journeys", () => {
     context,
     request,
   }, testInfo) => {
-    const namespace = makeNamespace(testInfo.project.name, testInfo.parallelIndex, "notice");
+    const namespace = makeNamespace(
+      testInfo.project.name,
+      testInfo.parallelIndex,
+      "notice",
+    );
     await resetMockState(request, namespace);
     await setMockSession(context, { role: "president", namespace });
 
@@ -206,7 +239,9 @@ test.describe("domain CRUD journeys", () => {
       await page.waitForTimeout(150);
       await page.getByTestId("notice-create-submit").click();
     }
-    await expect(page).toHaveURL(/\/dashboard\/settings\/notices\/notice-/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/\/dashboard\/settings\/notices\/notice-/, {
+      timeout: 10_000,
+    });
 
     const createdLength = before.notices.global.length + 1;
     await expect
@@ -228,7 +263,9 @@ test.describe("domain CRUD journeys", () => {
       delta: 1,
     });
 
-    const newNotice = created.notices.global.find((item) => item.title === "E2E 전체 공지");
+    const newNotice = created.notices.global.find(
+      (item) => item.title === "E2E 전체 공지",
+    );
     expect(newNotice).toBeDefined();
 
     await page.goto(`/dashboard/settings/notices/${newNotice!.id}`, {
@@ -237,8 +274,16 @@ test.describe("domain CRUD journeys", () => {
     await expect(page.getByText("E2E 전체 공지")).toBeVisible();
   });
 
-  test("site settings save updates mock state", async ({ page, context, request }, testInfo) => {
-    const namespace = makeNamespace(testInfo.project.name, testInfo.parallelIndex, "site");
+  test("site settings save updates mock state", async ({
+    page,
+    context,
+    request,
+  }, testInfo) => {
+    const namespace = makeNamespace(
+      testInfo.project.name,
+      testInfo.parallelIndex,
+      "site",
+    );
     await resetMockState(request, namespace);
     await setMockSession(context, { role: "president", namespace });
 

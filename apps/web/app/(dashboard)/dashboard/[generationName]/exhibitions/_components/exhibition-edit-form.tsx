@@ -435,7 +435,9 @@ export default function ExhibitionEditForm({
       ) : exhibition ? (
         <form className="mt-6 space-y-6" action={handleSubmit}>
           <label className="block space-y-1">
-            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">전시 제목</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+              전시 제목
+            </span>
             <input
               value={title}
               onChange={(event) => setTitle(event.target.value)}
@@ -445,7 +447,9 @@ export default function ExhibitionEditForm({
           </label>
 
           <label className="block space-y-1">
-            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">전시 장소</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+              전시 장소
+            </span>
             <input
               value={place}
               onChange={(event) => setPlace(event.target.value)}
@@ -455,7 +459,9 @@ export default function ExhibitionEditForm({
           </label>
 
           <div className="space-y-1">
-            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">전시 상세 설명</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+              전시 상세 설명
+            </span>
             <ExhibitionRichTextEditor
               value={descriptionHtml}
               onChange={setDescriptionHtml}
@@ -465,7 +471,9 @@ export default function ExhibitionEditForm({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-1">
-              <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">시작일</span>
+              <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                시작일
+              </span>
               <input
                 type="date"
                 value={startDateInput}
@@ -475,7 +483,9 @@ export default function ExhibitionEditForm({
               />
             </label>
             <label className="block space-y-1">
-              <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">종료일</span>
+              <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                종료일
+              </span>
               <input
                 type="date"
                 value={endDateInput}
@@ -535,7 +545,9 @@ export default function ExhibitionEditForm({
           </div>
 
           <div className="space-y-2 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-            <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">세부 이미지</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+              세부 이미지
+            </p>
             <label className="block space-y-1">
               <span className="text-xs text-slate-600 dark:text-slate-300">
                 새 세부 이미지 추가 (선택, 여러 장)

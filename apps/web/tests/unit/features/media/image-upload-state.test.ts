@@ -55,7 +55,10 @@ describe("features/media/upload/image-upload-state", () => {
     expect(newItem.source).toBe("new");
     expect(createSpy).toHaveBeenCalledOnce();
 
-    const existing = createExistingUploadImageItem({ id: "ex-1", imageUrl: "https://img/ex-1" });
+    const existing = createExistingUploadImageItem({
+      id: "ex-1",
+      imageUrl: "https://img/ex-1",
+    });
     const reordered = reorderUploadImageItems(
       [existing, newItem],
       [newItem.id, "unknown", existing.id],
@@ -66,7 +69,10 @@ describe("features/media/upload/image-upload-state", () => {
   it("revokes only new image object URLs", () => {
     const revokeSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
 
-    const existing = createExistingUploadImageItem({ id: "ex-1", imageUrl: "https://img/ex-1" });
+    const existing = createExistingUploadImageItem({
+      id: "ex-1",
+      imageUrl: "https://img/ex-1",
+    });
     const newItem = {
       id: "new-1",
       imageUrl: "blob:new-1",

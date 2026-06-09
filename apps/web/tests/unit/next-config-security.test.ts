@@ -9,7 +9,9 @@ describe("next.config security headers", () => {
     const [routeConfig] = headersConfig ?? [];
     expect(routeConfig?.source).toContain("(?!api");
 
-    const headers = new Map(routeConfig?.headers.map((header) => [header.key, header.value]));
+    const headers = new Map(
+      routeConfig?.headers.map((header) => [header.key, header.value]),
+    );
     expect(headers.get("Content-Security-Policy")).toContain("frame-ancestors 'none'");
     expect(headers.get("Content-Security-Policy")).toContain("object-src 'none'");
     expect(headers.get("Content-Security-Policy")).toContain(

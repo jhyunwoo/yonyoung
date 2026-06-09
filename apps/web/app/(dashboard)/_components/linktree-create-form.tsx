@@ -79,7 +79,6 @@ export default function LinktreeCreateForm({
   };
 
   const handleSubmit = async () => {
-
     const normalizedGroupName = normalizeLinktreeName(groupName);
     if (!normalizedGroupName) {
       setErrorMessage("분류 이름을 입력해 주세요.");
@@ -167,7 +166,9 @@ export default function LinktreeCreateForm({
         action={handleSubmit}
       >
         <label className="block space-y-1">
-          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">분류 이름</span>
+          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            분류 이름
+          </span>
           <input
             data-testid="linktree-group-name-input"
             value={groupName}
@@ -179,13 +180,17 @@ export default function LinktreeCreateForm({
         </label>
 
         <div className="space-y-2">
-          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">링크 목록</p>
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            링크 목록
+          </p>
           {itemDrafts.map((item, index) => (
             <div
               key={item.id}
               className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3"
             >
-              <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">링크 {index + 1}</p>
+              <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                링크 {index + 1}
+              </p>
               <div className="mt-2 space-y-2">
                 <input
                   data-testid={`linktree-item-name-input-${index}`}

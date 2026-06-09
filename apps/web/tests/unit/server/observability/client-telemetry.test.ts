@@ -11,7 +11,9 @@ describe("server/observability/client-telemetry", () => {
     expect(normalizeObservedRoute("/dashboard/members?email=user@example.com#frag")).toBe(
       "/dashboard/members",
     );
-    expect(normalizeObservedRoute("https://evil.example.com/not-a-path")).toBe("/unknown");
+    expect(normalizeObservedRoute("https://evil.example.com/not-a-path")).toBe(
+      "/unknown",
+    );
   });
 
   it("summarizes client error payloads without logging raw message, stack, or metadata values", () => {

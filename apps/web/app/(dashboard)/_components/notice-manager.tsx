@@ -71,7 +71,9 @@ export default async function NoticeManager({
         Notices
       </p>
       <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">{heading}</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
+          {heading}
+        </h1>
         {canWrite ? (
           <Link
             href={createPath}
@@ -107,7 +109,9 @@ export default async function NoticeManager({
                   <p className="text-base font-semibold text-slate-900 dark:text-slate-50">
                     {truncateNoticeTitle(notice.title)}
                   </p>
-                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">상세 보기</span>
+                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    상세 보기
+                  </span>
                 </div>
                 <p className="mt-3 text-xs text-slate-600 dark:text-slate-300">
                   작성일: {formatKoreanDate(notice.createdAt)}

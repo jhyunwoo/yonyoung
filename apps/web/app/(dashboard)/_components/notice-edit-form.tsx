@@ -190,7 +190,6 @@ export default function NoticeEditForm({
   };
 
   const handleSubmit = async () => {
-
     const nextTitle = title.trim();
     if (!nextTitle || !hasMeaningfulRichTextHtml(content)) {
       setErrorMessage("제목과 본문을 모두 입력해 주세요.");
@@ -261,7 +260,9 @@ export default function NoticeEditForm({
   if (isNotFound) {
     return (
       <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">{heading}</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
+          {heading}
+        </h1>
         <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
           존재하지 않는 공지이거나 접근할 수 없습니다.
         </p>
@@ -280,7 +281,9 @@ export default function NoticeEditForm({
       <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
         Notices
       </p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">{heading}</h1>
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
+        {heading}
+      </h1>
       <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
         {description}
       </p>
@@ -302,7 +305,9 @@ export default function NoticeEditForm({
         className="mt-6 space-y-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4"
         action={handleSubmit}
       >
-        <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">공지 수정</p>
+        <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+          공지 수정
+        </p>
         <input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
@@ -312,7 +317,9 @@ export default function NoticeEditForm({
         />
 
         <div className="space-y-1">
-          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">공지 내용</span>
+          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            공지 내용
+          </span>
           <RichTextEditor
             value={content}
             onChange={setContent}
@@ -321,8 +328,12 @@ export default function NoticeEditForm({
         </div>
 
         <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3">
-          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">첨부 이미지</p>
-          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">최대 {NOTICE_MAX_IMAGES}장</p>
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            첨부 이미지
+          </p>
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+            최대 {NOTICE_MAX_IMAGES}장
+          </p>
 
           <button
             type="button"
@@ -344,7 +355,9 @@ export default function NoticeEditForm({
           />
 
           {isUploadingImage ? (
-            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">이미지 업로드 중...</p>
+            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+              이미지 업로드 중...
+            </p>
           ) : null}
           {!isUploadingImage && imageUrls.length >= NOTICE_MAX_IMAGES ? (
             <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">

@@ -83,7 +83,9 @@ const SortableImageCard = ({ item, disabled, onRemoveItem }: SortableCardProps) 
             {item.label ?? "이미지"}
           </p>
           {item.subtitle ? (
-            <p className="truncate text-[10px] text-slate-600 dark:text-slate-300">{item.subtitle}</p>
+            <p className="truncate text-[10px] text-slate-600 dark:text-slate-300">
+              {item.subtitle}
+            </p>
           ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-1">

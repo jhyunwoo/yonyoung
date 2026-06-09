@@ -52,7 +52,10 @@ const getAttribute = (
   return null;
 };
 
-const isButtonLikeElement = (node: ts.JsxOpeningLikeElement, sourceFile: ts.SourceFile): boolean => {
+const isButtonLikeElement = (
+  node: ts.JsxOpeningLikeElement,
+  sourceFile: ts.SourceFile,
+): boolean => {
   const tagName = ts.isIdentifier(node.tagName)
     ? node.tagName.text
     : node.tagName.getText(sourceFile);
@@ -98,7 +101,10 @@ const validateTestIdPattern = (attribute: ts.JsxAttribute): boolean => {
 
     if (ts.isTemplateExpression(expression)) {
       const prefix = expression.head.text;
-      return prefix.length > 0 && TEST_ID_PATTERN.test(prefix.endsWith("-") ? prefix.slice(0, -1) : prefix);
+      return (
+        prefix.length > 0 &&
+        TEST_ID_PATTERN.test(prefix.endsWith("-") ? prefix.slice(0, -1) : prefix)
+      );
     }
 
     if (ts.isNoSubstitutionTemplateLiteral(expression)) {
@@ -126,7 +132,9 @@ const collectViolations = (): ContractViolation[] => {
       if (ts.isJsxSelfClosingElement(node) || ts.isJsxOpeningElement(node)) {
         if (isButtonLikeElement(node, sourceFile)) {
           const testIdAttribute = getAttribute(node, "data-testid");
-          const position = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
+          const position = sourceFile.getLineAndCharacterOfPosition(
+            node.getStart(sourceFile),
+          );
 
           if (!testIdAttribute) {
             violations.push({

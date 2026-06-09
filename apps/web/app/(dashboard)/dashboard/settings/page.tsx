@@ -31,7 +31,9 @@ export default async function SettingsPage() {
                 href={item.href}
                 className="block rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4 transition hover:border-slate-300 hover:bg-white"
               >
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{item.label}</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                  {item.label}
+                </p>
                 <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
                   {item.description}
                 </p>

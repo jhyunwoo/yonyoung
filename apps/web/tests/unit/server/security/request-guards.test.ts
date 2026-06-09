@@ -7,10 +7,7 @@ import {
   enforceSameOriginProtection,
   normalizeProxyPath,
 } from "@/server/security/request-guards";
-import {
-  CSRF_HEADER_NAME,
-  CSRF_HEADER_VALUE,
-} from "@/shared/security/csrf";
+import { CSRF_HEADER_NAME, CSRF_HEADER_VALUE } from "@/shared/security/csrf";
 
 const createRequest = (input: {
   url?: string;
@@ -32,9 +29,7 @@ describe("server/security/request-guards", () => {
       },
     });
 
-    expect(
-      enforceSameOriginProtection(request, { requireCsrfHeader: true }),
-    ).toBeNull();
+    expect(enforceSameOriginProtection(request, { requireCsrfHeader: true })).toBeNull();
   });
 
   it("blocks cross-site or missing-origin mutation requests", async () => {
@@ -60,7 +55,8 @@ describe("server/security/request-guards", () => {
       },
     });
     expect(
-      enforceSameOriginProtection(missingOriginRequest, { requireCsrfHeader: true })?.status,
+      enforceSameOriginProtection(missingOriginRequest, { requireCsrfHeader: true })
+        ?.status,
     ).toBe(403);
   });
 
@@ -72,7 +68,9 @@ describe("server/security/request-guards", () => {
       },
     });
 
-    expect(enforceRequestBodyLimit(request, API_PROXY_BODY_LIMIT_BYTES)?.status).toBe(413);
+    expect(enforceRequestBodyLimit(request, API_PROXY_BODY_LIMIT_BYTES)?.status).toBe(
+      413,
+    );
   });
 
   it("normalizes valid proxy paths and rejects blocked path traversal attempts", () => {

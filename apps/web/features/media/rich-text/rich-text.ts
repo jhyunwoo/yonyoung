@@ -57,7 +57,10 @@ const readPositiveNumberAttribute = (value: string): string => {
 
 const sanitizeFilter = new FilterXSS({
   whiteList: Object.fromEntries(
-    ALLOWED_TAGS.map((tag) => [tag, [...(ALLOWED_ATTRS[tag as keyof typeof ALLOWED_ATTRS] ?? [])]]),
+    ALLOWED_TAGS.map((tag) => [
+      tag,
+      [...(ALLOWED_ATTRS[tag as keyof typeof ALLOWED_ATTRS] ?? [])],
+    ]),
   ),
   stripIgnoreTag: true,
   stripIgnoreTagBody: ["script", "style", "iframe", "object", "embed"],
@@ -105,7 +108,9 @@ export const sanitizeRichTextHtml = (html: string): string => {
 };
 
 const stripRichTextHtml = (html: string): string => {
-  return normalizeWhitespace(sanitizeRichTextHtml(html).replace(RICH_TEXT_TAG_PATTERN, " "));
+  return normalizeWhitespace(
+    sanitizeRichTextHtml(html).replace(RICH_TEXT_TAG_PATTERN, " "),
+  );
 };
 
 export const hasMeaningfulRichTextHtml = (html: string): boolean => {

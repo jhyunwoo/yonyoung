@@ -88,7 +88,9 @@ export default function AuditHistoryPanel({
           {errorMessage}
         </p>
       ) : logs.length === 0 ? (
-        <p className="mt-3 text-xs text-slate-600 dark:text-slate-300">기록된 변경 이력이 없습니다.</p>
+        <p className="mt-3 text-xs text-slate-600 dark:text-slate-300">
+          기록된 변경 이력이 없습니다.
+        </p>
       ) : (
         <ul className="mt-3 space-y-2">
           {logs.map((log) => (

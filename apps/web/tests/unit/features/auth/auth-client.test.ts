@@ -1,12 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  CSRF_HEADER_NAME,
-  CSRF_HEADER_VALUE,
-} from "@/shared/security/csrf";
+import { CSRF_HEADER_NAME, CSRF_HEADER_VALUE } from "@/shared/security/csrf";
 
-const createAuthClientMock = vi.hoisted(() =>
-  vi.fn((options: unknown) => options),
-);
+const createAuthClientMock = vi.hoisted(() => vi.fn((options: unknown) => options));
 
 vi.mock("better-auth/react", () => ({
   createAuthClient: createAuthClientMock,
@@ -18,10 +13,7 @@ describe("features/auth/client/auth-client", () => {
   it("adds the app-owned CSRF header to state-changing auth requests", () => {
     const config = authClient as {
       fetchOptions: {
-        onRequest: (context: {
-          method: string;
-          headers: Headers;
-        }) => unknown;
+        onRequest: (context: { method: string; headers: Headers }) => unknown;
       };
     };
 
@@ -38,10 +30,7 @@ describe("features/auth/client/auth-client", () => {
   it("keeps safe auth reads free of the CSRF header requirement", () => {
     const config = authClient as {
       fetchOptions: {
-        onRequest: (context: {
-          method: string;
-          headers: Headers;
-        }) => unknown;
+        onRequest: (context: { method: string; headers: Headers }) => unknown;
       };
     };
 

@@ -151,7 +151,6 @@ export default function SiteSettingsForm() {
   };
 
   const handleSubmit = async () => {
-
     setErrorMessage(null);
     setSuccessMessage(null);
     const payload = normalizeInput(formState);
@@ -202,7 +201,9 @@ export default function SiteSettingsForm() {
       <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
         Settings / Site
       </p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">기본 설정</h1>
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
+        기본 설정
+      </h1>
       <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
         홈페이지 하단 연락처와 후원 계좌 정보를 수정할 수 있습니다. 저장하면 홈페이지와
         후원 페이지에 바로 반영됩니다.
@@ -222,7 +223,9 @@ export default function SiteSettingsForm() {
       <form action={handleSubmit} className="mt-6 space-y-6" noValidate>
         <div className="grid gap-5 md:grid-cols-2">
           <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">오픈 카톡방 링크</span>
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              오픈 카톡방 링크
+            </span>
             <input
               type="url"
               value={formState.footerOpenChatUrl}
@@ -233,7 +236,9 @@ export default function SiteSettingsForm() {
               required
             />
             {fieldErrors.footerOpenChatUrl ? (
-              <span className="text-xs text-red-600">{fieldErrors.footerOpenChatUrl}</span>
+              <span className="text-xs text-red-600">
+                {fieldErrors.footerOpenChatUrl}
+              </span>
             ) : null}
           </label>
 
@@ -254,7 +259,9 @@ export default function SiteSettingsForm() {
               />
             </div>
             {fieldErrors.footerInstagramId ? (
-              <span className="text-xs text-red-600">{fieldErrors.footerInstagramId}</span>
+              <span className="text-xs text-red-600">
+                {fieldErrors.footerInstagramId}
+              </span>
             ) : null}
             <span className="text-xs text-slate-600 dark:text-slate-300">
               @ 없이 아이디만 입력하면 됩니다.
@@ -262,7 +269,9 @@ export default function SiteSettingsForm() {
           </label>
 
           <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">이메일</span>
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              이메일
+            </span>
             <input
               type="email"
               value={formState.footerEmail}
@@ -278,7 +287,9 @@ export default function SiteSettingsForm() {
           </label>
 
           <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">전화번호</span>
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              전화번호
+            </span>
             <input
               type="text"
               value={formState.footerPhone}
@@ -295,7 +306,9 @@ export default function SiteSettingsForm() {
         </div>
 
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">주소</span>
+          <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            주소
+          </span>
           <textarea
             value={formState.footerAddress}
             onChange={(event) => updateField("footerAddress", event.target.value)}
@@ -310,10 +323,14 @@ export default function SiteSettingsForm() {
         </label>
 
         <section className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4 md:p-5">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-50">후원 계좌 설정</h2>
+          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-50">
+            후원 계좌 설정
+          </h2>
           <div className="mt-4 grid gap-4 md:grid-cols-3">
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">은행</span>
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                은행
+              </span>
               <input
                 type="text"
                 value={formState.donateBankName}
@@ -328,7 +345,9 @@ export default function SiteSettingsForm() {
             </label>
 
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">계좌번호</span>
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                계좌번호
+              </span>
               <input
                 type="text"
                 value={formState.donateAccountNumber}
@@ -340,12 +359,16 @@ export default function SiteSettingsForm() {
                 required
               />
               {fieldErrors.donateAccountNumber ? (
-                <span className="text-xs text-red-600">{fieldErrors.donateAccountNumber}</span>
+                <span className="text-xs text-red-600">
+                  {fieldErrors.donateAccountNumber}
+                </span>
               ) : null}
             </label>
 
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">예금주</span>
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                예금주
+              </span>
               <input
                 type="text"
                 value={formState.donateAccountHolder}
@@ -357,7 +380,9 @@ export default function SiteSettingsForm() {
                 required
               />
               {fieldErrors.donateAccountHolder ? (
-                <span className="text-xs text-red-600">{fieldErrors.donateAccountHolder}</span>
+                <span className="text-xs text-red-600">
+                  {fieldErrors.donateAccountHolder}
+                </span>
               ) : null}
             </label>
           </div>

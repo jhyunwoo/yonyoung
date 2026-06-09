@@ -41,7 +41,9 @@ export default function R2StorageUsageCard({ stats }: R2StorageUsageCardProps) {
   return (
     <section className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:p-8">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">파일 저장공간 사용량</h2>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">
+          파일 저장공간 사용량
+        </h2>
         <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
           한도 {formatBytes(limitBytes)}
         </span>
@@ -50,7 +52,9 @@ export default function R2StorageUsageCard({ stats }: R2StorageUsageCardProps) {
       {isAvailable ? (
         <div className="mt-4 flex flex-1 flex-col">
           <p className="text-sm text-slate-700 dark:text-slate-200">
-            <span className="font-semibold text-slate-900 dark:text-slate-50">{formatBytes(usedBytes)}</span>
+            <span className="font-semibold text-slate-900 dark:text-slate-50">
+              {formatBytes(usedBytes)}
+            </span>
             {" / "}
             {formatBytes(limitBytes)}
           </p>

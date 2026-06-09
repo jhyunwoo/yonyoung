@@ -26,10 +26,5 @@ export default function ArchiveViewCounts({
   const counts = useViewCounts(resourceType, resourceIds);
   const count = counts[resourceId] ?? 0;
 
-  return (
-    <ViewCountBadge
-      count={count}
-      className={`text-white/90 ${className}`}
-    />
-  );
+  return <ViewCountBadge count={count} className={`text-white/90 ${className}`} />;
 }

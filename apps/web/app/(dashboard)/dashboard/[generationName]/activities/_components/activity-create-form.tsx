@@ -236,7 +236,9 @@ export default function ActivityCreateForm({
 
       <form className="mt-6 space-y-4" action={handleSubmit}>
         <label className="block space-y-1">
-          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">활동 제목</span>
+          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            활동 제목
+          </span>
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
@@ -247,7 +249,9 @@ export default function ActivityCreateForm({
         </label>
 
         <div className="space-y-1">
-          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">활동 설명</span>
+          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            활동 설명
+          </span>
           <RichTextEditor
             value={description}
             onChange={setDescription}
@@ -257,7 +261,9 @@ export default function ActivityCreateForm({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block space-y-1">
-            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">시작일</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+              시작일
+            </span>
             <input
               type="date"
               value={startDateInput}
@@ -267,7 +273,9 @@ export default function ActivityCreateForm({
             />
           </label>
           <label className="block space-y-1">
-            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">종료일</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+              종료일
+            </span>
             <input
               type="date"
               value={endDateInput}
@@ -279,7 +287,9 @@ export default function ActivityCreateForm({
         </div>
 
         <label className="block space-y-1">
-          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">대표 이미지 (필수)</span>
+          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            대표 이미지 (필수)
+          </span>
           <button
             type="button"
             data-testid="activity-create-cover-select"

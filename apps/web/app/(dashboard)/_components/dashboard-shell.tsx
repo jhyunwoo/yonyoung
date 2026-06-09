@@ -266,7 +266,9 @@ const SidebarContent = (input: {
             />
           </span>
           <div className="min-w-0">
-            <p className="text-lg font-bold text-slate-900 dark:text-slate-50">연영회 대시보드</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-slate-50">
+              연영회 대시보드
+            </p>
             {currentGeneration ? (
               <p className="mt-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
                 현재 기수: {currentGeneration.name}
@@ -465,7 +467,9 @@ const SidebarContent = (input: {
                 {viewerName}
               </p>
               {viewerEmail ? (
-                <p className="truncate text-xs text-slate-600 dark:text-slate-300">{viewerEmail}</p>
+                <p className="truncate text-xs text-slate-600 dark:text-slate-300">
+                  {viewerEmail}
+                </p>
               ) : null}
             </div>
 
@@ -657,7 +661,9 @@ export default function DashboardShell({
 
       <div className="md:pl-72">
         <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/95 px-4 py-3 backdrop-blur md:hidden">
-          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{activePageName}</p>
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            {activePageName}
+          </p>
           <button
             type="button"
             data-testid="dashboard-mobile-sidebar-open"

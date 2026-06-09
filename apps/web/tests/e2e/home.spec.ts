@@ -6,7 +6,9 @@ test("home renders and contains main text", async ({ page }) => {
   await expect(page.getByTestId("home-activities-grid")).toBeVisible();
 });
 
-test("home recent activity card navigates to the record detail page", async ({ page }) => {
+test("home recent activity card navigates to the record detail page", async ({
+  page,
+}) => {
   await page.goto("/", { waitUntil: "domcontentloaded" });
 
   const firstActivityCard = page.locator("[data-testid^='home-activity-card-']").first();
@@ -18,7 +20,9 @@ test("home recent activity card navigates to the record detail page", async ({ p
   await expect(page.getByTestId("record-detail-gallery")).toBeVisible();
 });
 
-test("home latest exhibition card navigates to the exhibition detail page", async ({ page }) => {
+test("home latest exhibition card navigates to the exhibition detail page", async ({
+  page,
+}) => {
   await page.goto("/", { waitUntil: "domcontentloaded" });
 
   const latestExhibitionCard = page

@@ -109,7 +109,9 @@ describe("MarketItemDetailPageClient", () => {
       />,
     );
 
-    expect(await screen.findByRole("heading", { name: "필름 카메라" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "필름 카메라" }),
+    ).toBeInTheDocument();
     await waitFor(() => {
       expect(document.body.textContent).toContain("정상 작동");
     });
