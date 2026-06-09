@@ -91,7 +91,9 @@ export default async function GenerationExhibitionsList({
                   <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
                     {formatKoreanDateRange(exhibition.startDate, exhibition.endDate)}
                   </p>
-                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">장소: {exhibition.place}</p>
+                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                    장소: {exhibition.place}
+                  </p>
                   <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                     {summarizeExhibitionDescription(exhibition.description)}
                   </p>

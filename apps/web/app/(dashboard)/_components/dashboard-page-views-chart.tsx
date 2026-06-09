@@ -42,9 +42,30 @@ export default function PageViewChart({ data }: PageViewChartProps) {
         preserveAspectRatio="none"
       >
         {/* Grid lines */}
-        <line x1="0" y1="0" x2="1000" y2="0" className="stroke-slate-100 dark:stroke-slate-800" strokeWidth="1" />
-        <line x1="0" y1="100" x2="1000" y2="100" className="stroke-slate-100 dark:stroke-slate-800" strokeWidth="1" />
-        <line x1="0" y1="200" x2="1000" y2="200" className="stroke-slate-200 dark:stroke-slate-700" strokeWidth="1" />
+        <line
+          x1="0"
+          y1="0"
+          x2="1000"
+          y2="0"
+          className="stroke-slate-100 dark:stroke-slate-800"
+          strokeWidth="1"
+        />
+        <line
+          x1="0"
+          y1="100"
+          x2="1000"
+          y2="100"
+          className="stroke-slate-100 dark:stroke-slate-800"
+          strokeWidth="1"
+        />
+        <line
+          x1="0"
+          y1="200"
+          x2="1000"
+          y2="200"
+          className="stroke-slate-200 dark:stroke-slate-700"
+          strokeWidth="1"
+        />
 
         {/* Area fill */}
         <polyline
@@ -84,17 +105,32 @@ export default function PageViewChart({ data }: PageViewChartProps) {
 
         <defs>
           <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="currentColor" className="text-slate-900 dark:text-slate-100" />
-            <stop offset="100%" stopColor="currentColor" stopOpacity="0" className="text-slate-900 dark:text-slate-100" />
+            <stop
+              offset="0%"
+              stopColor="currentColor"
+              className="text-slate-900 dark:text-slate-100"
+            />
+            <stop
+              offset="100%"
+              stopColor="currentColor"
+              stopOpacity="0"
+              className="text-slate-900 dark:text-slate-100"
+            />
           </linearGradient>
         </defs>
       </svg>
 
       {/* X-axis labels (simplified) */}
       <div className="mt-2 flex justify-between px-1">
-        <span className="text-[10px] text-slate-400">{data[0]?.date}</span>
-        <span className="text-[10px] text-slate-400">{data[Math.floor(data.length / 2)]?.date}</span>
-        <span className="text-[10px] text-slate-400">{data[data.length - 1]?.date}</span>
+        <span className="text-[10px] text-slate-500 dark:text-slate-400">
+          {data[0]?.date}
+        </span>
+        <span className="text-[10px] text-slate-500 dark:text-slate-400">
+          {data[Math.floor(data.length / 2)]?.date}
+        </span>
+        <span className="text-[10px] text-slate-500 dark:text-slate-400">
+          {data[data.length - 1]?.date}
+        </span>
       </div>
     </div>
   );

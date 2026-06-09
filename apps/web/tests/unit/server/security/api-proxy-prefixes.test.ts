@@ -22,7 +22,9 @@ const extractTopLevelPrefixes = (sourceCode: string): string[] => {
       continue;
     }
 
-    const normalizedPath = rawPath.startsWith("/api/") ? rawPath.slice(5) : rawPath.slice(1);
+    const normalizedPath = rawPath.startsWith("/api/")
+      ? rawPath.slice(5)
+      : rawPath.slice(1);
     if (normalizedPath === "api") {
       continue;
     }

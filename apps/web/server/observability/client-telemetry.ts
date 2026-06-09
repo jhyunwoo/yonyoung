@@ -28,7 +28,9 @@ export const summarizeClientErrorForLog = (input: {
 }) => {
   const message = trimToNull(input.message);
   const stack = trimToNull(input.stack);
-  const metadataKeys = Object.keys(input.metadata ?? {}).sort().slice(0, MAX_METADATA_KEYS);
+  const metadataKeys = Object.keys(input.metadata ?? {})
+    .sort()
+    .slice(0, MAX_METADATA_KEYS);
 
   return {
     messagePresent: message !== null,

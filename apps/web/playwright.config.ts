@@ -15,7 +15,7 @@ export default defineConfig({
     },
   },
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    baseURL: "http://127.0.0.1:3005",
     trace: "retain-on-failure",
     video: "retain-on-failure",
     screenshot: "only-on-failure",
@@ -33,15 +33,15 @@ export default defineConfig({
       },
     },
     {
-      command: "pnpm build && pnpm start --hostname 127.0.0.1 --port 3000",
-      url: "http://127.0.0.1:3000",
+      command: "pnpm build && pnpm start --hostname 127.0.0.1 --port 3005",
+      url: "http://127.0.0.1:3005",
       reuseExistingServer: !process.env.CI,
       timeout: 420_000,
       stdout: "pipe",
       stderr: "pipe",
       env: {
         API_BASE_URL: "http://127.0.0.1:4010",
-        NEXT_PUBLIC_SITE_URL: "http://127.0.0.1:3000",
+        NEXT_PUBLIC_SITE_URL: "http://127.0.0.1:3005",
         NEXT_PUBLIC_VAPID_PUBLIC_KEY:
           "BE6j32xQmRYwWjghrxmYzaYli5fHfuVdW3UJ6Jla1bP71lx4rkQ7pP_XD4u1YByz8n4UkH8j4xK8SU2hTq7N1ZM",
       },

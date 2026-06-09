@@ -66,7 +66,6 @@ export default function LinktreeGroupEditForm({
   }, [canWrite, loadLinktree]);
 
   const handleSubmit = async () => {
-
     const normalizedName = normalizeLinktreeName(name);
     if (!normalizedName) {
       setErrorMessage("분류 이름을 입력해 주세요.");
@@ -118,7 +117,9 @@ export default function LinktreeGroupEditForm({
   if (isNotFound) {
     return (
       <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">링크 분류 수정</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
+          링크 분류 수정
+        </h1>
         <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
           존재하지 않는 분류이거나 접근할 수 없습니다.
         </p>
@@ -155,7 +156,9 @@ export default function LinktreeGroupEditForm({
         action={handleSubmit}
       >
         <label className="block space-y-1">
-          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">분류 이름</span>
+          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            분류 이름
+          </span>
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}

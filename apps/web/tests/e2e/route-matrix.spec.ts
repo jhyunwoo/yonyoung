@@ -4,7 +4,11 @@ import { routeManifest } from "./support/route-manifest";
 import { clearMockSession, setMockSession } from "./support/session";
 import { getMockState, resetMockState } from "./support/state-assert";
 import { assertReadable, setTheme } from "./support/theme-check";
-import { readDomButtonTestIds, verifyButtonSpec, waitForRouteReady } from "./support/route-helpers";
+import {
+  readDomButtonTestIds,
+  verifyButtonSpec,
+  waitForRouteReady,
+} from "./support/route-helpers";
 
 const getDeviceSetForProject = (projectName: string): "desktop" | "mobile" =>
   projectName.includes("mobile") ? "mobile" : "desktop";
@@ -13,8 +17,7 @@ const createNamespace = (input: {
   projectName: string;
   parallelIndex: number;
   routeId: string;
-}): string =>
-  [input.projectName, `w${input.parallelIndex}`, input.routeId].join("-");
+}): string => [input.projectName, `w${input.parallelIndex}`, input.routeId].join("-");
 
 test.describe.configure({ mode: "parallel" });
 
@@ -56,7 +59,9 @@ for (const route of routeManifest) {
     }
 
     const domButtons = await readDomButtonTestIds(page);
-    const expectedButtonIds = [...new Set(route.buttonSpecs.map((spec) => spec.testId))].sort();
+    const expectedButtonIds = [
+      ...new Set(route.buttonSpecs.map((spec) => spec.testId)),
+    ].sort();
 
     if (expectedButtonIds.length > 0) {
       expect(domButtons).toEqual(expectedButtonIds);

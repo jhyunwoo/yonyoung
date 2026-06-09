@@ -60,17 +60,15 @@ describe("LinktreeGroupDetail", () => {
   });
 
   it("adds a new sub-link from group detail page", async () => {
-    getLinktreeByIdMock
-      .mockResolvedValueOnce(createLinktree([]))
-      .mockResolvedValueOnce(
-        createLinktree([
-          {
-            id: "linktree-item-2",
-            name: "Instagram",
-            link: "https://instagram.com/yonyoung",
-          },
-        ]),
-      );
+    getLinktreeByIdMock.mockResolvedValueOnce(createLinktree([])).mockResolvedValueOnce(
+      createLinktree([
+        {
+          id: "linktree-item-2",
+          name: "Instagram",
+          link: "https://instagram.com/yonyoung",
+        },
+      ]),
+    );
     addLinktreeItemMock.mockResolvedValue({
       id: "linktree-item-2",
       linktreeId: "linktree-1",

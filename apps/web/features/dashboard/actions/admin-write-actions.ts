@@ -161,9 +161,7 @@ const readNoContentSchema = z
   .nullable()
   .transform(() => undefined);
 
-const toAdminWriteActionFailure = (
-  error: HonoApiError,
-): AdminWriteActionFailure => ({
+const toAdminWriteActionFailure = (error: HonoApiError): AdminWriteActionFailure => ({
   ok: false,
   errorMessage: error.message,
   status: error.status,

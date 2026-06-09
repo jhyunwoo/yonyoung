@@ -281,7 +281,6 @@ export default function AuthProfileForm({
   };
 
   const handleSubmit = async () => {
-
     if (isUploadingShowcaseImages) {
       setSubmitError("대표 작품 사진 업로드가 완료된 후 저장해 주세요.");
       setSubmitSuccess(null);
@@ -421,7 +420,9 @@ export default function AuthProfileForm({
 
         <form className="mt-7 space-y-5" onSubmit={handleFormSubmit} noValidate>
           <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-            <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">프로필 이미지</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+              프로필 이미지
+            </p>
             <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
               {canEditProfileImage
                 ? "프로필 사진을 수정할 수 있습니다."
@@ -468,8 +469,12 @@ export default function AuthProfileForm({
 
           {isDashboardMode && canEditProfileImage ? (
             <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
-              <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">대표 작품 사진</p>
-              <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">최대 {SHOWCASE_MAX_IMAGES}장</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                대표 작품 사진
+              </p>
+              <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                최대 {SHOWCASE_MAX_IMAGES}장
+              </p>
 
               <button
                 type="button"
@@ -491,7 +496,9 @@ export default function AuthProfileForm({
               />
 
               {isUploadingShowcaseImages ? (
-                <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">대표 작품 사진 업로드 중...</p>
+                <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+                  대표 작품 사진 업로드 중...
+                </p>
               ) : null}
               <UploadProgressBar
                 progressPercent={showcaseUploadProgressPercent}

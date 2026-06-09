@@ -92,7 +92,6 @@ export default function LinktreeGroupDetail({
   };
 
   const handleAddItem = async () => {
-
     if (!canWrite) {
       return;
     }
@@ -153,7 +152,9 @@ export default function LinktreeGroupDetail({
   if (isNotFound) {
     return (
       <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">링크 분류 상세</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
+          링크 분류 상세
+        </h1>
         <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
           존재하지 않는 분류이거나 접근할 수 없습니다.
         </p>
@@ -170,7 +171,9 @@ export default function LinktreeGroupDetail({
   if (!linktree) {
     return (
       <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-        <p className="text-sm text-slate-600 dark:text-slate-300">분류 데이터를 불러올 수 없습니다.</p>
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          분류 데이터를 불러올 수 없습니다.
+        </p>
       </section>
     );
   }
@@ -195,8 +198,12 @@ export default function LinktreeGroupDetail({
       ) : null}
 
       <div className="mt-6 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-        <p className="text-xl font-semibold text-slate-900 dark:text-slate-50">{linktree.name}</p>
-        <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">링크 {linktree.items.length}개</p>
+        <p className="text-xl font-semibold text-slate-900 dark:text-slate-50">
+          {linktree.name}
+        </p>
+        <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+          링크 {linktree.items.length}개
+        </p>
         <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
           생성일: {formatKoreanDate(linktree.createdAt)}
         </p>
@@ -237,7 +244,9 @@ export default function LinktreeGroupDetail({
       </div>
 
       <div className="mt-4 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-        <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">하위 링크</p>
+        <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+          하위 링크
+        </p>
 
         {canWrite ? (
           <form action={handleAddItem} className="mt-3 space-y-2">
@@ -281,8 +290,12 @@ export default function LinktreeGroupDetail({
                   href={`${listPath}/${linktree.id}/items/${item.id}`}
                   className="block rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 transition hover:bg-slate-50"
                 >
-                  <span className="font-medium text-slate-900 dark:text-slate-50">{item.name}</span>
-                  <span className="ml-2 text-xs text-slate-600 dark:text-slate-300">상세 보기</span>
+                  <span className="font-medium text-slate-900 dark:text-slate-50">
+                    {item.name}
+                  </span>
+                  <span className="ml-2 text-xs text-slate-600 dark:text-slate-300">
+                    상세 보기
+                  </span>
                   <span className="mt-1 block text-[11px] text-slate-600 dark:text-slate-300">
                     최근 수정: {formatKoreanDate(item.updatedAt)} ·{" "}
                     {formatAuditActor(item.updatedBy)}

@@ -56,7 +56,9 @@ const readFileUpdatedAt = async (filePath: string): Promise<number | null> => {
   }
 };
 
-const readProjectMeta = async (projectRoot: string): Promise<DashboardRuntimeProjectMeta> => {
+const readProjectMeta = async (
+  projectRoot: string,
+): Promise<DashboardRuntimeProjectMeta> => {
   const packageJsonPath = path.join(projectRoot, "package.json");
   const [version, gitUpdatedAt, fileUpdatedAt] = await Promise.all([
     readPackageVersion(packageJsonPath),
@@ -70,18 +72,16 @@ const readProjectMeta = async (projectRoot: string): Promise<DashboardRuntimePro
   };
 };
 
-export const readDashboardRuntimeMeta = cache(
-  async (): Promise<DashboardRuntimeMeta> => {
-    const webRoot = process.cwd();
-    const apiRoot = path.resolve(webRoot, "../yonyoung-api");
-    const [web, api] = await Promise.all([
-      readProjectMeta(webRoot),
-      readProjectMeta(apiRoot),
-    ]);
+export const readDashboardRuntimeMeta = cache(async (): Promise<DashboardRuntimeMeta> => {
+  const webRoot = process.cwd();
+  const apiRoot = path.resolve(webRoot, "../yonyoung-api");
+  const [web, api] = await Promise.all([
+    readProjectMeta(webRoot),
+    readProjectMeta(apiRoot),
+  ]);
 
-    return {
-      web,
-      api,
-    };
-  },
-);
+  return {
+    web,
+    api,
+  };
+});

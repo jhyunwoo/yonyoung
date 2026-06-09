@@ -39,7 +39,9 @@ describe("SiteSettingsForm", () => {
     await user.type(screen.getByLabelText("이메일"), "invalid-email");
     await user.click(screen.getByTestId("site-settings-submit"));
 
-    expect(await screen.findByText("이메일 형식이 올바르지 않습니다.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("이메일 형식이 올바르지 않습니다."),
+    ).toBeInTheDocument();
     expect(updateSiteSettingsMock).not.toHaveBeenCalled();
   });
 

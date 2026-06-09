@@ -52,7 +52,10 @@ describe("LinktreeCreateForm", () => {
 
     await user.type(screen.getByTestId("linktree-group-name-input"), "공식 채널");
     await user.type(screen.getByTestId("linktree-item-name-input-0"), "Instagram");
-    await user.type(screen.getByTestId("linktree-item-link-input-0"), "https://instagram.com/yonyoung");
+    await user.type(
+      screen.getByTestId("linktree-item-link-input-0"),
+      "https://instagram.com/yonyoung",
+    );
 
     await user.click(screen.getByTestId("linktree-create-submit"));
 

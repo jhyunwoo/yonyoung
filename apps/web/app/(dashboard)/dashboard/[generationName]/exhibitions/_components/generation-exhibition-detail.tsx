@@ -187,11 +187,15 @@ export default function GenerationExhibitionDetail({
       ) : exhibition ? (
         <div className="mt-6 space-y-6">
           <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-            <p className="text-xl font-semibold text-slate-900 dark:text-slate-50">{exhibition.title}</p>
+            <p className="text-xl font-semibold text-slate-900 dark:text-slate-50">
+              {exhibition.title}
+            </p>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
               {formatKoreanDateRange(exhibition.startDate, exhibition.endDate)}
             </p>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">장소: {exhibition.place}</p>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+              장소: {exhibition.place}
+            </p>
             <div className="mt-3">
               <RichTextContent html={exhibition.description} />
             </div>
@@ -206,7 +210,9 @@ export default function GenerationExhibitionDetail({
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">이미지</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+              이미지
+            </p>
             <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {detailImageUrls.map((imageUrl, index) => (
                 <div

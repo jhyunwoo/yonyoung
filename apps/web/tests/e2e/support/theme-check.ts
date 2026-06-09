@@ -27,7 +27,8 @@ const installThemeStabilizer = async (page: Page): Promise<void> => {
 export const setTheme = async (page: Page, theme: "light" | "dark"): Promise<void> => {
   await installThemeStabilizer(page);
 
-  const toggleId = theme === "dark" ? "public-theme-mode-dark" : "public-theme-mode-light";
+  const toggleId =
+    theme === "dark" ? "public-theme-mode-dark" : "public-theme-mode-light";
   const toggle = page.getByTestId(toggleId).first();
   if (await toggle.isVisible().catch(() => false)) {
     try {

@@ -66,18 +66,23 @@ describe("dashboard shared helpers", () => {
       { id: "1", name: "알파", items: [{ id: "item-1" }] },
     ] as unknown as ApiLinktree[];
 
-    expect(sortLinktreesByName(linktrees).map((linktree) => linktree.id)).toEqual(["2", "1"]);
+    expect(sortLinktreesByName(linktrees).map((linktree) => linktree.id)).toEqual([
+      "2",
+      "1",
+    ]);
     expect(findLinktreeItemById(linktrees[1], "item-1")?.id).toBe("item-1");
     expect(findLinktreeItemById(linktrees[1], "missing")).toBeNull();
     expect(normalizeLinktreeName("  공식 채널 ")).toBe("공식 채널");
-    expect(normalizeLinktreeItemInput({ name: "  인스타 ", link: " https://x.com " })).toEqual({
+    expect(
+      normalizeLinktreeItemInput({ name: "  인스타 ", link: " https://x.com " }),
+    ).toEqual({
       name: "인스타",
       link: "https://x.com",
     });
 
-    expect(readLinktreeErrorMessage(new AdminApiError({ status: 400, message: "bad" }))).toBe(
-      "bad",
-    );
+    expect(
+      readLinktreeErrorMessage(new AdminApiError({ status: 400, message: "bad" })),
+    ).toBe("bad");
   });
 
   it("handles notice helpers", () => {
@@ -127,9 +132,10 @@ describe("dashboard shared helpers", () => {
   it("handles activity helpers", () => {
     expect(readActivityErrorMessage(new Error("fail"))).toBe("fail");
     expect(
-      sortActivitiesByStartDateDesc(
-        [{ id: "a", startDate: 1 }, { id: "b", startDate: 2 }] as unknown as ApiActivity[],
-      ).map((item) => item.id),
+      sortActivitiesByStartDateDesc([
+        { id: "a", startDate: 1 },
+        { id: "b", startDate: 2 },
+      ] as unknown as ApiActivity[]).map((item) => item.id),
     ).toEqual(["b", "a"]);
     expect(summarizeActivityDescription("<p>Hello there world</p>", 5)).toBe("Hello...");
 
@@ -139,10 +145,16 @@ describe("dashboard shared helpers", () => {
     expect(formatActivityDateInput(date ?? 0)).toBe("2025-03-01");
 
     expect(
-      validateActivityDateRange({ startDateInput: "2025-03-01", endDateInput: "2025-03-05" }),
+      validateActivityDateRange({
+        startDateInput: "2025-03-01",
+        endDateInput: "2025-03-05",
+      }),
     ).toMatchObject({ startDate: expect.any(Number), endDate: expect.any(Number) });
     expect(
-      validateActivityDateRange({ startDateInput: "2025-03-10", endDateInput: "2025-03-05" }),
+      validateActivityDateRange({
+        startDateInput: "2025-03-10",
+        endDateInput: "2025-03-05",
+      }),
     ).toEqual({ errorMessage: "활동 종료일은 시작일보다 빠를 수 없습니다." });
 
     expect(
@@ -166,7 +178,9 @@ describe("dashboard shared helpers", () => {
     ).toEqual(["b", "a"]);
 
     expect(hasMeaningfulExhibitionDescription("<p>&nbsp;</p>")).toBe(false);
-    expect(summarizeExhibitionDescription("<p>Hello exhibition world</p>", 8)).toBe("Hello ex...");
+    expect(summarizeExhibitionDescription("<p>Hello exhibition world</p>", 8)).toBe(
+      "Hello ex...",
+    );
 
     const date = parseExhibitionDateInput("2026-01-31");
     expect(date).not.toBeNull();
@@ -174,10 +188,16 @@ describe("dashboard shared helpers", () => {
     expect(formatExhibitionDateInput(date ?? 0)).toBe("2026-01-31");
 
     expect(
-      validateExhibitionDateRange({ startDateInput: "2026-01-01", endDateInput: "2026-01-05" }),
+      validateExhibitionDateRange({
+        startDateInput: "2026-01-01",
+        endDateInput: "2026-01-05",
+      }),
     ).toMatchObject({ startDate: expect.any(Number), endDate: expect.any(Number) });
     expect(
-      validateExhibitionDateRange({ startDateInput: "2026-01-10", endDateInput: "2026-01-05" }),
+      validateExhibitionDateRange({
+        startDateInput: "2026-01-10",
+        endDateInput: "2026-01-05",
+      }),
     ).toEqual({ errorMessage: "전시 종료일은 시작일보다 빠를 수 없습니다." });
 
     expect(
@@ -209,7 +229,9 @@ describe("dashboard shared helpers", () => {
   });
 
   it("handles generation management helpers", () => {
-    expect(formatTimestampToDateInput(new Date("2026-03-03").getTime())).toBe("2026-03-03");
+    expect(formatTimestampToDateInput(new Date("2026-03-03").getTime())).toBe(
+      "2026-03-03",
+    );
     expect(
       validateGenerationFormInput({
         name: " 59기 ",
@@ -259,13 +281,23 @@ describe("dashboard shared helpers", () => {
     ] as unknown as ApiUser[];
 
     expect(
-      filterAssignableUsers({ users, nameQuery: "", roleFilter: USER_ROLE_FILTER_ALL }).map((user) => user.id),
+      filterAssignableUsers({
+        users,
+        nameQuery: "",
+        roleFilter: USER_ROLE_FILTER_ALL,
+      }).map((user) => user.id),
     ).toEqual(["u1", "u2", "u4"]);
     expect(
-      filterAssignableUsers({ users, nameQuery: "", roleFilter: USER_ROLE_FILTER_NONE }).map((user) => user.id),
+      filterAssignableUsers({
+        users,
+        nameQuery: "",
+        roleFilter: USER_ROLE_FILTER_NONE,
+      }).map((user) => user.id),
     ).toEqual(["u4"]);
     expect(
-      filterAssignableUsers({ users, nameQuery: "박", roleFilter: "manager" }).map((user) => user.id),
+      filterAssignableUsers({ users, nameQuery: "박", roleFilter: "manager" }).map(
+        (user) => user.id,
+      ),
     ).toEqual(["u2"]);
   });
 

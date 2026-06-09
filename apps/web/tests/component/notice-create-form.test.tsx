@@ -66,7 +66,9 @@ describe("NoticeCreateForm", () => {
 
     await user.click(screen.getByTestId("notice-create-submit"));
 
-    expect(await screen.findByText("제목과 본문을 모두 입력해 주세요.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("제목과 본문을 모두 입력해 주세요."),
+    ).toBeInTheDocument();
   });
 
   it("submits global notice and redirects", async () => {

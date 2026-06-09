@@ -67,17 +67,15 @@ describe("features/dashboard/generation", () => {
 
   it("filters accessible generations by role and membership", () => {
     expect(
-      getAccessibleGenerations(
-        { user: { role: "president" } },
-        generations,
-      ).map((generation) => generation.id),
+      getAccessibleGenerations({ user: { role: "president" } }, generations).map(
+        (generation) => generation.id,
+      ),
     ).toEqual(["gen-58", "gen-59", "gen-60"]);
 
     expect(
-      getAccessibleGenerations(
-        { user: { role: "vice_president" } },
-        generations,
-      ).map((generation) => generation.id),
+      getAccessibleGenerations({ user: { role: "vice_president" } }, generations).map(
+        (generation) => generation.id,
+      ),
     ).toEqual(["gen-58", "gen-59", "gen-60"]);
 
     expect(
@@ -155,11 +153,9 @@ describe("features/dashboard/generation", () => {
 
   it("retries profile fetch when implicit fetch returns null", async () => {
     fetchGenerationsFromServerMock.mockResolvedValue(generations);
-    getCurrentUserProfileMock
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        generationIds: ["gen-59"],
-      });
+    getCurrentUserProfileMock.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      generationIds: ["gen-59"],
+    });
 
     const options = await getAccessibleDashboardGenerationOptions({
       session: {

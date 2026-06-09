@@ -9,7 +9,6 @@ vi.mock("@/features/auth/client/auth-actions", () => ({
   signInWithGoogle: signInWithGoogleMock,
 }));
 
-
 describe("SignInPageClient", () => {
   const originalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 

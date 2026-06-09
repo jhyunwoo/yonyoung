@@ -68,5 +68,4 @@ export const buildDashboardSettingsMenuItems = (input: {
       return false;
     }
     return !(item.hiddenForMemberLikeRole && input.isMemberLikeRole);
-
   });

@@ -88,7 +88,9 @@ export default function MarketPageClient({ viewer }: { viewer: MarketViewer }) {
 
         <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">판매글 목록</h2>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+              판매글 목록
+            </h2>
             <select
               value={statusFilter}
               onChange={(event) =>
@@ -121,7 +123,9 @@ export default function MarketPageClient({ viewer }: { viewer: MarketViewer }) {
               ))}
             </ul>
           ) : items.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">등록된 판매글이 없습니다.</p>
+            <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">
+              등록된 판매글이 없습니다.
+            </p>
           ) : (
             <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {items.map((item) => (
@@ -156,7 +160,9 @@ export default function MarketPageClient({ viewer }: { viewer: MarketViewer }) {
                       <p className="line-clamp-1 font-semibold text-slate-900 dark:text-slate-50">
                         {item.name}
                       </p>
-                      <p className="text-sm text-slate-700 dark:text-slate-200">{formatPrice(item.price)}</p>
+                      <p className="text-sm text-slate-700 dark:text-slate-200">
+                        {formatPrice(item.price)}
+                      </p>
                       <p className="text-xs text-slate-600 dark:text-slate-300">
                         판매자: {buildMemberDisplayName(item.seller)}
                       </p>

@@ -145,7 +145,6 @@ export default function MarketItemEditPageClient({
   };
 
   const handleUpdateItem = async () => {
-
     if (!item) {
       return;
     }
@@ -203,7 +202,9 @@ export default function MarketItemEditPageClient({
           <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
             본인이 작성한 판매글만 수정할 수 있습니다.
           </p>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">작성자: {viewer.displayName}</p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+            작성자: {viewer.displayName}
+          </p>
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <Link
               href={`/dashboard/market/${itemId}`}
@@ -292,7 +293,8 @@ export default function MarketItemEditPageClient({
                     제품 설명
                   </p>
                   <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-                    선택 항목입니다. 강조, 목록, 링크 등 서식을 유지한 채 수정할 수 있습니다.
+                    선택 항목입니다. 강조, 목록, 링크 등 서식을 유지한 채 수정할 수
+                    있습니다.
                   </p>
                 </div>
                 <RichTextEditor

@@ -38,7 +38,6 @@ const readDashboardLayoutData = async (): Promise<{
     ...(profile !== null ? { profile } : {}),
   });
 
-
   const viewer = buildDashboardViewerProfile(session.user, profile);
 
   return {

@@ -80,9 +80,9 @@ describe("features/auth/model/auth-shared", () => {
     expect(resolvePostSignInPath({ role: "unverified", isProfileComplete: true })).toBe(
       AUTH_PENDING_APPROVAL_PATH,
     );
-    expect(resolvePostSignInPath({ role: "regular_member", isProfileComplete: false })).toBe(
-      AUTH_PROFILE_PATH,
-    );
+    expect(
+      resolvePostSignInPath({ role: "regular_member", isProfileComplete: false }),
+    ).toBe(AUTH_PROFILE_PATH);
     expect(resolvePostSignInPath({ role: "manager", isProfileComplete: true })).toBe(
       DASHBOARD_PATH,
     );

@@ -250,7 +250,9 @@ export default function ExhibitionCreateForm({
 
       <form className="mt-6 space-y-4" action={handleSubmit}>
         <label className="block space-y-1">
-          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">전시 제목</span>
+          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            전시 제목
+          </span>
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
@@ -261,7 +263,9 @@ export default function ExhibitionCreateForm({
         </label>
 
         <label className="block space-y-1">
-          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">전시 장소</span>
+          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            전시 장소
+          </span>
           <input
             value={place}
             onChange={(event) => setPlace(event.target.value)}
@@ -272,7 +276,9 @@ export default function ExhibitionCreateForm({
         </label>
 
         <div className="space-y-1">
-          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">전시 상세 설명</span>
+          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            전시 상세 설명
+          </span>
           <ExhibitionRichTextEditor
             value={descriptionHtml}
             onChange={setDescriptionHtml}
@@ -282,7 +288,9 @@ export default function ExhibitionCreateForm({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block space-y-1">
-            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">시작일</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+              시작일
+            </span>
             <input
               type="date"
               value={startDateInput}
@@ -292,7 +300,9 @@ export default function ExhibitionCreateForm({
             />
           </label>
           <label className="block space-y-1">
-            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">종료일</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+              종료일
+            </span>
             <input
               type="date"
               value={endDateInput}
@@ -304,7 +314,9 @@ export default function ExhibitionCreateForm({
         </div>
 
         <label className="block space-y-1">
-          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">대표 이미지 (필수)</span>
+          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            대표 이미지 (필수)
+          </span>
           <button
             type="button"
             data-testid="exhibition-create-cover-select"

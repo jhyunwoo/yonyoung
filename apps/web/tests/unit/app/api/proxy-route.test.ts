@@ -39,52 +39,58 @@ describe("app/api/[...path]/route", () => {
       path: ["recruiting", "presign", "image"],
       upstreamUrl: "https://api.example.com/api/recruiting/presign/image",
     },
-  ])("forwards $label to the upstream API", async ({ method, path, upstreamUrl, url }) => {
-    const fetchSpy = vi.fn(async () =>
-      new Response(JSON.stringify({ data: [] }), {
-        status: 200,
-        headers: {
-          "content-type": "application/json",
-          "cache-control": "private, no-store, max-age=0",
-        },
-      }),
-    );
-    vi.stubGlobal("fetch", fetchSpy);
+  ])(
+    "forwards $label to the upstream API",
+    async ({ method, path, upstreamUrl, url }) => {
+      const fetchSpy = vi.fn(
+        async () =>
+          new Response(JSON.stringify({ data: [] }), {
+            status: 200,
+            headers: {
+              "content-type": "application/json",
+              "cache-control": "private, no-store, max-age=0",
+            },
+          }),
+      );
+      vi.stubGlobal("fetch", fetchSpy);
 
-    const handlers = await import("@/app/api/[...path]/route");
-    const request = new NextRequest(url, {
-      method,
-      headers: {
-        cookie: "__Secure-better-auth.session_token=session-token",
-        origin: "https://yonyoung.yonsei.ac.kr",
-        "sec-fetch-site": "same-origin",
-        "x-request-id": "req-1",
-        ...(method === "POST" ? { [CSRF_HEADER_NAME]: CSRF_HEADER_VALUE } : {}),
-      },
-    });
-
-    const handler = method === "POST" ? handlers.POST : handlers.GET;
-    const response = await handler(request, {
-      params: Promise.resolve({ path }),
-    });
-
-    expect(response.status).toBe(200);
-    expect(fetchSpy).toHaveBeenCalledWith(
-      upstreamUrl,
-      expect.objectContaining({
+      const handlers = await import("@/app/api/[...path]/route");
+      const request = new NextRequest(url, {
         method,
-        cache: "no-store",
-        redirect: "manual",
-      }),
-    );
+        headers: {
+          cookie: "__Secure-better-auth.session_token=session-token",
+          origin: "https://yonyoung.yonsei.ac.kr",
+          "sec-fetch-site": "same-origin",
+          "x-request-id": "req-1",
+          ...(method === "POST" ? { [CSRF_HEADER_NAME]: CSRF_HEADER_VALUE } : {}),
+        },
+      });
 
-    const [, init] = fetchSpy.mock.calls[0] ?? [];
-    const headers = init?.headers as Headers;
-    expect(headers.get("cookie")).toBe("__Secure-better-auth.session_token=session-token");
-    expect(headers.get("x-request-id")).toBe("req-1");
-    expect(headers.get("x-forwarded-host")).toBe("yonyoung.yonsei.ac.kr");
-    expect(headers.get("x-forwarded-proto")).toBe("https");
-  });
+      const handler = method === "POST" ? handlers.POST : handlers.GET;
+      const response = await handler(request, {
+        params: Promise.resolve({ path }),
+      });
+
+      expect(response.status).toBe(200);
+      expect(fetchSpy).toHaveBeenCalledWith(
+        upstreamUrl,
+        expect.objectContaining({
+          method,
+          cache: "no-store",
+          redirect: "manual",
+        }),
+      );
+
+      const [, init] = fetchSpy.mock.calls[0] ?? [];
+      const headers = init?.headers as Headers;
+      expect(headers.get("cookie")).toBe(
+        "__Secure-better-auth.session_token=session-token",
+      );
+      expect(headers.get("x-request-id")).toBe("req-1");
+      expect(headers.get("x-forwarded-host")).toBe("yonyoung.yonsei.ac.kr");
+      expect(headers.get("x-forwarded-proto")).toBe("https");
+    },
+  );
 
   it("returns 404 for blocked or unknown proxy prefixes", async () => {
     const fetchSpy = vi.fn();

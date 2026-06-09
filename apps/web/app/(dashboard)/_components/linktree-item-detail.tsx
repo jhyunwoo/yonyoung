@@ -117,7 +117,9 @@ export default function LinktreeItemDetail({
   if (isGroupNotFound) {
     return (
       <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">링크 상세</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
+          링크 상세
+        </h1>
         <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
           존재하지 않는 분류이거나 접근할 수 없습니다.
         </p>
@@ -134,7 +136,9 @@ export default function LinktreeItemDetail({
   if (isItemNotFound) {
     return (
       <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">링크 상세</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
+          링크 상세
+        </h1>
         <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
           존재하지 않는 링크이거나 접근할 수 없습니다.
         </p>
@@ -159,7 +163,9 @@ export default function LinktreeItemDetail({
   if (!linktree || !item) {
     return (
       <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-        <p className="text-sm text-slate-600 dark:text-slate-300">링크 데이터를 불러올 수 없습니다.</p>
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          링크 데이터를 불러올 수 없습니다.
+        </p>
       </section>
     );
   }
@@ -169,7 +175,9 @@ export default function LinktreeItemDetail({
       <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
         Settings / Linktree
       </p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">링크 상세</h1>
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
+        링크 상세
+      </h1>
       <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
         링크 정보를 확인하고, 권한이 있으면 수정 화면으로 이동하거나 삭제할 수 있습니다.
       </p>
@@ -182,12 +190,20 @@ export default function LinktreeItemDetail({
 
       <div className="mt-6 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
         <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">분류</p>
-        <p className="mt-1 text-base font-semibold text-slate-900 dark:text-slate-50">{linktree.name}</p>
+        <p className="mt-1 text-base font-semibold text-slate-900 dark:text-slate-50">
+          {linktree.name}
+        </p>
 
-        <p className="mt-4 text-xs font-semibold text-slate-600 dark:text-slate-300">링크 이름</p>
-        <p className="mt-1 text-base font-semibold text-slate-900 dark:text-slate-50">{item.name}</p>
+        <p className="mt-4 text-xs font-semibold text-slate-600 dark:text-slate-300">
+          링크 이름
+        </p>
+        <p className="mt-1 text-base font-semibold text-slate-900 dark:text-slate-50">
+          {item.name}
+        </p>
 
-        <p className="mt-4 text-xs font-semibold text-slate-600 dark:text-slate-300">링크 주소</p>
+        <p className="mt-4 text-xs font-semibold text-slate-600 dark:text-slate-300">
+          링크 주소
+        </p>
         <a
           href={item.link}
           target="_blank"

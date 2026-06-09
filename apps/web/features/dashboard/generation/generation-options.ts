@@ -111,9 +111,7 @@ export const getAccessibleDashboardGenerationOptions = async (
   );
 
   return accessibleGenerations
-    .map((generation) =>
-      withCurrentUserUpdatedByFallback(generation, currentUserProfile),
-    )
+    .map((generation) => withCurrentUserUpdatedByFallback(generation, currentUserProfile))
     .map(toGenerationOption);
 };
 

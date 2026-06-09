@@ -16,7 +16,11 @@ describe("server/http/fetch-with-timeout", () => {
     const fetchSpy = vi.fn(async () => new Response(JSON.stringify({ ok: true })));
     vi.stubGlobal("fetch", fetchSpy);
 
-    const response = await fetchWithTimeout("http://example.com", { method: "GET" }, 2000);
+    const response = await fetchWithTimeout(
+      "http://example.com",
+      { method: "GET" },
+      2000,
+    );
 
     expect(response.ok).toBe(true);
     expect(fetchSpy).toHaveBeenCalledOnce();
@@ -42,7 +46,10 @@ describe("server/http/fetch-with-timeout", () => {
     vi.advanceTimersByTime(1000);
 
     await expect(promise).rejects.toEqual(expect.any(FetchTimeoutError));
-    await expect(promise).rejects.toMatchObject({ timeoutMs: 1000, name: "FetchTimeoutError" });
+    await expect(promise).rejects.toMatchObject({
+      timeoutMs: 1000,
+      name: "FetchTimeoutError",
+    });
   });
 
   it("preserves caller aborts instead of reporting them as timeouts", async () => {
@@ -75,12 +82,15 @@ describe("server/http/fetch-with-timeout", () => {
   });
 
   it("rethrows non-abort errors", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => {
-      throw new Error("network down");
-    }));
-
-    await expect(fetchWithTimeout("http://example.com", { method: "GET" }, 1000)).rejects.toThrow(
-      "network down",
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("network down");
+      }),
     );
+
+    await expect(
+      fetchWithTimeout("http://example.com", { method: "GET" }, 1000),
+    ).rejects.toThrow("network down");
   });
 });

@@ -42,7 +42,9 @@ const GenerationDashboardSummary = async (input: {
     <>
       <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <li className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4">
-          <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">기수 멤버</p>
+          <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+            기수 멤버
+          </p>
           <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-50">
             {generationMembers.length}
           </p>
@@ -63,7 +65,9 @@ const GenerationDashboardSummary = async (input: {
           <p className="text-xs text-slate-600 dark:text-slate-300">건</p>
         </li>
         <li className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4">
-          <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">최근 업데이트</p>
+          <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+            최근 업데이트
+          </p>
           <p className="mt-1 text-base font-semibold text-slate-900 dark:text-slate-50">
             {latestUpdateTimestamp > 0 ? formatKoreanDate(latestUpdateTimestamp) : "-"}
           </p>
@@ -81,7 +85,9 @@ const GenerationDashboardSummary = async (input: {
         />
 
         <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">최근 활동</h2>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">
+            최근 활동
+          </h2>
           {recentActivities.length === 0 ? (
             <p className="mt-4 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 p-4 text-sm text-slate-600 dark:text-slate-300">
               최근 활동 정보가 없습니다.
@@ -93,7 +99,9 @@ const GenerationDashboardSummary = async (input: {
                   key={activity.id}
                   className="rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-3"
                 >
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{activity.title}</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                    {activity.title}
+                  </p>
                   <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
                     {formatKoreanDateRange(activity.startDate, activity.endDate)}
                   </p>
@@ -102,7 +110,9 @@ const GenerationDashboardSummary = async (input: {
             </ul>
           )}
 
-          <h3 className="mt-6 text-sm font-semibold text-slate-900 dark:text-slate-50">최근 전시</h3>
+          <h3 className="mt-6 text-sm font-semibold text-slate-900 dark:text-slate-50">
+            최근 전시
+          </h3>
           {recentExhibitions.length === 0 ? (
             <p className="mt-3 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 p-4 text-sm text-slate-600 dark:text-slate-300">
               최근 전시 정보가 없습니다.
@@ -216,8 +226,12 @@ export default async function GenerationDashboardPage({
 
         <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">바로가기</h2>
-            <span className="text-xs text-slate-600 dark:text-slate-300">기수 관리 메뉴</span>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">
+              바로가기
+            </h2>
+            <span className="text-xs text-slate-600 dark:text-slate-300">
+              기수 관리 메뉴
+            </span>
           </div>
 
           <ul className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -227,7 +241,9 @@ export default async function GenerationDashboardPage({
                   href={item.href}
                   className="block rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4 transition hover:border-slate-300 hover:bg-white"
                 >
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{item.title}</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                    {item.title}
+                  </p>
                   <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
                     {item.description}
                   </p>

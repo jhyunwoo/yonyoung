@@ -18,7 +18,9 @@ export default async function RecentGlobalNotices() {
   return (
     <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">최근 전체 공지</h2>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">
+          최근 전체 공지
+        </h2>
         <Link
           href={GLOBAL_NOTICES_BASE_PATH}
           className="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-50"
@@ -39,7 +41,9 @@ export default async function RecentGlobalNotices() {
                 href={`${GLOBAL_NOTICES_BASE_PATH}/${notice.id}`}
                 className="block rounded-xl border border-slate-200 dark:border-slate-700 p-4 transition hover:border-slate-300 hover:bg-slate-50"
               >
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{notice.title}</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                  {notice.title}
+                </p>
                 <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
                   작성일: {formatKoreanDate(notice.createdAt)} · 작성자:{" "}
                   {buildMemberDisplayName(notice.author)}

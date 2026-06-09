@@ -41,7 +41,9 @@ export default async function GenerationNoticeOverview({
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <div>
-          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">기수 공지</p>
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            기수 공지
+          </p>
           {generationNotices.length === 0 ? (
             <p className="mt-2 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 p-3 text-sm text-slate-600 dark:text-slate-300">
               등록된 기수 공지가 없습니다.
@@ -53,7 +55,9 @@ export default async function GenerationNoticeOverview({
                   key={notice.id}
                   className="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2"
                 >
-                  <p className="text-sm font-medium text-slate-900 dark:text-slate-50">{notice.title}</p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-slate-50">
+                    {notice.title}
+                  </p>
                   <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
                     작성일: {formatKoreanDate(notice.createdAt)}
                   </p>
@@ -64,7 +68,9 @@ export default async function GenerationNoticeOverview({
         </div>
 
         <div>
-          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">전체 공지</p>
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            전체 공지
+          </p>
           {globalNotices.length === 0 ? (
             <p className="mt-2 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 p-3 text-sm text-slate-600 dark:text-slate-300">
               등록된 전체 공지가 없습니다.
@@ -76,7 +82,9 @@ export default async function GenerationNoticeOverview({
                   key={notice.id}
                   className="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2"
                 >
-                  <p className="text-sm font-medium text-slate-900 dark:text-slate-50">{notice.title}</p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-slate-50">
+                    {notice.title}
+                  </p>
                   <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
                     작성일: {formatKoreanDate(notice.createdAt)}
                   </p>

@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { adminRequest } from "@/features/dashboard/api/admin-api/http";
-import {
-  CSRF_HEADER_NAME,
-  CSRF_HEADER_VALUE,
-} from "@/shared/security/csrf";
+import { CSRF_HEADER_NAME, CSRF_HEADER_VALUE } from "@/shared/security/csrf";
 
 describe("features/dashboard/api/admin-api/http", () => {
   beforeEach(() => {

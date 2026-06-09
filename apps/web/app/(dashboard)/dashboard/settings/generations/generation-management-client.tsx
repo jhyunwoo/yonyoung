@@ -204,7 +204,6 @@ export default function GenerationManagementClient() {
   const selectedUserIdSet = useMemo(() => new Set(selectedUserIds), [selectedUserIds]);
 
   const handleCreateGeneration = async () => {
-
     const validationResult = validateGenerationFormInput({
       name: createName,
       sortOrderInput: createSortOrderInput,

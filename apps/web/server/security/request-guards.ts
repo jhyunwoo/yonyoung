@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  CSRF_HEADER_NAME,
-  CSRF_HEADER_VALUE,
-} from "@/shared/security/csrf";
+import { CSRF_HEADER_NAME, CSRF_HEADER_VALUE } from "@/shared/security/csrf";
 
 export { CSRF_HEADER_NAME, CSRF_HEADER_VALUE } from "@/shared/security/csrf";
 export const API_PROXY_BODY_LIMIT_BYTES = 5 * 1024 * 1024;
@@ -114,7 +111,10 @@ export const enforceSameOriginProtection = (
 
   const secFetchSite = request.headers.get("sec-fetch-site")?.trim().toLowerCase();
   if (secFetchSite && !ALLOWED_SEC_FETCH_SITE_VALUES.has(secFetchSite)) {
-    return createJsonErrorResponse(403, "Cross-site state-changing requests are blocked.");
+    return createJsonErrorResponse(
+      403,
+      "Cross-site state-changing requests are blocked.",
+    );
   }
 
   const requestOrigin = readRequestOrigin(request);
