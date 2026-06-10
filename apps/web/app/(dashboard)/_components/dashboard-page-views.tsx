@@ -57,9 +57,10 @@ const StatCard = ({ label, value, growth, description }: StatCardProps) => (
 
 type DashboardPageViewsCardProps = {
   stats: ApiPageViewStats | null;
+  error?: string | null;
 };
 
-const DashboardPageViewsCard = ({ stats }: DashboardPageViewsCardProps) => {
+const DashboardPageViewsCard = ({ stats, error }: DashboardPageViewsCardProps) => {
   const trend = stats?.dailyTrend ?? [];
   const todayViews = stats?.today.count ?? 0;
   const yesterdayViews = stats?.today.prevCount ?? 0;
@@ -82,7 +83,7 @@ const DashboardPageViewsCard = ({ stats }: DashboardPageViewsCardProps) => {
 
       {!stats ? (
         <p className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">
-          방문 통계를 불러오지 못했습니다.
+          방문 통계를 불러오지 못했습니다.{error ? ` (원인: ${error})` : ""}
         </p>
       ) : (
         <div className="mt-4 flex flex-1 flex-col gap-6">
@@ -123,6 +124,6 @@ const DashboardPageViewsCard = ({ stats }: DashboardPageViewsCardProps) => {
 
 export default async function DashboardPageViews() {
   const cookieHeader = await readCookieHeader();
-  const stats = await getCachedPageViewStats(cookieHeader);
-  return <DashboardPageViewsCard stats={stats} />;
+  const { data: stats, error } = await getCachedPageViewStats(cookieHeader);
+  return <DashboardPageViewsCard stats={stats} error={error} />;
 }

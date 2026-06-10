@@ -10,12 +10,12 @@ export const metadata = {
 export default async function StatsPage() {
   await serverAuthGuard.requireSession();
   const cookieHeader = await readCookieHeader();
-  const stats = await getCachedPageViewStats(cookieHeader);
+  const { data: stats, error } = await getCachedPageViewStats(cookieHeader);
 
   return (
     <main className="px-4 py-6 md:px-8 md:py-8">
       <div className="mx-auto max-w-6xl">
-        <StatsView stats={stats} />
+        <StatsView stats={stats} error={error} />
       </div>
     </main>
   );

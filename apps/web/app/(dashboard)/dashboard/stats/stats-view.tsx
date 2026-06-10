@@ -7,9 +7,10 @@ import { BarChart3Icon, CalendarIcon, MonitorIcon } from "lucide-react";
 
 type StatsViewProps = {
   stats: ApiPageViewStats | null;
+  error?: string | null;
 };
 
-export default function StatsView({ stats }: StatsViewProps) {
+export default function StatsView({ stats, error }: StatsViewProps) {
   const [period, setPeriod] = useState<7 | 30>(30);
 
   const trend = stats?.dailyTrend ?? [];
@@ -29,7 +30,7 @@ export default function StatsView({ stats }: StatsViewProps) {
   if (!stats) {
     return (
       <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500 dark:text-slate-400">
-        데이터를 불러올 수 없습니다.
+        데이터를 불러올 수 없습니다.{error ? ` (원인: ${error})` : ""}
       </div>
     );
   }
