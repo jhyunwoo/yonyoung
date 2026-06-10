@@ -1,17 +1,53 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { ApiPageViewStats } from "@/shared/contracts/api-contracts";
 import PageViewChart from "@/app/(dashboard)/_components/dashboard-page-views-chart";
 import { BarChart3Icon, CalendarIcon, MonitorIcon } from "lucide-react";
+import { adminRequest } from "@/features/dashboard/api/admin-api/http";
+import { AdminApiError } from "@/shared/http/http";
 
 type StatsViewProps = {
   stats: ApiPageViewStats | null;
   error?: string | null;
 };
 
-export default function StatsView({ stats, error }: StatsViewProps) {
+export default function StatsView({ stats: initialStats, error: initialError }: StatsViewProps) {
+  const [stats, setStats] = useState<ApiPageViewStats | null>(initialStats);
+  const [error, setError] = useState<string | null>(initialError ?? null);
   const [period, setPeriod] = useState<7 | 30>(30);
+
+  useEffect(() => {
+    let active = true;
+
+    const fetchStats = async () => {
+      try {
+        const data = await adminRequest<ApiPageViewStats>("/admin/page-views/dashboard", "GET");
+        if (active) {
+          setStats(data);
+          setError(null);
+        }
+      } catch (err) {
+        if (active) {
+          const msg =
+            err instanceof AdminApiError
+              ? err.message
+              : err instanceof Error
+                ? err.message
+                : "알 수 없는 오류가 발생했습니다.";
+          setError(msg);
+          setStats(null);
+        }
+      }
+    };
+
+    const timer = setInterval(fetchStats, 10000);
+
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, []);
 
   const trend = stats?.dailyTrend ?? [];
   const filteredTrend = useMemo(() => {
