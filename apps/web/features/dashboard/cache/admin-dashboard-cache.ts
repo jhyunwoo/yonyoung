@@ -39,6 +39,8 @@ const readAdminCollection = async <T>(
     });
 
     if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      console.error(`[readAdminCollection Error] PATH: ${path}, STATUS: ${response.status}, RESPONSE: ${errorText}`);
       return [];
     }
 
@@ -46,15 +48,21 @@ const readAdminCollection = async <T>(
     const rows = unwrapDataEnvelope<T[]>(payload);
 
     return Array.isArray(rows) ? rows : [];
-  } catch {
+  } catch (error) {
+    console.error(`[readAdminCollection Exception] PATH: ${path}, ERROR:`, error);
     return [];
   }
+};
+
+type AdminDataResult<T> = {
+  data: T | null;
+  error: string | null;
 };
 
 const readAdminData = async <T>(
   path: string,
   cookieHeader: string | null,
-): Promise<T | null> => {
+): Promise<AdminDataResult<T>> => {
   const headers = new Headers({
     Accept: "application/json",
   });
@@ -75,13 +83,19 @@ const readAdminData = async <T>(
     });
 
     if (!response.ok) {
-      return null;
+      const payload = (await response.json().catch(() => null)) as any;
+      const errorMessage = payload?.error?.message || `API Error (Status: ${response.status})`;
+      console.error(`[readAdminData Error] PATH: ${path}, STATUS: ${response.status}, MESSAGE: ${errorMessage}`);
+      return { data: null, error: errorMessage };
     }
 
     const payload = (await response.json().catch(() => null)) as unknown;
-    return unwrapDataEnvelope<T>(payload);
-  } catch {
-    return null;
+    const data = unwrapDataEnvelope<T>(payload);
+    return { data, error: null };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`[readAdminData Exception] PATH: ${path}, ERROR:`, error);
+    return { data: null, error: errorMessage };
   }
 };
 
@@ -149,11 +163,17 @@ export const getCachedAdminDashboardStats = async (
   }
 
   const suffix = search.size > 0 ? `?${search.toString()}` : "";
-  return readAdminData<ApiAdminDashboardStats>(`/admin/dashboard${suffix}`, cookieHeader);
+  const result = await readAdminData<ApiAdminDashboardStats>(`/admin/dashboard${suffix}`, cookieHeader);
+  return result.data;
+};
+
+export type PageViewStatsResult = {
+  data: ApiPageViewStats | null;
+  error: string | null;
 };
 
 export const getCachedPageViewStats = async (
   cookieHeader: string | null,
-): Promise<ApiPageViewStats | null> => {
+): Promise<PageViewStatsResult> => {
   return readAdminData<ApiPageViewStats>("/admin/page-views/dashboard", cookieHeader);
 };
