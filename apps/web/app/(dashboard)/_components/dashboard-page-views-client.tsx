@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import type { ApiPageViewStats } from "@/shared/contracts/api-contracts";
 import PageViewChart from "@/app/(dashboard)/_components/dashboard-page-views-chart";
 import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
@@ -129,7 +130,11 @@ export default function DashboardPageViewsCard({
   return (
     <section className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:p-8">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">방문 통계</h2>
+        <Link href="/dashboard/stats" className="group">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition cursor-pointer">
+            방문 통계
+          </h2>
+        </Link>
         {stats ? (
           <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
             최근 30일 추세{lastUpdated ? ` (마지막 업데이트: ${lastUpdated})` : ""}
