@@ -94,7 +94,7 @@ export default function StatsView({ stats: initialStats, error: initialError }: 
             상세 방문 통계
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            웹사이트 방문 데이터를 분석합니다. (10초마다 자동 갱신{lastUpdated ? ` - 마지막 업데이트: ${lastUpdated}` : ""})
+            웹사이트 방문 데이터를 분석합니다.{lastUpdated ? ` (마지막 업데이트: ${lastUpdated})` : ""}
           </p>
         </div>
 
