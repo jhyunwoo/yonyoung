@@ -63,15 +63,29 @@ type DashboardPageViewsCardProps = {
   initialError?: string | null;
 };
 
+const getFormattedTime = () => {
+  return new Date().toLocaleTimeString("ko-KR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+};
+
 export default function DashboardPageViewsCard({
   initialStats,
   initialError,
 }: DashboardPageViewsCardProps) {
   const [stats, setStats] = useState<ApiPageViewStats | null>(initialStats);
   const [error, setError] = useState<string | null>(initialError ?? null);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
+
+    if (initialStats) {
+      setLastUpdated(getFormattedTime());
+    }
 
     const fetchStats = async () => {
       try {
@@ -79,6 +93,7 @@ export default function DashboardPageViewsCard({
         if (active) {
           setStats(data);
           setError(null);
+          setLastUpdated(getFormattedTime());
         }
       } catch (err) {
         if (active) {
@@ -100,7 +115,7 @@ export default function DashboardPageViewsCard({
       active = false;
       clearInterval(timer);
     };
-  }, []);
+  }, [initialStats]);
 
   const trend = stats?.dailyTrend ?? [];
   const todayViews = stats?.today.count ?? 0;
@@ -117,7 +132,7 @@ export default function DashboardPageViewsCard({
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">방문 통계</h2>
         {stats ? (
           <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-            최근 30일 추세 (10초마다 자동 갱신)
+            최근 30일 추세 (10초마다 자동 갱신{lastUpdated ? ` - 마지막 업데이트: ${lastUpdated}` : ""})
           </span>
         ) : null}
       </div>

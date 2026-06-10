@@ -12,13 +12,27 @@ type StatsViewProps = {
   error?: string | null;
 };
 
+const getFormattedTime = () => {
+  return new Date().toLocaleTimeString("ko-KR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+};
+
 export default function StatsView({ stats: initialStats, error: initialError }: StatsViewProps) {
   const [stats, setStats] = useState<ApiPageViewStats | null>(initialStats);
   const [error, setError] = useState<string | null>(initialError ?? null);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [period, setPeriod] = useState<7 | 30>(30);
 
   useEffect(() => {
     let active = true;
+
+    if (initialStats) {
+      setLastUpdated(getFormattedTime());
+    }
 
     const fetchStats = async () => {
       try {
@@ -26,6 +40,7 @@ export default function StatsView({ stats: initialStats, error: initialError }: 
         if (active) {
           setStats(data);
           setError(null);
+          setLastUpdated(getFormattedTime());
         }
       } catch (err) {
         if (active) {
@@ -47,7 +62,7 @@ export default function StatsView({ stats: initialStats, error: initialError }: 
       active = false;
       clearInterval(timer);
     };
-  }, []);
+  }, [initialStats]);
 
   const trend = stats?.dailyTrend ?? [];
   const filteredTrend = useMemo(() => {
@@ -79,7 +94,7 @@ export default function StatsView({ stats: initialStats, error: initialError }: 
             상세 방문 통계
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            웹사이트 방문 데이터를 분석합니다.
+            웹사이트 방문 데이터를 분석합니다. (10초마다 자동 갱신{lastUpdated ? ` - 마지막 업데이트: ${lastUpdated}` : ""})
           </p>
         </div>
 
