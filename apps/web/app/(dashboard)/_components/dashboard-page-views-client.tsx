@@ -132,7 +132,7 @@ export default function DashboardPageViewsCard({
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">방문 통계</h2>
         {stats ? (
           <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-            최근 30일 추세 (10초마다 자동 갱신{lastUpdated ? ` - 마지막 업데이트: ${lastUpdated}` : ""})
+            최근 30일 추세{lastUpdated ? ` (마지막 업데이트: ${lastUpdated})` : ""}
           </span>
         ) : null}
       </div>
