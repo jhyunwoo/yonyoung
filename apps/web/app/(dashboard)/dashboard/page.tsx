@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { headers } from "next/headers";
 import RecentGlobalNotices from "@/app/(dashboard)/_components/recent-global-notices";
 import DashboardLinktreeOverview from "@/app/(dashboard)/_components/dashboard-linktree-overview";
 import DashboardR2StorageUsage from "@/app/(dashboard)/_components/dashboard-r2-storage-usage";
@@ -11,6 +12,16 @@ const YEONYOUNG_NAS_URL = "https://165.132.176.27:8080";
 
 export default async function DashboardPage() {
   await serverAuthGuard.requireSession();
+
+  const reqHeaders = await headers();
+  const clientIp =
+    reqHeaders.get("cf-connecting-ip") ||
+    reqHeaders.get("x-real-ip") ||
+    reqHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    "";
+
+  const isInternalNetwork =
+    process.env.NODE_ENV === "development" || clientIp.startsWith("165.132.");
 
   return (
     <main className="px-4 py-6 md:px-8 md:py-8">
@@ -52,14 +63,24 @@ export default async function DashboardPage() {
             있습니다.
           </p>
           <div className="mt-auto pt-5">
-            <a
-              href={YEONYOUNG_NAS_URL}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
-            >
-              연영나스 바로가기
-            </a>
+            {isInternalNetwork ? (
+              <a
+                href={YEONYOUNG_NAS_URL}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+              >
+                연영나스 바로가기
+              </a>
+            ) : (
+              <button
+                disabled
+                className="inline-flex items-center rounded-lg bg-slate-100 dark:bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-700"
+                title="연세대학교 내부망(165.132.x.x)에서만 접속할 수 있습니다."
+              >
+                연세대학교 내부망에서만 접속 가능합니다
+              </button>
+            )}
           </div>
         </aside>
 
