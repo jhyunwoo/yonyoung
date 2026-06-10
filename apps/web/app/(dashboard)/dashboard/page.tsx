@@ -73,13 +73,18 @@ export default async function DashboardPage() {
                 연영나스 바로가기
               </a>
             ) : (
-              <button
-                disabled
-                className="inline-flex items-center rounded-lg bg-slate-100 dark:bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-700"
-                title="연세대학교 내부망(165.132.x.x)에서만 접속할 수 있습니다."
-              >
-                연세대학교 내부망에서만 접속 가능합니다
-              </button>
+              <div className="flex flex-col gap-1.5 items-start">
+                <button
+                  disabled
+                  className="inline-flex items-center rounded-lg bg-slate-100 dark:bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-700"
+                  title="연세대학교 내부망(165.132.x.x)에서만 접속할 수 있습니다."
+                >
+                  연세대학교 내부망에서만 접속 가능합니다
+                </button>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 pl-0.5">
+                  VPN을 사용하여 접속해주세요.
+                </span>
+              </div>
             )}
           </div>
         </aside>
