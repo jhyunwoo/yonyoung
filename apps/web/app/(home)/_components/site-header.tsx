@@ -45,7 +45,7 @@ const navItems: NavItem[] = [
   },
   { href: "/linktree", label: "LINKTREE", testId: "linktree" },
   { href: "/donate", label: "DONATE US", testId: "donate" },
-  { href: "/dashboard", label: "DASHBOARD", testId: "dashboard", prefetch: false },
+  { href: "/dashboard", label: "DASHBOARD", testId: "dashboard" },
 ];
 
 const isActivePath = (pathname: string, item: NavItem): boolean => {
