@@ -6,6 +6,7 @@ export const API_ERROR_CODES = [
   "FORBIDDEN",
   "NOT_FOUND",
   "CONFLICT",
+  "TOO_MANY_REQUESTS",
   "INTERNAL_ERROR",
 ] as const;
 
@@ -83,6 +84,10 @@ export type ApiActivityImage = {
   activityId: string;
   imageUrl: string;
   sortOrder: number;
+  /** 원본 이미지 가로 픽셀 (업로드 시 측정, 레거시 데이터는 null) */
+  width: number | null;
+  /** 원본 이미지 세로 픽셀 (업로드 시 측정, 레거시 데이터는 null) */
+  height: number | null;
   createdAt: number;
   updatedAt: number;
 };
@@ -119,6 +124,10 @@ export type ApiListActivitiesQuery = {
 export type ApiCreateActivityImageInput = {
   imageUrl: string;
   sortOrder: number;
+  /** 원본 이미지 가로 픽셀 (선택, 측정 실패 시 생략) */
+  width?: number;
+  /** 원본 이미지 세로 픽셀 (선택, 측정 실패 시 생략) */
+  height?: number;
 };
 
 export type ApiUpdateActivityImageInput = Partial<ApiCreateActivityImageInput>;
@@ -134,6 +143,10 @@ export type ApiExhibitionImage = {
   exhibitionId: string;
   imageUrl: string;
   sortOrder: number;
+  /** 원본 이미지 가로 픽셀 (업로드 시 측정, 레거시 데이터는 null) */
+  width: number | null;
+  /** 원본 이미지 세로 픽셀 (업로드 시 측정, 레거시 데이터는 null) */
+  height: number | null;
   createdAt: number;
   updatedAt: number;
 };
@@ -172,6 +185,10 @@ export type ApiListExhibitionsQuery = {
 export type ApiCreateExhibitionImageInput = {
   imageUrl: string;
   sortOrder: number;
+  /** 원본 이미지 가로 픽셀 (선택, 측정 실패 시 생략) */
+  width?: number;
+  /** 원본 이미지 세로 픽셀 (선택, 측정 실패 시 생략) */
+  height?: number;
 };
 
 export type ApiUpdateExhibitionImageInput = Partial<ApiCreateExhibitionImageInput>;
@@ -181,6 +198,48 @@ export type ApiUpdateExhibitionImageBatchItemInput = {
   imageUrl?: string;
   sortOrder?: number;
 };
+
+/**
+ * 첨부파일 소속 구분.
+ * - "activity": 개별 활동 페이지 자료 (resourceId = 활동 UUID)
+ * - "site_donate": 후원 페이지 전역 자료 (resourceId = null)
+ */
+export type ApiAttachmentScope = "activity" | "site_donate";
+
+export type ApiAttachment = {
+  id: string;
+  scope: ApiAttachmentScope;
+  resourceId: string | null;
+  /** 표시용 제목 (예: "2026년 6월 회계 내역") */
+  title: string;
+  fileUrl: string;
+  /** 다운로드 시 보여줄 원본 파일명 */
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  sortOrder: number;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type ApiCreateAttachmentInput = {
+  scope: ApiAttachmentScope;
+  resourceId?: string | null;
+  title: string;
+  fileUrl: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  sortOrder?: number;
+};
+
+export type ApiUpdateAttachmentInput = {
+  title?: string;
+  sortOrder?: number;
+};
+
+/** 첨부파일 업로드 <input accept>에 사용하는 확장자 목록 (서버 allowlist와 동기화) */
+export const ATTACHMENT_ACCEPT = ".pdf,.xlsx,.xls,.docx,.hwp,.hwpx,.zip";
 
 export type ApiNoticeAuthor = {
   id: string;

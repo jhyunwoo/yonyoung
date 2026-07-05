@@ -7,12 +7,16 @@ import type { ApiPresignResponse } from "@/shared/contracts/api-contracts";
 export const PRESIGN_PATHS = {
   activityCover: "/activities/presign/cover",
   activityDetail: "/activities/presign/detail",
+  // 활동 첨부파일 (PDF/문서)
+  activityFile: "/activities/presign/file",
   exhibitionCover: "/exhibitions/presign/cover",
   exhibitionDetail: "/exhibitions/presign/detail",
   noticeImage: "/notices/presign/image",
   recruitingImage: "/recruiting/presign/image",
   marketImage: "/market/presign/image",
   userProfile: "/users/presign/profile",
+  // 후원 페이지 첨부파일 (회장/부회장 전용)
+  siteFile: "/site/presign/file",
 } as const;
 
 type PresignPath = (typeof PRESIGN_PATHS)[keyof typeof PRESIGN_PATHS];
@@ -50,19 +54,35 @@ const clampProgress = (progress: number): number => {
   return Math.round(progress);
 };
 
+/** 확장자 → 첨부파일 MIME 타입 매핑 (브라우저가 file.type을 비워 보내는 경우 대비) */
+const ATTACHMENT_CONTENT_TYPE_BY_EXTENSION: Record<string, string> = {
+  pdf: "application/pdf",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  xls: "application/vnd.ms-excel",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  hwp: "application/x-hwp",
+  hwpx: "application/vnd.hancom.hwpx",
+  zip: "application/zip",
+};
+
 const defaultContentType = (file: File): string => {
-  if (file.type && file.type.startsWith("image/")) {
+  // 브라우저가 타입을 알려주면 그대로 신뢰 (이미지/문서 공통, 서버 allowlist가 최종 검증)
+  if (file.type) {
     return file.type;
   }
 
   const name = file.name.toLowerCase();
-  if (name.endsWith(".png")) {
+  const extension = name.split(".").at(-1) ?? "";
+  if (extension in ATTACHMENT_CONTENT_TYPE_BY_EXTENSION) {
+    return ATTACHMENT_CONTENT_TYPE_BY_EXTENSION[extension];
+  }
+  if (extension === "png") {
     return "image/png";
   }
-  if (name.endsWith(".webp")) {
+  if (extension === "webp") {
     return "image/webp";
   }
-  if (name.endsWith(".gif")) {
+  if (extension === "gif") {
     return "image/gif";
   }
   return "image/jpeg";

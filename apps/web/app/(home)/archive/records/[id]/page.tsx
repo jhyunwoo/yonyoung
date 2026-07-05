@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getPublicActivityById } from "@/features/public/services/public-read-service";
+import {
+  getPublicActivityById,
+  getPublicAttachments,
+} from "@/features/public/services/public-read-service";
 import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
-import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import { RichTextContent } from "@/features/media/rich-text/rich-text-content";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 import PageViewTracker from "@/app/_components/page-view-tracker";
+import {
+  MasonryGallery,
+  type MasonryGalleryItem,
+} from "@/app/(home)/_components/masonry-gallery";
+import { AttachmentList } from "@/app/(home)/_components/attachment-list";
 
 export const metadata: Metadata = createPageMetadata({
   title: "활동 기록 상세 | 연영회",
@@ -23,19 +29,38 @@ type RecordDetailPageProps = {
 
 export default async function RecordDetailPage({ params }: RecordDetailPageProps) {
   const { id } = await params;
-  const activity = await getPublicActivityById(id).catch(() => null);
+  // 활동 정보와 첨부 자료는 독립적이므로 병렬로 조회한다
+  const [activity, attachments] = await Promise.all([
+    getPublicActivityById(id).catch(() => null),
+    getPublicAttachments("activity", id).catch(() => []),
+  ]);
 
   if (!activity) {
     notFound();
   }
 
-  const imageUrls =
+  // 상세 이미지가 없으면 커버 이미지 한 장으로 대체 (커버는 크기 정보가 없어 폴백 측정 사용)
+  const galleryItems: MasonryGalleryItem[] =
     activity.detailImages.length > 0
       ? activity.detailImages
           .slice()
           .sort((a, b) => a.sortOrder - b.sortOrder)
-          .map((image) => image.imageUrl)
-      : [activity.coverImageUrl];
+          .map((image, index) => ({
+            key: image.id,
+            imageUrl: image.imageUrl,
+            alt: `${activity.title} 상세 이미지 ${index + 1}`,
+            width: image.width,
+            height: image.height,
+          }))
+      : [
+          {
+            key: `${activity.id}-cover`,
+            imageUrl: activity.coverImageUrl,
+            alt: `${activity.title} 대표 이미지`,
+            width: null,
+            height: null,
+          },
+        ];
 
   return (
     <div className="min-h-screen bg-(--bg-primary) pb-9 pt-3 md:pb-12 md:pt-4">
@@ -60,26 +85,23 @@ export default async function RecordDetailPage({ params }: RecordDetailPageProps
           />
         </header>
 
-        <section
-          className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
+        <MasonryGallery
+          items={galleryItems}
+          fallbackAspectRatio="4 / 3"
           data-testid="record-detail-gallery"
-        >
-          {imageUrls.map((imageUrl, index) => (
-            <div
-              key={`${activity.id}-${imageUrl}-${index}`}
-              className="relative aspect-[4/3] w-full overflow-hidden border border-(--surface-border) bg-(--surface-muted)"
-            >
-              <Image
-                src={imageUrl}
-                alt={`${activity.title} 상세 이미지 ${index + 1}`}
-                fill
-                unoptimized={shouldUseUnoptimizedImage(imageUrl)}
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
-            </div>
-          ))}
-        </section>
+        />
+
+        {attachments.length > 0 ? (
+          <section className="mt-10">
+            <h2 className="mb-4 text-[1.2rem] font-bold text-(--text-primary)">
+              첨부 자료
+            </h2>
+            <AttachmentList
+              attachments={attachments}
+              data-testid="record-attachment-list"
+            />
+          </section>
+        ) : null}
       </div>
     </div>
   );

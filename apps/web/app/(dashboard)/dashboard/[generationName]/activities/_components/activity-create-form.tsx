@@ -10,6 +10,7 @@ import {
   type UploadImageItem,
 } from "@/features/media/upload/image-upload-state";
 import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/upload-batch";
+import { readImageDimensions } from "@/features/media/images/read-image-dimensions";
 import {
   PRESIGN_PATHS,
   uploadWithPresign,
@@ -184,6 +185,11 @@ export default function ActivityCreateForm({
 
       if (newDetailImages.length > 0) {
         try {
+          // 업로드 전에 원본 크기를 측정해 함께 저장 (공개 갤러리 masonry 레이아웃용)
+          const dimensionList = await Promise.all(
+            newDetailImages.map((image) => readImageDimensions(image.file)),
+          );
+
           const uploadedDetailUrls = await uploadFilesWithPresign({
             presignPath: PRESIGN_PATHS.activityDetail,
             files: newDetailImages.map((image) => image.file),
@@ -198,6 +204,7 @@ export default function ActivityCreateForm({
             uploadedDetailUrls.map((imageUrl, index) => ({
               imageUrl,
               sortOrder: index,
+              ...(dimensionList[index] ?? {}),
             })),
           );
         } catch (detailUploadError) {

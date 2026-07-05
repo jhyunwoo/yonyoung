@@ -3,6 +3,7 @@ import { cacheTag } from "next/cache";
 import { z } from "zod";
 import {
   apiActivitySchema,
+  apiAttachmentSchema,
   apiExhibitionSchema,
   apiGenerationSchema,
   apiLinktreeSchema,
@@ -12,6 +13,8 @@ import {
 } from "@/shared/contracts/api-schemas";
 import type {
   ApiActivity,
+  ApiAttachment,
+  ApiAttachmentScope,
   ApiExhibition,
   ApiGeneration,
   ApiLinktree,
@@ -135,6 +138,31 @@ export const getPublicSiteSettings = async (): Promise<ApiSiteSettings> => {
     schema: apiSiteSettingsSchema,
     fallback: DEFAULT_SITE_SETTINGS,
     event: "public.site-settings.read_fallback",
+  });
+};
+
+/**
+ * 공개 첨부파일 목록 조회 (후원 페이지 자료, 활동별 자료).
+ * 조회 실패 시 빈 배열로 폴백해 페이지 렌더링을 막지 않습니다.
+ */
+export const getPublicAttachments = async (
+  scope: ApiAttachmentScope,
+  resourceId?: string,
+): Promise<ApiAttachment[]> => {
+  "use cache";
+
+  cacheTag(PUBLIC_CACHE_TAGS.attachments);
+
+  const query = new URLSearchParams({ scope });
+  if (resourceId) {
+    query.set("resourceId", resourceId);
+  }
+
+  return readPublicWithFallback({
+    path: `/api/public/attachments?${query.toString()}`,
+    schema: z.array(apiAttachmentSchema),
+    fallback: [],
+    event: "public.attachments.read_fallback",
   });
 };
 

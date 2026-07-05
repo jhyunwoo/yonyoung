@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import type { ApiExhibition } from "@/shared/contracts/api-contracts";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/upload-batch";
+import { readImageDimensions } from "@/features/media/images/read-image-dimensions";
 import {
   PRESIGN_PATHS,
   uploadWithPresign,
@@ -303,6 +304,11 @@ export default function ExhibitionEditForm({
 
       const createdMap = new Map<string, string>();
       if (newOrder.length > 0) {
+        // 업로드 전에 원본 크기를 측정해 함께 저장 (공개 갤러리 masonry 레이아웃용)
+        const dimensionList = await Promise.all(
+          newOrder.map((image) => readImageDimensions(image.file)),
+        );
+
         const uploadedUrls = await uploadFilesWithPresign({
           presignPath: PRESIGN_PATHS.exhibitionDetail,
           files: newOrder.map((image) => image.file),
@@ -317,6 +323,7 @@ export default function ExhibitionEditForm({
           uploadedUrls.map((imageUrl, index) => ({
             imageUrl,
             sortOrder: existingOrder.length + index,
+            ...(dimensionList[index] ?? {}),
           })),
         );
 

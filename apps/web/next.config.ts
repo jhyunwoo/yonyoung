@@ -53,8 +53,12 @@ const contentSecurityPolicy = [
   "form-action 'self'",
   "object-src 'none'",
   "manifest-src 'self'",
-  "img-src 'self' data: blob: https:",
+  // 이미지 출처는 실제 사용하는 호스트로 한정한다:
+  // 'self'(웹 프록시 미디어), data:/blob:(업로드 미리보기), R2 공개 도메인, 구글 프로필 이미지
+  "img-src 'self' data: blob: https://storage.yonyoung.moveto.kr https://*.googleusercontent.com",
   "font-src 'self' data:",
+  // 'unsafe-inline'은 cacheComponents(정적 프리렌더)와 nonce 기반 CSP가 호환되지 않아 유지한다.
+  // 리치 텍스트는 서버에서 allowlist 필터(FilterXSS)로 정화되므로 실질 XSS 표면은 제한적이다.
   "style-src 'self' 'unsafe-inline'",
   `script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com${!isProduction ? " 'unsafe-eval'" : ""}`,
   `connect-src ${CSP_CONNECT_SOURCES.join(" ")}`,

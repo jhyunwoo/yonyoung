@@ -22,6 +22,7 @@ import type {
 } from "../../../shared/contracts/api-contracts";
 import type { MockRole, MockSessionUser, MockState } from "./contracts";
 import { createMockState, defaultRoleUserId } from "./seed";
+import { handleAttachmentRoutes } from "./attachments-handlers";
 
 const HOST = "127.0.0.1";
 const PORT = Number(process.env.MOCK_API_PORT ?? "4010");
@@ -626,6 +627,23 @@ const server = createServer(async (request, response) => {
       return;
     }
 
+    // 첨부파일 라우트 (공개 목록 + 관리자 CRUD) — 별도 모듈에서 처리
+    if (
+      handleAttachmentRoutes({
+        pathname,
+        method,
+        requestUrl,
+        body,
+        response,
+        state,
+        role,
+        sendData,
+        sendError,
+      })
+    ) {
+      return;
+    }
+
     if (segments[1] === "public") {
       if (pathname === "/api/public/activities" && method === "GET") {
         sendData(response, state.activities);
@@ -1102,6 +1120,8 @@ const server = createServer(async (request, response) => {
               ? body.imageUrl
               : "https://images.mock.local/activities/new-detail.jpg",
           sortOrder: typeof body?.sortOrder === "number" ? body.sortOrder : 0,
+          width: typeof body?.width === "number" ? body.width : null,
+          height: typeof body?.height === "number" ? body.height : null,
           createdAt: now(),
           updatedAt: now(),
         };
@@ -1124,6 +1144,8 @@ const server = createServer(async (request, response) => {
                 ? entry.imageUrl
                 : `https://images.mock.local/activities/new-batch-${index + 1}.jpg`,
             sortOrder: typeof entry.sortOrder === "number" ? entry.sortOrder : index,
+            width: typeof entry.width === "number" ? entry.width : null,
+            height: typeof entry.height === "number" ? entry.height : null,
             createdAt: now(),
             updatedAt: now(),
           };
@@ -1298,6 +1320,8 @@ const server = createServer(async (request, response) => {
               ? body.imageUrl
               : "https://images.mock.local/exhibitions/new-detail.jpg",
           sortOrder: typeof body?.sortOrder === "number" ? body.sortOrder : 0,
+          width: typeof body?.width === "number" ? body.width : null,
+          height: typeof body?.height === "number" ? body.height : null,
           createdAt: now(),
           updatedAt: now(),
         };
@@ -1320,6 +1344,8 @@ const server = createServer(async (request, response) => {
                 ? entry.imageUrl
                 : `https://images.mock.local/exhibitions/new-batch-${index + 1}.jpg`,
             sortOrder: typeof entry.sortOrder === "number" ? entry.sortOrder : index,
+            width: typeof entry.width === "number" ? entry.width : null,
+            height: typeof entry.height === "number" ? entry.height : null,
             createdAt: now(),
             updatedAt: now(),
           };

@@ -1,6 +1,8 @@
 import type {
   ApiActivity,
   ApiAdminDashboardStats,
+  ApiAttachment,
+  ApiAttachmentScope,
   ApiAuditLog,
   ApiAuditResourceType,
   ApiExhibition,
@@ -21,6 +23,11 @@ import type {
 } from "@/shared/contracts/api-contracts";
 import { adminRequest } from "@/features/dashboard/api/admin-api/http";
 import { bindAdminWriteAction } from "@/features/dashboard/api/admin-api/action-results";
+import {
+  createAttachmentAction,
+  deleteAttachmentAction,
+  updateAttachmentAction,
+} from "@/features/dashboard/actions/attachments";
 import {
   addActivityImageAction,
   addActivityImagesAction,
@@ -147,6 +154,14 @@ export const adminResourceApi = {
   updateExhibitionImage: bindAdminWriteAction(updateExhibitionImageAction),
   updateExhibitionImages: bindAdminWriteAction(updateExhibitionImagesAction),
   deleteExhibitionImage: bindAdminWriteAction(deleteExhibitionImageAction),
+
+  listAttachments: (scope: ApiAttachmentScope, resourceId?: string) =>
+    apiRequest.get<ApiAttachment[]>(
+      withOptionalQuery("/attachments", { scope, resourceId }),
+    ),
+  createAttachment: bindAdminWriteAction(createAttachmentAction),
+  updateAttachment: bindAdminWriteAction(updateAttachmentAction),
+  deleteAttachment: bindAdminWriteAction(deleteAttachmentAction),
 
   listLinktrees: () => apiRequest.get<ApiLinktree[]>("/linktree"),
   createLinktree: bindAdminWriteAction(createLinktreeAction),

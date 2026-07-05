@@ -6,7 +6,6 @@ import {
 import { formatKoreanYearRange } from "@/shared/utils/date-formatters";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 import PageTitleHero from "@/app/(home)/_components/page-title-hero";
-import PageViewTracker from "@/app/_components/page-view-tracker";
 
 const annualActivities = [
   { month: "March", title: "리크루팅" },

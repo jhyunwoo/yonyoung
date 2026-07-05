@@ -83,8 +83,11 @@ const readAdminData = async <T>(
     });
 
     if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as any;
-      const errorMessage = payload?.error?.message || `API Error (Status: ${response.status})`;
+      const payload = (await response.json().catch(() => null)) as {
+        error?: { message?: string };
+      } | null;
+      const errorMessage =
+        payload?.error?.message || `API Error (Status: ${response.status})`;
       console.error(`[readAdminData Error] PATH: ${path}, STATUS: ${response.status}, MESSAGE: ${errorMessage}`);
       return { data: null, error: errorMessage };
     }

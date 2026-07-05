@@ -1,18 +1,15 @@
 "use server";
 
 import { forbidden } from "next/navigation";
-import { headers } from "next/headers";
-import { updateTag } from "next/cache";
 import { z } from "zod";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { canManageGlobalUsers } from "@/features/auth/model/auth-shared";
+import { CACHE_TAGS } from "@/server/cache/tags";
 import {
-  assertAdminWriteAccess,
-  type AdminWriteAccessScope,
-} from "@/features/dashboard/actions/admin-write-access";
-import { readCookieHeader } from "@/shared/http/http";
-import { CACHE_TAGS, type AdminCacheTag, type PublicCacheTag } from "@/server/cache/tags";
-import { HonoApiError, honoRequest } from "@/server/http/hono-client";
+  readNoContentSchema,
+  writeRequest,
+  type AdminWriteActionResult,
+} from "@/features/dashboard/actions/admin-write-core";
 import {
   apiActivityImageSchema,
   apiActivitySchema,
@@ -108,111 +105,16 @@ import type {
   ApiUser,
 } from "@/shared/contracts/api-contracts";
 
-const ADMIN_API_BASE_PATH = "/api";
 const MARKET_PUSH_SUBSCRIPTIONS_PATH = "/market/push-subscriptions";
 
-type CacheTag = AdminCacheTag | PublicCacheTag;
-
-export type AdminWriteActionFailure = {
-  ok: false;
-  errorMessage: string;
-  status: number;
-  code: string;
-  requestId: string | null;
-};
-
-export type AdminWriteActionResult<T> =
-  | {
-      ok: true;
-      data: T;
-    }
-  | AdminWriteActionFailure;
+// 공통 쓰기 코어(writeRequest 등)는 admin-write-core.ts로 분리됨.
+// 기존 import 경로 호환을 위해 결과 타입을 재수출한다.
+export type {
+  AdminWriteActionFailure,
+  AdminWriteActionResult,
+} from "@/features/dashboard/actions/admin-write-core";
 
 export type BulkUpdateUsersRoleActionResult = AdminWriteActionResult<ApiUser[]>;
-
-const tagsToUpdate = (tags: readonly CacheTag[]): void => {
-  for (const tag of tags) {
-    updateTag(tag);
-  }
-};
-
-const readCorrelationHeaders = async (): Promise<{
-  requestId: string;
-  traceId: string;
-}> => {
-  const requestHeaders = await headers();
-  const requestId = requestHeaders.get("x-request-id")?.trim() || crypto.randomUUID();
-  const traceId = requestHeaders.get("x-trace-id")?.trim() || crypto.randomUUID();
-
-  return {
-    requestId,
-    traceId,
-  };
-};
-
-const requireAdminAccess = async (scope: AdminWriteAccessScope = "verified_member") => {
-  const session = await serverAuthGuard.requireSession();
-  assertAdminWriteAccess(session, scope);
-};
-
-const readNoContentSchema = z
-  .unknown()
-  .optional()
-  .nullable()
-  .transform(() => undefined);
-
-const toAdminWriteActionFailure = (error: HonoApiError): AdminWriteActionFailure => ({
-  ok: false,
-  errorMessage: error.message,
-  status: error.status,
-  code: error.code,
-  requestId: error.requestId,
-});
-
-const writeRequest = async <TResponse>(input: {
-  path: string;
-  method: "POST" | "PATCH" | "DELETE";
-  body?: unknown;
-  responseSchema: z.ZodType<TResponse>;
-  tags: readonly CacheTag[];
-  timeoutMs?: number;
-  requireAdminAccess?: boolean;
-  accessScope?: AdminWriteAccessScope;
-}): Promise<AdminWriteActionResult<TResponse>> => {
-  if (input.requireAdminAccess !== false) {
-    await requireAdminAccess(input.accessScope);
-  }
-
-  const cookieHeader = await readCookieHeader();
-  const { requestId, traceId } = await readCorrelationHeaders();
-
-  try {
-    const result = await honoRequest<TResponse>({
-      path: `${ADMIN_API_BASE_PATH}${input.path}`,
-      method: input.method,
-      body: input.body,
-      cache: "no-store",
-      responseSchema: input.responseSchema,
-      timeoutMs: input.timeoutMs ?? 45_000,
-      requestId,
-      traceId,
-      cookieHeader,
-    });
-
-    tagsToUpdate(input.tags);
-
-    return {
-      ok: true,
-      data: result,
-    };
-  } catch (error) {
-    if (error instanceof HonoApiError) {
-      return toAdminWriteActionFailure(error);
-    }
-
-    throw error;
-  }
-};
 
 export const createGenerationAction = async (
   input: ApiCreateGenerationInput,

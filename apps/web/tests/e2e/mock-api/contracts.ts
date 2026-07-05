@@ -1,5 +1,6 @@
 import type {
   ApiActivity,
+  ApiAttachment,
   ApiAuditLog,
   ApiExhibition,
   ApiGeneration,
@@ -39,6 +40,7 @@ export type MockState = {
   users: ApiUser[];
   generations: ApiGeneration[];
   activities: ApiActivity[];
+  attachments: ApiAttachment[];
   exhibitions: ApiExhibition[];
   notices: MockNoticeState;
   linktrees: ApiLinktree[];

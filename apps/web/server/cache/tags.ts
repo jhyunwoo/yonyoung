@@ -3,6 +3,7 @@ import "server-only";
 export const CACHE_TAGS = {
   public: {
     activities: "public:activities",
+    attachments: "public:attachments",
     exhibitions: "public:exhibitions",
     linktree: "public:linktree",
     generations: "public:generations",
@@ -13,6 +14,7 @@ export const CACHE_TAGS = {
   admin: {
     generations: "admin:generations",
     activities: "admin:activities",
+    attachments: "admin:attachments",
     exhibitions: "admin:exhibitions",
     linktree: "admin:linktree",
     market: "admin:market",

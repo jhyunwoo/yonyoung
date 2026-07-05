@@ -40,6 +40,9 @@ export const apiActivityImageSchema = z.object({
   activityId: z.string(),
   imageUrl: z.url(),
   sortOrder: z.number().int(),
+  // 원본 픽셀 크기. 구버전 API 응답(필드 없음)도 허용하도록 default(null) 처리
+  width: z.number().int().positive().nullable().default(null),
+  height: z.number().int().positive().nullable().default(null),
   createdAt: timestampSchema,
   updatedAt: timestampSchema,
 });
@@ -72,6 +75,8 @@ export const apiUpdateActivityInputSchema = apiCreateActivityInputSchema.partial
 export const apiCreateActivityImageInputSchema = z.object({
   imageUrl: z.url(),
   sortOrder: z.number().int(),
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
 });
 
 export const apiUpdateActivityImageInputSchema =
@@ -88,6 +93,9 @@ export const apiExhibitionImageSchema = z.object({
   exhibitionId: z.string(),
   imageUrl: z.url(),
   sortOrder: z.number().int(),
+  // 원본 픽셀 크기. 구버전 API 응답(필드 없음)도 허용하도록 default(null) 처리
+  width: z.number().int().positive().nullable().default(null),
+  height: z.number().int().positive().nullable().default(null),
   createdAt: timestampSchema,
   updatedAt: timestampSchema,
 });
@@ -122,6 +130,8 @@ export const apiUpdateExhibitionInputSchema = apiCreateExhibitionInputSchema.par
 export const apiCreateExhibitionImageInputSchema = z.object({
   imageUrl: z.url(),
   sortOrder: z.number().int(),
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
 });
 
 export const apiUpdateExhibitionImageInputSchema =
@@ -131,6 +141,38 @@ export const apiUpdateExhibitionImageBatchItemInputSchema = z.object({
   imageId: z.string(),
   imageUrl: z.url().optional(),
   sortOrder: z.number().int().optional(),
+});
+
+export const apiAttachmentScopeSchema = z.enum(["activity", "site_donate"]);
+
+export const apiAttachmentSchema = z.object({
+  id: z.string(),
+  scope: apiAttachmentScopeSchema,
+  resourceId: z.string().nullable(),
+  title: z.string(),
+  fileUrl: z.url(),
+  fileName: z.string(),
+  fileSize: z.number().int().nonnegative(),
+  mimeType: z.string(),
+  sortOrder: z.number().int(),
+  createdAt: timestampSchema,
+  updatedAt: timestampSchema,
+});
+
+export const apiCreateAttachmentInputSchema = z.object({
+  scope: apiAttachmentScopeSchema,
+  resourceId: z.string().nullable().optional(),
+  title: z.string().trim().min(1).max(200),
+  fileUrl: z.url(),
+  fileName: z.string().trim().min(1).max(255),
+  fileSize: z.number().int().positive(),
+  mimeType: z.string().min(1),
+  sortOrder: z.number().int().nonnegative().optional(),
+});
+
+export const apiUpdateAttachmentInputSchema = z.object({
+  title: z.string().trim().min(1).max(200).optional(),
+  sortOrder: z.number().int().nonnegative().optional(),
 });
 
 export const apiNoticeAuthorSchema = z.object({
