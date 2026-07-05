@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import { DEFAULT_SITE_SETTINGS } from "@/shared/contracts/api-contracts";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
-import { getPublicSiteSettings } from "@/features/public/services/public-read-service";
+import {
+  getPublicAttachments,
+  getPublicSiteSettings,
+} from "@/features/public/services/public-read-service";
 import PageTitleHero from "@/app/(home)/_components/page-title-hero";
+import { AttachmentList } from "@/app/(home)/_components/attachment-list";
 
 export const metadata: Metadata = createPageMetadata({
   title: "후원 안내 | 연영회",
@@ -12,7 +16,11 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 export default async function DonatePage() {
-  const siteSettings = await getPublicSiteSettings().catch(() => DEFAULT_SITE_SETTINGS);
+  // 설정과 첨부 자료는 서로 독립적이므로 병렬로 조회한다
+  const [siteSettings, attachments] = await Promise.all([
+    getPublicSiteSettings().catch(() => DEFAULT_SITE_SETTINGS),
+    getPublicAttachments("site_donate").catch(() => []),
+  ]);
 
   return (
     <div className="min-h-screen bg-(--bg-primary)">
@@ -93,12 +101,29 @@ export default async function DonatePage() {
             </div>
           </div>
 
+          {attachments.length > 0 ? (
+            <div className="mb-16">
+              <h2 className="mb-6 border-b-2 border-(--surface-strong-border) pb-2 text-[1.75rem] leading-[1.3] font-semibold text-(--text-primary) md:text-[2.5rem]">
+                회계 자료 · 소식지
+              </h2>
+              <p className="mb-6 text-base leading-[1.8] text-(--text-muted)">
+                후원금 사용 내역과 월간연영회 소식지를 확인하실 수 있습니다.
+              </p>
+              <AttachmentList
+                attachments={attachments}
+                data-testid="donate-attachment-list"
+              />
+            </div>
+          ) : null}
+
           <div className="mb-16 flex flex-col items-center justify-center gap-2 rounded-xl border border-(--surface-border) bg-(--surface-elevated) p-8 text-sm text-(--text-muted) shadow-[0_2px_4px_var(--shadow-strong)]">
             <p>
               후원해 주신 분들의 성함은 전시회에 특별히 감사의 말씀과 함께 소개됩니다.
             </p>
             <p>작은 관심과 응원이 저희에게 큰 힘이 됩니다.</p>
-            <p>후원금 사용 내역은 60기 운영진으로 연락주시면 열람하실 수 있습니다.</p>
+            {attachments.length === 0 ? (
+              <p>후원금 사용 내역은 60기 운영진으로 연락주시면 열람하실 수 있습니다.</p>
+            ) : null}
           </div>
         </section>
       </div>

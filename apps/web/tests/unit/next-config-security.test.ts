@@ -14,6 +14,11 @@ describe("next.config security headers", () => {
     );
     expect(headers.get("Content-Security-Policy")).toContain("frame-ancestors 'none'");
     expect(headers.get("Content-Security-Policy")).toContain("object-src 'none'");
+    // img-src는 광범위한 https: 대신 실제 미디어 호스트 allowlist여야 한다
+    expect(headers.get("Content-Security-Policy")).toContain(
+      "img-src 'self' data: blob: https://storage.yonyoung.moveto.kr https://*.googleusercontent.com",
+    );
+    expect(headers.get("Content-Security-Policy")).not.toContain("img-src 'self' data: blob: https:;");
     expect(headers.get("Content-Security-Policy")).toContain(
       "connect-src 'self' https://vitals.vercel-insights.com https://va.vercel-scripts.com https://*.r2.cloudflarestorage.com",
     );

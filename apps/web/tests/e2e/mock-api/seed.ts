@@ -161,6 +161,20 @@ const activities = [
         activityId: "act-1",
         imageUrl: "https://images.mock.local/activities/act-1-1.jpg",
         sortOrder: 0,
+        // 가로 사진 (치수 저장됨) — masonry가 원본 비율로 렌더링하는 분기 검증용
+        width: 1600,
+        height: 1200,
+        createdAt: now - 1000 * 60 * 60 * 48,
+        updatedAt: now - 1000 * 60 * 60 * 48,
+      },
+      {
+        id: "act-1-img-2",
+        activityId: "act-1",
+        imageUrl: "https://images.mock.local/activities/act-1-2.jpg",
+        sortOrder: 1,
+        // 레거시 이미지 (치수 미저장) — 클라이언트 폴백 분기 검증용
+        width: null,
+        height: null,
         createdAt: now - 1000 * 60 * 60 * 48,
         updatedAt: now - 1000 * 60 * 60 * 48,
       },
@@ -200,6 +214,9 @@ const exhibitions = [
         exhibitionId: "exh-1",
         imageUrl: "https://images.mock.local/exhibitions/exh-1-1.jpg",
         sortOrder: 0,
+        // 세로 사진 (치수 저장됨) — masonry가 원본 비율로 렌더링하는 분기 검증용
+        width: 1200,
+        height: 1800,
         createdAt: now - 1000 * 60 * 60 * 96,
         updatedAt: now - 1000 * 60 * 60 * 96,
       },
@@ -317,6 +334,38 @@ const marketComments = [
   },
 ];
 
+// 후원 페이지 자료 1건 + 활동 자료 1건 (다운로드 링크 렌더링 e2e 검증용)
+const attachments = [
+  {
+    id: "attach-1",
+    scope: "site_donate" as const,
+    resourceId: null,
+    title: "2026년 상반기 회계 내역",
+    fileUrl:
+      "https://images.mock.local/api/public/media/site/user-president/file/9b2143ea-1111-4222-8333-444455556666-report.pdf?sig=mock",
+    fileName: "2026-상반기-회계내역.pdf",
+    fileSize: 1048576,
+    mimeType: "application/pdf",
+    sortOrder: 0,
+    createdAt: now - 1000 * 60 * 60 * 24,
+    updatedAt: now - 1000 * 60 * 60 * 24,
+  },
+  {
+    id: "attach-2",
+    scope: "activity" as const,
+    resourceId: "act-1",
+    title: "월간연영회 2026년 3월호",
+    fileUrl:
+      "https://images.mock.local/api/public/media/activities/user-manager/file/9b2143ea-1111-4222-8333-444455556667-monthly.pdf?sig=mock",
+    fileName: "월간연영회-2026-03.pdf",
+    fileSize: 2097152,
+    mimeType: "application/pdf",
+    sortOrder: 0,
+    createdAt: now - 1000 * 60 * 60 * 12,
+    updatedAt: now - 1000 * 60 * 60 * 12,
+  },
+];
+
 const recruitingPlan = {
   year: 2026,
   title: "2026 상반기 연영회 모집",
@@ -355,6 +404,7 @@ export const createMockState = (): MockState => ({
     ...activity,
     detailImages: activity.detailImages.map((image) => ({ ...image })),
   })),
+  attachments: attachments.map((attachment) => ({ ...attachment })),
   exhibitions: exhibitions.map((exhibition) => ({
     ...exhibition,
     detailImages: exhibition.detailImages.map((image) => ({ ...image })),

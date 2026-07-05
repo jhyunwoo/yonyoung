@@ -1,0 +1,37 @@
+# yonyoung-web
+
+연세대학교 연영회 웹사이트의 프런트엔드. **Next.js 16 App Router** (React 19, Tailwind v4, cacheComponents, better-auth 클라이언트). Vercel 배포.
+
+## 명령어
+
+```bash
+pnpm dev            # next dev (API는 yonyoung-api를 pnpm dev로 함께 실행)
+pnpm lint           # eslint
+pnpm typecheck      # next typegen + tsc
+pnpm test:unit      # vitest (jsdom)
+pnpm test:e2e:full  # Playwright 전체 (mock API 서버 + 프로덕션 빌드로 실행)
+```
+
+## 아키텍처
+
+- 라우트 그룹: `app/(home)` 공개 사이트, `app/(dashboard)` 관리자. 루트 layout 없음(그룹별 layout)
+- **모든 API 호출은 프록시 경유**: `app/api/[...path]/route.ts` → Hono API. 새 최상위 API prefix를 쓰면 `server/security/api-proxy-prefixes.ts` allowlist에 추가해야 함 (계약 테스트가 누락을 잡음)
+- 계약: `shared/contracts/api-contracts.ts`(타입) + `api-schemas.ts`(zod 미러) — **API 저장소와 수동 동기화**. 응답 스키마의 신규 필드는 `.default(null)` 등으로 구버전 API 응답도 허용하게
+- 공개 데이터 읽기: `features/public/services/public-read-service.ts` — `"use cache"` + `cacheTag(CACHE_TAGS.public.*)` 패턴
+- 관리자 쓰기: `features/dashboard/actions/` 서버 액션 — 공통 코어는 `admin-write-core.ts`(writeRequest), 도메인별 액션 파일에서 사용. 쓰기 성공 시 `updateTag`로 관련 admin/public 태그를 모두 무효화 (`server/cache/tags.ts`)
+- 업로드: `features/dashboard/api/admin-api/upload.ts` presigned 직접 업로드. 이미지 업로드 시 `read-image-dimensions.ts`로 원본 크기를 측정해 함께 저장 (공개 갤러리 masonry용)
+- 공개 갤러리: `app/(home)/_components/masonry-gallery.tsx` (CSS columns, 원본 비율) + `adaptive-gallery-image.tsx` (치수 미상 레거시 이미지 폴백)
+- 첨부파일: 관리자 `attachment-manager.tsx`, 공개 `attachment-list.tsx`, 액션 `actions/attachments.ts`
+
+## 테스트
+
+- 유닛: `tests/unit/**` — 계약 테스트 주의: 모든 button류 요소는 `data-testid`(kebab-case) 필수, 프록시 prefix allowlist 검증 존재
+- e2e: `tests/e2e/**` + mock API `tests/e2e/mock-api/` (server.ts는 이미 큼 — 새 도메인 핸들러는 `attachments-handlers.ts`처럼 별도 모듈로). 시드는 `seed.ts`, 상태 검증은 `support/state-assert.ts`
+- e2e는 `pnpm build` 결과로 실행되므로 소스 수정 후 재실행 필요
+
+## 규칙
+
+- **파일당 500줄 이하**를 지향한다 (특히 클라이언트 컴포넌트 — 상태가 많으면 훅/하위 컴포넌트로 분리)
+- 주석은 **한국어**로 작성한다
+- 공개 페이지는 서버 컴포넌트 우선, `next/image` 사용 (raw `<img>` 지양)
+- CSP·보안 헤더는 `next.config.ts` — img-src는 실제 미디어 호스트 allowlist 유지

@@ -1,6 +1,7 @@
 export const API_PROXY_ALLOWED_PREFIXES = [
   "activities",
   "admin",
+  "attachments",
   "audit",
   "exhibitions",
   "generations",
@@ -13,6 +14,7 @@ export const API_PROXY_ALLOWED_PREFIXES = [
   "public",
   "recruiting",
   "recruiting-plan",
+  "site",
   "site-settings",
   "users",
 ] as const;

@@ -64,10 +64,10 @@ export default function StatsView({ stats: initialStats, error: initialError }: 
     };
   }, [initialStats]);
 
-  const trend = stats?.dailyTrend ?? [];
   const filteredTrend = useMemo(() => {
+    const trend = stats?.dailyTrend ?? [];
     return trend.slice(-period);
-  }, [trend, period]);
+  }, [stats?.dailyTrend, period]);
 
   const totalInPeriod = useMemo(() => {
     return filteredTrend.reduce((acc, curr) => acc + curr.count, 0);
