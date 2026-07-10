@@ -19,22 +19,13 @@ import {
   apiCreateExhibitionImageInputSchema,
   apiCreateExhibitionInputSchema,
   apiCreateGenerationInputSchema,
-  apiCreateGenerationNoticeInputSchema,
-  apiCreateGlobalNoticeInputSchema,
   apiCreateLinktreeInputSchema,
   apiCreateLinktreeItemInputSchema,
-  apiCreateMarketCommentInputSchema,
-  apiCreateMarketItemInputSchema,
   apiExhibitionImageSchema,
   apiExhibitionSchema,
-  apiGenerationNoticeSchema,
   apiGenerationSchema,
-  apiGlobalNoticeSchema,
   apiLinktreeItemSchema,
   apiLinktreeSchema,
-  apiMarketCommentSchema,
-  apiMarketItemSchema,
-  apiMarketPushSubscriptionInputSchema,
   apiMemberProfileUpdateInputSchema,
   apiRecruitingPlanSchema,
   apiSiteSettingsSchema,
@@ -45,13 +36,8 @@ import {
   apiUpdateExhibitionImageInputSchema,
   apiUpdateExhibitionInputSchema,
   apiUpdateGenerationInputSchema,
-  apiUpdateGenerationNoticeInputSchema,
-  apiUpdateGlobalNoticeInputSchema,
   apiUpdateLinktreeInputSchema,
   apiUpdateLinktreeItemInputSchema,
-  apiUpdateMarketCommentInputSchema,
-  apiUpdateMarketItemInputSchema,
-  apiUpdateMarketItemStatusInputSchema,
   apiUpdateSiteSettingsInputSchema,
   apiUpdateUserInputSchema,
   apiUpsertCurrentRecruitingPlanInputSchema,
@@ -66,22 +52,13 @@ import type {
   ApiCreateExhibitionImageInput,
   ApiCreateExhibitionInput,
   ApiCreateGenerationInput,
-  ApiCreateGenerationNoticeInput,
-  ApiCreateGlobalNoticeInput,
   ApiCreateLinktreeInput,
   ApiCreateLinktreeItemInput,
-  ApiCreateMarketCommentInput,
-  ApiCreateMarketItemInput,
   ApiExhibition,
   ApiExhibitionImage,
   ApiGeneration,
-  ApiGenerationNotice,
-  ApiGlobalNotice,
   ApiLinktree,
   ApiLinktreeItem,
-  ApiMarketComment,
-  ApiMarketItem,
-  ApiMarketPushSubscriptionInput,
   ApiMemberProfileUpdateInput,
   ApiRecruitingPlan,
   ApiSiteSettings,
@@ -92,20 +69,13 @@ import type {
   ApiUpdateExhibitionImageInput,
   ApiUpdateExhibitionInput,
   ApiUpdateGenerationInput,
-  ApiUpdateGenerationNoticeInput,
-  ApiUpdateGlobalNoticeInput,
   ApiUpdateLinktreeInput,
   ApiUpdateLinktreeItemInput,
-  ApiUpdateMarketCommentInput,
-  ApiUpdateMarketItemInput,
-  ApiUpdateMarketItemStatusInput,
   ApiUpdateSiteSettingsInput,
   ApiUpdateUserInput,
   ApiUpsertCurrentRecruitingPlanInput,
   ApiUser,
 } from "@/shared/contracts/api-contracts";
-
-const MARKET_PUSH_SUBSCRIPTIONS_PATH = "/market/push-subscriptions";
 
 // 공통 쓰기 코어(writeRequest 등)는 admin-write-core.ts로 분리됨.
 // 기존 import 경로 호환을 위해 결과 타입을 재수출한다.
@@ -484,208 +454,6 @@ export const deleteLinktreeItemAction = async (
     responseSchema: readNoContentSchema,
     accessScope: "manager",
     tags: [CACHE_TAGS.admin.linktree, CACHE_TAGS.public.linktree],
-  });
-};
-
-export const createGenerationNoticeAction = async (
-  generationId: string,
-  input: ApiCreateGenerationNoticeInput,
-): Promise<AdminWriteActionResult<ApiGenerationNotice>> => {
-  const payload = apiCreateGenerationNoticeInputSchema.parse(input);
-  return writeRequest({
-    path: `/generations/${generationId}/notices`,
-    method: "POST",
-    body: payload,
-    responseSchema: apiGenerationNoticeSchema,
-    accessScope: "manager",
-    tags: [CACHE_TAGS.admin.notices],
-  });
-};
-
-export const updateGenerationNoticeAction = async (
-  generationId: string,
-  noticeId: string,
-  input: ApiUpdateGenerationNoticeInput,
-): Promise<AdminWriteActionResult<ApiGenerationNotice>> => {
-  const payload = apiUpdateGenerationNoticeInputSchema.parse(input);
-  return writeRequest({
-    path: `/generations/${generationId}/notices/${noticeId}`,
-    method: "PATCH",
-    body: payload,
-    responseSchema: apiGenerationNoticeSchema,
-    accessScope: "manager",
-    tags: [CACHE_TAGS.admin.notices],
-  });
-};
-
-export const deleteGenerationNoticeAction = async (
-  generationId: string,
-  noticeId: string,
-): Promise<AdminWriteActionResult<void>> => {
-  return writeRequest({
-    path: `/generations/${generationId}/notices/${noticeId}`,
-    method: "DELETE",
-    responseSchema: readNoContentSchema,
-    accessScope: "manager",
-    tags: [CACHE_TAGS.admin.notices],
-  });
-};
-
-export const createGlobalNoticeAction = async (
-  input: ApiCreateGlobalNoticeInput,
-): Promise<AdminWriteActionResult<ApiGlobalNotice>> => {
-  const payload = apiCreateGlobalNoticeInputSchema.parse(input);
-  return writeRequest({
-    path: "/global-notices",
-    method: "POST",
-    body: payload,
-    responseSchema: apiGlobalNoticeSchema,
-    accessScope: "manager",
-    tags: [CACHE_TAGS.admin.notices],
-  });
-};
-
-export const updateGlobalNoticeAction = async (
-  id: string,
-  input: ApiUpdateGlobalNoticeInput,
-): Promise<AdminWriteActionResult<ApiGlobalNotice>> => {
-  const payload = apiUpdateGlobalNoticeInputSchema.parse(input);
-  return writeRequest({
-    path: `/global-notices/${id}`,
-    method: "PATCH",
-    body: payload,
-    responseSchema: apiGlobalNoticeSchema,
-    accessScope: "manager",
-    tags: [CACHE_TAGS.admin.notices],
-  });
-};
-
-export const deleteGlobalNoticeAction = async (
-  id: string,
-): Promise<AdminWriteActionResult<void>> => {
-  return writeRequest({
-    path: `/global-notices/${id}`,
-    method: "DELETE",
-    responseSchema: readNoContentSchema,
-    accessScope: "manager",
-    tags: [CACHE_TAGS.admin.notices],
-  });
-};
-
-export const createMarketItemAction = async (
-  input: ApiCreateMarketItemInput,
-): Promise<AdminWriteActionResult<ApiMarketItem>> => {
-  const payload = apiCreateMarketItemInputSchema.parse(input);
-  return writeRequest({
-    path: "/market/items",
-    method: "POST",
-    body: payload,
-    responseSchema: apiMarketItemSchema,
-    tags: [CACHE_TAGS.admin.market],
-  });
-};
-
-export const updateMarketItemAction = async (
-  id: string,
-  input: ApiUpdateMarketItemInput,
-): Promise<AdminWriteActionResult<ApiMarketItem>> => {
-  const payload = apiUpdateMarketItemInputSchema.parse(input);
-  return writeRequest({
-    path: `/market/items/${id}`,
-    method: "PATCH",
-    body: payload,
-    responseSchema: apiMarketItemSchema,
-    tags: [CACHE_TAGS.admin.market],
-  });
-};
-
-export const updateMarketItemStatusAction = async (
-  id: string,
-  input: ApiUpdateMarketItemStatusInput,
-): Promise<AdminWriteActionResult<ApiMarketItem>> => {
-  const payload = apiUpdateMarketItemStatusInputSchema.parse(input);
-  return writeRequest({
-    path: `/market/items/${id}/status`,
-    method: "PATCH",
-    body: payload,
-    responseSchema: apiMarketItemSchema,
-    tags: [CACHE_TAGS.admin.market],
-  });
-};
-
-export const deleteMarketItemAction = async (
-  id: string,
-): Promise<AdminWriteActionResult<void>> => {
-  return writeRequest({
-    path: `/market/items/${id}`,
-    method: "DELETE",
-    responseSchema: readNoContentSchema,
-    tags: [CACHE_TAGS.admin.market],
-  });
-};
-
-export const createMarketCommentAction = async (
-  id: string,
-  input: ApiCreateMarketCommentInput,
-): Promise<AdminWriteActionResult<ApiMarketComment>> => {
-  const payload = apiCreateMarketCommentInputSchema.parse(input);
-  return writeRequest({
-    path: `/market/items/${id}/comments`,
-    method: "POST",
-    body: payload,
-    responseSchema: apiMarketCommentSchema,
-    tags: [CACHE_TAGS.admin.market],
-  });
-};
-
-export const updateMarketCommentAction = async (
-  id: string,
-  input: ApiUpdateMarketCommentInput,
-): Promise<AdminWriteActionResult<ApiMarketComment>> => {
-  const payload = apiUpdateMarketCommentInputSchema.parse(input);
-  return writeRequest({
-    path: `/market/comments/${id}`,
-    method: "PATCH",
-    body: payload,
-    responseSchema: apiMarketCommentSchema,
-    tags: [CACHE_TAGS.admin.market],
-  });
-};
-
-export const deleteMarketCommentAction = async (
-  id: string,
-): Promise<AdminWriteActionResult<void>> => {
-  return writeRequest({
-    path: `/market/comments/${id}`,
-    method: "DELETE",
-    responseSchema: readNoContentSchema,
-    tags: [CACHE_TAGS.admin.market],
-  });
-};
-
-export const upsertMarketPushSubscriptionAction = async (
-  input: ApiMarketPushSubscriptionInput,
-): Promise<AdminWriteActionResult<void>> => {
-  const payload = apiMarketPushSubscriptionInputSchema.parse(input);
-  return writeRequest({
-    path: MARKET_PUSH_SUBSCRIPTIONS_PATH,
-    method: "POST",
-    body: payload,
-    responseSchema: readNoContentSchema,
-    tags: [CACHE_TAGS.admin.market],
-  });
-};
-
-export const deleteMarketPushSubscriptionAction = async (
-  input: ApiMarketPushSubscriptionInput,
-): Promise<AdminWriteActionResult<void>> => {
-  const payload = apiMarketPushSubscriptionInputSchema.parse(input);
-  return writeRequest({
-    path: MARKET_PUSH_SUBSCRIPTIONS_PATH,
-    method: "DELETE",
-    body: payload,
-    responseSchema: readNoContentSchema,
-    tags: [CACHE_TAGS.admin.market],
   });
 };
 

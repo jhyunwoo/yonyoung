@@ -4,12 +4,7 @@ import type {
   ApiAuditLog,
   ApiExhibition,
   ApiGeneration,
-  ApiGenerationNotice,
-  ApiGlobalNotice,
   ApiLinktree,
-  ApiMarketComment,
-  ApiMarketItem,
-  ApiMarketPushSubscriptionInput,
   ApiRecruitingPlan,
   ApiSiteSettings,
   ApiUser,
@@ -22,11 +17,6 @@ export type MockRole =
   | "manager"
   | "vice_president"
   | "president";
-
-export type MockNoticeState = {
-  generation: ApiGenerationNotice[];
-  global: ApiGlobalNotice[];
-};
 
 export type MockUploadObject = {
   objectKey: string;
@@ -42,15 +32,11 @@ export type MockState = {
   activities: ApiActivity[];
   attachments: ApiAttachment[];
   exhibitions: ApiExhibition[];
-  notices: MockNoticeState;
   linktrees: ApiLinktree[];
-  marketItems: ApiMarketItem[];
-  comments: ApiMarketComment[];
   recruitingPlan: ApiRecruitingPlan | null;
   siteSettings: ApiSiteSettings;
   uploads: Record<string, MockUploadObject>;
   auditLogs: ApiAuditLog[];
-  subscriptions: ApiMarketPushSubscriptionInput[];
 };
 
 export type MockSessionUser = Pick<

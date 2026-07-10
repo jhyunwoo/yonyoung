@@ -19,7 +19,6 @@ describe("features/dashboard/settings/dashboard-settings-menu", () => {
 
     expect(items.map((item) => item.key)).toEqual([
       "settings-profile",
-      "settings-notices",
       "settings-linktree",
       "settings-members",
     ]);
@@ -33,7 +32,6 @@ describe("features/dashboard/settings/dashboard-settings-menu", () => {
 
     expect(items.map((item) => item.key)).toEqual([
       "settings-profile",
-      "settings-notices",
       "settings-linktree",
       "settings-site",
       "settings-recruiting",

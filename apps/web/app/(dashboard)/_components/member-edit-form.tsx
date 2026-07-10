@@ -8,26 +8,17 @@ import type {
 } from "@/shared/contracts/api-contracts";
 import { AdminApiError } from "@/shared/http/http";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
-import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/upload-batch";
 import {
   PRESIGN_PATHS,
   uploadWithPresign,
 } from "@/features/dashboard/api/admin-api/upload";
-import { readFileList } from "@/features/media/upload/image-upload-state";
 import {
   MEMBER_ROLE_OPTIONS,
   coerceMemberRoleValue,
   type MemberRoleValue,
 } from "@/features/dashboard/members/member-role-options";
-import {
-  SHOWCASE_MAX_IMAGES,
-  normalizeShowcaseImageUrls,
-  toShowcaseUploadImageItems,
-} from "@/features/media/upload/showcase-images";
-import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
-import SortableImageGrid from "@/app/(dashboard)/_components/sortable-image-grid";
 import UploadProgressBar from "@/app/(dashboard)/_components/upload-progress-bar";
 
 type MemberEditFormProps = {
@@ -72,21 +63,10 @@ export default function MemberEditForm({
   const [generationIds, setGenerationIds] = useState<string[]>(
     user.generationIds ?? (user.generationId ? [user.generationId] : []),
   );
-  const {
-    items: showcaseImageItems,
-    appendExistingUrls,
-    removeItemById: removeShowcaseImageById,
-    reorderByIds: reorderShowcaseImagesByIds,
-    replaceItems: replaceShowcaseImages,
-  } = useImageUploadState({
-    initialItems: toShowcaseUploadImageItems(user.showcaseImageUrls),
-    maxItems: SHOWCASE_MAX_IMAGES,
-  });
 
   const [allGenerations, setAllGenerations] = useState<ApiGeneration[]>([]);
   const [isLoadingGenerations, setIsLoadingGenerations] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isUploadingShowcaseImages, setIsUploadingShowcaseImages] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
@@ -94,11 +74,7 @@ export default function MemberEditForm({
     null,
   );
   const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
-  const [showcaseUploadProgressPercent, setShowcaseUploadProgressPercent] = useState<
-    number | null
-  >(null);
   const profileFileInputRef = useRef<HTMLInputElement | null>(null);
-  const showcaseFileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setName(user.name);
@@ -113,7 +89,6 @@ export default function MemberEditForm({
     setGenerationIds(
       user.generationIds ?? (user.generationId ? [user.generationId] : []),
     );
-    replaceShowcaseImages(toShowcaseUploadImageItems(user.showcaseImageUrls));
     setSelectedImageFile(null);
     setSelectedImageObjectUrl((previous) => {
       if (previous) {
@@ -122,11 +97,9 @@ export default function MemberEditForm({
       return null;
     });
     setUploadProgressPercent(null);
-    setShowcaseUploadProgressPercent(null);
-    setIsUploadingShowcaseImages(false);
     setErrorMessage(null);
     setSuccessMessage(null);
-  }, [replaceShowcaseImages, user]);
+  }, [user]);
 
   useEffect(() => {
     return () => {
@@ -151,44 +124,6 @@ export default function MemberEditForm({
 
     const objectUrl = URL.createObjectURL(nextFile);
     setSelectedImageObjectUrl(objectUrl);
-  };
-
-  const handleShowcaseFilesChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const files = readFileList(event.target.files);
-    event.target.value = "";
-    if (files.length === 0) {
-      return;
-    }
-
-    const remainingSlots = SHOWCASE_MAX_IMAGES - showcaseImageItems.length;
-    if (remainingSlots <= 0) {
-      setErrorMessage(
-        `대표 작품 사진은 최대 ${SHOWCASE_MAX_IMAGES}장까지 등록할 수 있습니다.`,
-      );
-      setSuccessMessage(null);
-      return;
-    }
-
-    const uploadTargets = files.slice(0, remainingSlots);
-    setIsUploadingShowcaseImages(true);
-    setShowcaseUploadProgressPercent(0);
-    setErrorMessage(null);
-    setSuccessMessage(null);
-
-    try {
-      const uploadedUrls = await uploadFilesWithPresign({
-        presignPath: PRESIGN_PATHS.userProfile,
-        files: uploadTargets,
-        onProgress: setShowcaseUploadProgressPercent,
-      });
-      appendExistingUrls(uploadedUrls);
-    } catch (error) {
-      setErrorMessage(readErrorMessage(error));
-      setSuccessMessage(null);
-    } finally {
-      setIsUploadingShowcaseImages(false);
-      setShowcaseUploadProgressPercent(null);
-    }
   };
 
   useEffect(() => {
@@ -224,14 +159,6 @@ export default function MemberEditForm({
   }, []);
 
   const generationIdSet = useMemo(() => new Set(generationIds), [generationIds]);
-  const showcaseImageUrls = useMemo(
-    () => showcaseImageItems.map((item) => item.imageUrl),
-    [showcaseImageItems],
-  );
-  const isShowcaseUploadDisabled =
-    isSaving ||
-    isUploadingShowcaseImages ||
-    showcaseImageUrls.length >= SHOWCASE_MAX_IMAGES;
 
   const toggleGeneration = (generationId: string) => {
     setGenerationIds((previous) => {
@@ -244,12 +171,6 @@ export default function MemberEditForm({
   };
 
   const handleSubmit = async () => {
-    if (isUploadingShowcaseImages) {
-      setErrorMessage("대표 작품 사진 업로드가 완료된 후 저장해 주세요.");
-      setSuccessMessage(null);
-      return;
-    }
-
     if (name.trim().length === 0) {
       setErrorMessage("이름은 비워둘 수 없습니다.");
       setSuccessMessage(null);
@@ -272,8 +193,6 @@ export default function MemberEditForm({
         });
       }
 
-      const normalizedShowcaseImageUrls = normalizeShowcaseImageUrls(showcaseImageUrls);
-
       const payload: ApiAdminUpdateUserInput = {
         name: name.trim(),
         image: nextImageValue.length > 0 ? nextImageValue : null,
@@ -285,12 +204,10 @@ export default function MemberEditForm({
         phoneNumber: toNullableText(phoneNumber),
         role,
         generationIds,
-        showcaseImageUrls: normalizedShowcaseImageUrls,
       };
 
       const updated = await adminResourceApi.updateUser(user.id, payload);
       setImage(updated.image ?? "");
-      replaceShowcaseImages(toShowcaseUploadImageItems(updated.showcaseImageUrls ?? []));
       setSelectedImageFile(null);
       if (selectedImageObjectUrl) {
         URL.revokeObjectURL(selectedImageObjectUrl);
@@ -305,14 +222,6 @@ export default function MemberEditForm({
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const handleShowcaseUploadClick = () => {
-    if (isShowcaseUploadDisabled) {
-      return;
-    }
-
-    showcaseFileInputRef.current?.click();
   };
 
   const handleProfileImageUploadClick = () => {
@@ -413,64 +322,6 @@ export default function MemberEditForm({
           </div>
 
           <UploadProgressBar progressPercent={uploadProgressPercent} />
-        </div>
-
-        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
-          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-            대표 작품 사진
-          </p>
-          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-            최대 {SHOWCASE_MAX_IMAGES}장
-          </p>
-
-          <button
-            type="button"
-            data-testid="member-edit-showcase-upload"
-            onClick={handleShowcaseUploadClick}
-            disabled={isShowcaseUploadDisabled}
-            className="mt-3 inline-flex rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            파일 업로드
-          </button>
-          <input
-            ref={showcaseFileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleShowcaseFilesChange}
-            disabled={isShowcaseUploadDisabled}
-            className="sr-only"
-          />
-
-          {isUploadingShowcaseImages ? (
-            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
-              대표 작품 사진 업로드 중...
-            </p>
-          ) : null}
-          <UploadProgressBar
-            progressPercent={showcaseUploadProgressPercent}
-            label="대표 작품 사진 업로드 진행률"
-          />
-
-          <div className="mt-3 space-y-2">
-            <p className="text-xs text-slate-600 dark:text-slate-300">
-              마우스로 끌어 대표 작품 사진 순서를 바꿀 수 있습니다.
-            </p>
-            <SortableImageGrid
-              items={showcaseImageItems.map((image, index) => ({
-                id: image.id,
-                imageUrl: image.imageUrl,
-                label: `대표 작품 사진 ${index + 1}`,
-                alt: "대표 작품 사진",
-              }))}
-              onReorder={(nextItems) =>
-                reorderShowcaseImagesByIds(nextItems.map((item) => item.id))
-              }
-              onRemoveItem={removeShowcaseImageById}
-              disabled={isSaving || isUploadingShowcaseImages}
-              emptyMessage="등록된 대표 작품 사진이 없습니다."
-            />
-          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -590,7 +441,7 @@ export default function MemberEditForm({
         <div className="flex items-center gap-2">
           <FormSubmitButton
             data-testid="member-edit-submit"
-            disabled={isSaving || isUploadingShowcaseImages}
+            disabled={isSaving}
             className="inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
             idleLabel="저장"
             pendingLabel="저장 중..."
@@ -600,7 +451,7 @@ export default function MemberEditForm({
               type="button"
               data-testid="member-edit-cancel"
               onClick={onCancel}
-              disabled={isSaving || isUploadingShowcaseImages}
+              disabled={isSaving}
               className="inline-flex items-center rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
               취소

@@ -84,4 +84,51 @@ describe("attachments server actions", () => {
     ).rejects.toThrow();
     expect(writeRequestMock).not.toHaveBeenCalled();
   });
+
+  it("링크(linkUrl)만 전달하는 생성도 허용한다", async () => {
+    await createAttachmentAction({
+      scope: "site_donate",
+      title: "회계 구글 시트",
+      linkUrl: "https://docs.google.com/spreadsheets/d/abc",
+    });
+
+    expect(writeRequestMock).toHaveBeenCalledTimes(1);
+    const arg = writeRequestMock.mock.calls[0]![0] as {
+      body: Record<string, unknown>;
+    };
+    expect(arg.body.linkUrl).toBe("https://docs.google.com/spreadsheets/d/abc");
+    expect(arg.body.fileUrl).toBeUndefined();
+  });
+
+  it("파일 필드 세트와 linkUrl을 동시에 전달하면 zod 검증에서 예외를 던진다", async () => {
+    await expect(
+      createAttachmentAction({
+        ...baseCreateInput,
+        linkUrl: "https://docs.google.com/spreadsheets/d/abc",
+      }),
+    ).rejects.toThrow();
+    expect(writeRequestMock).not.toHaveBeenCalled();
+  });
+
+  it("파일 필드 세트가 불완전하면 zod 검증에서 예외를 던진다", async () => {
+    await expect(
+      createAttachmentAction({
+        scope: "site_donate",
+        title: "회계 자료",
+        fileUrl: "https://api.example.com/api/public/media/site/u/file/x.pdf?sig=a",
+      }),
+    ).rejects.toThrow();
+    expect(writeRequestMock).not.toHaveBeenCalled();
+  });
+
+  it("http(s)가 아닌 linkUrl은 zod 검증에서 예외를 던진다", async () => {
+    await expect(
+      createAttachmentAction({
+        scope: "site_donate",
+        title: "회계 자료",
+        linkUrl: "ftp://example.com/report.pdf",
+      }),
+    ).rejects.toThrow();
+    expect(writeRequestMock).not.toHaveBeenCalled();
+  });
 });

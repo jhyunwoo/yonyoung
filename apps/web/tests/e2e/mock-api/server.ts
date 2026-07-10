@@ -9,13 +9,8 @@ import type {
   ApiExhibitionImage,
   ApiGeneration,
   ApiGenerationMemberSummary,
-  ApiGenerationNotice,
-  ApiGlobalNotice,
   ApiLinktree,
   ApiLinktreeItem,
-  ApiMarketComment,
-  ApiMarketItem,
-  ApiMarketItemStatus,
   ApiRecruitingPlan,
   ApiUser,
   ApiUserResourceHistory,
@@ -322,15 +317,6 @@ const buildAuditActor = (user: ApiUser): NonNullable<ApiAuditLog["actor"]> => ({
   role: user.role,
 });
 
-const buildUserDisplayProfile = (user: ApiUser): ApiMarketItem["seller"] => ({
-  id: user.id,
-  name: user.name,
-  familyName: user.familyName,
-  givenName: user.givenName,
-  image: user.image,
-  role: user.role,
-});
-
 const trackAudit = (
   state: MockState,
   input: {
@@ -409,9 +395,7 @@ const buildUserHistory = (
     .map((log) => ({
       id: log.id,
       resourceType:
-        log.resourceType === "generation" ||
-        log.resourceType === "market_item" ||
-        log.resourceType === "market_comment"
+        log.resourceType === "generation"
           ? "activity"
           : (log.resourceType as ApiUserResourceHistory["items"][number]["resourceType"]),
       resourceId: log.resourceId,
@@ -928,92 +912,6 @@ const server = createServer(async (request, response) => {
         sendData(response, members);
         return;
       }
-
-      if (segments[3] === "notices" && !segments[4] && method === "GET") {
-        const notices = state.notices.generation.filter(
-          (notice) => notice.generationId === generationId,
-        );
-        sendData(response, notices);
-        return;
-      }
-
-      if (segments[3] === "notices" && !segments[4] && method === "POST") {
-        if (!requireWritableRole(response, role)) {
-          return;
-        }
-        const created: ApiGenerationNotice = {
-          id: `gnotice-${crypto.randomUUID()}`,
-          generationId,
-          title: typeof body?.title === "string" ? body.title : "신규 공지",
-          content: typeof body?.content === "string" ? body.content : "",
-          imageUrls: ensureArray(body?.imageUrls as string[]),
-          author: buildUserDisplayProfile(actorUser),
-          createdAt: now(),
-          updatedAt: now(),
-          updatedBy: buildAuditActor(actorUser),
-        };
-        state.notices.generation.unshift(created);
-        trackAudit(state, {
-          resourceType: "generation_notice",
-          resourceId: created.id,
-          action: "create",
-          actor: actorUser,
-          changedFields: ["title", "content", "imageUrls"],
-        });
-        sendData(response, created);
-        return;
-      }
-
-      if (segments[3] === "notices" && segments[4]) {
-        const noticeId = decodeURIComponent(segments[4]);
-        const notice = state.notices.generation.find((item) => item.id === noticeId);
-        if (!notice) {
-          sendError(response, 404, "NOT_FOUND", "Generation notice not found.");
-          return;
-        }
-
-        if (method === "GET") {
-          sendData(response, notice);
-          return;
-        }
-
-        if (method === "PATCH") {
-          if (!requireWritableRole(response, role)) {
-            return;
-          }
-          Object.assign(notice, body ?? {}, {
-            updatedAt: now(),
-            updatedBy: buildAuditActor(actorUser),
-          });
-          trackAudit(state, {
-            resourceType: "generation_notice",
-            resourceId: notice.id,
-            action: "update",
-            actor: actorUser,
-            changedFields: Object.keys(body ?? {}),
-          });
-          sendData(response, notice);
-          return;
-        }
-
-        if (method === "DELETE") {
-          if (!requireWritableRole(response, role)) {
-            return;
-          }
-          state.notices.generation = state.notices.generation.filter(
-            (item) => item.id !== noticeId,
-          );
-          trackAudit(state, {
-            resourceType: "generation_notice",
-            resourceId: noticeId,
-            action: "delete",
-            actor: actorUser,
-            changedFields: ["deleted"],
-          });
-          sendData(response, null);
-          return;
-        }
-      }
     }
 
     // Activities
@@ -1414,87 +1312,6 @@ const server = createServer(async (request, response) => {
       }
     }
 
-    // Global notices
-    if (pathname === "/api/global-notices" && method === "GET") {
-      sendData(response, state.notices.global);
-      return;
-    }
-
-    if (pathname === "/api/global-notices" && method === "POST") {
-      if (!requireWritableRole(response, role)) {
-        return;
-      }
-      const created: ApiGlobalNotice = {
-        id: `notice-${crypto.randomUUID()}`,
-        title: typeof body?.title === "string" ? body.title : "신규 전체 공지",
-        content: typeof body?.content === "string" ? body.content : "",
-        imageUrls: ensureArray(body?.imageUrls as string[]),
-        author: buildUserDisplayProfile(actorUser),
-        createdAt: now(),
-        updatedAt: now(),
-        updatedBy: buildAuditActor(actorUser),
-      };
-      state.notices.global.unshift(created);
-      trackAudit(state, {
-        resourceType: "global_notice",
-        resourceId: created.id,
-        action: "create",
-        actor: actorUser,
-        changedFields: ["title", "content", "imageUrls"],
-      });
-      sendData(response, created);
-      return;
-    }
-
-    if (segments[1] === "global-notices" && segments[2]) {
-      const noticeId = decodeURIComponent(segments[2]);
-      const notice = state.notices.global.find((item) => item.id === noticeId);
-      if (!notice) {
-        sendError(response, 404, "NOT_FOUND", "Global notice not found.");
-        return;
-      }
-
-      if (method === "GET") {
-        sendData(response, notice);
-        return;
-      }
-      if (method === "PATCH") {
-        if (!requireWritableRole(response, role)) {
-          return;
-        }
-        Object.assign(notice, body ?? {}, {
-          updatedAt: now(),
-          updatedBy: buildAuditActor(actorUser),
-        });
-        trackAudit(state, {
-          resourceType: "global_notice",
-          resourceId: notice.id,
-          action: "update",
-          actor: actorUser,
-          changedFields: Object.keys(body ?? {}),
-        });
-        sendData(response, notice);
-        return;
-      }
-      if (method === "DELETE") {
-        if (!requireWritableRole(response, role)) {
-          return;
-        }
-        state.notices.global = state.notices.global.filter(
-          (item) => item.id !== noticeId,
-        );
-        trackAudit(state, {
-          resourceType: "global_notice",
-          resourceId: noticeId,
-          action: "delete",
-          actor: actorUser,
-          changedFields: ["deleted"],
-        });
-        sendData(response, null);
-        return;
-      }
-    }
-
     // Linktree
     if (pathname === "/api/linktree" && method === "GET") {
       sendData(response, state.linktrees);
@@ -1629,199 +1446,6 @@ const server = createServer(async (request, response) => {
           return;
         }
       }
-    }
-
-    // Market
-    if (pathname === "/api/market/items" && method === "GET") {
-      const status = requestUrl.searchParams.get("status");
-      const sellerId = requestUrl.searchParams.get("sellerId");
-      let items = [...state.marketItems];
-      if (status) {
-        items = items.filter((item) => item.status === status);
-      }
-      if (sellerId) {
-        items = items.filter((item) => item.sellerId === sellerId);
-      }
-      sendData(response, items);
-      return;
-    }
-
-    if (pathname === "/api/market/items" && method === "POST") {
-      if (!requireWritableRole(response, role)) {
-        return;
-      }
-      const created: ApiMarketItem = {
-        id: `market-${crypto.randomUUID()}`,
-        sellerId: actorUser.id,
-        name: typeof body?.name === "string" ? body.name : "신규 판매글",
-        imageUrls: ensureArray(body?.imageUrls as string[]),
-        manufacturer: typeof body?.manufacturer === "string" ? body.manufacturer : null,
-        productCode: typeof body?.productCode === "string" ? body.productCode : null,
-        conditionGrade:
-          typeof body?.conditionGrade === "string"
-            ? (body.conditionGrade as ApiMarketItem["conditionGrade"])
-            : null,
-        description: typeof body?.description === "string" ? body.description : null,
-        price: typeof body?.price === "number" ? body.price : 0,
-        status: "selling",
-        seller: buildUserDisplayProfile(actorUser),
-        createdAt: now(),
-        updatedAt: now(),
-        updatedBy: buildAuditActor(actorUser),
-      };
-      state.marketItems.unshift(created);
-      trackAudit(state, {
-        resourceType: "market_item",
-        resourceId: created.id,
-        action: "create",
-        actor: actorUser,
-        changedFields: ["name", "price", "status"],
-      });
-      sendData(response, created);
-      return;
-    }
-
-    if (segments[1] === "market" && segments[2] === "items" && segments[3]) {
-      const itemId = decodeURIComponent(segments[3]);
-      const item = state.marketItems.find((entry) => entry.id === itemId);
-      if (!item) {
-        sendError(response, 404, "NOT_FOUND", "Market item not found.");
-        return;
-      }
-
-      if (!segments[4] && method === "GET") {
-        sendData(response, item);
-        return;
-      }
-
-      if (!segments[4] && method === "PATCH") {
-        if (!requireWritableRole(response, role)) {
-          return;
-        }
-        Object.assign(item, body ?? {}, {
-          updatedAt: now(),
-          updatedBy: buildAuditActor(actorUser),
-        });
-        sendData(response, item);
-        return;
-      }
-
-      if (!segments[4] && method === "DELETE") {
-        if (!requireWritableRole(response, role)) {
-          return;
-        }
-        state.marketItems = state.marketItems.filter((entry) => entry.id !== itemId);
-        state.comments = state.comments.filter((entry) => entry.itemId !== itemId);
-        sendData(response, null);
-        return;
-      }
-
-      if (segments[4] === "status" && method === "PATCH") {
-        if (!requireWritableRole(response, role)) {
-          return;
-        }
-        const status = normalizeRole(body?.status) as ApiMarketItemStatus | null;
-        if (!status || !["selling", "reserved", "sold"].includes(status)) {
-          sendError(response, 400, "BAD_REQUEST", "Invalid market status.");
-          return;
-        }
-        item.status = status;
-        item.updatedAt = now();
-        item.updatedBy = buildAuditActor(actorUser);
-        sendData(response, item);
-        return;
-      }
-
-      if (segments[4] === "comments" && method === "GET") {
-        const comments = state.comments.filter((entry) => entry.itemId === itemId);
-        sendData(response, comments);
-        return;
-      }
-
-      if (segments[4] === "comments" && method === "POST") {
-        if (!requireWritableRole(response, role)) {
-          return;
-        }
-        const created: ApiMarketComment = {
-          id: `market-comment-${crypto.randomUUID()}`,
-          itemId,
-          author: buildUserDisplayProfile(actorUser),
-          content: typeof body?.content === "string" ? body.content : "",
-          createdAt: now(),
-          updatedAt: now(),
-          updatedBy: buildAuditActor(actorUser),
-        };
-        state.comments.push(created);
-        sendData(response, created);
-        return;
-      }
-    }
-
-    if (segments[1] === "market" && segments[2] === "comments" && segments[3]) {
-      const commentId = decodeURIComponent(segments[3]);
-      const comment = state.comments.find((entry) => entry.id === commentId);
-      if (!comment) {
-        sendError(response, 404, "NOT_FOUND", "Market comment not found.");
-        return;
-      }
-
-      if (method === "PATCH") {
-        if (!requireWritableRole(response, role)) {
-          return;
-        }
-        if (typeof body?.content === "string") {
-          comment.content = body.content;
-        }
-        comment.updatedAt = now();
-        comment.updatedBy = buildAuditActor(actorUser);
-        sendData(response, comment);
-        return;
-      }
-
-      if (method === "DELETE") {
-        if (!requireWritableRole(response, role)) {
-          return;
-        }
-        state.comments = state.comments.filter((entry) => entry.id !== commentId);
-        sendData(response, null);
-        return;
-      }
-    }
-
-    if (pathname === "/api/market/push-subscriptions" && method === "POST") {
-      if (!requireWritableRole(response, role)) {
-        return;
-      }
-      const endpoint = typeof body?.endpoint === "string" ? body.endpoint : "";
-      const p256dh = typeof body?.p256dh === "string" ? body.p256dh : "";
-      const auth = typeof body?.auth === "string" ? body.auth : "";
-      if (!endpoint || !p256dh || !auth) {
-        sendError(response, 400, "BAD_REQUEST", "Invalid push subscription payload.");
-        return;
-      }
-      const existing = state.subscriptions.find(
-        (subscription) => subscription.endpoint === endpoint,
-      );
-      if (existing) {
-        existing.p256dh = p256dh;
-        existing.auth = auth;
-      } else {
-        state.subscriptions.push({ endpoint, p256dh, auth });
-      }
-      sendData(response, null);
-      return;
-    }
-
-    if (pathname === "/api/market/push-subscriptions" && method === "DELETE") {
-      if (!requireWritableRole(response, role)) {
-        return;
-      }
-      const endpoint = typeof body?.endpoint === "string" ? body.endpoint : "";
-      state.subscriptions = state.subscriptions.filter(
-        (subscription) => subscription.endpoint !== endpoint,
-      );
-      sendData(response, null);
-      return;
     }
 
     // Site settings

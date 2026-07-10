@@ -107,6 +107,8 @@ export const handleAttachmentRoutes = (ctx: AttachmentHandlerContext): boolean =
       return true;
     }
 
+    // 실제 API처럼 파일 필드 세트와 linkUrl 중 하나만 채운다
+    const linkUrl = typeof body?.linkUrl === "string" ? body.linkUrl : null;
     const created: ApiAttachment = {
       id: `attach-${crypto.randomUUID()}`,
       scope,
@@ -117,13 +119,23 @@ export const handleAttachmentRoutes = (ctx: AttachmentHandlerContext): boolean =
             ? body.resourceId
             : null,
       title: typeof body?.title === "string" ? body.title : "첨부파일",
-      fileUrl:
-        typeof body?.fileUrl === "string"
+      fileUrl: linkUrl
+        ? null
+        : typeof body?.fileUrl === "string"
           ? body.fileUrl
           : "https://images.mock.local/api/public/media/site/user/file/mock.pdf?sig=mock",
-      fileName: typeof body?.fileName === "string" ? body.fileName : "mock.pdf",
-      fileSize: typeof body?.fileSize === "number" ? body.fileSize : 1024,
-      mimeType: typeof body?.mimeType === "string" ? body.mimeType : "application/pdf",
+      fileName: linkUrl
+        ? null
+        : typeof body?.fileName === "string"
+          ? body.fileName
+          : "mock.pdf",
+      fileSize: linkUrl ? null : typeof body?.fileSize === "number" ? body.fileSize : 1024,
+      mimeType: linkUrl
+        ? null
+        : typeof body?.mimeType === "string"
+          ? body.mimeType
+          : "application/pdf",
+      linkUrl,
       sortOrder: typeof body?.sortOrder === "number" ? body.sortOrder : 0,
       createdAt: Date.now(),
       updatedAt: Date.now(),

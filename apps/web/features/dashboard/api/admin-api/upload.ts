@@ -11,9 +11,7 @@ export const PRESIGN_PATHS = {
   activityFile: "/activities/presign/file",
   exhibitionCover: "/exhibitions/presign/cover",
   exhibitionDetail: "/exhibitions/presign/detail",
-  noticeImage: "/notices/presign/image",
   recruitingImage: "/recruiting/presign/image",
-  marketImage: "/market/presign/image",
   userProfile: "/users/presign/profile",
   // 후원 페이지 첨부파일 (회장/부회장 전용)
   siteFile: "/site/presign/file",

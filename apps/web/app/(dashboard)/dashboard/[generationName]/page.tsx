@@ -11,7 +11,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import DashboardR2StorageUsage from "@/app/(dashboard)/_components/dashboard-r2-storage-usage";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
-import GenerationNoticeOverview from "@/app/(dashboard)/dashboard/[generationName]/generation-notice-overview";
 
 const sortByStartDateDesc = <T extends { startDate: number }>(list: T[]): T[] => {
   return [...list].sort((left, right) => right.startDate - left.startDate);
@@ -19,7 +18,6 @@ const sortByStartDateDesc = <T extends { startDate: number }>(list: T[]): T[] =>
 
 const GenerationDashboardSummary = async (input: {
   generationId: string;
-  generationPath: string;
 }) => {
   const cookieHeader = await readCookieHeader();
   const [activities, exhibitions, generationMembers] = await Promise.all([
@@ -78,12 +76,7 @@ const GenerationDashboardSummary = async (input: {
         <DashboardR2StorageUsage />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-        <GenerationNoticeOverview
-          generationId={input.generationId}
-          generationPath={input.generationPath}
-        />
-
+      <div className="grid gap-4">
         <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">
             최근 활동
@@ -149,11 +142,6 @@ export default async function GenerationDashboardPage({
 
   const items = [
     {
-      title: "공지 관리",
-      description: "이 기수 공지를 확인하고 새로 작성하거나 수정할 수 있습니다.",
-      href: `${generation.path}/notices`,
-    },
-    {
       title: "활동 관리",
       description: "활동 내용을 등록하고 수정할 수 있습니다.",
       href: `${generation.path}/activities`,
@@ -184,7 +172,7 @@ export default async function GenerationDashboardPage({
             활동 기간: {formatKoreanDateRange(generation.startDate, generation.endDate)}
           </p>
           <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
-            이 화면에서 공지, 최근 활동, 최근 전시 등 핵심 정보를 한 번에 확인할 수
+            이 화면에서 최근 활동, 최근 전시 등 핵심 정보를 한 번에 확인할 수
             있습니다.
           </p>
           <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
@@ -210,18 +198,14 @@ export default async function GenerationDashboardPage({
                   ))}
                 </div>
                 <Skeleton className="h-32 w-full" />
-                <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-                  <Skeleton className="h-52 w-full" />
+                <div className="grid gap-4">
                   <Skeleton className="h-52 w-full" />
                 </div>
               </div>
             </section>
           }
         >
-          <GenerationDashboardSummary
-            generationId={generation.id}
-            generationPath={generation.path}
-          />
+          <GenerationDashboardSummary generationId={generation.id} />
         </Suspense>
 
         <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">

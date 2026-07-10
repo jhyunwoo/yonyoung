@@ -66,7 +66,7 @@ describe("server/security/api-proxy-prefixes", () => {
 
   it("keeps known high-risk dashboard prefixes reachable through the proxy", () => {
     expect(API_PROXY_ALLOWED_PREFIXES).toEqual(
-      expect.arrayContaining(["audit", "notices", "recruiting"]),
+      expect.arrayContaining(["audit", "attachments", "recruiting"]),
     );
   });
 });

@@ -9,13 +9,6 @@ import {
   sortLinktreesByName,
 } from "@/app/(dashboard)/_components/linktree-shared";
 import {
-  buildNoticePreview,
-  buildRoleLabel,
-  normalizeNoticeImageUrls,
-  normalizeNotices,
-  readNoticeErrorMessage,
-} from "@/app/(dashboard)/_components/notice-shared";
-import {
   buildActivityImageSortPayload,
   formatTimestampToDateInput as formatActivityDateInput,
   parseDateInputToTimestamp as parseActivityDateInput,
@@ -45,16 +38,10 @@ import {
   sortGenerationsBySortOrderDesc,
   validateGenerationFormInput,
 } from "@/app/(dashboard)/dashboard/settings/generations/generation-management-shared";
-import {
-  formatPrice,
-  isMarketAdminRole,
-  readMarketErrorMessage,
-} from "@/app/(dashboard)/dashboard/market/market-shared";
 import type {
   ApiActivity,
   ApiExhibition,
   ApiGeneration,
-  ApiGlobalNotice,
   ApiLinktree,
   ApiUser,
 } from "@/shared/contracts/api-contracts";
@@ -83,50 +70,6 @@ describe("dashboard shared helpers", () => {
     expect(
       readLinktreeErrorMessage(new AdminApiError({ status: 400, message: "bad" })),
     ).toBe("bad");
-  });
-
-  it("handles notice helpers", () => {
-    const notices = normalizeNotices([
-      {
-        id: "n1",
-        title: "공지 1",
-        content: "<p>첫 공지</p>",
-        imageUrls: [],
-        createdAt: 10,
-        updatedAt: 10,
-        updatedBy: null,
-        author: { id: "u1", name: "A", image: null, role: "manager" },
-      },
-      {
-        id: "n2",
-        title: "공지 2",
-        content: "<p>둘째 공지</p>",
-        imageUrls: [],
-        createdAt: 20,
-        updatedAt: 20,
-        updatedBy: null,
-        author: { id: "u1", name: "A", image: null, role: "manager" },
-      },
-    ] as unknown as ApiGlobalNotice[]);
-
-    expect(notices.map((notice) => notice.id)).toEqual(["n2", "n1"]);
-    expect(buildRoleLabel("vice_president")).toBe("부회장");
-    expect(buildRoleLabel(null)).toBe("역할 미지정");
-    expect(buildNoticePreview("<p>Hello <b>World</b></p>", 6)).toBe("Hello...");
-
-    expect(
-      normalizeNoticeImageUrls([
-        "https://a.com/a.jpg",
-        " https://a.com/a.jpg ",
-        "http://b.com/b.jpg",
-        "not-url",
-      ]),
-    ).toEqual(["https://a.com/a.jpg", "http://b.com/b.jpg"]);
-
-    expect(readNoticeErrorMessage(new Error("x"))).toBe("x");
-    expect(readNoticeErrorMessage(null)).toBe(
-      "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.",
-    );
   });
 
   it("handles activity helpers", () => {
@@ -301,11 +244,4 @@ describe("dashboard shared helpers", () => {
     ).toEqual(["u2"]);
   });
 
-  it("handles market helpers", () => {
-    expect(formatPrice(1234567)).toBe("1,234,567원");
-    expect(readMarketErrorMessage(new Error("market fail"))).toBe("market fail");
-    expect(readMarketErrorMessage(null)).toBe("요청 처리 중 오류가 발생했습니다.");
-    expect(isMarketAdminRole("president")).toBe(true);
-    expect(isMarketAdminRole("regular_member")).toBe(false);
-  });
 });

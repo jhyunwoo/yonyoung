@@ -23,6 +23,25 @@ test.describe("attachments (첨부파일)", () => {
     await expect(downloadLink).toHaveAttribute("href", /api\/public\/media/);
   });
 
+  test("donate page renders external link attachments opening in a new tab", async ({
+    page,
+  }) => {
+    // 시드: attach-3 (site_donate scope, linkUrl 항목 "2026년 회계 구글 시트")
+    await page.goto("/donate", { waitUntil: "domcontentloaded" });
+
+    const attachmentList = page.getByTestId("donate-attachment-list");
+    await expect(attachmentList).toBeVisible();
+
+    const linkRow = attachmentList.locator("a", { hasText: "2026년 회계 구글 시트" });
+    await expect(linkRow).toHaveAttribute(
+      "href",
+      "https://docs.google.com/spreadsheets/d/mock-sheet-id",
+    );
+    await expect(linkRow).toHaveAttribute("target", "_blank");
+    await expect(linkRow).not.toHaveAttribute("download", /.+/);
+    await expect(linkRow).toContainText("링크 열기");
+  });
+
   test("record detail page renders activity attachments", async ({ page }) => {
     // 시드: attach-2 (activity scope, act-1 소속)
     await page.goto("/archive/records/act-1", { waitUntil: "domcontentloaded" });
@@ -78,6 +97,39 @@ test.describe("attachments (첨부파일)", () => {
     expect(
       stateAfterDelete.attachments.some((attachment) => attachment.id === created!.id),
     ).toBe(false);
+  });
+
+  test("president can create a link attachment (linkUrl) through the API", async ({
+    request,
+  }, testInfo) => {
+    const namespace = makeNamespace(
+      testInfo.project.name,
+      testInfo.parallelIndex,
+      "attachments-link",
+    );
+    await resetMockState(request, namespace);
+
+    const createResponse = await request.post(`${MOCK_API_BASE_URL}/api/attachments`, {
+      headers: {
+        "x-mock-worker": namespace,
+        "x-mock-role": "president",
+      },
+      data: {
+        scope: "site_donate",
+        title: "E2E 회계 구글 시트",
+        linkUrl: "https://docs.google.com/spreadsheets/d/e2e-sheet",
+        sortOrder: 2,
+      },
+    });
+    expect(createResponse.status()).toBe(201);
+
+    const state = await getMockState(request, namespace);
+    const created = state.attachments.find(
+      (attachment) => attachment.title === "E2E 회계 구글 시트",
+    );
+    expect(created).toBeDefined();
+    expect(created!.linkUrl).toBe("https://docs.google.com/spreadsheets/d/e2e-sheet");
+    expect(created!.fileUrl).toBeNull();
   });
 
   test("manager cannot manage donate attachments (site_donate is leadership-only)", async ({

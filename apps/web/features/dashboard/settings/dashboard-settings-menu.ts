@@ -15,13 +15,6 @@ const SETTINGS_MENU_ITEMS: DashboardSettingsMenuItem[] = [
     href: "/dashboard/profile",
   },
   {
-    key: "settings-notices",
-    label: "전체 공지 관리",
-    description: "모든 공지를 확인하고 새로 올리거나 고칠 수 있습니다.",
-    href: "/dashboard/settings/notices",
-    hiddenForMemberLikeRole: true,
-  },
-  {
     key: "settings-linktree",
     label: "링크 모음 관리",
     description: "홈페이지에 보여 줄 링크 목록을 정리할 수 있습니다.",

@@ -14,10 +14,8 @@ import {
   House,
   Image as ImageIcon,
   LogOut,
-  Megaphone,
   Menu,
   Settings,
-  Store,
   UserCircle2,
   Users,
   X,
@@ -136,13 +134,6 @@ const SidebarContent = (input: {
           active: input.selectedGenerationScopedPath === "/",
         },
         {
-          key: "generation-notices",
-          href: `${input.selectedGeneration.path}/notices`,
-          label: "공지",
-          Icon: Megaphone,
-          active: input.selectedGenerationScopedPath?.startsWith("/notices") === true,
-        },
-        {
           key: "generation-activities",
           href: `${input.selectedGeneration.path}/activities`,
           label: "활동",
@@ -162,15 +153,6 @@ const SidebarContent = (input: {
           label: "기수 멤버",
           Icon: Users,
           active: input.selectedGenerationScopedPath?.startsWith("/members") === true,
-        },
-        {
-          key: "market",
-          href: "/dashboard/market",
-          label: "연영장터",
-          Icon: Store,
-          active:
-            input.pathname === "/dashboard/market" ||
-            input.pathname.startsWith("/dashboard/market/"),
         },
         {
           key: "stats",
@@ -199,15 +181,6 @@ const SidebarContent = (input: {
             input.pathname === generation.path ||
             input.pathname.startsWith(`${generation.path}/`),
         })),
-        {
-          key: "market",
-          href: "/dashboard/market",
-          label: "연영장터",
-          Icon: Store,
-          active:
-            input.pathname === "/dashboard/market" ||
-            input.pathname.startsWith("/dashboard/market/"),
-        },
         {
           key: "stats",
           href: "/dashboard/stats",
@@ -495,12 +468,7 @@ const resolveActiveGenerationFromPath = (
 
   const nextPathname = pathname.slice("/dashboard/".length);
   const routeName = nextPathname.split("/")[0];
-  if (
-    !routeName ||
-    routeName === "settings" ||
-    routeName === "profile" ||
-    routeName === "market"
-  ) {
+  if (!routeName || routeName === "settings" || routeName === "profile") {
     return null;
   }
 
@@ -518,12 +486,7 @@ const resolveSelectedGenerationScopedPath = (pathname: string): string | null =>
   }
 
   const routeName = segments[1];
-  if (
-    !routeName ||
-    routeName === "settings" ||
-    routeName === "profile" ||
-    routeName === "market"
-  ) {
+  if (!routeName || routeName === "settings" || routeName === "profile") {
     return null;
   }
 
@@ -596,17 +559,10 @@ export default function DashboardShell({
       return "설정";
     }
 
-    if (pathname.startsWith("/dashboard/market")) {
-      return "연영장터";
-    }
-
     if (selectedGeneration) {
       if (selectedGenerationScopedPath === "/") {
         const generationName = selectedGeneration.name.trim();
         return generationName.length > 0 ? generationName : "기수 홈";
-      }
-      if (selectedGenerationScopedPath?.startsWith("/notices")) {
-        return "공지";
       }
       if (selectedGenerationScopedPath?.startsWith("/exhibitions")) {
         return "전시";

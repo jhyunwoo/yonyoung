@@ -51,10 +51,6 @@ const readHistoryResourceLabel = (
       return "활동";
     case "exhibition":
       return "전시";
-    case "generation_notice":
-      return "기수 공지";
-    case "global_notice":
-      return "전체 공지";
     case "linktree":
       return "링크 모음";
     case "linktree_item":
@@ -82,8 +78,6 @@ const resolveHistoryPath = (
   generationNamesById: Record<string, string>,
 ): string | null => {
   switch (item.resourceType) {
-    case "global_notice":
-      return `/dashboard/settings/notices/${item.resourceId}`;
     case "linktree":
       return `/dashboard/settings/linktree/${item.resourceId}`;
     case "linktree_item":
@@ -91,8 +85,7 @@ const resolveHistoryPath = (
         ? `/dashboard/settings/linktree/${item.linktreeId}/items/${item.resourceId}`
         : null;
     case "activity":
-    case "exhibition":
-    case "generation_notice": {
+    case "exhibition": {
       if (!item.generationId) {
         return null;
       }
@@ -105,10 +98,7 @@ const resolveHistoryPath = (
       if (item.resourceType === "activity") {
         return `${generationPath}/activities/${item.resourceId}`;
       }
-      if (item.resourceType === "exhibition") {
-        return `${generationPath}/exhibitions/${item.resourceId}`;
-      }
-      return `${generationPath}/notices/${item.resourceId}`;
+      return `${generationPath}/exhibitions/${item.resourceId}`;
     }
     default:
       return null;
