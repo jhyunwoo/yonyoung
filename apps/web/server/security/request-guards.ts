@@ -52,10 +52,18 @@ const readContentLength = (request: NextRequest): number | null => {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 };
 
+const parseOrigin = (value: string): string | null => {
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+};
+
 const readRequestOrigin = (request: NextRequest): string | null => {
   const origin = request.headers.get("origin")?.trim();
   if (origin) {
-    return origin;
+    return parseOrigin(origin);
   }
 
   const referer = request.headers.get("referer")?.trim();
@@ -63,11 +71,19 @@ const readRequestOrigin = (request: NextRequest): string | null => {
     return null;
   }
 
-  try {
-    return new URL(referer).origin;
-  } catch {
-    return null;
+  return parseOrigin(referer);
+};
+
+const resolveExpectedRequestOrigin = (request: NextRequest): string | null => {
+  const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (configuredSiteUrl) {
+    // In a standalone Next.js deployment behind a reverse proxy, nextUrl can expose
+    // the internal listener (for example, https://localhost:3000). The configured
+    // public site URL is the trusted browser-facing origin in that environment.
+    return parseOrigin(configuredSiteUrl);
   }
+
+  return request.nextUrl.origin;
 };
 
 const isInvalidPathSegment = (segment: string): boolean => {
@@ -118,7 +134,8 @@ export const enforceSameOriginProtection = (
   }
 
   const requestOrigin = readRequestOrigin(request);
-  if (!requestOrigin || requestOrigin !== request.nextUrl.origin) {
+  const expectedOrigin = resolveExpectedRequestOrigin(request);
+  if (!requestOrigin || !expectedOrigin || requestOrigin !== expectedOrigin) {
     return createJsonErrorResponse(403, "Same-origin requests are required.");
   }
 
