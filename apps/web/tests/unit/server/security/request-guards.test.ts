@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { NextRequest } from "next/server";
 import {
   API_PROXY_BODY_LIMIT_BYTES,
@@ -20,6 +20,21 @@ const createRequest = (input: {
   });
 
 describe("server/security/request-guards", () => {
+  const originalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+  beforeEach(() => {
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+  });
+
+  afterEach(() => {
+    if (originalSiteUrl === undefined) {
+      delete process.env.NEXT_PUBLIC_SITE_URL;
+      return;
+    }
+
+    process.env.NEXT_PUBLIC_SITE_URL = originalSiteUrl;
+  });
+
   it("allows same-origin state-changing requests with the CSRF header", () => {
     const request = createRequest({
       headers: {
@@ -30,6 +45,43 @@ describe("server/security/request-guards", () => {
     });
 
     expect(enforceSameOriginProtection(request, { requireCsrfHeader: true })).toBeNull();
+  });
+
+  it("uses the configured public site origin behind a reverse proxy", async () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://yonyoung.yonsei.ac.kr";
+
+    const publicOriginRequest = createRequest({
+      url: "https://localhost:3000/api/auth/sign-in/social",
+      headers: {
+        origin: "https://yonyoung.yonsei.ac.kr",
+        "sec-fetch-site": "same-origin",
+        [CSRF_HEADER_NAME]: CSRF_HEADER_VALUE,
+      },
+    });
+
+    expect(
+      enforceSameOriginProtection(publicOriginRequest, {
+        requireCsrfHeader: true,
+      }),
+    ).toBeNull();
+
+    const internalOriginRequest = createRequest({
+      url: "https://localhost:3000/api/auth/sign-in/social",
+      headers: {
+        origin: "https://localhost:3000",
+        "sec-fetch-site": "same-origin",
+        [CSRF_HEADER_NAME]: CSRF_HEADER_VALUE,
+      },
+    });
+    const internalOriginResponse = enforceSameOriginProtection(internalOriginRequest, {
+      requireCsrfHeader: true,
+    });
+
+    expect(internalOriginResponse?.status).toBe(403);
+    await expect(internalOriginResponse?.json()).resolves.toEqual({
+      ok: false,
+      message: "Same-origin requests are required.",
+    });
   });
 
   it("blocks cross-site or missing-origin mutation requests", async () => {
