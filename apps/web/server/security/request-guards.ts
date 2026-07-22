@@ -74,7 +74,7 @@ const readRequestOrigin = (request: NextRequest): string | null => {
   return parseOrigin(referer);
 };
 
-const resolveExpectedRequestOrigin = (request: NextRequest): string | null => {
+export const resolvePublicRequestOrigin = (request: NextRequest): string | null => {
   const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   if (configuredSiteUrl) {
     // In a standalone Next.js deployment behind a reverse proxy, nextUrl can expose
@@ -134,7 +134,7 @@ export const enforceSameOriginProtection = (
   }
 
   const requestOrigin = readRequestOrigin(request);
-  const expectedOrigin = resolveExpectedRequestOrigin(request);
+  const expectedOrigin = resolvePublicRequestOrigin(request);
   if (!requestOrigin || !expectedOrigin || requestOrigin !== expectedOrigin) {
     return createJsonErrorResponse(403, "Same-origin requests are required.");
   }
