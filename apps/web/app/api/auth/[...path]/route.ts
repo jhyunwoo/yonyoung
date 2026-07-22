@@ -6,6 +6,7 @@ import {
   enforceRequestBodyLimit,
   enforceSameOriginProtection,
   normalizeProxyPath,
+  resolvePublicRequestOrigin,
 } from "@/server/security/request-guards";
 import { fetchWithTimeout, FetchTimeoutError } from "@/server/http/fetch-with-timeout";
 
@@ -29,8 +30,22 @@ const HOP_BY_HOP_HEADERS = new Set([
   "content-length",
 ]);
 
-const resolveForwardedProtocol = (request: NextRequest): "http" | "https" => {
-  return request.nextUrl.protocol === "http:" ? "http" : "https";
+const resolveForwardedRequestOrigin = (
+  request: NextRequest,
+): { host: string; protocol: "http" | "https" } => {
+  const publicOrigin = resolvePublicRequestOrigin(request);
+  if (!publicOrigin) {
+    return {
+      host: request.nextUrl.host,
+      protocol: request.nextUrl.protocol === "http:" ? "http" : "https",
+    };
+  }
+
+  const publicUrl = new URL(publicOrigin);
+  return {
+    host: publicUrl.host,
+    protocol: publicUrl.protocol === "http:" ? "http" : "https",
+  };
 };
 
 const createProxyResponse = (response: Response): NextResponse => {
@@ -108,6 +123,7 @@ const handle = async (
   const upstreamUrl = `${getApiBaseUrl()}/api/auth/${joinedPath}${request.nextUrl.search}`;
   const hasRequestBody = request.method !== "GET" && request.method !== "HEAD";
   const requestBody = hasRequestBody ? request.body : undefined;
+  const forwardedRequestOrigin = resolveForwardedRequestOrigin(request);
 
   let upstreamResponse: Response;
   try {
@@ -117,8 +133,8 @@ const handle = async (
         method: request.method,
         headers: buildUpstreamProxyHeaders(request, {
           extraHeaders: {
-            "x-forwarded-host": request.nextUrl.host,
-            "x-forwarded-proto": resolveForwardedProtocol(request),
+            "x-forwarded-host": forwardedRequestOrigin.host,
+            "x-forwarded-proto": forwardedRequestOrigin.protocol,
           },
         }),
         body: requestBody,
