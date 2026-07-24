@@ -98,14 +98,13 @@ export default function HeroShowcase({
                     src={resolvedFeaturedExhibition.coverImageUrl}
                     alt={resolvedFeaturedExhibition.title}
                     fill
+                    priority
                     unoptimized={shouldUseUnoptimizedImage(
                       resolvedFeaturedExhibition.coverImageUrl,
                     )}
                     sizes="(min-width: 768px) 40vw, 100vw"
                     className="h-full w-full object-cover"
                     data-testid="home-hero-exhibition-image"
-                    fetchPriority="high"
-                    preload
                   />
                 </div>
                 <div className="space-y-2 p-5" data-testid="home-hero-exhibition-meta">

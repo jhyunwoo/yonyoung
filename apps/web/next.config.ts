@@ -108,11 +108,20 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   poweredByHeader: false,
   images: {
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       ...buildPublicMediaRemotePatterns(),
       {
         protocol: "https",
         hostname: "storage.yonyoung.moveto.kr",
+      },
+      {
+        protocol: "http",
+        hostname: "storage.yonyoung.moveto.kr",
+      },
+      {
+        protocol: "https",
+        hostname: "*.yonyoung.moveto.kr",
       },
       {
         protocol: "https",
