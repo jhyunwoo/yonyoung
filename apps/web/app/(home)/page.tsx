@@ -97,7 +97,7 @@ export default async function HomePage() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "연영회",
-    alternateName: "YonYoungHoe",
+    alternateName: "YonYoung",
     url: siteUrl,
   };
   const websiteJsonLd = {
