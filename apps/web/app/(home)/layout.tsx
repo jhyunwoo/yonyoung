@@ -7,8 +7,6 @@ import SiteFooter from "@/app/(home)/_components/site-footer";
 import PublicHeaderSafeArea from "@/app/(home)/_components/public-header-safe-area";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 import { WebVitalsReporter } from "@/app/_components/web-vitals-reporter";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Analytics } from "@vercel/analytics/next";
 
 const ROOT_FONT_FAMILY =
   '"Pretendard Variable", "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
@@ -57,8 +55,6 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <WebVitalsReporter />
         </Suspense>
-        <SpeedInsights />
-        <Analytics />
         <Suspense
           fallback={
             <div
