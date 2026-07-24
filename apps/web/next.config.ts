@@ -14,8 +14,6 @@ type RemoteImagePattern = {
 };
 const CSP_CONNECT_SOURCES = [
   "'self'",
-  "https://vitals.vercel-insights.com",
-  "https://va.vercel-scripts.com",
   "https://*.r2.cloudflarestorage.com",
 ] as const;
 
@@ -60,7 +58,7 @@ const contentSecurityPolicy = [
   // 'unsafe-inline'은 cacheComponents(정적 프리렌더)와 nonce 기반 CSP가 호환되지 않아 유지한다.
   // 리치 텍스트는 서버에서 allowlist 필터(FilterXSS)로 정화되므로 실질 XSS 표면은 제한적이다.
   "style-src 'self' 'unsafe-inline'",
-  `script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com${!isProduction ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline'${!isProduction ? " 'unsafe-eval'" : ""}`,
   `connect-src ${CSP_CONNECT_SOURCES.join(" ")}`,
   "worker-src 'self' blob:",
   ...(isProduction ? ["upgrade-insecure-requests"] : []),

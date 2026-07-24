@@ -20,7 +20,7 @@ describe("next.config security headers", () => {
     );
     expect(headers.get("Content-Security-Policy")).not.toContain("img-src 'self' data: blob: https:;");
     expect(headers.get("Content-Security-Policy")).toContain(
-      "connect-src 'self' https://vitals.vercel-insights.com https://va.vercel-scripts.com https://*.r2.cloudflarestorage.com",
+      "connect-src 'self' https://*.r2.cloudflarestorage.com",
     );
     expect(headers.get("X-Content-Type-Options")).toBe("nosniff");
     expect(headers.get("Referrer-Policy")).toBe("strict-origin-when-cross-origin");
