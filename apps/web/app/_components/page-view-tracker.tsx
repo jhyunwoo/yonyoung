@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { CSRF_HEADER_NAME, CSRF_HEADER_VALUE } from "@/shared/security/csrf";
 
 type PageViewTrackerProps = {
   pageType: "home" | "activity" | "exhibition" | "about" | "donate" | "linktree";
@@ -13,7 +14,10 @@ export default function PageViewTracker({ pageType, resourceId }: PageViewTracke
     if ((pageType === "activity" || pageType === "exhibition") && resourceId) {
       fetch("/api/public/views", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          [CSRF_HEADER_NAME]: CSRF_HEADER_VALUE,
+        },
         body: JSON.stringify({
           resourceType: pageType,
           resourceId,
@@ -26,7 +30,7 @@ export default function PageViewTracker({ pageType, resourceId }: PageViewTracke
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-yonyoung-csrf": "1",
+        [CSRF_HEADER_NAME]: CSRF_HEADER_VALUE,
       },
       body: JSON.stringify({ pageType, resourceId }),
     }).catch(() => {});
