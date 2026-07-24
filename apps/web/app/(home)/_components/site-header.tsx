@@ -218,7 +218,6 @@ export default function SiteHeader() {
                 width={40}
                 height={40}
                 priority
-                unoptimized
                 className="h-full w-auto object-contain"
                 data-testid="public-logo-image"
               />
