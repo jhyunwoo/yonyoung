@@ -26,11 +26,11 @@ describe("app/api/[...path]/route", () => {
         "https://api.example.com/api/audit/activity/fd3f8274-4f0a-4b5b-be59-0ca7918f710a?limit=20",
     },
     {
-      label: "notice image presign requests",
+      label: "recruiting image presign requests",
       method: "POST",
-      url: "https://yonyoung.yonsei.ac.kr/api/notices/presign/image",
-      path: ["notices", "presign", "image"],
-      upstreamUrl: "https://api.example.com/api/notices/presign/image",
+      url: "https://yonyoung.yonsei.ac.kr/api/recruiting/presign/image",
+      path: ["recruiting", "presign", "image"],
+      upstreamUrl: "https://api.example.com/api/recruiting/presign/image",
     },
     {
       label: "recruiting image presign requests",

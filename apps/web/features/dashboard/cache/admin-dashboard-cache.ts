@@ -5,8 +5,6 @@ import type {
   ApiAdminDashboardStats,
   ApiExhibition,
   ApiGenerationMemberSummary,
-  ApiGenerationNotice,
-  ApiGlobalNotice,
   ApiLinktree,
   ApiPageViewStats,
 } from "@/shared/contracts/api-contracts";
@@ -122,22 +120,6 @@ export const listCachedExhibitions = async (
     `/exhibitions?${query.toString()}`,
     cookieHeader,
   );
-};
-
-export const listCachedGenerationNotices = async (
-  generationId: string,
-  cookieHeader: string | null,
-): Promise<ApiGenerationNotice[]> => {
-  return readAdminCollection<ApiGenerationNotice>(
-    `/generations/${encodeURIComponent(generationId)}/notices`,
-    cookieHeader,
-  );
-};
-
-export const listCachedGlobalNotices = async (
-  cookieHeader: string | null,
-): Promise<ApiGlobalNotice[]> => {
-  return readAdminCollection<ApiGlobalNotice>("/global-notices", cookieHeader);
 };
 
 export const listCachedLinktrees = async (

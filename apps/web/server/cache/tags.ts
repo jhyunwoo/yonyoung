@@ -17,8 +17,6 @@ export const CACHE_TAGS = {
     attachments: "admin:attachments",
     exhibitions: "admin:exhibitions",
     linktree: "admin:linktree",
-    market: "admin:market",
-    notices: "admin:notices",
     recruitingPlan: "admin:recruiting-plan",
     siteSettings: "admin:site-settings",
     users: "admin:users",

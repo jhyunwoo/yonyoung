@@ -224,47 +224,6 @@ const exhibitions = [
   },
 ];
 
-const generationNotices = [
-  {
-    id: "gnotice-1",
-    generationId: "gen-59",
-    title: "59기 공지",
-    content: "<p>59기 모임 안내</p>",
-    imageUrls: [],
-    author: {
-      id: "user-manager",
-      name: "박부장",
-      familyName: "박",
-      givenName: "부장",
-      image: "https://images.mock.local/users/manager.jpg",
-      role: "manager",
-    },
-    createdAt: now - 1000 * 60 * 60 * 24,
-    updatedAt: now - 1000 * 60 * 60 * 24,
-    updatedBy: actor("user-manager", "박부장", "manager", "박", "부장"),
-  },
-];
-
-const globalNotices = [
-  {
-    id: "notice-1",
-    title: "전체 공지",
-    content: "<p>전체 운영 공지입니다.</p>",
-    imageUrls: [],
-    author: {
-      id: "user-president",
-      name: "김회장",
-      familyName: "김",
-      givenName: "회장",
-      image: "https://images.mock.local/users/president.jpg",
-      role: "president",
-    },
-    createdAt: now - 1000 * 60 * 60 * 12,
-    updatedAt: now - 1000 * 60 * 60 * 12,
-    updatedBy: actor("user-president", "김회장", "president", "김", "회장"),
-  },
-];
-
 const linktrees = [
   {
     id: "linktree-1",
@@ -286,55 +245,7 @@ const linktrees = [
   },
 ];
 
-const marketItems = [
-  {
-    id: "market-1",
-    sellerId: "user-member",
-    name: "필름 카메라",
-    imageUrls: [
-      "https://images.mock.local/market/market-1-1.jpg",
-      "https://images.mock.local/market/market-1-2.jpg",
-    ],
-    manufacturer: "Canon",
-    productCode: "AE-1",
-    conditionGrade: "B",
-    description: "정상 작동합니다.",
-    price: 120000,
-    status: "selling",
-    seller: {
-      id: "user-member",
-      name: "최부원",
-      familyName: "최",
-      givenName: "부원",
-      image: "https://images.mock.local/users/member.jpg",
-      role: "regular_member",
-    },
-    createdAt: now - 1000 * 60 * 60 * 10,
-    updatedAt: now - 1000 * 60 * 60 * 10,
-    updatedBy: actor("user-member", "최부원", "regular_member", "최", "부원"),
-  },
-];
-
-const marketComments = [
-  {
-    id: "market-comment-1",
-    itemId: "market-1",
-    author: {
-      id: "user-manager",
-      name: "박부장",
-      familyName: "박",
-      givenName: "부장",
-      image: "https://images.mock.local/users/manager.jpg",
-      role: "manager",
-    },
-    content: "관심 있습니다!",
-    createdAt: now - 1000 * 60 * 60 * 5,
-    updatedAt: now - 1000 * 60 * 60 * 5,
-    updatedBy: actor("user-manager", "박부장", "manager", "박", "부장"),
-  },
-];
-
-// 후원 페이지 자료 1건 + 활동 자료 1건 (다운로드 링크 렌더링 e2e 검증용)
+// 후원 페이지 자료(파일 1건 + 링크 1건) + 활동 자료 1건 (다운로드/링크 렌더링 e2e 검증용)
 const attachments = [
   {
     id: "attach-1",
@@ -346,6 +257,7 @@ const attachments = [
     fileName: "2026-상반기-회계내역.pdf",
     fileSize: 1048576,
     mimeType: "application/pdf",
+    linkUrl: null,
     sortOrder: 0,
     createdAt: now - 1000 * 60 * 60 * 24,
     updatedAt: now - 1000 * 60 * 60 * 24,
@@ -360,9 +272,24 @@ const attachments = [
     fileName: "월간연영회-2026-03.pdf",
     fileSize: 2097152,
     mimeType: "application/pdf",
+    linkUrl: null,
     sortOrder: 0,
     createdAt: now - 1000 * 60 * 60 * 12,
     updatedAt: now - 1000 * 60 * 60 * 12,
+  },
+  {
+    id: "attach-3",
+    scope: "site_donate" as const,
+    resourceId: null,
+    title: "2026년 회계 구글 시트",
+    fileUrl: null,
+    fileName: null,
+    fileSize: null,
+    mimeType: null,
+    linkUrl: "https://docs.google.com/spreadsheets/d/mock-sheet-id",
+    sortOrder: 1,
+    createdAt: now - 1000 * 60 * 60 * 6,
+    updatedAt: now - 1000 * 60 * 60 * 6,
   },
 ];
 
@@ -380,11 +307,11 @@ const recruitingPlan = {
 const auditLogs = [
   {
     id: "audit-1",
-    resourceType: "global_notice",
-    resourceId: "notice-1",
+    resourceType: "activity",
+    resourceId: "act-1",
     action: "create",
-    actor: actor("user-president", "김회장", "president", "김", "회장"),
-    changedFields: ["title", "content"],
+    actor: actor("user-manager", "박부장", "manager", "박", "부장"),
+    changedFields: ["title", "description"],
     createdAt: now - 1000 * 60 * 60 * 12,
   },
 ];
@@ -409,19 +336,12 @@ export const createMockState = (): MockState => ({
     ...exhibition,
     detailImages: exhibition.detailImages.map((image) => ({ ...image })),
   })),
-  notices: {
-    generation: generationNotices.map((notice) => ({ ...notice })),
-    global: globalNotices.map((notice) => ({ ...notice })),
-  },
   linktrees: linktrees.map((linktree) => ({
     ...linktree,
     items: linktree.items.map((item) => ({ ...item })),
   })),
-  marketItems: marketItems.map((item) => ({ ...item, imageUrls: [...item.imageUrls] })),
-  comments: marketComments.map((comment) => ({ ...comment })),
   recruitingPlan: { ...recruitingPlan },
   siteSettings: { ...DEFAULT_SITE_SETTINGS },
   uploads: {},
   auditLogs: auditLogs.map((log) => ({ ...log, changedFields: [...log.changedFields] })),
-  subscriptions: [],
 });

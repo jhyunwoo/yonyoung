@@ -14,10 +14,8 @@ import {
   formatKoreanMobilePhoneNumber,
   isKoreanMobilePhoneNumber,
 } from "@/shared/contracts/auth-profile";
-import SortableImageGrid from "@/app/(dashboard)/_components/sortable-image-grid";
 import UploadProgressBar from "@/app/(dashboard)/_components/upload-progress-bar";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
-import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/upload-batch";
 import {
   PRESIGN_PATHS,
   uploadWithPresign,
@@ -30,13 +28,6 @@ import {
   isUnverifiedRole,
   resolvePostSignInPath,
 } from "@/features/auth/model/auth-shared";
-import { readFileList } from "@/features/media/upload/image-upload-state";
-import {
-  SHOWCASE_MAX_IMAGES,
-  normalizeShowcaseImageUrls,
-  toShowcaseUploadImageItems,
-} from "@/features/media/upload/showcase-images";
-import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";
 
 type ProfileFormMode = "auth" | "dashboard";
 
@@ -46,7 +37,6 @@ type ProfileFormProps = {
   mode?: ProfileFormMode;
   initialProfile: {
     image: string;
-    showcaseImageUrls: string[];
     familyName: string;
     givenName: string;
     college: string;
@@ -155,43 +145,20 @@ export default function AuthProfileForm({
     initialProfile.collaborationAvailable,
   );
   const [personalLink, setPersonalLink] = useState(initialProfile.personalLink);
-  const {
-    items: showcaseImageItems,
-    appendExistingUrls,
-    removeItemById: removeShowcaseImageById,
-    reorderByIds: reorderShowcaseImagesByIds,
-    replaceItems: replaceShowcaseImages,
-  } = useImageUploadState({
-    initialItems: toShowcaseUploadImageItems(initialProfile.showcaseImageUrls),
-    maxItems: SHOWCASE_MAX_IMAGES,
-  });
 
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [selectedImageObjectUrl, setSelectedImageObjectUrl] = useState<string | null>(
     null,
   );
   const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
-  const [showcaseUploadProgressPercent, setShowcaseUploadProgressPercent] = useState<
-    number | null
-  >(null);
-  const [isUploadingShowcaseImages, setIsUploadingShowcaseImages] = useState(false);
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const profileFileInputRef = useRef<HTMLInputElement | null>(null);
-  const showcaseFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const isDashboardMode = mode === "dashboard";
-  const showcaseImageUrls = useMemo(
-    () => showcaseImageItems.map((item) => item.imageUrl),
-    [showcaseImageItems],
-  );
-  const isShowcaseUploadDisabled =
-    isSaving ||
-    isUploadingShowcaseImages ||
-    showcaseImageUrls.length >= SHOWCASE_MAX_IMAGES;
 
   useEffect(() => {
     return () => {
@@ -218,52 +185,6 @@ export default function AuthProfileForm({
     setSelectedImageObjectUrl(objectUrl);
   };
 
-  const handleShowcaseFilesChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const files = readFileList(event.target.files);
-    event.target.value = "";
-    if (files.length === 0) {
-      return;
-    }
-
-    const remainingSlots = SHOWCASE_MAX_IMAGES - showcaseImageItems.length;
-    if (remainingSlots <= 0) {
-      setSubmitError(
-        `대표 작품 사진은 최대 ${SHOWCASE_MAX_IMAGES}장까지 등록할 수 있습니다.`,
-      );
-      setSubmitSuccess(null);
-      return;
-    }
-
-    const uploadTargets = files.slice(0, remainingSlots);
-    setIsUploadingShowcaseImages(true);
-    setShowcaseUploadProgressPercent(0);
-    setSubmitError(null);
-    setSubmitSuccess(null);
-
-    try {
-      const uploadedUrls = await uploadFilesWithPresign({
-        presignPath: PRESIGN_PATHS.userProfile,
-        files: uploadTargets,
-        onProgress: setShowcaseUploadProgressPercent,
-      });
-      appendExistingUrls(uploadedUrls);
-    } catch (error) {
-      setSubmitError(readErrorMessage(error));
-      setSubmitSuccess(null);
-    } finally {
-      setIsUploadingShowcaseImages(false);
-      setShowcaseUploadProgressPercent(null);
-    }
-  };
-
-  const handleShowcaseUploadClick = () => {
-    if (isShowcaseUploadDisabled) {
-      return;
-    }
-
-    showcaseFileInputRef.current?.click();
-  };
-
   const handleProfileImageUploadClick = () => {
     if (!canEditProfileImage || isSaving) {
       return;
@@ -281,12 +202,6 @@ export default function AuthProfileForm({
   };
 
   const handleSubmit = async () => {
-    if (isUploadingShowcaseImages) {
-      setSubmitError("대표 작품 사진 업로드가 완료된 후 저장해 주세요.");
-      setSubmitSuccess(null);
-      return;
-    }
-
     const validationErrors = validateForm({
       familyName,
       givenName,
@@ -320,7 +235,6 @@ export default function AuthProfileForm({
         });
       }
 
-      const normalizedShowcaseImageUrls = normalizeShowcaseImageUrls(showcaseImageUrls);
       const trimmedPersonalLink = personalLink.trim();
 
       const payload: ApiMemberProfileUpdateInput = {
@@ -338,17 +252,11 @@ export default function AuthProfileForm({
 
       if (canEditProfileImage) {
         payload.image = nextImageValue.length > 0 ? nextImageValue : null;
-        if (isDashboardMode) {
-          payload.showcaseImageUrls = normalizedShowcaseImageUrls;
-        }
       }
 
       const updatedUser = await adminResourceApi.updateUser(userId, payload);
 
       setProfileImage(updatedUser.image ?? "");
-      replaceShowcaseImages(
-        toShowcaseUploadImageItems(updatedUser.showcaseImageUrls ?? []),
-      );
       setCollaborationAvailable(updatedUser.collaborationAvailable);
       setPersonalLink(updatedUser.personalLink ?? "");
       if (selectedImageObjectUrl) {
@@ -466,66 +374,6 @@ export default function AuthProfileForm({
 
             <UploadProgressBar progressPercent={uploadProgressPercent} />
           </div>
-
-          {isDashboardMode && canEditProfileImage ? (
-            <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
-              <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                대표 작품 사진
-              </p>
-              <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-                최대 {SHOWCASE_MAX_IMAGES}장
-              </p>
-
-              <button
-                type="button"
-                data-testid="auth-profile-showcase-select"
-                onClick={handleShowcaseUploadClick}
-                disabled={isShowcaseUploadDisabled}
-                className="mt-3 inline-flex rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                사진 선택
-              </button>
-              <input
-                ref={showcaseFileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleShowcaseFilesChange}
-                disabled={isShowcaseUploadDisabled}
-                className="sr-only"
-              />
-
-              {isUploadingShowcaseImages ? (
-                <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
-                  대표 작품 사진 업로드 중...
-                </p>
-              ) : null}
-              <UploadProgressBar
-                progressPercent={showcaseUploadProgressPercent}
-                label="대표 작품 사진 업로드 진행률"
-              />
-
-              <div className="mt-3 space-y-2">
-                <p className="text-xs text-slate-600 dark:text-slate-300">
-                  마우스로 끌어 대표 작품 사진 순서를 바꿀 수 있습니다.
-                </p>
-                <SortableImageGrid
-                  items={showcaseImageItems.map((image, index) => ({
-                    id: image.id,
-                    imageUrl: image.imageUrl,
-                    label: `대표 작품 사진 ${index + 1}`,
-                    alt: "대표 작품 사진",
-                  }))}
-                  onReorder={(nextItems) =>
-                    reorderShowcaseImagesByIds(nextItems.map((item) => item.id))
-                  }
-                  onRemoveItem={removeShowcaseImageById}
-                  disabled={isSaving || isUploadingShowcaseImages}
-                  emptyMessage="등록된 대표 작품 사진이 없습니다."
-                />
-              </div>
-            </div>
-          ) : null}
 
           <div className="grid gap-4 md:grid-cols-2">
             <label className="flex flex-col gap-1.5 text-sm">
@@ -659,7 +507,7 @@ export default function AuthProfileForm({
           <button
             type="submit"
             data-testid="auth-profile-submit"
-            disabled={isSaving || isUploadingShowcaseImages}
+            disabled={isSaving}
             className="inline-flex w-full items-center justify-center rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             aria-busy={isSaving}
           >

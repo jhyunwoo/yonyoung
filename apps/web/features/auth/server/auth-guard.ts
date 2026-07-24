@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { forbidden, redirect } from "next/navigation";
 import { fetchSessionFromApi } from "@/features/auth/server/auth-server";
 import {
@@ -94,12 +95,14 @@ const sanitizeProfileRecord = (value: unknown): Record<string, unknown> | null =
   return Object.keys(output).length > 0 ? output : null;
 };
 
-const getSession = async (): Promise<AuthSession | null> => {
+// React cache()로 요청 단위 dedupe: layout/page/액션이 각각 호출해도 API 왕복은 요청당 1회
+const getSession = cache(async (): Promise<AuthSession | null> => {
   const cookieHeader = await readCookieHeader();
   return fetchSessionFromApi(cookieHeader);
-};
+});
 
-const getCurrentUserProfile = async (
+// getSession이 캐시되어 동일 요청 내 session 객체 참조가 같으므로 인자 기반 dedupe가 성립
+const getCurrentUserProfile = cache(async (
   session: AuthSession,
 ): Promise<Record<string, unknown> | null> => {
   const cookieHeader = await readCookieHeader();
@@ -173,7 +176,7 @@ const getCurrentUserProfile = async (
   } catch {
     return null;
   }
-};
+});
 
 type AccessPredicate = (session: AuthSession) => boolean;
 

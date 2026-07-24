@@ -150,73 +150,67 @@ export const apiAttachmentSchema = z.object({
   scope: apiAttachmentScopeSchema,
   resourceId: z.string().nullable(),
   title: z.string(),
-  fileUrl: z.url(),
-  fileName: z.string(),
-  fileSize: z.number().int().nonnegative(),
-  mimeType: z.string(),
+  fileUrl: z.url().nullable(),
+  fileName: z.string().nullable(),
+  fileSize: z.number().int().nonnegative().nullable(),
+  mimeType: z.string().nullable(),
+  // 구버전 API 응답(linkUrl 없음)도 허용하기 위해 default(null)
+  linkUrl: z.url().nullable().default(null),
   sortOrder: z.number().int(),
   createdAt: timestampSchema,
   updatedAt: timestampSchema,
 });
 
-export const apiCreateAttachmentInputSchema = z.object({
-  scope: apiAttachmentScopeSchema,
-  resourceId: z.string().nullable().optional(),
-  title: z.string().trim().min(1).max(200),
-  fileUrl: z.url(),
-  fileName: z.string().trim().min(1).max(255),
-  fileSize: z.number().int().positive(),
-  mimeType: z.string().min(1),
-  sortOrder: z.number().int().nonnegative().optional(),
-});
+const isHttpUrl = (value: string): boolean => {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    return false;
+  }
+};
+
+export const apiCreateAttachmentInputSchema = z
+  .object({
+    scope: apiAttachmentScopeSchema,
+    resourceId: z.string().nullable().optional(),
+    title: z.string().trim().min(1).max(200),
+    fileUrl: z.url().optional(),
+    fileName: z.string().trim().min(1).max(255).optional(),
+    fileSize: z.number().int().positive().optional(),
+    mimeType: z.string().min(1).optional(),
+    linkUrl: z
+      .url()
+      .refine(isHttpUrl, "linkUrl은 http(s) URL만 사용할 수 있습니다.")
+      .optional(),
+    sortOrder: z.number().int().nonnegative().optional(),
+  })
+  .refine(
+    (input) => {
+      const fileFields = [
+        input.fileUrl,
+        input.fileName,
+        input.fileSize,
+        input.mimeType,
+      ];
+      const hasFile = fileFields.every((field) => field !== undefined);
+      const hasAnyFileField = fileFields.some((field) => field !== undefined);
+      const hasLink = input.linkUrl !== undefined;
+      if (hasLink) {
+        return !hasAnyFileField;
+      }
+      return hasFile;
+    },
+    {
+      message:
+        "파일 필드 세트(fileUrl, fileName, fileSize, mimeType)와 linkUrl 중 정확히 하나만 전달해야 합니다.",
+    },
+  );
 
 export const apiUpdateAttachmentInputSchema = z.object({
   title: z.string().trim().min(1).max(200).optional(),
   sortOrder: z.number().int().nonnegative().optional(),
 });
-
-export const apiNoticeAuthorSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  familyName: nullableStringSchema,
-  givenName: nullableStringSchema,
-  image: nullableStringSchema,
-  role: apiRoleSchema.nullable(),
-});
-
-export const apiGenerationNoticeSchema = z.object({
-  id: z.string(),
-  generationId: z.string(),
-  title: z.string(),
-  content: z.string(),
-  imageUrls: z.array(z.url()),
-  author: apiNoticeAuthorSchema,
-  createdAt: timestampSchema,
-  updatedAt: timestampSchema,
-  updatedBy: apiAuditActorSchema.nullable(),
-});
-
-export const apiGlobalNoticeSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  content: z.string(),
-  imageUrls: z.array(z.url()),
-  author: apiNoticeAuthorSchema,
-  createdAt: timestampSchema,
-  updatedAt: timestampSchema,
-  updatedBy: apiAuditActorSchema.nullable(),
-});
-
-const createNoticeInputBaseSchema = z.object({
-  title: z.string().trim().min(1),
-  content: z.string().trim().min(1),
-  imageUrls: z.array(z.url()).optional(),
-});
-
-export const apiCreateGenerationNoticeInputSchema = createNoticeInputBaseSchema;
-export const apiUpdateGenerationNoticeInputSchema = createNoticeInputBaseSchema.partial();
-export const apiCreateGlobalNoticeInputSchema = createNoticeInputBaseSchema;
-export const apiUpdateGlobalNoticeInputSchema = createNoticeInputBaseSchema.partial();
 
 export const apiLinktreeItemSchema = z.object({
   id: z.string(),
@@ -287,78 +281,6 @@ export const apiUpsertCurrentRecruitingPlanInputSchema = z.object({
   promotionImageUrls: z.array(z.url()),
   recruitmentStartAt: timestampSchema,
   recruitmentEndAt: timestampSchema,
-});
-
-export const apiMarketItemStatusSchema = z.enum(["selling", "reserved", "sold"]);
-export const apiMarketConditionGradeSchema = z.enum(["A", "B", "C", "D"]);
-
-export const apiMarketSellerSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  familyName: nullableStringSchema,
-  givenName: nullableStringSchema,
-  image: nullableStringSchema,
-  role: apiRoleSchema.nullable(),
-});
-
-export const apiMarketItemSchema = z.object({
-  id: z.string(),
-  sellerId: z.string(),
-  name: z.string(),
-  imageUrls: z.array(z.url()),
-  manufacturer: nullableStringSchema,
-  productCode: nullableStringSchema,
-  conditionGrade: apiMarketConditionGradeSchema.nullable(),
-  description: nullableStringSchema,
-  price: z.number().finite(),
-  status: apiMarketItemStatusSchema,
-  seller: apiMarketSellerSchema,
-  createdAt: timestampSchema,
-  updatedAt: timestampSchema,
-  updatedBy: apiAuditActorSchema.nullable(),
-});
-
-export const apiCreateMarketItemInputSchema = z.object({
-  name: z.string().trim().min(1),
-  imageUrls: z.array(z.url()).min(1),
-  manufacturer: nullableStringSchema.optional(),
-  productCode: nullableStringSchema.optional(),
-  conditionGrade: apiMarketConditionGradeSchema.nullable().optional(),
-  description: nullableStringSchema.optional(),
-  price: z.number().finite(),
-});
-
-export const apiUpdateMarketItemInputSchema = apiCreateMarketItemInputSchema
-  .partial()
-  .extend({
-    imageUrls: z.array(z.url()).optional(),
-  });
-
-export const apiUpdateMarketItemStatusInputSchema = z.object({
-  status: apiMarketItemStatusSchema,
-});
-
-export const apiMarketCommentSchema = z.object({
-  id: z.string(),
-  itemId: z.string(),
-  author: apiMarketSellerSchema,
-  content: z.string(),
-  createdAt: timestampSchema,
-  updatedAt: timestampSchema,
-  updatedBy: apiAuditActorSchema.nullable(),
-});
-
-export const apiCreateMarketCommentInputSchema = z.object({
-  content: z.string().trim().min(1),
-});
-
-export const apiUpdateMarketCommentInputSchema =
-  apiCreateMarketCommentInputSchema.partial();
-
-export const apiMarketPushSubscriptionInputSchema = z.object({
-  endpoint: z.url(),
-  p256dh: z.string().min(1),
-  auth: z.string().min(1),
 });
 
 export const apiUserSchema = z.object({
@@ -488,13 +410,10 @@ export const apiAuditResourceTypeSchema = z.enum([
   "generation",
   "activity",
   "exhibition",
-  "generation_notice",
-  "global_notice",
-  "market_item",
-  "market_comment",
   "linktree",
   "linktree_item",
   "user",
+  "attachment",
 ]);
 
 export const apiAuditActionSchema = z.enum(["create", "update", "delete"]);

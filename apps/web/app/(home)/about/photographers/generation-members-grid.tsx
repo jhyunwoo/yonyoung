@@ -77,9 +77,6 @@ export default function GenerationMembersGrid({
   const selectedMemberPersonalLink = selectedMember?.personalLink?.trim().length
     ? selectedMember.personalLink.trim()
     : null;
-  const selectedMemberShowcaseImageUrls = (
-    selectedMember?.showcaseImageUrls ?? []
-  ).filter((imageUrl) => imageUrl.trim().length > 0);
   const collaborationStatus = selectedMember?.collaborationAvailable
     ? {
         label: "가능",
@@ -94,7 +91,7 @@ export default function GenerationMembersGrid({
 
   return (
     <>
-      <ul className="grid grid-cols-2 gap-x-5 gap-y-6 sm:grid-cols-3 md:grid-cols-5 md:gap-x-6 md:gap-y-8 lg:grid-cols-6 xl:grid-cols-7">
+      <ul className="grid grid-cols-4 gap-x-3 gap-y-4 sm:grid-cols-6 md:grid-cols-8 md:gap-x-4 md:gap-y-5 lg:grid-cols-10 xl:grid-cols-12">
         {generation.members.map((member) => {
           const displayName = buildMemberDisplayName(member);
           const fallbackInitial = buildMemberDisplayInitial(displayName);
@@ -102,13 +99,13 @@ export default function GenerationMembersGrid({
             <li key={member.id} data-testid={`about-photographers-member-${member.id}`}>
               <button
                 type="button"
-                className="flex w-full flex-col items-center gap-3 text-center md:gap-4"
+                className="flex w-full flex-col items-center gap-2 text-center"
                 aria-label={`${displayName} 상세 정보 보기`}
                 onClick={() => setSelectedMemberId(member.id)}
                 data-testid={`about-photographers-member-button-${member.id}`}
               >
                 <div
-                  className="flex h-24 w-24 items-center justify-center rounded-full border-[3px] border-(--surface-strong-border) bg-(--surface-muted) p-1 shadow-[0_0_0_1px_rgba(15,16,24,0.08)] md:h-28 md:w-28"
+                  className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-(--surface-strong-border) bg-(--surface-muted) p-0.5 shadow-[0_0_0_1px_rgba(15,16,24,0.08)] md:h-14 md:w-14"
                   data-testid={`about-photographers-member-avatar-${member.id}`}
                 >
                   <div className="relative h-full w-full overflow-hidden rounded-full bg-(--surface-border)">
@@ -118,18 +115,18 @@ export default function GenerationMembersGrid({
                         alt={`${displayName} 프로필`}
                         fill
                         unoptimized
-                        sizes="(min-width: 768px) 112px, 96px"
+                        sizes="(min-width: 768px) 56px, 48px"
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-(--text-muted)">
+                      <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-(--text-muted)">
                         {fallbackInitial}
                       </div>
                     )}
                   </div>
                 </div>
                 <span
-                  className="text-base font-semibold tracking-tight text-(--text-primary) md:text-xl md:leading-none"
+                  className="text-xs font-semibold tracking-tight text-(--text-primary) md:text-sm"
                   data-testid={`about-photographers-member-name-${member.id}`}
                 >
                   {displayName}
@@ -187,21 +184,23 @@ export default function GenerationMembersGrid({
                 className="pointer-events-none absolute inset-x-16 top-2 -z-10 h-12 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(122,132,148,0.2),rgba(122,132,148,0))] blur-xl"
                 aria-hidden="true"
               />
-              <div className="relative h-[180px] w-full shrink-0 bg-(--surface-muted) sm:h-[220px] md:h-[280px]">
-                {selectedMember.image ? (
-                  <Image
-                    src={selectedMember.image}
-                    alt={`${selectedMemberDisplayName} 프로필`}
-                    fill
-                    unoptimized
-                    sizes="(min-width: 768px) 620px, 92vw"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-5xl font-semibold text-(--text-muted)">
-                    {buildMemberDisplayInitial(selectedMemberDisplayName)}
-                  </div>
-                )}
+              <div className="flex shrink-0 justify-center bg-(--surface-muted) px-6 pt-8 pb-2">
+                <div className="relative aspect-square w-40 overflow-hidden rounded-2xl border border-(--surface-border) bg-(--surface-border) md:w-56">
+                  {selectedMember.image ? (
+                    <Image
+                      src={selectedMember.image}
+                      alt={`${selectedMemberDisplayName} 프로필`}
+                      fill
+                      unoptimized
+                      sizes="(min-width: 768px) 224px, 160px"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-5xl font-semibold text-(--text-muted)">
+                      {buildMemberDisplayInitial(selectedMemberDisplayName)}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div
@@ -282,42 +281,6 @@ export default function GenerationMembersGrid({
                   </div>
                 </dl>
 
-                <section
-                  className="mt-8"
-                  data-testid="about-photographers-member-showcase-section"
-                >
-                  <h4 className="text-sm font-semibold text-(--text-primary)">
-                    대표 작품 사진
-                  </h4>
-                  {selectedMemberShowcaseImageUrls.length > 0 ? (
-                    <ul className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3">
-                      {selectedMemberShowcaseImageUrls.map((imageUrl, index) => (
-                        <li
-                          key={`${selectedMember.id}-showcase-${index}`}
-                          data-testid={`about-photographers-member-showcase-item-${index}`}
-                        >
-                          <div className="relative aspect-square overflow-hidden rounded-xl border border-(--surface-border) bg-(--surface-muted)">
-                            <Image
-                              src={imageUrl}
-                              alt={`${selectedMemberDisplayName} 대표 작품 사진 ${index + 1}`}
-                              fill
-                              unoptimized
-                              sizes="(min-width: 768px) 180px, 42vw"
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p
-                      className="mt-3 rounded-xl border border-dashed border-(--surface-border) bg-(--surface-muted) px-3 py-4 text-sm text-(--text-muted)"
-                      data-testid="about-photographers-member-showcase-empty"
-                    >
-                      등록된 대표 작품 사진이 없습니다.
-                    </p>
-                  )}
-                </section>
               </div>
             </motion.div>
           </motion.div>

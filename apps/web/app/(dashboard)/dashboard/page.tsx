@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { headers } from "next/headers";
-import RecentGlobalNotices from "@/app/(dashboard)/_components/recent-global-notices";
 import DashboardLinktreeOverview from "@/app/(dashboard)/_components/dashboard-linktree-overview";
 import DashboardR2StorageUsage from "@/app/(dashboard)/_components/dashboard-r2-storage-usage";
 import DashboardPageViews from "@/app/(dashboard)/_components/dashboard-page-views";
@@ -104,30 +103,6 @@ export default async function DashboardPage() {
             }
           >
             <DashboardR2StorageUsage />
-          </Suspense>
-        </div>
-
-        <div className="lg:col-span-2">
-          <Suspense
-            fallback={
-              <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:p-8">
-                <div className="space-y-3" aria-hidden="true">
-                  <Skeleton className="h-4 w-40" />
-                  {Array.from({ length: 3 }).map((_, index) => (
-                    <div
-                      key={`dashboard-global-notice-skeleton-${index + 1}`}
-                      className="rounded-lg border border-slate-200 p-3 dark:border-slate-700"
-                    >
-                      <Skeleton className="h-4 w-2/3" />
-                      <Skeleton className="mt-2 h-3 w-full" />
-                      <Skeleton className="mt-1 h-3 w-1/3" />
-                    </div>
-                  ))}
-                </div>
-              </section>
-            }
-          >
-            <RecentGlobalNotices />
           </Suspense>
         </div>
 

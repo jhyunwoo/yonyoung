@@ -8,14 +8,9 @@ import type {
   ApiExhibition,
   ApiGeneration,
   ApiGenerationMemberSummary,
-  ApiGenerationNotice,
-  ApiGlobalNotice,
   ApiLinktree,
   ApiListActivitiesQuery,
   ApiListExhibitionsQuery,
-  ApiListMarketItemsQuery,
-  ApiMarketComment,
-  ApiMarketItem,
   ApiRecruitingPlan,
   ApiSiteSettings,
   ApiUser,
@@ -61,25 +56,6 @@ import {
   updateLinktreeAction,
   updateLinktreeItemAction,
 } from "@/features/dashboard/actions/linktree";
-import {
-  createMarketCommentAction,
-  createMarketItemAction,
-  deleteMarketCommentAction,
-  deleteMarketItemAction,
-  deleteMarketPushSubscriptionAction,
-  updateMarketCommentAction,
-  updateMarketItemAction,
-  updateMarketItemStatusAction,
-  upsertMarketPushSubscriptionAction,
-} from "@/features/dashboard/actions/market";
-import {
-  createGenerationNoticeAction,
-  createGlobalNoticeAction,
-  deleteGenerationNoticeAction,
-  deleteGlobalNoticeAction,
-  updateGenerationNoticeAction,
-  updateGlobalNoticeAction,
-} from "@/features/dashboard/actions/notices";
 import { upsertCurrentRecruitingPlanAction } from "@/features/dashboard/actions/recruiting";
 import { updateSiteSettingsAction } from "@/features/dashboard/actions/site-settings";
 import {
@@ -171,45 +147,6 @@ export const adminResourceApi = {
   addLinktreeItem: bindAdminWriteAction(addLinktreeItemAction),
   updateLinktreeItem: bindAdminWriteAction(updateLinktreeItemAction),
   deleteLinktreeItem: bindAdminWriteAction(deleteLinktreeItemAction),
-
-  listGenerationNotices: (generationId: string) =>
-    apiRequest.get<ApiGenerationNotice[]>(`/generations/${generationId}/notices`),
-  createGenerationNotice: bindAdminWriteAction(createGenerationNoticeAction),
-  getGenerationNoticeById: (generationId: string, noticeId: string) =>
-    apiRequest.get<ApiGenerationNotice>(
-      `/generations/${generationId}/notices/${noticeId}`,
-    ),
-  updateGenerationNotice: bindAdminWriteAction(updateGenerationNoticeAction),
-  deleteGenerationNotice: bindAdminWriteAction(deleteGenerationNoticeAction),
-
-  listGlobalNotices: () => apiRequest.get<ApiGlobalNotice[]>("/global-notices"),
-  createGlobalNotice: bindAdminWriteAction(createGlobalNoticeAction),
-  getGlobalNoticeById: (id: string) =>
-    apiRequest.get<ApiGlobalNotice>(`/global-notices/${id}`),
-  updateGlobalNotice: bindAdminWriteAction(updateGlobalNoticeAction),
-  deleteGlobalNotice: bindAdminWriteAction(deleteGlobalNoticeAction),
-
-  listMarketItems: (input: ApiListMarketItemsQuery = {}) =>
-    apiRequest.get<ApiMarketItem[]>(
-      withOptionalQuery("/market/items", {
-        status: input.status,
-        sellerId: input.sellerId,
-        page: typeof input.page === "number" ? String(input.page) : undefined,
-        pageSize: typeof input.pageSize === "number" ? String(input.pageSize) : undefined,
-      }),
-    ),
-  createMarketItem: bindAdminWriteAction(createMarketItemAction),
-  getMarketItemById: (id: string) => apiRequest.get<ApiMarketItem>(`/market/items/${id}`),
-  updateMarketItem: bindAdminWriteAction(updateMarketItemAction),
-  updateMarketItemStatus: bindAdminWriteAction(updateMarketItemStatusAction),
-  deleteMarketItem: bindAdminWriteAction(deleteMarketItemAction),
-  listMarketCommentsByItemId: (id: string) =>
-    apiRequest.get<ApiMarketComment[]>(`/market/items/${id}/comments`),
-  createMarketComment: bindAdminWriteAction(createMarketCommentAction),
-  updateMarketComment: bindAdminWriteAction(updateMarketCommentAction),
-  deleteMarketComment: bindAdminWriteAction(deleteMarketCommentAction),
-  upsertMarketPushSubscription: bindAdminWriteAction(upsertMarketPushSubscriptionAction),
-  deleteMarketPushSubscription: bindAdminWriteAction(deleteMarketPushSubscriptionAction),
 
   getSiteSettings: () => apiRequest.get<ApiSiteSettings>("/site-settings"),
   updateSiteSettings: bindAdminWriteAction(updateSiteSettingsAction),
