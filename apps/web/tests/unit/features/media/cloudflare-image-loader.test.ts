@@ -46,7 +46,7 @@ describe("buildImageUrl", () => {
       const alreadyTransformed = `${CDN_BASE_URL}/cdn-cgi/image/width=640/${OBJECT_KEY}`;
 
       expect(buildImageUrl({ src: alreadyTransformed, width: 640 }, CDN_BASE_URL)).toBe(
-        `/_next/image?url=${encodeURIComponent(alreadyTransformed)}&w=640&q=75`,
+        alreadyTransformed,
       );
     });
 
@@ -95,37 +95,57 @@ describe("buildImageUrl", () => {
       expect(url).toContain("quality=75");
     });
 
-    it("로컬 정적 자산은 /_next/image로 폴백한다", () => {
+    it("로컬 정적 자산은 src를 그대로 반환한다", () => {
       expect(
         buildImageUrl({ src: "/yonyoung-logo-black.png", width: 96 }, CDN_BASE_URL),
-      ).toBe("/_next/image?url=%2Fyonyoung-logo-black.png&w=96&q=75");
+      ).toBe("/yonyoung-logo-black.png");
     });
 
-    it("미디어 호스트가 아닌 원격 URL은 /_next/image로 폴백한다", () => {
+    it("미디어 호스트가 아닌 원격 URL은 src를 그대로 반환한다", () => {
       const src = "https://lh3.googleusercontent.com/a/profile=s96-c";
 
-      expect(buildImageUrl({ src, width: 96 }, CDN_BASE_URL)).toBe(
-        `/_next/image?url=${encodeURIComponent(src)}&w=96&q=75`,
-      );
+      expect(buildImageUrl({ src, width: 96 }, CDN_BASE_URL)).toBe(src);
     });
 
-    it("URL로 파싱할 수 없는 값은 /_next/image로 폴백한다", () => {
+    it("URL로 파싱할 수 없는 값은 src를 그대로 반환한다", () => {
       expect(buildImageUrl({ src: "not a url", width: 640 }, CDN_BASE_URL)).toBe(
-        `/_next/image?url=${encodeURIComponent("not a url")}&w=640&q=75`,
+        "not a url",
       );
     });
   });
 
   describe("CDN 베이스 URL이 없는 경우 (롤백 스위치)", () => {
-    it.each([undefined, null, "", "   "])(
-      "%s이면 기존 /_next/image 경로를 그대로 쓴다",
-      (base) => {
-        const src = `https://yonyoung.yonsei.ac.kr/api/public/media/${OBJECT_KEY}?sig=abc123`;
+    it.each([undefined, null, "", "   "])("%s이면 src를 그대로 반환한다", (base) => {
+      const src = `https://yonyoung.yonsei.ac.kr/api/public/media/${OBJECT_KEY}?sig=abc123`;
 
-        expect(buildImageUrl({ src, width: 1080, quality: 75 }, base)).toBe(
-          `/_next/image?url=${encodeURIComponent(src)}&w=1080&q=75`,
-        );
-      },
-    );
+      expect(buildImageUrl({ src, width: 1080, quality: 75 }, base)).toBe(src);
+    });
+  });
+
+  // images.loader가 "custom"이면 Next.js는 /_next/image 엔드포인트를 제공하지 않는다.
+  // 이 경로로 URL을 만들면 404가 되므로 로더는 절대 이 문자열을 방출해서는 안 된다.
+  describe("/_next/image 엔드포인트를 절대 참조하지 않는다", () => {
+    const everySrc = [
+      `https://yonyoung.yonsei.ac.kr/api/public/media/${OBJECT_KEY}?sig=abc123`,
+      `/api/public/media/${OBJECT_KEY}?sig=abc123`,
+      `${CDN_BASE_URL}/${OBJECT_KEY}`,
+      `${CDN_BASE_URL}/cdn-cgi/image/width=640/${OBJECT_KEY}`,
+      "/yonyoung-logo-black.png",
+      "/yonyong-logo-white.png",
+      "https://lh3.googleusercontent.com/a/profile=s96-c",
+      "https://images.mock.local/activities/act-1-1.jpg",
+      "not a url",
+      "",
+    ];
+
+    it.each(everySrc)("src=%s (CDN 설정됨)", (src) => {
+      expect(buildImageUrl({ src, width: 640 }, CDN_BASE_URL)).not.toContain(
+        "/_next/image",
+      );
+    });
+
+    it.each(everySrc)("src=%s (CDN 미설정)", (src) => {
+      expect(buildImageUrl({ src, width: 640 }, undefined)).not.toContain("/_next/image");
+    });
   });
 });

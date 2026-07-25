@@ -21,7 +21,8 @@ pnpm test:e2e:full  # Playwright 전체 (mock API 서버 + 프로덕션 빌드�
 - 관리자 쓰기: `features/dashboard/actions/` 서버 액션 — 공통 코어는 `admin-write-core.ts`(writeRequest), 도메인별 액션 파일에서 사용. 쓰기 성공 시 `updateTag`로 관련 admin/public 태그를 모두 무효화 (`server/cache/tags.ts`)
 - 업로드: `features/dashboard/api/admin-api/upload.ts` presigned 직접 업로드. 이미지 업로드 시 `read-image-dimensions.ts`로 원본 크기를 측정해 함께 저장 (공개 갤러리 masonry용)
 - 공개 갤러리: `app/(home)/_components/masonry-gallery.tsx` (CSS columns, 원본 비율) + `adaptive-gallery-image.tsx` (치수 미상 레거시 이미지 폴백)
-- **이미지 전송**: `next/image`는 전역 커스텀 로더(`features/media/images/cloudflare-image-loader.ts`)를 쓴다. R2 미디어 URL은 `storage.yonyoung.moveto.kr/cdn-cgi/image/...`(Cloudflare Image Transformations)로 변환해 엣지에서 리사이즈/AVIF 인코딩한다 — 오리진(Dokploy) CPU를 쓰지 않는다. `NEXT_PUBLIC_IMAGE_CDN_BASE_URL`이 없으면 기존 `/_next/image`로 폴백하므로 이 값을 지우는 것이 롤백 스위치다(빌드 타임 인라인 → 재빌드 필요). 로컬 `/public` 자산·구글 프로필 이미지는 폴백 경로를 그대로 탄다
+- **이미지 전송**: `next/image`는 전역 커스텀 로더(`features/media/images/cloudflare-image-loader.ts`)를 쓴다. R2 미디어 URL은 `storage.yonyoung.moveto.kr/cdn-cgi/image/...`(Cloudflare Image Transformations)로 변환해 엣지에서 리사이즈/AVIF 인코딩한다 — 오리진(Dokploy) CPU를 쓰지 않는다. `NEXT_PUBLIC_IMAGE_CDN_BASE_URL`을 지우는 것이 롤백 스위치다(빌드 타임 인라인 → 재빌드 필요)
+- **`images.loader: "custom"`이면 Next.js는 `/_next/image` 엔드포인트를 제공하지 않는다.** 따라서 로더는 이 경로로 URL을 만들면 안 되고(404), 변환 대상이 아닌 src(로컬 `/public` 자산, 구글 프로필 이미지)는 **원본 그대로** 반환한다. 리사이즈가 없으므로 `public/` 로고는 표시 크기(최대 60px, OG 이미지)에 맞춰 192px로 미리 축소해 두었다 — 큰 원본을 다시 넣지 말 것. 이를 고정하는 회귀 테스트가 `tests/unit/features/media/cloudflare-image-loader.test.ts`에 있다
 - `images.deviceSizes`/`imageSizes`는 Cloudflare unique transformation 사용량(무료 월 5,000건)을 억제하려고 축소해 둔 값이다. 늘리면 이미지 1장당 변환 건수가 그만큼 늘어난다
 - 첨부파일: 관리자 `attachment-manager.tsx`, 공개 `attachment-list.tsx`, 액션 `actions/attachments.ts`
 
