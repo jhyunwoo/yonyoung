@@ -9,8 +9,13 @@
  * 이 로더는 R2 커스텀 도메인(Cloudflare 존)의 Image Transformations를 사용해
  * 브라우저가 엣지에서 바로 변환본을 받도록 URL을 바꿉니다. 오리진 CPU 사용 없음.
  *
- * NEXT_PUBLIC_IMAGE_CDN_BASE_URL이 비어 있으면 기존 /_next/image 경로를 그대로
- * 재현합니다 (로컬 개발·e2e 기본값이자 운영 롤백 스위치).
+ * NEXT_PUBLIC_IMAGE_CDN_BASE_URL이 비어 있거나 R2 미디어가 아닌 src(로컬 /public
+ * 자산, 구글 프로필 이미지 등)는 src를 **그대로** 반환합니다.
+ *
+ * `images.loader: "custom"`을 설정하면 Next.js는 /_next/image 엔드포인트를 아예
+ * 제공하지 않습니다. 따라서 이 경로로 URL을 만들면 404가 되므로 절대 방출하지
+ * 않습니다. 대신 변환 대상이 아닌 자산은 리사이즈 없이 원본을 그대로 서빙하며,
+ * 그래서 public/ 로고는 표시 크기에 맞춰 미리 축소해 둡니다.
  */
 
 /** DB에 저장된 공개 미디어 URL의 경로 접두사 (yonyoung-api의 presign.ts와 동일) */
@@ -88,14 +93,10 @@ const extractObjectPath = (src: string, cdnBaseUrl: string): string | null => {
   return null;
 };
 
-/** Next.js 기본 이미지 최적화 엔드포인트 URL (로더 도입 전과 동일한 동작) */
-const buildNextImageUrl = ({ src, width, quality }: ImageLoaderParams): string =>
-  `/_next/image?url=${encodeURIComponent(src)}&w=${width}&q=${quality ?? DEFAULT_QUALITY}`;
-
 /**
  * buildImageUrl 이미지 요청 URL을 생성합니다.
  * @param params next/image가 전달하는 src·width·quality 입력값입니다.
- * @param cdnBaseUrl Cloudflare 변환을 수행할 R2 커스텀 도메인 베이스 URL입니다. 비어 있으면 폴백합니다.
+ * @param cdnBaseUrl Cloudflare 변환을 수행할 R2 커스텀 도메인 베이스 URL입니다. 비어 있으면 변환하지 않습니다.
  * @returns 브라우저가 실제로 요청할 이미지 URL을 반환합니다.
  * @remarks 환경 변수에 의존하지 않는 순수 함수라 단위 테스트에서 직접 호출합니다.
  */
@@ -107,12 +108,12 @@ export const buildImageUrl = (
     ? trimTrailingSlash(cdnBaseUrl.trim())
     : null;
   if (!normalizedBaseUrl) {
-    return buildNextImageUrl(params);
+    return params.src;
   }
 
   const objectPath = extractObjectPath(params.src, normalizedBaseUrl);
   if (!objectPath) {
-    return buildNextImageUrl(params);
+    return params.src;
   }
 
   const options = [
