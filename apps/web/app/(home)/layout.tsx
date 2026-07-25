@@ -11,6 +11,9 @@ import { WebVitalsReporter } from "@/app/_components/web-vitals-reporter";
 const ROOT_FONT_FAMILY =
   '"Pretendard Variable", "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
 
+// 이미지가 별도 오리진(Cloudflare R2 커스텀 도메인)에서 오므로 연결을 미리 열어 둔다
+const IMAGE_CDN_BASE_URL = process.env.NEXT_PUBLIC_IMAGE_CDN_BASE_URL?.trim() || null;
+
 export const metadata: Metadata = createPageMetadata({
   title: "연영회 | 연세대학교 중앙사진동아리",
   description: "연세대학교 중앙사진동아리 연영회의 활동과 전시를 소개합니다.",
@@ -46,6 +49,12 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
+        {IMAGE_CDN_BASE_URL ? (
+          <>
+            <link rel="preconnect" href={IMAGE_CDN_BASE_URL} crossOrigin="" />
+            <link rel="dns-prefetch" href={IMAGE_CDN_BASE_URL} />
+          </>
+        ) : null}
         <Script src="/theme-init.js" strategy="beforeInteractive" />
       </head>
       <body
