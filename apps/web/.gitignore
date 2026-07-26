@@ -15,6 +15,7 @@
 /test-results
 /.cache/
 /.tmp/
+/.seo-cache/
 
 # next.js
 /.next/

@@ -30,9 +30,9 @@ const applicationSteps = [
 ];
 
 export const metadata: Metadata = createPageMetadata({
-  title: "RECRUITING | 연영회",
+  title: "연영회 리크루팅 | 연세대학교 사진동아리 모집",
   description:
-    "연영회 리크루팅 안내 페이지입니다. 올해 모집 계획, 모집 일정, 지원 자격, 지원 방법을 확인할 수 있습니다.",
+    "연세대학교 중앙사진동아리 연영회의 올해 모집 일정과 지원 자격, 지원 절차를 안내합니다. 사진을 함께 배우고 기록할 신입 회원을 기다립니다.",
   path: "/about/recruiting",
   keywords: ["연영회 리크루팅", "연영회 모집", "동아리 모집", "RECRUITING"],
 });
@@ -100,7 +100,7 @@ export default async function RecruitingPage() {
     <div className="min-h-screen bg-(--bg-primary)" data-testid="about-recruiting-page">
       <div className="mx-auto max-w-300 px-4 md:px-8">
         <PageTitleHero title="RECRUITING" description="연영회 모집 안내" />
-        <main className="mx-auto w-full max-w-300 space-y-10 pb-16 md:pb-20">
+        <div className="mx-auto w-full max-w-300 space-y-10 pb-16 md:pb-20">
           <section className="space-y-3 border border-(--surface-border) p-5">
             <h2 className="text-[1.7rem] font-semibold text-(--text-primary)">
               모집 안내
@@ -205,7 +205,7 @@ export default async function RecruitingPage() {
               ))}
             </div>
           </section>
-        </main>
+        </div>
       </div>
     </div>
   );

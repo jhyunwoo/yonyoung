@@ -12,8 +12,9 @@ import PageTitleHero from "@/app/(home)/_components/page-title-hero";
 import ArchiveViewCounts from "@/app/(home)/_components/archive-view-counts";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "활동 기록 | 연영회",
-  description: "연영회의 활동 기록을 사진 중심 아카이브로 확인하세요.",
+  title: "연영회 활동 기록 | 연세대 사진동아리 아카이브",
+  description:
+    "1966년부터 이어온 연세대학교 중앙사진동아리 연영회의 출사, 월간 프로젝트, 교류 활동을 사진과 기록으로 만나보세요.",
   path: "/archive/records",
   keywords: ["연영회 활동 기록", "사진 동아리 활동", "연세대 연영회 아카이브"],
 });
@@ -29,7 +30,10 @@ export default async function ArchiveRecordsPage() {
   return (
     <div className="min-h-screen bg-(--bg-primary)">
       <div className="mx-auto max-w-300 px-4 md:px-8">
-        <PageTitleHero title="활동 기록" />
+        <PageTitleHero
+          title="활동 기록"
+          description="출사와 프로젝트, 교류 활동을 사진과 함께 기록합니다."
+        />
       </div>
 
       <div className="pb-16">

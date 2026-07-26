@@ -12,8 +12,9 @@ import PageTitleHero from "@/app/(home)/_components/page-title-hero";
 import ArchiveViewCounts from "@/app/(home)/_components/archive-view-counts";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "전시회 | 연영회",
-  description: "연영회의 전시 기록을 일정, 장소, 이미지와 함께 확인하세요.",
+  title: "연영회 전시회 | 연세대 사진동아리 전시 아카이브",
+  description:
+    "연세대학교 중앙사진동아리 연영회의 정기 사진전, 신인 사진전, 보도 사진전을 일정과 장소, 작품 이미지로 확인하세요.",
   path: "/archive/exhibitions",
   keywords: ["연영회 전시", "연영회 전시 아카이브", "대학생 사진 전시"],
 });
@@ -29,7 +30,10 @@ export default async function ArchiveExhibitionsPage() {
   return (
     <div className="min-h-screen bg-(--bg-primary)">
       <div className="mx-auto max-w-300 px-4 md:px-8">
-        <PageTitleHero title="전시회" />
+        <PageTitleHero
+          title="전시회"
+          description="정기 사진전과 신인 사진전, 보도 사진전의 기록을 소개합니다."
+        />
       </div>
 
       <div className="pb-16">

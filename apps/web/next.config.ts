@@ -12,10 +12,7 @@ type RemoteImagePattern = {
   pathname: string;
   port?: string;
 };
-const CSP_CONNECT_SOURCES = [
-  "'self'",
-  "https://*.r2.cloudflarestorage.com",
-] as const;
+const CSP_CONNECT_SOURCES = ["'self'", "https://*.r2.cloudflarestorage.com"] as const;
 
 const buildPublicMediaRemotePatterns = (): RemoteImagePattern[] => {
   const candidateOrigins = new Set<string>(DEFAULT_PUBLIC_MEDIA_IMAGE_ORIGINS);
@@ -65,6 +62,10 @@ const contentSecurityPolicy = [
 ].join("; ");
 
 const securityHeaders = [
+  {
+    key: "Strict-Transport-Security",
+    value: "max-age=31536000",
+  },
   {
     key: "Content-Security-Policy",
     value: contentSecurityPolicy,
@@ -137,6 +138,15 @@ const nextConfig: NextConfig = {
         hostname: "**.googleusercontent.com",
       },
     ],
+  },
+  async redirects() {
+    return [
+      {
+        source: "/archive",
+        destination: "/archive/records",
+        permanent: true,
+      },
+    ];
   },
   async headers() {
     return [

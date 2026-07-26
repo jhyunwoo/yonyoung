@@ -9,8 +9,9 @@ import PageTitleHero from "@/app/(home)/_components/page-title-hero";
 import { AttachmentList } from "@/app/(home)/_components/attachment-list";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "후원 안내 | 연영회",
-  description: "연영회 후원 안내, 후원 방법, 후원금 사용 내역, 문의 정보를 확인하세요.",
+  title: "연영회 후원 안내 | 전시·사진 활동 후원",
+  description:
+    "연세대학교 중앙사진동아리 연영회의 전시 개최와 장비 유지, 사진 교육 활동을 후원하는 방법과 후원금 사용 내역을 안내합니다.",
   path: "/donate",
   keywords: ["연영회 후원", "DONATE US", "연영회 후원 안내", "후원금 사용 내역"],
 });

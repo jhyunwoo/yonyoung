@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import {
   listPublicGenerations,
   safeList,
@@ -46,13 +47,80 @@ export default async function AboutPage() {
       <div className="mx-auto max-w-300 px-4 md:px-8">
         <PageTitleHero
           title="연영회 소개"
-          description="연영회는 사진을 통해 세상을 기록하고 표현하는 동아리입니다. 우리는 다양한 주제와 스타일로 사진을 찍으며, 서로의 작품을 공유하고 함께 성장해 나갑니다."
+          description="연영회는 1966년 창립한 연세대학교 중앙사진동아리입니다. 함께 배우고 촬영하며, 전시와 기록으로 서로의 시선을 나눕니다."
         />
       </div>
-      <main
+      <div
         className="mx-auto w-full max-w-[1200px] space-y-14 px-4 pb-16 md:px-8 md:pb-20"
         data-testid="about-page"
       >
+        <section className="space-y-6" aria-labelledby="about-identity">
+          <div className="max-w-3xl space-y-4">
+            <h2
+              id="about-identity"
+              className="text-[2rem] font-semibold text-(--text-primary)"
+            >
+              사진으로 배우고, 기록하고, 전시합니다
+            </h2>
+            <p className="text-base leading-8 text-(--text-muted)">
+              연영회는 사진 이론과 촬영, 보정 경험을 나누는 세미나와 정기 출사를
+              진행합니다. 구성원이 직접 기획한 프로젝트와 작품은 대동제·연고전 보도사진전,
+              정기 사진전과 신인 사진전을 통해 교내외 관람객에게 소개합니다.
+            </p>
+            <p className="text-base leading-8 text-(--text-muted)">
+              기수와 전공에 관계없이 서로의 사진을 함께 보고 이야기하며, 동문과 다른 대학
+              사진동아리와도 교류합니다. 촬영에서 전시까지 한 해의 과정을 함께 경험하는
+              것이 연영회 활동의 중심입니다.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <article className="border border-(--surface-border) p-5">
+              <h3 className="text-lg font-semibold text-(--text-primary)">
+                세미나와 정기 출사
+              </h3>
+              <p className="mt-3 text-sm leading-7 text-(--text-muted)">
+                사진 이론과 촬영법, 후보정 과정을 함께 배우고 서울 곳곳에서 정기 출사를
+                진행합니다.
+              </p>
+              <Link
+                href="/archive/records"
+                className="mt-4 inline-flex text-sm font-semibold text-(--text-primary) underline underline-offset-4"
+              >
+                실제 활동 기록 보기
+              </Link>
+            </article>
+            <article className="border border-(--surface-border) p-5">
+              <h3 className="text-lg font-semibold text-(--text-primary)">
+                사진전과 보도 기록
+              </h3>
+              <p className="mt-3 text-sm leading-7 text-(--text-muted)">
+                정기전과 신인전, 교내 행사의 보도사진전을 기획하고 작품을 직접 선보입니다.
+              </p>
+              <Link
+                href="/archive/exhibitions"
+                className="mt-4 inline-flex text-sm font-semibold text-(--text-primary) underline underline-offset-4"
+              >
+                지난 전시회 보기
+              </Link>
+            </article>
+            <article className="border border-(--surface-border) p-5">
+              <h3 className="text-lg font-semibold text-(--text-primary)">
+                새로운 사진가와의 만남
+              </h3>
+              <p className="mt-3 text-sm leading-7 text-(--text-muted)">
+                매년 새 기수를 모집해 사진을 매개로 배우고 기록할 구성원을 맞이합니다.
+              </p>
+              <Link
+                href="/about/recruiting"
+                className="mt-4 inline-flex text-sm font-semibold text-(--text-primary) underline underline-offset-4"
+              >
+                리크루팅 안내 보기
+              </Link>
+            </article>
+          </div>
+        </section>
+
         <section className="space-y-6" data-testid="about-annual-activities">
           <h2 className="text-[2rem] font-semibold text-(--text-primary)">연간 활동</h2>
           <div className="grid gap-4 md:grid-cols-2">
@@ -111,7 +179,7 @@ export default async function AboutPage() {
             ) : null}
           </div>
         </section>
-      </main>
+      </div>
     </div>
   );
 }

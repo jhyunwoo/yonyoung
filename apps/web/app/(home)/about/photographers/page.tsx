@@ -9,9 +9,9 @@ import { createPageMetadata } from "@/features/seo/metadata/seo";
 import GenerationMembersGrid from "@/app/(home)/about/photographers/generation-members-grid";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "PHOTOGRAPHERS | 연영회",
+  title: "연영회 사진가·멤버 | 기수별 PHOTOGRAPHERS",
   description:
-    "연영회 기수별 사진가(멤버) 목록입니다. 데이터베이스에 등록된 기수/멤버 정보를 기반으로 표시합니다.",
+    "연세대학교 중앙사진동아리 연영회를 함께 만들어 온 사진가와 멤버를 기수별로 소개합니다. 각 멤버의 사진과 활동 정보를 확인하세요.",
   path: "/about/photographers",
   keywords: ["연영회", "Photographers", "연영회 멤버", "기수별 멤버"],
 });
@@ -24,7 +24,7 @@ export default async function PhotographersPage() {
       className="bg-(--bg-primary) pb-14 md:pb-20 md:pt-10"
       data-testid="about-photographers-page"
     >
-      <main
+      <div
         className="mx-auto w-full max-w-300 space-y-10 px-4 md:space-y-20 md:px-8"
         data-testid="about-photographers-main"
       >
@@ -88,7 +88,7 @@ export default async function PhotographersPage() {
             ))}
           </section>
         )}
-      </main>
+      </div>
     </div>
   );
 }
