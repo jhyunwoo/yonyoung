@@ -18,6 +18,7 @@ type NavItem = {
   testId: string;
   children?: NavChild[];
   prefetch?: boolean;
+  rel?: "nofollow";
 };
 
 type ThemeMode = "light" | "dark" | "system";
@@ -35,7 +36,7 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    href: "/archive",
+    href: "/archive/records",
     label: "ARCHIVE",
     testId: "archive",
     children: [
@@ -45,14 +46,19 @@ const navItems: NavItem[] = [
   },
   { href: "/linktree", label: "LINKTREE", testId: "linktree" },
   { href: "/donate", label: "DONATE US", testId: "donate" },
-  { href: "/dashboard", label: "DASHBOARD", testId: "dashboard" },
+  {
+    href: "/dashboard",
+    label: "DASHBOARD",
+    testId: "dashboard",
+    rel: "nofollow",
+  },
 ];
 
 const isActivePath = (pathname: string, item: NavItem): boolean => {
   if (item.href === "/about") {
     return pathname.startsWith("/about");
   }
-  if (item.href === "/archive") {
+  if (item.href === "/archive/records") {
     return pathname.startsWith("/archive");
   }
   return pathname === item.href;
@@ -244,6 +250,7 @@ export default function SiteHeader() {
                   <Link
                     href={item.href}
                     prefetch={item.prefetch}
+                    rel={item.rel}
                     className={`${desktopLinkBaseClass} ${active ? "after:w-full" : ""}`.trim()}
                     data-testid={`public-nav-desktop-${item.testId}`}
                   >
@@ -387,6 +394,7 @@ export default function SiteHeader() {
                       <Link
                         href={item.href}
                         prefetch={item.prefetch}
+                        rel={item.rel}
                         className={`${mobileLinkBaseClass} ${active ? "after:w-12" : ""}`.trim()}
                         data-testid={`public-nav-mobile-${item.testId}`}
                         onClick={() => setIsMobileMenuOpen(false)}

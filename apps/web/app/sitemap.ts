@@ -33,11 +33,6 @@ const STATIC_ROUTES: StaticSitemapRoute[] = [
     priority: 0.7,
   },
   {
-    path: "/archive",
-    changeFrequency: "weekly",
-    priority: 0.8,
-  },
-  {
     path: "/archive/records",
     changeFrequency: "daily",
     priority: 0.9,
@@ -63,7 +58,6 @@ const toDate = (timestamp: number): Date => new Date(timestamp);
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = resolveSiteUrl();
-  const now = new Date();
   const [activities, exhibitions] = await Promise.all([
     listPublicActivities(),
     listPublicExhibitions(),
@@ -71,7 +65,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((route) => ({
     url: `${siteUrl}${route.path}`,
-    lastModified: now,
     changeFrequency: route.changeFrequency,
     priority: route.priority,
   }));

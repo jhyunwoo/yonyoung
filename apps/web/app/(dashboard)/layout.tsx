@@ -14,11 +14,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 const ROOT_FONT_FAMILY =
   '"Pretendard Variable", "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
 
-export const metadata: Metadata = createPageMetadata({
-  title: "연영회 Dashboard",
-  description: "연영회 내부 인원 전용 대시보드",
-  path: "/dashboard",
-});
+export const metadata: Metadata = {
+  ...createPageMetadata({
+    title: "연영회 Dashboard",
+    description: "연영회 내부 인원 전용 대시보드",
+    path: "/dashboard",
+  }),
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+  },
+};
 
 const readDashboardLayoutData = async (): Promise<{
   generationOptions: Awaited<ReturnType<typeof getAccessibleDashboardGenerationOptions>>;

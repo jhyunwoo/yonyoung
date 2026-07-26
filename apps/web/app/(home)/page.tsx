@@ -15,6 +15,7 @@ import {
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import { summarizeRichTextHtml } from "@/features/media/rich-text/rich-text";
 import { resolveSiteUrl } from "@/features/seo/metadata/seo";
+import JsonLd from "@/features/seo/structured-data/json-ld";
 import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
 
 const getHomePrimaryData = async () => {
@@ -93,35 +94,45 @@ export default async function HomePage() {
 
   const recentActivities = activities.slice(0, 6);
   const siteUrl = resolveSiteUrl();
+  const organizationId = `${siteUrl}/#organization`;
+  const websiteId = `${siteUrl}/#website`;
   const organizationJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
+    "@id": organizationId,
     name: "연영회",
-    alternateName: "YonYoung",
+    alternateName: ["YonYoung", "연세대학교 중앙사진동아리 연영회"],
     url: siteUrl,
+    logo: `${siteUrl}/android-chrome-512x512.png`,
+    image: `${siteUrl}/android-chrome-512x512.png`,
+    description:
+      "1966년 창단한 연세대학교 중앙사진동아리로, 사진 촬영과 전시, 교류 활동을 이어가고 있습니다.",
+    foundingDate: "1966",
+    sameAs: ["https://www.instagram.com/yonyoungpage"],
+    parentOrganization: {
+      "@type": "CollegeOrUniversity",
+      name: "연세대학교",
+      url: "https://www.yonsei.ac.kr",
+    },
   };
   const websiteJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
+    "@id": websiteId,
     name: "연영회",
+    alternateName: ["YonYoung", "연세대학교 중앙사진동아리 연영회"],
     url: siteUrl,
+    inLanguage: "ko-KR",
+    publisher: {
+      "@id": organizationId,
+    },
   };
 
   return (
     <div className="pb-14 md:pb-20">
       <PageViewTracker pageType="home" />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(organizationJsonLd),
-        }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(websiteJsonLd),
-        }}
-      />
+      <JsonLd data={organizationJsonLd} />
+      <JsonLd data={websiteJsonLd} />
       <HeroShowcase
         featuredExhibition={exhibitions[0] ?? null}
         exhibitions={exhibitions}

@@ -15,8 +15,9 @@ const ROOT_FONT_FAMILY =
 const IMAGE_CDN_BASE_URL = process.env.NEXT_PUBLIC_IMAGE_CDN_BASE_URL?.trim() || null;
 
 export const metadata: Metadata = createPageMetadata({
-  title: "연영회 | 연세대학교 중앙사진동아리",
-  description: "연세대학교 중앙사진동아리 연영회의 활동과 전시를 소개합니다.",
+  title: "연영회 | 1966년 창립 연세대학교 중앙사진동아리",
+  description:
+    "1966년 창단한 연세대학교 중앙사진동아리 연영회입니다. 출사와 사진 프로젝트, 정기 전시, 리크루팅 소식을 한곳에서 만나보세요.",
   path: "/",
   keywords: [
     "연영회",
