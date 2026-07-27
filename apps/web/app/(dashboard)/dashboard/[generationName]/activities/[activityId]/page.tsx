@@ -15,7 +15,7 @@ export default async function GenerationActivityDetailPage({
   ]);
 
   return (
-    <main className="px-4 py-6 md:px-8 md:py-8">
+    <div className="px-4 py-6 md:px-8 md:py-8">
       <GenerationActivityDetail
         activityId={activityId}
         generationId={generation.id}
@@ -24,6 +24,6 @@ export default async function GenerationActivityDetailPage({
         canManage={isAdminRole(session.user.role)}
         canDelete={isAdminRole(session.user.role)}
       />
-    </main>
+    </div>
   );
 }

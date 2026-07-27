@@ -16,9 +16,7 @@ const sortByStartDateDesc = <T extends { startDate: number }>(list: T[]): T[] =>
   return [...list].sort((left, right) => right.startDate - left.startDate);
 };
 
-const GenerationDashboardSummary = async (input: {
-  generationId: string;
-}) => {
+const GenerationDashboardSummary = async (input: { generationId: string }) => {
   const cookieHeader = await readCookieHeader();
   const [activities, exhibitions, generationMembers] = await Promise.all([
     listCachedActivities(input.generationId, cookieHeader),
@@ -39,34 +37,28 @@ const GenerationDashboardSummary = async (input: {
   return (
     <>
       <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <li className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4">
-          <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-            기수 멤버
-          </p>
-          <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-50">
-            {generationMembers.length}
-          </p>
-          <p className="text-xs text-slate-600 dark:text-slate-300">명</p>
+        <li className="rounded-lg border border-hairline bg-surface-sunken p-4">
+          <p className="text-xs font-semibold text-ink-muted">기수 멤버</p>
+          <p className="mt-1 text-2xl font-bold text-ink">{generationMembers.length}</p>
+          <p className="text-xs text-ink-muted">명</p>
         </li>
-        <li className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4">
-          <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">활동</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-50">
+        <li className="rounded-lg border border-hairline bg-surface-sunken p-4">
+          <p className="text-xs font-semibold text-ink-muted">활동</p>
+          <p className="mt-1 text-2xl font-bold text-ink">
             {generationActivities.length}
           </p>
-          <p className="text-xs text-slate-600 dark:text-slate-300">건</p>
+          <p className="text-xs text-ink-muted">건</p>
         </li>
-        <li className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4">
-          <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">전시</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-50">
+        <li className="rounded-lg border border-hairline bg-surface-sunken p-4">
+          <p className="text-xs font-semibold text-ink-muted">전시</p>
+          <p className="mt-1 text-2xl font-bold text-ink">
             {generationExhibitions.length}
           </p>
-          <p className="text-xs text-slate-600 dark:text-slate-300">건</p>
+          <p className="text-xs text-ink-muted">건</p>
         </li>
-        <li className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4">
-          <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-            최근 업데이트
-          </p>
-          <p className="mt-1 text-base font-semibold text-slate-900 dark:text-slate-50">
+        <li className="rounded-lg border border-hairline bg-surface-sunken p-4">
+          <p className="text-xs font-semibold text-ink-muted">최근 업데이트</p>
+          <p className="mt-1 text-base font-semibold text-ink">
             {latestUpdateTimestamp > 0 ? formatKoreanDate(latestUpdateTimestamp) : "-"}
           </p>
         </li>
@@ -77,12 +69,10 @@ const GenerationDashboardSummary = async (input: {
       </div>
 
       <div className="grid gap-4">
-        <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">
-            최근 활동
-          </h2>
+        <section className="rounded-lg border border-hairline bg-surface p-6 md:p-8">
+          <h2 className="text-lg font-bold text-ink">최근 활동</h2>
           {recentActivities.length === 0 ? (
-            <p className="mt-4 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 p-4 text-sm text-slate-600 dark:text-slate-300">
+            <p className="mt-4 rounded-lg border border-dashed border-hairline-strong bg-surface-sunken p-4 text-sm text-ink-muted">
               최근 활동 정보가 없습니다.
             </p>
           ) : (
@@ -90,12 +80,10 @@ const GenerationDashboardSummary = async (input: {
               {recentActivities.map((activity) => (
                 <li
                   key={activity.id}
-                  className="rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-3"
+                  className="rounded-lg border border-hairline px-4 py-3"
                 >
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                    {activity.title}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                  <p className="text-sm font-semibold text-ink">{activity.title}</p>
+                  <p className="mt-1 text-xs text-ink-muted">
                     {formatKoreanDateRange(activity.startDate, activity.endDate)}
                   </p>
                 </li>
@@ -103,11 +91,9 @@ const GenerationDashboardSummary = async (input: {
             </ul>
           )}
 
-          <h3 className="mt-6 text-sm font-semibold text-slate-900 dark:text-slate-50">
-            최근 전시
-          </h3>
+          <h3 className="mt-6 text-sm font-semibold text-ink">최근 전시</h3>
           {recentExhibitions.length === 0 ? (
-            <p className="mt-3 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 p-4 text-sm text-slate-600 dark:text-slate-300">
+            <p className="mt-3 rounded-lg border border-dashed border-hairline-strong bg-surface-sunken p-4 text-sm text-ink-muted">
               최근 전시 정보가 없습니다.
             </p>
           ) : (
@@ -115,12 +101,10 @@ const GenerationDashboardSummary = async (input: {
               {recentExhibitions.map((exhibition) => (
                 <li
                   key={exhibition.id}
-                  className="rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-3"
+                  className="rounded-lg border border-hairline px-4 py-3"
                 >
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                    {exhibition.title}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                  <p className="text-sm font-semibold text-ink">{exhibition.title}</p>
+                  <p className="mt-1 text-xs text-ink-muted">
                     {formatKoreanDateRange(exhibition.startDate, exhibition.endDate)}
                   </p>
                 </li>
@@ -159,23 +143,22 @@ export default async function GenerationDashboardPage({
   ];
 
   return (
-    <main className="px-4 py-6 md:px-8 md:py-8">
+    <div className="px-4 py-6 md:px-8 md:py-8">
       <div className="mx-auto grid w-full max-w-6xl gap-4">
-        <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-          <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
+        <section className="rounded-lg border border-hairline bg-surface p-6 md:p-8">
+          <p className="text-xs font-semibold tracking-[0.12em] text-ink-muted uppercase">
             Generation Overview
           </p>
-          <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
+          <h1 className="mt-2 text-2xl font-bold text-ink md:text-3xl">
             {generation.name}
           </h1>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+          <p className="mt-2 text-sm text-ink-muted">
             활동 기간: {formatKoreanDateRange(generation.startDate, generation.endDate)}
           </p>
-          <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
-            이 화면에서 최근 활동, 최근 전시 등 핵심 정보를 한 번에 확인할 수
-            있습니다.
+          <p className="mt-3 text-sm leading-relaxed text-ink-muted md:text-base">
+            이 화면에서 최근 활동, 최근 전시 등 핵심 정보를 한 번에 확인할 수 있습니다.
           </p>
-          <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+          <p className="mt-2 text-xs text-ink-muted">
             최근 수정: {formatKoreanDate(generation.updatedAt)} ·{" "}
             {formatAuditActor(generation.updatedBy)}
           </p>
@@ -183,13 +166,13 @@ export default async function GenerationDashboardPage({
 
         <Suspense
           fallback={
-            <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
+            <section className="rounded-lg border border-hairline bg-surface p-6 md:p-8">
               <div className="space-y-4" aria-hidden="true">
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   {Array.from({ length: 4 }).map((_, index) => (
                     <div
                       key={`generation-summary-skeleton-${index + 1}`}
-                      className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4"
+                      className="rounded-lg border border-hairline bg-surface-sunken p-4"
                     >
                       <Skeleton className="h-3 w-16" />
                       <Skeleton className="mt-2 h-7 w-14" />
@@ -208,14 +191,10 @@ export default async function GenerationDashboardPage({
           <GenerationDashboardSummary generationId={generation.id} />
         </Suspense>
 
-        <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
+        <section className="rounded-lg border border-hairline bg-surface p-6 md:p-8">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">
-              바로가기
-            </h2>
-            <span className="text-xs text-slate-600 dark:text-slate-300">
-              기수 관리 메뉴
-            </span>
+            <h2 className="text-lg font-bold text-ink">바로가기</h2>
+            <span className="text-xs text-ink-muted">기수 관리 메뉴</span>
           </div>
 
           <ul className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -223,12 +202,10 @@ export default async function GenerationDashboardPage({
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className="block rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4 transition hover:border-slate-300 hover:bg-white"
+                  className="block rounded-lg border border-hairline bg-surface-sunken p-4 transition hover:border-hairline-strong hover:bg-surface"
                 >
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                    {item.title}
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+                  <p className="text-sm font-semibold text-ink">{item.title}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-ink-muted">
                     {item.description}
                   </p>
                 </Link>
@@ -237,6 +214,6 @@ export default async function GenerationDashboardPage({
           </ul>
         </section>
       </div>
-    </main>
+    </div>
   );
 }

@@ -19,12 +19,12 @@ export default async function GenerationExhibitionCreatePage({
   }
 
   return (
-    <main className="px-4 py-6 md:px-8 md:py-8">
+    <div className="px-4 py-6 md:px-8 md:py-8">
       <ExhibitionCreateForm
         generationId={generation.id}
         generationPath={generation.path}
         generationName={generation.name}
       />
-    </main>
+    </div>
   );
 }

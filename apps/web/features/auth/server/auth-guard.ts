@@ -102,81 +102,83 @@ const getSession = cache(async (): Promise<AuthSession | null> => {
 });
 
 // getSession이 캐시되어 동일 요청 내 session 객체 참조가 같으므로 인자 기반 dedupe가 성립
-const getCurrentUserProfile = cache(async (
-  session: AuthSession,
-): Promise<Record<string, unknown> | null> => {
-  const cookieHeader = await readCookieHeader();
-  const headers = new Headers({
-    Accept: "application/json",
-  });
-  if (cookieHeader) {
-    headers.set("cookie", cookieHeader);
-    applyForwardedRequestContextHeaders(
-      headers,
-      await readServerForwardedRequestContext(),
-    );
-  }
+const getCurrentUserProfile = cache(
+  async (session: AuthSession): Promise<Record<string, unknown> | null> => {
+    const cookieHeader = await readCookieHeader();
+    const headers = new Headers({
+      Accept: "application/json",
+    });
+    if (cookieHeader) {
+      headers.set("cookie", cookieHeader);
+      applyForwardedRequestContextHeaders(
+        headers,
+        await readServerForwardedRequestContext(),
+      );
+    }
 
-  try {
-    const currentUserResponse = await fetch(
-      `${resolveApiBaseUrl()}${CURRENT_USER_PATH}`,
-      {
+    try {
+      const currentUserResponse = await fetch(
+        `${resolveApiBaseUrl()}${CURRENT_USER_PATH}`,
+        {
+          method: "GET",
+          headers,
+          cache: "no-store",
+        },
+      );
+
+      if (currentUserResponse.ok) {
+        const payload = (await currentUserResponse.json().catch(() => null)) as unknown;
+        return sanitizeProfileRecord(unwrapDataEnvelope(payload));
+      }
+
+      const userByIdResponse = await fetch(
+        `${resolveApiBaseUrl()}${USER_PATH_PREFIX}/${encodeURIComponent(session.user.id)}`,
+        {
+          method: "GET",
+          headers,
+          cache: "no-store",
+        },
+      );
+
+      if (userByIdResponse.ok) {
+        const payload = (await userByIdResponse.json().catch(() => null)) as unknown;
+        return sanitizeProfileRecord(unwrapDataEnvelope(payload));
+      }
+
+      const normalizedEmail = session.user.email.trim().toLowerCase();
+      if (normalizedEmail.length === 0) {
+        return null;
+      }
+
+      const usersResponse = await fetch(`${resolveApiBaseUrl()}${USER_PATH_PREFIX}`, {
         method: "GET",
         headers,
         cache: "no-store",
-      },
-    );
+      });
+      if (!usersResponse.ok) {
+        return null;
+      }
 
-    if (currentUserResponse.ok) {
-      const payload = (await currentUserResponse.json().catch(() => null)) as unknown;
-      return sanitizeProfileRecord(unwrapDataEnvelope(payload));
-    }
+      const usersPayload = (await usersResponse.json().catch(() => null)) as unknown;
+      const users = unwrapDataEnvelope(usersPayload);
+      if (!Array.isArray(users)) {
+        return null;
+      }
 
-    const userByIdResponse = await fetch(
-      `${resolveApiBaseUrl()}${USER_PATH_PREFIX}/${encodeURIComponent(session.user.id)}`,
-      {
-        method: "GET",
-        headers,
-        cache: "no-store",
-      },
-    );
+      const matchedUser = users.find((user) => {
+        const userRecord = asRecord(user);
+        const email = userRecord?.email;
+        return (
+          typeof email === "string" && email.trim().toLowerCase() === normalizedEmail
+        );
+      });
 
-    if (userByIdResponse.ok) {
-      const payload = (await userByIdResponse.json().catch(() => null)) as unknown;
-      return sanitizeProfileRecord(unwrapDataEnvelope(payload));
-    }
-
-    const normalizedEmail = session.user.email.trim().toLowerCase();
-    if (normalizedEmail.length === 0) {
+      return sanitizeProfileRecord(matchedUser);
+    } catch {
       return null;
     }
-
-    const usersResponse = await fetch(`${resolveApiBaseUrl()}${USER_PATH_PREFIX}`, {
-      method: "GET",
-      headers,
-      cache: "no-store",
-    });
-    if (!usersResponse.ok) {
-      return null;
-    }
-
-    const usersPayload = (await usersResponse.json().catch(() => null)) as unknown;
-    const users = unwrapDataEnvelope(usersPayload);
-    if (!Array.isArray(users)) {
-      return null;
-    }
-
-    const matchedUser = users.find((user) => {
-      const userRecord = asRecord(user);
-      const email = userRecord?.email;
-      return typeof email === "string" && email.trim().toLowerCase() === normalizedEmail;
-    });
-
-    return sanitizeProfileRecord(matchedUser);
-  } catch {
-    return null;
-  }
-});
+  },
+);
 
 type AccessPredicate = (session: AuthSession) => boolean;
 

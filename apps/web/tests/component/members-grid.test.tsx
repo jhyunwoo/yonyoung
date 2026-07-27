@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { renderWithDashboardProviders as render } from "@/tests/setup/dashboard-providers";
 import type { ApiGeneration, ApiUser } from "@/shared/contracts/api-contracts";
 import { AdminApiError } from "@/shared/http/http";
 const listUsersMock = vi.hoisted(() => vi.fn());
@@ -121,7 +122,6 @@ describe("MembersGrid", () => {
   });
 
   it("selects visible users and merges updated roles after bulk update", async () => {
-    const confirmMock = vi.spyOn(window, "confirm").mockReturnValue(true);
     bulkUpdateUsersRoleMock.mockImplementation(
       async (input: { userIds: string[]; role: string }) =>
         users
@@ -172,10 +172,13 @@ describe("MembersGrid", () => {
     });
     fireEvent.click(screen.getByTestId("settings-members-bulk-role-submit"));
 
+    // window.confirm 대신 커스텀 확인 다이얼로그가 뜬다.
+    expect(
+      await screen.findByText("선택한 멤버 1명의 권한을 부장(으)로 변경하시겠습니까?"),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("confirm-dialog-accept"));
+
     await waitFor(() => {
-      expect(confirmMock).toHaveBeenCalledWith(
-        "선택한 멤버 1명의 권한을 부장(으)로 변경하시겠습니까?",
-      );
       expect(bulkUpdateUsersRoleMock).toHaveBeenCalledWith({
         userIds: ["user-1"],
         role: "manager",
@@ -198,7 +201,6 @@ describe("MembersGrid", () => {
   });
 
   it("keeps selection when bulk role update fails", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     bulkUpdateUsersRoleMock.mockRejectedValue(
       new AdminApiError({
         status: 403,
@@ -212,6 +214,8 @@ describe("MembersGrid", () => {
     await screen.findByText("김연영");
     fireEvent.click(screen.getByTestId("settings-members-select-user-1"));
     fireEvent.click(screen.getByTestId("settings-members-bulk-role-submit"));
+
+    fireEvent.click(await screen.findByTestId("confirm-dialog-accept"));
 
     expect(
       await screen.findByText("본인보다 높거나 같은 등급의 사용자는 변경할 수 없습니다."),

@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { ApiPageViewStats } from "@/shared/contracts/api-contracts";
 import PageViewChart from "@/app/(dashboard)/_components/dashboard-page-views-chart";
-import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, BarChart3 } from "lucide-react";
+import { Card, CardHeader } from "@/app/(dashboard)/_components/ui/card";
+import { EmptyState } from "@/app/(dashboard)/_components/ui/empty-state";
 import { adminRequest } from "@/features/dashboard/api/admin-api/http";
 import { AdminApiError } from "@/shared/http/http";
 
@@ -28,34 +30,28 @@ type StatCardProps = {
 };
 
 const StatCard = ({ label, value, growth, description }: StatCardProps) => (
-  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
-    <div className="flex items-center justify-between">
-      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 dark:text-slate-300">
-        {label}
-      </p>
+  <div className="rounded-lg border border-hairline bg-surface-sunken p-4">
+    <div className="flex items-center justify-between gap-2">
+      <p className="text-eyebrow text-ink-muted uppercase">{label}</p>
       {growth !== undefined && (
+        // 화살표 아이콘 + 부호가 함께 있어 색만으로 증감을 전달하지 않는다.
         <span
-          className={`flex items-center gap-0.5 text-xs font-bold ${
-            growth >= 0
-              ? "text-emerald-700 dark:text-emerald-500"
-              : "text-rose-700 dark:text-rose-500"
+          className={`flex items-center gap-0.5 text-caption font-semibold tabular-nums ${
+            growth >= 0 ? "text-success-text" : "text-danger-text"
           }`}
         >
           {growth >= 0 ? (
-            <ArrowUpIcon className="h-3 w-3" />
+            <ArrowUpIcon className="h-3 w-3" aria-hidden="true" />
           ) : (
-            <ArrowDownIcon className="h-3 w-3" />
+            <ArrowDownIcon className="h-3 w-3" aria-hidden="true" />
           )}
+          {growth >= 0 ? "+" : "-"}
           {Math.abs(growth).toFixed(1)}%
         </span>
       )}
     </div>
-    <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50">
-      {formatNumber(value)}
-    </p>
-    {description && (
-      <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">{description}</p>
-    )}
+    <p className="mt-2 text-h3 text-ink tabular-nums">{formatNumber(value)}</p>
+    {description && <p className="mt-1 text-caption text-ink-muted">{description}</p>}
   </div>
 );
 
@@ -90,7 +86,10 @@ export default function DashboardPageViewsCard({
 
     const fetchStats = async () => {
       try {
-        const data = await adminRequest<ApiPageViewStats>("/admin/page-views/dashboard", "GET");
+        const data = await adminRequest<ApiPageViewStats>(
+          "/admin/page-views/dashboard",
+          "GET",
+        );
         if (active) {
           setStats(data);
           setError(null);
@@ -128,27 +127,39 @@ export default function DashboardPageViewsCard({
   const weekGrowth = calculateGrowth(thisWeekViews, lastWeekViews);
 
   return (
-    <section className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:p-8">
-      <div className="flex items-center justify-between gap-2">
-        <Link href="/dashboard/stats" className="group">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition cursor-pointer">
+    <Card className="flex h-full flex-col">
+      <CardHeader
+        title={
+          <Link
+            href="/dashboard/stats"
+            className="rounded-md transition-colors duration-150 hover:text-primary-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) motion-reduce:transition-none"
+          >
             방문 통계
-          </h2>
-        </Link>
-        {stats ? (
-          <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-            최근 30일 추세{lastUpdated ? ` (마지막 업데이트: ${lastUpdated})` : ""}
-          </span>
-        ) : null}
-      </div>
+          </Link>
+        }
+        description={
+          stats !== null
+            ? `최근 30일 추세${lastUpdated !== null ? ` · ${lastUpdated} 기준` : ""}`
+            : undefined
+        }
+      />
 
-      {!stats ? (
-        <p className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">
-          방문 통계를 불러오지 못했습니다.{error ? ` (원인: ${error})` : ""}
-        </p>
+      {stats === null ? (
+        <div className="mt-5">
+          <EmptyState
+            Icon={BarChart3}
+            accent="purple"
+            title="방문 통계를 불러오지 못했습니다"
+            description={
+              error !== null
+                ? `원인: ${error}`
+                : "잠시 후 자동으로 다시 시도합니다. 계속 실패하면 새로고침해 주세요."
+            }
+          />
+        </div>
       ) : (
-        <div className="mt-4 flex flex-1 flex-col gap-6">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="mt-5 flex flex-1 flex-col gap-5">
+          <div className="grid gap-3 sm:grid-cols-2">
             <StatCard
               label="오늘 방문"
               value={todayViews}
@@ -159,26 +170,22 @@ export default function DashboardPageViewsCard({
               label="이번 주 방문"
               value={thisWeekViews}
               growth={weekGrowth}
-              description="지난 주 대비"
+              description="지난주 대비"
             />
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                일별 방문자 추이
-              </h3>
-              <div className="flex items-center gap-4 text-[10px] text-slate-500 dark:text-slate-400">
-                <div className="flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-full bg-slate-900 dark:bg-slate-100" />
-                  <span>방문자 수</span>
-                </div>
-              </div>
+          <div className="rounded-lg border border-hairline p-4 md:p-5">
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <h3 className="text-body-sm font-semibold text-ink">일별 방문자 추이</h3>
+              <span className="flex items-center gap-1.5 text-caption text-ink-muted">
+                <span aria-hidden="true" className="h-2 w-2 rounded-full bg-primary" />
+                방문자 수
+              </span>
             </div>
             <PageViewChart data={trend} />
           </div>
         </div>
       )}
-    </section>
+    </Card>
   );
 }

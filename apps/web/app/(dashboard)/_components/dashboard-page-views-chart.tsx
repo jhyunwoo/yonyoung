@@ -56,16 +56,12 @@ export default function PageViewChart({ data }: PageViewChartProps) {
       >
         <defs>
           <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop
-              offset="0%"
-              stopColor="currentColor"
-              className="text-indigo-500/30 dark:text-indigo-400/40"
-            />
+            <stop offset="0%" stopColor="currentColor" className="text-primary-text/30" />
             <stop
               offset="100%"
               stopColor="currentColor"
               stopOpacity="0"
-              className="text-indigo-500/0 dark:text-indigo-400/0"
+              className="text-primary-text/0"
             />
           </linearGradient>
         </defs>
@@ -76,7 +72,7 @@ export default function PageViewChart({ data }: PageViewChartProps) {
           y1="0"
           x2="1000"
           y2="0"
-          className="stroke-slate-100 dark:stroke-slate-800/60"
+          className="stroke-hairline"
           strokeWidth="1"
         />
         <line
@@ -84,7 +80,7 @@ export default function PageViewChart({ data }: PageViewChartProps) {
           y1="100"
           x2="1000"
           y2="100"
-          className="stroke-slate-100 dark:stroke-slate-800/60"
+          className="stroke-hairline"
           strokeWidth="1"
         />
         <line
@@ -92,15 +88,12 @@ export default function PageViewChart({ data }: PageViewChartProps) {
           y1="200"
           x2="1000"
           y2="200"
-          className="stroke-slate-200 dark:stroke-slate-700/60"
+          className="stroke-hairline"
           strokeWidth="1"
         />
 
         {/* Area fill */}
-        <polyline
-          fill="url(#chartGradient)"
-          points={`0,200 ${points} 1000,200`}
-        />
+        <polyline fill="url(#chartGradient)" points={`0,200 ${points} 1000,200`} />
 
         {/* Main line */}
         <polyline
@@ -110,7 +103,7 @@ export default function PageViewChart({ data }: PageViewChartProps) {
           strokeLinecap="round"
           strokeLinejoin="round"
           points={points}
-          className="text-indigo-600 dark:text-indigo-400"
+          className="text-primary-text"
         />
 
         {/* Dots (Hidden on small screens if too dense, scaled elegantly) */}
@@ -123,7 +116,7 @@ export default function PageViewChart({ data }: PageViewChartProps) {
               cx={x}
               cy={y}
               r="2.5"
-              className="fill-white stroke-indigo-600 stroke-[1.5] dark:fill-slate-900 dark:stroke-indigo-400 sm:r-[3]"
+              className="fill-surface stroke-primary stroke-[1.5] sm:r-[3]"
             />
           );
         })}
@@ -136,7 +129,7 @@ export default function PageViewChart({ data }: PageViewChartProps) {
               y1={0}
               x2={hoveredItem.x * 10}
               y2={200}
-              className="stroke-slate-300 dark:stroke-slate-600"
+              className="stroke-hairline-strong"
               strokeDasharray="4 4"
               strokeWidth="1.5"
             />
@@ -144,7 +137,7 @@ export default function PageViewChart({ data }: PageViewChartProps) {
               cx={hoveredItem.x * 10}
               cy={hoveredItem.y * 2}
               r="6"
-              className="fill-indigo-600 stroke-white stroke-2 dark:fill-indigo-400 dark:stroke-slate-900 shadow-md"
+              className="fill-primary stroke-surface stroke-2 shadow-md"
             />
           </>
         )}
@@ -190,16 +183,16 @@ export default function PageViewChart({ data }: PageViewChartProps) {
       {/* Floating Tooltip */}
       {hoveredItem && (
         <div
-          className="absolute z-10 pointer-events-none rounded-lg border border-indigo-100 bg-white/95 px-2.5 py-1.5 shadow-lg dark:border-slate-800 dark:bg-slate-950/95 backdrop-blur-sm text-left transition-all duration-75"
+          className="absolute z-10 pointer-events-none rounded-lg border border-hairline bg-surface/95 px-2.5 py-1.5 shadow-lg backdrop-blur-sm text-left transition-all duration-75"
           style={{
             left: `calc(${Math.max(6, Math.min(94, hoveredItem.x))}% - 60px)`,
             top: `calc(${hoveredItem.y}% - 56px)`,
           }}
         >
-          <p className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+          <p className="text-[9px] font-semibold text-ink-muted uppercase tracking-wider">
             {hoveredItem.date}
           </p>
-          <p className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-0.5">
+          <p className="text-xs font-bold text-ink mt-0.5">
             {hoveredItem.count.toLocaleString()}명
           </p>
         </div>
@@ -207,15 +200,11 @@ export default function PageViewChart({ data }: PageViewChartProps) {
 
       {/* X-axis labels */}
       <div className="mt-2 flex justify-between px-1">
-        <span className="text-[10px] text-slate-500 dark:text-slate-400">
-          {data[0]?.date}
-        </span>
-        <span className="text-[10px] text-slate-500 dark:text-slate-400 hidden sm:inline">
+        <span className="text-[10px] text-ink-muted">{data[0]?.date}</span>
+        <span className="text-[10px] text-ink-muted hidden sm:inline">
           {data[Math.floor(data.length / 2)]?.date}
         </span>
-        <span className="text-[10px] text-slate-500 dark:text-slate-400">
-          {data[data.length - 1]?.date}
-        </span>
+        <span className="text-[10px] text-ink-muted">{data[data.length - 1]?.date}</span>
       </div>
     </div>
   );

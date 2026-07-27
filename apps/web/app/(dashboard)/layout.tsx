@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { ReactNode, Suspense } from "react";
 
@@ -10,9 +11,18 @@ import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { getAccessibleDashboardGenerationOptions } from "@/features/dashboard/generation/generation-options";
 import { buildDashboardViewerProfile } from "@/features/dashboard/members/user-profile";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  CardSkeleton,
+  PageHeaderSkeleton,
+} from "@/app/(dashboard)/_components/ui/skeletons";
 
-const ROOT_FONT_FAMILY =
-  '"Pretendard Variable", "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
+// 뷰포트: safe-area 인셋(env(safe-area-inset-*))을 쓰려면 viewport-fit=cover 가
+// 필요하다. 확대는 절대 막지 않는다(접근성).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   ...createPageMetadata({
@@ -74,40 +84,40 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body style={{ fontFamily: ROOT_FONT_FAMILY }}>
+      <head>
+        {/* 첫 페인트 전에 localStorage 의 테마를 <html> 에 적용해 플래시를 막는다.
+            (home) 과 같은 스크립트를 공유하므로 두 그룹의 테마 설정이 이어진다.
+            beforeInteractive 라 하이드레이션보다 먼저 실행된다. */}
+        <Script src="/theme-init.js" strategy="beforeInteractive" />
+      </head>
+      <body className="min-h-dvh bg-canvas text-ink antialiased">
         <Suspense
           fallback={
             <main
-              className="min-h-screen bg-slate-50 dark:bg-slate-800 px-4 py-6 md:px-8 md:py-8"
+              className="min-h-dvh bg-canvas px-4 py-6 md:px-8 md:py-8"
               data-testid="dashboard-shell-loading"
             >
               <p className="sr-only" role="status" aria-live="polite">
                 대시보드 셸을 불러오는 중입니다.
               </p>
-              <div className="mx-auto grid w-full max-w-6xl gap-4 md:grid-cols-[18rem_minmax(0,1fr)]">
-                <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-sm">
-                  <Skeleton className="h-11 w-11 rounded-full" />
+              <div className="mx-auto grid w-full max-w-6xl gap-4 md:grid-cols-[15rem_minmax(0,1fr)]">
+                <section className="rounded-lg border border-hairline bg-surface p-4">
+                  <Skeleton className="h-10 w-10 rounded-md" />
                   <Skeleton className="mt-4 h-5 w-36" />
-                  <Skeleton className="mt-2 h-3 w-24" />
                   <div className="mt-6 space-y-2">
                     {Array.from({ length: 6 }).map((_, index) => (
                       <Skeleton
                         key={`dashboard-shell-nav-${index + 1}`}
-                        className="h-10 w-full"
+                        className="h-11 w-full"
                       />
                     ))}
                   </div>
-                  <div className="mt-10">
-                    <Skeleton className="h-12 w-full" />
-                  </div>
                 </section>
-                <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-                  <Skeleton className="h-6 w-48" />
-                  <Skeleton className="mt-3 h-4 w-full max-w-xl" />
-                  <Skeleton className="mt-2 h-4 w-full max-w-lg" />
+                <section className="rounded-lg border border-hairline bg-surface p-6 md:p-8">
+                  <PageHeaderSkeleton />
                   <div className="mt-8 grid gap-4 md:grid-cols-2">
-                    <Skeleton className="h-32 w-full" />
-                    <Skeleton className="h-32 w-full" />
+                    <CardSkeleton />
+                    <CardSkeleton />
                   </div>
                 </section>
               </div>

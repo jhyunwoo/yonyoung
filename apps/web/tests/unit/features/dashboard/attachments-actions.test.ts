@@ -52,8 +52,7 @@ describe("attachments server actions", () => {
       ...baseCreateInput,
       scope: "activity",
       resourceId: "20000000-0000-4000-8000-000000000001",
-      fileUrl:
-        "https://api.example.com/api/public/media/activities/u/file/x.pdf?sig=a",
+      fileUrl: "https://api.example.com/api/public/media/activities/u/file/x.pdf?sig=a",
     });
 
     const arg = writeRequestMock.mock.calls[0]![0] as Record<string, unknown>;

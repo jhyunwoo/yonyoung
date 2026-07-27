@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import AuditHistoryPanel from "@/app/(dashboard)/_components/audit-history-panel";
 import LastUpdatedMeta from "@/app/(dashboard)/_components/last-updated-meta";
 import { readExhibitionErrorMessage } from "@/app/(dashboard)/dashboard/[generationName]/exhibitions/_components/exhibition-shared";
+import { useConfirm } from "@/app/(dashboard)/_components/ui/confirm-provider";
 
 type GenerationExhibitionDetailProps = {
   exhibitionId: string;
@@ -32,6 +33,7 @@ export default function GenerationExhibitionDetail({
   canDelete,
 }: GenerationExhibitionDetailProps) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [exhibition, setExhibition] = useState<ApiExhibition | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -96,7 +98,12 @@ export default function GenerationExhibitionDetail({
       return;
     }
 
-    const confirmed = window.confirm("정말 이 전시를 삭제하시겠습니까?");
+    const confirmed = await confirm({
+      title: "정말 이 전시를 삭제하시겠습니까?",
+      description: "전시에 등록된 이미지와 첨부파일도 함께 삭제되며 되돌릴 수 없습니다.",
+      confirmLabel: "삭제",
+      tone: "danger",
+    });
     if (!confirmed) {
       return;
     }
@@ -114,16 +121,16 @@ export default function GenerationExhibitionDetail({
   };
 
   return (
-    <section className="mx-auto w-full max-w-5xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
+    <section className="mx-auto w-full max-w-5xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
+          <p className="text-xs font-semibold tracking-[0.12em] text-ink-muted uppercase">
             Exhibitions
           </p>
-          <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
+          <h1 className="mt-2 text-2xl font-bold text-ink md:text-3xl">
             {generationName} 전시 상세
           </h1>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+          <p className="mt-2 text-sm text-ink-muted">
             전시 정보와 사진을 확인할 수 있습니다.
           </p>
         </div>
@@ -131,7 +138,7 @@ export default function GenerationExhibitionDetail({
           {canManage ? (
             <Link
               href={`${generationPath}/exhibitions/${exhibitionId}/edit`}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition hover:bg-primary-active"
             >
               수정
             </Link>
@@ -142,14 +149,14 @@ export default function GenerationExhibitionDetail({
               data-testid="generation-exhibition-delete"
               onClick={handleDelete}
               disabled={isLoading || isDeleting || exhibition === null}
-              className="rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-lg border border-danger-hairline px-4 py-2 text-sm font-semibold text-danger-text transition hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isDeleting ? "삭제 중..." : "삭제"}
             </button>
           ) : null}
           <Link
             href={`${generationPath}/exhibitions`}
-            className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200"
+            className="rounded-lg border border-hairline-strong px-4 py-2 text-sm font-semibold text-ink-secondary"
           >
             목록으로
           </Link>
@@ -158,7 +165,7 @@ export default function GenerationExhibitionDetail({
 
       {isLoading ? (
         <div className="mt-6 space-y-6" aria-hidden="true">
-          <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          <div className="rounded-lg border border-hairline p-4">
             <Skeleton className="h-7 w-2/3" />
             <Skeleton className="mt-2 h-4 w-40" />
             <Skeleton className="mt-2 h-4 w-52" />
@@ -174,50 +181,44 @@ export default function GenerationExhibitionDetail({
               {Array.from({ length: 3 }).map((_, index) => (
                 <Skeleton
                   key={`exhibition-detail-image-loading-${index + 1}`}
-                  className="aspect-[4/3] w-full rounded-xl"
+                  className="aspect-[4/3] w-full rounded-lg"
                 />
               ))}
             </div>
           </div>
         </div>
       ) : errorMessage ? (
-        <p className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="mt-6 rounded-lg border border-danger-hairline bg-danger-soft px-4 py-3 text-sm text-danger-text">
           {errorMessage}
         </p>
       ) : exhibition ? (
         <div className="mt-6 space-y-6">
-          <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-            <p className="text-xl font-semibold text-slate-900 dark:text-slate-50">
-              {exhibition.title}
-            </p>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+          <div className="rounded-lg border border-hairline p-4">
+            <p className="text-xl font-semibold text-ink">{exhibition.title}</p>
+            <p className="mt-2 text-sm text-ink-muted">
               {formatKoreanDateRange(exhibition.startDate, exhibition.endDate)}
             </p>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-              장소: {exhibition.place}
-            </p>
+            <p className="mt-1 text-sm text-ink-muted">장소: {exhibition.place}</p>
             <div className="mt-3">
               <RichTextContent html={exhibition.description} />
             </div>
-            <p className="mt-3 text-xs text-slate-600 dark:text-slate-300">
+            <p className="mt-3 text-xs text-ink-muted">
               생성일: {formatKoreanDate(exhibition.createdAt)}
             </p>
             <LastUpdatedMeta
               updatedAt={exhibition.updatedAt}
               updatedBy={exhibition.updatedBy}
-              className="mt-1 text-xs text-slate-600 dark:text-slate-300"
+              className="mt-1 text-xs text-ink-muted"
             />
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-              이미지
-            </p>
+            <p className="text-sm font-semibold text-ink">이미지</p>
             <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {detailImageUrls.map((imageUrl, index) => (
                 <div
                   key={`${exhibition.id}-${index}-${imageUrl}`}
-                  className="relative aspect-[4/3] overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700"
+                  className="relative aspect-[4/3] overflow-hidden rounded-lg border border-hairline bg-canvas-soft"
                 >
                   <Image
                     src={imageUrl}

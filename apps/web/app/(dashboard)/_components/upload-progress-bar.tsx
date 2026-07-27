@@ -33,11 +33,11 @@ export default function UploadProgressBar({
 
   return (
     <div className={wrapperClassName}>
-      <p className="text-xs text-slate-600 dark:text-slate-300">
+      <p className="text-xs text-ink-muted">
         {label}: {normalizedProgress}%
       </p>
       <div
-        className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-600"
+        className="mt-1 h-2 w-full overflow-hidden rounded-full bg-hairline"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={100}
@@ -45,7 +45,7 @@ export default function UploadProgressBar({
         aria-label={label}
       >
         <div
-          className="h-full rounded-full bg-slate-900 transition-all duration-200"
+          className="h-full rounded-full bg-primary transition-all duration-200"
           style={{ width: `${normalizedProgress}%` }}
         />
       </div>

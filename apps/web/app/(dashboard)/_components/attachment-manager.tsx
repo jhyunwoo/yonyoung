@@ -238,8 +238,8 @@ export default function AttachmentManager({ scope, resourceId }: AttachmentManag
     [
       "rounded-lg px-3 py-1.5 text-sm font-semibold transition",
       isActive
-        ? "bg-slate-900 text-white dark:bg-slate-50 dark:text-slate-900"
-        : "border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800",
+        ? "bg-primary text-on-primary"
+        : "border border-hairline-strong text-ink-muted hover:bg-surface-sunken",
     ].join(" ");
 
   const isSubmitDisabled =
@@ -247,7 +247,7 @@ export default function AttachmentManager({ scope, resourceId }: AttachmentManag
 
   return (
     <div className="space-y-4" data-testid="attachment-manager">
-      <div className="space-y-3 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+      <div className="space-y-3 rounded-lg border border-hairline p-4">
         <div className="flex items-center gap-2" role="group" aria-label="첨부 방식 선택">
           <button
             type="button"
@@ -272,9 +272,7 @@ export default function AttachmentManager({ scope, resourceId }: AttachmentManag
         </div>
 
         <label className="block space-y-1">
-          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-            첨부파일 제목
-          </span>
+          <span className="text-sm font-semibold text-ink">첨부파일 제목</span>
           <input
             type="text"
             value={title}
@@ -283,7 +281,7 @@ export default function AttachmentManager({ scope, resourceId }: AttachmentManag
             maxLength={200}
             disabled={isSaving}
             data-testid="attachment-title-input"
-            className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-50"
+            className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm text-ink"
           />
         </label>
 
@@ -303,11 +301,11 @@ export default function AttachmentManager({ scope, resourceId }: AttachmentManag
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isSaving}
                 data-testid="attachment-select-file-button"
-                className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+                className="rounded-lg border border-hairline-strong px-3 py-2 text-sm font-semibold text-ink-secondary hover:bg-surface-sunken disabled:opacity-50"
               >
                 파일 선택
               </button>
-              <span className="text-sm text-slate-600 dark:text-slate-300">
+              <span className="text-sm text-ink-muted">
                 {selectedFile
                   ? `${selectedFile.name} (${formatFileSize(selectedFile.size)})`
                   : "PDF, 엑셀, 워드, 한글, ZIP 파일을 첨부할 수 있습니다."}
@@ -317,7 +315,7 @@ export default function AttachmentManager({ scope, resourceId }: AttachmentManag
                 onClick={() => void handleUpload()}
                 disabled={isSubmitDisabled}
                 data-testid="attachment-upload-button"
-                className="ml-auto rounded-lg bg-slate-900 dark:bg-slate-50 px-4 py-2 text-sm font-semibold text-white dark:text-slate-900 hover:bg-slate-700 dark:hover:bg-slate-200 disabled:opacity-50"
+                className="ml-auto rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary-active disabled:opacity-50"
               >
                 업로드
               </button>
@@ -326,9 +324,7 @@ export default function AttachmentManager({ scope, resourceId }: AttachmentManag
         ) : (
           <div className="flex flex-wrap items-end gap-2">
             <label className="min-w-0 flex-1 space-y-1">
-              <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                링크 주소
-              </span>
+              <span className="text-sm font-semibold text-ink">링크 주소</span>
               <input
                 type="url"
                 value={linkUrl}
@@ -336,7 +332,7 @@ export default function AttachmentManager({ scope, resourceId }: AttachmentManag
                 placeholder="예: https://docs.google.com/spreadsheets/d/..."
                 disabled={isSaving}
                 data-testid="attachment-link-input"
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-50"
+                className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm text-ink"
               />
             </label>
             <button
@@ -344,7 +340,7 @@ export default function AttachmentManager({ scope, resourceId }: AttachmentManag
               onClick={() => void handleUpload()}
               disabled={isSubmitDisabled}
               data-testid="attachment-upload-button"
-              className="rounded-lg bg-slate-900 dark:bg-slate-50 px-4 py-2 text-sm font-semibold text-white dark:text-slate-900 hover:bg-slate-700 dark:hover:bg-slate-200 disabled:opacity-50"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary-active disabled:opacity-50"
             >
               링크 등록
             </button>
@@ -358,42 +354,32 @@ export default function AttachmentManager({ scope, resourceId }: AttachmentManag
       </div>
 
       {errorMessage ? (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+        <p className="text-sm text-danger-text" role="alert">
           {errorMessage}
         </p>
       ) : null}
 
       {isLoading ? (
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          첨부파일 목록을 불러오는 중...
-        </p>
+        <p className="text-sm text-ink-muted">첨부파일 목록을 불러오는 중...</p>
       ) : attachments.length === 0 ? (
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          등록된 첨부파일이 없습니다.
-        </p>
+        <p className="text-sm text-ink-muted">등록된 첨부파일이 없습니다.</p>
       ) : (
         <ul className="space-y-2" data-testid="attachment-list">
           {attachments.map((attachment, index) => (
             <li
               key={attachment.id}
-              className="flex items-center gap-3 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2"
+              className="flex items-center gap-3 rounded-lg border border-hairline px-3 py-2"
             >
               {attachment.linkUrl ? (
-                <Link2
-                  className="h-5 w-5 shrink-0 text-slate-500 dark:text-slate-400"
-                  aria-hidden
-                />
+                <Link2 className="h-5 w-5 shrink-0 text-ink-muted" aria-hidden />
               ) : (
-                <FileText
-                  className="h-5 w-5 shrink-0 text-slate-500 dark:text-slate-400"
-                  aria-hidden
-                />
+                <FileText className="h-5 w-5 shrink-0 text-ink-muted" aria-hidden />
               )}
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">
+                <p className="truncate text-sm font-semibold text-ink">
                   {attachment.title}
                 </p>
-                <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                <p className="truncate text-xs text-ink-muted">
                   {attachment.linkUrl
                     ? attachment.linkUrl
                     : `${attachment.fileName ?? "파일"} · ${formatFileSize(attachment.fileSize ?? 0)}`}
@@ -405,7 +391,7 @@ export default function AttachmentManager({ scope, resourceId }: AttachmentManag
                 disabled={isSaving || index === 0}
                 aria-label="첨부파일 순서 위로 이동"
                 data-testid="attachment-move-up-button"
-                className="rounded p-1.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30"
+                className="rounded p-1.5 text-ink-muted hover:bg-canvas-soft disabled:opacity-30"
               >
                 <ArrowUp className="h-4 w-4" aria-hidden />
               </button>
@@ -415,7 +401,7 @@ export default function AttachmentManager({ scope, resourceId }: AttachmentManag
                 disabled={isSaving || index === attachments.length - 1}
                 aria-label="첨부파일 순서 아래로 이동"
                 data-testid="attachment-move-down-button"
-                className="rounded p-1.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30"
+                className="rounded p-1.5 text-ink-muted hover:bg-canvas-soft disabled:opacity-30"
               >
                 <ArrowDown className="h-4 w-4" aria-hidden />
               </button>
@@ -425,7 +411,7 @@ export default function AttachmentManager({ scope, resourceId }: AttachmentManag
                 disabled={isSaving}
                 aria-label="첨부파일 삭제"
                 data-testid="attachment-delete-button"
-                className="rounded p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 disabled:opacity-30"
+                className="rounded p-1.5 text-danger-text hover:bg-danger-soft disabled:opacity-30"
               >
                 <Trash2 className="h-4 w-4" aria-hidden />
               </button>

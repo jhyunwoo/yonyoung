@@ -14,6 +14,7 @@ import {
   findLinktreeItemById,
   readLinktreeErrorMessage,
 } from "@/app/(dashboard)/_components/linktree-shared";
+import { useConfirm } from "@/app/(dashboard)/_components/ui/confirm-provider";
 
 type LinktreeItemDetailProps = {
   linktreeId: string;
@@ -29,6 +30,7 @@ export default function LinktreeItemDetail({
   listPath,
 }: LinktreeItemDetailProps) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [linktree, setLinktree] = useState<ApiLinktree | null>(null);
   const [item, setItem] = useState<ApiLinktreeItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -72,7 +74,12 @@ export default function LinktreeItemDetail({
   }, [loadItem]);
 
   const handleDelete = async () => {
-    const confirmed = window.confirm("이 링크를 삭제하시겠습니까?");
+    const confirmed = await confirm({
+      title: "이 링크를 삭제하시겠습니까?",
+      description: "삭제한 링크는 되돌릴 수 없습니다.",
+      confirmLabel: "삭제",
+      tone: "danger",
+    });
     if (!confirmed) {
       return;
     }
@@ -93,12 +100,12 @@ export default function LinktreeItemDetail({
 
   if (isLoading) {
     return (
-      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
+      <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
         <div className="space-y-4" aria-hidden="true">
           <Skeleton className="h-4 w-28" />
           <Skeleton className="h-8 w-32" />
           <Skeleton className="h-3 w-full max-w-lg" />
-          <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          <div className="rounded-lg border border-hairline p-4">
             <Skeleton className="h-3 w-14" />
             <Skeleton className="mt-2 h-5 w-36" />
             <Skeleton className="mt-4 h-3 w-16" />
@@ -116,16 +123,14 @@ export default function LinktreeItemDetail({
 
   if (isGroupNotFound) {
     return (
-      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
-          링크 상세
-        </h1>
-        <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+      <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
+        <h1 className="text-2xl font-bold text-ink md:text-3xl">링크 상세</h1>
+        <p className="mt-3 text-sm text-ink-muted">
           존재하지 않는 분류이거나 접근할 수 없습니다.
         </p>
         <Link
           href={listPath}
-          className="mt-6 inline-flex rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"
+          className="mt-6 inline-flex rounded-lg border border-hairline-strong px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-canvas-soft"
         >
           목록으로 이동
         </Link>
@@ -135,23 +140,21 @@ export default function LinktreeItemDetail({
 
   if (isItemNotFound) {
     return (
-      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
-          링크 상세
-        </h1>
-        <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+      <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
+        <h1 className="text-2xl font-bold text-ink md:text-3xl">링크 상세</h1>
+        <p className="mt-3 text-sm text-ink-muted">
           존재하지 않는 링크이거나 접근할 수 없습니다.
         </p>
         <div className="mt-6 flex flex-wrap gap-2">
           <Link
             href={listPath}
-            className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="inline-flex rounded-lg border border-hairline-strong px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-canvas-soft"
           >
             목록으로 이동
           </Link>
           <Link
             href={`${listPath}/${linktreeId}`}
-            className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="inline-flex rounded-lg border border-hairline-strong px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-canvas-soft"
           >
             분류 상세로 이동
           </Link>
@@ -162,75 +165,63 @@ export default function LinktreeItemDetail({
 
   if (!linktree || !item) {
     return (
-      <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-        <p className="text-sm text-slate-600 dark:text-slate-300">
-          링크 데이터를 불러올 수 없습니다.
-        </p>
+      <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
+        <p className="text-sm text-ink-muted">링크 데이터를 불러올 수 없습니다.</p>
       </section>
     );
   }
 
   return (
-    <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-      <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
+    <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
+      <p className="text-xs font-semibold tracking-[0.12em] text-ink-muted uppercase">
         Settings / Linktree
       </p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
-        링크 상세
-      </h1>
-      <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
+      <h1 className="mt-2 text-2xl font-bold text-ink md:text-3xl">링크 상세</h1>
+      <p className="mt-3 text-sm leading-relaxed text-ink-muted md:text-base">
         링크 정보를 확인하고, 권한이 있으면 수정 화면으로 이동하거나 삭제할 수 있습니다.
       </p>
 
       {errorMessage ? (
-        <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="mt-4 rounded-lg border border-danger-hairline bg-danger-soft px-4 py-3 text-sm text-danger-text">
           {errorMessage}
         </p>
       ) : null}
 
-      <div className="mt-6 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-        <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">분류</p>
-        <p className="mt-1 text-base font-semibold text-slate-900 dark:text-slate-50">
-          {linktree.name}
-        </p>
+      <div className="mt-6 rounded-lg border border-hairline p-4">
+        <p className="text-xs font-semibold text-ink-muted">분류</p>
+        <p className="mt-1 text-base font-semibold text-ink">{linktree.name}</p>
 
-        <p className="mt-4 text-xs font-semibold text-slate-600 dark:text-slate-300">
-          링크 이름
-        </p>
-        <p className="mt-1 text-base font-semibold text-slate-900 dark:text-slate-50">
-          {item.name}
-        </p>
+        <p className="mt-4 text-xs font-semibold text-ink-muted">링크 이름</p>
+        <p className="mt-1 text-base font-semibold text-ink">{item.name}</p>
 
-        <p className="mt-4 text-xs font-semibold text-slate-600 dark:text-slate-300">
-          링크 주소
-        </p>
+        <p className="mt-4 text-xs font-semibold text-ink-muted">링크 주소</p>
         <a
           href={item.link}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-1 inline-flex text-sm text-blue-700 dark:text-blue-300 underline underline-offset-2"
+          className="mt-1 inline-flex text-sm text-primary-text underline underline-offset-2"
         >
           {item.link}
         </a>
-        <p className="mt-4 text-xs text-slate-600 dark:text-slate-300">
+        <p className="mt-4 text-xs text-ink-muted">
           생성일: {formatKoreanDate(item.createdAt)}
         </p>
         <LastUpdatedMeta
           updatedAt={item.updatedAt}
           updatedBy={item.updatedBy}
-          className="mt-1 text-xs text-slate-600 dark:text-slate-300"
+          className="mt-1 text-xs text-ink-muted"
         />
 
         <div className="mt-5 flex flex-wrap gap-2">
           <Link
             href={listPath}
-            className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="rounded-lg border border-hairline-strong px-3 py-1.5 text-xs font-semibold text-ink-secondary transition hover:bg-canvas-soft"
           >
             목록으로
           </Link>
           <Link
             href={`${listPath}/${linktree.id}`}
-            className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="rounded-lg border border-hairline-strong px-3 py-1.5 text-xs font-semibold text-ink-secondary transition hover:bg-canvas-soft"
           >
             분류 상세로
           </Link>
@@ -239,7 +230,7 @@ export default function LinktreeItemDetail({
             <>
               <Link
                 href={`${listPath}/${linktree.id}/items/${item.id}/edit`}
-                className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="rounded-lg border border-hairline-strong px-3 py-1.5 text-xs font-semibold text-ink-secondary transition hover:bg-canvas-soft"
               >
                 링크 수정
               </Link>
@@ -248,7 +239,7 @@ export default function LinktreeItemDetail({
                 data-testid="linktree-item-delete"
                 onClick={() => void handleDelete()}
                 disabled={isDeleting}
-                className="rounded-lg border border-red-200 dark:border-red-500 px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-300 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg border border-danger-hairline px-3 py-1.5 text-xs font-semibold text-danger-text disabled:cursor-not-allowed disabled:opacity-60"
               >
                 링크 삭제
               </button>

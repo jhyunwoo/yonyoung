@@ -1,40 +1,33 @@
 "use client";
 
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
+import { Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+
 import {
-  ArrowLeft,
-  BarChart3,
-  Camera,
-  ChevronDown,
-  FolderKanban,
-  House,
-  Image as ImageIcon,
-  LogOut,
-  Menu,
-  Settings,
-  UserCircle2,
-  Users,
-  X,
-  type LucideIcon,
-} from "lucide-react";
+  buildNavigationItems,
+  isSettingsSectionPath,
+  resolveActiveGenerationFromPath,
+  resolveActivePageName,
+  resolveSelectedGenerationScopedPath,
+} from "@/app/(dashboard)/_components/shell/dashboard-navigation";
+import { MobileDrawer } from "@/app/(dashboard)/_components/shell/mobile-drawer";
+import { SidebarContent } from "@/app/(dashboard)/_components/shell/sidebar-content";
+import { ConfirmProvider } from "@/app/(dashboard)/_components/ui/confirm-provider";
+import { IconButton } from "@/app/(dashboard)/_components/ui/icon-button";
+import { SkipLink } from "@/app/(dashboard)/_components/ui/layout-parts";
+import { ToastProvider } from "@/app/(dashboard)/_components/ui/toast-provider";
 import { signOut } from "@/features/auth/client/auth-actions";
 import { isPresidentOrVicePresidentRole } from "@/features/auth/model/auth-shared";
-import { buildDashboardSettingsMenuItems } from "@/features/dashboard/settings/dashboard-settings-menu";
 import type { DashboardGenerationOption } from "@/features/dashboard/generation/generation-options";
-import { isSameGenerationRouteName } from "@/features/dashboard/generation/dashboard-generation-route";
+import { buildDashboardSettingsMenuItems } from "@/features/dashboard/settings/dashboard-settings-menu";
 import { isMemberLikeRoleValue } from "@/shared/contracts/auth-roles";
 
-export type DashboardViewer = {
-  id: string;
-  displayName: string;
-  email: string;
-  image: string | null;
-  role: string | null;
-};
+export type { DashboardViewer } from "@/app/(dashboard)/_components/shell/dashboard-shell-types";
+
+import type { DashboardViewer } from "@/app/(dashboard)/_components/shell/dashboard-shell-types";
+
+const MAIN_CONTENT_ID = "dashboard-main";
 
 type DashboardShellProps = {
   children: ReactNode;
@@ -42,471 +35,24 @@ type DashboardShellProps = {
   viewer: DashboardViewer | null;
 };
 
-type NavigationItem = {
-  key: string;
-  href: string;
-  label: string;
-  Icon: LucideIcon;
-  active: boolean;
-};
-
-const SidebarContent = (input: {
-  pathname: string;
-  generationOptions: DashboardGenerationOption[];
-  selectedGeneration: DashboardGenerationOption | null;
-  selectedGenerationScopedPath: string | null;
-  viewer: DashboardViewer | null;
-  onNavigate: () => void;
-  onSignOut: () => Promise<void>;
-  isSignOutPending: boolean;
-}) => {
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const shouldReduceMotion = useReducedMotion();
-  const settingsSubItems = buildDashboardSettingsMenuItems({
-    canManagePrivilegedSettings: isPresidentOrVicePresidentRole(input.viewer?.role),
-    isMemberLikeRole: isMemberLikeRoleValue(input.viewer?.role),
-  });
-  const isSettingsSectionActive =
-    input.pathname === "/dashboard/profile" ||
-    input.pathname.startsWith("/dashboard/profile/") ||
-    input.pathname === "/dashboard/settings" ||
-    input.pathname.startsWith("/dashboard/settings/");
-  const [isSettingsExpanded, setIsSettingsExpanded] = useState(isSettingsSectionActive);
-  const profileMenuRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    setIsProfileMenuOpen(false);
-  }, [input.pathname]);
-
-  useEffect(() => {
-    if (isSettingsSectionActive) {
-      setIsSettingsExpanded(true);
-    }
-  }, [isSettingsSectionActive]);
-
-  useEffect(() => {
-    if (!isProfileMenuOpen) {
-      return;
-    }
-
-    const handleMouseDown = (event: MouseEvent) => {
-      const target = event.target;
-      if (!(target instanceof Node)) {
-        return;
-      }
-
-      if (profileMenuRef.current?.contains(target)) {
-        return;
-      }
-
-      setIsProfileMenuOpen(false);
-    };
-
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsProfileMenuOpen(false);
-      }
-    };
-
-    window.addEventListener("mousedown", handleMouseDown);
-    window.addEventListener("keydown", handleEscape);
-
-    return () => {
-      window.removeEventListener("mousedown", handleMouseDown);
-      window.removeEventListener("keydown", handleEscape);
-    };
-  }, [isProfileMenuOpen]);
-
-  const navigationItems: NavigationItem[] = input.selectedGeneration
-    ? [
-        {
-          key: "dashboard-home",
-          href: "/dashboard",
-          label: "전체 기수",
-          Icon: ArrowLeft,
-          active: input.pathname === "/dashboard",
-        },
-        {
-          key: "generation-home",
-          href: input.selectedGeneration.path,
-          label: "기수 홈",
-          Icon: FolderKanban,
-          active: input.selectedGenerationScopedPath === "/",
-        },
-        {
-          key: "generation-activities",
-          href: `${input.selectedGeneration.path}/activities`,
-          label: "활동",
-          Icon: ImageIcon,
-          active: input.selectedGenerationScopedPath?.startsWith("/activities") === true,
-        },
-        {
-          key: "generation-exhibitions",
-          href: `${input.selectedGeneration.path}/exhibitions`,
-          label: "전시",
-          Icon: Camera,
-          active: input.selectedGenerationScopedPath?.startsWith("/exhibitions") === true,
-        },
-        {
-          key: "generation-members",
-          href: `${input.selectedGeneration.path}/members`,
-          label: "기수 멤버",
-          Icon: Users,
-          active: input.selectedGenerationScopedPath?.startsWith("/members") === true,
-        },
-        {
-          key: "stats",
-          href: "/dashboard/stats",
-          label: "방문 통계",
-          Icon: BarChart3,
-          active:
-            input.pathname === "/dashboard/stats" ||
-            input.pathname.startsWith("/dashboard/stats/"),
-        },
-        {
-          key: "homepage",
-          href: "/",
-          label: "홈페이지",
-          Icon: House,
-          active: input.pathname === "/",
-        },
-      ]
-    : [
-        ...input.generationOptions.map((generation) => ({
-          key: `generation-${generation.id}`,
-          href: generation.path,
-          label: generation.name,
-          Icon: FolderKanban,
-          active:
-            input.pathname === generation.path ||
-            input.pathname.startsWith(`${generation.path}/`),
-        })),
-        {
-          key: "stats",
-          href: "/dashboard/stats",
-          label: "방문 통계",
-          Icon: BarChart3,
-          active:
-            input.pathname === "/dashboard/stats" ||
-            input.pathname.startsWith("/dashboard/stats/"),
-        },
-        {
-          key: "homepage",
-          href: "/",
-          label: "홈페이지",
-          Icon: House,
-          active: input.pathname === "/",
-        },
-      ];
-
-  const currentGeneration = input.selectedGeneration;
-
-  const viewerName = input.viewer?.displayName ?? "사용자";
-  const viewerEmail = input.viewer?.email ?? "";
-  const viewerImage = input.viewer?.image;
-  const avatarFallback = viewerName.slice(0, 1);
-
-  const handleProfileLinkClick = () => {
-    setIsProfileMenuOpen(false);
-    input.onNavigate();
-  };
-
-  const handleSignOutClick = async () => {
-    if (input.isSignOutPending) {
-      return;
-    }
-
-    setIsProfileMenuOpen(false);
-    await input.onSignOut();
-  };
-
-  return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="border-b border-slate-200 dark:border-slate-700 px-5 py-5">
-        <Link
-          href="/dashboard"
-          onClick={input.onNavigate}
-          className="flex items-center gap-3"
-        >
-          <span className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-            <Image
-              src="/yonyoung-logo-black.png"
-              alt="연영회 로고"
-              width={32}
-              height={32}
-              className="h-8 w-8 object-contain"
-            />
-          </span>
-          <div className="min-w-0">
-            <p className="text-lg font-bold text-slate-900 dark:text-slate-50">
-              연영회 대시보드
-            </p>
-            {currentGeneration ? (
-              <p className="mt-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                현재 기수: {currentGeneration.name}
-              </p>
-            ) : null}
-          </div>
-        </Link>
-
-        {!currentGeneration && input.generationOptions.length === 0 ? (
-          <p className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-            현재 소속된 기수 정보가 없습니다.
-          </p>
-        ) : null}
-      </div>
-
-      <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
-        <ul className="space-y-1">
-          <AnimatePresence initial={false} mode="popLayout">
-            {navigationItems.map(({ key, href, label, Icon, active }) => (
-              <motion.li
-                key={key}
-                layout={!shouldReduceMotion}
-                initial={shouldReduceMotion ? false : { opacity: 0, x: -12, scale: 0.98 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={
-                  shouldReduceMotion
-                    ? { opacity: 0 }
-                    : { opacity: 0, x: 12, scale: 0.98, transition: { duration: 0.14 } }
-                }
-                transition={
-                  shouldReduceMotion
-                    ? { duration: 0 }
-                    : { type: "spring", stiffness: 520, damping: 34, mass: 0.64 }
-                }
-              >
-                <Link
-                  href={href}
-                  onClick={input.onNavigate}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                    active
-                      ? "bg-slate-900 text-white"
-                      : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-50"
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{label}</span>
-                </Link>
-              </motion.li>
-            ))}
-          </AnimatePresence>
-
-          <motion.li layout={!shouldReduceMotion}>
-            <button
-              type="button"
-              data-testid="dashboard-settings-toggle"
-              onClick={() => setIsSettingsExpanded((previous) => !previous)}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${
-                isSettingsSectionActive
-                  ? "bg-slate-900 text-white"
-                  : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-50"
-              }`}
-              aria-expanded={isSettingsExpanded}
-            >
-              <Settings className="h-4 w-4" />
-              <span className="flex-1">설정</span>
-              <ChevronDown
-                className={`h-4 w-4 transition ${isSettingsExpanded ? "rotate-180" : ""}`}
-              />
-            </button>
-
-            <AnimatePresence initial={false}>
-              {isSettingsExpanded ? (
-                <motion.ul
-                  initial={shouldReduceMotion ? false : { height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={
-                    shouldReduceMotion
-                      ? { height: 0, opacity: 0 }
-                      : { height: 0, opacity: 0, transition: { duration: 0.16 } }
-                  }
-                  transition={
-                    shouldReduceMotion
-                      ? { duration: 0 }
-                      : { type: "spring", stiffness: 460, damping: 36, mass: 0.58 }
-                  }
-                  className="mt-1 space-y-1 overflow-hidden pl-9"
-                >
-                  {settingsSubItems.map((settingsSubItem, index) => {
-                    const isSubItemActive =
-                      input.pathname === settingsSubItem.href ||
-                      input.pathname.startsWith(`${settingsSubItem.href}/`);
-
-                    return (
-                      <motion.li
-                        key={settingsSubItem.key}
-                        initial={shouldReduceMotion ? false : { opacity: 0, x: -8 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={
-                          shouldReduceMotion
-                            ? { opacity: 0 }
-                            : { opacity: 0, x: 8, transition: { duration: 0.12 } }
-                        }
-                        transition={
-                          shouldReduceMotion
-                            ? { duration: 0 }
-                            : { duration: 0.2, delay: index * 0.03, ease: "easeOut" }
-                        }
-                      >
-                        <Link
-                          href={settingsSubItem.href}
-                          onClick={input.onNavigate}
-                          className={`block rounded-lg px-3 py-2 text-sm transition ${
-                            isSubItemActive
-                              ? "bg-slate-100 dark:bg-slate-700 font-semibold text-slate-900 dark:text-slate-50"
-                              : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-50"
-                          }`}
-                        >
-                          {settingsSubItem.label}
-                        </Link>
-                      </motion.li>
-                    );
-                  })}
-                </motion.ul>
-              ) : null}
-            </AnimatePresence>
-          </motion.li>
-        </ul>
-      </nav>
-
-      <div className="border-t border-slate-200 dark:border-slate-700 p-3">
-        <div className="relative" ref={profileMenuRef}>
-          <AnimatePresence initial={false}>
-            {isProfileMenuOpen ? (
-              <motion.div
-                initial={shouldReduceMotion ? false : { opacity: 0, y: 8, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={
-                  shouldReduceMotion
-                    ? { opacity: 0 }
-                    : { opacity: 0, y: 8, scale: 0.98, transition: { duration: 0.14 } }
-                }
-                transition={
-                  shouldReduceMotion
-                    ? { duration: 0 }
-                    : { type: "spring", stiffness: 520, damping: 34, mass: 0.64 }
-                }
-                className="absolute bottom-full left-0 right-0 mb-2 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg"
-              >
-                <Link
-                  href="/dashboard/profile"
-                  onClick={handleProfileLinkClick}
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800"
-                >
-                  <UserCircle2 className="h-4 w-4" />
-                  <span>개인 프로필</span>
-                </Link>
-                <button
-                  type="button"
-                  data-testid="dashboard-signout-button"
-                  onClick={handleSignOutClick}
-                  disabled={input.isSignOutPending}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>{input.isSignOutPending ? "로그아웃 중..." : "로그아웃"}</span>
-                </button>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-
-          <button
-            type="button"
-            data-testid="dashboard-profile-menu-toggle"
-            onClick={() => setIsProfileMenuOpen((previous) => !previous)}
-            className="flex w-full items-center gap-3 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-left transition hover:bg-slate-50"
-            aria-haspopup="menu"
-            aria-expanded={isProfileMenuOpen}
-          >
-            <div className="h-9 w-9 overflow-hidden rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700">
-              {viewerImage ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={viewerImage}
-                  alt="사용자 프로필 이미지"
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-600 dark:text-slate-300">
-                  {avatarFallback}
-                </div>
-              )}
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">
-                {viewerName}
-              </p>
-              {viewerEmail ? (
-                <p className="truncate text-xs text-slate-600 dark:text-slate-300">
-                  {viewerEmail}
-                </p>
-              ) : null}
-            </div>
-
-            <ChevronDown
-              className={`h-4 w-4 text-slate-600 dark:text-slate-300 transition ${
-                isProfileMenuOpen ? "rotate-180" : ""
-              }`}
-            />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const resolveActiveGenerationFromPath = (
-  pathname: string,
-  generationOptions: DashboardGenerationOption[],
-): DashboardGenerationOption | null => {
-  if (!pathname.startsWith("/dashboard/")) {
-    return null;
-  }
-
-  const nextPathname = pathname.slice("/dashboard/".length);
-  const routeName = nextPathname.split("/")[0];
-  if (!routeName || routeName === "settings" || routeName === "profile") {
-    return null;
-  }
-
-  return (
-    generationOptions.find((generation) =>
-      isSameGenerationRouteName(generation.name, routeName),
-    ) ?? null
-  );
-};
-
-const resolveSelectedGenerationScopedPath = (pathname: string): string | null => {
-  const segments = pathname.split("/").filter((segment) => segment.length > 0);
-  if (segments.length < 2 || segments[0] !== "dashboard") {
-    return null;
-  }
-
-  const routeName = segments[1];
-  if (!routeName || routeName === "settings" || routeName === "profile") {
-    return null;
-  }
-
-  if (segments.length === 2) {
-    return "/";
-  }
-
-  return `/${segments.slice(2).join("/")}`;
-};
-
+/**
+ * 대시보드 셸.
+ *
+ * 구조: 데스크탑 고정 사이드바 + 모바일 상단 바 / 오프캔버스 드로어.
+ * 바텀 내비게이션은 쓰지 않는다 — 이 앱의 정보 구조는 최상위 탭 3~5개가
+ * 아니라 기수 → 활동/전시 → 상세로 이어지는 깊은 계층이다.
+ *
+ * <main> 은 이 컴포넌트가 단독으로 소유한다. 재디자인 이전에는 셸과 각 페이지가
+ * 모두 <main> 을 렌더해 랜드마크가 중첩돼 있었다(페이지는 PageContainer 를 쓴다).
+ */
 export default function DashboardShell({
   children,
   generationOptions,
   viewer,
 }: DashboardShellProps) {
   const pathname = usePathname();
-  const shouldReduceMotion = useReducedMotion();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isSignOutPending, setIsSignOutPending] = useState(false);
-
-  const isAuthRoute = pathname.startsWith("/auth/");
 
   const selectedGeneration = useMemo(
     () => resolveActiveGenerationFromPath(pathname, generationOptions),
@@ -517,193 +63,109 @@ export default function DashboardShell({
     [pathname],
   );
 
+  const navigationItems = useMemo(
+    () =>
+      buildNavigationItems({
+        pathname,
+        generationOptions,
+        selectedGeneration,
+        selectedGenerationScopedPath,
+      }),
+    [pathname, generationOptions, selectedGeneration, selectedGenerationScopedPath],
+  );
+
+  const settingsItems = useMemo(
+    () =>
+      buildDashboardSettingsMenuItems({
+        canManagePrivilegedSettings: isPresidentOrVicePresidentRole(viewer?.role),
+        isMemberLikeRole: isMemberLikeRoleValue(viewer?.role),
+      }),
+    [viewer?.role],
+  );
+
+  const activePageName = useMemo(
+    () =>
+      resolveActivePageName({
+        pathname,
+        selectedGeneration,
+        selectedGenerationScopedPath,
+      }),
+    [pathname, selectedGeneration, selectedGenerationScopedPath],
+  );
+
   useEffect(() => {
-    setMobileOpen(false);
+    setIsMobileOpen(false);
   }, [pathname]);
 
-  useEffect(() => {
-    if (!mobileOpen) {
-      return;
-    }
-
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setMobileOpen(false);
-      }
-    };
-
-    window.addEventListener("keydown", handleEscape);
-    return () => {
-      window.removeEventListener("keydown", handleEscape);
-    };
-  }, [mobileOpen]);
-
-  useEffect(() => {
-    document.body.style.overflow = mobileOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [mobileOpen]);
-
-  const activePageName = useMemo(() => {
-    if (pathname === "/dashboard") {
-      return "홈";
-    }
-
-    if (pathname.startsWith("/dashboard/profile")) {
-      return "내 프로필";
-    }
-
-    if (pathname.startsWith("/dashboard/settings")) {
-      return "설정";
-    }
-
-    if (selectedGeneration) {
-      if (selectedGenerationScopedPath === "/") {
-        const generationName = selectedGeneration.name.trim();
-        return generationName.length > 0 ? generationName : "기수 홈";
-      }
-      if (selectedGenerationScopedPath?.startsWith("/exhibitions")) {
-        return "전시";
-      }
-      if (selectedGenerationScopedPath?.startsWith("/members")) {
-        return "기수 멤버";
-      }
-      if (selectedGenerationScopedPath?.startsWith("/activities")) {
-        return "활동";
-      }
-
-      return selectedGeneration.name;
-    }
-
-    return "Dashboard";
-  }, [pathname, selectedGeneration, selectedGenerationScopedPath]);
-
-  const handleSignOut = async () => {
+  const handleSignOut = async (): Promise<void> => {
     if (isSignOutPending) {
       return;
     }
 
     setIsSignOutPending(true);
     const result = await signOut();
-
     setIsSignOutPending(false);
-    if (!result.ok) {
-      return;
-    }
 
-    window.location.href = "/auth/sign-in";
+    if (result.ok) {
+      window.location.href = "/auth/sign-in";
+    }
   };
 
-  if (isAuthRoute) {
+  // /auth/* 는 셸 없이 자체 레이아웃을 쓴다. 프로바이더도 필요 없다.
+  if (pathname.startsWith("/auth/")) {
     return <>{children}</>;
   }
 
+  const sidebar = (onNavigate: () => void) => (
+    <SidebarContent
+      pathname={pathname}
+      navigationItems={navigationItems}
+      settingsItems={settingsItems}
+      isSettingsSectionActive={isSettingsSectionPath(pathname)}
+      hasGenerationOptions={generationOptions.length > 0}
+      selectedGeneration={selectedGeneration}
+      viewer={viewer}
+      onNavigate={onNavigate}
+      onSignOut={handleSignOut}
+      isSignOutPending={isSignOutPending}
+    />
+  );
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-50">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 md:block">
-        <SidebarContent
-          pathname={pathname}
-          generationOptions={generationOptions}
-          selectedGeneration={selectedGeneration}
-          selectedGenerationScopedPath={selectedGenerationScopedPath}
-          viewer={viewer}
-          onNavigate={() => {}}
-          onSignOut={handleSignOut}
-          isSignOutPending={isSignOutPending}
-        />
-      </aside>
+    <ToastProvider>
+      <ConfirmProvider>
+        <div className="min-h-dvh bg-canvas text-ink">
+          <SkipLink targetId={MAIN_CONTENT_ID} />
 
-      <div className="md:pl-72">
-        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/95 px-4 py-3 backdrop-blur md:hidden">
-          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-            {activePageName}
-          </p>
-          <button
-            type="button"
-            data-testid="dashboard-mobile-sidebar-open"
-            onClick={() => setMobileOpen(true)}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-            aria-label="사이드바 열기"
-          >
-            <Menu className="h-4 w-4" />
-          </button>
-        </header>
+          {/* md–lg 는 좁은 레일, lg 이상은 전체 폭 */}
+          <aside className="fixed inset-y-0 left-0 z-30 hidden w-(--sidebar-width-md) border-r border-hairline md:block lg:w-(--sidebar-width)">
+            {sidebar(() => {})}
+          </aside>
 
-        <main>{children}</main>
-      </div>
+          <div className="md:pl-(--sidebar-width-md) lg:pl-(--sidebar-width)">
+            <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-hairline bg-surface/95 px-4 py-2 pt-[calc(env(safe-area-inset-top)+0.5rem)] backdrop-blur md:hidden">
+              <p className="truncate text-body-sm font-semibold text-ink">
+                {activePageName}
+              </p>
+              <IconButton
+                data-testid="dashboard-mobile-sidebar-open"
+                label="사이드바 열기"
+                icon={<Menu className="h-4 w-4" />}
+                variant="utility"
+                onClick={() => setIsMobileOpen(true)}
+              />
+            </header>
 
-      <AnimatePresence initial={false}>
-        {mobileOpen ? (
-          <div
-            className="fixed inset-0 z-40 md:hidden"
-            role="dialog"
-            aria-modal="true"
-            data-testid="dashboard-mobile-sidebar"
-            data-state="open"
-          >
-            <motion.button
-              type="button"
-              data-testid="dashboard-mobile-sidebar-backdrop"
-              aria-label="사이드바 닫기"
-              className="absolute inset-0 bg-slate-900/40"
-              onClick={() => setMobileOpen(false)}
-              initial={shouldReduceMotion ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={
-                shouldReduceMotion
-                  ? { opacity: 0 }
-                  : { opacity: 0, transition: { duration: 0.2, ease: "easeOut" } }
-              }
-              transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2 }}
-            />
-            <motion.aside
-              className="absolute right-0 top-0 flex h-full w-[84%] max-w-sm flex-col border-l border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl"
-              initial={shouldReduceMotion ? false : { x: "100%", opacity: 0.98 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={
-                shouldReduceMotion
-                  ? { x: "100%", opacity: 0.98 }
-                  : {
-                      x: "100%",
-                      opacity: 0.98,
-                      transition: { duration: 0.24, ease: [0.4, 0, 0.2, 1] },
-                    }
-              }
-              transition={
-                shouldReduceMotion
-                  ? { duration: 0 }
-                  : { type: "spring", stiffness: 330, damping: 32, mass: 0.7 }
-              }
-            >
-              <div className="flex items-center justify-end border-b border-slate-200 dark:border-slate-700 px-4 py-3">
-                <button
-                  type="button"
-                  data-testid="dashboard-mobile-sidebar-close"
-                  onClick={() => setMobileOpen(false)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-                  aria-label="사이드바 닫기"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              <div className="min-h-0 flex-1">
-                <SidebarContent
-                  pathname={pathname}
-                  generationOptions={generationOptions}
-                  selectedGeneration={selectedGeneration}
-                  selectedGenerationScopedPath={selectedGenerationScopedPath}
-                  viewer={viewer}
-                  onNavigate={() => setMobileOpen(false)}
-                  onSignOut={handleSignOut}
-                  isSignOutPending={isSignOutPending}
-                />
-              </div>
-            </motion.aside>
+            <main id={MAIN_CONTENT_ID} tabIndex={-1} className="focus:outline-none">
+              {children}
+            </main>
           </div>
-        ) : null}
-      </AnimatePresence>
-    </div>
+
+          <MobileDrawer open={isMobileOpen} onClose={() => setIsMobileOpen(false)}>
+            {sidebar(() => setIsMobileOpen(false))}
+          </MobileDrawer>
+        </div>
+      </ConfirmProvider>
+    </ToastProvider>
   );
 }

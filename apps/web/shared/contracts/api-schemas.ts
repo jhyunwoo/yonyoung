@@ -187,12 +187,7 @@ export const apiCreateAttachmentInputSchema = z
   })
   .refine(
     (input) => {
-      const fileFields = [
-        input.fileUrl,
-        input.fileName,
-        input.fileSize,
-        input.mimeType,
-      ];
+      const fileFields = [input.fileUrl, input.fileName, input.fileSize, input.mimeType];
       const hasFile = fileFields.every((field) => field !== undefined);
       const hasAnyFileField = fileFields.some((field) => field !== undefined);
       const hasLink = input.linkUrl !== undefined;

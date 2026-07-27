@@ -11,12 +11,7 @@ import type {
 } from "../../../shared/contracts/api-contracts";
 
 export type MockRole =
-  | "guest"
-  | "unverified"
-  | "member"
-  | "manager"
-  | "vice_president"
-  | "president";
+  "guest" | "unverified" | "member" | "manager" | "vice_president" | "president";
 
 export type MockUploadObject = {
   objectKey: string;

@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowUpRight } from "lucide-react";
+import { Alert } from "@/app/(dashboard)/_components/ui/alert";
+import { Button } from "@/app/(dashboard)/_components/ui/button";
 import { signInWithGoogle } from "@/features/auth/client/auth-actions";
 
 type SignInPageClientProps = {
@@ -100,84 +102,61 @@ export default function SignInPageClient({ authCanonicalOrigin }: SignInPageClie
   };
 
   return (
+    // 셸(DashboardShell)은 /auth/* 를 우회하므로 이 페이지가 스스로 <main> 이자
+    // 캔버스가 된다.
     <main
       data-testid="auth-signin-page"
-      className="relative isolate min-h-screen overflow-hidden text-[#2c3357]"
+      className="flex min-h-dvh items-center justify-center bg-canvas px-4 py-10 text-ink"
     >
-      <div className="relative mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
-        <section className="w-full max-w-xl overflow-hidden rounded-4xl border border-[#2c3357] bg-[#2c3357] p-px shadow-[0_32px_80px_rgba(44,51,87,0.2)]">
-          <div className="rounded-[calc(2rem-1px)] bg-white px-6 py-7 sm:px-8 sm:py-9">
-            <div className="flex items-center justify-between gap-4 border-b border-[#2c3357]/10 pb-5">
-              <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-[1.15rem] border border-[#2c3357]/12 bg-neutral-100 shadow-[0_12px_24px_rgba(44,51,87,0.08)]">
-                  <Image
-                    src="/yonyoung-logo-black.png"
-                    alt="연영회 심볼"
-                    width={46}
-                    height={46}
-                    className="h-11 w-11 object-contain"
-                  />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#667089]">
-                    YonYoungHoe Dashboard
-                  </p>
-                  <h1 className="mt-1 text-[1.9rem] font-semibold tracking-[-0.04em] text-[#2c3357] sm:text-[2.2rem]">
-                    연영회 로그인
-                  </h1>
-                </div>
-              </div>
-
-              <Link
-                href="/"
-                className="hidden items-center gap-1 text-sm font-semibold text-[#667089] transition hover:text-[#2c3357] sm:inline-flex"
-              >
-                홈으로
-                <ArrowUpRight className="h-4 w-4" />
-              </Link>
-            </div>
-
-            <div className="mt-6 rounded-[1.6rem] border border-[#2c3357]/10 bg-white px-5 py-6 shadow-[0_18px_40px_rgba(44,51,87,0.08)] sm:px-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#667089]">
-                Dashboard Auth
-              </p>
-              <p className="mt-3 text-sm leading-7 text-[#4e556e] sm:text-[0.95rem]">
-                내부 운영 화면 이용을 위해 승인된 Google 계정으로 로그인해 주세요.
-              </p>
-
-              <button
-                type="button"
-                data-testid="auth-signin-google-submit"
-                disabled={isPending}
-                onClick={handleGoogleSignIn}
-                className="mt-6 inline-flex w-full items-center justify-center gap-3 rounded-[1.25rem] border border-[#2c3357]/14 bg-neutral-100 px-4 py-4 text-sm font-semibold text-[#2c3357] shadow-[0_16px_28px_rgba(44,51,87,0.08)] transition hover:-translate-y-0.5 hover:bg-neutral-200 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <GoogleIcon className="h-5 w-5 shrink-0" />
-                <span>
-                  {isPending ? "Google 로그인 중..." : "Google 계정으로 로그인"}
-                </span>
-              </button>
-
-              {errorMessage ? (
-                <p
-                  role="alert"
-                  className="mt-4 rounded-[1.1rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
-                >
-                  {errorMessage}
-                </p>
-              ) : null}
-            </div>
-
-            <Link
-              href="/"
-              className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#667089] transition hover:text-[#2c3357] sm:hidden"
-            >
-              홈으로 돌아가기
-              <ArrowUpRight className="h-4 w-4" />
-            </Link>
+      <section className="w-full max-w-md rounded-xl border border-hairline bg-surface p-6 shadow-soft sm:p-8">
+        <div className="flex items-center gap-3">
+          <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-hairline bg-surface-sunken">
+            <Image
+              src="/yonyoung-logo-black.png"
+              alt=""
+              width={32}
+              height={32}
+              className="h-8 w-8 object-contain dark:invert"
+            />
+          </span>
+          <div className="min-w-0">
+            <p className="text-eyebrow text-ink-muted uppercase">연영회 대시보드</p>
+            <h1 className="mt-1 text-h3 text-ink">로그인</h1>
           </div>
-        </section>
-      </div>
+        </div>
+
+        <p className="mt-6 text-body-sm text-ink-muted">
+          내부 운영 화면입니다. 승인된 Google 계정으로 로그인해 주세요.
+        </p>
+
+        <Button
+          data-testid="auth-signin-google-submit"
+          variant="secondary"
+          size="lg"
+          fullWidth
+          className="mt-5"
+          isPending={isPending}
+          pendingLabel="Google 로그인 중..."
+          leadingIcon={<GoogleIcon className="h-5 w-5 shrink-0" />}
+          onClick={handleGoogleSignIn}
+        >
+          Google 계정으로 로그인
+        </Button>
+
+        {errorMessage !== null && (
+          <Alert tone="danger" className="mt-4">
+            {errorMessage}
+          </Alert>
+        )}
+
+        <Link
+          href="/"
+          className="mt-6 inline-flex items-center gap-1 rounded-md text-body-sm font-medium text-ink-muted transition-colors duration-150 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) motion-reduce:transition-none"
+        >
+          홈으로 돌아가기
+          <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
+      </section>
     </main>
   );
 }

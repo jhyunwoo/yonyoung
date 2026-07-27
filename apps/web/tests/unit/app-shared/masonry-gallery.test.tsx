@@ -55,9 +55,7 @@ describe("MasonryGallery", () => {
   });
 
   it("치수가 저장된 이미지는 width/height 속성으로 원본 비율 렌더링된다", () => {
-    render(
-      <MasonryGallery items={makeItems()} fallbackAspectRatio="4 / 3" />,
-    );
+    render(<MasonryGallery items={makeItems()} fallbackAspectRatio="4 / 3" />);
 
     const image = screen.getByAltText("가로 사진");
     expect(image.getAttribute("width")).toBe("1600");
@@ -65,9 +63,7 @@ describe("MasonryGallery", () => {
   });
 
   it("치수 미상(레거시) 이미지는 폴백 비율 프레임으로 렌더링된다", () => {
-    render(
-      <MasonryGallery items={makeItems()} fallbackAspectRatio="4 / 3" />,
-    );
+    render(<MasonryGallery items={makeItems()} fallbackAspectRatio="4 / 3" />);
 
     const legacyImage = screen.getByAltText("레거시 사진");
     const frame = legacyImage.closest("div");
@@ -75,9 +71,7 @@ describe("MasonryGallery", () => {
   });
 
   it("onLoad에서 실제 비율을 측정하면 프레임 비율이 보정된다", () => {
-    render(
-      <MasonryGallery items={makeItems()} fallbackAspectRatio="4 / 3" />,
-    );
+    render(<MasonryGallery items={makeItems()} fallbackAspectRatio="4 / 3" />);
 
     const legacyImage = screen.getByAltText("레거시 사진") as HTMLImageElement;
     Object.defineProperty(legacyImage, "naturalWidth", { value: 1000 });

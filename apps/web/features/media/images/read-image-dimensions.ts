@@ -11,9 +11,7 @@ export type ImageDimensions = {
 };
 
 /** createImageBitmap 미지원/디코딩 실패 시 사용하는 <img> 프리로드 폴백 */
-const readDimensionsWithImageElement = (
-  file: File,
-): Promise<ImageDimensions | null> =>
+const readDimensionsWithImageElement = (file: File): Promise<ImageDimensions | null> =>
   new Promise((resolve) => {
     const objectUrl = URL.createObjectURL(file);
     const image = new Image();

@@ -1,6 +1,12 @@
 "use client";
 
+import { RotateCcw } from "lucide-react";
 import { useEffect } from "react";
+
+import { Alert } from "@/app/(dashboard)/_components/ui/alert";
+import { Button } from "@/app/(dashboard)/_components/ui/button";
+import { PageContainer } from "@/app/(dashboard)/_components/ui/layout-parts";
+import { PageHeader } from "@/app/(dashboard)/_components/ui/page-header";
 
 type DashboardErrorPageProps = {
   error: Error & { digest?: string };
@@ -27,26 +33,28 @@ export default function DashboardErrorPage({ error, reset }: DashboardErrorPageP
   }, [error]);
 
   return (
-    <main className="px-4 py-6 md:px-8 md:py-8" data-testid="dashboard-error-page">
-      <div className="mx-auto w-full max-w-6xl rounded-2xl border border-red-200 bg-red-50 p-6 md:p-8">
-        <p className="text-xs font-semibold tracking-[0.12em] text-red-600 uppercase">
-          Dashboard Error
-        </p>
-        <h1 className="mt-2 text-2xl font-bold text-red-900 md:text-3xl">
-          대시보드 정보를 불러오지 못했습니다.
-        </h1>
-        <p className="mt-3 text-sm leading-relaxed text-red-700 md:text-base">
-          네트워크 상태를 확인한 뒤 다시 시도해 주세요.
-        </p>
-        <button
-          type="button"
-          data-testid="dashboard-error-reset"
-          onClick={reset}
-          className="mt-6 inline-flex rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-600"
-        >
-          다시 시도
-        </button>
-      </div>
-    </main>
+    <PageContainer data-testid="dashboard-error-page">
+      <PageHeader
+        eyebrow="Dashboard Error"
+        title="대시보드 정보를 불러오지 못했습니다."
+        description="일시적인 네트워크 문제일 수 있습니다. 잠시 후 다시 시도해 주세요. 계속 실패하면 운영진에게 알려 주세요."
+        actions={
+          <Button
+            data-testid="dashboard-error-reset"
+            variant="primary"
+            onClick={reset}
+            leadingIcon={<RotateCcw className="h-4 w-4" aria-hidden="true" />}
+          >
+            다시 시도
+          </Button>
+        }
+      />
+
+      {error.digest !== undefined && (
+        <Alert tone="danger" title="오류 코드">
+          <code className="font-mono text-caption">{error.digest}</code>
+        </Alert>
+      )}
+    </PageContainer>
   );
 }

@@ -238,14 +238,12 @@ export default function MemberEditForm({
     <section
       className={
         inline
-          ? "mt-6 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4"
-          : "rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8"
+          ? "mt-6 rounded-lg border border-hairline bg-surface-sunken p-4"
+          : "rounded-lg border border-hairline bg-surface p-6 md:p-8"
       }
     >
-      <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">
-        사용자 정보 수정
-      </h2>
-      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+      <h2 className="text-lg font-bold text-ink">사용자 정보 수정</h2>
+      <p className="mt-2 text-sm text-ink-muted">
         권한이 있는 운영자는 사용자 정보를 수정할 수 있습니다.
       </p>
 
@@ -257,7 +255,7 @@ export default function MemberEditForm({
               value={name}
               onChange={(event) => setName(event.target.value)}
               disabled={isSaving}
-              className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
+              className="rounded-lg border border-hairline-strong px-3 py-2"
             />
           </label>
 
@@ -267,7 +265,7 @@ export default function MemberEditForm({
               value={role}
               onChange={(event) => setRole(coerceMemberRoleValue(event.target.value))}
               disabled={isSaving}
-              className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
+              className="rounded-lg border border-hairline-strong px-3 py-2"
             >
               {MEMBER_ROLE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -278,16 +276,14 @@ export default function MemberEditForm({
           </label>
         </div>
 
-        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
-          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-            프로필 이미지
-          </p>
-          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+        <div className="rounded-lg border border-hairline bg-surface p-4">
+          <p className="text-sm font-semibold text-ink">프로필 이미지</p>
+          <p className="mt-1 text-xs text-ink-muted">
             사진 파일을 선택해 프로필 이미지를 바꿀 수 있습니다.
           </p>
 
           <div className="mt-3 flex items-center gap-4">
-            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-hairline bg-surface-sunken">
               {imagePreviewUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -296,7 +292,7 @@ export default function MemberEditForm({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-xs text-slate-600 dark:text-slate-300">
+                <div className="flex h-full w-full items-center justify-center text-xs text-ink-muted">
                   없음
                 </div>
               )}
@@ -307,7 +303,7 @@ export default function MemberEditForm({
               data-testid="member-edit-profile-image-select"
               onClick={handleProfileImageUploadClick}
               disabled={isSaving}
-              className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-60"
             >
               파일 선택
             </button>
@@ -331,7 +327,7 @@ export default function MemberEditForm({
               value={familyName}
               onChange={(event) => setFamilyName(event.target.value)}
               disabled={isSaving}
-              className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
+              className="rounded-lg border border-hairline-strong px-3 py-2"
             />
           </label>
 
@@ -341,7 +337,7 @@ export default function MemberEditForm({
               value={givenName}
               onChange={(event) => setGivenName(event.target.value)}
               disabled={isSaving}
-              className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
+              className="rounded-lg border border-hairline-strong px-3 py-2"
             />
           </label>
         </div>
@@ -353,7 +349,7 @@ export default function MemberEditForm({
               value={college}
               onChange={(event) => setCollege(event.target.value)}
               disabled={isSaving}
-              className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
+              className="rounded-lg border border-hairline-strong px-3 py-2"
             />
           </label>
 
@@ -363,7 +359,7 @@ export default function MemberEditForm({
               value={department}
               onChange={(event) => setDepartment(event.target.value)}
               disabled={isSaving}
-              className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
+              className="rounded-lg border border-hairline-strong px-3 py-2"
             />
           </label>
         </div>
@@ -375,7 +371,7 @@ export default function MemberEditForm({
               value={studentNumber}
               onChange={(event) => setStudentNumber(event.target.value)}
               disabled={isSaving}
-              className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
+              className="rounded-lg border border-hairline-strong px-3 py-2"
             />
           </label>
 
@@ -385,13 +381,13 @@ export default function MemberEditForm({
               value={phoneNumber}
               onChange={(event) => setPhoneNumber(event.target.value)}
               disabled={isSaving}
-              className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2"
+              className="rounded-lg border border-hairline-strong px-3 py-2"
             />
           </label>
         </div>
 
-        <fieldset className="rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-          <legend className="px-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+        <fieldset className="rounded-lg border border-hairline p-4">
+          <legend className="px-1 text-sm font-medium text-ink-secondary">
             소속 기수
           </legend>
           {isLoadingGenerations ? (
@@ -404,14 +400,12 @@ export default function MemberEditForm({
               ))}
             </div>
           ) : allGenerations.length === 0 ? (
-            <p className="text-sm text-slate-600 dark:text-slate-300">
-              선택 가능한 기수가 없습니다.
-            </p>
+            <p className="text-sm text-ink-muted">선택 가능한 기수가 없습니다.</p>
           ) : (
             <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {allGenerations.map((generation) => (
                 <li key={generation.id}>
-                  <label className="flex cursor-pointer items-center gap-2 rounded-md border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-700 dark:text-slate-200">
+                  <label className="flex cursor-pointer items-center gap-2 rounded-md border border-hairline px-3 py-2 text-sm text-ink-secondary">
                     <input
                       type="checkbox"
                       checked={generationIdSet.has(generation.id)}
@@ -427,13 +421,13 @@ export default function MemberEditForm({
         </fieldset>
 
         {errorMessage ? (
-          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p className="rounded-lg border border-danger-hairline bg-danger-soft px-3 py-2 text-sm text-danger-text">
             {errorMessage}
           </p>
         ) : null}
 
         {successMessage ? (
-          <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          <p className="rounded-lg border border-success-hairline bg-success-soft px-3 py-2 text-sm text-success-text">
             {successMessage}
           </p>
         ) : null}
@@ -442,7 +436,7 @@ export default function MemberEditForm({
           <FormSubmitButton
             data-testid="member-edit-submit"
             disabled={isSaving}
-            className="inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition hover:bg-primary-active disabled:cursor-not-allowed disabled:opacity-60"
             idleLabel="저장"
             pendingLabel="저장 중..."
           />
@@ -452,7 +446,7 @@ export default function MemberEditForm({
               data-testid="member-edit-cancel"
               onClick={onCancel}
               disabled={isSaving}
-              className="inline-flex items-center rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center rounded-lg border border-hairline-strong bg-surface px-4 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-canvas-soft disabled:cursor-not-allowed disabled:opacity-60"
             >
               취소
             </button>
