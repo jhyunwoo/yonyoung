@@ -1,3 +1,7 @@
+import { HardDrive } from "lucide-react";
+
+import { Card, CardHeader } from "@/app/(dashboard)/_components/ui/card";
+import { EmptyState } from "@/app/(dashboard)/_components/ui/empty-state";
 import type { ApiAdminDashboardStats } from "@/shared/contracts/api-contracts";
 
 const DEFAULT_R2_STORAGE_LIMIT_BYTES = 10 * 1024 * 1024 * 1024;
@@ -38,45 +42,57 @@ export default function R2StorageUsageCard({ stats }: R2StorageUsageCardProps) {
   const usagePercent = clamp((usedBytes / limitBytes) * 100, 0, 100);
   const remainingBytes = Math.max(limitBytes - usedBytes, 0);
 
+  // 사용률이 높아지면 게이지 색으로 경고한다. 색만으로 전달하지 않도록
+  // 아래 문구에도 남은 용량을 함께 적는다.
+  const meterTone =
+    usagePercent >= 90 ? "bg-danger" : usagePercent >= 75 ? "bg-warning" : "bg-primary";
+
   return (
-    <section className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:p-8">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">
-          파일 저장공간 사용량
-        </h2>
-        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-          한도 {formatBytes(limitBytes)}
-        </span>
-      </div>
+    <Card className="flex h-full flex-col">
+      <CardHeader
+        title="파일 저장공간 사용량"
+        actions={
+          <span className="text-caption text-ink-muted">
+            한도 {formatBytes(limitBytes)}
+          </span>
+        }
+      />
 
       {isAvailable ? (
-        <div className="mt-4 flex flex-1 flex-col">
-          <p className="text-sm text-slate-700 dark:text-slate-200">
-            <span className="font-semibold text-slate-900 dark:text-slate-50">
-              {formatBytes(usedBytes)}
-            </span>
-            {" / "}
-            {formatBytes(limitBytes)}
+        <div className="mt-5 flex flex-1 flex-col">
+          <p className="text-h3 text-ink tabular-nums">{formatBytes(usedBytes)}</p>
+          <p className="mt-1 text-caption text-ink-muted">
+            전체 {formatBytes(limitBytes)} 중 {usagePercent.toFixed(1)}% 사용 · 남은 용량{" "}
+            {formatBytes(remainingBytes)}
           </p>
-          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-            사용률 {usagePercent.toFixed(1)}% · 남은 용량 {formatBytes(remainingBytes)}
-          </p>
-          <div className="mt-auto pt-4">
-            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
+
+          <div className="mt-auto pt-5">
+            <div
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(usagePercent)}
+              aria-label="파일 저장공간 사용률"
+              className="h-2 w-full overflow-hidden rounded-full bg-canvas-soft"
+            >
               <div
                 data-testid="r2-usage-meter"
-                className="h-full rounded-full bg-slate-900"
+                className={`h-full rounded-full ${meterTone} transition-all duration-300 motion-reduce:transition-none`}
                 style={{ width: `${usagePercent}%` }}
-                aria-hidden="true"
               />
             </div>
           </div>
         </div>
       ) : (
-        <p className="mt-4 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 p-4 text-sm text-slate-600 dark:text-slate-300">
-          저장공간 사용량을 불러오지 못했습니다.
-        </p>
+        <div className="mt-5">
+          <EmptyState
+            Icon={HardDrive}
+            accent="teal"
+            title="사용량을 불러오지 못했습니다"
+            description="저장공간 정보를 가져오는 중 문제가 발생했습니다. 잠시 후 새로고침해 주세요."
+          />
+        </div>
       )}
-    </section>
+    </Card>
   );
 }

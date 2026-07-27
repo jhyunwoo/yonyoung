@@ -87,8 +87,10 @@ test.describe("domain CRUD journeys", () => {
       new RegExp(`/dashboard/settings/linktree/${newLinktree!.id}$`),
     );
 
-    page.once("dialog", (dialog) => dialog.accept());
+    // window.confirm 대신 커스텀 확인 다이얼로그를 쓴다.
     await page.getByTestId("linktree-group-delete").click();
+    await expect(page.getByTestId("confirm-dialog")).toBeVisible();
+    await page.getByTestId("confirm-dialog-accept").click();
     await expect(page).toHaveURL(/\/dashboard\/settings\/linktree$/);
 
     const deletedLength = created.linktrees.length - 1;

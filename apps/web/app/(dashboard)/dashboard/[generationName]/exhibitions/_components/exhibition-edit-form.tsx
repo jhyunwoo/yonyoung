@@ -367,25 +367,25 @@ export default function ExhibitionEditForm({
   };
 
   return (
-    <section className="mx-auto w-full max-w-5xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-      <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
+    <section className="mx-auto w-full max-w-5xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
+      <p className="text-xs font-semibold tracking-[0.12em] text-ink-muted uppercase">
         Exhibitions
       </p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
+      <h1 className="mt-2 text-2xl font-bold text-ink md:text-3xl">
         {generationName} 전시 수정
       </h1>
-      <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
+      <p className="mt-3 text-sm leading-relaxed text-ink-muted md:text-base">
         전시 기본 정보와 사진을 함께 수정할 수 있습니다.
       </p>
 
       {noticeMessage ? (
-        <p className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p className="mt-6 rounded-lg border border-warning-hairline bg-warning-soft px-4 py-3 text-sm text-warning-text">
           {noticeMessage}
         </p>
       ) : null}
 
       {errorMessage ? (
-        <p className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="mt-6 rounded-lg border border-danger-hairline bg-danger-soft px-4 py-3 text-sm text-danger-text">
           {errorMessage}
         </p>
       ) : null}
@@ -414,13 +414,13 @@ export default function ExhibitionEditForm({
               <Skeleton className="h-10 w-full" />
             </div>
           </div>
-          <div className="space-y-2 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          <div className="space-y-2 rounded-lg border border-hairline p-4">
             <Skeleton className="h-4 w-32" />
             <Skeleton className="aspect-[4/3] w-full max-w-md rounded-lg" />
             <Skeleton className="h-10 w-24" />
             <Skeleton className="h-3 w-64" />
           </div>
-          <div className="space-y-2 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          <div className="space-y-2 rounded-lg border border-hairline p-4">
             <Skeleton className="h-4 w-16" />
             <Skeleton className="h-3 w-52" />
             <Skeleton className="h-10 w-24" />
@@ -442,33 +442,27 @@ export default function ExhibitionEditForm({
       ) : exhibition ? (
         <form className="mt-6 space-y-6" action={handleSubmit}>
           <label className="block space-y-1">
-            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-              전시 제목
-            </span>
+            <span className="text-sm font-semibold text-ink">전시 제목</span>
             <input
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               disabled={isSaving}
-              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm"
             />
           </label>
 
           <label className="block space-y-1">
-            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-              전시 장소
-            </span>
+            <span className="text-sm font-semibold text-ink">전시 장소</span>
             <input
               value={place}
               onChange={(event) => setPlace(event.target.value)}
               disabled={isSaving}
-              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm"
             />
           </label>
 
           <div className="space-y-1">
-            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-              전시 상세 설명
-            </span>
+            <span className="text-sm font-semibold text-ink">전시 상세 설명</span>
             <ExhibitionRichTextEditor
               value={descriptionHtml}
               onChange={setDescriptionHtml}
@@ -478,36 +472,30 @@ export default function ExhibitionEditForm({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-1">
-              <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                시작일
-              </span>
+              <span className="text-sm font-semibold text-ink">시작일</span>
               <input
                 type="date"
                 value={startDateInput}
                 onChange={(event) => setStartDateInput(event.target.value)}
                 disabled={isSaving}
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm"
               />
             </label>
             <label className="block space-y-1">
-              <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                종료일
-              </span>
+              <span className="text-sm font-semibold text-ink">종료일</span>
               <input
                 type="date"
                 value={endDateInput}
                 onChange={(event) => setEndDateInput(event.target.value)}
                 disabled={isSaving}
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm"
               />
             </label>
           </div>
 
-          <div className="space-y-2 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-            <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-              대표 이미지 교체 (선택)
-            </p>
-            <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700">
+          <div className="space-y-2 rounded-lg border border-hairline p-4">
+            <p className="text-sm font-semibold text-ink">대표 이미지 교체 (선택)</p>
+            <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-hairline bg-canvas-soft">
               <Image
                 src={exhibition.coverImageUrl}
                 alt={`${exhibition.title} 대표 이미지`}
@@ -522,7 +510,7 @@ export default function ExhibitionEditForm({
               data-testid="exhibition-edit-cover-select"
               onClick={handleOpenCoverFilePicker}
               disabled={isSaving}
-              className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-60"
             >
               파일 선택
             </button>
@@ -534,13 +522,13 @@ export default function ExhibitionEditForm({
               disabled={isSaving}
               className="sr-only"
             />
-            <p className="text-xs text-slate-600 dark:text-slate-300">
+            <p className="text-xs text-ink-muted">
               {coverFile
                 ? `선택됨: ${coverFile.name}`
                 : "대표 이미지를 교체하지 않으려면 비워 두세요."}
             </p>
             {coverPreviewUrl ? (
-              <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-emerald-200 bg-emerald-50">
+              <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-success-hairline bg-success-soft">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={coverPreviewUrl}
@@ -551,12 +539,10 @@ export default function ExhibitionEditForm({
             ) : null}
           </div>
 
-          <div className="space-y-2 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-            <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-              세부 이미지
-            </p>
+          <div className="space-y-2 rounded-lg border border-hairline p-4">
+            <p className="text-sm font-semibold text-ink">세부 이미지</p>
             <label className="block space-y-1">
-              <span className="text-xs text-slate-600 dark:text-slate-300">
+              <span className="text-xs text-ink-muted">
                 새 세부 이미지 추가 (선택, 여러 장)
               </span>
               <button
@@ -564,7 +550,7 @@ export default function ExhibitionEditForm({
                 data-testid="exhibition-edit-detail-select"
                 onClick={handleOpenDetailFilePicker}
                 disabled={isSaving}
-                className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-60"
               >
                 파일 선택
               </button>
@@ -578,7 +564,7 @@ export default function ExhibitionEditForm({
                 className="sr-only"
               />
             </label>
-            <p className="text-xs text-slate-600 dark:text-slate-300">
+            <p className="text-xs text-ink-muted">
               마우스로 끌어 세부 이미지 순서를 바꿀 수 있습니다.
             </p>
             <SortableImageGrid
@@ -605,26 +591,26 @@ export default function ExhibitionEditForm({
           <LastUpdatedMeta
             updatedAt={exhibition.updatedAt}
             updatedBy={exhibition.updatedBy}
-            className="text-xs text-slate-600 dark:text-slate-300"
+            className="text-xs text-ink-muted"
           />
 
           <div className="flex flex-wrap gap-2">
             <FormSubmitButton
               data-testid="exhibition-edit-submit"
               disabled={isSubmitDisabled}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
               idleLabel="수정 저장"
               pendingLabel="저장 중..."
             />
             <Link
               href={`${generationPath}/exhibitions/${exhibition.id}`}
-              className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200"
+              className="rounded-lg border border-hairline-strong px-4 py-2 text-sm font-semibold text-ink-secondary"
             >
               상세로
             </Link>
             <Link
               href={`${generationPath}/exhibitions`}
-              className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200"
+              className="rounded-lg border border-hairline-strong px-4 py-2 text-sm font-semibold text-ink-secondary"
             >
               목록으로
             </Link>

@@ -243,5 +243,4 @@ describe("dashboard shared helpers", () => {
       ),
     ).toEqual(["u2"]);
   });
-
 });

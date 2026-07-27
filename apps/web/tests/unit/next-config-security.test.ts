@@ -18,7 +18,9 @@ describe("next.config security headers", () => {
     expect(headers.get("Content-Security-Policy")).toContain(
       "img-src 'self' data: blob: https://storage.yonyoung.moveto.kr https://*.googleusercontent.com",
     );
-    expect(headers.get("Content-Security-Policy")).not.toContain("img-src 'self' data: blob: https:;");
+    expect(headers.get("Content-Security-Policy")).not.toContain(
+      "img-src 'self' data: blob: https:;",
+    );
     expect(headers.get("Content-Security-Policy")).toContain(
       "connect-src 'self' https://*.r2.cloudflarestorage.com",
     );

@@ -1,3 +1,4 @@
+import { PageContainer } from "@/app/(dashboard)/_components/ui/layout-parts";
 import { getCachedPageViewStats } from "@/features/dashboard/cache/admin-dashboard-cache";
 import { readCookieHeader } from "@/shared/http/http";
 import StatsView from "./stats-view";
@@ -13,10 +14,8 @@ export default async function StatsPage() {
   const { data: stats, error } = await getCachedPageViewStats(cookieHeader);
 
   return (
-    <main className="px-4 py-6 md:px-8 md:py-8">
-      <div className="mx-auto max-w-6xl">
-        <StatsView stats={stats} error={error} />
-      </div>
-    </main>
+    <PageContainer>
+      <StatsView stats={stats} error={error} />
+    </PageContainer>
   );
 }

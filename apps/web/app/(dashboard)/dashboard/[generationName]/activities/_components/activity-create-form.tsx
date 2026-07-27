@@ -230,35 +230,31 @@ export default function ActivityCreateForm({
   };
 
   return (
-    <section className="mx-auto w-full max-w-4xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
-      <p className="text-xs font-semibold tracking-[0.12em] text-slate-600 dark:text-slate-300 uppercase">
+    <section className="mx-auto w-full max-w-4xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
+      <p className="text-xs font-semibold tracking-[0.12em] text-ink-muted uppercase">
         Activities
       </p>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 md:text-3xl">
+      <h1 className="mt-2 text-2xl font-bold text-ink md:text-3xl">
         {generationName} 활동 추가
       </h1>
-      <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 md:text-base">
+      <p className="mt-3 text-sm leading-relaxed text-ink-muted md:text-base">
         대표 사진은 꼭 등록해야 하며, 세부 사진은 필요할 때 여러 장 추가할 수 있습니다.
       </p>
 
       <form className="mt-6 space-y-4" action={handleSubmit}>
         <label className="block space-y-1">
-          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-            활동 제목
-          </span>
+          <span className="text-sm font-semibold text-ink">활동 제목</span>
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             disabled={isSaving}
             placeholder="예: 60기 정기 촬영 워크숍"
-            className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm"
           />
         </label>
 
         <div className="space-y-1">
-          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-            활동 설명
-          </span>
+          <span className="text-sm font-semibold text-ink">활동 설명</span>
           <RichTextEditor
             value={description}
             onChange={setDescription}
@@ -268,41 +264,35 @@ export default function ActivityCreateForm({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block space-y-1">
-            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-              시작일
-            </span>
+            <span className="text-sm font-semibold text-ink">시작일</span>
             <input
               type="date"
               value={startDateInput}
               onChange={(event) => setStartDateInput(event.target.value)}
               disabled={isSaving}
-              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm"
             />
           </label>
           <label className="block space-y-1">
-            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-              종료일
-            </span>
+            <span className="text-sm font-semibold text-ink">종료일</span>
             <input
               type="date"
               value={endDateInput}
               onChange={(event) => setEndDateInput(event.target.value)}
               disabled={isSaving}
-              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm"
             />
           </label>
         </div>
 
         <label className="block space-y-1">
-          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-            대표 이미지 (필수)
-          </span>
+          <span className="text-sm font-semibold text-ink">대표 이미지 (필수)</span>
           <button
             type="button"
             data-testid="activity-create-cover-select"
             onClick={handleOpenCoverFilePicker}
             disabled={isSaving}
-            className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-60"
           >
             파일 선택
           </button>
@@ -314,11 +304,11 @@ export default function ActivityCreateForm({
             disabled={isSaving}
             className="sr-only"
           />
-          <p className="text-xs text-slate-600 dark:text-slate-300">
+          <p className="text-xs text-ink-muted">
             {coverFile ? `선택됨: ${coverFile.name}` : "아직 파일이 선택되지 않았습니다."}
           </p>
           {coverPreviewUrl ? (
-            <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700">
+            <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-hairline bg-canvas-soft">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={coverPreviewUrl}
@@ -331,7 +321,7 @@ export default function ActivityCreateForm({
 
         <div className="space-y-2">
           <label className="block space-y-1">
-            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            <span className="text-sm font-semibold text-ink">
               세부 이미지 (선택, 여러 장)
             </span>
             <button
@@ -339,7 +329,7 @@ export default function ActivityCreateForm({
               data-testid="activity-create-detail-select"
               onClick={handleOpenDetailFilePicker}
               disabled={isSaving}
-              className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-60"
             >
               파일 선택
             </button>
@@ -354,7 +344,7 @@ export default function ActivityCreateForm({
             />
           </label>
 
-          <p className="text-xs text-slate-600 dark:text-slate-300">
+          <p className="text-xs text-ink-muted">
             마우스로 끌어 세부 이미지 순서를 바꿀 수 있습니다.
           </p>
           <SortableImageGrid
@@ -376,7 +366,7 @@ export default function ActivityCreateForm({
         </div>
 
         {errorMessage ? (
-          <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p className="rounded-lg border border-danger-hairline bg-danger-soft px-4 py-3 text-sm text-danger-text">
             {errorMessage}
           </p>
         ) : null}
@@ -385,13 +375,13 @@ export default function ActivityCreateForm({
           <FormSubmitButton
             data-testid="activity-create-submit"
             disabled={isSubmitDisabled}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
             idleLabel="활동 생성"
             pendingLabel="저장 중..."
           />
           <Link
             href={`${generationPath}/activities`}
-            className="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200"
+            className="rounded-lg border border-hairline-strong px-4 py-2 text-sm font-semibold text-ink-secondary"
           >
             목록으로
           </Link>

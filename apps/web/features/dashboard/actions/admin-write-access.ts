@@ -8,10 +8,7 @@ import {
 } from "@/features/auth/model/auth-shared";
 
 export type AdminWriteAccessScope =
-  | "verified_member"
-  | "manager"
-  | "leadership"
-  | "user_manager";
+  "verified_member" | "manager" | "leadership" | "user_manager";
 
 export const canPerformAdminWrite = (
   session: AuthSession | null | undefined,

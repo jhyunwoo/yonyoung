@@ -1,2 +1,348 @@
 @import "tailwindcss";
+
+/* Pretendard 동적 서브셋의 @font-face 선언(92개 유니코드 범위).
+ * 생성 파일이며 `pnpm fonts:sync` 로 갱신한다. woff2 는 public/fonts/pretendard 에 있다.
+ *
+ * 자체 호스팅하는 이유: next.config.ts 의 CSP 가 `font-src 'self' data:` 라
+ * 외부 폰트 CDN 을 쓸 수 없다. 동적 서브셋이므로 브라우저는 실제로 쓰인
+ * 유니코드 범위의 청크만 내려받는다(한글 화면 기준 대략 8~15개).
+ * (home) 그룹은 이 스타일시트를 import 하지 않으므로 영향이 없다. */
+@import "./pretendard-font.css";
+
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * 대시보드 전용 디자인 토큰 (DESIGN.md — Notion 디자인 언어 기반)
+ *
+ * (home) 그룹은 app/(home)/globals.css 를 따로 쓰고 root layout 도 분리돼
+ * 있으므로, 이 파일의 어떤 선언도 공개 사이트에 도달하지 않는다.
+ *
+ * 명명 규칙: 역할 기반(canvas/surface/ink/hairline/primary/danger…).
+ * 다크 모드에서 "warm paper" 같은 이름이 거짓말이 되지 않고, 이름만으로
+ * 대비 계약을 감사할 수 있다 — text-ink-muted 는 본문 가능, text-ink-faint 는
+ * 텍스트 금지(아이콘/구분선 전용). 스티커 액센트만 고유명을 유지한다.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── 표면 ── */
+  --canvas: #f6f5f4; /* 페이지 바탕 (warm paper) */
+  --canvas-soft: #efedeb; /* 한 단계 눌린 영역: 테이블 헤더, 코드 블록 */
+  --surface: #ffffff; /* 카드 / 패널 */
+  --surface-raised: #ffffff; /* 모달 / 팝오버 */
+  --surface-sunken: #faf9f8; /* 인풋 비활성, 리스트 스트라이프 */
+  --hairline: #e6e6e6; /* 1px 테두리 · 구분선 */
+  --hairline-strong: #d5d3d0; /* 인풋 테두리 (비텍스트 3:1 확보) */
+
+  /* ── 잉크 ── */
+  --ink: #191918; /* DESIGN.md 의 "~95% alpha 블랙" 을 실체화 */
+  --ink-secondary: #31302e;
+  --ink-muted: #615d59; /* 본문 보조 텍스트의 하한선 (on #fff 6.5:1) */
+  --ink-faint: #a39e98; /* on #fff 2.66:1 — 텍스트 금지, 아이콘 전용 */
+  --ink-inverse: #ffffff;
+
+  /* ── 구조 액센트 (유일) ── */
+  --primary: #0075de; /* 채움용. 흰 글자와 4.57:1 */
+  --primary-active: #005bab;
+  --primary-text: #005bab; /* 링크/텍스트용. on #fff 6.8:1 */
+  --primary-soft: #e8f2fd; /* 선택 상태 배경 */
+  --primary-hairline: #b6d9f8;
+  --on-primary: #ffffff;
+  --focus-ring: #0075de;
+
+  /* ── 상태 (DESIGN.md 에 없어 파생) ── */
+  --danger: #c62828; /* 흰 글자와 5.6:1 */
+  --danger-text: #a4231b;
+  --danger-soft: #fdeceb;
+  --danger-hairline: #f3c9c6;
+  --success: #1a7f37;
+  --success-text: #17692f;
+  --success-soft: #e7f6ec;
+  --success-hairline: #b9e0c5;
+  --warning: #9a6700;
+  --warning-text: #8a5b00;
+  --warning-soft: #fdf4e3;
+  --warning-hairline: #ecd8a8;
+
+  /* ── 스티커 팔레트 (장식 전용: 아바타 · 카테고리 점 · 아이콘 타일) ──
+   * 절대 CTA 나 구조적 채움에 쓰지 않는다. DESIGN.md "Don't" 항목. */
+  --accent-sky: #62aef0;
+  --accent-purple: #d6b6f6;
+  --accent-pink: #ff64c8;
+  --accent-orange: #dd5b00;
+  --accent-teal: #2a9d99;
+  --accent-green: #1aae39;
+  --accent-ink: #191918; /* 스티커 타일 위 글자/아이콘 색 */
+
+  /* ── 그림자: Notion 의 다층 마이크로 섀도 (하드 캐스트 금지) ── */
+  --shadow-soft:
+    rgba(0, 0, 0, 0.01) 0 0.175px 1.041px, rgba(0, 0, 0, 0.02) 0 0.8px 2.925px,
+    rgba(0, 0, 0, 0.027) 0 2.025px 7.847px, rgba(0, 0, 0, 0.04) 0 4px 18px;
+  --shadow-elevated:
+    rgba(0, 0, 0, 0.012) 0 0.4px 1.2px, rgba(0, 0, 0, 0.022) 0 1.4px 4.2px,
+    rgba(0, 0, 0, 0.03) 0 3.5px 9.6px, rgba(0, 0, 0, 0.04) 0 8px 22px,
+    rgba(0, 0, 0, 0.05) 0 23px 52px;
+  --shadow-focus: 0 0 0 3px rgba(0, 117, 222, 0.24);
+  --scrim: rgba(25, 25, 24, 0.45);
+
+  /* ── 레이아웃 상수 ── */
+  --sidebar-width: 17rem;
+  --sidebar-width-md: 15rem;
+  --topbar-height: 3.5rem;
+}
+
+.dark {
+  --canvas: #191918;
+  --canvas-soft: #131312;
+  --surface: #232322;
+  --surface-raised: #2b2b29;
+  --surface-sunken: #1e1e1d;
+  --hairline: #35342f;
+  --hairline-strong: #4a4844;
+
+  --ink: #ededec; /* on --surface 13.4:1 */
+  --ink-secondary: #cbc9c5; /* 9.5:1 */
+  --ink-muted: #9d9994; /* 5.5:1 — 다크의 본문 보조 하한선 */
+  --ink-faint: #79756f; /* 텍스트 금지 */
+  --ink-inverse: #191918;
+
+  --primary: #1668c4; /* 흰 글자와 5.5:1 */
+  --primary-active: #0f5099;
+  --primary-text: #5aa9f2; /* on --surface 6.2:1 */
+  --primary-soft: #16283c;
+  --primary-hairline: #2c527d;
+  --on-primary: #ffffff;
+  --focus-ring: #5aa9f2;
+
+  --danger: #b5342b;
+  --danger-text: #ff9d94;
+  --danger-soft: #341b19;
+  --danger-hairline: #5c2f2b;
+  --success: #1c7a36;
+  --success-text: #6ede8a;
+  --success-soft: #142a1a;
+  --success-hairline: #2b5236;
+  --warning: #8a6100;
+  --warning-text: #e3b341;
+  --warning-soft: #2c2312;
+  --warning-hairline: #55431c;
+
+  /* 어두운 바탕에서 스티커는 채도가 튀므로 톤다운하고 글자색을 반전한다. */
+  --accent-sky: #4a8ec4;
+  --accent-purple: #a482c4;
+  --accent-pink: #d1509f;
+  --accent-orange: #b34a00;
+  --accent-teal: #23807d;
+  --accent-green: #168a2e;
+  --accent-ink: #ffffff;
+
+  /* 다크에서는 그림자가 거의 보이지 않으므로 상단 하이라이트로 리프트를 만든다. */
+  --shadow-soft: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-elevated:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 24px rgba(0, 0, 0, 0.55),
+    0 23px 52px rgba(0, 0, 0, 0.4);
+  --shadow-focus: 0 0 0 3px rgba(90, 169, 242, 0.3);
+  --scrim: rgba(0, 0, 0, 0.62);
+}
+
+/* @theme inline 이어야 유틸이 var(--…) 를 그대로 내보내고,
+ * .dark 의 재정의가 런타임에 전파된다. (inline 없이는 값이 구워진다) */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-canvas-soft: var(--canvas-soft);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-hairline: var(--hairline);
+  --color-hairline-strong: var(--hairline-strong);
+
+  --color-ink: var(--ink);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-ink-inverse: var(--ink-inverse);
+
+  --color-primary: var(--primary);
+  --color-primary-active: var(--primary-active);
+  --color-primary-text: var(--primary-text);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-hairline: var(--primary-hairline);
+  --color-on-primary: var(--on-primary);
+
+  --color-danger: var(--danger);
+  --color-danger-text: var(--danger-text);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-hairline: var(--danger-hairline);
+  --color-success: var(--success);
+  --color-success-text: var(--success-text);
+  --color-success-soft: var(--success-soft);
+  --color-success-hairline: var(--success-hairline);
+  --color-warning: var(--warning);
+  --color-warning-text: var(--warning-text);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-hairline: var(--warning-hairline);
+
+  --color-accent-sky: var(--accent-sky);
+  --color-accent-purple: var(--accent-purple);
+  --color-accent-pink: var(--accent-pink);
+  --color-accent-orange: var(--accent-orange);
+  --color-accent-teal: var(--accent-teal);
+  --color-accent-green: var(--accent-green);
+  --color-accent-ink: var(--accent-ink);
+
+  --color-scrim: var(--scrim);
+
+  /* 반경 — DESIGN.md 스케일 그대로 */
+  --radius-xs: 4px;
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* 그림자 */
+  --shadow-soft: var(--shadow-soft);
+  --shadow-elevated: var(--shadow-elevated);
+  --shadow-focus: var(--shadow-focus);
+
+  /* 타입 스케일 — 음수 트래킹을 토큰에 내장해 호출부가 잊을 수 없게 한다 */
+  --text-display-1: 64px;
+  --text-display-1--line-height: 1;
+  --text-display-1--letter-spacing: -2.125px;
+  --text-display-1--font-weight: 700;
+
+  --text-display-2: 54px;
+  --text-display-2--line-height: 1.04;
+  --text-display-2--letter-spacing: -1.875px;
+  --text-display-2--font-weight: 700;
+
+  --text-h1: 40px;
+  --text-h1--line-height: 1.1;
+  --text-h1--letter-spacing: -1px;
+  --text-h1--font-weight: 700;
+
+  --text-h2: 26px;
+  --text-h2--line-height: 1.23;
+  --text-h2--letter-spacing: -0.625px;
+  --text-h2--font-weight: 700;
+
+  --text-h3: 22px;
+  --text-h3--line-height: 1.27;
+  --text-h3--letter-spacing: -0.25px;
+  --text-h3--font-weight: 700;
+
+  --text-title: 20px;
+  --text-title--line-height: 1.4;
+  --text-title--letter-spacing: -0.125px;
+  --text-title--font-weight: 600;
+
+  --text-body: 16px;
+  --text-body--line-height: 1.5;
+
+  --text-body-sm: 15px;
+  --text-body-sm--line-height: 1.4;
+
+  --text-caption: 14px;
+  --text-caption--line-height: 1.43;
+
+  --text-eyebrow: 12px;
+  --text-eyebrow--line-height: 1.33;
+  --text-eyebrow--letter-spacing: 0.125px;
+  --text-eyebrow--font-weight: 600;
+
+  --font-sans:
+    "Pretendard Variable", Pretendard, Inter, -apple-system, system-ui, "Segoe UI",
+    "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", Helvetica, Arial, sans-serif;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    /* DESIGN.md: 본문/헤딩 역할에 lining numerals 와 locl 활성화 */
+    font-feature-settings:
+      "lnum" 1,
+      "locl" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* iOS 는 16px 미만 폼 컨트롤에 포커스하면 화면을 확대한다.
+   * 시각적으로 작은 글씨가 필요하면 래퍼를 쓰고 컨트롤 자체는 줄이지 않는다. */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  /* 어떤 요소에서도 포커스 링이 사라지지 않도록 하는 최후 보루.
+   * 재디자인 이전 대시보드는 focus 스타일이 사실상 없었다. */
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * 대시보드 리치텍스트 오버라이드
+ *
+ * features/media/rich-text/rich-text-content.tsx 는 (home) 도 쓰므로 수정 금지.
+ * 그 컴포넌트는 className 을 BASE_CLASS_NAMES 뒤에 붙이지만, 순서가 아니라
+ * 캐스케이드 레이어가 승부를 가른다 — Tailwind v4 유틸은 @layer utilities
+ * 안에 있고 아래 규칙들은 레이어 밖이라 항상 이긴다.
+ * 사용법: <RichTextContent html={html} className="dash-prose" />
+ * ───────────────────────────────────────────────────────────────────────── */
+.dash-prose {
+  color: var(--ink-secondary);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.dash-prose h2,
+.dash-prose h3 {
+  color: var(--ink);
+  letter-spacing: -0.25px;
+}
+
+.dash-prose a {
+  color: var(--primary-text);
+}
+
+.dash-prose blockquote {
+  border-left-color: var(--hairline-strong);
+  color: var(--ink-muted);
+}
+
+.dash-prose code {
+  background-color: var(--canvas-soft);
+  color: var(--ink);
+}
+
+.dash-prose pre {
+  background-color: var(--canvas-soft);
+  color: var(--ink);
+}
+
+.dash-prose pre code {
+  background-color: transparent;
+}
+
+.dash-prose th {
+  background-color: var(--canvas-soft);
+  border-color: var(--hairline);
+  color: var(--ink);
+}
+
+.dash-prose td {
+  border-color: var(--hairline);
+}

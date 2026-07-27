@@ -19,12 +19,12 @@ export default async function GenerationActivityCreatePage({
   }
 
   return (
-    <main className="px-4 py-6 md:px-8 md:py-8">
+    <div className="px-4 py-6 md:px-8 md:py-8">
       <ActivityCreateForm
         generationId={generation.id}
         generationPath={generation.path}
         generationName={generation.name}
       />
-    </main>
+    </div>
   );
 }

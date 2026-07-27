@@ -16,10 +16,10 @@ export default async function GenerationExhibitionsPage({
   ]);
 
   return (
-    <main className="px-4 py-6 md:px-8 md:py-8">
+    <div className="px-4 py-6 md:px-8 md:py-8">
       <Suspense
         fallback={
-          <section className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm md:p-8">
+          <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
             <div className="space-y-3" aria-hidden="true">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-3 w-full max-w-xl" />
@@ -27,7 +27,7 @@ export default async function GenerationExhibitionsPage({
                 {Array.from({ length: 6 }).map((_, index) => (
                   <div
                     key={`generation-exhibition-list-skeleton-${index + 1}`}
-                    className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
+                    className="overflow-hidden rounded-lg border border-hairline"
                   >
                     <Skeleton className="aspect-[4/3] w-full rounded-none" />
                     <div className="space-y-2 p-3">
@@ -48,6 +48,6 @@ export default async function GenerationExhibitionsPage({
           canManage={isAdminRole(session.user.role)}
         />
       </Suspense>
-    </main>
+    </div>
   );
 }

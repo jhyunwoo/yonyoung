@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { renderWithDashboardProviders as render } from "@/tests/setup/dashboard-providers";
 import userEvent from "@testing-library/user-event";
 
 const replaceMock = vi.hoisted(() => vi.fn());

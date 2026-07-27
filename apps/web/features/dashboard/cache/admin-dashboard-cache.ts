@@ -38,7 +38,9 @@ const readAdminCollection = async <T>(
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
-      console.error(`[readAdminCollection Error] PATH: ${path}, STATUS: ${response.status}, RESPONSE: ${errorText}`);
+      console.error(
+        `[readAdminCollection Error] PATH: ${path}, STATUS: ${response.status}, RESPONSE: ${errorText}`,
+      );
       return [];
     }
 
@@ -86,7 +88,9 @@ const readAdminData = async <T>(
       } | null;
       const errorMessage =
         payload?.error?.message || `API Error (Status: ${response.status})`;
-      console.error(`[readAdminData Error] PATH: ${path}, STATUS: ${response.status}, MESSAGE: ${errorMessage}`);
+      console.error(
+        `[readAdminData Error] PATH: ${path}, STATUS: ${response.status}, MESSAGE: ${errorMessage}`,
+      );
       return { data: null, error: errorMessage };
     }
 
@@ -148,7 +152,10 @@ export const getCachedAdminDashboardStats = async (
   }
 
   const suffix = search.size > 0 ? `?${search.toString()}` : "";
-  const result = await readAdminData<ApiAdminDashboardStats>(`/admin/dashboard${suffix}`, cookieHeader);
+  const result = await readAdminData<ApiAdminDashboardStats>(
+    `/admin/dashboard${suffix}`,
+    cookieHeader,
+  );
   return result.data;
 };
 

@@ -20,7 +20,7 @@ export default async function DashboardRuntimeMeta() {
   const runtimeMeta = await readDashboardRuntimeMeta();
 
   return (
-    <div className="mx-auto mt-6 flex w-full max-w-6xl flex-col gap-1 text-[11px] text-slate-500 dark:text-slate-400 md:text-xs">
+    <div className="mx-auto mt-6 flex w-full max-w-6xl flex-col gap-1 text-[11px] text-ink-muted md:text-xs">
       <p>
         WEB v{runtimeMeta.web.version} · 최근 업데이트{" "}
         {formatRuntimeUpdatedAt(runtimeMeta.web.updatedAt)}

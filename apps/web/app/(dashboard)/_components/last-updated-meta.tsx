@@ -14,7 +14,7 @@ export default function LastUpdatedMeta({
   className,
 }: LastUpdatedMetaProps) {
   return (
-    <p className={className ?? "text-xs text-slate-600 dark:text-slate-300"}>
+    <p className={className ?? "text-xs text-ink-muted"}>
       최근 수정: {formatKoreanDate(updatedAt)} · {formatAuditActor(updatedBy)}
     </p>
   );

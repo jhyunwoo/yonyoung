@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+
+import { Button } from "@/app/(dashboard)/_components/ui/button";
+import { Dialog } from "@/app/(dashboard)/_components/ui/dialog";
+import { Field } from "@/app/(dashboard)/_components/ui/field";
+import { Input } from "@/app/(dashboard)/_components/ui/input";
 import Link from "@tiptap/extension-link";
 import { Table } from "@tiptap/extension-table";
 import { TableCell } from "@tiptap/extension-table-cell";
@@ -40,8 +45,8 @@ const ToolbarButton = ({
       disabled={disabled}
       className={`rounded border px-2 py-1 text-xs font-semibold transition ${
         active
-          ? "border-slate-900 bg-slate-900 text-white"
-          : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+          ? "border-primary bg-primary text-on-primary"
+          : "border-hairline-strong bg-surface text-ink-secondary hover:bg-canvas-soft"
       } disabled:cursor-not-allowed disabled:opacity-50`}
     >
       {label}
@@ -55,6 +60,9 @@ export default function RichTextEditor({
   disabled = false,
   minHeight = 220,
 }: RichTextEditorProps) {
+  const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+  const [linkDraft, setLinkDraft] = useState("");
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -107,22 +115,23 @@ export default function RichTextEditor({
     editor.setEditable(!disabled);
   }, [disabled, editor]);
 
-  const handleSetLink = () => {
+  const openLinkDialog = () => {
     if (!editor || disabled) {
       return;
     }
 
     const previousLink = editor.getAttributes("link").href as string | undefined;
-    const nextLink = window.prompt(
-      "링크 주소를 입력하세요. 비워 두면 링크가 삭제됩니다.",
-      previousLink ?? "https://",
-    );
+    setLinkDraft(previousLink ?? "https://");
+    setIsLinkDialogOpen(true);
+  };
 
-    if (nextLink === null) {
+  const applyLink = () => {
+    setIsLinkDialogOpen(false);
+    if (!editor) {
       return;
     }
 
-    const trimmedLink = nextLink.trim();
+    const trimmedLink = linkDraft.trim();
     if (trimmedLink.length === 0) {
       editor.chain().focus().unsetLink().run();
       return;
@@ -133,7 +142,7 @@ export default function RichTextEditor({
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2">
+      <div className="flex flex-wrap gap-1.5 rounded-lg border border-hairline bg-surface-sunken p-2">
         <ToolbarButton
           label="H2"
           onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
@@ -190,7 +199,7 @@ export default function RichTextEditor({
         />
         <ToolbarButton
           label="링크"
-          onClick={handleSetLink}
+          onClick={openLinkDialog}
           active={editor?.isActive("link")}
           disabled={disabled || !editor}
         />
@@ -223,15 +232,63 @@ export default function RichTextEditor({
       </div>
 
       <div
-        className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2"
+        className="rounded-lg border border-hairline-strong bg-surface px-3 py-2"
         style={{ minHeight }}
       >
         <EditorContent
           editor={editor}
-          className="prose-editor text-sm text-slate-900 dark:text-slate-50 outline-none [&_.ProseMirror]:outline-none [&_.ProseMirror_h2]:mt-4 [&_.ProseMirror_h2]:text-xl [&_.ProseMirror_h2]:font-semibold [&_.ProseMirror_h3]:mt-3 [&_.ProseMirror_h3]:text-lg [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_p]:my-2 [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:pl-5 [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:pl-5 [&_.ProseMirror_blockquote]:border-l-4 [&_.ProseMirror_blockquote]:border-slate-300 [&_.ProseMirror_blockquote]:pl-3 [&_.ProseMirror_pre]:overflow-x-auto [&_.ProseMirror_pre]:rounded [&_.ProseMirror_pre]:bg-slate-900 [&_.ProseMirror_pre]:p-3 [&_.ProseMirror_pre]:text-xs [&_.ProseMirror_pre]:text-slate-100 [&_.ProseMirror_table]:my-2 [&_.ProseMirror_table]:w-full [&_.ProseMirror_table]:border-collapse [&_.ProseMirror_td]:border [&_.ProseMirror_td]:border-slate-300 [&_.ProseMirror_td]:p-2 [&_.ProseMirror_th]:border [&_.ProseMirror_th]:border-slate-300 [&_.ProseMirror_th]:bg-slate-50 [&_.ProseMirror_th]:p-2"
+          className="prose-editor text-sm text-ink outline-none [&_.ProseMirror]:outline-none [&_.ProseMirror_h2]:mt-4 [&_.ProseMirror_h2]:text-xl [&_.ProseMirror_h2]:font-semibold [&_.ProseMirror_h3]:mt-3 [&_.ProseMirror_h3]:text-lg [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_p]:my-2 [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:pl-5 [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:pl-5 [&_.ProseMirror_blockquote]:border-l-4 [&_.ProseMirror_blockquote]:border-hairline-strong [&_.ProseMirror_blockquote]:pl-3 [&_.ProseMirror_pre]:overflow-x-auto [&_.ProseMirror_pre]:rounded [&_.ProseMirror_pre]:bg-canvas-soft [&_.ProseMirror_pre]:p-3 [&_.ProseMirror_pre]:text-xs [&_.ProseMirror_pre]:text-ink [&_.ProseMirror_a]:text-primary-text [&_.ProseMirror_a]:underline [&_.ProseMirror_table]:my-2 [&_.ProseMirror_table]:w-full [&_.ProseMirror_table]:border-collapse [&_.ProseMirror_td]:border [&_.ProseMirror_td]:border-hairline-strong [&_.ProseMirror_td]:p-2 [&_.ProseMirror_th]:border [&_.ProseMirror_th]:border-hairline-strong [&_.ProseMirror_th]:bg-surface-sunken [&_.ProseMirror_th]:p-2"
           style={{ minHeight }}
         />
       </div>
+
+      {/* window.prompt 를 대체한다. 기본 prompt 는 스타일도 포커스 동작도
+          제어할 수 없고, 주소를 지워서 링크를 해제하는 방법을 알려줄 자리가 없었다. */}
+      <Dialog
+        open={isLinkDialogOpen}
+        onClose={() => setIsLinkDialogOpen(false)}
+        title="링크 주소"
+        description="주소를 비우고 저장하면 링크가 해제됩니다."
+        size="sm"
+        testId="rich-text-link-dialog"
+        footer={
+          <>
+            <Button
+              data-testid="rich-text-link-cancel"
+              variant="secondary"
+              onClick={() => setIsLinkDialogOpen(false)}
+            >
+              취소
+            </Button>
+            <Button
+              data-testid="rich-text-link-apply"
+              variant="primary"
+              onClick={applyLink}
+            >
+              적용
+            </Button>
+          </>
+        }
+      >
+        <Field label="링크 주소">
+          {(control) => (
+            <Input
+              {...control}
+              type="url"
+              inputMode="url"
+              value={linkDraft}
+              placeholder="https://example.com"
+              onChange={(event) => setLinkDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  applyLink();
+                }
+              }}
+            />
+          )}
+        </Field>
+      </Dialog>
     </div>
   );
 }

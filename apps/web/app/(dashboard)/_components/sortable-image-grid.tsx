@@ -62,9 +62,9 @@ const SortableImageCard = ({ item, disabled, onRemoveItem }: SortableCardProps) 
     <li
       ref={setNodeRef}
       style={style}
-      className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+      className="overflow-hidden rounded-lg border border-hairline bg-surface-sunken"
     >
-      <div className="aspect-square overflow-hidden bg-slate-100 dark:bg-slate-700">
+      <div className="aspect-square overflow-hidden bg-canvas-soft">
         <div className="relative h-full w-full">
           <Image
             src={item.imageUrl}
@@ -79,13 +79,11 @@ const SortableImageCard = ({ item, disabled, onRemoveItem }: SortableCardProps) 
 
       <div className="flex items-start justify-between gap-2 px-2 py-1.5">
         <div className="min-w-0">
-          <p className="truncate text-[11px] font-medium text-slate-700 dark:text-slate-200">
+          <p className="truncate text-[11px] font-medium text-ink-secondary">
             {item.label ?? "이미지"}
           </p>
           {item.subtitle ? (
-            <p className="truncate text-[10px] text-slate-600 dark:text-slate-300">
-              {item.subtitle}
-            </p>
+            <p className="truncate text-[10px] text-ink-muted">{item.subtitle}</p>
           ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-1">
@@ -95,7 +93,7 @@ const SortableImageCard = ({ item, disabled, onRemoveItem }: SortableCardProps) 
             {...attributes}
             {...listeners}
             disabled={disabled}
-            className="rounded border border-slate-300 dark:border-slate-600 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:text-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded border border-hairline-strong px-1.5 py-0.5 text-[10px] font-semibold text-ink-muted disabled:cursor-not-allowed disabled:opacity-60"
             aria-label="이미지 순서 변경"
             title="마우스로 끌어 순서 변경"
           >
@@ -108,7 +106,7 @@ const SortableImageCard = ({ item, disabled, onRemoveItem }: SortableCardProps) 
               onClick={() => onRemoveItem(item.id)}
               disabled={disabled}
               aria-label="이미지 삭제"
-              className="rounded border border-red-200 dark:border-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 dark:text-red-300 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded border border-danger-hairline px-1.5 py-0.5 text-[10px] font-semibold text-danger-text disabled:cursor-not-allowed disabled:opacity-60"
             >
               삭제
             </button>
@@ -169,7 +167,7 @@ export default function SortableImageGrid({
 
   if (items.length === 0) {
     return (
-      <p className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-3 py-4 text-xs text-slate-600 dark:text-slate-300">
+      <p className="rounded-lg border border-dashed border-hairline-strong bg-surface-sunken px-3 py-4 text-xs text-ink-muted">
         {emptyMessage}
       </p>
     );
@@ -197,7 +195,7 @@ export default function SortableImageGrid({
       </SortableContext>
       <DragOverlay>
         {activeItem ? (
-          <div className="w-[140px] overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg">
+          <div className="w-[140px] overflow-hidden rounded-lg border border-hairline bg-surface shadow-lg">
             <div className="relative aspect-square w-full">
               <Image
                 src={activeItem.imageUrl}
@@ -208,7 +206,7 @@ export default function SortableImageGrid({
                 sizes="140px"
               />
             </div>
-            <p className="truncate px-2 py-1 text-[11px] text-slate-700 dark:text-slate-200">
+            <p className="truncate px-2 py-1 text-[11px] text-ink-secondary">
               {activeItem.label ?? "이미지"}
             </p>
           </div>

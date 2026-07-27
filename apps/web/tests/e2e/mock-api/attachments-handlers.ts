@@ -52,7 +52,9 @@ const listByScope = (
     .filter(
       (attachment) =>
         attachment.scope === scope &&
-        (resourceId ? attachment.resourceId === resourceId : attachment.resourceId === null),
+        (resourceId
+          ? attachment.resourceId === resourceId
+          : attachment.resourceId === null),
     )
     .sort((left, right) => left.sortOrder - right.sortOrder);
 
@@ -129,7 +131,11 @@ export const handleAttachmentRoutes = (ctx: AttachmentHandlerContext): boolean =
         : typeof body?.fileName === "string"
           ? body.fileName
           : "mock.pdf",
-      fileSize: linkUrl ? null : typeof body?.fileSize === "number" ? body.fileSize : 1024,
+      fileSize: linkUrl
+        ? null
+        : typeof body?.fileSize === "number"
+          ? body.fileSize
+          : 1024,
       mimeType: linkUrl
         ? null
         : typeof body?.mimeType === "string"

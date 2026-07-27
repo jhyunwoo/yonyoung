@@ -1,4 +1,4 @@
-type DashboardSettingsMenuItem = {
+export type DashboardSettingsMenuItem = {
   key: string;
   label: string;
   description: string;

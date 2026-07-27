@@ -341,10 +341,7 @@ export type ApiUser = {
 };
 
 export type ApiUserResourceHistoryResourceType =
-  | "activity"
-  | "exhibition"
-  | "linktree"
-  | "linktree_item";
+  "activity" | "exhibition" | "linktree" | "linktree_item";
 
 export type ApiUserResourceHistoryItem = {
   id: string;

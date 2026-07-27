@@ -41,7 +41,7 @@ export default async function GenerationExhibitionEditPage({
   }
 
   return (
-    <main className="px-4 py-6 md:px-8 md:py-8">
+    <div className="px-4 py-6 md:px-8 md:py-8">
       <ExhibitionEditForm
         exhibitionId={id}
         generationId={generation.id}
@@ -49,6 +49,6 @@ export default async function GenerationExhibitionEditPage({
         generationPath={generation.path}
         initialMessage={initialMessage}
       />
-    </main>
+    </div>
   );
 }

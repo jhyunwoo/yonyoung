@@ -22,6 +22,7 @@ import {
   readMemberGenerationNames,
 } from "@/features/dashboard/members/member-directory";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useConfirm } from "@/app/(dashboard)/_components/ui/confirm-provider";
 
 const readErrorMessage = (error: unknown): string => {
   if (error instanceof AdminApiError) {
@@ -36,6 +37,7 @@ const readErrorMessage = (error: unknown): string => {
 };
 
 export default function MembersGrid() {
+  const confirm = useConfirm();
   const [users, setUsers] = useState<ApiUser[]>([]);
   const [generations, setGenerations] = useState<ApiGeneration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -170,9 +172,11 @@ export default function MembersGrid() {
     }
 
     const roleLabel = buildMemberRoleLabel(selectedRole);
-    const shouldUpdate = window.confirm(
-      `선택한 멤버 ${selectedUserIds.length}명의 권한을 ${roleLabel}(으)로 변경하시겠습니까?`,
-    );
+    const shouldUpdate = await confirm({
+      title: `선택한 멤버 ${selectedUserIds.length}명의 권한을 ${roleLabel}(으)로 변경하시겠습니까?`,
+      description: "변경한 권한은 즉시 적용됩니다.",
+      confirmLabel: "권한 변경",
+    });
     if (!shouldUpdate) {
       return;
     }
@@ -209,7 +213,7 @@ export default function MembersGrid() {
       >
         {Array.from({ length: 8 }).map((_, index) => (
           <li key={`settings-members-skeleton-${index + 1}`}>
-            <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4">
+            <div className="rounded-lg border border-hairline bg-surface-sunken p-4">
               <div className="flex items-center gap-3">
                 <Skeleton className="h-12 w-12 shrink-0 rounded-full" />
                 <div className="min-w-0 flex-1 space-y-2">
@@ -230,7 +234,7 @@ export default function MembersGrid() {
 
   if (loadErrorMessage) {
     return (
-      <p className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+      <p className="mt-6 rounded-lg border border-danger-hairline bg-danger-soft p-4 text-sm text-danger-text">
         {loadErrorMessage}
       </p>
     );
@@ -238,7 +242,7 @@ export default function MembersGrid() {
 
   if (users.length === 0) {
     return (
-      <p className="mt-6 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 p-4 text-sm text-slate-600 dark:text-slate-300">
+      <p className="mt-6 rounded-lg border border-dashed border-hairline-strong bg-surface-sunken p-4 text-sm text-ink-muted">
         등록된 멤버가 없습니다.
       </p>
     );
@@ -246,29 +250,25 @@ export default function MembersGrid() {
 
   return (
     <div className="mt-6">
-      <section className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4">
+      <section className="rounded-lg border border-hairline bg-surface-sunken p-4">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
           <label className="space-y-1.5">
-            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-              멤버 검색
-            </span>
+            <span className="text-xs font-semibold text-ink-secondary">멤버 검색</span>
             <input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="이름, 학번, 전화번호로 검색"
-              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-50"
+              className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm text-ink"
               data-testid="settings-members-search-input"
             />
           </label>
 
           <label className="space-y-1.5">
-            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-              대학
-            </span>
+            <span className="text-xs font-semibold text-ink-secondary">대학</span>
             <select
               value={selectedCollege}
               onChange={(event) => setSelectedCollege(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-50"
+              className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm text-ink"
               data-testid="settings-members-college-filter"
             >
               <option value="">전체 대학</option>
@@ -281,13 +281,11 @@ export default function MembersGrid() {
           </label>
 
           <label className="space-y-1.5">
-            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-              학과
-            </span>
+            <span className="text-xs font-semibold text-ink-secondary">학과</span>
             <select
               value={selectedDepartment}
               onChange={(event) => setSelectedDepartment(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-50"
+              className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm text-ink"
               data-testid="settings-members-department-filter"
             >
               <option value="">전체 학과</option>
@@ -300,13 +298,11 @@ export default function MembersGrid() {
           </label>
 
           <label className="space-y-1.5">
-            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-              속한 기수
-            </span>
+            <span className="text-xs font-semibold text-ink-secondary">속한 기수</span>
             <select
               value={selectedGenerationId}
               onChange={(event) => setSelectedGenerationId(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-50"
+              className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm text-ink"
               data-testid="settings-members-generation-filter"
             >
               <option value="">전체 기수</option>
@@ -320,7 +316,7 @@ export default function MembersGrid() {
         </div>
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-slate-600 dark:text-slate-300">
+          <p className="text-sm text-ink-muted">
             총 {users.length}명 중 {filteredUsers.length}명을 보고 있습니다.
           </p>
           {hasActiveFilters ? (
@@ -333,7 +329,7 @@ export default function MembersGrid() {
                 setSelectedDepartment("");
                 setSelectedGenerationId("");
               }}
-              className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-700"
+              className="inline-flex rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-canvas-soft"
             >
               검색/필터 초기화
             </button>
@@ -341,18 +337,18 @@ export default function MembersGrid() {
         </div>
       </section>
 
-      <section className="mt-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+      <section className="mt-4 rounded-lg border border-hairline bg-surface p-4">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">
             <p
-              className="text-sm font-semibold text-slate-900 dark:text-slate-50"
+              className="text-sm font-semibold text-ink"
               data-testid="settings-members-selection-summary"
             >
               {selectedUserIds.length > 0
                 ? `선택된 멤버 ${selectedUserIds.length}명`
                 : "멤버를 선택해 권한을 한 번에 변경할 수 있습니다."}
             </p>
-            <p className="text-xs text-slate-600 dark:text-slate-300">
+            <p className="text-xs text-ink-muted">
               현재 목록에서 {visibleSelectedCount}명이 선택되어 있습니다.
               {hiddenSelectedCount > 0
                 ? ` 필터에 가려진 선택 멤버 ${hiddenSelectedCount}명도 함께 유지됩니다.`
@@ -362,7 +358,7 @@ export default function MembersGrid() {
 
           <div className="flex flex-wrap items-end gap-2">
             <label className="space-y-1">
-              <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 pr-4">
+              <span className="text-xs font-semibold text-ink-muted pr-4">
                 변경할 권한
               </span>
               <select
@@ -374,7 +370,7 @@ export default function MembersGrid() {
                 }}
                 disabled={isBulkUpdating}
                 data-testid="settings-members-bulk-role-select"
-                className="min-w-40 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="min-w-40 rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm text-ink disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {BULK_MEMBER_ROLE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -389,7 +385,7 @@ export default function MembersGrid() {
               onClick={handleSelectVisibleUsers}
               disabled={filteredUsers.length === 0 || isBulkUpdating}
               data-testid="settings-members-select-visible-users"
-              className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-canvas-soft disabled:cursor-not-allowed disabled:opacity-60"
             >
               현재 목록 전체 선택
             </button>
@@ -398,7 +394,7 @@ export default function MembersGrid() {
               onClick={handleClearSelection}
               disabled={selectedUserIds.length === 0 || isBulkUpdating}
               data-testid="settings-members-clear-selected-users"
-              className="inline-flex rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-canvas-soft disabled:cursor-not-allowed disabled:opacity-60"
             >
               선택 해제
             </button>
@@ -407,7 +403,7 @@ export default function MembersGrid() {
               onClick={handleBulkRoleUpdate}
               disabled={selectedUserIds.length === 0 || isBulkUpdating}
               data-testid="settings-members-bulk-role-submit"
-              className="inline-flex rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300"
+              className="inline-flex rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-on-primary transition hover:bg-primary-active disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isBulkUpdating
                 ? "변경 중..."
@@ -418,19 +414,19 @@ export default function MembersGrid() {
       </section>
 
       {errorMessage ? (
-        <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="mt-4 rounded-lg border border-danger-hairline bg-danger-soft px-4 py-3 text-sm text-danger-text">
           {errorMessage}
         </p>
       ) : null}
 
       {successMessage ? (
-        <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <p className="mt-4 rounded-lg border border-success-hairline bg-success-soft px-4 py-3 text-sm text-success-text">
           {successMessage}
         </p>
       ) : null}
 
       {filteredUsers.length === 0 ? (
-        <p className="mt-4 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 p-4 text-sm text-slate-600 dark:text-slate-300">
+        <p className="mt-4 rounded-lg border border-dashed border-hairline-strong bg-surface-sunken p-4 text-sm text-ink-muted">
           검색 또는 필터 조건에 맞는 멤버가 없습니다.
         </p>
       ) : (
@@ -444,27 +440,26 @@ export default function MembersGrid() {
             const roleLabel = buildMemberRoleLabel(user.role);
             const generationNames = readMemberGenerationNames(user, generationNamesById);
             const isSelected = selectedUserIdSet.has(user.id);
+            // 선택 상태는 파란 단색 채움이 아니라 소프트 틴트 + 파란 테두리로 표현한다.
+            // 카드 안에 여러 줄의 보조 텍스트·뱃지가 들어가는데, 단색 채움 위에서는
+            // 그 색들을 전부 뒤집어야 하고 그러다 대비가 깨진다(axe color-contrast).
             const cardClass = isSelected
-              ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
-              : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-50";
-            const secondaryTextClass = isSelected
-              ? "text-slate-200 dark:text-slate-700"
-              : "text-slate-600 dark:text-slate-300";
+              ? "border-primary bg-primary-soft text-ink"
+              : "border-hairline bg-surface-sunken text-ink";
+            const secondaryTextClass = "text-ink-muted";
             const neutralBadgeClass = isSelected
-              ? "border-slate-200/60 bg-slate-800 text-slate-100 dark:border-slate-300 dark:bg-slate-200 dark:text-slate-900"
-              : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200";
+              ? "border-primary-hairline bg-surface text-ink-secondary"
+              : "border-hairline-strong bg-surface text-ink-secondary";
             const emptyGenerationBadgeClass = isSelected
-              ? "border-slate-200/60 bg-slate-800 text-slate-100 dark:border-slate-300 dark:bg-slate-200 dark:text-slate-900"
-              : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300";
-            const linkTextClass = isSelected
-              ? "text-white hover:text-slate-200 dark:text-slate-900 dark:hover:text-slate-700"
-              : "text-slate-900 hover:text-slate-700 dark:text-slate-50 dark:hover:text-slate-200";
+              ? "border-primary-hairline bg-surface text-ink-muted"
+              : "border-hairline-strong bg-surface text-ink-muted";
+            const linkTextClass = "text-ink hover:text-ink-secondary";
 
             return (
               <li key={user.id}>
                 <div
                   data-testid={`settings-members-card-${user.id}`}
-                  className={`flex h-full flex-col rounded-xl border p-4 transition ${cardClass}`}
+                  className={`flex h-full flex-col rounded-lg border p-4 transition ${cardClass}`}
                 >
                   <div className="flex items-start gap-3">
                     <Link
@@ -472,7 +467,7 @@ export default function MembersGrid() {
                       data-testid={`settings-members-open-${user.id}`}
                       className={`flex min-w-0 flex-1 items-start gap-3 rounded-lg ${linkTextClass}`}
                     >
-                      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700">
+                      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-hairline bg-canvas-soft">
                         {user.image ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -481,7 +476,7 @@ export default function MembersGrid() {
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-600 dark:text-slate-300">
+                          <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-ink-muted">
                             {avatarFallback}
                           </div>
                         )}
@@ -522,7 +517,7 @@ export default function MembersGrid() {
                         generationNames.map((generationName, index) => (
                           <span
                             key={`${user.id}-${index}-${generationName}`}
-                            className="rounded-full border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-semibold text-sky-700 dark:border-sky-900 dark:bg-sky-950/40 dark:text-sky-200"
+                            className="rounded-full border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-semibold text-sky-700"
                           >
                             {generationName}
                           </span>
