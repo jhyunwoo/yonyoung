@@ -52,10 +52,10 @@ export default async function LinktreeManager({
           {linktrees.map((group) => (
             <li key={group.id} className="rounded-lg border border-hairline p-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
+                <div className="min-w-0">
                   <Link
                     href={`${basePath}/${group.id}`}
-                    className="text-base font-semibold text-ink transition hover:text-ink-secondary"
+                    className="text-base font-semibold text-ink transition hover:text-ink-secondary wrap-anywhere"
                   >
                     {group.name}
                   </Link>
@@ -82,7 +82,9 @@ export default async function LinktreeManager({
                         href={`${basePath}/${group.id}/items/${item.id}`}
                         className="block rounded-lg border border-hairline px-3 py-2 text-sm text-ink-secondary transition hover:bg-surface-sunken"
                       >
-                        <span className="font-medium text-ink">{item.name}</span>
+                        <span className="font-medium text-ink wrap-anywhere">
+                          {item.name}
+                        </span>
                         <span className="ml-2 text-xs text-ink-muted">상세 보기</span>
                         <span className="mt-1 block text-[11px] text-ink-muted">
                           최근 수정: {formatKoreanDate(item.updatedAt)} ·{" "}

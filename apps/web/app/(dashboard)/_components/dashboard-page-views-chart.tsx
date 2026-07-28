@@ -183,9 +183,11 @@ export default function PageViewChart({ data }: PageViewChartProps) {
       {/* Floating Tooltip */}
       {hoveredItem && (
         <div
-          className="absolute z-10 pointer-events-none rounded-lg border border-hairline bg-surface/95 px-2.5 py-1.5 shadow-lg backdrop-blur-sm text-left transition-all duration-75"
+          className="absolute z-10 max-w-32 pointer-events-none rounded-lg border border-hairline bg-surface/95 px-2.5 py-1.5 shadow-lg backdrop-blur-sm text-left transition-all duration-75"
           style={{
-            left: `calc(${Math.max(6, Math.min(94, hoveredItem.x))}% - 60px)`,
+            // 좁은 화면에서 툴팁이 차트 밖으로 삐져나가 가로 스크롤을 만들지
+            // 않도록 0 ~ (컨테이너 폭 - max-w-32) 범위로 고정한다.
+            left: `clamp(0px, calc(${Math.max(6, Math.min(94, hoveredItem.x))}% - 60px), calc(100% - 8rem))`,
             top: `calc(${hoveredItem.y}% - 56px)`,
           }}
         >

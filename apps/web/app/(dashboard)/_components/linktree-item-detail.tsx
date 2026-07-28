@@ -189,17 +189,21 @@ export default function LinktreeItemDetail({
 
       <div className="mt-6 rounded-lg border border-hairline p-4">
         <p className="text-xs font-semibold text-ink-muted">분류</p>
-        <p className="mt-1 text-base font-semibold text-ink">{linktree.name}</p>
+        <p className="mt-1 text-base font-semibold text-ink wrap-anywhere">
+          {linktree.name}
+        </p>
 
         <p className="mt-4 text-xs font-semibold text-ink-muted">링크 이름</p>
-        <p className="mt-1 text-base font-semibold text-ink">{item.name}</p>
+        <p className="mt-1 text-base font-semibold text-ink wrap-anywhere">{item.name}</p>
 
         <p className="mt-4 text-xs font-semibold text-ink-muted">링크 주소</p>
+        {/* 상세 화면에서는 주소 전체를 보여줘야 하므로 자르지 않고 임의 위치에서
+            줄바꿈한다(공백 없는 긴 URL 이 좁은 화면을 밀어내는 것을 막는다). */}
         <a
           href={item.link}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-1 inline-flex text-sm text-primary-text underline underline-offset-2"
+          className="mt-1 inline-block max-w-full text-sm text-primary-text underline underline-offset-2 wrap-anywhere"
         >
           {item.link}
         </a>

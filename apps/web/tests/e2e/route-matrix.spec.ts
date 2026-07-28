@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { assertNoHorizontalOverflow } from "./support/overflow-check";
 import { routeManifest } from "./support/route-manifest";
 import { clearMockSession, setMockSession } from "./support/session";
 import { getMockState, resetMockState } from "./support/state-assert";
@@ -57,6 +58,9 @@ for (const route of routeManifest) {
       await assertReadable(page);
       await waitForRouteReady(page, route);
     }
+
+    // 좁은 화면에서 긴 URL·이메일이 레이아웃을 밀어내지 않는지 확인한다.
+    await assertNoHorizontalOverflow(page, `${route.id} (${testInfo.project.name})`);
 
     const domButtons = await readDomButtonTestIds(page);
     const expectedButtonIds = [

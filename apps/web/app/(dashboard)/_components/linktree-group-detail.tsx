@@ -199,7 +199,7 @@ export default function LinktreeGroupDetail({
       ) : null}
 
       <div className="mt-6 rounded-lg border border-hairline p-4">
-        <p className="text-xl font-semibold text-ink">{linktree.name}</p>
+        <p className="text-xl font-semibold text-ink wrap-anywhere">{linktree.name}</p>
         <p className="mt-2 text-xs text-ink-muted">링크 {linktree.items.length}개</p>
         <p className="mt-1 text-xs text-ink-muted">
           생성일: {formatKoreanDate(linktree.createdAt)}
@@ -285,7 +285,7 @@ export default function LinktreeGroupDetail({
                   href={`${listPath}/${linktree.id}/items/${item.id}`}
                   className="block rounded-lg border border-hairline px-3 py-2 text-sm text-ink-secondary transition hover:bg-surface-sunken"
                 >
-                  <span className="font-medium text-ink">{item.name}</span>
+                  <span className="font-medium text-ink wrap-anywhere">{item.name}</span>
                   <span className="ml-2 text-xs text-ink-muted">상세 보기</span>
                   <span className="mt-1 block text-[11px] text-ink-muted">
                     최근 수정: {formatKoreanDate(item.updatedAt)} ·{" "}

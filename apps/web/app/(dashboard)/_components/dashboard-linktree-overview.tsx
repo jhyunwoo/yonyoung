@@ -15,7 +15,10 @@ export default async function DashboardLinktreeOverview() {
   const totalLinkCount = flattenLinktreeItems(visibleGroups).length;
 
   return (
-    <Card data-testid="dashboard-linktree-overview" className="flex h-full flex-col">
+    <Card
+      data-testid="dashboard-linktree-overview"
+      className="flex h-full min-w-0 flex-col"
+    >
       <CardHeader
         title="홈페이지 링크 모음"
         description={`그룹 ${visibleGroups.length}개 · 링크 ${totalLinkCount}개가 공개돼 있습니다.`}
@@ -48,10 +51,15 @@ export default async function DashboardLinktreeOverview() {
       ) : (
         <div className="mt-5 grid gap-4 xl:grid-cols-2">
           {visibleGroups.map((group) => (
-            <article key={group.id} className="rounded-lg border border-hairline p-4">
+            <article
+              key={group.id}
+              className="min-w-0 rounded-lg border border-hairline p-4"
+            >
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-body-sm font-semibold text-ink">{group.name}</h3>
-                <span className="text-caption text-ink-muted tabular-nums">
+                <h3 className="min-w-0 truncate text-body-sm font-semibold text-ink">
+                  {group.name}
+                </h3>
+                <span className="shrink-0 text-caption text-ink-muted tabular-nums">
                   {group.items.length}개
                 </span>
               </div>
@@ -65,9 +73,11 @@ export default async function DashboardLinktreeOverview() {
                       rel="noopener noreferrer"
                       className="block rounded-md border border-hairline bg-surface-sunken px-3 py-2.5 transition-colors duration-150 hover:bg-canvas-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) motion-reduce:transition-none"
                     >
-                      <span className="block text-body-sm font-medium text-ink">
+                      <span className="block truncate text-body-sm font-medium text-ink">
                         {item.name}
                       </span>
+                      {/* 링크 주소는 한 줄로 잘라 보여준다. truncate 는 nowrap 이라
+                          부모가 min-w-0 이어야 실제로 줄어든다(모바일 가로 깨짐 방지). */}
                       <span className="mt-0.5 block truncate text-caption text-ink-muted">
                         {item.link}
                       </span>

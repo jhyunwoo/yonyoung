@@ -325,7 +325,9 @@ export default function MemberDetailClient({
                   <dl className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     <div>
                       <dt className="text-xs font-semibold text-ink-muted">이메일</dt>
-                      <dd className="mt-1 text-sm text-ink">{fullUser.email}</dd>
+                      <dd className="mt-1 text-sm text-ink wrap-anywhere">
+                        {fullUser.email}
+                      </dd>
                     </div>
                     <div>
                       <dt className="text-xs font-semibold text-ink-muted">성</dt>

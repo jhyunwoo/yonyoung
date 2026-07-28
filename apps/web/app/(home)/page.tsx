@@ -61,7 +61,9 @@ const HomeQuickLinksSection = async () => {
                 <p className="text-xs font-semibold uppercase tracking-widest text-(--text-muted)">
                   {item.groupName}
                 </p>
-                <p className="mt-2 text-base font-semibold text-(--text-primary)">
+                {/* 공백 없는 긴 링크 이름이 좁은 화면에서 카드를 밀어내지
+                    않도록 임의 위치에서 줄바꿈한다. */}
+                <p className="mt-2 text-base font-semibold text-(--text-primary) wrap-anywhere">
                   {item.name}
                 </p>
                 <p className="mt-1 truncate text-xs text-(--text-muted)">{item.link}</p>

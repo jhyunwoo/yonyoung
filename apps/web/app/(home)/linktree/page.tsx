@@ -56,7 +56,9 @@ export default async function LinktreePage() {
                         className="flex w-full flex-row items-center justify-center border border-(--surface-border) bg-(--surface-elevated) px-4 py-[1.2rem] text-center text-(--text-primary) no-underline shadow-[0_4px_12px_var(--shadow-strong)] transition-all duration-200 hover:-translate-y-[2px] hover:border-(--surface-strong-border) hover:bg-(--surface-muted)"
                         data-testid={`linktree-item-card-${item.id}`}
                       >
-                        <span className="text-[0.95rem] font-semibold tracking-[0.02em]">
+                        {/* 공백 없는 긴 링크 이름이 좁은 화면에서 카드를 밀어내지
+                            않도록 임의 위치에서 줄바꿈한다. */}
+                        <span className="min-w-0 text-[0.95rem] font-semibold tracking-[0.02em] wrap-anywhere">
                           {item.name}
                         </span>
                       </a>

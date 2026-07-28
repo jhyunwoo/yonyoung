@@ -217,7 +217,7 @@ export default function MemberDetailClient({
                 </div>
                 <div>
                   <dt className="text-xs font-semibold text-ink-muted">이메일</dt>
-                  <dd className="mt-1 text-sm text-ink">{user.email}</dd>
+                  <dd className="mt-1 text-sm text-ink wrap-anywhere">{user.email}</dd>
                 </div>
                 <div>
                   <dt className="text-xs font-semibold text-ink-muted">성</dt>
