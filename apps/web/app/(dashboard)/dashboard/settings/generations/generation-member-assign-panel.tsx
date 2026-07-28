@@ -165,7 +165,8 @@ export const GenerationMemberAssignPanel = ({
               readNormalizedGenerationIds(user).includes(selectedGeneration.id);
 
             return (
-              <li key={user.id}>
+              // min-w-0: 카드 안 truncate 텍스트가 그리드 트랙을 넓히지 못하게 한다.
+              <li key={user.id} className="min-w-0">
                 <label
                   className={`block cursor-pointer rounded-lg border p-3 transition-colors duration-150 motion-reduce:transition-none ${
                     isSelected

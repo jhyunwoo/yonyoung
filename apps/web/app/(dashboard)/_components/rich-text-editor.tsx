@@ -231,13 +231,15 @@ export default function RichTextEditor({
         />
       </div>
 
+      {/* 열을 여러 개 추가한 표는 좁은 화면에서 편집 영역보다 넓어진다.
+          페이지 전체가 밀리지 않도록 편집 영역 안에서만 가로 스크롤시킨다. */}
       <div
-        className="rounded-lg border border-hairline-strong bg-surface px-3 py-2"
+        className="overflow-x-auto rounded-lg border border-hairline-strong bg-surface px-3 py-2"
         style={{ minHeight }}
       >
         <EditorContent
           editor={editor}
-          className="prose-editor text-sm text-ink outline-none [&_.ProseMirror]:outline-none [&_.ProseMirror_h2]:mt-4 [&_.ProseMirror_h2]:text-xl [&_.ProseMirror_h2]:font-semibold [&_.ProseMirror_h3]:mt-3 [&_.ProseMirror_h3]:text-lg [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_p]:my-2 [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:pl-5 [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:pl-5 [&_.ProseMirror_blockquote]:border-l-4 [&_.ProseMirror_blockquote]:border-hairline-strong [&_.ProseMirror_blockquote]:pl-3 [&_.ProseMirror_pre]:overflow-x-auto [&_.ProseMirror_pre]:rounded [&_.ProseMirror_pre]:bg-canvas-soft [&_.ProseMirror_pre]:p-3 [&_.ProseMirror_pre]:text-xs [&_.ProseMirror_pre]:text-ink [&_.ProseMirror_a]:text-primary-text [&_.ProseMirror_a]:underline [&_.ProseMirror_table]:my-2 [&_.ProseMirror_table]:w-full [&_.ProseMirror_table]:border-collapse [&_.ProseMirror_td]:border [&_.ProseMirror_td]:border-hairline-strong [&_.ProseMirror_td]:p-2 [&_.ProseMirror_th]:border [&_.ProseMirror_th]:border-hairline-strong [&_.ProseMirror_th]:bg-surface-sunken [&_.ProseMirror_th]:p-2"
+          className="prose-editor text-sm text-ink outline-none [&_.ProseMirror]:wrap-anywhere [&_.ProseMirror]:outline-none [&_.ProseMirror_h2]:mt-4 [&_.ProseMirror_h2]:text-xl [&_.ProseMirror_h2]:font-semibold [&_.ProseMirror_h3]:mt-3 [&_.ProseMirror_h3]:text-lg [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_p]:my-2 [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:pl-5 [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:pl-5 [&_.ProseMirror_blockquote]:border-l-4 [&_.ProseMirror_blockquote]:border-hairline-strong [&_.ProseMirror_blockquote]:pl-3 [&_.ProseMirror_pre]:overflow-x-auto [&_.ProseMirror_pre]:rounded [&_.ProseMirror_pre]:bg-canvas-soft [&_.ProseMirror_pre]:p-3 [&_.ProseMirror_pre]:text-xs [&_.ProseMirror_pre]:text-ink [&_.ProseMirror_a]:text-primary-text [&_.ProseMirror_a]:underline [&_.ProseMirror_table]:my-2 [&_.ProseMirror_table]:w-full [&_.ProseMirror_table]:border-collapse [&_.ProseMirror_td]:border [&_.ProseMirror_td]:border-hairline-strong [&_.ProseMirror_td]:p-2 [&_.ProseMirror_th]:border [&_.ProseMirror_th]:border-hairline-strong [&_.ProseMirror_th]:bg-surface-sunken [&_.ProseMirror_th]:p-2"
           style={{ minHeight }}
         />
       </div>

@@ -456,7 +456,8 @@ export default function MembersGrid() {
             const linkTextClass = "text-ink hover:text-ink-secondary";
 
             return (
-              <li key={user.id}>
+              // min-w-0: 카드 안 truncate 텍스트가 그리드 트랙을 넓히지 못하게 한다.
+              <li key={user.id} className="min-w-0">
                 <div
                   data-testid={`settings-members-card-${user.id}`}
                   className={`flex h-full flex-col rounded-lg border p-4 transition ${cardClass}`}

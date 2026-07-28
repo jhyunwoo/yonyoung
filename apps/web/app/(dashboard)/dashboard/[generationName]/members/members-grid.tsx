@@ -120,7 +120,8 @@ export default function MembersGrid({ generationId, generationPath }: MembersGri
         const roleLabel = buildMemberRoleLabel(member.role);
 
         return (
-          <li key={member.id}>
+          // min-w-0: 카드 안 truncate 텍스트가 그리드 트랙을 넓히지 못하게 한다.
+          <li key={member.id} className="min-w-0">
             <Link
               href={`${generationPath}/members/${encodeURIComponent(member.id)}`}
               className="block rounded-lg border border-hairline bg-surface-sunken p-4 transition hover:border-hairline-strong hover:bg-surface"

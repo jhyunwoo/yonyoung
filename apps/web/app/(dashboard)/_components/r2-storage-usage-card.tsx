@@ -48,7 +48,7 @@ export default function R2StorageUsageCard({ stats }: R2StorageUsageCardProps) {
     usagePercent >= 90 ? "bg-danger" : usagePercent >= 75 ? "bg-warning" : "bg-primary";
 
   return (
-    <Card className="flex h-full flex-col">
+    <Card className="flex h-full min-w-0 flex-col">
       <CardHeader
         title="파일 저장공간 사용량"
         actions={

@@ -144,7 +144,7 @@ export default function DashboardShell({
 
           <div className="md:pl-(--sidebar-width-md) lg:pl-(--sidebar-width)">
             <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-hairline bg-surface/95 px-4 py-2 pt-[calc(env(safe-area-inset-top)+0.5rem)] backdrop-blur md:hidden">
-              <p className="truncate text-body-sm font-semibold text-ink">
+              <p className="min-w-0 truncate text-body-sm font-semibold text-ink">
                 {activePageName}
               </p>
               <IconButton

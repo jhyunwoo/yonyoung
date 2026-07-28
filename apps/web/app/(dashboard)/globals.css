@@ -274,6 +274,11 @@
       "locl" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* URL·이메일처럼 공백 없는 긴 문자열이 좁은 화면에서 컨테이너를 뚫고 나가
+     * 가로 스크롤을 만들지 않게 하는 최후 보루. 폭이 확정된 뒤 적용되므로
+     * (anywhere 와 달리) 기존 레이아웃의 폭 계산은 바꾸지 않는다.
+     * 그리드/플렉스 트랙까지 밀어내는 경우는 항목에 min-w-0 을 함께 준다. */
+    overflow-wrap: break-word;
   }
 
   /* iOS 는 16px 미만 폼 컨트롤에 포커스하면 화면을 확대한다.

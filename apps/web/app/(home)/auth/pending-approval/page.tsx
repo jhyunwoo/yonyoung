@@ -55,7 +55,11 @@ export default async function PendingApprovalPage() {
         </p>
 
         <div className="mt-8 border border-(--surface-border) bg-(--surface-muted) p-4 text-sm text-(--text-muted)">
-          계정: <span className="font-medium text-(--text-primary)">{sessionEmail}</span>
+          {/* 긴 이메일이 좁은 화면을 밀어내지 않도록 임의 위치에서 줄바꿈한다. */}
+          계정:{" "}
+          <span className="font-medium text-(--text-primary) wrap-anywhere">
+            {sessionEmail}
+          </span>
         </div>
 
         <div className="mt-8 flex flex-wrap gap-3">

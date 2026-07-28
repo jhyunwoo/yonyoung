@@ -7,6 +7,8 @@ type RichTextContentProps = {
 
 const BASE_CLASS_NAMES = [
   "text-sm leading-relaxed text-slate-700 dark:text-slate-200",
+  // 붙여넣은 긴 URL 이 좁은 화면에서 컨테이너를 뚫지 않게 한다.
+  "wrap-anywhere",
   "[&_h2]:mt-5 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:text-slate-900 dark:[&_h2]:text-slate-100",
   "[&_h3]:mt-4 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:text-slate-900 dark:[&_h3]:text-slate-100",
   "[&_p]:my-2",
@@ -16,7 +18,9 @@ const BASE_CLASS_NAMES = [
   "[&_pre]:my-3 [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-slate-900 [&_pre]:p-3 [&_pre]:text-xs [&_pre]:text-slate-100 dark:[&_pre]:bg-slate-950",
   "[&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-xs dark:[&_code]:bg-slate-800/80 dark:[&_code]:text-slate-100",
   "[&_a]:text-blue-700 [&_a]:underline dark:[&_a]:text-blue-300",
-  "[&_table]:my-3 [&_table]:w-full [&_table]:border-collapse [&_table]:text-sm",
+  // 열이 많은 표는 모바일 폭을 넘긴다. 표 자체를 블록 스크롤 컨테이너로 만들어
+  // 페이지 전체가 아니라 표 안에서만 가로 스크롤되게 한다.
+  "[&_table]:my-3 [&_table]:block [&_table]:w-full [&_table]:overflow-x-auto [&_table]:border-collapse [&_table]:text-sm",
   "[&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-50 [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_th]:font-semibold dark:[&_th]:border-slate-600 dark:[&_th]:bg-slate-800/70",
   "[&_td]:border [&_td]:border-slate-300 [&_td]:px-2 [&_td]:py-1 dark:[&_td]:border-slate-600",
 ].join(" ");

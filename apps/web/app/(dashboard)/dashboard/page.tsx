@@ -46,7 +46,7 @@ export default async function DashboardPage() {
               <ExternalLink className="h-4 w-4" aria-hidden="true" />
             </a>
           ) : (
-            <div className="flex flex-col items-start gap-1.5">
+            <div className="flex min-w-0 flex-col items-start gap-1.5">
               <button
                 type="button"
                 disabled

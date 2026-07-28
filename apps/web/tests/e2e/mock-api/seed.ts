@@ -100,7 +100,8 @@ const users = [
   {
     id: "user-unverified",
     name: "신규회원",
-    email: "unverified@yonyoung.test",
+    // 공백 없는 긴 이메일 — 좁은 화면에서 카드/상세를 밀어내지 않는지 검증하는 값이다.
+    email: "unverified.extremely.long.mailbox.name.for.overflow@department.yonyoung.test",
     image: null,
     showcaseImageUrls: [],
     familyName: "신",
@@ -239,6 +240,16 @@ const linktrees = [
         link: "https://instagram.com/yonyongpage",
         createdAt: now - 1000 * 60 * 60 * 100,
         updatedAt: now - 1000 * 60 * 60 * 20,
+        updatedBy: actor("user-manager", "박부장", "manager", "박", "부장"),
+      },
+      // 공백 없는 아주 긴 이름/주소 — 모바일 가로 깨짐 회귀를 잡기 위한 값이다.
+      {
+        id: "linktree-item-long",
+        linktreeId: "linktree-1",
+        name: "AbnormallyLongLinkTitleWithoutAnySpacesToStressTestTruncation",
+        link: "https://example.com/very/long/path/segment/that/never/breaks/because-it-has-no-spaces-at-all?utm_source=yonyoung&utm_medium=dashboard&utm_campaign=overflow-regression-check",
+        createdAt: now - 1000 * 60 * 60 * 99,
+        updatedAt: now - 1000 * 60 * 60 * 19,
         updatedBy: actor("user-manager", "박부장", "manager", "박", "부장"),
       },
     ],
