@@ -58,7 +58,8 @@ test("갤러리가 justified rows 로 배치된다", async ({ page }, testInfo) 
   expect(layout.display).toBe("flex");
   expect(layout.flexWrap).toBe("wrap");
 
-  const rows = groupIntoRows(await readTileBoxes(gallery));
+  const boxes = await readTileBoxes(gallery);
+  const rows = groupIntoRows(boxes);
   expect(rows.length).toBeGreaterThan(0);
 
   for (const row of rows) {
@@ -83,8 +84,16 @@ test("갤러리가 justified rows 로 배치된다", async ({ page }, testInfo) 
     );
   }
 
-  // 데스크탑은 한 행에 3장, 모바일은 1장
-  expect(rows[0]?.length).toBe(testInfo.project.name === "mobile-chromium" ? 1 : 3);
+  if (testInfo.project.name === "mobile-chromium") {
+    // 모바일은 사진 비율과 무관하게 모든 행이 1장이어야 한다.
+    // 첫 행만 보면 세로 사진 2장이 한 행에 들어가는 회귀를 놓친다(act-1 의 4·5번째가 그렇다).
+    expect(rows.map((row) => row.length)).toEqual(boxes.map(() => 1));
+    for (const box of boxes) {
+      expect(Math.abs(box.width - (galleryBox?.width ?? 0))).toBeLessThanOrEqual(1);
+    }
+  } else {
+    expect(rows[0]?.length).toBe(3);
+  }
 
   await assertNoHorizontalOverflow(page, "활동 기록 상세 갤러리");
 });

@@ -1,6 +1,6 @@
 import { createElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 vi.mock("framer-motion", () => {
@@ -55,6 +55,10 @@ const renderGallery = (items: PhotoGalleryItem[] = makeItems()) => {
 };
 
 const getTiles = (): HTMLElement[] => screen.getAllByRole("listitem");
+
+/** 타일에도 같은 alt 의 이미지가 있으므로 반드시 라이트박스 프레임 안에서 찾는다 */
+const getLightboxImage = (alt: string): HTMLElement =>
+  within(screen.getByTestId("gallery-lightbox-frame")).getByAltText(alt);
 
 describe("PhotoGallery 레이아웃", () => {
   it("justified rows 컨테이너로 렌더링되고 CSS 컬럼을 쓰지 않는다", () => {
@@ -186,6 +190,44 @@ describe("PhotoGallery 라이트박스", () => {
     expect(screen.queryByTestId("gallery-lightbox-prev")).toBeNull();
     expect(screen.queryByTestId("gallery-lightbox-next")).toBeNull();
     expect(screen.queryByTestId("gallery-lightbox-counter")).toBeNull();
+  });
+
+  it("사진이 로드되기 전에는 스켈레톤을 보여준다", async () => {
+    const user = userEvent.setup();
+    renderGallery();
+
+    await user.click(screen.getByTestId("gallery-photo-button-with-dimensions"));
+
+    expect(screen.getByTestId("gallery-lightbox-skeleton")).toBeInTheDocument();
+
+    fireEvent.load(getLightboxImage("가로 사진"));
+
+    expect(screen.queryByTestId("gallery-lightbox-skeleton")).toBeNull();
+  });
+
+  it("이미지 로드에 실패해도 스켈레톤이 남지 않는다", async () => {
+    const user = userEvent.setup();
+    renderGallery();
+
+    await user.click(screen.getByTestId("gallery-photo-button-with-dimensions"));
+    fireEvent.error(getLightboxImage("가로 사진"));
+
+    expect(screen.queryByTestId("gallery-lightbox-skeleton")).toBeNull();
+  });
+
+  it("이미 본 사진으로 돌아오면 스켈레톤을 다시 보여주지 않는다", async () => {
+    const user = userEvent.setup();
+    renderGallery();
+
+    await user.click(screen.getByTestId("gallery-photo-button-with-dimensions"));
+    fireEvent.load(getLightboxImage("가로 사진"));
+
+    // 다음 사진은 아직 로드 전이라 스켈레톤이 다시 뜬다
+    await user.click(screen.getByTestId("gallery-lightbox-next"));
+    expect(screen.getByTestId("gallery-lightbox-skeleton")).toBeInTheDocument();
+
+    await user.click(screen.getByTestId("gallery-lightbox-prev"));
+    expect(screen.queryByTestId("gallery-lightbox-skeleton")).toBeNull();
   });
 
   it("닫으면 배경 스크롤 잠금이 풀린다", async () => {

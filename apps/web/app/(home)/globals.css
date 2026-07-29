@@ -170,8 +170,7 @@ body {
   );
   /*
    * 마지막 행이 남은 폭을 다 먹어 거대해지는 것을 막는 상한.
-   * 1열(모바일)에서는 모든 행이 한 장짜리라 "폭을 다 먹는 것"이 곧 정상 동작이므로
-   * 화면을 넘지 않는 선에서 사실상 상한을 두지 않는다.
+   * 모바일(1열)에서는 아이템이 항상 폭 100% 라 상한 자체가 걸리지 않는다.
    */
   --gallery-cap-h: 90svh;
 
@@ -214,9 +213,13 @@ body {
   --photo-aspect: 1.5;
   flex-grow: var(--photo-aspect);
   flex-shrink: 1;
-  flex-basis: calc(var(--photo-aspect) * var(--gallery-row-h));
-  /* basis 와 같은 비례식이라 한 행의 모든 아이템이 동시에 상한에 걸린다 → 높이 균일성 유지 */
-  max-width: calc(var(--photo-aspect) * var(--gallery-cap-h));
+  /*
+   * 모바일은 비율과 무관하게 무조건 한 행에 한 장.
+   * basis 를 비율에 비례시키면(=아래 40rem 이상 규칙) 세로 사진처럼 폭이 좁은 사진은
+   * 두 장이 한 행에 들어가 버려 "1열"이 깨진다. 폭을 100% 로 못 박아 그걸 막는다.
+   */
+  flex-basis: 100%;
+  max-width: 100%;
   /* flex 자동 최소 크기(내부 이미지의 intrinsic width)로 행이 넘치는 것을 차단 */
   min-width: 0;
   aspect-ratio: var(--photo-aspect);
@@ -227,4 +230,13 @@ body {
    * 통째로 덮어 뒤 사진이 앞 사진의 클릭을 가로챈다.
    */
   position: relative;
+}
+
+/* 2열 이상부터 justified rows 수학이 켜진다 (모바일은 위의 100% 고정) */
+@media (min-width: 40rem) {
+  .photo-gallery-item {
+    flex-basis: calc(var(--photo-aspect) * var(--gallery-row-h));
+    /* basis 와 같은 비례식이라 한 행의 모든 아이템이 동시에 상한에 걸린다 → 높이 균일성 유지 */
+    max-width: calc(var(--photo-aspect) * var(--gallery-cap-h));
+  }
 }
