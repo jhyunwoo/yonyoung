@@ -10,9 +10,9 @@ import { createPageMetadata, resolveSiteUrl } from "@/features/seo/metadata/seo"
 import JsonLd from "@/features/seo/structured-data/json-ld";
 import PageViewTracker from "@/app/_components/page-view-tracker";
 import {
-  MasonryGallery,
-  type MasonryGalleryItem,
-} from "@/app/(home)/_components/masonry-gallery";
+  PhotoGallery,
+  type PhotoGalleryItem,
+} from "@/app/(home)/_components/photo-gallery";
 
 type ExhibitionDetailPageProps = {
   params: Promise<{
@@ -138,7 +138,7 @@ export default async function ExhibitionDetailPage({
   };
 
   // 상세 이미지가 없으면 커버 이미지 한 장으로 대체 (커버는 크기 정보가 없어 폴백 측정 사용)
-  const galleryItems: MasonryGalleryItem[] =
+  const galleryItems: PhotoGalleryItem[] =
     exhibition.detailImages.length > 0
       ? exhibition.detailImages
           .slice()
@@ -187,9 +187,10 @@ export default async function ExhibitionDetailPage({
           />
         </header>
 
-        <MasonryGallery
+        <PhotoGallery
           items={galleryItems}
-          fallbackAspectRatio="2 / 3"
+          fallbackAspect={2 / 3}
+          refAspect={0.75}
           data-testid="exhibition-detail-gallery"
         />
       </div>

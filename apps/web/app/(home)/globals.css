@@ -143,3 +143,88 @@ body {
 .dark .recruiting-rich-text-contrast a {
   color: #90c5ff !important;
 }
+
+/*
+ * 공개 사진 갤러리 — justified rows (Google Photos 방식).
+ *
+ * flex-grow / flex-basis 를 사진 원본 비율(A)에 비례하게 주면
+ *   width_i = basis_i + free * grow_i/Σgrow = A_i * (H + free/ΣA)
+ * 가 되어 width_i / A_i 가 행 내 상수(= 실제 행 높이)가 된다.
+ * 결과적으로 한 행의 모든 사진 높이가 저절로 같아지고, 폭은 원본 비율대로 배분되며,
+ * 배치 순서는 DOM 순서(왼쪽 → 오른쪽)를 그대로 따른다. JS 계산이 전혀 필요 없다.
+ */
+.photo-gallery {
+  --gallery-gap: 1rem;
+  --gallery-cols: 1;
+  /* 행 높이 계산 기준 비율 — 페이지에서 인라인 style 로 덮어쓴다 */
+  --gallery-ref-aspect: 1.5;
+  /*
+   * basis 합이 컨테이너 폭과 정확히 일치하면 브라우저의 서브픽셀 반올림 때문에
+   * 마지막 한 장이 다음 행으로 밀린다(3:2 사진은 비율이 정확히 1.5라 실제로 자주 발생).
+   * 분모에 여유를 둬서 wrap 판정에만 슬랙을 준다 — 최종 행 높이는 grow 가 채우므로 동일하다.
+   */
+  --gallery-slack: 0.3;
+  --gallery-row-h: calc(
+    (100cqw - (var(--gallery-cols) - 1) * var(--gallery-gap)) /
+      (var(--gallery-cols) + var(--gallery-slack)) / var(--gallery-ref-aspect)
+  );
+  /*
+   * 마지막 행이 남은 폭을 다 먹어 거대해지는 것을 막는 상한.
+   * 1열(모바일)에서는 모든 행이 한 장짜리라 "폭을 다 먹는 것"이 곧 정상 동작이므로
+   * 화면을 넘지 않는 선에서 사실상 상한을 두지 않는다.
+   */
+  --gallery-cap-h: 90svh;
+
+  /*
+   * 주의: container-type 은 layout containment 를 적용해 이 요소가 position:fixed
+   * 후손의 컨테이닝 블록이 된다. 따라서 라이트박스는 반드시 portal 로 body 에 붙여야 한다.
+   */
+  container-type: inline-size;
+  display: flex;
+  flex-wrap: wrap;
+  /* 기본값 stretch 는 아이템의 aspect-ratio 를 덮어쓰므로 반드시 flex-start */
+  align-items: flex-start;
+  gap: var(--gallery-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 40rem) {
+  .photo-gallery {
+    --gallery-cols: 2;
+    /* 2열 이상부터는 마지막 행이 폭을 다 먹지 않도록 목표 행 높이의 1.4배로 제한한다 */
+    --gallery-cap-h: min(calc(var(--gallery-row-h) * 1.4), 62svh);
+  }
+}
+
+@media (min-width: 64rem) {
+  .photo-gallery {
+    --gallery-cols: 3;
+  }
+}
+
+/* 상세 이미지가 없어 커버 한 장만 있는 갤러리는 조금 더 크게 보여준다 */
+.photo-gallery:has(> :only-child) {
+  --gallery-cap-h: min(70svh, 520px);
+}
+
+.photo-gallery-item {
+  /* 사진 원본 비율 — 타일에서 인라인 style 로 덮어쓴다. 반드시 순수 숫자 */
+  --photo-aspect: 1.5;
+  flex-grow: var(--photo-aspect);
+  flex-shrink: 1;
+  flex-basis: calc(var(--photo-aspect) * var(--gallery-row-h));
+  /* basis 와 같은 비례식이라 한 행의 모든 아이템이 동시에 상한에 걸린다 → 높이 균일성 유지 */
+  max-width: calc(var(--photo-aspect) * var(--gallery-cap-h));
+  /* flex 자동 최소 크기(내부 이미지의 intrinsic width)로 행이 넘치는 것을 차단 */
+  min-width: 0;
+  aspect-ratio: var(--photo-aspect);
+  overflow: hidden;
+  /*
+   * next/image 의 fill 은 부모가 positioned 여야 한다.
+   * 이게 없으면 이미지가 .photo-gallery(container-type 때문에 컨테이닝 블록이 된다)를
+   * 통째로 덮어 뒤 사진이 앞 사진의 클릭을 가로챈다.
+   */
+  position: relative;
+}
