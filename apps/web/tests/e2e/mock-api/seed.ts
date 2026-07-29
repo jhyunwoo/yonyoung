@@ -156,15 +156,16 @@ const activities = [
     createdAt: now - 1000 * 60 * 60 * 48,
     updatedAt: now - 1000 * 60 * 60 * 24,
     updatedBy: actor("user-manager", "박부장", "manager", "박", "부장"),
+    // justified rows 검증용 구성: 가로 3장(데스크탑 첫 행) + 세로 2장 + 레거시 1장
     detailImages: [
       {
         id: "act-1-img-1",
         activityId: "act-1",
         imageUrl: "https://images.mock.local/activities/act-1-1.jpg",
         sortOrder: 0,
-        // 가로 사진 (치수 저장됨) — masonry가 원본 비율로 렌더링하는 분기 검증용
-        width: 1600,
-        height: 1200,
+        // 가로 3:2 — 데스크탑 한 행에 3장이 들어가는 기준 비율
+        width: 3000,
+        height: 2000,
         createdAt: now - 1000 * 60 * 60 * 48,
         updatedAt: now - 1000 * 60 * 60 * 48,
       },
@@ -173,7 +174,49 @@ const activities = [
         activityId: "act-1",
         imageUrl: "https://images.mock.local/activities/act-1-2.jpg",
         sortOrder: 1,
-        // 레거시 이미지 (치수 미저장) — 클라이언트 폴백 분기 검증용
+        width: 3000,
+        height: 2000,
+        createdAt: now - 1000 * 60 * 60 * 48,
+        updatedAt: now - 1000 * 60 * 60 * 48,
+      },
+      {
+        id: "act-1-img-3",
+        activityId: "act-1",
+        imageUrl: "https://images.mock.local/activities/act-1-3.jpg",
+        sortOrder: 2,
+        // 가로 4:3 — 비율이 섞여도 행 높이가 통일되는지 검증
+        width: 1600,
+        height: 1200,
+        createdAt: now - 1000 * 60 * 60 * 48,
+        updatedAt: now - 1000 * 60 * 60 * 48,
+      },
+      {
+        id: "act-1-img-4",
+        activityId: "act-1",
+        imageUrl: "https://images.mock.local/activities/act-1-4.jpg",
+        sortOrder: 3,
+        // 세로 2:3
+        width: 2000,
+        height: 3000,
+        createdAt: now - 1000 * 60 * 60 * 48,
+        updatedAt: now - 1000 * 60 * 60 * 48,
+      },
+      {
+        id: "act-1-img-5",
+        activityId: "act-1",
+        imageUrl: "https://images.mock.local/activities/act-1-5.jpg",
+        sortOrder: 4,
+        width: 2000,
+        height: 3000,
+        createdAt: now - 1000 * 60 * 60 * 48,
+        updatedAt: now - 1000 * 60 * 60 * 48,
+      },
+      {
+        id: "act-1-img-6",
+        activityId: "act-1",
+        imageUrl: "https://images.mock.local/activities/act-1-6.jpg",
+        sortOrder: 5,
+        // 레거시 이미지 (치수 미저장) — 폴백 비율 분기 검증용
         width: null,
         height: null,
         createdAt: now - 1000 * 60 * 60 * 48,
@@ -215,7 +258,7 @@ const exhibitions = [
         exhibitionId: "exh-1",
         imageUrl: "https://images.mock.local/exhibitions/exh-1-1.jpg",
         sortOrder: 0,
-        // 세로 사진 (치수 저장됨) — masonry가 원본 비율로 렌더링하는 분기 검증용
+        // 세로 사진 (치수 저장됨) — 원본 비율로 렌더링하는 분기 검증용
         width: 1200,
         height: 1800,
         createdAt: now - 1000 * 60 * 60 * 96,

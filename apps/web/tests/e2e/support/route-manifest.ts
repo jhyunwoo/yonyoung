@@ -98,6 +98,7 @@ const ROUTES: RouteCase[] = [
     modeSet: ALL_MODES,
     deviceSet: ALL_DEVICES,
     readyLocator: { kind: "testid", value: "record-detail-gallery" },
+    // 갤러리 사진 버튼은 시드 데이터에 종속돼 전량 일치 검증에 부적합하다 — gallery.spec.ts 가 검증한다
     buttonSpecs: [],
   },
   {
@@ -118,6 +119,7 @@ const ROUTES: RouteCase[] = [
     modeSet: ALL_MODES,
     deviceSet: ALL_DEVICES,
     readyLocator: { kind: "testid", value: "exhibition-detail-gallery" },
+    // 위와 동일 — gallery.spec.ts 가 검증한다
     buttonSpecs: [],
   },
   {
