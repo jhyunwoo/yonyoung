@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 
@@ -47,9 +47,21 @@ export function PhotoLightbox({
   onStep,
 }: PhotoLightboxProps) {
   const [isMounted, setIsMounted] = useState(false);
+  /**
+   * 로딩이 끝난 사진의 key 집합.
+   * 원본 이미지는 그리드 썸네일보다 훨씬 커서 눈에 띄게 늦게 뜨므로,
+   * 그 사이 사진 크기 그대로의 스켈레톤을 보여준다.
+   * 이미 본 사진으로 되돌아왔을 때 스켈레톤이 다시 깜빡이지 않도록 key 로 기억한다.
+   */
+  const [loadedKeys, setLoadedKeys] = useState<Record<string, true>>({});
   const panelRef = useRef<HTMLDivElement | null>(null);
   // 닫을 때 원래 눌렀던 사진 버튼으로 포커스를 되돌리기 위해 보관한다
   const restoreFocusRef = useRef<HTMLElement | null>(null);
+
+  // 실패한 이미지도 "완료"로 처리해야 스켈레톤이 영원히 남지 않는다(alt 텍스트가 대신 보인다)
+  const markLoaded = useCallback((key: string) => {
+    setLoadedKeys((current) => (current[key] ? current : { ...current, [key]: true }));
+  }, []);
 
   const activeIndex =
     openIndex !== null && openIndex >= 0 && openIndex < items.length ? openIndex : null;
@@ -120,6 +132,7 @@ export function PhotoLightbox({
       ? { index: activeIndex, item: activeItem, aspect: aspects[activeIndex] ?? 1 }
       : null;
   const hasMultiple = items.length > 1;
+  const isActiveLoaded = active !== null && loadedKeys[active.item.key] === true;
 
   return createPortal(
     <AnimatePresence>
@@ -161,14 +174,28 @@ export function PhotoLightbox({
                 } as CSSProperties
               }
             >
+              {/* 프레임 = 사진 크기이므로 스켈레톤이 곧 로딩될 사진의 자리 그대로다 */}
+              {isActiveLoaded ? null : (
+                <div
+                  aria-hidden="true"
+                  data-testid="gallery-lightbox-skeleton"
+                  className={`absolute inset-0 bg-white/10 ${
+                    shouldReduceMotion ? "" : "animate-pulse"
+                  }`}
+                />
+              )}
               <Image
                 key={active.item.key}
                 src={active.item.imageUrl}
                 alt={active.item.alt}
                 fill
                 unoptimized={shouldUseUnoptimizedImage(active.item.imageUrl)}
-                className="object-contain"
+                className={`object-contain transition-opacity duration-300 ${
+                  isActiveLoaded ? "opacity-100" : "opacity-0"
+                }`}
                 sizes="(min-width: 1024px) 90vw, 100vw"
+                onLoad={() => markLoaded(active.item.key)}
+                onError={() => markLoaded(active.item.key)}
               />
             </div>
           </div>
