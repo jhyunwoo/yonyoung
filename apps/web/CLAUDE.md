@@ -1,6 +1,6 @@
 # yonyoung-web
 
-연세대학교 연영회 웹사이트의 프런트엔드. **Next.js 16 App Router** (React 19, Tailwind v4, cacheComponents, better-auth 클라이언트). Vercel 배포.
+연세대학교 연영회 웹사이트의 프런트엔드. **Next.js 16 App Router** (React 19, Tailwind v4, cacheComponents, better-auth 클라이언트). Oracle Cloud + Dokploy + Nixpack 배포
 
 ## 명령어
 

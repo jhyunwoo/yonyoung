@@ -108,15 +108,15 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
     // R2 미디어는 Cloudflare 엣지에서 변환한다 (features/media/images/cloudflare-image-loader.ts).
-    // NEXT_PUBLIC_IMAGE_CDN_BASE_URL이 없으면 로더가 /_next/image로 폴백하므로
-    // 아래 formats/remotePatterns/minimumCacheTTL 설정은 그대로 유효하다.
+    // NEXT_PUBLIC_IMAGE_CDN_BASE_URL이 없거나 변환 대상이 아니면 원본 src를 그대로 반환한다.
+    // custom loader 사용 중에는 /_next/image 엔드포인트가 생성되지 않는다.
     loader: "custom",
     loaderFile: "./features/media/images/cloudflare-image-loader.ts",
     // 이미지 1장당 생성되는 변환 후보 폭을 줄여 Cloudflare unique transformation 사용량을 억제한다.
     // 기본값은 3840/2048까지 포함해 4K 변환까지 만들어졌다.
     deviceSizes: [640, 828, 1080, 1440, 1920],
     imageSizes: [128, 256, 384],
-    // 폴백(/_next/image) 경로의 디스크 캐시 유지 기간 — 기본 4시간은 재변환이 잦다
+    // Next 이미지 설정의 기본 캐시 정책을 명시적으로 유지한다.
     minimumCacheTTL: 2678400,
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
