@@ -5,27 +5,42 @@ on:
     branches: ["main", "dev"]
   pull_request:
     branches: ["main", "dev"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: "true"
 
 jobs:
   quality-gates:
+    name: Quality gates
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
+        uses: pnpm/action-setup@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: "22"
+          node-version-file: ".nvmrc"
           cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Check vendored fonts
+        run: pnpm fonts:check
 
       - name: Lint
         run: pnpm lint
@@ -36,37 +51,48 @@ jobs:
       - name: Unit tests (coverage)
         run: pnpm test:unit:coverage
 
+      - name: Upload coverage report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-${{ github.run_id }}-${{ github.run_attempt }}
+          path: coverage
+          if-no-files-found: ignore
+          retention-days: 7
+
   e2e:
+    name: E2E (Chromium)
+    needs: quality-gates
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
+        uses: pnpm/action-setup@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: "22"
+          node-version-file: ".nvmrc"
           cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Playwright 브라우저는 run-playwright.sh가 자동 설치하지만, CI에서는 OS 의존성까지 함께 설치한다
-      - name: Install Playwright browsers
+      - name: Install Chromium and system dependencies
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: E2E tests (mock API + production build)
+      - name: Run E2E tests (mock API + production build)
         run: pnpm test:e2e:full
 
-      - name: Upload Playwright report
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+      - name: Upload E2E failure artifacts
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
         with:
-          name: playwright-report
+          name: playwright-results-${{ github.run_id }}-${{ github.run_attempt }}
           path: test-results/playwright
+          if-no-files-found: ignore
           retention-days: 7

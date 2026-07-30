@@ -42,8 +42,6 @@ export default defineConfig({
       env: {
         API_BASE_URL: "http://127.0.0.1:4010",
         NEXT_PUBLIC_SITE_URL: "http://127.0.0.1:3005",
-        NEXT_PUBLIC_VAPID_PUBLIC_KEY:
-          "BE6j32xQmRYwWjghrxmYzaYli5fHfuVdW3UJ6Jla1bP71lx4rkQ7pP_XD4u1YByz8n4UkH8j4xK8SU2hTq7N1ZM",
       },
     },
   ],

@@ -26,10 +26,8 @@ const vitestInlineConfig = {
         "features/media/rich-text/rich-text.ts",
         "features/media/images/read-image-dimensions.ts",
         "features/media/upload/image-upload-state.ts",
-        "features/media/upload/showcase-images.ts",
         "features/auth/model/auth-shared.ts",
         "features/dashboard/actions/admin-write-access.ts",
-        "app/(dashboard)/dashboard/market/market-shared.ts",
       ],
       thresholds: {
         lines: 95,

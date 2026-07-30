@@ -1,5 +1,15 @@
-import { describe, expect, it } from "vitest";
-import { canPerformAdminWrite } from "@/features/dashboard/actions/admin-write-access";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("next/navigation", () => ({
+  forbidden: vi.fn(() => {
+    throw new Error("forbidden");
+  }),
+}));
+
+import {
+  assertAdminWriteAccess,
+  canPerformAdminWrite,
+} from "@/features/dashboard/actions/admin-write-access";
 import type { AuthSession } from "@/features/auth/model/auth-shared";
 
 const createSession = (role: string): AuthSession => ({
@@ -35,5 +45,14 @@ describe("features/dashboard/actions/admin-write-access", () => {
     expect(canPerformAdminWrite(createSession("vice_president"), "user_manager")).toBe(
       true,
     );
+  });
+
+  it("allows authorized writes and rejects unauthorized writes", () => {
+    expect(() =>
+      assertAdminWriteAccess(createSession("regular_member"), "verified_member"),
+    ).not.toThrow();
+    expect(() =>
+      assertAdminWriteAccess(createSession("regular_member"), "manager"),
+    ).toThrow("forbidden");
   });
 });

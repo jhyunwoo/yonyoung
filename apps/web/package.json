@@ -19,7 +19,7 @@
     "test:e2e:full": "./scripts/run-playwright.sh test",
     "test:e2e:full:repeat": "./scripts/run-playwright.sh test --repeat-each=2",
     "test": "pnpm test:unit && pnpm test:e2e:full",
-    "test:ci": "pnpm lint && pnpm typecheck && pnpm test:unit:coverage && pnpm test:e2e:full"
+    "test:ci": "pnpm fonts:check && pnpm lint && pnpm typecheck && pnpm test:unit:coverage && pnpm test:e2e:full"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
