@@ -51,7 +51,7 @@ export default async function ArchiveExhibitionsPage() {
                 <Link
                   key={exhibition.id}
                   href={`/archive/exhibitions/${exhibition.id}`}
-                  className="group relative block aspect-[2/3] w-full cursor-pointer overflow-hidden bg-black shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all duration-300 hover:-translate-y-[5px] hover:shadow-[0_8px_25px_rgba(0,0,0,0.15)]"
+                  className="group relative block aspect-[2/3] w-full cursor-pointer overflow-hidden bg-black shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-[translate,box-shadow] duration-300 motion-reduce:transition-none hover:-translate-y-[5px] hover:shadow-[0_8px_25px_rgba(0,0,0,0.15)]"
                   data-testid={`archive-exhibition-card-${exhibition.id}`}
                   aria-label={`${exhibition.title} 상세 보기`}
                 >

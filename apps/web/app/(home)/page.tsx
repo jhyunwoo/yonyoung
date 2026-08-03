@@ -81,7 +81,7 @@ const HomeQuickLinksSection = async () => {
           <Link
             href="/archive/records"
             data-testid="home-cta-archive-bottom"
-            className="mt-4 inline-flex border border-(--surface-strong-border) px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-(--text-primary) transition hover:bg-(--text-primary) hover:text-white"
+            className="pressable mt-4 inline-flex border border-(--surface-strong-border) px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-(--text-primary) transition hover:bg-(--text-primary) hover:text-white"
           >
             아카이브 보러가기
           </Link>

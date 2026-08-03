@@ -62,10 +62,29 @@ const VARIANT_CLASS: Record<ButtonVariant, string> = {
   ),
 };
 
+/*
+ * 누름 피드백은 scale 0.98 이다. 0.95~0.97 이 아닌 이유: 대시보드 버튼은 하루
+ * 수십 번 눌리는 고빈도 표면이라 눈에 띄는 모션은 금방 굼떠 보인다. 여기서는
+ * "색만 바뀌고 아무것도 움직이지 않는" 상태(특히 hover 가 없는 터치)를 메우는
+ * 정도면 충분하다. duration-150 은 누름 피드백 예산(100~160ms) 안에 있다.
+ *
+ * transition-colors 대신 프로퍼티를 명시하는 이유는 transform 을 추가하기
+ * 위해서다. secondary 의 shadow-soft 는 기존처럼 트랜지션 대상에서 제외해
+ * 현재 동작을 바꾸지 않는다.
+ *
+ * motion-reduce 오버라이드가 아니라 motion-safe 로 거는 이유: 오버라이드는
+ * 같은 명시도라 Tailwind 의 유틸 정렬 순서에 승패가 걸리지만, motion-safe 는
+ * 애초에 감소 모드에서 규칙 자체가 생성되지 않아 순서와 무관하게 안전하다.
+ */
 const BASE_CLASS = cx(
   "inline-flex items-center justify-center rounded-md py-2",
   "whitespace-nowrap select-none",
-  "transition-colors duration-150 motion-reduce:transition-none",
+  "transition-[color,background-color,border-color,transform] duration-150",
+  "motion-reduce:transition-none",
+  "motion-safe:active:scale-[0.98]",
+  // 비활성은 눌려도 반응하지 않아야 한다. a[aria-disabled](ButtonLink)는 :active 가
+  // 실제로 발동하므로 명시적으로 되돌린다 — 속성 선택자가 붙어 명시도로 이긴다.
+  "aria-disabled:active:scale-100 disabled:active:scale-100",
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
   "disabled:cursor-not-allowed aria-disabled:cursor-not-allowed",
 );

@@ -1,5 +1,6 @@
 "use client";
 
+import { motion, useReducedMotion } from "framer-motion";
 import type { ButtonHTMLAttributes } from "react";
 
 import { cx } from "@/app/(dashboard)/_components/ui/cx";
@@ -26,6 +27,11 @@ type SegmentedControlProps<TValue extends string> = {
  *
  * 재디자인 이전에는 pill 처럼 보이지만 aria-pressed 도 role 도 없는 그냥
  * 버튼 두 개였다. radiogroup 으로 만들어 현재 선택을 AT 에 알린다.
+ *
+ * 선택 표시는 layoutId 를 공유하는 thumb 하나가 세그먼트 사이를 미끄러진다
+ * (이전에는 배경색이 순간이동해 어디서 어디로 옮겨갔는지 읽히지 않았다).
+ * layoutId 는 한 페이지에 컨트롤이 둘 이상 있어도 섞이지 않도록 testIdPrefix
+ * 에서 파생시킨다.
  */
 export const SegmentedControl = <TValue extends string>({
   label,
@@ -34,27 +40,33 @@ export const SegmentedControl = <TValue extends string>({
   onChange,
   testIdPrefix,
   className,
-}: SegmentedControlProps<TValue>) => (
-  <div
-    role="radiogroup"
-    aria-label={label}
-    className={cx(
-      "inline-flex items-center gap-1 rounded-md border border-hairline bg-canvas-soft p-1",
-      className,
-    )}
-  >
-    {options.map((option) => (
-      <SegmentButton
-        key={option.value}
-        data-testid={`${testIdPrefix}-${option.value}`}
-        isSelected={option.value === value}
-        onClick={() => onChange(option.value)}
-      >
-        {option.label}
-      </SegmentButton>
-    ))}
-  </div>
-);
+}: SegmentedControlProps<TValue>) => {
+  const shouldReduceMotion = useReducedMotion();
+
+  return (
+    <div
+      role="radiogroup"
+      aria-label={label}
+      className={cx(
+        "inline-flex items-center gap-1 rounded-md border border-hairline bg-canvas-soft p-1",
+        className,
+      )}
+    >
+      {options.map((option) => (
+        <SegmentButton
+          key={option.value}
+          data-testid={`${testIdPrefix}-${option.value}`}
+          isSelected={option.value === value}
+          thumbLayoutId={`${testIdPrefix}-thumb`}
+          shouldReduceMotion={shouldReduceMotion === true}
+          onClick={() => onChange(option.value)}
+        >
+          {option.label}
+        </SegmentButton>
+      ))}
+    </div>
+  );
+};
 
 /**
  * 세그먼트 버튼 하나.
@@ -65,24 +77,43 @@ export const SegmentedControl = <TValue extends string>({
  */
 const SegmentButton = ({
   isSelected,
+  thumbLayoutId,
+  shouldReduceMotion,
   className,
   children,
   ...rest
-}: ButtonHTMLAttributes<HTMLButtonElement> & { isSelected: boolean }) => (
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  isSelected: boolean;
+  thumbLayoutId: string;
+  shouldReduceMotion: boolean;
+}) => (
   <button
     type="button"
     data-testid="ui-segment"
     role="radio"
     aria-checked={isSelected}
     className={cx(
-      "min-h-9 rounded-sm px-3 text-caption font-medium",
+      "relative min-h-9 rounded-sm px-3 text-caption font-medium",
       "transition-colors duration-150 motion-reduce:transition-none",
       "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
-      isSelected ? "bg-surface text-ink shadow-soft" : "text-ink-muted hover:text-ink",
+      isSelected ? "text-ink" : "text-ink-muted hover:text-ink",
       className,
     )}
     {...rest}
   >
-    {children}
+    {isSelected && (
+      <motion.span
+        aria-hidden="true"
+        layoutId={thumbLayoutId}
+        className="absolute inset-0 rounded-sm bg-surface shadow-soft"
+        transition={
+          shouldReduceMotion
+            ? { duration: 0 }
+            : { type: "spring", stiffness: 460, damping: 36, mass: 0.58 }
+        }
+      />
+    )}
+    {/* thumb 가 absolute 로 깔리므로 라벨을 위로 올린다 */}
+    <span className="relative z-10">{children}</span>
   </button>
 );

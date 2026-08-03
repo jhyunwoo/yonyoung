@@ -64,14 +64,14 @@ export default function HeroShowcase({
             <Link
               href="/archive/records"
               data-testid="home-cta-archive"
-              className="inline-flex border border-(--surface-strong-border) bg-(--accent) px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-(--accent-foreground) transition hover:opacity-90"
+              className="pressable inline-flex border border-(--surface-strong-border) bg-(--accent) px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-(--accent-foreground) transition hover:opacity-90"
             >
               활동 아카이브 보기
             </Link>
             <Link
               href="/about"
               data-testid="home-cta-about"
-              className="inline-flex border border-(--surface-strong-border) px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-(--text-primary) transition hover:bg-(--text-primary) hover:text-white"
+              className="pressable inline-flex border border-(--surface-strong-border) px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-(--text-primary) transition hover:bg-(--text-primary) hover:text-white"
             >
               동아리 소개 보기
             </Link>

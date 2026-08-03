@@ -24,7 +24,7 @@ const formatFileSize = (bytes: number): string => {
 };
 
 const rowClassName =
-  "flex items-center gap-3 rounded-lg border border-(--surface-border) bg-(--surface-muted) px-4 py-3 no-underline transition hover:border-(--text-muted)";
+  "pressable flex items-center gap-3 rounded-lg border border-(--surface-border) bg-(--surface-muted) px-4 py-3 no-underline transition hover:border-(--text-muted)";
 
 /**
  * 공개 첨부파일 목록 — 서버 컴포넌트.
@@ -75,10 +75,7 @@ export function AttachmentList({
               download={attachment.fileName ?? undefined}
               className={rowClassName}
             >
-              <FileText
-                className="h-5 w-5 shrink-0 text-(--text-muted)"
-                aria-hidden
-              />
+              <FileText className="h-5 w-5 shrink-0 text-(--text-muted)" aria-hidden />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[0.95rem] font-semibold text-(--text-primary)">
                   {attachment.title}

@@ -299,6 +299,48 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
+ * Alert 등장 트랜지션
+ *
+ * 저장 성공/실패 배너(ui/alert.tsx)는 이 앱의 유일한 저장 피드백 표면인데
+ * 호출부 대부분이 `{message !== null && <Alert/>}` 조건부 렌더라 아무 다리 없이
+ * 나타나며 아래 콘텐츠를 밀어냈다. @starting-style 로 처리하면 5곳의 호출부를
+ * 하나도 건드리지 않는다.
+ *
+ * 퇴장은 의도적으로 다루지 않는다 — 호출부를 전부 AnimatePresence 로 감싸야 하고,
+ * 배너가 사라지는 것은 나타나는 것만큼 거슬리지 않는다.
+ *
+ * 이징은 저장소 공통 ease-out([0.22, 1, 0.36, 1] — motion-reveal 등)과 같은 값이다.
+ * 미지원 브라우저(@starting-style 은 Baseline 2024)는 애니메이션 없이 그냥 표시된다.
+ * ───────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  [data-alert] {
+    transition:
+      opacity 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @starting-style {
+    [data-alert] {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+}
+
+/* 감소 모드에서는 끄는 게 아니라 순화한다 — 이동 없이 페이드만. */
+@media (prefers-reduced-motion: reduce) {
+  [data-alert] {
+    transition: opacity 180ms ease-out;
+  }
+
+  @starting-style {
+    [data-alert] {
+      opacity: 0;
+    }
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
  * 대시보드 리치텍스트 오버라이드
  *
  * features/media/rich-text/rich-text-content.tsx 는 (home) 도 쓰므로 수정 금지.

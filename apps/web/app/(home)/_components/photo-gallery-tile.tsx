@@ -13,6 +13,8 @@ type PhotoGalleryTileProps = {
   onSelect: (index: number) => void;
   /** 치수 미상(레거시) 이미지가 로드된 뒤 실제 비율을 알려준다 */
   onMeasure: (ratio: number) => void;
+  /** 곧 클릭할 것 같은 사진을 미리 받아두게 알려준다 */
+  onWarm: (index: number) => void;
 };
 
 const TILE_SIZES = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 34vw";
@@ -32,6 +34,7 @@ export function PhotoGalleryTile({
   index,
   onSelect,
   onMeasure,
+  onWarm,
 }: PhotoGalleryTileProps) {
   const hasStoredSize = item.width !== null && item.height !== null;
 
@@ -48,6 +51,9 @@ export function PhotoGalleryTile({
         aria-label={`${item.alt} 크게 보기`}
         data-testid={`gallery-photo-button-${item.key}`}
         onClick={() => onSelect(index)}
+        // 마우스·펜은 hover 시점에, 터치는 탭 다운 시점에 확대용 이미지를 미리 받기 시작한다
+        onPointerEnter={() => onWarm(index)}
+        onFocus={() => onWarm(index)}
       >
         <Image
           src={item.imageUrl}

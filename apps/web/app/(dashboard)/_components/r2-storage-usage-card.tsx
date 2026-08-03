@@ -77,7 +77,7 @@ export default function R2StorageUsageCard({ stats }: R2StorageUsageCardProps) {
             >
               <div
                 data-testid="r2-usage-meter"
-                className={`h-full rounded-full ${meterTone} transition-all duration-300 motion-reduce:transition-none`}
+                className={`h-full rounded-full ${meterTone} transition-[width] duration-300 motion-reduce:transition-none`}
                 style={{ width: `${usagePercent}%` }}
               />
             </div>
