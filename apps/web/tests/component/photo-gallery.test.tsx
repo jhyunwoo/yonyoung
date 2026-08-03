@@ -60,6 +60,9 @@ const getTiles = (): HTMLElement[] => screen.getAllByRole("listitem");
 const getLightboxImage = (alt: string): HTMLElement =>
   within(screen.getByTestId("gallery-lightbox-frame")).getByAltText(alt);
 
+const getPreloadImage = (key: string): HTMLElement =>
+  screen.getByTestId(`gallery-preload-${key}`);
+
 describe("PhotoGallery 레이아웃", () => {
   it("justified rows 컨테이너로 렌더링되고 CSS 컬럼을 쓰지 않는다", () => {
     renderGallery();
@@ -239,5 +242,78 @@ describe("PhotoGallery 라이트박스", () => {
 
     await user.click(screen.getByTestId("gallery-lightbox-close"));
     expect(document.body.style.overflow).not.toBe("hidden");
+  });
+});
+
+describe("PhotoGallery 확대 이미지 미리 로딩", () => {
+  const makeThreeItems = (): PhotoGalleryItem[] => [
+    { key: "a", imageUrl: "https://images.mock.local/a.jpg", alt: "A", width: 1600, height: 1200 },
+    { key: "b", imageUrl: "https://images.mock.local/b.jpg", alt: "B", width: 1600, height: 1200 },
+    { key: "c", imageUrl: "https://images.mock.local/c.jpg", alt: "C", width: 1600, height: 1200 },
+  ];
+
+  it("라이트박스를 열면 앞뒤 사진만 미리 받아둔다", async () => {
+    const user = userEvent.setup();
+    renderGallery(makeThreeItems());
+
+    await user.click(screen.getByTestId("gallery-photo-button-b"));
+
+    // 현재 보고 있는 b 는 제외하고 앞뒤(a, c)만
+    expect(getPreloadImage("a")).toBeInTheDocument();
+    expect(getPreloadImage("c")).toBeInTheDocument();
+    expect(screen.queryByTestId("gallery-preload-b")).toBeNull();
+  });
+
+  it("미리 받는 이미지는 라이트박스와 동일한 sizes 를 즉시 요청한다", async () => {
+    const user = userEvent.setup();
+    renderGallery(makeThreeItems());
+
+    await user.click(screen.getByTestId("gallery-photo-button-b"));
+
+    const preloaded = getPreloadImage("c");
+    // sizes 나 loading 이 어긋나면 브라우저가 다른 후보를 골라 미리 받은 게 무효가 된다
+    expect(preloaded).toHaveAttribute("loading", "eager");
+    expect(preloaded.getAttribute("sizes")).toBe(
+      getLightboxImage("B").getAttribute("sizes"),
+    );
+  });
+
+  it("미리 받아둔 사진으로 이동하면 스켈레톤이 뜨지 않는다", async () => {
+    const user = userEvent.setup();
+    renderGallery();
+
+    await user.click(screen.getByTestId("gallery-photo-button-with-dimensions"));
+    fireEvent.load(getPreloadImage("legacy-without-dimensions"));
+
+    await user.click(screen.getByTestId("gallery-lightbox-next"));
+
+    expect(screen.getByTestId("gallery-lightbox-counter")).toHaveTextContent("2 / 2");
+    expect(screen.queryByTestId("gallery-lightbox-skeleton")).toBeNull();
+  });
+
+  it("타일에 hover 하면 그 사진을 미리 받아두고, 열었을 때 스켈레톤이 없다", async () => {
+    const user = userEvent.setup();
+    renderGallery();
+
+    expect(screen.queryByTestId("gallery-preload-layer")).toBeNull();
+
+    await user.hover(screen.getByTestId("gallery-photo-button-with-dimensions"));
+    fireEvent.load(getPreloadImage("with-dimensions"));
+
+    await user.click(screen.getByTestId("gallery-photo-button-with-dimensions"));
+
+    expect(screen.getByTestId("gallery-lightbox")).toBeInTheDocument();
+    expect(screen.queryByTestId("gallery-lightbox-skeleton")).toBeNull();
+  });
+
+  it("사진이 한 장뿐이면 미리 받아둘 사진이 없다", async () => {
+    const user = userEvent.setup();
+    const [singleItem] = makeItems();
+    renderGallery(singleItem ? [singleItem] : []);
+
+    await user.click(screen.getByTestId("gallery-photo-button-with-dimensions"));
+
+    expect(screen.getByTestId("gallery-lightbox")).toBeInTheDocument();
+    expect(screen.queryByTestId("gallery-preload-layer")).toBeNull();
   });
 });

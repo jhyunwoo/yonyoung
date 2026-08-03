@@ -42,7 +42,7 @@ export default function HomeErrorPage({ error, reset }: HomeErrorPageProps) {
           type="button"
           data-testid="home-error-reset"
           onClick={reset}
-          className="mt-8 inline-flex border border-(--surface-strong-border) bg-(--text-primary) px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+          className="pressable mt-8 inline-flex border border-(--surface-strong-border) bg-(--text-primary) px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
         >
           다시 시도
         </button>

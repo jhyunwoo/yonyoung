@@ -200,7 +200,10 @@ export default function SiteHeader() {
   return (
     <header
       className={[
-        "fixed inset-x-0 top-0 z-[1000] h-[var(--public-header-height-mobile)] border-b border-transparent bg-(--surface-elevated) transition-all duration-300 md:h-[var(--public-header-height-desktop)]",
+        // 스크롤 시 실제로 바뀌는 것은 테두리와 그림자뿐이다. transition-all 이면
+        // 배경색까지 전환 대상이 돼, 테마를 바꿀 때 페이지 전체는 즉시 바뀌는데
+        // 헤더만 300ms 동안 뒤늦게 따라오는 것이 눈에 띈다.
+        "fixed inset-x-0 top-0 z-[1000] h-[var(--public-header-height-mobile)] border-b border-transparent bg-(--surface-elevated) transition-[border-color,box-shadow] duration-300 motion-reduce:transition-none md:h-[var(--public-header-height-desktop)]",
         isScrolled
           ? "border-b-(--surface-border) shadow-[0_2px_10px_var(--shadow-strong)]"
           : "",
@@ -256,8 +259,18 @@ export default function SiteHeader() {
                   >
                     {item.label}
                   </Link>
+                  {/*
+                    group-focus-within 이 없으면 키보드 사용자는 이 하위 메뉴에
+                    영영 닿지 못한다 — invisible(visibility:hidden)이 자식 링크를
+                    탭 순서에서 빼버리는데 여는 조건이 hover 뿐이었다.
+
+                    visibility 를 transition 목록에 반드시 남겨야 한다. 빠질 경우
+                    닫힐 때 즉시 hidden 이 돼 페이드아웃이 통째로 사라진다.
+                    드롭다운 예산은 150~250ms 이고, 트리거 바로 아래 붙으므로
+                    origin-top 에서 살짝 커지며 열린다.
+                  */}
                   {item.children ? (
-                    <ul className="invisible absolute top-full left-1/2 z-20 min-w-[150px] -translate-x-1/2 border-t-2 border-(--surface-strong-border) bg-(--surface-elevated) py-2 opacity-0 shadow-[0_4px_15px_var(--shadow-strong)] transition-all duration-300 group-hover:visible group-hover:opacity-100">
+                    <ul className="invisible absolute top-full left-1/2 z-20 min-w-[150px] origin-top -translate-x-1/2 scale-[0.97] border-t-2 border-(--surface-strong-border) bg-(--surface-elevated) py-2 opacity-0 shadow-[0_4px_15px_var(--shadow-strong)] transition-[opacity,scale,visibility] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:visible group-hover:scale-100 group-hover:opacity-100 group-focus-within:visible group-focus-within:scale-100 group-focus-within:opacity-100 motion-reduce:transition-none motion-reduce:scale-100">
                       {item.children.map((child) => (
                         <li key={child.href} className="w-full">
                           <Link
@@ -334,17 +347,17 @@ export default function SiteHeader() {
           data-testid="public-nav-toggle"
         >
           <span
-            className={`h-[2px] w-[25px] bg-(--text-primary) transition-all duration-300 ${
+            className={`h-[2px] w-[25px] bg-(--text-primary) transition-[transform,opacity] duration-300 motion-reduce:transition-none ${
               isMobileMenuOpen ? "translate-y-[7px] rotate-45" : ""
             }`}
           />
           <span
-            className={`h-[2px] w-[25px] bg-(--text-primary) transition-all duration-300 ${
+            className={`h-[2px] w-[25px] bg-(--text-primary) transition-[transform,opacity] duration-300 motion-reduce:transition-none ${
               isMobileMenuOpen ? "opacity-0" : ""
             }`}
           />
           <span
-            className={`h-[2px] w-[25px] bg-(--text-primary) transition-all duration-300 ${
+            className={`h-[2px] w-[25px] bg-(--text-primary) transition-[transform,opacity] duration-300 motion-reduce:transition-none ${
               isMobileMenuOpen ? "-translate-y-[7px] -rotate-45" : ""
             }`}
           />

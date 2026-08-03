@@ -66,6 +66,51 @@ body {
   }
 }
 
+/*
+ * 공개 사이트 버튼형 요소의 누름 피드백.
+ *
+ * (home) 그룹에는 대시보드의 buildButtonClass 같은 공용 버튼이 없어 CTA 클래스
+ * 문자열이 파일마다 복붙돼 있고, 그 결과 "눌렀을 때"의 반응이 어디에도 없었다.
+ * hover 가 없는 터치 기기에서는 탭해도 아무 일이 없는 것처럼 보인다.
+ *
+ * transform 이 아니라 scale/translate 롱핸드를 쓰는 이유: 이 CTA 중 일부는
+ * hover:-translate-y 를 이미 쓰는데, transform: scale() 로 덮으면 그 translate 가
+ * 통째로 날아간다. 롱핸드끼리는 독립적으로 합성된다.
+ *
+ * Tailwind 유틸은 @layer utilities 안에 있고 이 규칙은 레이어 밖이라 항상 이긴다.
+ * 즉 여기 transition shorthand 가 요소의 `transition` 유틸을 덮어쓰므로, 이 CTA 들이
+ * 실제로 쓰는 hover 속성(opacity/색/테두리/그림자)을 목록에 함께 넣어야 한다.
+ */
+.pressable {
+  transition:
+    scale 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    translate 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pressable:active {
+  scale: 0.98;
+}
+
+/* 감소 모드: 위치 변화만 제거하고 색·투명도 전환은 남긴다(이해를 돕는 전환이다). */
+@media (prefers-reduced-motion: reduce) {
+  .pressable {
+    transition:
+      opacity 160ms ease-out,
+      color 160ms ease-out,
+      background-color 160ms ease-out,
+      border-color 160ms ease-out;
+  }
+
+  .pressable:active {
+    scale: none;
+  }
+}
+
 .exhibition-description,
 .record-description {
   color: var(--text-secondary);
@@ -238,5 +283,51 @@ body {
     flex-basis: calc(var(--photo-aspect) * var(--gallery-row-h));
     /* basis 와 같은 비례식이라 한 행의 모든 아이템이 동시에 상한에 걸린다 → 높이 균일성 유지 */
     max-width: calc(var(--photo-aspect) * var(--gallery-cap-h));
+  }
+}
+
+/*
+ * 타일 hover/press 반응.
+ *
+ * 갤러리 타일은 공개 사이트에서 반응이 전혀 없는 유일한 클릭 가능 이미지였다
+ * (홈 활동 카드 · 기록 카드 · 전시 카드는 전부 hover 모션이 있다). cursor-zoom-in
+ * 만으로는 터치 기기에서 확대 가능하다는 신호가 아예 없다.
+ *
+ * transform 만 쓰므로 위의 justified rows 수학(flex-basis / aspect-ratio)에는
+ * 영향이 없고, .photo-gallery-item 의 overflow:hidden 이 확대분을 잘라내
+ * 프레임 밖으로 새지 않는다. 300ms 는 임의 값이 아니라 홈/아카이브 카드가
+ * 이미 쓰는 duration-300 과 같은 값이다.
+ *
+ * next/image fill 은 position:absolute 인 <img> 로 렌더되므로 아래 선택자가 그것을 잡는다.
+ */
+.photo-gallery-item img {
+  transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .photo-gallery-item button:hover img {
+    transform: scale(1.03);
+  }
+}
+
+/* 누름은 hover 와 달리 터치에서도 발동해야 하므로 미디어 쿼리 밖에 둔다. */
+.photo-gallery-item button:active img {
+  transform: scale(0.995);
+  transition: transform 120ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 감소 모드: 끄는 게 아니라 순화 — 확대 대신 밝기로 반응한다. */
+@media (prefers-reduced-motion: reduce) {
+  .photo-gallery-item img {
+    transition: filter 300ms ease-out;
+  }
+
+  .photo-gallery-item button:hover img,
+  .photo-gallery-item button:active img {
+    transform: none;
+  }
+
+  .photo-gallery-item button:hover img {
+    filter: brightness(0.94);
   }
 }

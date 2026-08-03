@@ -45,7 +45,7 @@ export default function UploadProgressBar({
         aria-label={label}
       >
         <div
-          className="h-full rounded-full bg-primary transition-all duration-200"
+          className="h-full rounded-full bg-primary transition-[width] duration-200 motion-reduce:transition-none"
           style={{ width: `${normalizedProgress}%` }}
         />
       </div>

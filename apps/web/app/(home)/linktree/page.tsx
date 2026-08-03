@@ -53,7 +53,7 @@ export default async function LinktreePage() {
                         href={item.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex w-full flex-row items-center justify-center border border-(--surface-border) bg-(--surface-elevated) px-4 py-[1.2rem] text-center text-(--text-primary) no-underline shadow-[0_4px_12px_var(--shadow-strong)] transition-all duration-200 hover:-translate-y-[2px] hover:border-(--surface-strong-border) hover:bg-(--surface-muted)"
+                        className="pressable flex w-full flex-row items-center justify-center border border-(--surface-border) bg-(--surface-elevated) px-4 py-[1.2rem] text-center text-(--text-primary) no-underline shadow-[0_4px_12px_var(--shadow-strong)] hover:-translate-y-[2px] hover:border-(--surface-strong-border) hover:bg-(--surface-muted)"
                         data-testid={`linktree-item-card-${item.id}`}
                       >
                         {/* 공백 없는 긴 링크 이름이 좁은 화면에서 카드를 밀어내지

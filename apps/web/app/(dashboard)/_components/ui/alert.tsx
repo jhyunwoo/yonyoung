@@ -33,6 +33,10 @@ const TONE: Record<
  *
  * danger 는 role="alert"(즉시 알림), 나머지는 role="status"(대기 후 알림).
  * 아이콘을 함께 두어 색만으로 의미가 전달되지 않게 한다.
+ *
+ * data-alert 는 globals.css 의 @starting-style 등장 트랜지션 훅이다. 저장 결과
+ * 배너는 대부분 조건부 렌더(`{successMessage && <Alert/>}`)라 아무 다리 없이
+ * 튀어나오는데, CSS 쪽에서 처리하면 호출부를 하나도 건드리지 않아도 된다.
  */
 export const Alert = ({
   tone = "info",
@@ -52,6 +56,7 @@ export const Alert = ({
   return (
     <div
       role={tone === "danger" ? "alert" : "status"}
+      data-alert=""
       className={cx(
         "flex items-start gap-2.5 rounded-md border px-3.5 py-3 text-body-sm",
         toneClass,

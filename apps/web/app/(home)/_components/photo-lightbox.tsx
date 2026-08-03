@@ -3,9 +3,10 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
+import { LIGHTBOX_IMAGE_SIZES } from "./photo-preload-images";
 
 export type PhotoLightboxItem = {
   key: string;
@@ -22,10 +23,17 @@ type PhotoLightboxProps = {
   onClose: () => void;
   /** delta 만큼 이동(끝에서 순환) */
   onStep: (delta: number) => void;
+  /**
+   * 로딩이 끝난 사진의 key 집합. 미리 받아둔 사진도 포함되므로 소유자는 PhotoGallery 다.
+   * 원본 이미지는 그리드 썸네일보다 훨씬 커서 눈에 띄게 늦게 뜨므로,
+   * 아직 없는 사진은 사진 크기 그대로의 스켈레톤으로 자리를 잡아둔다.
+   */
+  loadedKeys: Record<string, true>;
+  onImageLoaded: (key: string) => void;
 };
 
 const BUTTON_CLASS =
-  "flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
+  "pressable flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
 
 /**
  * 사진 확대 보기 오버레이.
@@ -45,23 +53,13 @@ export function PhotoLightbox({
   openIndex,
   onClose,
   onStep,
+  loadedKeys,
+  onImageLoaded,
 }: PhotoLightboxProps) {
   const [isMounted, setIsMounted] = useState(false);
-  /**
-   * 로딩이 끝난 사진의 key 집합.
-   * 원본 이미지는 그리드 썸네일보다 훨씬 커서 눈에 띄게 늦게 뜨므로,
-   * 그 사이 사진 크기 그대로의 스켈레톤을 보여준다.
-   * 이미 본 사진으로 되돌아왔을 때 스켈레톤이 다시 깜빡이지 않도록 key 로 기억한다.
-   */
-  const [loadedKeys, setLoadedKeys] = useState<Record<string, true>>({});
   const panelRef = useRef<HTMLDivElement | null>(null);
   // 닫을 때 원래 눌렀던 사진 버튼으로 포커스를 되돌리기 위해 보관한다
   const restoreFocusRef = useRef<HTMLElement | null>(null);
-
-  // 실패한 이미지도 "완료"로 처리해야 스켈레톤이 영원히 남지 않는다(alt 텍스트가 대신 보인다)
-  const markLoaded = useCallback((key: string) => {
-    setLoadedKeys((current) => (current[key] ? current : { ...current, [key]: true }));
-  }, []);
 
   const activeIndex =
     openIndex !== null && openIndex >= 0 && openIndex < items.length ? openIndex : null;
@@ -193,9 +191,9 @@ export function PhotoLightbox({
                 className={`object-contain transition-opacity duration-300 ${
                   isActiveLoaded ? "opacity-100" : "opacity-0"
                 }`}
-                sizes="(min-width: 1024px) 90vw, 100vw"
-                onLoad={() => markLoaded(active.item.key)}
-                onError={() => markLoaded(active.item.key)}
+                sizes={LIGHTBOX_IMAGE_SIZES}
+                onLoad={() => onImageLoaded(active.item.key)}
+                onError={() => onImageLoaded(active.item.key)}
               />
             </div>
           </div>
