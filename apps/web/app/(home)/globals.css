@@ -1,6 +1,18 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+  group-hover 를 쓰면 안 되는 자리를 위한 변형이다. Tailwind 는 hover 계열
+  유틸리티를 전부 @media (hover: hover) 로 감싸는데, 터치스크린을 겸한
+  데스크톱(2-in-1, 터치 모니터, 태블릿 랜딩 뷰포트)은 마우스가 붙어 있어도
+  hover: none 을 보고한다. 그런 환경에서는 :hover 가 실제로 걸리는데도
+  규칙이 통째로 무시돼, hover 로만 여는 UI가 영영 열리지 않는다.
+
+  hover 가 장식(색 변화 등)일 때는 Tailwind 기본값인 group-hover 가 맞다.
+  hover 없이는 아예 도달할 수 없는 콘텐츠(헤더 드롭다운 등)에만 이 변형을 쓴다.
+*/
+@custom-variant parent-hovered (&:is(:where(.group):hover *));
+
 :root {
   --public-header-height-mobile: 72px;
   --public-header-height-desktop: 80px;

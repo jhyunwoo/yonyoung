@@ -6,66 +6,11 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Monitor, Moon, Sun } from "lucide-react";
-
-type NavChild = {
-  href: string;
-  label: string;
-};
-
-type NavItem = {
-  href: string;
-  label: string;
-  testId: string;
-  children?: NavChild[];
-  prefetch?: boolean;
-  rel?: "nofollow";
-};
+import SiteHeaderDesktopNav from "./site-header-desktop-nav";
+import { isActivePath, navItems } from "./site-nav-items";
 
 type ThemeMode = "light" | "dark" | "system";
 type ResolvedTheme = "light" | "dark";
-
-const navItems: NavItem[] = [
-  {
-    href: "/about",
-    label: "ABOUT",
-    testId: "about",
-    children: [
-      { href: "/about", label: "소개" },
-      { href: "/about/photographers", label: "PHOTOGRAPHERS" },
-      { href: "/about/recruiting", label: "RECRUITING" },
-    ],
-  },
-  {
-    href: "/archive/records",
-    label: "ARCHIVE",
-    testId: "archive",
-    children: [
-      { href: "/archive/records", label: "활동 기록" },
-      { href: "/archive/exhibitions", label: "전시회" },
-    ],
-  },
-  { href: "/linktree", label: "LINKTREE", testId: "linktree" },
-  { href: "/donate", label: "DONATE US", testId: "donate" },
-  {
-    href: "/dashboard",
-    label: "DASHBOARD",
-    testId: "dashboard",
-    rel: "nofollow",
-  },
-];
-
-const isActivePath = (pathname: string, item: NavItem): boolean => {
-  if (item.href === "/about") {
-    return pathname.startsWith("/about");
-  }
-  if (item.href === "/archive/records") {
-    return pathname.startsWith("/archive");
-  }
-  return pathname === item.href;
-};
-
-const desktopLinkBaseClass =
-  "relative block py-6 text-[0.9rem] font-medium tracking-[0.05em] text-(--text-primary) uppercase after:absolute after:bottom-[0.8rem] after:left-0 after:h-[2px] after:w-0 after:bg-(--text-primary) after:transition-[width] after:duration-300 hover:after:w-full";
 
 const mobileLinkBaseClass =
   "relative block px-4 py-4 text-center text-[0.9rem] font-medium tracking-[0.05em] text-(--text-primary) uppercase after:absolute after:bottom-[0.6rem] after:left-1/2 after:h-[2px] after:w-0 after:-translate-x-1/2 after:bg-(--text-primary) after:transition-[width] after:duration-300 hover:after:w-12";
@@ -242,51 +187,7 @@ export default function SiteHeader() {
           className="hidden items-center gap-3 md:flex"
           data-testid="public-nav-desktop"
         >
-          <ul className="flex list-none items-center gap-8">
-            {navItems.map((item) => {
-              const active = isActivePath(pathname, item);
-              return (
-                <li
-                  key={item.href}
-                  className={item.children ? "relative group" : "relative"}
-                >
-                  <Link
-                    href={item.href}
-                    prefetch={item.prefetch}
-                    rel={item.rel}
-                    className={`${desktopLinkBaseClass} ${active ? "after:w-full" : ""}`.trim()}
-                    data-testid={`public-nav-desktop-${item.testId}`}
-                  >
-                    {item.label}
-                  </Link>
-                  {/*
-                    group-focus-within 이 없으면 키보드 사용자는 이 하위 메뉴에
-                    영영 닿지 못한다 — invisible(visibility:hidden)이 자식 링크를
-                    탭 순서에서 빼버리는데 여는 조건이 hover 뿐이었다.
-
-                    visibility 를 transition 목록에 반드시 남겨야 한다. 빠질 경우
-                    닫힐 때 즉시 hidden 이 돼 페이드아웃이 통째로 사라진다.
-                    드롭다운 예산은 150~250ms 이고, 트리거 바로 아래 붙으므로
-                    origin-top 에서 살짝 커지며 열린다.
-                  */}
-                  {item.children ? (
-                    <ul className="invisible absolute top-full left-1/2 z-20 min-w-[150px] origin-top -translate-x-1/2 scale-[0.97] border-t-2 border-(--surface-strong-border) bg-(--surface-elevated) py-2 opacity-0 shadow-[0_4px_15px_var(--shadow-strong)] transition-[opacity,scale,visibility] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:visible group-hover:scale-100 group-hover:opacity-100 group-focus-within:visible group-focus-within:scale-100 group-focus-within:opacity-100 motion-reduce:transition-none motion-reduce:scale-100">
-                      {item.children.map((child) => (
-                        <li key={child.href} className="w-full">
-                          <Link
-                            href={child.href}
-                            className="block whitespace-nowrap px-6 py-[0.8rem] text-[0.85rem] text-(--text-primary) transition-colors duration-200 hover:bg-(--surface-muted)"
-                          >
-                            {child.label}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
+          <SiteHeaderDesktopNav pathname={pathname} />
           <div
             className="flex items-center gap-1 rounded-full border border-(--surface-border) bg-(--surface-elevated) p-1"
             role="group"
