@@ -50,6 +50,34 @@ describe("SiteHeader", () => {
     expect(localStorage.getItem("theme")).toBe("light");
   });
 
+  /**
+   * 하위 메뉴가 있는 항목의 부모 클릭은 이동이 아니라 열기/닫기다. 이동이 막혔는지는
+   * defaultPrevented 로 확인한다 — 막히지 않으면 jsdom 은 조용히 링크를 따라간다.
+   */
+  it("toggles the desktop dropdown on click instead of navigating", async () => {
+    const user = userEvent.setup();
+    render(<SiteHeader />);
+
+    const trigger = screen.getByTestId("public-nav-desktop-archive");
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+
+    const defaultPrevented: boolean[] = [];
+    const record = (event: MouseEvent) => defaultPrevented.push(event.defaultPrevented);
+    document.addEventListener("click", record);
+
+    try {
+      await user.click(trigger);
+      expect(trigger).toHaveAttribute("aria-expanded", "true");
+
+      await user.click(trigger);
+      expect(trigger).toHaveAttribute("aria-expanded", "false");
+
+      expect(defaultPrevented).toEqual([true, true]);
+    } finally {
+      document.removeEventListener("click", record);
+    }
+  });
+
   it("opens and closes mobile navigation", async () => {
     const user = userEvent.setup();
     render(<SiteHeader />);

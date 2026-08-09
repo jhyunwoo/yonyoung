@@ -5,6 +5,20 @@ import { expect, test, type Browser, type Page, type TestInfo } from "@playwrigh
   검증해야 하므로 컨텍스트를 직접 만든다. 768px 이상이어야 햄버거 메뉴가 아니라
   데스크톱 내비가 나온다.
 */
+/*
+  하이드레이션 전에는 부모 링크 클릭이 그냥 이동한다 — JS 없는 환경을 위한
+  폴백이라 의도한 동작이다. domcontentloaded 는 그 시점을 보장하지 않아서,
+  병렬 실행으로 느려지면 클릭 테스트가 간헐적으로 이동해 버린다.
+
+  데스크톱 내비는 하이드레이션되는 순간 CSS 전용 열기 클래스를 떼어내므로
+  (site-header-desktop-nav.tsx), 그 클래스가 사라진 것을 신호로 쓴다.
+*/
+const waitForNavHydration = async (page: Page) => {
+  await expect(page.getByTestId("public-nav-desktop-archive-submenu")).not.toHaveClass(
+    /parent-hovered/,
+  );
+};
+
 const openDesktopContext = async (
   browser: Browser,
   testInfo: TestInfo,
@@ -17,6 +31,7 @@ const openDesktopContext = async (
   });
   const page = await context.newPage();
   await page.goto("/", { waitUntil: "domcontentloaded" });
+  await waitForNavHydration(page);
   return { context, page };
 };
 
@@ -69,10 +84,9 @@ test("archive dropdown opens on hover when the browser reports hover: none", asy
  * 방법이 없다. 탭이 부모 링크로 이동해 버리면 전시회는 데스크톱 내비에서
  * 영영 도달 불가능해진다.
  *
- * 주의: Chromium 은 탭한 요소에 sticky hover 를 남기고, parent-hovered 는
- * 미디어 게이트가 없으므로 하위 메뉴는 상태와 무관하게 "보이는" 상태가 된다.
- * 그래서 toBeVisible 만으로는 이 기능의 회귀를 잡지 못한다. 실제로 탭이
- * 열었는지는 data-open 으로 확인해야 한다.
+ * Chromium 은 탭한 요소에 sticky hover 를 남긴다. 하이드레이션 이후에는
+ * parent-hovered 클래스를 떼어내므로 그 hover 가 하위 메뉴를 열어 두지 못하지만,
+ * 그래도 "탭이 열었는지"는 toBeVisible 이 아니라 data-open 으로 확인한다.
  */
 test("archive dropdown opens on tap instead of navigating away", async ({
   browser,
@@ -93,6 +107,35 @@ test("archive dropdown opens on tap instead of navigating away", async ({
 
     await submenu.getByRole("link", { name: "전시회" }).tap();
     await expect(page).toHaveURL(/\/archive\/exhibitions$/);
+  } finally {
+    await context.close();
+  }
+});
+
+/**
+ * 두 번째 탭은 닫는다. 하이드레이션 이후 data-open 이 유일한 근거이므로
+ * sticky hover 가 남아 있어도 화면과 상태가 어긋나지 않아야 한다.
+ */
+test("a second tap on the trigger closes the dropdown", async ({
+  browser,
+}, testInfo) => {
+  const { context, page } = await openDesktopContext(browser, testInfo, {
+    hasTouch: true,
+  });
+
+  try {
+    const trigger = page.getByTestId("public-nav-desktop-archive");
+    const submenu = page.getByTestId("public-nav-desktop-archive-submenu");
+
+    await trigger.tap();
+    await expect(submenu).toHaveAttribute("data-open", "true");
+
+    await trigger.tap();
+
+    await expect(submenu).toHaveAttribute("data-open", "false");
+    await expect(submenu).toBeHidden();
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await expectStayedOnHome(page);
   } finally {
     await context.close();
   }
@@ -211,10 +254,11 @@ test("aria-expanded stays correct when focus and hover are on different items", 
 });
 
 /**
- * 터치 대응 때문에 마우스 클릭 동작이 바뀌면 안 된다. 마우스는 hover 로 이미
- * 하위 메뉴를 볼 수 있으므로 부모 링크는 지금까지처럼 그냥 이동해야 한다.
+ * 하위 메뉴가 있는 항목의 부모 클릭은 이동이 아니라 "열기"다. 예전에는 마우스
+ * 클릭이 그대로 이동해서, hover 로 펼쳐진 메뉴를 클릭이 앞질러 없애 버렸다 —
+ * 전시회를 고르려 해도 활동 기록으로 끌려갔다.
  */
-test("mouse click on a dropdown trigger still navigates", async ({
+test("mouse click on a dropdown trigger opens the submenu instead of navigating", async ({
   browser,
 }, testInfo) => {
   const { context, page } = await openDesktopContext(browser, testInfo, {
@@ -222,7 +266,123 @@ test("mouse click on a dropdown trigger still navigates", async ({
   });
 
   try {
+    const submenu = page.getByTestId("public-nav-desktop-archive-submenu");
+
     await page.getByTestId("public-nav-desktop-archive").click();
+
+    await expect(submenu).toHaveAttribute("data-open", "true");
+    await expect(submenu).toBeVisible();
+    await expectStayedOnHome(page);
+
+    await submenu.getByRole("link", { name: "전시회" }).click();
+    await expect(page).toHaveURL(/\/archive\/exhibitions$/);
+  } finally {
+    await context.close();
+  }
+});
+
+/**
+ * 마우스가 트리거 위에 그대로 있는 상태에서 닫혀야 한다. CSS 로 여는 경로를
+ * 하이드레이션 이후까지 남겨 두면 :hover 가 계속 열어 둬서, 상태는 닫힘인데
+ * 화면은 펼쳐진 채로 어긋난다.
+ */
+test("a second mouse click closes the dropdown while the pointer stays on the trigger", async ({
+  browser,
+}, testInfo) => {
+  const { context, page } = await openDesktopContext(browser, testInfo, {
+    hasTouch: false,
+  });
+
+  try {
+    const trigger = page.getByTestId("public-nav-desktop-archive");
+    const submenu = page.getByTestId("public-nav-desktop-archive-submenu");
+
+    await trigger.click();
+    await expect(submenu).toHaveAttribute("data-open", "true");
+
+    await trigger.click();
+
+    await expect(submenu).toHaveAttribute("data-open", "false");
+    await expect(submenu).toBeHidden();
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  } finally {
+    await context.close();
+  }
+});
+
+/** 키보드 Enter 도 이동이 아니라 열기여야 하고, 이동은 하위 항목이 담당한다. */
+test("keyboard Enter on a dropdown trigger opens the submenu instead of navigating", async ({
+  browser,
+}, testInfo) => {
+  const { context, page } = await openDesktopContext(browser, testInfo, {
+    hasTouch: false,
+  });
+
+  try {
+    const submenu = page.getByTestId("public-nav-desktop-archive-submenu");
+
+    await page.getByTestId("public-nav-desktop-archive").focus();
+    await page.keyboard.press("Enter");
+
+    await expect(submenu).toHaveAttribute("data-open", "true");
+    await expectStayedOnHome(page);
+
+    // 트리거 다음 순서는 하위 항목이다: 활동 기록 → 전시회.
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Tab");
+    await expect(submenu.getByRole("link", { name: "전시회" })).toBeFocused();
+
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/archive\/exhibitions$/);
+  } finally {
+    await context.close();
+  }
+});
+
+/** 하위 메뉴가 있는 항목은 전부 같은 규칙을 따라야 한다 — ARCHIVE 도 ABOUT 도. */
+test("about dropdown behaves the same as archive", async ({ browser }, testInfo) => {
+  const { context, page } = await openDesktopContext(browser, testInfo, {
+    hasTouch: false,
+  });
+
+  try {
+    const submenu = page.getByTestId("public-nav-desktop-about-submenu");
+
+    await page.getByTestId("public-nav-desktop-about").click();
+
+    await expect(submenu).toHaveAttribute("data-open", "true");
+    await expectStayedOnHome(page);
+
+    await submenu.getByRole("link", { name: "PHOTOGRAPHERS" }).click();
+    await expect(page).toHaveURL(/\/about\/photographers$/);
+  } finally {
+    await context.close();
+  }
+});
+
+/**
+ * 하위 페이지에서도 같은 동작이어야 한다. 헤더는 전 페이지 공용이지만, 활성
+ * 항목(밑줄 고정)에서 클릭 처리가 달라지는 회귀를 막는다.
+ */
+test("the dropdown still opens on click from inside the archive section", async ({
+  browser,
+}, testInfo) => {
+  const { context, page } = await openDesktopContext(browser, testInfo, {
+    hasTouch: false,
+  });
+
+  try {
+    await page.goto("/archive/exhibitions", { waitUntil: "domcontentloaded" });
+    await waitForNavHydration(page);
+
+    const submenu = page.getByTestId("public-nav-desktop-archive-submenu");
+    await page.getByTestId("public-nav-desktop-archive").click();
+
+    await expect(submenu).toHaveAttribute("data-open", "true");
+    await page.waitForTimeout(700);
+    expect(new URL(page.url()).pathname).toBe("/archive/exhibitions");
+
+    await submenu.getByRole("link", { name: "활동 기록" }).click();
     await expect(page).toHaveURL(/\/archive\/records$/);
   } finally {
     await context.close();

@@ -603,7 +603,9 @@ Tailwind preflight가 `h1`~`h6`의 `font-weight`를 `inherit`으로 초기화하
 
 - `border-t-2 border-(--surface-strong-border)`(상단 강조선) + `{colors.surface-elevated}` 바탕 + 레벨 2 그림자
 - `min-w-[150px]`, 중앙 정렬(`left-1/2 -translate-x-1/2`), 반경 0
-- `invisible opacity-0` → `group-hover:visible group-hover:opacity-100`, 항목 hover는 `bg-(--surface-muted)`
+- `invisible opacity-0` → 열림 상태에서 `visible opacity-100`, 항목 hover는 `bg-(--surface-muted)`
+- **부모 항목은 이동하지 않는다.** hover(마우스)·focus(키보드)로 펼쳐지고, 클릭/탭은 열기·닫기 토글이다. 실제 이동은 하위 항목 선택으로만 일어난다
+- 열림 여부의 근거는 하이드레이션 이후 `data-open` 하나뿐이다. CSS 로만 여는 경로(`parent-hovered:` / `group-focus-within:`)는 하이드레이션 전 폴백으로만 붙는다 — 남겨 두면 `:hover` 가 "클릭으로 닫기"를 무시해 화면과 `aria-expanded` 가 어긋난다
 
 ### `theme-toggle` — 라이트/다크/시스템 3분할
 
