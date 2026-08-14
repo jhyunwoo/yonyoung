@@ -21,20 +21,26 @@
 /** DB에 저장된 공개 미디어 URL의 경로 접두사 (yonyoung-api의 presign.ts와 동일) */
 const PUBLIC_MEDIA_PATH_PREFIX = "/api/public/media/";
 
-/** 변환 옵션: 포맷 자동 협상, 확대 금지, EXIF 제거, 한도 초과 시 원본으로 리다이렉트 */
-const TRANSFORM_BASE_OPTIONS = [
-  "format=auto",
-  "fit=scale-down",
-  "metadata=none",
-  "onerror=redirect",
-];
-
 const DEFAULT_QUALITY = 75;
 
 export type ImageLoaderParams = {
   src: string;
   width: number;
   quality?: number;
+};
+
+export type CloudflareTransformOptions = {
+  width: number;
+  /** 지정하면 width와 함께 정확한 크기를 요구한다 (fit=cover와 같이 쓴다) */
+  height?: number;
+  quality?: number;
+  /**
+   * 기본 `auto` — Accept 헤더로 협상한다(브라우저에 AVIF/WebP를 준다).
+   * `next/og`처럼 협상 없이 바이트를 직접 디코딩하는 소비자는 `jpeg`로 고정해야 한다.
+   */
+  format?: "auto" | "jpeg";
+  /** 기본 `scale-down` — 원본보다 키우지 않는다. 고정 비율 카드는 `cover`로 채운다. */
+  fit?: "scale-down" | "cover";
 };
 
 const trimTrailingSlash = (value: string): string => value.replace(/\/+$/, "");
@@ -94,6 +100,45 @@ const extractObjectPath = (src: string, cdnBaseUrl: string): string | null => {
 };
 
 /**
+ * buildCloudflareTransformUrl R2 미디어 src를 Cloudflare Image Transformations URL로 바꿉니다.
+ * @param src 변환 대상 후보 URL입니다 (프록시 절대/상대 URL 또는 레거시 R2 직접 URL).
+ * @param cdnBaseUrl 변환을 수행할 R2 커스텀 도메인 베이스 URL입니다.
+ * @param options 변환 옵션입니다. metadata 제거와 한도 초과 시 원본 리다이렉트는 항상 적용됩니다.
+ * @returns 변환 URL을 반환하고, 변환 대상이 아니거나 CDN이 설정되지 않았으면 null을 반환합니다.
+ * @remarks next/image 로더와 OG 이미지 생성이 같은 경로 추출 규칙을 공유하도록 하는 진입점입니다.
+ */
+export const buildCloudflareTransformUrl = (
+  src: string,
+  cdnBaseUrl: string | null | undefined,
+  options: CloudflareTransformOptions,
+): string | null => {
+  const normalizedBaseUrl = cdnBaseUrl?.trim()
+    ? trimTrailingSlash(cdnBaseUrl.trim())
+    : null;
+  if (!normalizedBaseUrl) {
+    return null;
+  }
+
+  const objectPath = extractObjectPath(src, normalizedBaseUrl);
+  if (!objectPath) {
+    return null;
+  }
+
+  const transformOptions = [
+    `format=${options.format ?? "auto"}`,
+    `fit=${options.fit ?? "scale-down"}`,
+    // EXIF 제거, 한도 초과 시 원본으로 리다이렉트
+    "metadata=none",
+    "onerror=redirect",
+    `width=${options.width}`,
+    ...(options.height === undefined ? [] : [`height=${options.height}`]),
+    `quality=${options.quality ?? DEFAULT_QUALITY}`,
+  ].join(",");
+
+  return `${normalizedBaseUrl}/cdn-cgi/image/${transformOptions}/${objectPath}`;
+};
+
+/**
  * buildImageUrl 이미지 요청 URL을 생성합니다.
  * @param params next/image가 전달하는 src·width·quality 입력값입니다.
  * @param cdnBaseUrl Cloudflare 변환을 수행할 R2 커스텀 도메인 베이스 URL입니다. 비어 있으면 변환하지 않습니다.
@@ -104,25 +149,12 @@ export const buildImageUrl = (
   params: ImageLoaderParams,
   cdnBaseUrl: string | null | undefined,
 ): string => {
-  const normalizedBaseUrl = cdnBaseUrl?.trim()
-    ? trimTrailingSlash(cdnBaseUrl.trim())
-    : null;
-  if (!normalizedBaseUrl) {
-    return params.src;
-  }
-
-  const objectPath = extractObjectPath(params.src, normalizedBaseUrl);
-  if (!objectPath) {
-    return params.src;
-  }
-
-  const options = [
-    ...TRANSFORM_BASE_OPTIONS,
-    `width=${params.width}`,
-    `quality=${params.quality ?? DEFAULT_QUALITY}`,
-  ].join(",");
-
-  return `${normalizedBaseUrl}/cdn-cgi/image/${options}/${objectPath}`;
+  return (
+    buildCloudflareTransformUrl(params.src, cdnBaseUrl, {
+      width: params.width,
+      quality: params.quality,
+    }) ?? params.src
+  );
 };
 
 /**

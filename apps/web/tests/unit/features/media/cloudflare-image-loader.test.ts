@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildImageUrl } from "@/features/media/images/cloudflare-image-loader";
+import {
+  buildCloudflareTransformUrl,
+  buildImageUrl,
+} from "@/features/media/images/cloudflare-image-loader";
 
 const CDN_BASE_URL = "https://storage.yonyoung.moveto.kr";
 const OBJECT_KEY = "activities/user-abc/cover/2608c868-6e55-4231-98cc-e57db4bff11f-5.jpg";
@@ -119,6 +122,48 @@ describe("buildImageUrl", () => {
       const src = `https://yonyoung.yonsei.ac.kr/api/public/media/${OBJECT_KEY}?sig=abc123`;
 
       expect(buildImageUrl({ src, width: 1080, quality: 75 }, base)).toBe(src);
+    });
+  });
+
+  // OG 이미지 생성이 쓰는 진입점. next/og(satori)는 Accept 협상 없이 바이트를 직접
+  // 디코딩하므로 format=auto가 아니라 jpeg로 고정해야 하고, 1200×630을 정확히 채워야 한다.
+  describe("buildCloudflareTransformUrl", () => {
+    it("OG 카드용 jpeg·cover·고정 크기 변환 URL을 만든다", () => {
+      const url = buildCloudflareTransformUrl(
+        `https://yonyoung.yonsei.ac.kr/api/public/media/${OBJECT_KEY}?sig=abc123`,
+        CDN_BASE_URL,
+        { width: 1200, height: 630, quality: 80, format: "jpeg", fit: "cover" },
+      );
+
+      expect(url).toBe(
+        `${CDN_BASE_URL}/cdn-cgi/image/format=jpeg,fit=cover,metadata=none,onerror=redirect,width=1200,height=630,quality=80/${OBJECT_KEY}`,
+      );
+    });
+
+    it("height를 생략하면 URL에도 넣지 않는다", () => {
+      const url = buildCloudflareTransformUrl(
+        `/api/public/media/${OBJECT_KEY}`,
+        CDN_BASE_URL,
+        { width: 640 },
+      );
+
+      expect(url).not.toContain("height=");
+    });
+
+    it("변환 대상이 아닌 src는 null을 반환한다", () => {
+      expect(
+        buildCloudflareTransformUrl("/yonyoung-logo-black.png", CDN_BASE_URL, {
+          width: 1200,
+        }),
+      ).toBeNull();
+    });
+
+    it("CDN 베이스 URL이 없으면 null을 반환한다", () => {
+      expect(
+        buildCloudflareTransformUrl(`/api/public/media/${OBJECT_KEY}`, undefined, {
+          width: 1200,
+        }),
+      ).toBeNull();
     });
   });
 

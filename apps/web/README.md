@@ -24,8 +24,14 @@
 ### 요구 사항
 
 - Node.js `22.12.0` (`.nvmrc`)
-- pnpm `10.30.2` (`package.json#packageManager`)
+- pnpm `11.21.0` (`package.json#packageManager`)
 - 전체 E2E 테스트를 실행할 경우 Chromium과 Linux 런타임 라이브러리
+
+### TypeScript 5와 7을 함께 설치하는 이유
+
+`pnpm typecheck`는 네이티브 포팅된 TypeScript 7(`typescript7` alias)로 돌아갑니다. 같은 프로젝트 검사가 TS 5.9 기준 약 45초에서 약 7초로 줄어듭니다.
+
+`typescript@5.9.3`도 그대로 남겨 둡니다. TypeScript 7은 JS 컴파일러 API(`lib/typescript.js`)를 더 이상 제공하지 않는데, `eslint-config-next/typescript`가 쓰는 `typescript-eslint`가 그 API를 직접 `require`하기 때문입니다(peer 범위도 `<6.1.0`). 루트 `typescript`를 7로 바꾸면 `pnpm lint`가 깨집니다. `next build`의 내장 타입 검사도 `typescript` 패키지를 resolve해서 그 `tsc`를 실행하므로 TS 5.9를 씁니다. typescript-eslint가 TS 7을 지원하면 alias를 지우고 루트를 7로 올리면 됩니다.
 
 Corepack을 쓰는 환경에서는 저장소에 고정된 pnpm 버전을 그대로 사용할 수 있습니다.
 
@@ -68,7 +74,7 @@ pnpm dev
 | `pnpm build`                | 프로덕션 빌드 생성                                     |
 | `pnpm start`                | 생성된 프로덕션 빌드 실행                              |
 | `pnpm lint`                 | 전체 소스 ESLint 검사                                  |
-| `pnpm typecheck`            | Next 라우트 타입 생성 후 TypeScript 검사               |
+| `pnpm typecheck`            | Next 라우트 타입 생성 후 TypeScript 7 검사             |
 | `pnpm format`               | Prettier로 파일 수정                                   |
 | `pnpm format:check`         | 포맷 변경 없이 Prettier 검사                           |
 | `pnpm fonts:sync`           | 설치된 Pretendard 동적 서브셋을 저장소 자산으로 동기화 |
@@ -260,6 +266,9 @@ Playwright wrapper인 `scripts/run-playwright.sh`는 Chromium을 준비하고, L
 - `NEXT_PUBLIC_SITE_URL`은 사용자가 접근하는 HTTPS 공개 origin이어야 합니다.
 - reverse proxy가 원래 host/protocol을 보존하도록 구성해야 OAuth cookie와 callback origin이 일치합니다.
 - `pnpm install --frozen-lockfile`, `pnpm build`, `pnpm start` 순서를 사용합니다.
+- 빌드 시점에 API가 닿아야 활동·전시 상세가 사전 렌더링됩니다. API가 닿지 않아도 빌드는 통과하지만(플레이스홀더 param으로 폴백) 상세 페이지가 하나도 구워지지 않고 sitemap에도 정적 경로만 남습니다.
+- 게시물 OG 이미지를 빌드 시점 PNG로 굽기 위해서는 `NEXT_PUBLIC_IMAGE_CDN_BASE_URL` 호스트도 빌드 중에 닿아야 합니다. 닿지 않으면 대표 사진을 못 받아 해당 OG 라우트만 요청 시점 렌더링(`ƒ`)으로 내려갑니다 — 내용은 그대로 맞고 다음 빌드에서 자동으로 정적으로 돌아옵니다.
+- Turbopack의 빌드 파일시스템 캐시는 16.3부터 기본으로 켜져 있지만 `.next/cache`에 저장됩니다. Nixpacks 컨테이너 빌드는 매번 깨끗한 레이어에서 시작하므로, 이 캐시로 빌드를 빠르게 하려면 Dokploy에서 `.next/cache`를 볼륨으로 마운트해야 합니다. 마운트하지 않을 계획이면 `next.config.ts`에 `experimental.turbopackFileSystemCacheForBuild: false`를 넣어 읽히지 않을 캐시를 쓰는 비용을 없앨 수 있습니다.
 - 새 환경 변수를 추가하면 `.env.example`, `server/env.ts`, 배포 환경, README를 함께 갱신하십시오.
 - 테스트 통과는 실제 Google 로그인, Dokploy 배포, 검색엔진 색인, 실사용 Core Web Vitals 성공을 의미하지 않습니다.
 

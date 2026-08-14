@@ -6,6 +6,7 @@ import {
 } from "@/features/public/services/public-read-service";
 import { formatKoreanYearRange } from "@/shared/utils/date-formatters";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
+import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
 import PageTitleHero from "@/app/(home)/_components/page-title-hero";
 
 const annualActivities = [
@@ -17,13 +18,7 @@ const annualActivities = [
   { month: "February", title: "신인 사진전" },
 ];
 
-export const metadata: Metadata = createPageMetadata({
-  title: "연영회 소개 | 연세대학교 중앙사진동아리",
-  description:
-    "1966년부터 이어진 연세대학교 중앙사진동아리 연영회의 역사, 연간 활동, 기수 정보를 소개합니다.",
-  path: "/about",
-  keywords: ["연영회 소개", "연영회 역사", "연세대학교 동아리", "사진 동아리 활동"],
-});
+export const metadata: Metadata = createPageMetadata(PAGE_SEO.about);
 
 const getPublicGenerations = async () => {
   return safeList(listPublicGenerations, []);

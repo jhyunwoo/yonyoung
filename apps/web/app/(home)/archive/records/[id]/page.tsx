@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+import { Suspense } from "react";
 import {
   getPublicActivityById,
   getPublicAttachments,
@@ -12,11 +13,16 @@ import { RichTextContent } from "@/features/media/rich-text/rich-text-content";
 import { createPageMetadata, resolveSiteUrl } from "@/features/seo/metadata/seo";
 import JsonLd from "@/features/seo/structured-data/json-ld";
 import PageViewTracker from "@/app/_components/page-view-tracker";
+import ArchiveDetailSkeleton from "@/app/(home)/_components/archive-detail-skeleton";
 import {
   PhotoGallery,
   type PhotoGalleryItem,
 } from "@/app/(home)/_components/photo-gallery";
 import { AttachmentList } from "@/app/(home)/_components/attachment-list";
+
+// 공개된 활동 전부를 빌드 시점에 굽는다. 목록에 없는 id는 App Shell을 받은 뒤
+// 첫 방문에서 백그라운드로 채워져 캐시에 올라간다.
+export { generateActivityStaticParams as generateStaticParams } from "@/features/public/services/public-static-params";
 
 type RecordDetailPageProps = {
   params: Promise<{
@@ -59,7 +65,14 @@ export async function generateMetadata({
   });
 }
 
-export default async function RecordDetailPage({ params }: RecordDetailPageProps) {
+/**
+ * id에 의존하는 모든 것을 담는다.
+ *
+ * `await params`가 이 컴포넌트 안에서 일어나야 `generateStaticParams`에 없는 id로
+ * 들어와도 바깥 프레임이 App Shell로 먼저 나갈 수 있다 (params를 페이지 최상단에서
+ * await하면 셸이 특정 URL에 묶여 버린다).
+ */
+async function RecordDetailContent({ params }: RecordDetailPageProps) {
   const { id } = await params;
   // 활동 정보와 첨부 자료는 독립적이므로 병렬로 조회한다
   const [activity, attachments] = await Promise.all([
@@ -154,48 +167,66 @@ export default async function RecordDetailPage({ params }: RecordDetailPageProps
         ];
 
   return (
-    <div className="min-h-screen bg-(--bg-primary) pb-9 pt-3 md:pb-12 md:pt-4">
+    <>
       <PageViewTracker pageType="activity" resourceId={id} />
       <JsonLd data={activityJsonLd} />
       <JsonLd data={breadcrumbJsonLd} />
-      <div className="mx-auto max-w-[1200px] px-4 md:px-8">
-        <header className="mb-8">
-          <Link
-            href="/archive/records"
-            className="mb-4 inline-flex text-[0.9rem] text-(--text-primary) no-underline hover:underline"
-          >
-            활동 기록으로 돌아가기
-          </Link>
-          <h1 className="m-0 text-[1.7rem] font-bold text-(--text-primary) md:text-[2rem]">
-            {activity.title}
-          </h1>
-          <p className="mb-0 mt-3 text-[0.95rem] text-(--text-muted)">
-            {formatKoreanDateRange(activity.startDate, activity.endDate)}
-          </p>
-          <RichTextContent
-            html={activity.description}
-            className="record-description mb-0 mt-3 leading-[1.6]"
-          />
-        </header>
-
-        <PhotoGallery
-          items={galleryItems}
-          fallbackAspect={4 / 3}
-          refAspect={1.5}
-          data-testid="record-detail-gallery"
+      <header className="mb-8">
+        <h1 className="m-0 text-[1.7rem] font-bold text-(--text-primary) md:text-[2rem]">
+          {activity.title}
+        </h1>
+        <p className="mb-0 mt-3 text-[0.95rem] text-(--text-muted)">
+          {formatKoreanDateRange(activity.startDate, activity.endDate)}
+        </p>
+        <RichTextContent
+          html={activity.description}
+          className="record-description mb-0 mt-3 leading-[1.6]"
         />
+      </header>
 
-        {attachments.length > 0 ? (
-          <section className="mt-10">
-            <h2 className="mb-4 text-[1.2rem] font-bold text-(--text-primary)">
-              첨부 자료
-            </h2>
-            <AttachmentList
-              attachments={attachments}
-              data-testid="record-attachment-list"
+      <PhotoGallery
+        items={galleryItems}
+        fallbackAspect={4 / 3}
+        refAspect={1.5}
+        data-testid="record-detail-gallery"
+      />
+
+      {attachments.length > 0 ? (
+        <section className="mt-10">
+          <h2 className="mb-4 text-[1.2rem] font-bold text-(--text-primary)">
+            첨부 자료
+          </h2>
+          <AttachmentList
+            attachments={attachments}
+            data-testid="record-attachment-list"
+          />
+        </section>
+      ) : null}
+    </>
+  );
+}
+
+export default function RecordDetailPage({ params }: RecordDetailPageProps) {
+  return (
+    <div className="min-h-screen bg-(--bg-primary) pb-9 pt-3 md:pb-12 md:pt-4">
+      <div className="mx-auto max-w-[1200px] px-4 md:px-8">
+        <Link
+          href="/archive/records"
+          className="mb-4 inline-flex text-[0.9rem] text-(--text-primary) no-underline hover:underline"
+        >
+          활동 기록으로 돌아가기
+        </Link>
+
+        <Suspense
+          fallback={
+            <ArchiveDetailSkeleton
+              tileAspect="aspect-[4/3]"
+              data-testid="record-detail-skeleton"
             />
-          </section>
-        ) : null}
+          }
+        >
+          <RecordDetailContent params={params} />
+        </Suspense>
       </div>
     </div>
   );

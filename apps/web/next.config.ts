@@ -105,6 +105,12 @@ const nextConfig: NextConfig = {
     authInterrupts: true,
   },
   cacheComponents: true,
+  // Partial Prefetching (Next 16.3, cacheComponents 필수).
+  // 링크마다 대상 라우트를 통째로 프리페치하지 않고 라우트당 App Shell 하나를 받아
+  // 클라이언트에 캐시한다. 아카이브 목록은 카드 수십 개가 전부 같은
+  // /archive/records/[id] 라우트를 가리키므로 프리페치 요청이 카드 수 → 1로 줄어든다.
+  // generateStaticParams에 없는 id도 즉시 App Shell을 받는 ISR 동작의 전제 조건이기도 하다.
+  partialPrefetching: true,
   poweredByHeader: false,
   images: {
     // R2 미디어는 Cloudflare 엣지에서 변환한다 (features/media/images/cloudflare-image-loader.ts).

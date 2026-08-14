@@ -7,8 +7,8 @@ import HeroShowcase from "@/app/(home)/_components/hero-showcase";
 import PageViewTracker from "@/app/_components/page-view-tracker";
 import {
   flattenLinktreeItems,
+  getFeaturedPublicExhibition,
   listPublicActivities,
-  listPublicExhibitions,
   listPublicLinktrees,
   safeList,
 } from "@/features/public/services/public-read-service";
@@ -21,7 +21,9 @@ import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
 const getHomePrimaryData = async () => {
   return Promise.all([
     safeList(listPublicActivities, []),
-    safeList(listPublicExhibitions, []),
+    // 히어로에 띄울 전시는 "지금" 기준으로 골라야 해서 서버 캐시 안에서 결정한다.
+    // 예전에는 클라이언트가 하이드레이션 후 다시 골라 LCP 이미지를 두 번 받았다.
+    safeList(getFeaturedPublicExhibition, null),
   ]);
 };
 
@@ -92,7 +94,7 @@ const HomeQuickLinksSection = async () => {
 };
 
 export default async function HomePage() {
-  const [activities, exhibitions] = await getHomePrimaryData();
+  const [activities, featuredExhibition] = await getHomePrimaryData();
 
   const recentActivities = activities.slice(0, 6);
   const siteUrl = resolveSiteUrl();
@@ -136,8 +138,7 @@ export default async function HomePage() {
       <JsonLd data={organizationJsonLd} />
       <JsonLd data={websiteJsonLd} />
       <HeroShowcase
-        featuredExhibition={exhibitions[0] ?? null}
-        exhibitions={exhibitions}
+        featuredExhibition={featuredExhibition}
         recentActivities={recentActivities}
       />
 

@@ -2,16 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import type { ApiActivity, ApiExhibition } from "@/shared/contracts/api-contracts";
 import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
-import { pickFeaturedPublicExhibition } from "@/features/public/model/public-exhibition";
 
 type HeroShowcaseProps = {
+  /** 서버에서 이미 고른 노출 대상 전시 (`getFeaturedPublicExhibition`) */
   featuredExhibition: ApiExhibition | null;
-  exhibitions: ApiExhibition[];
   recentActivities: ApiActivity[];
 };
 
@@ -23,12 +22,9 @@ type HeroShowcaseProps = {
  */
 export default function HeroShowcase({
   featuredExhibition,
-  exhibitions,
   recentActivities,
 }: HeroShowcaseProps) {
   const rootRef = useRef<HTMLElement | null>(null);
-  const [resolvedFeaturedExhibition, setResolvedFeaturedExhibition] =
-    useState<ApiExhibition | null>(featuredExhibition);
   const shouldReduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({
     target: rootRef,
@@ -37,10 +33,6 @@ export default function HeroShowcase({
   const textOffset = useTransform(scrollYProgress, [0, 1], [0, -80]);
   const imageOffset = useTransform(scrollYProgress, [0, 1], [0, 110]);
   const firstActivity = recentActivities[0];
-
-  useEffect(() => {
-    setResolvedFeaturedExhibition(pickFeaturedPublicExhibition(exhibitions));
-  }, [exhibitions]);
 
   return (
     <section
@@ -86,21 +78,21 @@ export default function HeroShowcase({
             whileHover={shouldReduceMotion ? undefined : { y: -4, scale: 1.01 }}
             transition={{ type: "spring", damping: 20, stiffness: 260 }}
           >
-            {resolvedFeaturedExhibition ? (
+            {featuredExhibition ? (
               <Link
-                href={`/archive/exhibitions/${resolvedFeaturedExhibition.id}`}
+                href={`/archive/exhibitions/${featuredExhibition.id}`}
                 className="group block overflow-hidden border border-(--surface-strong-border) bg-(--surface-elevated) focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-(--text-primary)"
-                data-testid={`home-hero-exhibition-card-${resolvedFeaturedExhibition.id}`}
-                aria-label={`${resolvedFeaturedExhibition.title} 상세 보기`}
+                data-testid={`home-hero-exhibition-card-${featuredExhibition.id}`}
+                aria-label={`${featuredExhibition.title} 상세 보기`}
               >
                 <div className="relative aspect-4/3">
                   <Image
-                    src={resolvedFeaturedExhibition.coverImageUrl}
-                    alt={resolvedFeaturedExhibition.title}
+                    src={featuredExhibition.coverImageUrl}
+                    alt={featuredExhibition.title}
                     fill
                     priority
                     unoptimized={shouldUseUnoptimizedImage(
-                      resolvedFeaturedExhibition.coverImageUrl,
+                      featuredExhibition.coverImageUrl,
                     )}
                     sizes="(min-width: 768px) 40vw, 100vw"
                     className="h-full w-full object-cover"
@@ -112,14 +104,14 @@ export default function HeroShowcase({
                     Latest Exhibition
                   </p>
                   <h2 className="text-[1.7rem] tracking-[-0.02em] text-(--text-primary)">
-                    {resolvedFeaturedExhibition.title}
+                    {featuredExhibition.title}
                   </h2>
                   <p className="text-sm text-(--text-muted)">
                     {formatKoreanDateRange(
-                      resolvedFeaturedExhibition.startDate,
-                      resolvedFeaturedExhibition.endDate,
+                      featuredExhibition.startDate,
+                      featuredExhibition.endDate,
                     )}{" "}
-                    · {resolvedFeaturedExhibition.place}
+                    · {featuredExhibition.place}
                   </p>
                 </div>
               </Link>

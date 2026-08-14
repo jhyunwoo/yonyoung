@@ -6,15 +6,10 @@ import {
 } from "@/features/public/services/public-read-service";
 import { formatKoreanYearRange } from "@/shared/utils/date-formatters";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
+import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
 import GenerationMembersGrid from "@/app/(home)/about/photographers/generation-members-grid";
 
-export const metadata: Metadata = createPageMetadata({
-  title: "연영회 사진가·멤버 | 기수별 PHOTOGRAPHERS",
-  description:
-    "연세대학교 중앙사진동아리 연영회를 함께 만들어 온 사진가와 멤버를 기수별로 소개합니다. 각 멤버의 사진과 활동 정보를 확인하세요.",
-  path: "/about/photographers",
-  keywords: ["연영회", "Photographers", "연영회 멤버", "기수별 멤버"],
-});
+export const metadata: Metadata = createPageMetadata(PAGE_SEO.photographers);
 
 export default async function PhotographersPage() {
   const generations = await safeList(listPublicPhotographers, []);

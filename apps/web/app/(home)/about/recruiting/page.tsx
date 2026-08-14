@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
+import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
 import { getPublicCurrentRecruitingPlan } from "@/features/public/services/public-read-service";
 import {
   HIGH_CONTRAST_RICH_TEXT_CLASS_NAMES,
@@ -29,13 +30,7 @@ const applicationSteps = [
   },
 ];
 
-export const metadata: Metadata = createPageMetadata({
-  title: "연영회 리크루팅 | 연세대학교 사진동아리 모집",
-  description:
-    "연세대학교 중앙사진동아리 연영회의 올해 모집 일정과 지원 자격, 지원 절차를 안내합니다. 사진을 함께 배우고 기록할 신입 회원을 기다립니다.",
-  path: "/about/recruiting",
-  keywords: ["연영회 리크루팅", "연영회 모집", "동아리 모집", "RECRUITING"],
-});
+export const metadata: Metadata = createPageMetadata(PAGE_SEO.recruiting);
 
 const koreanDateTimeFormatter = new Intl.DateTimeFormat("ko-KR", {
   year: "numeric",

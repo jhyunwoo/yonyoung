@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DEFAULT_SITE_SETTINGS } from "@/shared/contracts/api-contracts";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
+import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
 import {
   getPublicAttachments,
   getPublicSiteSettings,
@@ -8,13 +9,7 @@ import {
 import PageTitleHero from "@/app/(home)/_components/page-title-hero";
 import { AttachmentList } from "@/app/(home)/_components/attachment-list";
 
-export const metadata: Metadata = createPageMetadata({
-  title: "연영회 후원 안내 | 전시·사진 활동 후원",
-  description:
-    "연세대학교 중앙사진동아리 연영회의 전시 개최와 장비 유지, 사진 교육 활동을 후원하는 방법과 후원금 사용 내역을 안내합니다.",
-  path: "/donate",
-  keywords: ["연영회 후원", "DONATE US", "연영회 후원 안내", "후원금 사용 내역"],
-});
+export const metadata: Metadata = createPageMetadata(PAGE_SEO.donate);
 
 export default async function DonatePage() {
   // 설정과 첨부 자료는 서로 독립적이므로 병렬로 조회한다

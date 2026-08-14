@@ -4,15 +4,10 @@ import {
   safeList,
 } from "@/features/public/services/public-read-service";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
+import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
 import PageTitleHero from "@/app/(home)/_components/page-title-hero";
 
-export const metadata: Metadata = createPageMetadata({
-  title: "연영회 공식 링크 | SNS·문의·사진 커뮤니티",
-  description:
-    "연세대학교 중앙사진동아리 연영회의 공식 Instagram, 문의 채널, 사진 활동과 관련된 커뮤니티 링크를 한 곳에서 확인하세요.",
-  path: "/linktree",
-  keywords: ["연영회 링크", "연영회 SNS", "연영회 문의", "Linktree"],
-});
+export const metadata: Metadata = createPageMetadata(PAGE_SEO.linktree);
 
 export default async function LinktreePage() {
   const linktrees = await safeList(listPublicLinktrees, []);

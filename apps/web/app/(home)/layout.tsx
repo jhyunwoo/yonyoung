@@ -6,6 +6,7 @@ import SiteHeader from "@/app/(home)/_components/site-header";
 import SiteFooter from "@/app/(home)/_components/site-footer";
 import PublicHeaderSafeArea from "@/app/(home)/_components/public-header-safe-area";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
+import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
 import { WebVitalsReporter } from "@/app/_components/web-vitals-reporter";
 
 const ROOT_FONT_FAMILY =
@@ -14,20 +15,7 @@ const ROOT_FONT_FAMILY =
 // 이미지가 별도 오리진(Cloudflare R2 커스텀 도메인)에서 오므로 연결을 미리 열어 둔다
 const IMAGE_CDN_BASE_URL = process.env.NEXT_PUBLIC_IMAGE_CDN_BASE_URL?.trim() || null;
 
-export const metadata: Metadata = createPageMetadata({
-  title: "연영회 | 1966년 창립 연세대학교 중앙사진동아리",
-  description:
-    "1966년 창단한 연세대학교 중앙사진동아리 연영회입니다. 출사와 사진 프로젝트, 정기 전시, 리크루팅 소식을 한곳에서 만나보세요.",
-  path: "/",
-  keywords: [
-    "연영회",
-    "연세대학교",
-    "중앙사진동아리",
-    "사진동아리",
-    "정기전",
-    "아카이브",
-  ],
-});
+export const metadata: Metadata = createPageMetadata(PAGE_SEO.home);
 
 export const viewport: Viewport = {
   width: "device-width",
