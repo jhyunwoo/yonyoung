@@ -17,7 +17,7 @@ export const PRESIGN_PATHS = {
   siteFile: "/site/presign/file",
 } as const;
 
-type PresignPath = (typeof PRESIGN_PATHS)[keyof typeof PRESIGN_PATHS];
+export type PresignPath = (typeof PRESIGN_PATHS)[keyof typeof PRESIGN_PATHS];
 
 type UploadHeaders = Record<string, string>;
 

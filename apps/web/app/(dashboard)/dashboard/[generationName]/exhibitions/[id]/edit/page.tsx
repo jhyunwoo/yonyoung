@@ -1,5 +1,8 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
+import { readCookieHeader } from "@/shared/http/http";
+import { getAdminExhibitionById } from "@/features/dashboard/services/admin-read-service";
+import AdminReadErrorNotice from "@/app/(dashboard)/_components/admin-read-error";
 import { isAdminRole } from "@/features/auth/model/auth-shared";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
 import ExhibitionEditForm from "@/app/(dashboard)/dashboard/[generationName]/exhibitions/_components/exhibition-edit-form";
@@ -40,15 +43,30 @@ export default async function GenerationExhibitionEditPage({
     redirect(`${generation.path}/exhibitions/${id}`);
   }
 
+  const exhibitionResult = await getAdminExhibitionById(id, await readCookieHeader());
+
+  if (!exhibitionResult.ok && exhibitionResult.error.reason === "not_found") {
+    notFound();
+  }
+
+  // 다른 기수의 전시를 이 기수 경로로 열었으면 목록으로 되돌린다.
+  if (exhibitionResult.ok && exhibitionResult.data.generationId !== generation.id) {
+    redirect(`${generation.path}/exhibitions`);
+  }
+
   return (
     <div className="px-4 py-6 md:px-8 md:py-8">
-      <ExhibitionEditForm
-        exhibitionId={id}
-        generationId={generation.id}
-        generationName={generation.name}
-        generationPath={generation.path}
-        initialMessage={initialMessage}
-      />
+      {exhibitionResult.ok ? (
+        <ExhibitionEditForm
+          exhibition={exhibitionResult.data}
+          generationId={generation.id}
+          generationName={generation.name}
+          generationPath={generation.path}
+          initialMessage={initialMessage}
+        />
+      ) : (
+        <AdminReadErrorNotice error={exhibitionResult.error} />
+      )}
     </div>
   );
 }

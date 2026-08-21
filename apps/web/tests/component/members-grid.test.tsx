@@ -3,14 +3,10 @@ import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { renderWithDashboardProviders as render } from "@/tests/setup/dashboard-providers";
 import type { ApiGeneration, ApiUser } from "@/shared/contracts/api-contracts";
 import { AdminApiError } from "@/shared/http/http";
-const listUsersMock = vi.hoisted(() => vi.fn());
-const listGenerationsMock = vi.hoisted(() => vi.fn());
 const bulkUpdateUsersRoleMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/features/dashboard/api/admin-api/resources", () => ({
   adminResourceApi: {
-    listUsers: listUsersMock,
-    listGenerations: listGenerationsMock,
     bulkUpdateUsersRole: bulkUpdateUsersRoleMock,
   },
 }));
@@ -110,15 +106,18 @@ const users: ApiUser[] = [
 ];
 
 describe("MembersGrid", () => {
+  // 초기 목록은 서버 컴포넌트가 읽어 props로 내려준다.
+  const renderGrid = () =>
+    render(
+      <MembersGrid
+        initialUsers={users.map((user) => ({ ...user }))}
+        generations={generations.map((generation) => ({ ...generation }))}
+      />,
+    );
+
   beforeEach(() => {
     vi.restoreAllMocks();
-    listUsersMock.mockReset();
-    listGenerationsMock.mockReset();
     bulkUpdateUsersRoleMock.mockReset();
-    listUsersMock.mockResolvedValue(users.map((user) => ({ ...user })));
-    listGenerationsMock.mockResolvedValue(
-      generations.map((generation) => ({ ...generation })),
-    );
   });
 
   it("selects visible users and merges updated roles after bulk update", async () => {
@@ -133,7 +132,7 @@ describe("MembersGrid", () => {
           })),
     );
 
-    render(<MembersGrid />);
+    renderGrid();
 
     await screen.findByText("김연영");
     expect(screen.getByTestId("settings-members-open-user-1")).toHaveAttribute(
@@ -209,7 +208,7 @@ describe("MembersGrid", () => {
       }),
     );
 
-    render(<MembersGrid />);
+    renderGrid();
 
     await screen.findByText("김연영");
     fireEvent.click(screen.getByTestId("settings-members-select-user-1"));

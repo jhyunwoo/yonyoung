@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { formatAuditActor } from "@/features/dashboard/ui/audit-display";
 import { readCookieHeader } from "@/shared/http/http";
-import { listCachedLinktrees } from "@/features/dashboard/cache/admin-dashboard-cache";
+import { listAdminLinktrees } from "@/features/dashboard/services/admin-read-service";
+import AdminReadErrorNotice from "@/app/(dashboard)/_components/admin-read-error";
 import { formatKoreanDate } from "@/shared/utils/date-formatters";
 import { sortLinktreesByName } from "@/app/(dashboard)/_components/linktree-shared";
 
@@ -15,7 +16,8 @@ export default async function LinktreeManager({
   basePath,
 }: LinktreeManagerProps) {
   const cookieHeader = await readCookieHeader();
-  const linktrees = sortLinktreesByName(await listCachedLinktrees(cookieHeader));
+  const result = await listAdminLinktrees(cookieHeader);
+  const linktrees = result.ok ? sortLinktreesByName(result.data) : [];
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
@@ -43,7 +45,9 @@ export default async function LinktreeManager({
         </p>
       ) : null}
 
-      {linktrees.length === 0 ? (
+      {!result.ok ? (
+        <AdminReadErrorNotice error={result.error} />
+      ) : linktrees.length === 0 ? (
         <p className="mt-6 rounded-lg border border-dashed border-hairline-strong bg-surface-sunken px-4 py-6 text-sm text-ink-muted">
           등록된 링크 분류가 없습니다.
         </p>

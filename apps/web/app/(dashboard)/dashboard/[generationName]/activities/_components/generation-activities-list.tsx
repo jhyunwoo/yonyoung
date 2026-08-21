@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { readCookieHeader } from "@/shared/http/http";
-import { listCachedActivities } from "@/features/dashboard/cache/admin-dashboard-cache";
+import { listAdminActivities } from "@/features/dashboard/services/admin-read-service";
+import AdminReadErrorNotice from "@/app/(dashboard)/_components/admin-read-error";
 import { formatAuditActor } from "@/features/dashboard/ui/audit-display";
 import { formatKoreanDate, formatKoreanDateRange } from "@/shared/utils/date-formatters";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
@@ -24,9 +25,10 @@ export default async function GenerationActivitiesList({
   canManage,
 }: GenerationActivitiesListProps) {
   const cookieHeader = await readCookieHeader();
-  const activities = sortActivitiesByStartDateDesc(
-    await listCachedActivities(generationId, cookieHeader),
-  );
+  const result = await listAdminActivities(generationId, cookieHeader);
+  const activities = result.ok
+    ? sortActivitiesByStartDateDesc(result.data)
+    : [];
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
@@ -60,7 +62,9 @@ export default async function GenerationActivitiesList({
         </p>
       ) : null}
 
-      {activities.length === 0 ? (
+      {!result.ok ? (
+        <AdminReadErrorNotice error={result.error} />
+      ) : activities.length === 0 ? (
         <p className="mt-6 rounded-lg border border-dashed border-hairline-strong bg-surface-sunken px-4 py-6 text-sm text-ink-muted">
           현재 기수에 등록된 활동이 없습니다.
         </p>

@@ -1,8 +1,20 @@
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
+import { readCookieHeader } from "@/shared/http/http";
+import {
+  listAdminGenerations,
+  listAdminUsers,
+} from "@/features/dashboard/services/admin-read-service";
+import AdminReadErrorNotice from "@/app/(dashboard)/_components/admin-read-error";
 import MembersGrid from "@/app/(dashboard)/dashboard/settings/members/members-grid";
 
 export default async function SettingsMembersPage() {
   await serverAuthGuard.requireGlobalUserManagementAccess();
+
+  const cookieHeader = await readCookieHeader();
+  const [usersResult, generationsResult] = await Promise.all([
+    listAdminUsers(cookieHeader),
+    listAdminGenerations(cookieHeader),
+  ]);
 
   return (
     <div className="px-4 py-6 md:px-8 md:py-8">
@@ -15,7 +27,14 @@ export default async function SettingsMembersPage() {
           전체 멤버의 권한, 소속 기수, 기본 정보를 보고 검색과 필터로 원하는 사용자를
           빠르게 찾을 수 있으며, 여러 명을 선택해 권한을 한 번에 수정할 수 있습니다.
         </p>
-        <MembersGrid />
+        {usersResult.ok ? (
+          <MembersGrid
+            initialUsers={usersResult.data}
+            generations={generationsResult.ok ? generationsResult.data : []}
+          />
+        ) : (
+          <AdminReadErrorNotice error={usersResult.error} />
+        )}
       </section>
     </div>
   );

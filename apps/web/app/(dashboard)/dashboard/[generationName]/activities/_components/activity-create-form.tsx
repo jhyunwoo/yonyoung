@@ -1,16 +1,17 @@
 "use client";
 
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
+import { readFileList } from "@/features/media/upload/image-upload-state";
 import {
-  readFileList,
-  type UploadImageItem,
-} from "@/features/media/upload/image-upload-state";
-import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/upload-batch";
-import { readImageDimensions } from "@/features/media/images/read-image-dimensions";
+  readNewUploadImageItems,
+  uploadDetailImages,
+} from "@/features/media/upload/detail-image-upload";
+import { createWeightedUploadProgressTracker } from "@/features/media/upload/weighted-upload-progress";
+import { useSelectedImageFile } from "@/features/media/upload/use-selected-image-file";
 import {
   PRESIGN_PATHS,
   uploadWithPresign,
@@ -44,9 +45,7 @@ export default function ActivityCreateForm({
   const [description, setDescription] = useState(EMPTY_RICH_TEXT_HTML);
   const [startDateInput, setStartDateInput] = useState("");
   const [endDateInput, setEndDateInput] = useState("");
-  const [coverFile, setCoverFile] = useState<File | null>(null);
-  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
-  const coverFileInputRef = useRef<HTMLInputElement | null>(null);
+  const cover = useSelectedImageFile();
   const detailFileInputRef = useRef<HTMLInputElement | null>(null);
   const {
     items: detailImages,
@@ -58,40 +57,13 @@ export default function ActivityCreateForm({
   const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    return () => {
-      if (coverPreviewUrl) {
-        URL.revokeObjectURL(coverPreviewUrl);
-      }
-    };
-  }, [coverPreviewUrl]);
-
-  const isSubmitDisabled = useMemo(() => {
-    return (
-      isSaving ||
-      title.trim().length === 0 ||
-      !hasMeaningfulRichTextHtml(description) ||
-      startDateInput.trim().length === 0 ||
-      endDateInput.trim().length === 0 ||
-      coverFile === null
-    );
-  }, [coverFile, description, endDateInput, isSaving, startDateInput, title]);
-
-  const handleCoverFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextFile = event.target.files?.[0] ?? null;
-
-    if (coverPreviewUrl) {
-      URL.revokeObjectURL(coverPreviewUrl);
-    }
-
-    setCoverFile(nextFile);
-    if (!nextFile) {
-      setCoverPreviewUrl(null);
-      return;
-    }
-
-    setCoverPreviewUrl(URL.createObjectURL(nextFile));
-  };
+  const isSubmitDisabled =
+    isSaving ||
+    title.trim().length === 0 ||
+    !hasMeaningfulRichTextHtml(description) ||
+    startDateInput.trim().length === 0 ||
+    endDateInput.trim().length === 0 ||
+    cover.selectedFile === null;
 
   const handleDetailFilesChange = (event: ChangeEvent<HTMLInputElement>) => {
     const nextFiles = readFileList(event.target.files);
@@ -104,7 +76,7 @@ export default function ActivityCreateForm({
       return;
     }
 
-    coverFileInputRef.current?.click();
+    cover.openFilePicker();
   };
 
   const handleOpenDetailFilePicker = () => {
@@ -128,6 +100,7 @@ export default function ActivityCreateForm({
       return;
     }
 
+    const coverFile = cover.selectedFile;
     if (!coverFile) {
       setErrorMessage("대표 이미지 파일을 선택해 주세요.");
       return;
@@ -147,31 +120,16 @@ export default function ActivityCreateForm({
     setUploadProgressPercent(0);
 
     try {
-      const newDetailImages = detailImages.filter(
-        (image): image is UploadImageItem & { file: File } => image.file !== null,
-      );
-      const totalUploadCount = 1 + newDetailImages.length;
-      let coverUploadProgress = 0;
-      let detailUploadProgress = 0;
-      const updateUploadProgress = () => {
-        if (totalUploadCount <= 0) {
-          setUploadProgressPercent(null);
-          return;
-        }
-
-        const weightedProgress =
-          (coverUploadProgress + detailUploadProgress * newDetailImages.length) /
-          totalUploadCount;
-        setUploadProgressPercent(Math.round(weightedProgress));
-      };
+      const newDetailImages = readNewUploadImageItems(detailImages);
+      const uploadProgress = createWeightedUploadProgressTracker({
+        detailCount: newDetailImages.length,
+        onProgress: setUploadProgressPercent,
+      });
 
       const coverImageUrl = await uploadWithPresign({
         presignPath: PRESIGN_PATHS.activityCover,
         file: coverFile,
-        onProgress: (progressPercent) => {
-          coverUploadProgress = progressPercent;
-          updateUploadProgress();
-        },
+        onProgress: uploadProgress.reportCoverProgress,
       });
 
       const createdActivity = await adminResourceApi.createActivity({
@@ -185,27 +143,15 @@ export default function ActivityCreateForm({
 
       if (newDetailImages.length > 0) {
         try {
-          // 업로드 전에 원본 크기를 측정해 함께 저장 (공개 갤러리 masonry 레이아웃용)
-          const dimensionList = await Promise.all(
-            newDetailImages.map((image) => readImageDimensions(image.file)),
-          );
-
-          const uploadedDetailUrls = await uploadFilesWithPresign({
+          const uploadedDetailImages = await uploadDetailImages({
             presignPath: PRESIGN_PATHS.activityDetail,
-            files: newDetailImages.map((image) => image.file),
-            onProgress: (progressPercent) => {
-              detailUploadProgress = progressPercent;
-              updateUploadProgress();
-            },
+            items: newDetailImages,
+            onProgress: uploadProgress.reportDetailProgress,
           });
 
           await adminResourceApi.addActivityImages(
             createdActivity.id,
-            uploadedDetailUrls.map((imageUrl, index) => ({
-              imageUrl,
-              sortOrder: index,
-              ...(dimensionList[index] ?? {}),
-            })),
+            uploadedDetailImages,
           );
         } catch (detailUploadError) {
           const detailUploadMessage = readActivityErrorMessage(detailUploadError);
@@ -297,21 +243,23 @@ export default function ActivityCreateForm({
             파일 선택
           </button>
           <input
-            ref={coverFileInputRef}
+            ref={cover.fileInputRef}
             type="file"
             accept="image/*"
-            onChange={handleCoverFileChange}
+            onChange={cover.selectFile}
             disabled={isSaving}
             className="sr-only"
           />
           <p className="text-xs text-ink-muted">
-            {coverFile ? `선택됨: ${coverFile.name}` : "아직 파일이 선택되지 않았습니다."}
+            {cover.selectedFile
+              ? `선택됨: ${cover.selectedFile.name}`
+              : "아직 파일이 선택되지 않았습니다."}
           </p>
-          {coverPreviewUrl ? (
+          {cover.previewUrl ? (
             <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-hairline bg-canvas-soft">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={coverPreviewUrl}
+                src={cover.previewUrl}
                 alt="대표 이미지 미리보기"
                 className="h-full w-full object-cover"
               />
