@@ -1,5 +1,6 @@
 "use client";
 
+import { useResetOnChange } from "@/shared/react/use-reset-on-change";
 import type { ApiPublicGenerationWithMembers } from "@/shared/contracts/api-contracts";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
@@ -30,9 +31,8 @@ export default function GenerationMembersGrid({
     return generation.members.find((member) => member.id === selectedMemberId) ?? null;
   }, [generation.members, selectedMemberId]);
 
-  useEffect(() => {
-    setSelectedMemberId(null);
-  }, [generation.id]);
+  // 다른 기수를 보여 주기 시작하면 열려 있던 멤버 상세를 닫는다.
+  useResetOnChange(generation.id, () => setSelectedMemberId(null));
 
   useEffect(() => {
     if (!selectedMember) {
@@ -280,7 +280,6 @@ export default function GenerationMembersGrid({
                     </dd>
                   </div>
                 </dl>
-
               </div>
             </motion.div>
           </motion.div>

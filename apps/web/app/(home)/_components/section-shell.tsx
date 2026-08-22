@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
 import MotionReveal from "@/app/(home)/_components/motion-reveal";
 
 type SectionShellProps = {

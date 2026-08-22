@@ -138,7 +138,7 @@ export default function SignInPageClient({ authCanonicalOrigin }: SignInPageClie
           isPending={isPending}
           pendingLabel="Google 로그인 중..."
           leadingIcon={<GoogleIcon className="h-5 w-5 shrink-0" />}
-          onClick={handleGoogleSignIn}
+          onClick={() => void handleGoogleSignIn()}
         >
           Google 계정으로 로그인
         </Button>

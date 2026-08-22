@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useRef, useState } from "react";
+import { type ChangeEvent, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
@@ -45,7 +45,13 @@ export default function ActivityCreateForm({
   const [description, setDescription] = useState(EMPTY_RICH_TEXT_HTML);
   const [startDateInput, setStartDateInput] = useState("");
   const [endDateInput, setEndDateInput] = useState("");
-  const cover = useSelectedImageFile();
+  const {
+    selectedFile: coverFile,
+    fileInputRef: coverFileInputRef,
+    previewUrl: coverPreviewUrl,
+    selectFile: selectCoverFile,
+    openFilePicker: openCoverFilePicker,
+  } = useSelectedImageFile();
   const detailFileInputRef = useRef<HTMLInputElement | null>(null);
   const {
     items: detailImages,
@@ -63,7 +69,7 @@ export default function ActivityCreateForm({
     !hasMeaningfulRichTextHtml(description) ||
     startDateInput.trim().length === 0 ||
     endDateInput.trim().length === 0 ||
-    cover.selectedFile === null;
+    coverFile === null;
 
   const handleDetailFilesChange = (event: ChangeEvent<HTMLInputElement>) => {
     const nextFiles = readFileList(event.target.files);
@@ -76,7 +82,7 @@ export default function ActivityCreateForm({
       return;
     }
 
-    cover.openFilePicker();
+    openCoverFilePicker();
   };
 
   const handleOpenDetailFilePicker = () => {
@@ -100,7 +106,6 @@ export default function ActivityCreateForm({
       return;
     }
 
-    const coverFile = cover.selectedFile;
     if (!coverFile) {
       setErrorMessage("대표 이미지 파일을 선택해 주세요.");
       return;
@@ -243,23 +248,21 @@ export default function ActivityCreateForm({
             파일 선택
           </button>
           <input
-            ref={cover.fileInputRef}
+            ref={coverFileInputRef}
             type="file"
             accept="image/*"
-            onChange={cover.selectFile}
+            onChange={selectCoverFile}
             disabled={isSaving}
             className="sr-only"
           />
           <p className="text-xs text-ink-muted">
-            {cover.selectedFile
-              ? `선택됨: ${cover.selectedFile.name}`
-              : "아직 파일이 선택되지 않았습니다."}
+            {coverFile ? `선택됨: ${coverFile.name}` : "아직 파일이 선택되지 않았습니다."}
           </p>
-          {cover.previewUrl ? (
+          {coverPreviewUrl ? (
             <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-hairline bg-canvas-soft">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={cover.previewUrl}
+                src={coverPreviewUrl}
                 alt="대표 이미지 미리보기"
                 className="h-full w-full object-cover"
               />

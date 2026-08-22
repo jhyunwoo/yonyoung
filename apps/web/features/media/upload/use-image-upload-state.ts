@@ -75,16 +75,12 @@ const normalizeItems = (
 };
 
 export const useImageUploadState = (options: UseImageUploadStateOptions = {}) => {
-  const initialItems = options.initialItems ?? [];
-  const initialNormalizedItemsRef = useRef<UploadImageItem[] | null>(null);
-  if (initialNormalizedItemsRef.current === null) {
-    initialNormalizedItemsRef.current = normalizeItems(initialItems, options.maxItems);
-  }
-
-  const [items, setItems] = useState<UploadImageItem[]>(
-    initialNormalizedItemsRef.current,
+  // 정규화는 objectURL 해제를 동반하므로 첫 렌더에서 딱 한 번만 수행해야 한다.
+  const [items, setItems] = useState<UploadImageItem[]>(() =>
+    normalizeItems(options.initialItems ?? [], options.maxItems),
   );
-  const itemsRef = useRef<UploadImageItem[]>(initialNormalizedItemsRef.current);
+  // 언마운트 정리에서 최신 목록을 읽어야 하는데 cleanup은 클로저가 낡을 수 있다.
+  const itemsRef = useRef<UploadImageItem[]>(items);
 
   useEffect(() => {
     itemsRef.current = items;

@@ -525,7 +525,14 @@ const upsertGeneration = (
   return created;
 };
 
-const server = createServer(async (request, response) => {
+const server = createServer((request, response) => {
+  void handleRequest(request, response);
+});
+
+const handleRequest = async (
+  request: IncomingMessage,
+  response: ServerResponse,
+): Promise<void> => {
   try {
     const method = request.method ?? "GET";
     const requestUrl = new URL(request.url ?? "/", `http://${HOST}:${PORT}`);
@@ -1555,7 +1562,7 @@ const server = createServer(async (request, response) => {
       error instanceof Error ? error.message : "Unknown server error",
     );
   }
-});
+};
 
 server.listen(PORT, HOST, () => {
   console.log(`[mock-api] listening on http://${HOST}:${PORT}`);

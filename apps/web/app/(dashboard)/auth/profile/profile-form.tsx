@@ -68,7 +68,15 @@ export default function AuthProfileForm({
     collaborationAvailable: initialProfile.collaborationAvailable,
     personalLink: initialProfile.personalLink,
   });
-  const image = useProfileImageSelection(initialProfile.image);
+  const {
+    imageUrl,
+    selectedFile: selectedImageFile,
+    fileInputRef: imageInputRef,
+    previewUrl: imagePreviewUrl,
+    selectFile: selectImageFile,
+    openFilePicker: openImageFilePicker,
+    reset: resetImageSelection,
+  } = useProfileImageSelection(initialProfile.image);
 
   const [fieldErrors, setFieldErrors] = useState<ProfileFieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -91,13 +99,13 @@ export default function AuthProfileForm({
     setIsSaving(true);
 
     try {
-      let nextImageUrl = image.imageUrl;
+      let nextImageUrl = imageUrl;
 
-      if (canEditProfileImage && image.selectedFile) {
+      if (canEditProfileImage && selectedImageFile) {
         setUploadProgressPercent(0);
         nextImageUrl = await uploadWithPresign({
           presignPath: PRESIGN_PATHS.userProfile,
-          file: image.selectedFile,
+          file: selectedImageFile,
           onProgress: setUploadProgressPercent,
         });
       }
@@ -116,7 +124,7 @@ export default function AuthProfileForm({
         collaborationAvailable: updatedUser.collaborationAvailable,
         personalLink: updatedUser.personalLink ?? "",
       }));
-      image.reset(updatedUser.image ?? "");
+      resetImageSelection(updatedUser.image ?? "");
       setUploadProgressPercent(null);
 
       if (!isDashboardMode) {
@@ -183,18 +191,18 @@ export default function AuthProfileForm({
 
         <form className="mt-7 space-y-5" onSubmit={handleFormSubmit} noValidate>
           <ProfileImageField
-            previewUrl={image.previewUrl}
+            previewUrl={imagePreviewUrl}
             canEdit={canEditProfileImage}
             isSaving={isSaving}
             uploadProgressPercent={uploadProgressPercent}
-            fileInputRef={image.fileInputRef}
+            fileInputRef={imageInputRef}
             onOpenFilePicker={() => {
               if (!canEditProfileImage || isSaving) {
                 return;
               }
-              image.openFilePicker();
+              openImageFilePicker();
             }}
-            onSelectFile={image.selectFile}
+            onSelectFile={selectImageFile}
           />
 
           <ProfileFields

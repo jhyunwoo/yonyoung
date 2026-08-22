@@ -1,23 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ApiLinktree, ApiLinktreeItem } from "@/shared/contracts/api-contracts";
-import { AdminApiError } from "@/shared/http/http";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import {
-  findLinktreeItemById,
   normalizeLinktreeItemInput,
   readLinktreeErrorMessage,
 } from "@/app/(dashboard)/_components/linktree-shared";
-import { Skeleton } from "@/components/ui/skeleton";
 
 type LinktreeItemEditFormProps = {
-  linktreeId: string;
-  itemId: string;
-  canWrite: boolean;
+  linktree: ApiLinktree;
+  item: ApiLinktreeItem;
   listPath: string;
 };
 
@@ -31,72 +27,19 @@ const isValidHttpUrl = (value: string): boolean => {
 };
 
 export default function LinktreeItemEditForm({
-  linktreeId,
-  itemId,
-  canWrite,
+  linktree,
+  item,
   listPath,
 }: LinktreeItemEditFormProps) {
   const router = useRouter();
-  const [linktree, setLinktree] = useState<ApiLinktree | null>(null);
-  const [item, setItem] = useState<ApiLinktreeItem | null>(null);
+  const linktreeId = linktree.id;
+  const itemId = item.id;
 
-  const [name, setName] = useState("");
-  const [link, setLink] = useState("");
+  const [name, setName] = useState(item.name);
+  const [link, setLink] = useState(item.link);
 
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isGroupNotFound, setIsGroupNotFound] = useState(false);
-  const [isItemNotFound, setIsItemNotFound] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (canWrite) {
-      return;
-    }
-
-    router.replace(`${listPath}/${linktreeId}/items/${itemId}`);
-  }, [canWrite, itemId, linktreeId, listPath, router]);
-
-  const loadItem = useCallback(async () => {
-    setIsLoading(true);
-    setIsGroupNotFound(false);
-    setIsItemNotFound(false);
-    setErrorMessage(null);
-
-    try {
-      const row = await adminResourceApi.getLinktreeById(linktreeId);
-      const foundItem = findLinktreeItemById(row, itemId);
-
-      setLinktree(row);
-      if (!foundItem) {
-        setItem(null);
-        setIsItemNotFound(true);
-        return;
-      }
-
-      setItem(foundItem);
-      setName(foundItem.name);
-      setLink(foundItem.link);
-    } catch (error) {
-      setLinktree(null);
-      setItem(null);
-      if (error instanceof AdminApiError && error.status === 404) {
-        setIsGroupNotFound(true);
-      } else {
-        setErrorMessage(readLinktreeErrorMessage(error));
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [itemId, linktreeId]);
-
-  useEffect(() => {
-    if (!canWrite) {
-      return;
-    }
-
-    void loadItem();
-  }, [canWrite, loadItem]);
 
   const handleSubmit = async () => {
     const normalized = normalizeLinktreeItemInput({ name, link });
@@ -123,83 +66,6 @@ export default function LinktreeItemEditForm({
       setIsSaving(false);
     }
   };
-
-  if (!canWrite) {
-    return (
-      <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
-        <div className="space-y-3" aria-hidden="true">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-8 w-32" />
-          <Skeleton className="h-3 w-64" />
-        </div>
-      </section>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
-        <div className="space-y-3" aria-hidden="true">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-8 w-32" />
-          <Skeleton className="h-3 w-64" />
-          <Skeleton className="h-10 w-full max-w-lg" />
-          <Skeleton className="h-10 w-full max-w-lg" />
-          <Skeleton className="h-10 w-20" />
-        </div>
-      </section>
-    );
-  }
-
-  if (isGroupNotFound) {
-    return (
-      <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
-        <h1 className="text-2xl font-bold text-ink md:text-3xl">링크 수정</h1>
-        <p className="mt-3 text-sm text-ink-muted">
-          존재하지 않는 분류이거나 접근할 수 없습니다.
-        </p>
-        <Link
-          href={listPath}
-          className="mt-6 inline-flex rounded-lg border border-hairline-strong px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-canvas-soft"
-        >
-          목록으로 이동
-        </Link>
-      </section>
-    );
-  }
-
-  if (isItemNotFound) {
-    return (
-      <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
-        <h1 className="text-2xl font-bold text-ink md:text-3xl">링크 수정</h1>
-        <p className="mt-3 text-sm text-ink-muted">
-          존재하지 않는 링크이거나 접근할 수 없습니다.
-        </p>
-        <div className="mt-6 flex flex-wrap gap-2">
-          <Link
-            href={listPath}
-            className="inline-flex rounded-lg border border-hairline-strong px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-canvas-soft"
-          >
-            목록으로 이동
-          </Link>
-          <Link
-            href={`${listPath}/${linktreeId}`}
-            className="inline-flex rounded-lg border border-hairline-strong px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-canvas-soft"
-          >
-            분류 상세로 이동
-          </Link>
-        </div>
-      </section>
-    );
-  }
-
-  if (!linktree || !item) {
-    return (
-      <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
-        <p className="text-sm text-ink-muted">링크 데이터를 불러올 수 없습니다.</p>
-      </section>
-    );
-  }
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">

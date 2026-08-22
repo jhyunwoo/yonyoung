@@ -1,5 +1,7 @@
 "use client";
 
+import { useResetOnChange } from "@/shared/react/use-reset-on-change";
+import { useIsMounted } from "@/shared/react/use-is-mounted";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { isActivePath, navItems, type NavItem } from "./site-nav-items";
@@ -199,16 +201,11 @@ function DesktopNavItem({
 export default function SiteHeaderDesktopNav({ pathname }: { pathname: string }) {
   const [clickState, setClickState] = useState<ClickState | null>(null);
   // 서버 렌더와 첫 클라이언트 렌더가 모두 false 라 하이드레이션 불일치가 없다.
-  const [hydrated, setHydrated] = useState(false);
+  const hydrated = useIsMounted();
   const navRef = useRef<HTMLUListElement>(null);
 
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    setClickState(null);
-  }, [pathname]);
+  // 페이지를 이동하면 열려 있던 드롭다운을 닫는다.
+  useResetOnChange(pathname, () => setClickState(null));
 
   useEffect(() => {
     if (!clickState) {

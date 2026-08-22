@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useRef, useState } from "react";
+import { type ChangeEvent, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -80,7 +80,13 @@ export default function ExhibitionEditForm({
   const [endDateInput, setEndDateInput] = useState(
     formatTimestampToDateInput(exhibition.endDate),
   );
-  const cover = useSelectedImageFile();
+  const {
+    selectedFile: coverFile,
+    fileInputRef: coverFileInputRef,
+    previewUrl: coverPreviewUrl,
+    selectFile: selectCoverFile,
+    openFilePicker: openCoverFilePicker,
+  } = useSelectedImageFile();
   const detailFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const {
@@ -115,7 +121,7 @@ export default function ExhibitionEditForm({
       return;
     }
 
-    cover.openFilePicker();
+    openCoverFilePicker();
   };
 
   const handleOpenDetailFilePicker = () => {
@@ -172,7 +178,6 @@ export default function ExhibitionEditForm({
     setUploadProgressPercent(0);
 
     try {
-      const coverFile = cover.selectedFile;
       const newOrder = readNewUploadImageItems(detailImages);
       const uploadProgress = createWeightedUploadProgressTracker({
         detailCount: newOrder.length,
@@ -361,23 +366,23 @@ export default function ExhibitionEditForm({
             파일 선택
           </button>
           <input
-            ref={cover.fileInputRef}
+            ref={coverFileInputRef}
             type="file"
             accept="image/*"
-            onChange={cover.selectFile}
+            onChange={selectCoverFile}
             disabled={isSaving}
             className="sr-only"
           />
           <p className="text-xs text-ink-muted">
-            {cover.selectedFile
-              ? `선택됨: ${cover.selectedFile.name}`
+            {coverFile
+              ? `선택됨: ${coverFile.name}`
               : "대표 이미지를 교체하지 않으려면 비워 두세요."}
           </p>
-          {cover.previewUrl ? (
+          {coverPreviewUrl ? (
             <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-success-hairline bg-success-soft">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={cover.previewUrl}
+                src={coverPreviewUrl}
                 alt="새 대표 이미지 미리보기"
                 className="h-full w-full object-cover"
               />

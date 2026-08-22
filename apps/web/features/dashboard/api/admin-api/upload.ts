@@ -71,8 +71,9 @@ const defaultContentType = (file: File): string => {
 
   const name = file.name.toLowerCase();
   const extension = name.split(".").at(-1) ?? "";
-  if (extension in ATTACHMENT_CONTENT_TYPE_BY_EXTENSION) {
-    return ATTACHMENT_CONTENT_TYPE_BY_EXTENSION[extension];
+  const attachmentContentType = ATTACHMENT_CONTENT_TYPE_BY_EXTENSION[extension];
+  if (attachmentContentType) {
+    return attachmentContentType;
   }
   if (extension === "png") {
     return "image/png";

@@ -39,6 +39,10 @@ export default function StatsView({
     let active = true;
 
     if (initialStats) {
+      // 서버가 내려준 통계의 "갱신 시각"은 클라이언트 로컬 시간으로 보여 준다.
+      // 렌더 중에 계산하면 서버 렌더 결과와 달라져 hydration 불일치가 나므로
+      // 마운트 이후에만 채운다.
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 클라이언트에서만 알 수 있는 값이다.
       setLastUpdated(getFormattedTime());
     }
 
@@ -67,7 +71,7 @@ export default function StatsView({
       }
     };
 
-    const timer = setInterval(fetchStats, 10000);
+    const timer = setInterval(() => void fetchStats(), 10000);
 
     return () => {
       active = false;

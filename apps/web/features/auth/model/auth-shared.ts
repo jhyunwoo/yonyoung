@@ -1,5 +1,5 @@
 import {
-  ADMIN_ROLE_VALUES,
+  type ADMIN_ROLE_VALUES,
   PRESIDENT_ROLE,
   isAdminRoleValue,
   isUnverifiedRoleValue,

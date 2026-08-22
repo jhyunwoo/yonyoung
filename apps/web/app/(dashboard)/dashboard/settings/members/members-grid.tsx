@@ -188,7 +188,7 @@ export default function MembersGrid({ initialUsers, generations }: MembersGridPr
         }}
         onSelectVisible={handleSelectVisibleUsers}
         onClearSelection={handleClearSelection}
-        onSubmit={handleBulkRoleUpdate}
+        onSubmit={() => void handleBulkRoleUpdate()}
       />
 
       {errorMessage ? (

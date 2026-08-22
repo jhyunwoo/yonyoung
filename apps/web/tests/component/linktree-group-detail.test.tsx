@@ -61,7 +61,8 @@ describe("LinktreeGroupDetail", () => {
   });
 
   it("adds a new sub-link from group detail page", async () => {
-    getLinktreeByIdMock.mockResolvedValueOnce(createLinktree([])).mockResolvedValueOnce(
+    // 초기 목록은 서버 컴포넌트가 넘겨주고, 추가 후 최신 목록만 다시 읽는다.
+    getLinktreeByIdMock.mockResolvedValue(
       createLinktree([
         {
           id: "linktree-item-2",
@@ -83,7 +84,7 @@ describe("LinktreeGroupDetail", () => {
     const user = userEvent.setup();
     render(
       <LinktreeGroupDetail
-        linktreeId="linktree-1"
+        initialLinktree={createLinktree([])}
         canWrite
         listPath="/dashboard/settings/linktree"
       />,
@@ -106,12 +107,11 @@ describe("LinktreeGroupDetail", () => {
   });
 
   it("shows validation error when sub-link URL is invalid", async () => {
-    getLinktreeByIdMock.mockResolvedValue(createLinktree([]));
 
     const user = userEvent.setup();
     render(
       <LinktreeGroupDetail
-        linktreeId="linktree-1"
+        initialLinktree={createLinktree([])}
         canWrite
         listPath="/dashboard/settings/linktree"
       />,

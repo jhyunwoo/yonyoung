@@ -26,9 +26,7 @@ export default async function GenerationActivitiesList({
 }: GenerationActivitiesListProps) {
   const cookieHeader = await readCookieHeader();
   const result = await listAdminActivities(generationId, cookieHeader);
-  const activities = result.ok
-    ? sortActivitiesByStartDateDesc(result.data)
-    : [];
+  const activities = result.ok ? sortActivitiesByStartDateDesc(result.data) : [];
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">

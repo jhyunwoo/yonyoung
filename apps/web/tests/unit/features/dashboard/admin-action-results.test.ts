@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AdminApiError } from "@/shared/http/http";
+import { type AdminApiError } from "@/shared/http/http";
 import {
   bindAdminWriteAction,
   unwrapAdminWriteActionResult,

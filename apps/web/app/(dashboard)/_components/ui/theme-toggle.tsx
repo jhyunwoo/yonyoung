@@ -48,9 +48,12 @@ const applyThemeMode = (mode: ThemeMode): void => {
 export const ThemeToggle = ({ className }: { className?: string }) => {
   const [mode, setMode] = useState<ThemeMode>("system");
 
+  // theme-init 스크립트가 hydration 전에 <html> 에 써 둔 값을 한 번 읽어 온다.
+  // 서버에서는 알 수 없는 값이라 마운트 후에만 동기화할 수 있다.
   useEffect(() => {
     const current = document.documentElement.dataset.themeMode;
     if (isThemeMode(current)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- DOM(외부 시스템)에서 초기값을 읽어 오는 동기화다.
       setMode(current);
     }
   }, []);

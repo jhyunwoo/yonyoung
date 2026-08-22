@@ -1,3 +1,5 @@
+import type * as HttpModule from "@/shared/http/http";
+import type * as HonoClientModule from "@/server/http/hono-client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ApiUser } from "@/shared/contracts/api-contracts";
 
@@ -35,7 +37,7 @@ vi.mock("@/features/dashboard/actions/admin-write-access", () => ({
 }));
 
 vi.mock("@/shared/http/http", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/shared/http/http")>();
+  const actual = await importOriginal<typeof HttpModule>();
 
   return {
     ...actual,
@@ -44,7 +46,7 @@ vi.mock("@/shared/http/http", async (importOriginal) => {
 });
 
 vi.mock("@/server/http/hono-client", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/server/http/hono-client")>();
+  const actual = await importOriginal<typeof HonoClientModule>();
 
   return {
     ...actual,

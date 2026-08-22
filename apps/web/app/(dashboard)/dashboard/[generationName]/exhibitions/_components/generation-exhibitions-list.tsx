@@ -26,9 +26,7 @@ export default async function GenerationExhibitionsList({
 }: GenerationExhibitionsListProps) {
   const cookieHeader = await readCookieHeader();
   const result = await listAdminExhibitions(generationId, cookieHeader);
-  const exhibitions = result.ok
-    ? sortExhibitionsByStartDateDesc(result.data)
-    : [];
+  const exhibitions = result.ok ? sortExhibitionsByStartDateDesc(result.data) : [];
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">

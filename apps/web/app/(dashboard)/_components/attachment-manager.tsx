@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
+import { type ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import { FileText, Link2, Trash2, ArrowDown, ArrowUp } from "lucide-react";
 import {
   ATTACHMENT_ACCEPT,

@@ -192,6 +192,16 @@ export const getAdminExhibitionById = (
     apiExhibitionSchema,
   );
 
+export const getAdminLinktreeById = (
+  linktreeId: string,
+  cookieHeader: string | null,
+): Promise<AdminReadResult<ApiLinktree>> =>
+  readAdminResource(
+    `/linktree/${encodeURIComponent(linktreeId)}`,
+    cookieHeader,
+    apiLinktreeSchema,
+  );
+
 export const listAdminUsers = (
   cookieHeader: string | null,
 ): Promise<AdminReadResult<ApiUser[]>> =>

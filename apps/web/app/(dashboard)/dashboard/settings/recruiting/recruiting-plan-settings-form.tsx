@@ -340,7 +340,7 @@ export default function RecruitingPlanSettingsForm() {
             type="file"
             accept="image/*"
             multiple
-            onChange={handleUploadPromotionImages}
+            onChange={(event) => void handleUploadPromotionImages(event)}
             className="sr-only"
             disabled={isPromotionUploadDisabled}
           />
