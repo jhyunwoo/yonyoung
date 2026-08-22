@@ -5,7 +5,7 @@
 ## 명령어
 
 ```bash
-pnpm dev            # next dev (API는 yonyoung-api를 pnpm dev로 함께 실행)
+pnpm dev            # apps/web에서 Next dev만 실행; 저장소 루트 pnpm dev는 Web+API 실행
 pnpm lint           # eslint
 pnpm typecheck      # next typegen + TypeScript 7 (typescript7 alias) — 5.9 대비 ~6배 빠름
 pnpm test:unit      # vitest (jsdom)
@@ -16,7 +16,7 @@ pnpm test:e2e:full  # Playwright 전체 (mock API 서버 + 프로덕션 빌드�
 
 - 라우트 그룹: `app/(home)` 공개 사이트, `app/(dashboard)` 관리자. 루트 layout 없음(그룹별 layout)
 - **모든 API 호출은 프록시 경유**: `app/api/[...path]/route.ts` → Hono API. 새 최상위 API prefix를 쓰면 `server/security/api-proxy-prefixes.ts` allowlist에 추가해야 함 (계약 테스트가 누락을 잡음)
-- 계약: `shared/contracts/api/<domain>.ts` 에 도메인별로 나뉘어 있고 `api-contracts.ts`(타입) + `api-schemas.ts`(zod 미러)가 배럴 역할 — **API 저장소와 수동 동기화**. 응답 스키마의 신규 필드는 `.default(null)` 등으로 구버전 API 응답도 허용하게
+- 계약: `@yonyoung/contracts`의 공개 subpath가 타입과 런타임 Zod 스키마의 단일 소스다. Web은 API 구현 파일을 import하지 않는다. 계약 변경은 API OpenAPI snapshot, `apps/api/src/tests/contract-compatibility.types.ts`, Web mock/test를 함께 검증한다. 응답 스키마의 신규 필드는 호환성이 필요할 때 `.default(null)` 등으로 구버전 API 응답도 허용하게 한다
 - 공개 데이터 읽기: `features/public/services/public-read-service.ts` — `"use cache"` + `cacheLife` + `cacheTag(CACHE_TAGS.public.*)` 패턴. **모든 `"use cache"` 스코프에 `cacheLife`를 명시한다** — 생략하면 `default`(15분)가 붙고, `stale`이 짧으면 그 결과가 라우트 App Shell에 못 들어간다. 아카이브류는 `days`, 설정성 데이터는 `hours`(쓰기 시 `updateTag`로 즉시 무효화되므로 길게 잡아도 안전). "지금" 기준 계산(`Date.now()`)은 cacheComponents에서 `"use cache"` 안에서만 허용된다 — 히어로 전시 선택(`getFeaturedPublicExhibition`)이 그 예다
 - **게시물 사전 렌더링**: `/archive/records/[id]`·`/archive/exhibitions/[id]`는 `features/public/services/public-static-params.ts`의 공유 `generateStaticParams`로 공개 게시물을 전부 빌드 시점에 굽는다. 페이지와 `opengraph-image.tsx`가 같은 함수를 re-export한다. 두 가지 규칙: ① cacheComponents는 **빈 배열을 빌드 에러로 처리**하므로 빌드 시 API가 닿지 않으면 `PLACEHOLDER_PARAM_ID`를 돌려준다 ② 페이지 최상단에서 `await params` 하면 안 된다 — `params` Promise를 `<Suspense>` 안의 하위 컴포넌트에 넘겨야 목록에 없는 id도 즉시 App Shell을 받는다
 - 관리자 읽기: `features/dashboard/services/admin-read-service.ts` — 항상 `cache: "no-store"`(권한별로 갈리는 데이터라 캐시 금지). 결과는 `AdminReadResult<T>` 판별 union 이라 **"데이터 없음"과 "읽지 못함"이 구분된다** — 실패를 `[]`나 `null`로 바꾸지 말 것. 응답은 Zod 계약으로 런타임 검증한다

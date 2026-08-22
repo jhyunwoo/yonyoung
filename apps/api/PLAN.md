@@ -1,5 +1,7 @@
 # yonyoung-api Clean Code / Maintainability Refactoring
 
+> Monorepo note: 이 문서는 API 리팩터링 당시의 보존된 계획 문서다. 현재 저장소 운영 규칙은 루트 `AGENTS.md`와 `docs/monorepo-architecture.md`가 우선한다. 아래의 저장소 루트는 `apps/api`를 뜻하고, runtime-neutral 공개 계약은 `packages/contracts`가 소유한다.
+
 `yonyoung-api` repository의 전체 코드를 분석하고, 현재 동작과 API 호환성을 보존하면서 코드 품질, 유지보수성, 테스트 가능성, 개발자 가독성을 크게 개선하는 점진적 리팩터링을 수행하라.
 
 이 작업의 목표는 새로운 기능을 추가하거나 프레임워크를 교체하는 것이 아니다.
@@ -70,7 +72,7 @@ dependency upgrade 또한 refactoring과 섞지 마라. 현재 dependency versio
 * `wrangler.jsonc`
 * `vitest.config.ts`
 * `vitest.workers.config.ts`
-* `.github/workflows/ci.yml`
+* `../../.github/workflows/api-runtime.yml`
 * `README.md`
 * `src/index.ts`
 * `src/app/createApp.ts`

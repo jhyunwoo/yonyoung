@@ -1,5 +1,7 @@
 # yonyoung-web 코드 품질 및 유지보수성 리팩터링
 
+> Monorepo note: 이 문서는 Web 리팩터링 당시의 보존된 계획 문서다. 현재 저장소 운영 규칙은 루트 `AGENTS.md`와 `docs/monorepo-architecture.md`가 우선한다. 아래의 저장소 루트는 `apps/web`을 뜻하며, API 계약의 현재 소유자는 `packages/contracts`다.
+
 `yonyoung-web` 저장소를 전체적으로 분석하고, 기존 기능과 사용자 경험을 변경하지 않는 범위에서 코드 품질, 가독성, 타입 안정성, 테스트 가능성, 유지보수성을 크게 향상시키는 리팩터링을 수행하라.
 
 단순히 계획만 작성하지 말고 실제 코드를 수정하고 검증까지 완료하라.
@@ -27,50 +29,50 @@
 
 코드를 수정하기 전에 반드시 다음 파일을 읽고 기존 프로젝트 규칙과 아키텍처를 파악하라.
 
-* `CLAUDE.md`
-* `README.md`
-* `package.json`
-* `tsconfig.json`
-* `tsconfig.typecheck.json`
-* `eslint.config.mjs`
-* `next.config.ts`
-* `vitest.config.ts`
-* `playwright.config.ts`
-* `.github/workflows/ci.yml`
+- `CLAUDE.md`
+- `README.md`
+- `package.json`
+- `tsconfig.json`
+- `tsconfig.typecheck.json`
+- `eslint.config.mjs`
+- `next.config.ts`
+- `vitest.config.ts`
+- `playwright.config.ts`
+- `../../.github/workflows/ci.yml`
 
 그리고 다음 디렉터리를 전체적으로 조사하라.
 
-* `app/`
-* `features/`
-* `server/`
-* `shared/`
-* `components/`
-* `tests/`
+- `app/`
+- `features/`
+- `server/`
+- `shared/`
+- `components/`
+- `tests/`
 
 `CLAUDE.md`의 프로젝트 고유 규칙은 일반적인 코딩 스타일보다 우선한다.
 
 특히 다음 기존 동작을 절대 임의로 변경하지 마라.
 
-* API proxy 구조
-* Better Auth 인증 흐름
-* 권한 검사
-* Server Action access scope
-* `cacheComponents`
-* `use cache`
-* `cacheTag`
-* `updateTag`
-* admin/public cache invalidation 관계
-* Cloudflare 이미지 loader
-* 이미지 transformation 정책
-* CSP/security headers
-* presigned upload
-* 이미지 dimension 저장
-* gallery layout
-* attachment 기능
-* API request/response contract
-* 공개 URL
-* dashboard URL
-* 테스트에서 사용하는 `data-testid`
+- API proxy 구조
+- Better Auth 인증 흐름
+- 권한 검사
+- Server Action access scope
+- `cacheComponents`
+- `use cache`
+- `cacheTag`
+- `updateTag`
+- admin/public cache invalidation 관계
+- Cloudflare 이미지 loader
+- 이미지 transformation 정책
+- CSP/security headers
+- presigned upload
+- 이미지 dimension 저장
+- gallery layout
+- attachment 기능
+- API request/response contract
+- 공개 URL
+- dashboard URL
+- 테스트에서 사용하는 `data-testid`
 
 주석은 기존 프로젝트 규칙대로 한국어를 사용하라.
 
@@ -102,23 +104,23 @@ baseline에서 실패가 존재한다면 리팩터링으로 인해 발생한 실
 
 추가로 production source의 다음 항목을 조사하라.
 
-* 500줄 이상 파일
-* 지나치게 큰 Client Component
-* 지나치게 큰 custom hook
-* `eslint-disable`
-* `as any`
-* `as unknown as`
-* `@ts-ignore`
-* `@ts-expect-error`
-* TODO/FIXME
-* 반복되는 validation
-* 반복되는 error handling
-* 반복되는 API orchestration
-* mount 시 데이터를 가져오는 `useEffect`
-* props/state를 다시 state로 복제하는 Effect
-* 지나치게 넓은 barrel export
-* 이름과 실제 behavior가 다른 함수
-* `utils.ts`, `helpers.ts`, `shared.ts`에 과도하게 모인 로직
+- 500줄 이상 파일
+- 지나치게 큰 Client Component
+- 지나치게 큰 custom hook
+- `eslint-disable`
+- `as any`
+- `as unknown as`
+- `@ts-ignore`
+- `@ts-expect-error`
+- TODO/FIXME
+- 반복되는 validation
+- 반복되는 error handling
+- 반복되는 API orchestration
+- mount 시 데이터를 가져오는 `useEffect`
+- props/state를 다시 state로 복제하는 Effect
+- 지나치게 넓은 barrel export
+- 이름과 실제 behavior가 다른 함수
+- `utils.ts`, `helpers.ts`, `shared.ts`에 과도하게 모인 로직
 
 이 결과를 바탕으로 실제 수정 우선순위를 결정하되 아래에 명시된 핵심 hotspot은 반드시 조사한다.
 
@@ -164,11 +166,11 @@ server -> app
 
 `app/`은 주로 다음 책임을 갖게 한다.
 
-* routing
-* layout
-* metadata
-* Server Component composition
-* route-specific thin presentation
+- routing
+- layout
+- metadata
+- Server Component composition
+- route-specific thin presentation
 
 business/domain logic은 가능한 경우 `features/`로 이동한다.
 
@@ -184,11 +186,11 @@ Next.js App Router의 Server Component 기본 모델을 최대한 활용한다.
 
 다음에만 Client Component를 사용한다.
 
-* state
-* user event
-* browser API
-* React client hook
-* animation/interaction
+- state
+- user event
+- browser API
+- React client hook
+- animation/interaction
 
 초기 데이터를 가져오기 위해 다음과 같은 패턴을 사용하는 Client Component를 조사한다.
 
@@ -209,12 +211,12 @@ Server page
 
 특히 다음 영역을 조사하라.
 
-* Activity edit
-* Exhibition edit
-* Members settings
-* Generation settings
-* Linktree editor/detail
-* 기타 dashboard editor
+- Activity edit
+- Exhibition edit
+- Members settings
+- Generation settings
+- Linktree editor/detail
+- 기타 dashboard editor
 
 단, browser-only API가 필요한 로직을 억지로 Server Component로 이동하지 마라.
 
@@ -249,10 +251,10 @@ features/dashboard/actions/
 
 `admin-write-core.ts`에는 다음과 같은 truly shared infrastructure만 남긴다.
 
-* writeRequest
-* common result type
-* shared response handling
-* shared access handling
+- writeRequest
+- common result type
+- shared response handling
+- shared access handling
 
 각 domain 파일은 직접 다음을 선언하도록 한다.
 
@@ -264,12 +266,12 @@ delete...
 
 각 mutation의 다음 semantics를 반드시 보존한다.
 
-* path
-* method
-* request schema
-* response schema
-* accessScope
-* cache tags
+- path
+- method
+- request schema
+- response schema
+- accessScope
+- cache tags
 
 특히 cache invalidation tag를 하나라도 누락시키지 마라.
 
@@ -367,8 +369,8 @@ API response는 가능한 경우 기존 Zod schema를 통해 runtime validation�
 다음 파일을 조사한다.
 
 ```text
-shared/contracts/api-contracts.ts
-shared/contracts/api-schemas.ts
+../../packages/contracts/src/api-contracts.ts
+../../packages/contracts/src/api-schemas.ts
 ```
 
 여러 bounded context가 하나의 거대한 파일에 있다면 domain별로 분리한다.
@@ -376,7 +378,7 @@ shared/contracts/api-schemas.ts
 예:
 
 ```text
-shared/contracts/api/
+../../packages/contracts/src/api/
 ├── common.ts
 ├── audit.ts
 ├── generations.ts
@@ -423,22 +425,22 @@ exhibition-edit-form.tsx
 
 각 component가 현재 다음 책임을 동시에 가지고 있는지 확인한다.
 
-* field state
-* validation
-* rich text
-* date conversion
-* cover image
-* detail images
-* object URL lifecycle
-* image sorting
-* file upload
-* upload progress
-* image dimensions
-* API orchestration
-* partial failure recovery
-* routing
-* error UI
-* form UI
+- field state
+- validation
+- rich text
+- date conversion
+- cover image
+- detail images
+- object URL lifecycle
+- image sorting
+- file upload
+- upload progress
+- image dimensions
+- API orchestration
+- partial failure recovery
+- routing
+- error UI
+- form UI
 
 책임을 적절히 분리하라.
 
@@ -463,12 +465,12 @@ features/dashboard/activities/
 
 다음 로직은 가능한 경우 pure function으로 추출하고 unit test를 작성한다.
 
-* validation
-* date transformation
-* API payload construction
-* image order mapping
-* uploaded image mapping
-* weighted upload progress calculation
+- validation
+- date transformation
+- API payload construction
+- image order mapping
+- uploaded image mapping
+- weighted upload progress calculation
 
 기존 `useImageUploadState` 등 이미 존재하는 abstraction을 먼저 재사용하라.
 
@@ -492,16 +494,16 @@ app/(dashboard)/auth/profile/profile-form.tsx
 
 수많은 independent `useState`와 다음 책임이 한 component에 몰려 있다면 분리한다.
 
-* form state
-* validation
-* image selection
-* object URL
-* upload
-* payload mapping
-* API request
-* redirect
-* success/error state
-* UI
+- form state
+- validation
+- image selection
+- object URL
+- upload
+- payload mapping
+- API request
+- redirect
+- success/error state
+- UI
 
 다음과 같은 구조를 검토한다.
 
@@ -546,11 +548,11 @@ app/(dashboard)/dashboard/settings/members/members-grid.tsx
 
 Client Component에는 다음 interactive state만 남기는 것을 목표로 한다.
 
-* search
-* filters
-* selection
-* bulk role update
-* confirmation state
+- search
+- filters
+- selection
+- bulk role update
+- confirmation state
 
 UI는 필요에 따라 다음과 같이 분리한다.
 
@@ -613,15 +615,15 @@ app/(home)/_components/site-header.tsx
 
 다음 concern을 분리할 수 있는지 검토한다.
 
-* scroll state
-* body scroll lock
-* mobile navigation
-* theme mode
-* system theme subscription
-* localStorage
-* DOM dataset synchronization
-* theme switch UI
-* animation
+- scroll state
+- body scroll lock
+- mobile navigation
+- theme mode
+- system theme subscription
+- localStorage
+- DOM dataset synchronization
+- theme switch UI
+- animation
 
 필요하다면 다음 정도의 hook/component를 만들 수 있다.
 
@@ -657,13 +659,13 @@ react-hooks/refs
 
 각 violation을 직접 조사하고 다음 유형으로 분류한다.
 
-* unnecessary derived state
-* valid external synchronization
-* browser subscription
-* DOM measurement
-* invalid ref access
-* impure render
-* lifecycle workaround
+- unnecessary derived state
+- valid external synchronization
+- browser subscription
+- DOM measurement
+- invalid ref access
+- impure render
+- lifecycle workaround
 
 derived state는 render 단계로 옮긴다.
 
@@ -698,9 +700,9 @@ lint error를 없애기 위해 동작을 바꾸거나 dependency array를 임의
 다음 방식은 금지한다.
 
 ```ts
-value!
-value as Something
-value as unknown as Something
+value!;
+value as Something;
+value as unknown as Something;
 ```
 
 를 단순히 type checker를 통과시키기 위한 용도로 추가하는 것.
@@ -736,13 +738,13 @@ API contract 정리 후에는 다음도 평가한다.
 
 특히 다음 종류의 오류를 잡을 수 있도록 한다.
 
-* floating Promise
-* Promise misuse
-* unnecessary conditions
-* unsafe member access
-* unsafe assignment
-* exhaustive discriminated union handling
-* inconsistent type imports
+- floating Promise
+- Promise misuse
+- unnecessary conditions
+- unsafe member access
+- unsafe assignment
+- exhaustive discriminated union handling
+- inconsistent type imports
 
 lint performance가 크게 악화되는 경우 원인을 측정한 뒤 설정한다.
 
@@ -818,18 +820,18 @@ failure
 
 우선 다음을 테스트한다.
 
-* form validation
-* DTO mapping
-* date conversion
-* upload progress
-* image ordering
-* profile payload
-* member filtering
-* member selection
-* generation reducer
-* generation selectors
-* API parser
-* error/result transformation
+- form validation
+- DTO mapping
+- date conversion
+- upload progress
+- image ordering
+- profile payload
+- member filtering
+- member selection
+- generation reducer
+- generation selectors
+- API parser
+- error/result transformation
 
 Vitest coverage scope에 새로 추출된 중요한 pure modules를 추가한다.
 
@@ -849,17 +851,17 @@ Playwright에서는 기존 사용자가 보는 behavior를 유지한다.
 
 다음 리팩터링은 하지 마라.
 
-* 모든 CRUD를 generic factory 하나로 만들기
-* 모든 form을 GenericForm 하나로 만들기
-* 모든 state를 Context로 옮기기
-* 모든 fetch를 custom hook으로 추상화하기
-* 단순 JSX를 의미 없이 수십 개 파일로 나누기
-* 단순 boolean 계산에 useMemo 추가하기
-* useCallback을 습관적으로 추가하기
-* 새로운 state management library 추가
-* 새로운 form library 추가
-* 새로운 fetching library 추가
-* line count만 맞추기 위한 분할
+- 모든 CRUD를 generic factory 하나로 만들기
+- 모든 form을 GenericForm 하나로 만들기
+- 모든 state를 Context로 옮기기
+- 모든 fetch를 custom hook으로 추상화하기
+- 단순 JSX를 의미 없이 수십 개 파일로 나누기
+- 단순 boolean 계산에 useMemo 추가하기
+- useCallback을 습관적으로 추가하기
+- 새로운 state management library 추가
+- 새로운 form library 추가
+- 새로운 fetching library 추가
+- line count만 맞추기 위한 분할
 
 중복 제거보다 명확한 domain semantics를 우선한다.
 
@@ -920,27 +922,27 @@ pnpm test:e2e:full
 
 리팩터링 중 다음 동작의 regression이 발생하지 않는지 특히 검증한다.
 
-* 로그인
-* profile setup
-* profile edit
-* dashboard authorization
-* generation management
-* member role update
-* activity create/edit/delete
-* activity image upload/order/delete
-* exhibition create/edit/delete
-* exhibition image upload/order/delete
-* attachments
-* linktree
-* site settings
-* recruiting settings
-* public archive
-* gallery
-* lightbox
-* theme switching
-* desktop/mobile navigation
-* image CDN
-* public cache invalidation
+- 로그인
+- profile setup
+- profile edit
+- dashboard authorization
+- generation management
+- member role update
+- activity create/edit/delete
+- activity image upload/order/delete
+- exhibition create/edit/delete
+- exhibition image upload/order/delete
+- attachments
+- linktree
+- site settings
+- recruiting settings
+- public archive
+- gallery
+- lightbox
+- theme switching
+- desktop/mobile navigation
+- image CDN
+- public cache invalidation
 
 API request shape나 URL을 바꾸지 않는다.
 
@@ -952,12 +954,12 @@ API request shape나 URL을 바꾸지 않는다.
 
 특히 다음을 실제 코드와 일치시키라.
 
-* action architecture
-* API module architecture
-* contract locations
-* Server/Client data-fetching rule
-* import dependency rule
-* testing rule
+- action architecture
+- API module architecture
+- contract locations
+- Server/Client data-fetching rule
+- import dependency rule
+- testing rule
 
 필요하다면 별도의 `docs/architecture.md`를 만들 수 있다.
 
@@ -979,27 +981,27 @@ cache tag는 어디에서 invalidation하는가?
 
 최종적으로 다음 조건을 만족하는지 확인하라.
 
-* 기존 기능 regression 없음
-* 기존 API contract 유지
-* 기존 auth behavior 유지
-* 기존 cache invalidation 유지
-* 기존 CSP/image behavior 유지
-* `admin-write-actions.ts` God Module 제거
-* domain action이 실제 implementation 소유
-* API/contract 모듈의 책임이 명확해짐
-* 대형 Client Component 책임 분리
-* Server Component에서 가능한 initial fetching은 server로 이동
-* global React hooks lint disable 제거 또는 최대한 축소
-* 새 `any` 없음
-* 새 불필요한 `unknown as` cast 없음
-* TypeScript strictness 개선
-* business logic unit tests 증가
-* 기존 coverage threshold 유지
-* lint 통과
-* typecheck 통과
-* unit tests 통과
-* E2E 통과
-* 프로젝트 문서와 실제 architecture 일치
+- 기존 기능 regression 없음
+- 기존 API contract 유지
+- 기존 auth behavior 유지
+- 기존 cache invalidation 유지
+- 기존 CSP/image behavior 유지
+- `admin-write-actions.ts` God Module 제거
+- domain action이 실제 implementation 소유
+- API/contract 모듈의 책임이 명확해짐
+- 대형 Client Component 책임 분리
+- Server Component에서 가능한 initial fetching은 server로 이동
+- global React hooks lint disable 제거 또는 최대한 축소
+- 새 `any` 없음
+- 새 불필요한 `unknown as` cast 없음
+- TypeScript strictness 개선
+- business logic unit tests 증가
+- 기존 coverage threshold 유지
+- lint 통과
+- typecheck 통과
+- unit tests 통과
+- E2E 통과
+- 프로젝트 문서와 실제 architecture 일치
 
 ---
 
@@ -1031,11 +1033,11 @@ Client에서 Server로 이동한 데이터 fetching과 남겨 둔 Client state�
 
 가능하면 다음 before/after를 비교한다.
 
-* 500줄 이상 production files
-* global ESLint disables
-* unsafe casts
-* tested pure modules
-* 주요 hotspot file line counts
+- 500줄 이상 production files
+- global ESLint disables
+- unsafe casts
+- tested pure modules
+- 주요 hotspot file line counts
 
 ## Validation
 

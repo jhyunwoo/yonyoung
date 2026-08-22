@@ -2,7 +2,7 @@
 
 연세대학교 중앙사진동아리 연영회의 공개 웹사이트와 내부 운영 대시보드를 함께 제공하는 Next.js 애플리케이션입니다. 공개 활동·전시 아카이브, 사진가 소개, 리크루팅, 후원, 링크트리와 회원·기수·콘텐츠·사이트 설정을 관리하는 대시보드가 한 저장소에 있습니다.
 
-이 저장소는 웹 프런트엔드와 Backend for Frontend(BFF) 역할만 담당합니다. 인증, 데이터 저장, R2 업로드 서명 등 실제 비즈니스 API는 별도의 `yonyoung-api`가 담당합니다.
+이 workspace는 웹 프런트엔드와 Backend for Frontend(BFF) 역할만 담당합니다. 인증, 데이터 저장, R2 업로드 서명 등 실제 비즈니스 API는 같은 monorepo의 독립 배포 서비스 `@yonyoung/api`가 담당합니다.
 
 ## 기술 스택
 
@@ -23,8 +23,8 @@
 
 ### 요구 사항
 
-- Node.js `22.12.0` (`.nvmrc`)
-- pnpm `11.21.0` (`package.json#packageManager`)
+- Node.js `22.23.2` (저장소 루트 `.nvmrc`)
+- pnpm `11.21.0` (저장소 루트 `package.json#packageManager`)
 - 전체 E2E 테스트를 실행할 경우 Chromium과 Linux 런타임 라이브러리
 
 ### TypeScript 5와 7을 함께 설치하는 이유
@@ -36,6 +36,7 @@
 Corepack을 쓰는 환경에서는 저장소에 고정된 pnpm 버전을 그대로 사용할 수 있습니다.
 
 ```bash
+cd ../..
 nvm use
 corepack enable
 pnpm install --frozen-lockfile
@@ -44,7 +45,7 @@ pnpm install --frozen-lockfile
 환경 변수 예시를 복사합니다.
 
 ```bash
-cp .env.example .env
+cp apps/web/.env.example apps/web/.env
 ```
 
 개발 서버를 실행한 뒤 [http://localhost:3000](http://localhost:3000)을 엽니다.
@@ -53,7 +54,7 @@ cp .env.example .env
 pnpm dev
 ```
 
-로컬 API를 함께 개발할 때는 별도 `yonyoung-api` 개발 서버를 실행하고 `.env`의 `API_BASE_URL`을 그 주소로 바꾸십시오.
+루트 `pnpm dev`는 Web과 API를 함께 실행합니다. Web만 실행하려면 `pnpm dev:web`, API만 실행하려면 `pnpm dev:api`를 사용합니다. `apps/web` 안의 패키지 명령도 계속 동작합니다.
 
 ## 환경 변수
 
@@ -139,7 +140,6 @@ App Router의 route group 두 개가 각각 독립적인 루트 레이아웃과 
 │   ├── observability/          # 구조화 로그와 민감정보 제거
 │   └── security/               # 프록시 allowlist, CSRF, body limit, origin 검사
 ├── shared/
-│   ├── contracts/              # API 타입과 Zod 런타임 스키마
 │   ├── http/                   # 클라이언트/서버 공용 HTTP 유틸리티
 │   └── security/               # 공용 CSRF 헤더
 ├── tests/
@@ -178,10 +178,10 @@ Browser
 
 ### API 계약
 
-- TypeScript 형태: `shared/contracts/api-contracts.ts`
-- 런타임 검증: `shared/contracts/api-schemas.ts`
+- TypeScript 형태와 런타임 Zod 검증: `@yonyoung/contracts` 공개 subpath
+- 권위 있는 소스: monorepo 루트 `packages/contracts/src/`
 
-이 계약은 별도 API 저장소와 자동 생성되지 않으므로 수동으로 동기화해야 합니다. API 응답 필드가 추가·변경되면 타입, Zod 스키마, mock API seed/handler, 단위/E2E 테스트를 함께 수정하십시오.
+Web과 API는 같은 계약 package를 사용합니다. API feature는 shared schema에 OpenAPI metadata를 더하고, API의 compile-time compatibility test와 OpenAPI snapshot이 소비자 형태의 드리프트를 검출합니다. API 응답 필드가 추가·변경되면 계약, API wrapper/snapshot, mock API seed/handler, 단위/E2E 테스트를 함께 수정하십시오.
 
 ### 캐시
 
@@ -242,30 +242,30 @@ Playwright wrapper인 `scripts/run-playwright.sh`는 Chromium을 준비하고, L
 
 ## CI/CD
 
-`.github/workflows/ci.yml`은 `main`·`dev` push, 두 브랜치를 대상으로 한 pull request, 수동 실행에서 동작합니다.
+monorepo 루트 `.github/workflows/ci.yml`은 `main`·`dev` push, 두 브랜치를 대상으로 한 pull request, 수동 실행에서 동작합니다.
 
 1. `Quality gates`
    - 저장소에 고정된 pnpm 버전 설치
    - Node `.nvmrc` 버전과 pnpm store cache 사용
    - frozen lockfile 설치
-   - vendored font, ESLint, TypeScript 검사
-   - 커버리지 threshold를 포함한 Vitest 실행
+   - root formatting과 package boundary 검사
+   - Turbo affected graph에 따라 vendored font, formatting, ESLint, TypeScript, coverage, build 실행
 2. `E2E (Chromium)`
-   - Quality gates 성공 후 실행
+   - Quality gates 성공 후 Web이 영향받은 경우에만 실행; 아니면 안정적인 check 이름으로 성공 no-op
    - Chromium과 OS 의존성 설치
    - mock API + 프로덕션 빌드 기반 전체 Playwright 실행
    - 실패 시 trace/video/screenshot artifact 업로드
 
 같은 PR/ref에 새 커밋이 올라오면 이전 실행은 concurrency 설정으로 취소됩니다. GitHub Actions의 pnpm 버전은 `package.json#packageManager` 한 곳에서만 관리하므로 workflow에 별도 `version`을 다시 쓰지 마십시오.
 
-현재 배포는 GitHub Actions가 서버에 직접 접속하는 방식이 아니라 Dokploy/Nixpacks의 저장소 연동이 담당합니다. 따라서 Actions의 두 job을 모두 필수 status check로 설정하고, 성공한 커밋만 Dokploy 배포 브랜치에 병합하는 것이 release gate입니다. 실제 Dokploy 배포 성공 여부와 health check는 별도 운영 화면에서 확인해야 합니다.
+현재 배포는 GitHub Actions가 서버에 직접 접속하는 방식이 아니라 Dokploy/Nixpacks의 저장소 연동이 담당합니다. Dokploy의 build context는 monorepo 루트여야 하고 scoped Web build를 사용합니다. 실제 Dokploy 배포 성공 여부와 health check는 별도 운영 화면에서 확인해야 합니다.
 
 ## 배포 시 주의 사항
 
 - 빌드와 런타임 모두 `API_BASE_URL`이 필요합니다.
 - `NEXT_PUBLIC_SITE_URL`은 사용자가 접근하는 HTTPS 공개 origin이어야 합니다.
 - reverse proxy가 원래 host/protocol을 보존하도록 구성해야 OAuth cookie와 callback origin이 일치합니다.
-- `pnpm install --frozen-lockfile`, `pnpm build`, `pnpm start` 순서를 사용합니다.
+- monorepo 루트 context에서 `pnpm install --frozen-lockfile`, `pnpm turbo run build --filter=@yonyoung/web...`, `pnpm --filter @yonyoung/web start` 순서를 사용합니다.
 - 빌드 시점에 API가 닿아야 활동·전시 상세가 사전 렌더링됩니다. API가 닿지 않아도 빌드는 통과하지만(플레이스홀더 param으로 폴백) 상세 페이지가 하나도 구워지지 않고 sitemap에도 정적 경로만 남습니다.
 - 게시물 OG 이미지를 빌드 시점 PNG로 굽기 위해서는 `NEXT_PUBLIC_IMAGE_CDN_BASE_URL` 호스트도 빌드 중에 닿아야 합니다. 닿지 않으면 대표 사진을 못 받아 해당 OG 라우트만 요청 시점 렌더링(`ƒ`)으로 내려갑니다 — 내용은 그대로 맞고 다음 빌드에서 자동으로 정적으로 돌아옵니다.
 - Turbopack의 빌드 파일시스템 캐시는 16.3부터 기본으로 켜져 있지만 `.next/cache`에 저장됩니다. Nixpacks 컨테이너 빌드는 매번 깨끗한 레이어에서 시작하므로, 이 캐시로 빌드를 빠르게 하려면 Dokploy에서 `.next/cache`를 볼륨으로 마운트해야 합니다. 마운트하지 않을 계획이면 `next.config.ts`에 `experimental.turbopackFileSystemCacheForBuild: false`를 넣어 읽히지 않을 캐시를 쓰는 비용을 없앨 수 있습니다.

@@ -1,135 +1,180 @@
-# Turborepo starter
+# Yonyoung monorepo
 
-This Turborepo starter is maintained by the Turborepo core team.
+Production repository for the Yonyoung website and API. The repository uses one
+pnpm workspace and Turborepo task graph while retaining two independently
+deployed runtimes:
 
-## Using this example
+- `@yonyoung/web`: Next.js 16 application, browser-facing BFF, and Dokploy/Nixpacks deployment.
+- `@yonyoung/api`: Hono application on Cloudflare Workers with D1, R2, KV, Analytics Engine, and the `PublicApi` Worker entrypoint.
+- `@yonyoung/contracts`: runtime-neutral public DTOs, Zod consumer schemas, auth roles, profile rules, and upload allowlists.
+- `@yonyoung/eslint-config`: small architecture-boundary helpers; each app retains its runtime-specific lint rules and dependency versions.
+- `@yonyoung/typescript-config`: reusable compiler primitives; each app retains its own TypeScript compiler and runtime options.
 
-Run the following command:
-
-```sh
-npx create-turbo@latest
+```text
+                         @yonyoung/contracts
+                           /             \
+                          v               v
+             @yonyoung/web                 @yonyoung/api
+             Next.js + BFF                 Hono + Workers
+             Dokploy                       Cloudflare
 ```
 
-## What's inside?
+The browser still calls the web application's same-origin `/api/*` BFF. The API
+remains a separate Worker. Consolidating the repositories does not create a
+runtime trust relationship between the applications.
 
-This Turborepo includes the following packages/apps:
+## Repository layout
 
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+```text
+apps/
+  web/                    Next.js app, BFF, Vitest and Playwright tests
+  api/                    Worker source, D1 migrations, Wrangler and tests
+packages/
+  contracts/              public runtime-neutral contracts
+  eslint-config/          shared boundary-rule primitives
+  typescript-config/      shared compiler-option primitives
+tooling/
+  check-boundaries.mjs    cross-workspace import guard
+docs/
+  monorepo-architecture.md
+  ci-and-caching.md
+  deployment-and-cutover.md
+  migration-history.md
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+Application-specific architecture remains documented in
+[`apps/web/docs/architecture.md`](apps/web/docs/architecture.md) and
+[`apps/api/docs/architecture.md`](apps/api/docs/architecture.md).
 
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+## Prerequisites and install
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+- Node `22.23.2` (see `.nvmrc`; pnpm 11 requires Node `>=22.13`)
+- Corepack
+- pnpm `11.21.0`, pinned by the root `packageManager` field
 
-### Develop
-
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
+```bash
+nvm use
+corepack enable
+pnpm install --frozen-lockfile
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+There is exactly one workspace and lockfile. Do not run a second package-manager
+install inside either app or commit nested lockfiles.
 
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
+## Environment ownership
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
+Each runtime owns its environment. Do not create a combined root secret file.
 
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+```bash
+cp apps/web/.env.example apps/web/.env.local
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+Set `API_BASE_URL` to the origin printed by the local Wrangler process when doing
+full-stack development. `NEXT_PUBLIC_SITE_URL` and
+`NEXT_PUBLIC_IMAGE_CDN_BASE_URL` are build inputs because Next.js can embed them.
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+The API's non-secret bindings and production resource IDs remain in
+`apps/api/wrangler.jsonc`. Keep local Worker secrets in an ignored
+`apps/api/.dev.vars` file or use Wrangler secret management; never commit them.
+See [`apps/api/README.md`](apps/api/README.md) for binding-specific details.
 
+## Development
+
+```bash
+pnpm dev              # web + API; API applies local D1 migrations first
+pnpm dev:web
+pnpm dev:api
+
+pnpm --filter @yonyoung/web dev
+pnpm --filter @yonyoung/api dev
 ```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+Turbo runs package scripts with the package as the working directory, so existing
+Next.js, Playwright, Wrangler, Drizzle, asset, and migration relative paths retain
+their application-local meaning.
+
+## Quality and tests
+
+```bash
+pnpm lint
+pnpm format:check
+pnpm typecheck
+pnpm test:unit
+pnpm test:workers
+pnpm test:coverage
+pnpm test:integration
+pnpm test:e2e:full
+pnpm build
+pnpm build:ci       # starts the deterministic Web mock API for static generation
+pnpm quality
 ```
 
-## Useful Links
+Focused examples:
 
-Learn more about the power of Turborepo:
+```bash
+pnpm --filter @yonyoung/web test:unit:coverage
+pnpm --filter @yonyoung/web test:e2e:full
+pnpm --filter @yonyoung/api test
+pnpm --filter @yonyoung/api test:integration
+pnpm turbo run build --filter=@yonyoung/web...
+pnpm turbo run typecheck --filter=@yonyoung/api...
+```
 
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+`pnpm test` intentionally includes each package's complete `test` script and is
+not cached. Playwright, Workers-runtime, integration, deployment, and database
+mutation tasks are also uncached. Deterministic lint, typecheck, build, unit, and
+coverage tasks may use the local or remote Turbo cache.
+
+## Contracts
+
+Both applications declare `@yonyoung/contracts` as a real workspace dependency.
+Web code imports public subpaths such as `@yonyoung/contracts/users`; it never
+imports Worker implementation files. API OpenAPI schemas retain API-only UUID,
+authorization-neutral validation, examples, descriptions, and Hono metadata.
+
+`apps/api/src/tests/contract-compatibility.types.ts` makes API response shapes
+assignable to consumer schemas and consumer request shapes assignable to API
+schemas. API OpenAPI snapshot/quality tests and package runtime tests provide the
+other drift gates. A contract change therefore invalidates and validates both
+applications through the workspace graph.
+
+## Turbo and affected execution
+
+```bash
+pnpm turbo ls
+pnpm turbo ls --affected
+pnpm turbo run lint typecheck test:coverage build --affected
+pnpm turbo run build --dry
+```
+
+An app-only implementation change affects that app. A contracts change affects
+both apps. Shared configuration changes invalidate the tasks that consume that
+configuration. Root/global configuration changes invalidate all relevant tasks.
+See [`docs/ci-and-caching.md`](docs/ci-and-caching.md).
+
+## Database and deployment safety
+
+Database mutation and production deployment are never build side effects:
+
+```bash
+pnpm db:generate
+pnpm db:migrate:local
+pnpm db:migrate:remote        # explicit production-sensitive action
+pnpm deploy:dry-run
+pnpm deploy:api               # deploys the existing yonyoung-api Worker
+pnpm deploy:web:build         # builds web plus internal dependencies
+```
+
+The complete production setup, external dashboard checklist, smoke tests, and
+rollback sequence are in
+[`docs/deployment-and-cutover.md`](docs/deployment-and-cutover.md). Do not archive
+the source repositories until production cutover and rollback verification are
+complete.
+
+## Additional references
+
+- [`docs/monorepo-architecture.md`](docs/monorepo-architecture.md)
+- [`docs/migration-history.md`](docs/migration-history.md)
+- [`apps/web/README.md`](apps/web/README.md)
+- [`apps/api/README.md`](apps/api/README.md)
+- [`apps/api/docs/permissions.md`](apps/api/docs/permissions.md)

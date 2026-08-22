@@ -251,13 +251,13 @@ components:
 > 저장소 루트의 `DESIGN.md`(Notion Analysis)는 **`app/(dashboard)` 관리자 화면**의 근거 문서다.
 > 두 문서는 의도적으로 다른 디자인 언어를 기술하며, **서로 섞어 쓰면 안 된다.**
 >
-> | | `MAINDESIGN.md` (공개 사이트) | `DESIGN.md` (대시보드) |
-> |---|---|---|
-> | 모서리 | **0px** (각짐) | 8~16px (둥금) |
-> | 구조 표현 | **1px 테두리** | 그림자 + 헤어라인 |
-> | 액센트 | 없음 — 잉크 남색 `#2c3357` 하나 | Notion 블루 `#0075de` |
-> | 바탕 | 순백 `#ffffff` | 웜 페이퍼 `#f6f5f4` |
-> | 제목 굵기 | 큰 글자일수록 **얇게(400)** | 항상 700 |
+> |           | `MAINDESIGN.md` (공개 사이트)     | `DESIGN.md` (대시보드)           |
+> | --------- | --------------------------------- | -------------------------------- |
+> | 모서리    | **0px** (각짐)                    | 8~16px (둥금)                    |
+> | 구조 표현 | **1px 테두리**                    | 그림자 + 헤어라인                |
+> | 액센트    | 없음 — 잉크 남색 `#2c3357` 하나   | Notion 블루 `#0075de`            |
+> | 바탕      | 순백 `#ffffff`                    | 웜 페이퍼 `#f6f5f4`              |
+> | 제목 굵기 | 큰 글자일수록 **얇게(400)**       | 항상 700                         |
 > | 토큰 접두 | `--bg-*` `--surface-*` `--text-*` | `--canvas` `--surface` `--ink-*` |
 >
 > 토큰 실체는 `app/(home)/globals.css`의 `:root` / `.dark` 블록이다. 이 문서와 그 파일이 어긋나면 **CSS가 사실이고 이 문서가 갱신 대상**이다.
@@ -294,23 +294,23 @@ components:
 
 ### 전체 토큰 표
 
-| 토큰 | 라이트 | 다크 | Tailwind 사용법 | 용도 |
-| --- | --- | --- | --- | --- |
-| `{colors.bg-primary}` | `#ffffff` | `#0d0f12` | `bg-(--bg-primary)` | 페이지 최상위 바탕 |
-| `{colors.bg-secondary}` | `#f7f9fc` | `#12151a` | `bg-(--bg-secondary)` | 넓은 영역을 한 단계 누를 때 |
-| `{colors.surface-elevated}` | `#ffffff` | `#171b21` | `bg-(--surface-elevated)` | 카드 · 패널 · 헤더 · 드롭다운 |
-| `{colors.surface-muted}` | `#f2f5fb` | `#1d232b` | `bg-(--surface-muted)` | 카드 내부 눌린 블록 · hover 바탕 · 스켈레톤 |
-| `{colors.surface-border}` | `#bfbfbf` | `#303845` | `border-(--surface-border)` | 흐린 헤어라인 (비강조 카드 · 구분선) |
-| `{colors.surface-strong-border}` | `#333333` | `#465162` | `border-(--surface-strong-border)` | 구조 테두리 (기본 카드 · 버튼) |
-| `{colors.text-primary}` | `#2c3357` | `#f3f4f6` | `text-(--text-primary)` | 제목 · 강조 본문 · 링크 |
-| `{colors.text-secondary}` | `#4e556e` | `#d2d7df` | `text-(--text-secondary)` | 리치 텍스트 본문 (전시/활동 설명) |
-| `{colors.text-muted}` | `#666666` | `#a4acb8` | `text-(--text-muted)` | 설명문 · 메타 · eyebrow |
-| `{colors.accent}` | `#2c3357` | `#cfd6e2` | `bg-(--accent)` | 유일한 채움 액션 |
-| `{colors.accent-foreground}` | `#ffffff` | `#11151b` | `text-(--accent-foreground)` | `accent` 위의 글자 |
-| `{colors.footer-bg}` | `#1a1a1a` | `#0b0d11` | `bg-(--footer-bg)` | 푸터 밴드 (양 테마 모두 어두움) |
-| `{colors.footer-text}` | `#ffffff` | `#f3f4f6` | `text-(--footer-text)` | 푸터 강조 글자 |
-| `{colors.footer-muted}` | `#999999` | `#97a0ad` | `text-(--footer-muted)` | 푸터 본문 · 링크 |
-| `{colors.shadow-strong}` | `rgba(44,51,87,.1)` | `rgba(0,0,0,.48)` | `shadow-[0_2px_10px_var(--shadow-strong)]` | 그림자 색 |
+| 토큰                             | 라이트              | 다크              | Tailwind 사용법                            | 용도                                        |
+| -------------------------------- | ------------------- | ----------------- | ------------------------------------------ | ------------------------------------------- |
+| `{colors.bg-primary}`            | `#ffffff`           | `#0d0f12`         | `bg-(--bg-primary)`                        | 페이지 최상위 바탕                          |
+| `{colors.bg-secondary}`          | `#f7f9fc`           | `#12151a`         | `bg-(--bg-secondary)`                      | 넓은 영역을 한 단계 누를 때                 |
+| `{colors.surface-elevated}`      | `#ffffff`           | `#171b21`         | `bg-(--surface-elevated)`                  | 카드 · 패널 · 헤더 · 드롭다운               |
+| `{colors.surface-muted}`         | `#f2f5fb`           | `#1d232b`         | `bg-(--surface-muted)`                     | 카드 내부 눌린 블록 · hover 바탕 · 스켈레톤 |
+| `{colors.surface-border}`        | `#bfbfbf`           | `#303845`         | `border-(--surface-border)`                | 흐린 헤어라인 (비강조 카드 · 구분선)        |
+| `{colors.surface-strong-border}` | `#333333`           | `#465162`         | `border-(--surface-strong-border)`         | 구조 테두리 (기본 카드 · 버튼)              |
+| `{colors.text-primary}`          | `#2c3357`           | `#f3f4f6`         | `text-(--text-primary)`                    | 제목 · 강조 본문 · 링크                     |
+| `{colors.text-secondary}`        | `#4e556e`           | `#d2d7df`         | `text-(--text-secondary)`                  | 리치 텍스트 본문 (전시/활동 설명)           |
+| `{colors.text-muted}`            | `#666666`           | `#a4acb8`         | `text-(--text-muted)`                      | 설명문 · 메타 · eyebrow                     |
+| `{colors.accent}`                | `#2c3357`           | `#cfd6e2`         | `bg-(--accent)`                            | 유일한 채움 액션                            |
+| `{colors.accent-foreground}`     | `#ffffff`           | `#11151b`         | `text-(--accent-foreground)`               | `accent` 위의 글자                          |
+| `{colors.footer-bg}`             | `#1a1a1a`           | `#0b0d11`         | `bg-(--footer-bg)`                         | 푸터 밴드 (양 테마 모두 어두움)             |
+| `{colors.footer-text}`           | `#ffffff`           | `#f3f4f6`         | `text-(--footer-text)`                     | 푸터 강조 글자                              |
+| `{colors.footer-muted}`          | `#999999`           | `#97a0ad`         | `text-(--footer-muted)`                    | 푸터 본문 · 링크                            |
+| `{colors.shadow-strong}`         | `rgba(44,51,87,.1)` | `rgba(0,0,0,.48)` | `shadow-[0_2px_10px_var(--shadow-strong)]` | 그림자 색                                   |
 
 ### 액센트에 대한 규칙
 
@@ -332,17 +332,17 @@ hover 시 **흐린 선 → 진한 선**으로 승격하는 것이 이 사이트�
 
 WCAG 기준 실측값이다. 모든 텍스트 조합은 AA(4.5:1)를 통과한다.
 
-| 조합 | 라이트 | 다크 | 판정 |
-| --- | --- | --- | --- |
-| `text-primary` on `bg-primary` | 12.22 | 17.44 | AA ✅ |
-| `text-primary` on `surface-muted` | 11.19 | 14.37 | AA ✅ |
-| `text-secondary` on `surface-elevated` | 7.37 | 11.95 | AA ✅ |
-| `text-muted` on `bg-primary` | 5.74 | 8.38 | AA ✅ |
-| `text-muted` on `surface-muted` | 5.26 | 6.91 | AA ✅ |
-| `accent-foreground` on `accent` | 12.22 | 12.53 | AA ✅ |
-| `footer-muted` on `footer-bg` | 6.11 | 7.36 | AA ✅ |
-| `surface-strong-border` on `bg-primary` | 12.63 | **2.39** | 다크 ⚠️ |
-| `surface-border` on `bg-primary` | 1.84 | 1.62 | 장식 전용 ⚠️ |
+| 조합                                    | 라이트 | 다크     | 판정         |
+| --------------------------------------- | ------ | -------- | ------------ |
+| `text-primary` on `bg-primary`          | 12.22  | 17.44    | AA ✅        |
+| `text-primary` on `surface-muted`       | 11.19  | 14.37    | AA ✅        |
+| `text-secondary` on `surface-elevated`  | 7.37   | 11.95    | AA ✅        |
+| `text-muted` on `bg-primary`            | 5.74   | 8.38     | AA ✅        |
+| `text-muted` on `surface-muted`         | 5.26   | 6.91     | AA ✅        |
+| `accent-foreground` on `accent`         | 12.22  | 12.53    | AA ✅        |
+| `footer-muted` on `footer-bg`           | 6.11   | 7.36     | AA ✅        |
+| `surface-strong-border` on `bg-primary` | 12.63  | **2.39** | 다크 ⚠️      |
+| `surface-border` on `bg-primary`        | 1.84   | 1.62     | 장식 전용 ⚠️ |
 
 **여기서 나오는 강제 규칙 두 가지:**
 
@@ -391,30 +391,30 @@ Pretendard 단일 패밀리로 한글·라틴·숫자를 모두 처리한다. �
 
 이 시스템에서 가장 중요한 타이포 규칙이다. 위반하면 즉시 다른 사이트처럼 보인다.
 
-| 글자 크기 | 굵기 | 근거 |
-| --- | --- | --- |
+| 글자 크기    | 굵기                                 | 근거                                                                                          |
+| ------------ | ------------------------------------ | --------------------------------------------------------------------------------------------- |
 | **≥ 1.7rem** | **400** (`font-normal`, 클래스 생략) | 큰 한글을 굵게 쓰면 획이 뭉쳐 덩어리가 된다. 얇게 + 좁은 자간이 편집 디자인의 목소리를 만든다 |
-| 1.1 ~ 1.3rem | 400 또는 600 | 카드 제목은 400, 소제목(h3)은 600 |
-| ≤ 1rem | 600 / 700 | 작은 글자는 굵어야 라벨로 읽힌다 |
+| 1.1 ~ 1.3rem | 400 또는 600                         | 카드 제목은 400, 소제목(h3)은 600                                                             |
+| ≤ 1rem       | 600 / 700                            | 작은 글자는 굵어야 라벨로 읽힌다                                                              |
 
 Tailwind preflight가 `h1`~`h6`의 `font-weight`를 `inherit`으로 초기화하므로, **굵기 클래스를 생략하면 자동으로 400**이 된다. 큰 제목에는 굵기 클래스를 **쓰지 않는 것이 정답**이다.
 
 ### 스케일
 
-| 토큰 | 크기 (모바일 → md) | 굵기 | 행간 | 자간 | Tailwind | 용도 |
-| --- | --- | --- | --- | --- | --- | --- |
-| `{typography.display}` | 3.75rem → 6rem | 400 | 0.96 | −0.02em | `text-6xl md:text-8xl leading-[0.96] tracking-[-0.02em]` | 홈 히어로 h1 — **홈에서 단 1회** |
-| `{typography.headline}` | 2.2rem → 2.5rem | 400 | 1.15 | −0.02em | `text-[2.2rem] md:text-[2.5rem] leading-tight tracking-[-0.02em]` | `SectionShell` 섹션 제목 (h2) |
-| `{typography.page-title}` | 2rem → 3rem | 400 | 1.2 | −0.02em | `text-[2rem] md:text-[3rem] leading-[1.2] tracking-[-0.02em]` | `PageTitleHero` 페이지 제목 (h1) |
-| `{typography.title-lg}` | 1.7rem | 400 | 1.25 | −0.02em | `text-[1.7rem] tracking-[-0.02em]` | 히어로 전시 카드 제목 |
-| `{typography.title-md}` | 1.3rem | 400 | 1.2 | −0.02em | `text-[1.3rem] leading-tight tracking-[-0.02em]` | 미디어 카드 제목 (h3) |
-| `{typography.title-sm}` | 1.125rem | 600 | 1.4 | 0 | `text-lg font-semibold` | 소개 카드 소제목 |
-| `{typography.body-lg}` | 1.125rem | 400 | 1.6 | 0 | `text-lg` | 페이지 제목 밑 설명문 |
-| `{typography.body}` | 1rem | 400 | 1.6 (본문 1.8) | 0 | `text-base leading-relaxed` | 일반 본문 |
-| `{typography.body-sm}` | 0.875rem | 400 | 1.6 | 0 | `text-sm leading-relaxed` | 카드 설명 · 메타 · 푸터 (**가장 많이 쓰임**) |
-| `{typography.label}` | 0.875rem | 600 | 1.5 | +0.08em | `text-sm font-semibold uppercase tracking-[0.08em]` | 버튼 라벨 · 데스크톱 내비 |
-| `{typography.eyebrow}` | 0.75rem | 600 | 1.35 | +0.12em | `text-xs font-semibold uppercase tracking-[0.12em]` | 섹션 eyebrow · 카드 메타 라벨 |
-| `{typography.caption}` | 0.75rem | 400 | 1.5 | 0 | `text-xs` | 저작권 · 보조 설명 |
+| 토큰                      | 크기 (모바일 → md) | 굵기 | 행간           | 자간    | Tailwind                                                          | 용도                                         |
+| ------------------------- | ------------------ | ---- | -------------- | ------- | ----------------------------------------------------------------- | -------------------------------------------- |
+| `{typography.display}`    | 3.75rem → 6rem     | 400  | 0.96           | −0.02em | `text-6xl md:text-8xl leading-[0.96] tracking-[-0.02em]`          | 홈 히어로 h1 — **홈에서 단 1회**             |
+| `{typography.headline}`   | 2.2rem → 2.5rem    | 400  | 1.15           | −0.02em | `text-[2.2rem] md:text-[2.5rem] leading-tight tracking-[-0.02em]` | `SectionShell` 섹션 제목 (h2)                |
+| `{typography.page-title}` | 2rem → 3rem        | 400  | 1.2            | −0.02em | `text-[2rem] md:text-[3rem] leading-[1.2] tracking-[-0.02em]`     | `PageTitleHero` 페이지 제목 (h1)             |
+| `{typography.title-lg}`   | 1.7rem             | 400  | 1.25           | −0.02em | `text-[1.7rem] tracking-[-0.02em]`                                | 히어로 전시 카드 제목                        |
+| `{typography.title-md}`   | 1.3rem             | 400  | 1.2            | −0.02em | `text-[1.3rem] leading-tight tracking-[-0.02em]`                  | 미디어 카드 제목 (h3)                        |
+| `{typography.title-sm}`   | 1.125rem           | 600  | 1.4            | 0       | `text-lg font-semibold`                                           | 소개 카드 소제목                             |
+| `{typography.body-lg}`    | 1.125rem           | 400  | 1.6            | 0       | `text-lg`                                                         | 페이지 제목 밑 설명문                        |
+| `{typography.body}`       | 1rem               | 400  | 1.6 (본문 1.8) | 0       | `text-base leading-relaxed`                                       | 일반 본문                                    |
+| `{typography.body-sm}`    | 0.875rem           | 400  | 1.6            | 0       | `text-sm leading-relaxed`                                         | 카드 설명 · 메타 · 푸터 (**가장 많이 쓰임**) |
+| `{typography.label}`      | 0.875rem           | 600  | 1.5            | +0.08em | `text-sm font-semibold uppercase tracking-[0.08em]`               | 버튼 라벨 · 데스크톱 내비                    |
+| `{typography.eyebrow}`    | 0.75rem            | 600  | 1.35           | +0.12em | `text-xs font-semibold uppercase tracking-[0.12em]`               | 섹션 eyebrow · 카드 메타 라벨                |
+| `{typography.caption}`    | 0.75rem            | 400  | 1.5            | 0       | `text-xs`                                                         | 저작권 · 보조 설명                           |
 
 `SectionShell`의 eyebrow만 자간이 한 단계 넓다(`tracking-[0.16em]`) — 섹션 최상위 라벨이라 의도적으로 더 벌린 것이며 그대로 유지한다.
 
@@ -436,24 +436,24 @@ Tailwind preflight가 `h1`~`h6`의 `font-weight`를 `inherit`으로 초기화하
 
 아래 값들은 스케일 밖의 잔여물이다. 새 코드에서 쓰지 말고, 기존 코드를 만지면 오른쪽 값으로 정리한다.
 
-| 사용 중 | → 대체 |
-| --- | --- |
-| `text-[2.8rem]` (에러/404 페이지) | `text-[2.5rem]` = `headline` |
-| `text-[1.75rem]`, `text-[1.8rem]` | `text-[1.7rem]` = `title-lg` |
-| `text-[1.2rem]`, `text-[1.15rem]` | `text-[1.3rem]` = `title-md` |
-| `text-[0.95rem]`, `text-[0.9rem]`, `text-[0.85rem]` | `text-sm` = `body-sm` |
-| `text-[0.8rem]` | `text-xs` = `caption` |
+| 사용 중                                             | → 대체                       |
+| --------------------------------------------------- | ---------------------------- |
+| `text-[2.8rem]` (에러/404 페이지)                   | `text-[2.5rem]` = `headline` |
+| `text-[1.75rem]`, `text-[1.8rem]`                   | `text-[1.7rem]` = `title-lg` |
+| `text-[1.2rem]`, `text-[1.15rem]`                   | `text-[1.3rem]` = `title-md` |
+| `text-[0.95rem]`, `text-[0.9rem]`, `text-[0.85rem]` | `text-sm` = `body-sm`        |
+| `text-[0.8rem]`                                     | `text-xs` = `caption`        |
 
 ## Layout
 
 ### 컨테이너
 
-| 이름 | 폭 | Tailwind | 용도 |
-| --- | --- | --- | --- |
-| **기본** | 1200px | `max-w-[1200px]` | 헤더 · 푸터 · 모든 섹션 · 일반 페이지 |
+| 이름       | 폭     | Tailwind         | 용도                                        |
+| ---------- | ------ | ---------------- | ------------------------------------------- |
+| **기본**   | 1200px | `max-w-[1200px]` | 헤더 · 푸터 · 모든 섹션 · 일반 페이지       |
 | **와이드** | 1400px | `max-w-[1400px]` | 활동 기록 그리드처럼 이미지가 주인공인 격자 |
-| **읽기** | 800px | `max-w-200` | 후원 안내처럼 글이 주인공인 페이지 |
-| **문단** | 768px | `max-w-3xl` | 섹션 설명문 (`SectionShell` description) |
+| **읽기**   | 800px  | `max-w-200`      | 후원 안내처럼 글이 주인공인 페이지          |
+| **문단**   | 768px  | `max-w-3xl`      | 섹션 설명문 (`SectionShell` description)    |
 
 > `max-w-300`과 `max-w-[1200px]`는 **완전히 같은 값**이다(Tailwind v4에서 `300 × 0.25rem = 75rem = 1200px`). 두 표기가 코드에 섞여 있는데, 신규 코드는 **`max-w-[1200px]`로 통일**한다. 값이 다르다고 오해해 "고치는" 일을 막기 위한 규칙이다.
 
@@ -471,28 +471,28 @@ Tailwind preflight가 `h1`~`h6`의 `font-weight`를 `inherit`으로 초기화하
 
 4px 배수만 쓴다. 홀수 값이나 임의 px 여백은 금지.
 
-| 토큰 | 값 | Tailwind | 쓰는 곳 |
-| --- | --- | --- | --- |
-| `{spacing.xxs}` | 4px | `gap-1` | 아이콘과 글자 사이 |
-| `{spacing.xs}` | 8px | `gap-2` | 메타 정보 묶음 |
-| `{spacing.sm}` | 12px | `gap-3` | 버튼 그룹 · 조밀한 그리드 |
-| `{spacing.md}` | 16px | `p-4` `gap-4` | 소형 카드 패딩 · 모바일 거터 |
-| `{spacing.lg}` | 20px | `p-5` | **미디어 카드 메타 영역 패딩** |
-| `{spacing.xl}` | 24px | `p-6` `gap-6` | 패널 패딩 · 표준 그리드 간격 |
-| `{spacing.xxl}` | 32px | `gap-8` `px-8` | 미디어 그리드 간격 · 데스크톱 거터 |
-| `{spacing.section-y}` | 48px | `py-12` | 섹션 세로 (모바일) |
-| `{spacing.section-y-md}` | 64px | `md:py-16` | 섹션 세로 (데스크톱) |
+| 토큰                     | 값   | Tailwind       | 쓰는 곳                            |
+| ------------------------ | ---- | -------------- | ---------------------------------- |
+| `{spacing.xxs}`          | 4px  | `gap-1`        | 아이콘과 글자 사이                 |
+| `{spacing.xs}`           | 8px  | `gap-2`        | 메타 정보 묶음                     |
+| `{spacing.sm}`           | 12px | `gap-3`        | 버튼 그룹 · 조밀한 그리드          |
+| `{spacing.md}`           | 16px | `p-4` `gap-4`  | 소형 카드 패딩 · 모바일 거터       |
+| `{spacing.lg}`           | 20px | `p-5`          | **미디어 카드 메타 영역 패딩**     |
+| `{spacing.xl}`           | 24px | `p-6` `gap-6`  | 패널 패딩 · 표준 그리드 간격       |
+| `{spacing.xxl}`          | 32px | `gap-8` `px-8` | 미디어 그리드 간격 · 데스크톱 거터 |
+| `{spacing.section-y}`    | 48px | `py-12`        | 섹션 세로 (모바일)                 |
+| `{spacing.section-y-md}` | 64px | `md:py-16`     | 섹션 세로 (데스크톱)               |
 
 **카드 패딩 결정 규칙**: 이미지 밑 메타 영역 = `p-5` / 텍스트만 있는 소형 카드 = `p-4` / 독립 패널·CTA 박스 = `p-6`.
 
 ### 브레이크포인트
 
-| 이름 | 폭 | 주요 변화 |
-| --- | --- | --- |
-| 기본 | ~639px | 1열. 헤더 72px + 햄버거 메뉴. 갤러리 1열 고정 |
-| `sm` | 640px | 카드 그리드 2열. 갤러리 justified rows 수학 시작 |
-| `md` | 768px | **데스크톱 내비 전환점.** 헤더 80px, 거터 32px, 히어로 2열 |
-| `lg` | 1024px | 카드 그리드 3열. 갤러리 기준 3열 |
+| 이름 | 폭     | 주요 변화                                                  |
+| ---- | ------ | ---------------------------------------------------------- |
+| 기본 | ~639px | 1열. 헤더 72px + 햄버거 메뉴. 갤러리 1열 고정              |
+| `sm` | 640px  | 카드 그리드 2열. 갤러리 justified rows 수학 시작           |
+| `md` | 768px  | **데스크톱 내비 전환점.** 헤더 80px, 거터 32px, 히어로 2열 |
+| `lg` | 1024px | 카드 그리드 3열. 갤러리 기준 3열                           |
 
 `md`(768px)가 이 사이트의 실질적 전환점이다. 헤더 높이·내비 형태·거터·히어로 레이아웃이 모두 여기서 바뀐다.
 
@@ -500,12 +500,12 @@ Tailwind preflight가 `h1`~`h6`의 `font-weight`를 `inherit`으로 초기화하
 
 ### 그리드 패턴
 
-| 대상 | 클래스 | 간격 |
-| --- | --- | --- |
-| 미디어 카드 (활동/전시) | `grid gap-8 sm:grid-cols-2 lg:grid-cols-3` | 32px |
-| 텍스트 카드 (퀵링크/소개) | `grid gap-4 sm:grid-cols-2 lg:grid-cols-3` | 16px |
-| 히어로 | `grid gap-10 md:grid-cols-[1.1fr_0.9fr] md:items-end` | 40px |
-| 포스터 (전시 목록) | 3열 → 1열, `aspect-[2/3]` | 40px |
+| 대상                      | 클래스                                                | 간격 |
+| ------------------------- | ----------------------------------------------------- | ---- |
+| 미디어 카드 (활동/전시)   | `grid gap-8 sm:grid-cols-2 lg:grid-cols-3`            | 32px |
+| 텍스트 카드 (퀵링크/소개) | `grid gap-4 sm:grid-cols-2 lg:grid-cols-3`            | 16px |
+| 히어로                    | `grid gap-10 md:grid-cols-[1.1fr_0.9fr] md:items-end` | 40px |
+| 포스터 (전시 목록)        | 3열 → 1열, `aspect-[2/3]`                             | 40px |
 
 **이미지가 있는 그리드는 간격을 넓게(gap-8), 텍스트만 있는 그리드는 좁게(gap-4)** — 사진끼리 붙으면 서로 간섭하기 때문이다.
 
@@ -524,12 +524,12 @@ Tailwind preflight가 `h1`~`h6`의 `font-weight`를 `inherit`으로 초기화하
 
 깊이의 **1차 언어는 그림자가 아니라 테두리**다. 그림자는 "실제로 다른 레이어에 떠 있는 것"에만 허용된다.
 
-| 레벨 | 처리 | 사용처 |
-| --- | --- | --- |
-| **0 — 평면 (기본)** | 그림자 없음. `border` 1px만 | 모든 카드 · 버튼 · 패널 · 이미지 프레임 |
-| **1 — 부착** | `shadow-[0_2px_10px_var(--shadow-strong)]` | 스크롤된 헤더 (`scrollY > 50`) |
-| **2 — 떠 있음** | `shadow-[0_4px_15px_var(--shadow-strong)]` | 내비 드롭다운 · 링크트리 카드 |
-| **3 — 오버레이** | `bg-black/90` 전면 + 컨트롤 `backdrop-blur-sm` | 라이트박스 · 모바일 메뉴 백드롭(`bg-black/25`) |
+| 레벨                | 처리                                           | 사용처                                         |
+| ------------------- | ---------------------------------------------- | ---------------------------------------------- |
+| **0 — 평면 (기본)** | 그림자 없음. `border` 1px만                    | 모든 카드 · 버튼 · 패널 · 이미지 프레임        |
+| **1 — 부착**        | `shadow-[0_2px_10px_var(--shadow-strong)]`     | 스크롤된 헤더 (`scrollY > 50`)                 |
+| **2 — 떠 있음**     | `shadow-[0_4px_15px_var(--shadow-strong)]`     | 내비 드롭다운 · 링크트리 카드                  |
+| **3 — 오버레이**    | `bg-black/90` 전면 + 컨트롤 `backdrop-blur-sm` | 라이트박스 · 모바일 메뉴 백드롭(`bg-black/25`) |
 
 ### 그림자 규칙
 
@@ -545,10 +545,10 @@ Tailwind preflight가 `h1`~`h6`의 `font-weight`를 `inherit`으로 초기화하
 
 ### 반경 — 값이 두 개뿐인 시스템
 
-| 토큰 | 값 | 허용 대상 |
-| --- | --- | --- |
-| `{rounded.none}` | **0px** | 카드, 버튼, 패널, 이미지 프레임, 입력, 드롭다운 — **기본값** |
-| `{rounded.full}` | 9999px | 아이콘 버튼(테마 토글 36px, 라이트박스 44px), 상태 칩, 카운터 배지 |
+| 토큰             | 값      | 허용 대상                                                          |
+| ---------------- | ------- | ------------------------------------------------------------------ |
+| `{rounded.none}` | **0px** | 카드, 버튼, 패널, 이미지 프레임, 입력, 드롭다운 — **기본값**       |
+| `{rounded.full}` | 9999px  | 아이콘 버튼(테마 토글 36px, 라이트박스 44px), 상태 칩, 카운터 배지 |
 
 **중간값은 존재하지 않는다.** `rounded-sm` / `rounded-md` / `rounded-lg` / `rounded-xl` / `rounded-2xl` / `rounded-[5px]`는 전부 이 시스템 밖이다. 각진 모서리가 사진 프레임과 UI를 같은 기하로 묶는 장치이므로, 한 군데만 둥글어져도 그 요소가 다른 시스템에서 온 것처럼 보인다.
 
@@ -556,20 +556,20 @@ Tailwind preflight가 `h1`~`h6`의 `font-weight`를 `inherit`으로 초기화하
 
 ### 선 두께
 
-| 두께 | 용도 |
-| --- | --- |
-| 1px | 기본 테두리 전부 (`border`) |
-| 2px | 강조 하단선 (`border-b-2` — 링크트리/후원 제목), 내비 밑줄, 드롭다운 상단선, 햄버거 바 |
-| 4px | 좌측 강조 바 (`border-l-4` — 항목 리스트) |
+| 두께 | 용도                                                                                   |
+| ---- | -------------------------------------------------------------------------------------- |
+| 1px  | 기본 테두리 전부 (`border`)                                                            |
+| 2px  | 강조 하단선 (`border-b-2` — 링크트리/후원 제목), 내비 밑줄, 드롭다운 상단선, 햄버거 바 |
+| 4px  | 좌측 강조 바 (`border-l-4` — 항목 리스트)                                              |
 
 ### 이미지 프레임
 
-| 비율 | Tailwind | 용도 |
-| --- | --- | --- |
-| **4 / 3** | `aspect-4/3` | 활동 카드, 히어로 전시 카드, 아카이브 타일 — **기본 비율** |
-| **2 / 3** | `aspect-[2/3]` | 전시 포스터 (세로형) |
-| **1 / 1** | `aspect-square` | 프로필 아바타 |
-| 원본 비율 | `--photo-aspect` | 사진 갤러리 (justified rows — 크롭 없음) |
+| 비율      | Tailwind         | 용도                                                       |
+| --------- | ---------------- | ---------------------------------------------------------- |
+| **4 / 3** | `aspect-4/3`     | 활동 카드, 히어로 전시 카드, 아카이브 타일 — **기본 비율** |
+| **2 / 3** | `aspect-[2/3]`   | 전시 포스터 (세로형)                                       |
+| **1 / 1** | `aspect-square`  | 프로필 아바타                                              |
+| 원본 비율 | `--photo-aspect` | 사진 갤러리 (justified rows — 크롭 없음)                   |
 
 프레임은 언제나 각지고(`{rounded.none}`), 이미지는 `object-cover`로 채운다. 단 **사진 갤러리와 라이트박스는 크롭하지 않는다** — 프레임 자체를 사진 비율에 맞춘다(계산은 `app/(home)/globals.css`의 `.photo-gallery` 참조).
 
@@ -769,17 +769,17 @@ inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold
 
 ### 표준 값
 
-| 상황 | 값 |
-| --- | --- |
+| 상황                         | 값                                                                 |
+| ---------------------------- | ------------------------------------------------------------------ |
 | 스크롤 등장 (`MotionReveal`) | `opacity 0→1`, `y 18→0`, `duration 0.6`, `ease [0.22, 1, 0.36, 1]` |
-| 등장 뷰포트 | `{ once: true, margin: "-10% 0px" }` — **한 번만 재생** |
-| 목록 스태거 | `delay = index * 0.04` |
-| CSS 전환 (기본) | `transition duration-300` |
-| CSS 전환 (색상) | `transition-colors duration-200` |
-| 카드 hover 스프링 | `{ type: "spring", damping: 20, stiffness: 260 }` |
-| 모바일 메뉴 스프링 | `{ type: "spring", stiffness: 360, damping: 30, mass: 0.62 }` |
-| 라이트박스 페이드 | `duration 0.2`, `ease [0.22, 1, 0.36, 1]` |
-| 히어로 패럴랙스 | 텍스트 `y 0→-80`, 이미지 `y 0→110` (스크롤 진행률 연동) |
+| 등장 뷰포트                  | `{ once: true, margin: "-10% 0px" }` — **한 번만 재생**            |
+| 목록 스태거                  | `delay = index * 0.04`                                             |
+| CSS 전환 (기본)              | `transition duration-300`                                          |
+| CSS 전환 (색상)              | `transition-colors duration-200`                                   |
+| 카드 hover 스프링            | `{ type: "spring", damping: 20, stiffness: 260 }`                  |
+| 모바일 메뉴 스프링           | `{ type: "spring", stiffness: 360, damping: 30, mass: 0.62 }`      |
+| 라이트박스 페이드            | `duration 0.2`, `ease [0.22, 1, 0.36, 1]`                          |
+| 히어로 패럴랙스              | 텍스트 `y 0→-80`, 이미지 `y 0→110` (스크롤 진행률 연동)            |
 
 ### 규칙
 
@@ -820,17 +820,17 @@ inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold
 
 이 문서는 홈페이지를 기준으로 한 **정답**을 기술한다. 아래는 현재 코드가 그 기준에서 벗어난 지점이며, 해당 파일을 만질 때 함께 정리한다. (지금 당장 일괄 수정하라는 뜻은 아니다.)
 
-| # | 위치 | 현재 | 기준 | 영향 |
-| --- | --- | --- | --- | --- |
-| 1 | `app/(home)/layout.tsx` | Pretendard를 지정하지만 `@font-face`를 로드하지 않음 (`(dashboard)`만 import) | 공개 사이트도 서브셋 폰트를 로드 | **높음** — 자간·굵기 규칙이 설계대로 재현되지 않음 |
-| 2 | `globals.css` `.dark` | `--surface-strong-border: #465162` (2.39:1) | 3:1 이상 (`#5b6779` 이상) | **높음** — 다크에서 버튼 경계가 안 보임 |
-| 3 | `about/recruiting/page.tsx` | `bg-blue-50` / `emerald-50` / `slate-100`, `dark:` 없음 | `--status-*` 토큰 | **높음** — 다크 모드에서 칩이 깨짐 |
-| 4 | `donate/page.tsx` | `rounded-lg` / `rounded-xl` / `rounded-[5px]` | `{rounded.none}` | 중간 — 사이트에서 유일하게 둥근 페이지 |
-| 5 | `_components/attachment-list.tsx` | `rounded-lg` | `{rounded.none}` | 중간 |
-| 6 | `about/photographers/generation-members-grid.tsx` | `rounded-2xl`, `rounded-lg` | `{rounded.none}` / `{rounded.full}` | 중간 |
-| 7 | `archive/exhibitions/page.tsx` | `shadow-[0_4px_15px_rgba(0,0,0,0.1)]` 하드코딩 | `var(--shadow-strong)` | 중간 — 다크에서 그림자 소실 |
-| 8 | `PageTitleHero`, `linktree`, `donate` 제목 | `font-bold` / `font-semibold` | 400 (굵기 클래스 생략) | 중간 — 홈과 하위 페이지의 목소리 불일치 |
-| 9 | 히어로·홈 CTA | `hover:text-white` | `hover:text-(--bg-primary)` | 낮음 — 다크에서 대비 저하 |
-| 10 | 여러 파일 | `text-[2.8rem]` `[1.75rem]` `[0.95rem]` `[0.9rem]` `[0.85rem]` `[0.8rem]` | 스케일 토큰 | 낮음 |
-| 11 | `archive/*`, `linktree` | `max-[1024px]` 등 max-width 질의 | 모바일 우선(min-width) | 낮음 |
-| 12 | 여러 파일 | `max-w-300`과 `max-w-[1200px]` 혼용 (같은 값) | `max-w-[1200px]`로 통일 | 낮음 |
+| #   | 위치                                              | 현재                                                                          | 기준                                | 영향                                               |
+| --- | ------------------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------- | -------------------------------------------------- |
+| 1   | `app/(home)/layout.tsx`                           | Pretendard를 지정하지만 `@font-face`를 로드하지 않음 (`(dashboard)`만 import) | 공개 사이트도 서브셋 폰트를 로드    | **높음** — 자간·굵기 규칙이 설계대로 재현되지 않음 |
+| 2   | `globals.css` `.dark`                             | `--surface-strong-border: #465162` (2.39:1)                                   | 3:1 이상 (`#5b6779` 이상)           | **높음** — 다크에서 버튼 경계가 안 보임            |
+| 3   | `about/recruiting/page.tsx`                       | `bg-blue-50` / `emerald-50` / `slate-100`, `dark:` 없음                       | `--status-*` 토큰                   | **높음** — 다크 모드에서 칩이 깨짐                 |
+| 4   | `donate/page.tsx`                                 | `rounded-lg` / `rounded-xl` / `rounded-[5px]`                                 | `{rounded.none}`                    | 중간 — 사이트에서 유일하게 둥근 페이지             |
+| 5   | `_components/attachment-list.tsx`                 | `rounded-lg`                                                                  | `{rounded.none}`                    | 중간                                               |
+| 6   | `about/photographers/generation-members-grid.tsx` | `rounded-2xl`, `rounded-lg`                                                   | `{rounded.none}` / `{rounded.full}` | 중간                                               |
+| 7   | `archive/exhibitions/page.tsx`                    | `shadow-[0_4px_15px_rgba(0,0,0,0.1)]` 하드코딩                                | `var(--shadow-strong)`              | 중간 — 다크에서 그림자 소실                        |
+| 8   | `PageTitleHero`, `linktree`, `donate` 제목        | `font-bold` / `font-semibold`                                                 | 400 (굵기 클래스 생략)              | 중간 — 홈과 하위 페이지의 목소리 불일치            |
+| 9   | 히어로·홈 CTA                                     | `hover:text-white`                                                            | `hover:text-(--bg-primary)`         | 낮음 — 다크에서 대비 저하                          |
+| 10  | 여러 파일                                         | `text-[2.8rem]` `[1.75rem]` `[0.95rem]` `[0.9rem]` `[0.85rem]` `[0.8rem]`     | 스케일 토큰                         | 낮음                                               |
+| 11  | `archive/*`, `linktree`                           | `max-[1024px]` 등 max-width 질의                                              | 모바일 우선(min-width)              | 낮음                                               |
+| 12  | 여러 파일                                         | `max-w-300`과 `max-w-[1200px]` 혼용 (같은 값)                                 | `max-w-[1200px]`로 통일             | 낮음                                               |

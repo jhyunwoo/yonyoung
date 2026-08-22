@@ -36,16 +36,19 @@ tests/
 - OpenAPI JSON: `/api/openapi.json`, `/doc`
 - API UI: `/api/docs`, `/ui`
 
-`@hono/zod-openapi` 스키마가 API 문서의 단일 소스입니다.
+공개 DTO와 런타임 중립 Zod 스키마는 `@yonyoung/contracts`가 단일 소스입니다. API feature 계약은 이 스키마에 Hono/OpenAPI 메타데이터를 더하며, OpenAPI snapshot과 compile-time consumer compatibility 검사가 드리프트를 차단합니다.
 
 ## Local Development
 
 ```bash
-pnpm install
-pnpm dev
+cd ../..
+corepack enable
+pnpm install --frozen-lockfile
+cp apps/api/.dev.vars.example apps/api/.dev.vars
+pnpm --filter @yonyoung/api dev
 ```
 
-`pnpm dev`는 실행 전에 `wrangler d1 migrations apply yonyoung-db --local`을 자동 수행합니다.
+패키지 디렉터리에서 실행하는 `pnpm dev`도 동일하게 동작합니다. 루트 `pnpm dev`는 Web과 API를 함께 시작합니다. API `dev`는 실행 전에 `wrangler d1 migrations apply yonyoung-db --local`을 자동 수행합니다.
 기존에 실행 중이던 `wrangler dev`가 있으면 먼저 종료한 뒤 다시 실행하세요.
 
 ## Quality Gates
@@ -65,7 +68,7 @@ pnpm test:integration
 ## Deployment
 
 ```bash
-pnpm deploy
+pnpm --filter @yonyoung/api deploy
 ```
 
 ### Workers Builds troubleshooting
@@ -84,12 +87,13 @@ Recovery steps:
 3. In `API token`, select `Create new token` or choose another active user token.
 4. Save the build settings and retry the failed build.
 
-For this repository, the expected Worker name is `yonyoung-api` and the Wrangler configuration
-file is at the repository root: `wrangler.jsonc`.
+For this monorepo, the expected Worker name is `yonyoung-api` and the Wrangler configuration
+file is `apps/api/wrangler.jsonc`. Run Wrangler through the API workspace so relative asset and
+migration paths continue to resolve from `apps/api`.
 
 ## CI
 
-PR에서 다음 검증이 수행됩니다.
+루트 `.github/workflows/api-runtime.yml`은 Turbo의 affected graph에서 API가 영향받을 때 다음 검증을 수행합니다. API가 영향받지 않은 경우 동일한 안정적인 job 이름으로 성공 no-op을 반환합니다.
 
 - `pnpm lint`
 - `pnpm format:check`

@@ -6,7 +6,7 @@
 
 ## 역할과 서열
 
-역할 문자열은 `src/shared/auth/roles.ts`에서 정규화된다. 알 수 없는 값은 `unverified`로 취급한다.
+역할 문자열은 `@yonyoung/contracts/auth`의 `normalizeLegacyRole`에서 정규화된다. 알 수 없는 값은 `unverified`로 취급한다.
 
 | 역할                                                 | 설명                   | 서열 |
 | ---------------------------------------------------- | ---------------------- | ---- |

@@ -6,7 +6,7 @@
 | -------------------- | ------------------------------------------------------------------------------------------------------------- |
 | `app/`               | 라우팅, 레이아웃, 메타데이터, Server Component 조립, 그 라우트에서만 쓰는 표현 컴포넌트                       |
 | `features/<domain>/` | 도메인 로직. `services/`(서버 읽기), `actions/`(서버 쓰기), `model/`·`*-model.ts`(순수 계산), `hooks/`, `ui/` |
-| `shared/`            | 도메인이 없는 공용 요소. `contracts/`(API 계약), `http/`, `react/`, `utils/`                                  |
+| `shared/`            | Web 런타임 안의 도메인 없는 공용 요소. `http/`, `react/`, `utils/`, `security/`                               |
 | `server/`            | 요청 처리 경계. API 프록시 allowlist, 캐시 태그, 보안 헤더, 요청 컨텍스트                                     |
 | `components/`        | 디자인 시스템 프리미티브                                                                                      |
 
@@ -46,7 +46,7 @@ type AdminReadResult<T> = { ok: true; data: T } | { ok: false; error: AdminReadE
 구분할 수 있어야 화면에서 빈 상태와 오류 상태를 다르게 보여 줄 수 있다.
 오류 표시는 `app/(dashboard)/_components/admin-read-error.tsx` 를 쓴다.
 
-응답은 `shared/contracts/api/*` 의 Zod 스키마로 런타임 검증한다. 계약과 다른 응답은
+응답은 `@yonyoung/contracts`의 공개 subpath가 제공하는 Zod 스키마로 런타임 검증한다. 계약과 다른 응답은
 성공으로 취급하지 않는다(`invalid_response`).
 
 ## 데이터 쓰기
@@ -109,16 +109,16 @@ GenericForm 으로 묶으면 도메인 규칙이 조건문 속으로 사라진�
 
 ## 새 dashboard 도메인 추가하기
 
-| 무엇을                | 어디에                                                  |
-| --------------------- | ------------------------------------------------------- |
-| API 타입 + Zod 스키마 | `shared/contracts/api/<domain>.ts` (+ 배럴에 re-export) |
-| 서버 읽기             | `features/dashboard/services/admin-read-service.ts`     |
-| 서버 쓰기             | `features/dashboard/actions/<domain>.ts`                |
-| 클라이언트 API 호출   | `features/dashboard/api/admin-api/resources.ts`         |
-| 캐시 태그             | `server/cache/tags.ts`                                  |
-| 순수 계산             | `features/dashboard/<domain>/*.ts` (단위 테스트 대상)   |
-| 화면                  | `app/(dashboard)/...`                                   |
-| 새 API prefix         | `server/security/api-proxy-prefixes.ts` allowlist       |
+| 무엇을                | 어디에                                                       |
+| --------------------- | ------------------------------------------------------------ |
+| API 타입 + Zod 스키마 | `../../packages/contracts/src/api/<domain>.ts`의 공개 export |
+| 서버 읽기             | `features/dashboard/services/admin-read-service.ts`          |
+| 서버 쓰기             | `features/dashboard/actions/<domain>.ts`                     |
+| 클라이언트 API 호출   | `features/dashboard/api/admin-api/resources.ts`              |
+| 캐시 태그             | `server/cache/tags.ts`                                       |
+| 순수 계산             | `features/dashboard/<domain>/*.ts` (단위 테스트 대상)        |
+| 화면                  | `app/(dashboard)/...`                                        |
+| 새 API prefix         | `server/security/api-proxy-prefixes.ts` allowlist            |
 
 ### `resources.ts` 를 도메인별로 쪼개지 않은 이유
 
