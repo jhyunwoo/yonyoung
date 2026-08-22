@@ -4,10 +4,10 @@ import { formatAuditActor } from "@/features/dashboard/ui/audit-display";
 import { formatKoreanDate, formatKoreanDateRange } from "@/shared/utils/date-formatters";
 import { readCookieHeader } from "@/shared/http/http";
 import {
-  listCachedActivities,
-  listCachedExhibitions,
-  listCachedGenerationMembers,
-} from "@/features/dashboard/cache/admin-dashboard-cache";
+  listAdminActivities,
+  listAdminExhibitions,
+  listAdminGenerationMembers,
+} from "@/features/dashboard/services/admin-read-service";
 import { Skeleton } from "@/components/ui/skeleton";
 import DashboardR2StorageUsage from "@/app/(dashboard)/_components/dashboard-r2-storage-usage";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
@@ -18,14 +18,20 @@ const sortByStartDateDesc = <T extends { startDate: number }>(list: T[]): T[] =>
 
 const GenerationDashboardSummary = async (input: { generationId: string }) => {
   const cookieHeader = await readCookieHeader();
-  const [activities, exhibitions, generationMembers] = await Promise.all([
-    listCachedActivities(input.generationId, cookieHeader),
-    listCachedExhibitions(input.generationId, cookieHeader),
-    listCachedGenerationMembers(input.generationId, cookieHeader),
+  const [activitiesResult, exhibitionsResult, membersResult] = await Promise.all([
+    listAdminActivities(input.generationId, cookieHeader),
+    listAdminExhibitions(input.generationId, cookieHeader),
+    listAdminGenerationMembers(input.generationId, cookieHeader),
   ]);
 
-  const generationActivities = sortByStartDateDesc(activities);
-  const generationExhibitions = sortByStartDateDesc(exhibitions);
+  // 요약 카드는 읽기 실패 시에도 나머지 항목을 계속 보여 준다.
+  const generationMembers = membersResult.ok ? membersResult.data : [];
+  const generationActivities = sortByStartDateDesc(
+    activitiesResult.ok ? activitiesResult.data : [],
+  );
+  const generationExhibitions = sortByStartDateDesc(
+    exhibitionsResult.ok ? exhibitionsResult.data : [],
+  );
   const recentActivities = generationActivities.slice(0, 4);
   const recentExhibitions = generationExhibitions.slice(0, 3);
 

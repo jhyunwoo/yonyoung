@@ -1,77 +1,35 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ApiLinktree, ApiLinktreeItem } from "@/shared/contracts/api-contracts";
-import { AdminApiError } from "@/shared/http/http";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { formatKoreanDate } from "@/shared/utils/date-formatters";
-import { Skeleton } from "@/components/ui/skeleton";
 import AuditHistoryPanel from "@/app/(dashboard)/_components/audit-history-panel";
 import LastUpdatedMeta from "@/app/(dashboard)/_components/last-updated-meta";
-import {
-  findLinktreeItemById,
-  readLinktreeErrorMessage,
-} from "@/app/(dashboard)/_components/linktree-shared";
+import { readLinktreeErrorMessage } from "@/app/(dashboard)/_components/linktree-shared";
 import { useConfirm } from "@/app/(dashboard)/_components/ui/confirm-provider";
 
 type LinktreeItemDetailProps = {
-  linktreeId: string;
-  itemId: string;
+  linktree: ApiLinktree;
+  item: ApiLinktreeItem;
   canWrite: boolean;
   listPath: string;
 };
 
 export default function LinktreeItemDetail({
-  linktreeId,
-  itemId,
+  linktree,
+  item,
   canWrite,
   listPath,
 }: LinktreeItemDetailProps) {
   const router = useRouter();
   const confirm = useConfirm();
-  const [linktree, setLinktree] = useState<ApiLinktree | null>(null);
-  const [item, setItem] = useState<ApiLinktreeItem | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isGroupNotFound, setIsGroupNotFound] = useState(false);
-  const [isItemNotFound, setIsItemNotFound] = useState(false);
+  const linktreeId = linktree.id;
+  const itemId = item.id;
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const loadItem = useCallback(async () => {
-    setIsLoading(true);
-    setIsGroupNotFound(false);
-    setIsItemNotFound(false);
-    setErrorMessage(null);
-
-    try {
-      const row = await adminResourceApi.getLinktreeById(linktreeId);
-      const foundItem = findLinktreeItemById(row, itemId);
-
-      setLinktree(row);
-      if (!foundItem) {
-        setItem(null);
-        setIsItemNotFound(true);
-      } else {
-        setItem(foundItem);
-      }
-    } catch (error) {
-      setItem(null);
-      setLinktree(null);
-      if (error instanceof AdminApiError && error.status === 404) {
-        setIsGroupNotFound(true);
-      } else {
-        setErrorMessage(readLinktreeErrorMessage(error));
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [itemId, linktreeId]);
-
-  useEffect(() => {
-    void loadItem();
-  }, [loadItem]);
 
   const handleDelete = async () => {
     const confirmed = await confirm({
@@ -97,79 +55,6 @@ export default function LinktreeItemDetail({
       setIsDeleting(false);
     }
   };
-
-  if (isLoading) {
-    return (
-      <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
-        <div className="space-y-4" aria-hidden="true">
-          <Skeleton className="h-4 w-28" />
-          <Skeleton className="h-8 w-32" />
-          <Skeleton className="h-3 w-full max-w-lg" />
-          <div className="rounded-lg border border-hairline p-4">
-            <Skeleton className="h-3 w-14" />
-            <Skeleton className="mt-2 h-5 w-36" />
-            <Skeleton className="mt-4 h-3 w-16" />
-            <Skeleton className="mt-2 h-4 w-4/5" />
-            <div className="mt-5 flex gap-2">
-              <Skeleton className="h-8 w-20" />
-              <Skeleton className="h-8 w-24" />
-              <Skeleton className="h-8 w-20" />
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  if (isGroupNotFound) {
-    return (
-      <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
-        <h1 className="text-2xl font-bold text-ink md:text-3xl">링크 상세</h1>
-        <p className="mt-3 text-sm text-ink-muted">
-          존재하지 않는 분류이거나 접근할 수 없습니다.
-        </p>
-        <Link
-          href={listPath}
-          className="mt-6 inline-flex rounded-lg border border-hairline-strong px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-canvas-soft"
-        >
-          목록으로 이동
-        </Link>
-      </section>
-    );
-  }
-
-  if (isItemNotFound) {
-    return (
-      <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
-        <h1 className="text-2xl font-bold text-ink md:text-3xl">링크 상세</h1>
-        <p className="mt-3 text-sm text-ink-muted">
-          존재하지 않는 링크이거나 접근할 수 없습니다.
-        </p>
-        <div className="mt-6 flex flex-wrap gap-2">
-          <Link
-            href={listPath}
-            className="inline-flex rounded-lg border border-hairline-strong px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-canvas-soft"
-          >
-            목록으로 이동
-          </Link>
-          <Link
-            href={`${listPath}/${linktreeId}`}
-            className="inline-flex rounded-lg border border-hairline-strong px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-canvas-soft"
-          >
-            분류 상세로 이동
-          </Link>
-        </div>
-      </section>
-    );
-  }
-
-  if (!linktree || !item) {
-    return (
-      <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
-        <p className="text-sm text-ink-muted">링크 데이터를 불러올 수 없습니다.</p>
-      </section>
-    );
-  }
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">

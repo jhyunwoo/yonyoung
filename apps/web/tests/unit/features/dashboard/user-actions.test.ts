@@ -1,9 +1,12 @@
+import type * as HttpModule from "@/shared/http/http";
+import type * as HonoClientModule from "@/server/http/hono-client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ApiUser } from "@/shared/contracts/api-contracts";
 
 const headersMock = vi.hoisted(() => vi.fn());
 const updateTagMock = vi.hoisted(() => vi.fn());
 const requireSessionMock = vi.hoisted(() => vi.fn());
+const getCurrentUserProfileMock = vi.hoisted(() => vi.fn());
 const assertAdminWriteAccessMock = vi.hoisted(() => vi.fn());
 const readCookieHeaderMock = vi.hoisted(() => vi.fn());
 const honoRequestMock = vi.hoisted(() => vi.fn());
@@ -25,6 +28,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/features/auth/server/auth-guard", () => ({
   serverAuthGuard: {
     requireSession: requireSessionMock,
+    getCurrentUserProfile: getCurrentUserProfileMock,
   },
 }));
 
@@ -33,7 +37,7 @@ vi.mock("@/features/dashboard/actions/admin-write-access", () => ({
 }));
 
 vi.mock("@/shared/http/http", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/shared/http/http")>();
+  const actual = await importOriginal<typeof HttpModule>();
 
   return {
     ...actual,
@@ -42,7 +46,7 @@ vi.mock("@/shared/http/http", async (importOriginal) => {
 });
 
 vi.mock("@/server/http/hono-client", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/server/http/hono-client")>();
+  const actual = await importOriginal<typeof HonoClientModule>();
 
   return {
     ...actual,
@@ -50,10 +54,11 @@ vi.mock("@/server/http/hono-client", async (importOriginal) => {
   };
 });
 
+import { updateSiteSettingsAction } from "@/features/dashboard/actions/site-settings";
 import {
   bulkUpdateUsersRoleAction,
-  updateSiteSettingsAction,
-} from "@/features/dashboard/actions/admin-write-actions";
+  updateUserAction,
+} from "@/features/dashboard/actions/users";
 import { HonoApiError } from "@/server/http/hono-client";
 
 const createUser = (input: Partial<ApiUser> & Pick<ApiUser, "id" | "name" | "email">) =>
@@ -79,7 +84,7 @@ const createUser = (input: Partial<ApiUser> & Pick<ApiUser, "id" | "name" | "ema
     updatedBy: input.updatedBy ?? null,
   }) satisfies ApiUser;
 
-describe("features/dashboard/actions/admin-write-actions bulkUpdateUsersRoleAction", () => {
+describe("features/dashboard/actions/users bulkUpdateUsersRoleAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -97,6 +102,7 @@ describe("features/dashboard/actions/admin-write-actions bulkUpdateUsersRoleActi
       },
     });
     assertAdminWriteAccessMock.mockReturnValue(undefined);
+    getCurrentUserProfileMock.mockResolvedValue(null);
     readCookieHeaderMock.mockResolvedValue("better-auth.session_token=session-token");
     headersMock.mockResolvedValue({
       get: (name: string) => {
@@ -195,5 +201,69 @@ describe("features/dashboard/actions/admin-write-actions bulkUpdateUsersRoleActi
     });
     expect(honoRequestMock).not.toHaveBeenCalled();
     expect(updateTagMock).not.toHaveBeenCalled();
+  });
+
+  it("allows a member to update only self-profile fields without admin access", async () => {
+    requireSessionMock.mockResolvedValue({
+      session: {
+        id: "session-member",
+        userId: "user-member",
+        expiresAt: Date.now() + 60_000,
+      },
+      user: {
+        id: "user-member",
+        email: "member@example.com",
+        name: "일반 회원",
+        role: "regular_member",
+      },
+    });
+    honoRequestMock.mockResolvedValue(
+      createUser({
+        id: "user-member",
+        name: "일반 회원",
+        email: "member@example.com",
+        familyName: "김",
+      }),
+    );
+
+    await updateUserAction("user-member", {
+      familyName: "김",
+      role: "president",
+    });
+
+    expect(assertAdminWriteAccessMock).not.toHaveBeenCalled();
+    expect(honoRequestMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: "/api/users/user-member",
+        method: "PATCH",
+        body: {
+          familyName: "김",
+        },
+      }),
+    );
+  });
+
+  it("forbids a member from updating another user's profile", async () => {
+    requireSessionMock.mockResolvedValue({
+      session: {
+        id: "session-member",
+        userId: "user-member",
+        expiresAt: Date.now() + 60_000,
+      },
+      user: {
+        id: "user-member",
+        email: "member@example.com",
+        name: "일반 회원",
+        role: "regular_member",
+      },
+    });
+    getCurrentUserProfileMock.mockResolvedValue({ id: "profile-member" });
+
+    await expect(
+      updateUserAction("another-user", {
+        familyName: "김",
+      }),
+    ).rejects.toThrow("NEXT_FORBIDDEN");
+    expect(honoRequestMock).not.toHaveBeenCalled();
   });
 });

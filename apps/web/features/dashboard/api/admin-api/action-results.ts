@@ -1,5 +1,5 @@
 import { AdminApiError } from "@/shared/http/http";
-import type { AdminWriteActionResult } from "@/features/dashboard/actions/admin-write-actions";
+import type { AdminWriteActionResult } from "@/features/dashboard/actions/admin-write-core";
 
 export const unwrapAdminWriteActionResult = <T>(result: AdminWriteActionResult<T>): T => {
   if (result.ok) {

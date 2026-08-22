@@ -1,13 +1,11 @@
 "use client";
 
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type ChangeEvent, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ApiActivity } from "@/shared/contracts/api-contracts";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
-import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/upload-batch";
-import { readImageDimensions } from "@/features/media/images/read-image-dimensions";
 import {
   PRESIGN_PATHS,
   uploadWithPresign,
@@ -15,12 +13,16 @@ import {
 import {
   createExistingUploadImageItem,
   readFileList,
-  type UploadImageItem,
 } from "@/features/media/upload/image-upload-state";
+import {
+  readNewUploadImageItems,
+  uploadDetailImages,
+} from "@/features/media/upload/detail-image-upload";
+import { createWeightedUploadProgressTracker } from "@/features/media/upload/weighted-upload-progress";
+import { useSelectedImageFile } from "@/features/media/upload/use-selected-image-file";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import { hasMeaningfulRichTextHtml } from "@/features/media/rich-text/rich-text";
 import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";
-import { Skeleton } from "@/components/ui/skeleton";
 import AuditHistoryPanel from "@/app/(dashboard)/_components/audit-history-panel";
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import LastUpdatedMeta from "@/app/(dashboard)/_components/last-updated-meta";
@@ -34,134 +36,69 @@ import {
 } from "@/app/(dashboard)/dashboard/[generationName]/activities/_components/activity-shared";
 
 type ActivityEditFormProps = {
-  activityId: string;
+  activity: ApiActivity;
   generationId: string;
   generationName: string;
   generationPath: string;
   initialMessage: string | null;
 };
 
+/** 정렬은 서버 응답 순서에 의존하지 않고 sortOrder로 다시 고정한다. */
+const toSortedDetailImageItems = (activity: ApiActivity) =>
+  activity.detailImages
+    .slice()
+    .sort((left, right) => left.sortOrder - right.sortOrder)
+    .map((image) =>
+      createExistingUploadImageItem({
+        id: image.id,
+        imageUrl: image.imageUrl,
+      }),
+    );
+
 export default function ActivityEditForm({
-  activityId,
+  activity,
   generationId,
   generationName,
   generationPath,
   initialMessage,
 }: ActivityEditFormProps) {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [noticeMessage, setNoticeMessage] = useState<string | null>(initialMessage);
 
-  const [activity, setActivity] = useState<ApiActivity | null>(null);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [startDateInput, setStartDateInput] = useState("");
-  const [endDateInput, setEndDateInput] = useState("");
-  const [coverFile, setCoverFile] = useState<File | null>(null);
-  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
-  const coverFileInputRef = useRef<HTMLInputElement | null>(null);
+  const [title, setTitle] = useState(activity.title);
+  const [description, setDescription] = useState(activity.description);
+  const [startDateInput, setStartDateInput] = useState(
+    formatTimestampToDateInput(activity.startDate),
+  );
+  const [endDateInput, setEndDateInput] = useState(
+    formatTimestampToDateInput(activity.endDate),
+  );
+  const {
+    selectedFile: coverFile,
+    fileInputRef: coverFileInputRef,
+    previewUrl: coverPreviewUrl,
+    selectFile: selectCoverFile,
+    openFilePicker: openCoverFilePicker,
+  } = useSelectedImageFile();
   const detailFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const {
     items: detailImages,
-    replaceItems,
     appendFiles,
     removeItemById,
     reorderByIds,
-  } = useImageUploadState();
+  } = useImageUploadState({ initialItems: toSortedDetailImageItems(activity) });
   const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]);
   const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
 
-  useEffect(() => {
-    return () => {
-      if (coverPreviewUrl) {
-        URL.revokeObjectURL(coverPreviewUrl);
-      }
-    };
-  }, [coverPreviewUrl]);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const load = async () => {
-      setIsLoading(true);
-      setErrorMessage(null);
-
-      try {
-        const row = await adminResourceApi.getActivityById(activityId);
-        if (!mounted) {
-          return;
-        }
-
-        if (row.generationId !== generationId) {
-          router.replace(`${generationPath}/activities`);
-          return;
-        }
-
-        const sortedImages = row.detailImages
-          .slice()
-          .sort((left, right) => left.sortOrder - right.sortOrder)
-          .map((image) =>
-            createExistingUploadImageItem({
-              id: image.id,
-              imageUrl: image.imageUrl,
-            }),
-          );
-
-        setActivity(row);
-        setTitle(row.title);
-        setDescription(row.description);
-        setStartDateInput(formatTimestampToDateInput(row.startDate));
-        setEndDateInput(formatTimestampToDateInput(row.endDate));
-        replaceItems(sortedImages);
-        setDeletedImageIds([]);
-      } catch (error) {
-        if (!mounted) {
-          return;
-        }
-        setErrorMessage(readActivityErrorMessage(error));
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    void load();
-    return () => {
-      mounted = false;
-    };
-  }, [activityId, generationId, generationPath, replaceItems, router]);
-
-  const isSubmitDisabled = useMemo(() => {
-    return (
-      isSaving ||
-      isLoading ||
-      title.trim().length === 0 ||
-      !hasMeaningfulRichTextHtml(description) ||
-      startDateInput.trim().length === 0 ||
-      endDateInput.trim().length === 0 ||
-      activity === null
-    );
-  }, [activity, description, endDateInput, isLoading, isSaving, startDateInput, title]);
-
-  const handleCoverFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextFile = event.target.files?.[0] ?? null;
-
-    if (coverPreviewUrl) {
-      URL.revokeObjectURL(coverPreviewUrl);
-    }
-
-    setCoverFile(nextFile);
-    if (!nextFile) {
-      setCoverPreviewUrl(null);
-      return;
-    }
-
-    setCoverPreviewUrl(URL.createObjectURL(nextFile));
-  };
+  const isSubmitDisabled =
+    isSaving ||
+    title.trim().length === 0 ||
+    !hasMeaningfulRichTextHtml(description) ||
+    startDateInput.trim().length === 0 ||
+    endDateInput.trim().length === 0;
 
   const handleAddDetailFiles = (event: ChangeEvent<HTMLInputElement>) => {
     const files = readFileList(event.target.files);
@@ -178,7 +115,7 @@ export default function ActivityEditForm({
       return;
     }
 
-    coverFileInputRef.current?.click();
+    openCoverFilePicker();
   };
 
   const handleOpenDetailFilePicker = () => {
@@ -229,34 +166,19 @@ export default function ActivityEditForm({
     setUploadProgressPercent(0);
 
     try {
-      const newOrder = detailImages.filter(
-        (image): image is UploadImageItem & { file: File } =>
-          image.source === "new" && image.file !== null,
-      );
-      const totalUploadCount = (coverFile ? 1 : 0) + newOrder.length;
-      let coverUploadProgress = coverFile ? 0 : 100;
-      let detailUploadProgress = newOrder.length > 0 ? 0 : 100;
-      const updateUploadProgress = () => {
-        if (totalUploadCount <= 0) {
-          setUploadProgressPercent(null);
-          return;
-        }
-
-        const weightedCover = coverFile ? coverUploadProgress : 0;
-        const weightedDetail = detailUploadProgress * newOrder.length;
-        const weightedProgress = (weightedCover + weightedDetail) / totalUploadCount;
-        setUploadProgressPercent(Math.round(weightedProgress));
-      };
+      const newOrder = readNewUploadImageItems(detailImages);
+      const uploadProgress = createWeightedUploadProgressTracker({
+        detailCount: newOrder.length,
+        hasCover: coverFile !== null,
+        onProgress: setUploadProgressPercent,
+      });
 
       let nextCoverImageUrl = activity.coverImageUrl;
       if (coverFile) {
         nextCoverImageUrl = await uploadWithPresign({
           presignPath: PRESIGN_PATHS.activityCover,
           file: coverFile,
-          onProgress: (progressPercent) => {
-            coverUploadProgress = progressPercent;
-            updateUploadProgress();
-          },
+          onProgress: uploadProgress.reportCoverProgress,
         });
       }
 
@@ -281,27 +203,16 @@ export default function ActivityEditForm({
 
       const createdMap = new Map<string, string>();
       if (newOrder.length > 0) {
-        // 업로드 전에 원본 크기를 측정해 함께 저장 (공개 갤러리 masonry 레이아웃용)
-        const dimensionList = await Promise.all(
-          newOrder.map((image) => readImageDimensions(image.file)),
-        );
-
-        const uploadedUrls = await uploadFilesWithPresign({
+        const uploadedDetailImages = await uploadDetailImages({
           presignPath: PRESIGN_PATHS.activityDetail,
-          files: newOrder.map((image) => image.file),
-          onProgress: (progressPercent) => {
-            detailUploadProgress = progressPercent;
-            updateUploadProgress();
-          },
+          items: newOrder,
+          startSortOrder: existingOrder.length,
+          onProgress: uploadProgress.reportDetailProgress,
         });
 
         const created = await adminResourceApi.addActivityImages(
           activity.id,
-          uploadedUrls.map((imageUrl, index) => ({
-            imageUrl,
-            sortOrder: existingOrder.length + index,
-            ...(dimensionList[index] ?? {}),
-          })),
+          uploadedDetailImages,
         );
 
         created.forEach((row, index) => {
@@ -367,222 +278,175 @@ export default function ActivityEditForm({
         </p>
       ) : null}
 
-      {isLoading ? (
-        <div className="mt-6 space-y-6" aria-hidden="true">
-          <div className="space-y-1">
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-          <div className="space-y-1">
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-32 w-full" />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1">
-              <Skeleton className="h-4 w-14" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-            <div className="space-y-1">
-              <Skeleton className="h-4 w-14" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-          </div>
-          <div className="space-y-2 rounded-lg border border-hairline p-4">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="aspect-[4/3] w-full max-w-md rounded-lg" />
-            <Skeleton className="h-10 w-24" />
-            <Skeleton className="h-3 w-64" />
-          </div>
-          <div className="space-y-2 rounded-lg border border-hairline p-4">
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-3 w-52" />
-            <Skeleton className="h-10 w-24" />
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {Array.from({ length: 3 }).map((_, index) => (
-                <Skeleton
-                  key={`activity-edit-image-loading-${index + 1}`}
-                  className="aspect-[4/3] w-full rounded-lg"
-                />
-              ))}
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Skeleton className="h-10 w-24" />
-            <Skeleton className="h-10 w-20" />
-            <Skeleton className="h-10 w-20" />
-          </div>
+      <form className="mt-6 space-y-6" action={handleSubmit}>
+        <label className="block space-y-1">
+          <span className="text-sm font-semibold text-ink">활동 제목</span>
+          <input
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            disabled={isSaving}
+            className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm"
+          />
+        </label>
+
+        <div className="space-y-1">
+          <span className="text-sm font-semibold text-ink">활동 설명</span>
+          <RichTextEditor
+            value={description}
+            onChange={setDescription}
+            disabled={isSaving}
+          />
         </div>
-      ) : activity ? (
-        <form className="mt-6 space-y-6" action={handleSubmit}>
+
+        <div className="grid gap-4 sm:grid-cols-2">
           <label className="block space-y-1">
-            <span className="text-sm font-semibold text-ink">활동 제목</span>
+            <span className="text-sm font-semibold text-ink">시작일</span>
             <input
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
+              type="date"
+              value={startDateInput}
+              onChange={(event) => setStartDateInput(event.target.value)}
               disabled={isSaving}
               className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm"
             />
           </label>
-
-          <div className="space-y-1">
-            <span className="text-sm font-semibold text-ink">활동 설명</span>
-            <RichTextEditor
-              value={description}
-              onChange={setDescription}
+          <label className="block space-y-1">
+            <span className="text-sm font-semibold text-ink">종료일</span>
+            <input
+              type="date"
+              value={endDateInput}
+              onChange={(event) => setEndDateInput(event.target.value)}
               disabled={isSaving}
+              className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm"
+            />
+          </label>
+        </div>
+
+        <div className="space-y-2 rounded-lg border border-hairline p-4">
+          <p className="text-sm font-semibold text-ink">대표 이미지 교체 (선택)</p>
+          <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-hairline bg-canvas-soft">
+            <Image
+              src={activity.coverImageUrl}
+              alt={`${activity.title} 대표 이미지`}
+              fill
+              className="object-cover"
+              unoptimized={shouldUseUnoptimizedImage(activity.coverImageUrl)}
+              sizes="(max-width: 768px) 100vw, 400px"
             />
           </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block space-y-1">
-              <span className="text-sm font-semibold text-ink">시작일</span>
-              <input
-                type="date"
-                value={startDateInput}
-                onChange={(event) => setStartDateInput(event.target.value)}
-                disabled={isSaving}
-                className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm"
-              />
-            </label>
-            <label className="block space-y-1">
-              <span className="text-sm font-semibold text-ink">종료일</span>
-              <input
-                type="date"
-                value={endDateInput}
-                onChange={(event) => setEndDateInput(event.target.value)}
-                disabled={isSaving}
-                className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm"
-              />
-            </label>
-          </div>
-
-          <div className="space-y-2 rounded-lg border border-hairline p-4">
-            <p className="text-sm font-semibold text-ink">대표 이미지 교체 (선택)</p>
-            <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-hairline bg-canvas-soft">
-              <Image
-                src={activity.coverImageUrl}
-                alt={`${activity.title} 대표 이미지`}
-                fill
-                className="object-cover"
-                unoptimized={shouldUseUnoptimizedImage(activity.coverImageUrl)}
-                sizes="(max-width: 768px) 100vw, 400px"
+          <button
+            type="button"
+            data-testid="activity-edit-cover-select"
+            onClick={handleOpenCoverFilePicker}
+            disabled={isSaving}
+            className="inline-flex rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            파일 선택
+          </button>
+          <input
+            ref={coverFileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={selectCoverFile}
+            disabled={isSaving}
+            className="sr-only"
+          />
+          <p className="text-xs text-ink-muted">
+            {coverFile
+              ? `선택됨: ${coverFile.name}`
+              : "대표 이미지를 교체하지 않으려면 비워 두세요."}
+          </p>
+          {coverPreviewUrl ? (
+            <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-success-hairline bg-success-soft">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={coverPreviewUrl}
+                alt="새 대표 이미지 미리보기"
+                className="h-full w-full object-cover"
               />
             </div>
+          ) : null}
+        </div>
+
+        <div className="space-y-2 rounded-lg border border-hairline p-4">
+          <p className="text-sm font-semibold text-ink">세부 이미지</p>
+          <label className="block space-y-1">
+            <span className="text-xs text-ink-muted">
+              새 세부 이미지 추가 (선택, 여러 장)
+            </span>
             <button
               type="button"
-              data-testid="activity-edit-cover-select"
-              onClick={handleOpenCoverFilePicker}
+              data-testid="activity-edit-detail-select"
+              onClick={handleOpenDetailFilePicker}
               disabled={isSaving}
               className="inline-flex rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-60"
             >
               파일 선택
             </button>
             <input
-              ref={coverFileInputRef}
+              ref={detailFileInputRef}
               type="file"
               accept="image/*"
-              onChange={handleCoverFileChange}
+              multiple
+              onChange={handleAddDetailFiles}
               disabled={isSaving}
               className="sr-only"
             />
-            <p className="text-xs text-ink-muted">
-              {coverFile
-                ? `선택됨: ${coverFile.name}`
-                : "대표 이미지를 교체하지 않으려면 비워 두세요."}
-            </p>
-            {coverPreviewUrl ? (
-              <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg border border-success-hairline bg-success-soft">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={coverPreviewUrl}
-                  alt="새 대표 이미지 미리보기"
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            ) : null}
-          </div>
-
-          <div className="space-y-2 rounded-lg border border-hairline p-4">
-            <p className="text-sm font-semibold text-ink">세부 이미지</p>
-            <label className="block space-y-1">
-              <span className="text-xs text-ink-muted">
-                새 세부 이미지 추가 (선택, 여러 장)
-              </span>
-              <button
-                type="button"
-                data-testid="activity-edit-detail-select"
-                onClick={handleOpenDetailFilePicker}
-                disabled={isSaving}
-                className="inline-flex rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                파일 선택
-              </button>
-              <input
-                ref={detailFileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleAddDetailFiles}
-                disabled={isSaving}
-                className="sr-only"
-              />
-            </label>
-            <p className="text-xs text-ink-muted">
-              마우스로 끌어 세부 이미지 순서를 바꿀 수 있습니다.
-            </p>
-            <SortableImageGrid
-              items={detailImages.map((image, index) => ({
-                id: image.id,
-                imageUrl: image.imageUrl,
-                label:
-                  image.source === "existing"
-                    ? `기존 이미지 ${index + 1}`
-                    : (image.file?.name ?? `새 이미지 ${index + 1}`),
-                subtitle: image.source === "existing" ? "기존" : "새 업로드",
-              }))}
-              onReorder={(nextItems) => reorderByIds(nextItems.map((item) => item.id))}
-              onRemoveItem={handleRemoveDetailImage}
-              disabled={isSaving}
-              emptyMessage="등록된 세부 이미지가 없습니다."
-            />
-            <UploadProgressBar
-              progressPercent={uploadProgressPercent}
-              label="사진 업로드 진행률"
-            />
-          </div>
-
-          <LastUpdatedMeta
-            updatedAt={activity.updatedAt}
-            updatedBy={activity.updatedBy}
-            className="text-xs text-ink-muted"
+          </label>
+          <p className="text-xs text-ink-muted">
+            마우스로 끌어 세부 이미지 순서를 바꿀 수 있습니다.
+          </p>
+          <SortableImageGrid
+            items={detailImages.map((image, index) => ({
+              id: image.id,
+              imageUrl: image.imageUrl,
+              label:
+                image.source === "existing"
+                  ? `기존 이미지 ${index + 1}`
+                  : (image.file?.name ?? `새 이미지 ${index + 1}`),
+              subtitle: image.source === "existing" ? "기존" : "새 업로드",
+            }))}
+            onReorder={(nextItems) => reorderByIds(nextItems.map((item) => item.id))}
+            onRemoveItem={handleRemoveDetailImage}
+            disabled={isSaving}
+            emptyMessage="등록된 세부 이미지가 없습니다."
           />
+          <UploadProgressBar
+            progressPercent={uploadProgressPercent}
+            label="사진 업로드 진행률"
+          />
+        </div>
 
-          <div className="flex flex-wrap gap-2">
-            <FormSubmitButton
-              data-testid="activity-edit-submit"
-              disabled={isSubmitDisabled}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
-              idleLabel="수정 저장"
-              pendingLabel="저장 중..."
-            />
-            <Link
-              href={`${generationPath}/activities/${activity.id}`}
-              className="rounded-lg border border-hairline-strong px-4 py-2 text-sm font-semibold text-ink-secondary"
-            >
-              상세로
-            </Link>
-            <Link
-              href={`${generationPath}/activities`}
-              className="rounded-lg border border-hairline-strong px-4 py-2 text-sm font-semibold text-ink-secondary"
-            >
-              목록으로
-            </Link>
-          </div>
-        </form>
-      ) : null}
+        <LastUpdatedMeta
+          updatedAt={activity.updatedAt}
+          updatedBy={activity.updatedBy}
+          className="text-xs text-ink-muted"
+        />
+
+        <div className="flex flex-wrap gap-2">
+          <FormSubmitButton
+            data-testid="activity-edit-submit"
+            disabled={isSubmitDisabled}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
+            idleLabel="수정 저장"
+            pendingLabel="저장 중..."
+          />
+          <Link
+            href={`${generationPath}/activities/${activity.id}`}
+            className="rounded-lg border border-hairline-strong px-4 py-2 text-sm font-semibold text-ink-secondary"
+          >
+            상세로
+          </Link>
+          <Link
+            href={`${generationPath}/activities`}
+            className="rounded-lg border border-hairline-strong px-4 py-2 text-sm font-semibold text-ink-secondary"
+          >
+            목록으로
+          </Link>
+        </div>
+      </form>
 
       <div className="mt-6">
-        <AuditHistoryPanel resourceType="activity" resourceId={activityId} />
+        <AuditHistoryPanel resourceType="activity" resourceId={activity.id} />
       </div>
     </section>
   );

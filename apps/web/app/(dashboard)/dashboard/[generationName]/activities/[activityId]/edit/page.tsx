@@ -1,5 +1,8 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
+import { readCookieHeader } from "@/shared/http/http";
+import { getAdminActivityById } from "@/features/dashboard/services/admin-read-service";
+import AdminReadErrorNotice from "@/app/(dashboard)/_components/admin-read-error";
 import { isAdminRole } from "@/features/auth/model/auth-shared";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
 import ActivityEditForm from "@/app/(dashboard)/dashboard/[generationName]/activities/_components/activity-edit-form";
@@ -41,15 +44,30 @@ export default async function GenerationActivityEditPage({
     redirect(`${generation.path}/activities/${activityId}`);
   }
 
+  const activityResult = await getAdminActivityById(activityId, await readCookieHeader());
+
+  if (!activityResult.ok && activityResult.error.reason === "not_found") {
+    notFound();
+  }
+
+  // 다른 기수의 활동을 이 기수 경로로 열었으면 목록으로 되돌린다.
+  if (activityResult.ok && activityResult.data.generationId !== generation.id) {
+    redirect(`${generation.path}/activities`);
+  }
+
   return (
     <div className="space-y-8 px-4 py-6 md:px-8 md:py-8">
-      <ActivityEditForm
-        activityId={activityId}
-        generationId={generation.id}
-        generationName={generation.name}
-        generationPath={generation.path}
-        initialMessage={initialMessage}
-      />
+      {activityResult.ok ? (
+        <ActivityEditForm
+          activity={activityResult.data}
+          generationId={generation.id}
+          generationName={generation.name}
+          generationPath={generation.path}
+          initialMessage={initialMessage}
+        />
+      ) : (
+        <AdminReadErrorNotice error={activityResult.error} />
+      )}
 
       {/* 활동 상세 페이지에 공개되는 첨부 자료 (회계 파일, 월간연영회 PDF 등) */}
       <section className="mx-auto w-full max-w-5xl rounded-lg border border-hairline bg-surface p-6 md:p-8">

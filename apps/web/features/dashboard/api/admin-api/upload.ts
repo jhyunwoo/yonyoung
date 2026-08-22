@@ -17,7 +17,7 @@ export const PRESIGN_PATHS = {
   siteFile: "/site/presign/file",
 } as const;
 
-type PresignPath = (typeof PRESIGN_PATHS)[keyof typeof PRESIGN_PATHS];
+export type PresignPath = (typeof PRESIGN_PATHS)[keyof typeof PRESIGN_PATHS];
 
 type UploadHeaders = Record<string, string>;
 
@@ -71,8 +71,9 @@ const defaultContentType = (file: File): string => {
 
   const name = file.name.toLowerCase();
   const extension = name.split(".").at(-1) ?? "";
-  if (extension in ATTACHMENT_CONTENT_TYPE_BY_EXTENSION) {
-    return ATTACHMENT_CONTENT_TYPE_BY_EXTENSION[extension];
+  const attachmentContentType = ATTACHMENT_CONTENT_TYPE_BY_EXTENSION[extension];
+  if (attachmentContentType) {
+    return attachmentContentType;
   }
   if (extension === "png") {
     return "image/png";

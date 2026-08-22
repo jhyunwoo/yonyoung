@@ -1,69 +1,30 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import type { ApiLinktree } from "@/shared/contracts/api-contracts";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AdminApiError } from "@/shared/http/http";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import {
   normalizeLinktreeName,
   readLinktreeErrorMessage,
 } from "@/app/(dashboard)/_components/linktree-shared";
-import { Skeleton } from "@/components/ui/skeleton";
 
 type LinktreeGroupEditFormProps = {
-  linktreeId: string;
-  canWrite: boolean;
+  linktree: ApiLinktree;
   listPath: string;
 };
 
 export default function LinktreeGroupEditForm({
-  linktreeId,
-  canWrite,
+  linktree,
   listPath,
 }: LinktreeGroupEditFormProps) {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const linktreeId = linktree.id;
+  const [name, setName] = useState(linktree.name);
   const [isSaving, setIsSaving] = useState(false);
-  const [isNotFound, setIsNotFound] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (canWrite) {
-      return;
-    }
-
-    router.replace(`${listPath}/${linktreeId}`);
-  }, [canWrite, linktreeId, listPath, router]);
-
-  const loadLinktree = useCallback(async () => {
-    setIsLoading(true);
-    setIsNotFound(false);
-    setErrorMessage(null);
-
-    try {
-      const row = await adminResourceApi.getLinktreeById(linktreeId);
-      setName(row.name);
-    } catch (error) {
-      if (error instanceof AdminApiError && error.status === 404) {
-        setIsNotFound(true);
-      } else {
-        setErrorMessage(readLinktreeErrorMessage(error));
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [linktreeId]);
-
-  useEffect(() => {
-    if (!canWrite) {
-      return;
-    }
-
-    void loadLinktree();
-  }, [canWrite, loadLinktree]);
 
   const handleSubmit = async () => {
     const normalizedName = normalizeLinktreeName(name);
@@ -87,49 +48,6 @@ export default function LinktreeGroupEditForm({
       setIsSaving(false);
     }
   };
-
-  if (!canWrite) {
-    return (
-      <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
-        <div className="space-y-3" aria-hidden="true">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-8 w-36" />
-          <Skeleton className="h-3 w-64" />
-        </div>
-      </section>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
-        <div className="space-y-3" aria-hidden="true">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-8 w-36" />
-          <Skeleton className="h-3 w-64" />
-          <Skeleton className="h-10 w-full max-w-lg" />
-          <Skeleton className="h-10 w-20" />
-        </div>
-      </section>
-    );
-  }
-
-  if (isNotFound) {
-    return (
-      <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
-        <h1 className="text-2xl font-bold text-ink md:text-3xl">링크 분류 수정</h1>
-        <p className="mt-3 text-sm text-ink-muted">
-          존재하지 않는 분류이거나 접근할 수 없습니다.
-        </p>
-        <Link
-          href={listPath}
-          className="mt-6 inline-flex rounded-lg border border-hairline-strong px-3 py-2 text-sm font-semibold text-ink-secondary transition hover:bg-canvas-soft"
-        >
-          목록으로 이동
-        </Link>
-      </section>
-    );
-  }
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">

@@ -1,8 +1,9 @@
 "use client";
 
 import { Menu } from "lucide-react";
+import { useResetOnChange } from "@/shared/react/use-reset-on-change";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 
 import {
   buildNavigationItems,
@@ -93,9 +94,8 @@ export default function DashboardShell({
     [pathname, selectedGeneration, selectedGenerationScopedPath],
   );
 
-  useEffect(() => {
-    setIsMobileOpen(false);
-  }, [pathname]);
+  // 페이지를 이동하면 열려 있던 모바일 사이드바를 닫는다.
+  useResetOnChange(pathname, () => setIsMobileOpen(false));
 
   const handleSignOut = async (): Promise<void> => {
     if (isSignOutPending) {

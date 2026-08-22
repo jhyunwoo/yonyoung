@@ -1,5 +1,6 @@
 "use client";
 
+import { useResetOnChange } from "@/shared/react/use-reset-on-change";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronDown, LogOut, UserCircle2 } from "lucide-react";
 import Link from "next/link";
@@ -39,9 +40,7 @@ export const SidebarFooter = ({
   const shouldReduceMotion = useReducedMotion();
 
   // 경로가 바뀌면 메뉴를 닫는다.
-  useEffect(() => {
-    setIsMenuOpen(false);
-  }, [pathname]);
+  useResetOnChange(pathname, () => setIsMenuOpen(false));
 
   useEffect(() => {
     if (!isMenuOpen) {

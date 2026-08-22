@@ -1,9 +1,10 @@
 "use client";
 
+import { useResetOnChange } from "@/shared/react/use-reset-on-change";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronDown, Settings } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { cx } from "@/app/(dashboard)/_components/ui/cx";
 import type { NavigationItem } from "@/app/(dashboard)/_components/shell/dashboard-navigation";
@@ -47,11 +48,12 @@ export const SidebarNav = ({
   const shouldReduceMotion = useReducedMotion();
   const [isSettingsExpanded, setIsSettingsExpanded] = useState(isSettingsSectionActive);
 
-  useEffect(() => {
+  // 설정 하위 경로로 들어가면 설정 섹션을 펼쳐 둔다(사용자가 접은 상태는 유지).
+  useResetOnChange(isSettingsSectionActive, () => {
     if (isSettingsSectionActive) {
       setIsSettingsExpanded(true);
     }
-  }, [isSettingsSectionActive]);
+  });
 
   return (
     <nav aria-label="대시보드" className="min-h-0 flex-1 overflow-y-auto px-3 py-4">

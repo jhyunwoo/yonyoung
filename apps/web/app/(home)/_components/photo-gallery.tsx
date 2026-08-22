@@ -139,11 +139,7 @@ export function PhotoGallery({
       </ul>
 
       {/* 라이트박스가 닫히면 portal 내용이 사라지므로, 프리로더는 반드시 그 바깥에 둔다 */}
-      <PhotoPreloadImages
-        items={items}
-        indices={preloadIndices}
-        onLoaded={markLoaded}
-      />
+      <PhotoPreloadImages items={items} indices={preloadIndices} onLoaded={markLoaded} />
 
       <PhotoLightbox
         items={items}

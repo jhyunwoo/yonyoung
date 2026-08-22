@@ -66,13 +66,13 @@ export const useFocusTrap = (
 
       if (event.shiftKey && (active === first || !container.contains(active))) {
         event.preventDefault();
-        last.focus();
+        last?.focus();
         return;
       }
 
       if (!event.shiftKey && active === last) {
         event.preventDefault();
-        first.focus();
+        first?.focus();
       }
     };
 

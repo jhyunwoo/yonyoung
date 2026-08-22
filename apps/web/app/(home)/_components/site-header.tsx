@@ -3,144 +3,33 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Monitor, Moon, Sun } from "lucide-react";
+import { useState } from "react";
 import SiteHeaderDesktopNav from "./site-header-desktop-nav";
-import { isActivePath, navItems } from "./site-nav-items";
-
-type ThemeMode = "light" | "dark" | "system";
-type ResolvedTheme = "light" | "dark";
-
-const mobileLinkBaseClass =
-  "relative block px-4 py-4 text-center text-[0.9rem] font-medium tracking-[0.05em] text-(--text-primary) uppercase after:absolute after:bottom-[0.6rem] after:left-1/2 after:h-[2px] after:w-0 after:-translate-x-1/2 after:bg-(--text-primary) after:transition-[width] after:duration-300 hover:after:w-12";
-
-const resolveTheme = (mode: ThemeMode, isSystemDark: boolean): ResolvedTheme => {
-  if (mode === "system") {
-    return isSystemDark ? "dark" : "light";
-  }
-  return mode;
-};
-
-const readStoredThemeMode = (): ThemeMode => {
-  if (typeof window === "undefined") {
-    return "system";
-  }
-
-  try {
-    const stored = localStorage.getItem("theme");
-    if (stored === "light" || stored === "dark" || stored === "system") {
-      return stored;
-    }
-  } catch {
-    // ignore storage errors
-  }
-
-  const datasetMode = document.documentElement.dataset.themeMode;
-  if (datasetMode === "light" || datasetMode === "dark" || datasetMode === "system") {
-    return datasetMode;
-  }
-
-  return "system";
-};
-
-const readResolvedThemeFromDataset = (): ResolvedTheme | null => {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const datasetTheme = document.documentElement.dataset.theme;
-  if (datasetTheme === "light" || datasetTheme === "dark") {
-    return datasetTheme;
-  }
-
-  return null;
-};
+import SiteHeaderMobileNav from "./site-header-mobile-nav";
+import SiteHeaderThemeSwitcher from "./site-header-theme-switcher";
+import { useBodyScrollLock } from "./hooks/use-body-scroll-lock";
+import { useHeaderScrollState } from "./hooks/use-header-scroll-state";
+import { useThemeMode } from "./hooks/use-theme-mode";
 
 export default function SiteHeader() {
   const pathname = usePathname();
-  const shouldReduceMotion = useReducedMotion();
-  const [isScrolled, setIsScrolled] = useState(false);
+  const isScrolled = useHeaderScrollState();
+  const { themeMode, resolvedTheme, changeThemeMode } = useThemeMode();
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [themeMode, setThemeMode] = useState<ThemeMode>("system");
-  const [isSystemDark, setIsSystemDark] = useState(false);
+  const [menuPathname, setMenuPathname] = useState(pathname);
 
-  useEffect(() => {
-    const onScroll = () => setIsScrolled(window.scrollY > 50);
-    window.addEventListener("scroll", onScroll);
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  useEffect(() => {
+  // 다른 페이지로 이동하면 열려 있던 모바일 메뉴를 닫는다.
+  // effect로 나중에 닫으면 새 화면이 메뉴가 열린 채로 한 프레임 그려진다.
+  if (menuPathname !== pathname) {
+    setMenuPathname(pathname);
     setIsMobileMenuOpen(false);
-  }, [pathname]);
+  }
 
-  useEffect(() => {
-    document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isMobileMenuOpen]);
-
-  useEffect(() => {
-    const initialMode = readStoredThemeMode();
-    setThemeMode(initialMode);
-
-    const datasetTheme = readResolvedThemeFromDataset();
-    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    setIsSystemDark(systemDark);
-    const nextResolvedTheme = datasetTheme ?? resolveTheme(initialMode, systemDark);
-    document.documentElement.classList.toggle("dark", nextResolvedTheme === "dark");
-    document.documentElement.dataset.theme = nextResolvedTheme;
-    document.documentElement.dataset.themeMode = initialMode;
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const onSystemThemeChange = () => {
-      setIsSystemDark(mediaQuery.matches);
-      if (themeMode !== "system") {
-        return;
-      }
-      const nextResolvedTheme = resolveTheme("system", mediaQuery.matches);
-      document.documentElement.classList.toggle("dark", nextResolvedTheme === "dark");
-      document.documentElement.dataset.theme = nextResolvedTheme;
-    };
-
-    if (typeof mediaQuery.addEventListener === "function") {
-      mediaQuery.addEventListener("change", onSystemThemeChange);
-      return () => mediaQuery.removeEventListener("change", onSystemThemeChange);
-    }
-
-    mediaQuery.addListener(onSystemThemeChange);
-    return () => mediaQuery.removeListener(onSystemThemeChange);
-  }, [themeMode]);
-
-  const handleThemeModeChange = (nextMode: ThemeMode) => {
-    setThemeMode(nextMode);
-
-    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const nextResolvedTheme = resolveTheme(nextMode, systemDark);
-    document.documentElement.classList.toggle("dark", nextResolvedTheme === "dark");
-    document.documentElement.dataset.theme = nextResolvedTheme;
-    document.documentElement.dataset.themeMode = nextMode;
-
-    try {
-      localStorage.setItem("theme", nextMode);
-    } catch {
-      // ignore storage errors
-    }
-  };
+  useBodyScrollLock(isMobileMenuOpen);
 
   const logoSrc =
-    resolveTheme(themeMode, isSystemDark) === "dark"
-      ? "/yonyong-logo-white.png"
-      : "/yonyoung-logo-black.png";
+    resolvedTheme === "dark" ? "/yonyong-logo-white.png" : "/yonyoung-logo-black.png";
 
   return (
     <header
@@ -188,55 +77,7 @@ export default function SiteHeader() {
           data-testid="public-nav-desktop"
         >
           <SiteHeaderDesktopNav pathname={pathname} />
-          <div
-            className="flex items-center gap-1 rounded-full border border-(--surface-border) bg-(--surface-elevated) p-1"
-            role="group"
-            aria-label="테마 모드 선택"
-            data-testid="public-theme-mode-group"
-          >
-            <button
-              type="button"
-              onClick={() => handleThemeModeChange("light")}
-              aria-label="라이트 모드"
-              aria-pressed={themeMode === "light"}
-              data-testid="public-theme-mode-light"
-              className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition ${
-                themeMode === "light"
-                  ? "bg-(--accent) text-(--accent-foreground)"
-                  : "text-(--text-primary) hover:bg-(--surface-muted)"
-              }`}
-            >
-              <Sun className="h-4 w-4" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              onClick={() => handleThemeModeChange("dark")}
-              aria-label="다크 모드"
-              aria-pressed={themeMode === "dark"}
-              data-testid="public-theme-mode-dark"
-              className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition ${
-                themeMode === "dark"
-                  ? "bg-(--accent) text-(--accent-foreground)"
-                  : "text-(--text-primary) hover:bg-(--surface-muted)"
-              }`}
-            >
-              <Moon className="h-4 w-4" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              onClick={() => handleThemeModeChange("system")}
-              aria-label="기기 설정"
-              aria-pressed={themeMode === "system"}
-              data-testid="public-theme-mode-system"
-              className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition ${
-                themeMode === "system"
-                  ? "bg-(--accent) text-(--accent-foreground)"
-                  : "text-(--text-primary) hover:bg-(--surface-muted)"
-              }`}
-            >
-              <Monitor className="h-4 w-4" aria-hidden="true" />
-            </button>
-          </div>
+          <SiteHeaderThemeSwitcher themeMode={themeMode} onChange={changeThemeMode} />
         </nav>
 
         <button
@@ -265,79 +106,11 @@ export default function SiteHeader() {
         </button>
       </div>
 
-      <AnimatePresence initial={false}>
-        {isMobileMenuOpen ? (
-          <div className="fixed inset-x-0 top-[var(--public-header-height-mobile)] bottom-0 z-[999] md:top-[var(--public-header-height-desktop)] md:hidden">
-            <motion.button
-              type="button"
-              className="absolute inset-0 bg-black/25"
-              aria-label="모바일 메뉴 닫기"
-              data-testid="public-nav-mobile-backdrop"
-              onClick={() => setIsMobileMenuOpen(false)}
-              initial={shouldReduceMotion ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={
-                shouldReduceMotion
-                  ? { opacity: 0 }
-                  : { opacity: 0, transition: { duration: 0.18, ease: "easeOut" } }
-              }
-              transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2 }}
-            />
-            <motion.nav
-              className="absolute inset-x-0 top-0 block border-b border-(--surface-border) bg-(--surface-elevated) p-8"
-              data-testid="public-nav-mobile"
-              data-state="open"
-              initial={shouldReduceMotion ? false : { opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={
-                shouldReduceMotion
-                  ? { opacity: 0, y: -8 }
-                  : { opacity: 0, y: -20, transition: { duration: 0.2, ease: "easeOut" } }
-              }
-              transition={
-                shouldReduceMotion
-                  ? { duration: 0 }
-                  : { type: "spring", stiffness: 360, damping: 30, mass: 0.62 }
-              }
-            >
-              <ul className="flex list-none flex-col gap-4">
-                {navItems.map((item) => {
-                  const active = isActivePath(pathname, item);
-                  return (
-                    <li key={item.href} className="w-full">
-                      <Link
-                        href={item.href}
-                        prefetch={item.prefetch}
-                        rel={item.rel}
-                        className={`${mobileLinkBaseClass} ${active ? "after:w-12" : ""}`.trim()}
-                        data-testid={`public-nav-mobile-${item.testId}`}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        {item.label}
-                      </Link>
-                      {item.children ? (
-                        <ul className="mt-[0.4rem] w-full list-none bg-(--surface-muted)">
-                          {item.children.map((child) => (
-                            <li key={child.href}>
-                              <Link
-                                href={child.href}
-                                className="block px-4 py-[0.8rem] text-center text-[0.8rem] text-(--text-primary)"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                              >
-                                {child.label}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ul>
-            </motion.nav>
-          </div>
-        ) : null}
-      </AnimatePresence>
+      <SiteHeaderMobileNav
+        isOpen={isMobileMenuOpen}
+        pathname={pathname}
+        onClose={() => setIsMobileMenuOpen(false)}
+      />
     </header>
   );
 }

@@ -1,8 +1,9 @@
 "use client";
 
+import { useIsMounted } from "@/shared/react/use-is-mounted";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 import { cx } from "@/app/(dashboard)/_components/ui/cx";
@@ -57,10 +58,7 @@ export const Dialog = ({
   const shouldReduceMotion = useReducedMotion();
 
   // 포털은 클라이언트에서만 마운트한다.
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const isMounted = useIsMounted();
 
   useFocusTrap(panelRef, open && isMounted);
 

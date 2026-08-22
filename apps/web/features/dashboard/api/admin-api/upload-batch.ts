@@ -1,5 +1,5 @@
 import {
-  PRESIGN_PATHS,
+  type PRESIGN_PATHS,
   uploadWithPresign,
 } from "@/features/dashboard/api/admin-api/upload";
 

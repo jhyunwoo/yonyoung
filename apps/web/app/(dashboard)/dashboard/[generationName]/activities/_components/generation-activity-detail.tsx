@@ -147,7 +147,7 @@ export default function GenerationActivityDetail({
             <button
               type="button"
               data-testid="generation-activity-delete"
-              onClick={handleDelete}
+              onClick={() => void handleDelete()}
               disabled={isLoading || isDeleting || activity === null}
               className="rounded-lg border border-danger-hairline px-4 py-2 text-sm font-semibold text-danger-text transition hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-60"
             >

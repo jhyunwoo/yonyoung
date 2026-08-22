@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { CSRF_HEADER_NAME, CSRF_HEADER_VALUE } from "@/shared/security/csrf";
 
 export { CSRF_HEADER_NAME, CSRF_HEADER_VALUE } from "@/shared/security/csrf";

@@ -1,19 +1,20 @@
 "use client";
 
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type ChangeEvent, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
-import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/upload-batch";
-import { readImageDimensions } from "@/features/media/images/read-image-dimensions";
 import {
   PRESIGN_PATHS,
   uploadWithPresign,
 } from "@/features/dashboard/api/admin-api/upload";
+import { readFileList } from "@/features/media/upload/image-upload-state";
 import {
-  readFileList,
-  type UploadImageItem,
-} from "@/features/media/upload/image-upload-state";
+  readNewUploadImageItems,
+  uploadDetailImages,
+} from "@/features/media/upload/detail-image-upload";
+import { createWeightedUploadProgressTracker } from "@/features/media/upload/weighted-upload-progress";
+import { useSelectedImageFile } from "@/features/media/upload/use-selected-image-file";
 import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import SortableImageGrid from "@/app/(dashboard)/_components/sortable-image-grid";
@@ -45,9 +46,13 @@ export default function ExhibitionCreateForm({
   const [descriptionHtml, setDescriptionHtml] = useState(EMPTY_DESCRIPTION_HTML);
   const [startDateInput, setStartDateInput] = useState("");
   const [endDateInput, setEndDateInput] = useState("");
-  const [coverFile, setCoverFile] = useState<File | null>(null);
-  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
-  const coverFileInputRef = useRef<HTMLInputElement | null>(null);
+  const {
+    selectedFile: coverFile,
+    fileInputRef: coverFileInputRef,
+    previewUrl: coverPreviewUrl,
+    selectFile: selectCoverFile,
+    openFilePicker: openCoverFilePicker,
+  } = useSelectedImageFile();
   const detailFileInputRef = useRef<HTMLInputElement | null>(null);
   const {
     items: detailImages,
@@ -59,41 +64,14 @@ export default function ExhibitionCreateForm({
   const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    return () => {
-      if (coverPreviewUrl) {
-        URL.revokeObjectURL(coverPreviewUrl);
-      }
-    };
-  }, [coverPreviewUrl]);
-
-  const isSubmitDisabled = useMemo(() => {
-    return (
-      isSaving ||
-      title.trim().length === 0 ||
-      place.trim().length === 0 ||
-      !hasMeaningfulExhibitionDescription(descriptionHtml) ||
-      startDateInput.trim().length === 0 ||
-      endDateInput.trim().length === 0 ||
-      coverFile === null
-    );
-  }, [coverFile, descriptionHtml, endDateInput, isSaving, place, startDateInput, title]);
-
-  const handleCoverFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextFile = event.target.files?.[0] ?? null;
-
-    if (coverPreviewUrl) {
-      URL.revokeObjectURL(coverPreviewUrl);
-    }
-
-    setCoverFile(nextFile);
-    if (!nextFile) {
-      setCoverPreviewUrl(null);
-      return;
-    }
-
-    setCoverPreviewUrl(URL.createObjectURL(nextFile));
-  };
+  const isSubmitDisabled =
+    isSaving ||
+    title.trim().length === 0 ||
+    place.trim().length === 0 ||
+    !hasMeaningfulExhibitionDescription(descriptionHtml) ||
+    startDateInput.trim().length === 0 ||
+    endDateInput.trim().length === 0 ||
+    coverFile === null;
 
   const handleDetailFilesChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = readFileList(event.target.files);
@@ -110,7 +88,7 @@ export default function ExhibitionCreateForm({
       return;
     }
 
-    coverFileInputRef.current?.click();
+    openCoverFilePicker();
   };
 
   const handleOpenDetailFilePicker = () => {
@@ -160,31 +138,16 @@ export default function ExhibitionCreateForm({
     setUploadProgressPercent(0);
 
     try {
-      const newDetailImages = detailImages.filter(
-        (image): image is UploadImageItem & { file: File } => image.file !== null,
-      );
-      const totalUploadCount = 1 + newDetailImages.length;
-      let coverUploadProgress = 0;
-      let detailUploadProgress = 0;
-      const updateUploadProgress = () => {
-        if (totalUploadCount <= 0) {
-          setUploadProgressPercent(null);
-          return;
-        }
-
-        const weightedProgress =
-          (coverUploadProgress + detailUploadProgress * newDetailImages.length) /
-          totalUploadCount;
-        setUploadProgressPercent(Math.round(weightedProgress));
-      };
+      const newDetailImages = readNewUploadImageItems(detailImages);
+      const uploadProgress = createWeightedUploadProgressTracker({
+        detailCount: newDetailImages.length,
+        onProgress: setUploadProgressPercent,
+      });
 
       const coverImageUrl = await uploadWithPresign({
         presignPath: PRESIGN_PATHS.exhibitionCover,
         file: coverFile,
-        onProgress: (progressPercent) => {
-          coverUploadProgress = progressPercent;
-          updateUploadProgress();
-        },
+        onProgress: uploadProgress.reportCoverProgress,
       });
 
       const createdExhibition = await adminResourceApi.createExhibition({
@@ -199,27 +162,15 @@ export default function ExhibitionCreateForm({
 
       if (newDetailImages.length > 0) {
         try {
-          // 업로드 전에 원본 크기를 측정해 함께 저장 (공개 갤러리 masonry 레이아웃용)
-          const dimensionList = await Promise.all(
-            newDetailImages.map((image) => readImageDimensions(image.file)),
-          );
-
-          const uploadedDetailUrls = await uploadFilesWithPresign({
+          const uploadedDetailImages = await uploadDetailImages({
             presignPath: PRESIGN_PATHS.exhibitionDetail,
-            files: newDetailImages.map((image) => image.file),
-            onProgress: (progressPercent) => {
-              detailUploadProgress = progressPercent;
-              updateUploadProgress();
-            },
+            items: newDetailImages,
+            onProgress: uploadProgress.reportDetailProgress,
           });
 
           await adminResourceApi.addExhibitionImages(
             createdExhibition.id,
-            uploadedDetailUrls.map((imageUrl, index) => ({
-              imageUrl,
-              sortOrder: index,
-              ...(dimensionList[index] ?? {}),
-            })),
+            uploadedDetailImages,
           );
         } catch (detailUploadError) {
           const detailUploadMessage = readExhibitionErrorMessage(detailUploadError);
@@ -325,7 +276,7 @@ export default function ExhibitionCreateForm({
             ref={coverFileInputRef}
             type="file"
             accept="image/*"
-            onChange={handleCoverFileChange}
+            onChange={selectCoverFile}
             disabled={isSaving}
             className="sr-only"
           />

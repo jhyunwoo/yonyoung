@@ -5,7 +5,15 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LIB_CACHE_DIR="$ROOT_DIR/.cache/playwright-libs"
 DEB_CACHE_DIR="$ROOT_DIR/.cache/playwright-debs"
-LIB_DIR="$LIB_CACHE_DIR/usr/lib/x86_64-linux-gnu"
+
+# .deb 파일명과 라이브러리 경로가 아키텍처마다 다르다(amd64/x86_64-linux-gnu,
+# arm64/aarch64-linux-gnu). CI는 amd64지만 개발 머신은 arm64일 수 있다.
+DEB_ARCH="$(dpkg --print-architecture 2>/dev/null || echo amd64)"
+case "$DEB_ARCH" in
+  arm64) LIB_TRIPLET="aarch64-linux-gnu" ;;
+  *) LIB_TRIPLET="x86_64-linux-gnu" ;;
+esac
+LIB_DIR="$LIB_CACHE_DIR/usr/lib/$LIB_TRIPLET"
 
 download_package() {
   local package_name="$1"
@@ -68,14 +76,26 @@ ensure_linux_runtime_libraries() {
 
   rm -rf "$LIB_CACHE_DIR"
   mkdir -p "$LIB_CACHE_DIR"
-  dpkg-deb -x "$DEB_CACHE_DIR"/libnspr4_*_amd64.deb "$LIB_CACHE_DIR"
-  dpkg-deb -x "$DEB_CACHE_DIR"/libnss3_*_amd64.deb "$LIB_CACHE_DIR"
+  extract_package() {
+    local package_name="$1"
+    if ! compgen -G "$DEB_CACHE_DIR/${package_name}_*_${DEB_ARCH}.deb" >/dev/null; then
+      return 1
+    fi
+    dpkg-deb -x "$DEB_CACHE_DIR/${package_name}"_*_"${DEB_ARCH}".deb "$LIB_CACHE_DIR"
+  }
 
-  if compgen -G "$DEB_CACHE_DIR/libasound2t64_*_amd64.deb" >/dev/null; then
-    dpkg-deb -x "$DEB_CACHE_DIR"/libasound2t64_*_amd64.deb "$LIB_CACHE_DIR"
-  else
-    dpkg-deb -x "$DEB_CACHE_DIR"/libasound2_*_amd64.deb "$LIB_CACHE_DIR"
-  fi
+  extract_package "libnspr4" || {
+    echo "Failed to obtain libnspr4 for $DEB_ARCH." >&2
+    exit 1
+  }
+  extract_package "libnss3" || {
+    echo "Failed to obtain libnss3 for $DEB_ARCH." >&2
+    exit 1
+  }
+  extract_package "libasound2t64" || extract_package "libasound2" || {
+    echo "Failed to obtain libasound2 for $DEB_ARCH." >&2
+    exit 1
+  }
 }
 
 main() {

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { getApiBaseUrl } from "@/server/env";
 import {
   API_PROXY_BODY_LIMIT_BYTES,

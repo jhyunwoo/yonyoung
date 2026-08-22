@@ -1,5 +1,6 @@
 "use client";
 
+import { useResetOnChange } from "@/shared/react/use-reset-on-change";
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import type {
   ApiAdminUpdateUserInput,
@@ -76,7 +77,8 @@ export default function MemberEditForm({
   const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
   const profileFileInputRef = useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => {
+  // 다른 멤버를 편집하기 시작하면 폼 초안을 그 멤버의 서버 값으로 되돌린다.
+  useResetOnChange(user, () => {
     setName(user.name);
     setImage(user.image ?? "");
     setFamilyName(user.familyName ?? "");
@@ -99,7 +101,7 @@ export default function MemberEditForm({
     setUploadProgressPercent(null);
     setErrorMessage(null);
     setSuccessMessage(null);
-  }, [user]);
+  });
 
   useEffect(() => {
     return () => {

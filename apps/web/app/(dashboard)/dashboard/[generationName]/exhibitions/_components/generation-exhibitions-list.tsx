@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { readCookieHeader } from "@/shared/http/http";
-import { listCachedExhibitions } from "@/features/dashboard/cache/admin-dashboard-cache";
+import { listAdminExhibitions } from "@/features/dashboard/services/admin-read-service";
+import AdminReadErrorNotice from "@/app/(dashboard)/_components/admin-read-error";
 import { formatAuditActor } from "@/features/dashboard/ui/audit-display";
 import { formatKoreanDate, formatKoreanDateRange } from "@/shared/utils/date-formatters";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
@@ -24,9 +25,8 @@ export default async function GenerationExhibitionsList({
   canManage,
 }: GenerationExhibitionsListProps) {
   const cookieHeader = await readCookieHeader();
-  const exhibitions = sortExhibitionsByStartDateDesc(
-    await listCachedExhibitions(generationId, cookieHeader),
-  );
+  const result = await listAdminExhibitions(generationId, cookieHeader);
+  const exhibitions = result.ok ? sortExhibitionsByStartDateDesc(result.data) : [];
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
@@ -58,7 +58,9 @@ export default async function GenerationExhibitionsList({
         </p>
       ) : null}
 
-      {exhibitions.length === 0 ? (
+      {!result.ok ? (
+        <AdminReadErrorNotice error={result.error} />
+      ) : exhibitions.length === 0 ? (
         <p className="mt-6 rounded-lg border border-dashed border-hairline-strong bg-surface-sunken px-4 py-6 text-sm text-ink-muted">
           현재 기수에 등록된 전시가 없습니다.
         </p>

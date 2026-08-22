@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { apiUpdateSiteSettingsInputSchema } from "@/shared/contracts/api-schemas";
+import { apiUpdateSiteSettingsInputSchema } from "@/shared/contracts/api/site-settings";
 
 describe("shared/contracts/api-schemas", () => {
   it("accepts donateAccountNumber with digits and dashes up to 50 chars", () => {

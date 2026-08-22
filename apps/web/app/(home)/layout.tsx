@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { ReactNode, Suspense } from "react";
+import { type ReactNode, Suspense } from "react";
 import Script from "next/script";
 import SiteHeader from "@/app/(home)/_components/site-header";
 import SiteFooter from "@/app/(home)/_components/site-footer";

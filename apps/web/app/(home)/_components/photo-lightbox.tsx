@@ -1,9 +1,10 @@
 "use client";
 
+import { useIsMounted } from "@/shared/react/use-is-mounted";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import { LIGHTBOX_IMAGE_SIZES } from "./photo-preload-images";
@@ -56,7 +57,7 @@ export function PhotoLightbox({
   loadedKeys,
   onImageLoaded,
 }: PhotoLightboxProps) {
-  const [isMounted, setIsMounted] = useState(false);
+  const isMounted = useIsMounted();
   const panelRef = useRef<HTMLDivElement | null>(null);
   // 닫을 때 원래 눌렀던 사진 버튼으로 포커스를 되돌리기 위해 보관한다
   const restoreFocusRef = useRef<HTMLElement | null>(null);
@@ -65,10 +66,6 @@ export function PhotoLightbox({
     openIndex !== null && openIndex >= 0 && openIndex < items.length ? openIndex : null;
   const isOpen = activeIndex !== null;
   const shouldReduceMotion = useReducedMotion();
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   // 배경 스크롤 잠금 + 포커스 이동/복귀
   useEffect(() => {

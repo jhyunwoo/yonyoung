@@ -3,13 +3,25 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { API_PROXY_ALLOWED_PREFIXES } from "@/server/security/api-proxy-prefixes";
 
+const collectTypeScriptFiles = (relativeDirectory: string): string[] => {
+  const absoluteDirectory = path.join(process.cwd(), relativeDirectory);
+
+  return fs.readdirSync(absoluteDirectory, { withFileTypes: true }).flatMap((entry) => {
+    const relativePath = path.join(relativeDirectory, entry.name);
+    if (entry.isDirectory()) {
+      return collectTypeScriptFiles(relativePath);
+    }
+
+    return entry.isFile() && /\.tsx?$/.test(entry.name) ? [relativePath] : [];
+  });
+};
+
 const API_CLIENT_SOURCE_FILES = [
-  "features/dashboard/actions/admin-write-actions.ts",
-  "features/dashboard/api/admin-api/resources.ts",
-  "features/dashboard/api/admin-api/upload.ts",
+  ...collectTypeScriptFiles("features/dashboard/actions"),
+  ...collectTypeScriptFiles("features/dashboard/api/admin-api"),
   "features/dashboard/generation/generation-fetcher.ts",
   "features/public/services/public-read-service.ts",
-] as const;
+];
 
 const API_PATH_LITERAL_PATTERN = /["'`](\/(?:api\/)?[A-Za-z0-9-]+(?:\/[^"'`\n]*)?)["'`]/g;
 

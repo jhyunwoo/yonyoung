@@ -50,5 +50,6 @@ export const resolveStickerAccent = (seed: string): StickerAccent => {
   for (let index = 0; index < seed.length; index += 1) {
     hash = (hash * 31 + seed.charCodeAt(index)) % 100_000;
   }
-  return STICKER_ACCENTS[hash % STICKER_ACCENTS.length];
+  // 나머지 연산 결과는 항상 유효한 인덱스지만 타입만으로는 그 사실을 알 수 없다.
+  return STICKER_ACCENTS[hash % STICKER_ACCENTS.length] ?? STICKER_ACCENTS[0];
 };

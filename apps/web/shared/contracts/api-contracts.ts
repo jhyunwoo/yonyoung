@@ -1,521 +1,104 @@
-import type { CoreRole } from "@/shared/contracts/auth-roles";
-
-export const API_ERROR_CODES = [
-  "BAD_REQUEST",
-  "UNAUTHORIZED",
-  "FORBIDDEN",
-  "NOT_FOUND",
-  "CONFLICT",
-  "TOO_MANY_REQUESTS",
-  "INTERNAL_ERROR",
-] as const;
-
-export type ApiErrorCode = (typeof API_ERROR_CODES)[number];
-
-export type ApiErrorEnvelope = {
-  error: {
-    code: ApiErrorCode;
-    message: string;
-    requestId: string;
-  };
-};
-
-export type DataEnvelope<T> = {
-  data: T;
-};
-
-export type ApiKnownRole = CoreRole;
-export type ApiRole = ApiKnownRole | (string & {});
-
-export type ApiAuditResourceType =
-  | "generation"
-  | "activity"
-  | "exhibition"
-  | "linktree"
-  | "linktree_item"
-  | "user"
-  | "attachment";
-
-export type ApiAuditAction = "create" | "update" | "delete";
-
-export type ApiAuditActor = {
-  id: string;
-  name: string;
-  familyName: string | null;
-  givenName: string | null;
-  role: ApiRole | null;
-};
-
-export type ApiAuditLog = {
-  id: string;
-  resourceType: ApiAuditResourceType;
-  resourceId: string;
-  action: ApiAuditAction;
-  actor: ApiAuditActor | null;
-  changedFields: string[];
-  createdAt: number;
-};
-
-export type ApiGeneration = {
-  id: string;
-  name: string;
-  sortOrder: number;
-  startDate: number;
-  endDate: number;
-  createdAt: number;
-  updatedAt: number;
-  updatedBy: ApiAuditActor | null;
-};
-
-export type ApiCreateGenerationInput = {
-  name: string;
-  sortOrder: number;
-  startDate: number;
-  endDate: number;
-};
-
-export type ApiUpdateGenerationInput = Partial<ApiCreateGenerationInput>;
-
-export type ApiActivityImage = {
-  id: string;
-  activityId: string;
-  imageUrl: string;
-  sortOrder: number;
-  /** 원본 이미지 가로 픽셀 (업로드 시 측정, 레거시 데이터는 null) */
-  width: number | null;
-  /** 원본 이미지 세로 픽셀 (업로드 시 측정, 레거시 데이터는 null) */
-  height: number | null;
-  createdAt: number;
-  updatedAt: number;
-};
-
-export type ApiActivity = {
-  id: string;
-  title: string;
-  description: string;
-  startDate: number;
-  endDate: number;
-  coverImageUrl: string;
-  generationId: string;
-  createdAt: number;
-  updatedAt: number;
-  updatedBy: ApiAuditActor | null;
-  detailImages: ApiActivityImage[];
-};
-
-export type ApiCreateActivityInput = {
-  title: string;
-  description: string;
-  startDate: number;
-  endDate: number;
-  coverImageUrl: string;
-  generationId: string;
-};
-
-export type ApiUpdateActivityInput = Partial<ApiCreateActivityInput>;
-
-export type ApiListActivitiesQuery = {
-  generationId?: string;
-};
-
-export type ApiCreateActivityImageInput = {
-  imageUrl: string;
-  sortOrder: number;
-  /** 원본 이미지 가로 픽셀 (선택, 측정 실패 시 생략) */
-  width?: number;
-  /** 원본 이미지 세로 픽셀 (선택, 측정 실패 시 생략) */
-  height?: number;
-};
-
-export type ApiUpdateActivityImageInput = Partial<ApiCreateActivityImageInput>;
-
-export type ApiUpdateActivityImageBatchItemInput = {
-  imageId: string;
-  imageUrl?: string;
-  sortOrder?: number;
-};
-
-export type ApiExhibitionImage = {
-  id: string;
-  exhibitionId: string;
-  imageUrl: string;
-  sortOrder: number;
-  /** 원본 이미지 가로 픽셀 (업로드 시 측정, 레거시 데이터는 null) */
-  width: number | null;
-  /** 원본 이미지 세로 픽셀 (업로드 시 측정, 레거시 데이터는 null) */
-  height: number | null;
-  createdAt: number;
-  updatedAt: number;
-};
-
-export type ApiExhibition = {
-  id: string;
-  title: string;
-  startDate: number;
-  endDate: number;
-  generationId: string;
-  place: string;
-  coverImageUrl: string;
-  description: string;
-  createdAt: number;
-  updatedAt: number;
-  updatedBy: ApiAuditActor | null;
-  detailImages: ApiExhibitionImage[];
-};
-
-export type ApiCreateExhibitionInput = {
-  title: string;
-  startDate: number;
-  endDate: number;
-  generationId: string;
-  place: string;
-  coverImageUrl: string;
-  description: string;
-};
-
-export type ApiUpdateExhibitionInput = Partial<ApiCreateExhibitionInput>;
-
-export type ApiListExhibitionsQuery = {
-  generationId?: string;
-};
-
-export type ApiCreateExhibitionImageInput = {
-  imageUrl: string;
-  sortOrder: number;
-  /** 원본 이미지 가로 픽셀 (선택, 측정 실패 시 생략) */
-  width?: number;
-  /** 원본 이미지 세로 픽셀 (선택, 측정 실패 시 생략) */
-  height?: number;
-};
-
-export type ApiUpdateExhibitionImageInput = Partial<ApiCreateExhibitionImageInput>;
-
-export type ApiUpdateExhibitionImageBatchItemInput = {
-  imageId: string;
-  imageUrl?: string;
-  sortOrder?: number;
-};
-
-/**
- * 첨부파일 소속 구분.
- * - "activity": 개별 활동 페이지 자료 (resourceId = 활동 UUID)
- * - "site_donate": 후원 페이지 전역 자료 (resourceId = null)
- */
-export type ApiAttachmentScope = "activity" | "site_donate";
-
-/** 파일 첨부(fileUrl 세트)와 외부 링크(linkUrl) 중 정확히 하나만 값이 채워진다. */
-export type ApiAttachment = {
-  id: string;
-  scope: ApiAttachmentScope;
-  resourceId: string | null;
-  /** 표시용 제목 (예: "2026년 6월 회계 내역") */
-  title: string;
-  fileUrl: string | null;
-  /** 다운로드 시 보여줄 원본 파일명 */
-  fileName: string | null;
-  fileSize: number | null;
-  mimeType: string | null;
-  /** 외부 링크 URL (예: 구글 독스 공유 링크) */
-  linkUrl: string | null;
-  sortOrder: number;
-  createdAt: number;
-  updatedAt: number;
-};
-
-/** 생성 시에는 파일 필드 세트(fileUrl~mimeType) 또는 linkUrl 중 정확히 하나만 전달한다. */
-export type ApiCreateAttachmentInput = {
-  scope: ApiAttachmentScope;
-  resourceId?: string | null;
-  title: string;
-  fileUrl?: string;
-  fileName?: string;
-  fileSize?: number;
-  mimeType?: string;
-  linkUrl?: string;
-  sortOrder?: number;
-};
-
-export type ApiUpdateAttachmentInput = {
-  title?: string;
-  sortOrder?: number;
-};
-
-/** 첨부파일 업로드 <input accept>에 사용하는 확장자 목록 (서버 allowlist와 동기화) */
-export const ATTACHMENT_ACCEPT = ".pdf,.xlsx,.xls,.docx,.hwp,.hwpx,.zip";
-
-export type ApiLinktreeItem = {
-  id: string;
-  linktreeId: string;
-  name: string;
-  link: string;
-  createdAt: number;
-  updatedAt: number;
-  updatedBy: ApiAuditActor | null;
-};
-
-export type ApiLinktree = {
-  id: string;
-  name: string;
-  createdAt: number;
-  updatedAt: number;
-  updatedBy: ApiAuditActor | null;
-  items: ApiLinktreeItem[];
-};
-
-export type ApiCreateLinktreeInput = {
-  name: string;
-};
-
-export type ApiUpdateLinktreeInput = Partial<ApiCreateLinktreeInput>;
-
-export type ApiCreateLinktreeItemInput = {
-  name: string;
-  link: string;
-};
-
-export type ApiUpdateLinktreeItemInput = Partial<ApiCreateLinktreeItemInput>;
-
-export type ApiSiteSettings = {
-  footerOpenChatUrl: string;
-  footerInstagramId: string;
-  footerEmail: string;
-  footerPhone: string;
-  footerAddress: string;
-  donateBankName: string;
-  donateAccountNumber: string;
-  donateAccountHolder: string;
-};
-
-export type ApiUpdateSiteSettingsInput = Partial<ApiSiteSettings>;
-
-export const DEFAULT_SITE_SETTINGS: ApiSiteSettings = {
-  footerOpenChatUrl: "https://open.kakao.com/o/snVWZ4th",
-  footerInstagramId: "yonyongpage",
-  footerEmail: "kimse0604@naver.com",
-  footerPhone: "010-6814-1800",
-  footerAddress: "서울특별시 서대문구 연희로 50 연세대학교 대강당 nn호",
-  donateBankName: "예시은행",
-  donateAccountNumber: "123-456-789012",
-  donateAccountHolder: "연영회",
-};
-
-export type ApiRecruitingPlan = {
-  year: number;
-  title: string;
-  content: string;
-  promotionImageUrls: string[];
-  recruitmentStartAt: number;
-  recruitmentEndAt: number;
-  createdAt: number;
-  updatedAt: number;
-};
-
-export type ApiUpsertCurrentRecruitingPlanInput = {
-  title: string;
-  content: string;
-  promotionImageUrls: string[];
-  recruitmentStartAt: number;
-  recruitmentEndAt: number;
-};
-
-export type ApiUser = {
-  id: string;
-  name: string;
-  email: string;
-  image: string | null;
-  showcaseImageUrls: string[];
-  familyName: string | null;
-  givenName: string | null;
-  college: string | null;
-  department: string | null;
-  studentNumber: string | null;
-  phoneNumber: string | null;
-  collaborationAvailable: boolean;
-  personalLink: string | null;
-  role: ApiRole | null;
-  generationId: string | null;
-  generationIds?: string[];
-  createdAt: number;
-  updatedAt: number;
-  updatedBy: ApiAuditActor | null;
-};
-
-export type ApiUserResourceHistoryResourceType =
-  "activity" | "exhibition" | "linktree" | "linktree_item";
-
-export type ApiUserResourceHistoryItem = {
-  id: string;
-  resourceType: ApiUserResourceHistoryResourceType;
-  resourceId: string;
-  resourceTitle: string | null;
-  action: ApiAuditAction;
-  changedFields: string[];
-  isDeleted: boolean;
-  generationId: string | null;
-  linktreeId: string | null;
-  createdAt: number;
-};
-
-export type ApiUserResourceHistory = {
-  items: ApiUserResourceHistoryItem[];
-  page: number;
-  pageSize: number;
-  total: number;
-  totalPages: number;
-};
-
-export type ApiPublicGenerationMember = {
-  id: string;
-  name: string;
-  image: string | null;
-  showcaseImageUrls: string[];
-  familyName: string | null;
-  givenName: string | null;
-  collaborationAvailable: boolean;
-  personalLink: string | null;
-  role: ApiRole | null;
-  generationId: string;
-};
-
-export type ApiGenerationMemberSummary = {
-  id: string;
-  generationId: string;
-  name: string;
-  image: string | null;
-  familyName: string | null;
-  givenName: string | null;
-  department: string | null;
-  collaborationAvailable: boolean;
-  personalLink: string | null;
-  role: ApiRole | null;
-};
-
-export type ApiPublicGenerationWithMembers = {
-  id: string;
-  name: string;
-  sortOrder: number;
-  startDate: number;
-  endDate: number;
-  members: ApiPublicGenerationMember[];
-};
-
-export type ApiAdminUpdateUserInput = {
-  name?: string;
-  image?: string | null;
-  showcaseImageUrls?: string[];
-  familyName?: string | null;
-  givenName?: string | null;
-  college?: string | null;
-  department?: string | null;
-  studentNumber?: string | null;
-  phoneNumber?: string | null;
-  collaborationAvailable?: boolean;
-  personalLink?: string | null;
-  role?: CoreRole;
-  generationIds?: string[];
-  generationId?: string | null;
-};
-
-export type ApiMemberProfileUpdateInput = {
-  image?: string | null;
-  showcaseImageUrls?: string[];
-  familyName?: string | null;
-  givenName?: string | null;
-  college?: string | null;
-  department?: string | null;
-  studentNumber?: string | null;
-  phoneNumber?: string | null;
-  collaborationAvailable?: boolean;
-  personalLink?: string | null;
-};
-
-export type ApiUpdateUserInput = ApiAdminUpdateUserInput | ApiMemberProfileUpdateInput;
-
-export type ApiBulkUpdateUserRoleInput = {
-  userIds: string[];
-  role: CoreRole;
-};
-
-export type ApiAdminDashboardStats = {
-  usersTotal: number;
-  unverifiedUsersTotal: number;
-  generationsTotal: number;
-  selectedGenerationMembersTotal: number;
-  selectedGenerationActivitiesTotal: number;
-  selectedGenerationExhibitionsTotal: number;
-  linktreeLinksTotal: number;
-  r2StorageUsedBytes: number;
-  r2StorageLimitBytes: number;
-  r2StorageUsageAvailable: boolean;
-};
-
-export type ApiPresignRequest = {
-  fileName: string;
-  contentType: string;
-  fileSize: number;
-};
-
-export type ApiPresignResponse = {
-  uploadUrl: string;
-  objectKey: string;
-  publicUrl: string;
-  requiredHeaders?: Record<string, string>;
-};
-
-export type ApiMultipartUploadInitRequest = {
-  fileName: string;
-  contentType: string;
-  fileSize: number;
-};
-
-export type ApiMultipartUploadInitResponse = {
-  uploadId: string;
-  objectKey: string;
-  publicUrl: string;
-  partSize: number;
-  maxPartNumber: number;
-};
-
-export type ApiMultipartUploadPartRequest = {
-  uploadId: string;
-  objectKey: string;
-  partNumber: number;
-};
-
-export type ApiMultipartUploadPartResponse = {
-  uploadUrl: string;
-  requiredHeaders: Record<string, string>;
-};
-
-export type ApiMultipartUploadedPart = {
-  partNumber: number;
-  etag: string;
-};
-
-export type ApiMultipartUploadCompleteRequest = {
-  uploadId: string;
-  objectKey: string;
-  parts: ApiMultipartUploadedPart[];
-};
-
-export type ApiMultipartUploadCompleteResponse = {
-  objectKey: string;
-  publicUrl: string;
-};
-
-export type ApiMultipartUploadAbortRequest = {
-  uploadId: string;
-  objectKey: string;
-};
-
-export type ApiPageViewStats = {
-  today: {
-    count: number;
-    prevCount: number;
-  };
-  thisWeek: {
-    count: number;
-    prevCount: number;
-  };
-  dailyTrend: Array<{ date: string; count: number }>;
-};
+// 기존 import 경로 호환용 facade. 새 코드는 bounded context 모듈을 직접 사용한다.
+export { API_ERROR_CODES } from "@/shared/contracts/api/common";
+export type {
+  ApiErrorCode,
+  ApiErrorEnvelope,
+  ApiKnownRole,
+  ApiRole,
+  DataEnvelope,
+} from "@/shared/contracts/api/common";
+
+export type {
+  ApiAuditAction,
+  ApiAuditActor,
+  ApiAuditLog,
+  ApiAuditResourceType,
+} from "@/shared/contracts/api/audit";
+
+export type {
+  ApiCreateGenerationInput,
+  ApiGeneration,
+  ApiGenerationMemberSummary,
+  ApiPublicGenerationMember,
+  ApiPublicGenerationWithMembers,
+  ApiUpdateGenerationInput,
+} from "@/shared/contracts/api/generations";
+
+export type {
+  ApiActivity,
+  ApiActivityImage,
+  ApiCreateActivityImageInput,
+  ApiCreateActivityInput,
+  ApiListActivitiesQuery,
+  ApiUpdateActivityImageBatchItemInput,
+  ApiUpdateActivityImageInput,
+  ApiUpdateActivityInput,
+} from "@/shared/contracts/api/activities";
+
+export type {
+  ApiCreateExhibitionImageInput,
+  ApiCreateExhibitionInput,
+  ApiExhibition,
+  ApiExhibitionImage,
+  ApiListExhibitionsQuery,
+  ApiUpdateExhibitionImageBatchItemInput,
+  ApiUpdateExhibitionImageInput,
+  ApiUpdateExhibitionInput,
+} from "@/shared/contracts/api/exhibitions";
+
+export { ATTACHMENT_ACCEPT } from "@/shared/contracts/api/attachments";
+export type {
+  ApiAttachment,
+  ApiAttachmentScope,
+  ApiCreateAttachmentInput,
+  ApiUpdateAttachmentInput,
+} from "@/shared/contracts/api/attachments";
+
+export type {
+  ApiCreateLinktreeInput,
+  ApiCreateLinktreeItemInput,
+  ApiLinktree,
+  ApiLinktreeItem,
+  ApiUpdateLinktreeInput,
+  ApiUpdateLinktreeItemInput,
+} from "@/shared/contracts/api/linktree";
+
+export { DEFAULT_SITE_SETTINGS } from "@/shared/contracts/api/site-settings";
+export type {
+  ApiSiteSettings,
+  ApiUpdateSiteSettingsInput,
+} from "@/shared/contracts/api/site-settings";
+
+export type {
+  ApiRecruitingPlan,
+  ApiUpsertCurrentRecruitingPlanInput,
+} from "@/shared/contracts/api/recruiting";
+
+export type {
+  ApiAdminUpdateUserInput,
+  ApiBulkUpdateUserRoleInput,
+  ApiMemberProfileUpdateInput,
+  ApiUpdateUserInput,
+  ApiUser,
+  ApiUserResourceHistory,
+  ApiUserResourceHistoryItem,
+  ApiUserResourceHistoryResourceType,
+} from "@/shared/contracts/api/users";
+
+export type {
+  ApiAdminDashboardStats,
+  ApiPageViewStats,
+} from "@/shared/contracts/api/dashboard";
+
+export type {
+  ApiMultipartUploadAbortRequest,
+  ApiMultipartUploadCompleteRequest,
+  ApiMultipartUploadCompleteResponse,
+  ApiMultipartUploadInitRequest,
+  ApiMultipartUploadInitResponse,
+  ApiMultipartUploadedPart,
+  ApiMultipartUploadPartRequest,
+  ApiMultipartUploadPartResponse,
+  ApiPresignRequest,
+  ApiPresignResponse,
+} from "@/shared/contracts/api/uploads";

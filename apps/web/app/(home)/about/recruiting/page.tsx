@@ -85,6 +85,10 @@ export default async function RecruitingPage() {
   const currentRecruitingPlan = await getPublicCurrentRecruitingPlan();
   const recruitingStatus = currentRecruitingPlan
     ? readRecruitingStatus(
+        // 서버 컴포넌트다. 위에서 headers()를 await 해 이미 동적 렌더링으로
+        // 확정됐으므로 요청 시각을 읽는 것이 맞고, 클라이언트 렌더 규칙을 보는
+        // react-hooks/purity 는 여기에 해당하지 않는다.
+        // eslint-disable-next-line react-hooks/purity
         Date.now(),
         currentRecruitingPlan.recruitmentStartAt,
         currentRecruitingPlan.recruitmentEndAt,
