@@ -1,3 +1,5 @@
+import type { PageViewType } from "../views/page-view-target";
+
 export type GenerationEntity = {
   id: string;
   name: string;
@@ -13,19 +15,18 @@ export type AuditResourceType =
   | "generation"
   | "activity"
   | "exhibition"
-  | "generation_notice"
-  | "global_notice"
-  | "market_item"
-  | "market_comment"
   | "linktree"
   | "linktree_item"
-  | "user";
+  | "user"
+  | "attachment";
 
 export type AuditAction = "create" | "update" | "delete";
 
 export type AuditActorEntity = {
   id: string;
   name: string;
+  familyName: string | null;
+  givenName: string | null;
   role: string | null;
 };
 
@@ -39,11 +40,21 @@ export type AuditLogEntity = {
   createdAt: Date;
 };
 
+/** 세부 이미지 쓰기 입력에 선택적으로 포함되는 원본 픽셀 크기 (측정 실패 시 생략) */
+export type ImageDimensionsInput = {
+  width?: number;
+  height?: number;
+};
+
 export type ActivityImageEntity = {
   id: string;
   activityId: string;
   imageUrl: string;
   sortOrder: number;
+  /** 업로드 시 측정한 원본 가로 픽셀 (측정 도입 전 레거시 행은 null) */
+  width: number | null;
+  /** 업로드 시 측정한 원본 세로 픽셀 (측정 도입 전 레거시 행은 null) */
+  height: number | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -67,6 +78,10 @@ export type ExhibitionImageEntity = {
   exhibitionId: string;
   imageUrl: string;
   sortOrder: number;
+  /** 업로드 시 측정한 원본 가로 픽셀 (측정 도입 전 레거시 행은 null) */
+  width: number | null;
+  /** 업로드 시 측정한 원본 세로 픽셀 (측정 도입 전 레거시 행은 null) */
+  height: number | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -105,81 +120,34 @@ export type LinktreeEntity = {
   items: LinktreeItemEntity[];
 };
 
-export type NoticeAuthorEntity = {
-  id: string;
-  name: string;
-  image: string | null;
-  role: string | null;
-};
+export type AttachmentScope = "activity" | "site_donate";
 
-export type GenerationNoticeEntity = {
+/** 파일 첨부(fileUrl 세트)와 외부 링크(linkUrl) 중 정확히 하나만 값이 채워진다. */
+export type AttachmentEntity = {
   id: string;
-  generationId: string;
+  scope: AttachmentScope;
+  resourceId: string | null;
   title: string;
-  content: string;
-  imageUrls: string[];
-  author: NoticeAuthorEntity;
+  fileUrl: string | null;
+  fileName: string | null;
+  fileSize: number | null;
+  mimeType: string | null;
+  linkUrl: string | null;
+  sortOrder: number;
   createdAt: Date;
   updatedAt: Date;
-  updatedBy: AuditActorEntity | null;
 };
 
-export type GlobalNoticeEntity = {
-  id: string;
+export type CreateAttachmentInput = {
+  scope: AttachmentScope;
+  resourceId: string | null;
   title: string;
-  content: string;
-  imageUrls: string[];
-  author: NoticeAuthorEntity;
-  createdAt: Date;
-  updatedAt: Date;
-  updatedBy: AuditActorEntity | null;
-};
-
-export type MarketItemStatus = "selling" | "reserved" | "sold";
-export type MarketConditionGrade = "A" | "B" | "C" | "D";
-
-export type MarketSellerEntity = {
-  id: string;
-  name: string;
-  image: string | null;
-  role: string | null;
-};
-
-export type MarketItemEntity = {
-  id: string;
-  sellerId: string;
-  name: string;
-  imageUrls: string[];
-  manufacturer: string | null;
-  productCode: string | null;
-  conditionGrade: MarketConditionGrade | null;
-  description: string | null;
-  price: number;
-  status: MarketItemStatus;
-  seller: MarketSellerEntity;
-  createdAt: Date;
-  updatedAt: Date;
-  updatedBy: AuditActorEntity | null;
-};
-
-export type MarketCommentEntity = {
-  id: string;
-  itemId: string;
-  author: MarketSellerEntity;
-  content: string;
-  createdAt: Date;
-  updatedAt: Date;
-  updatedBy: AuditActorEntity | null;
-};
-
-export type MarketPushSubscriptionEntity = {
-  id: string;
-  userId: string;
-  endpoint: string;
-  p256dh: string;
-  auth: string;
-  createdAt: Date;
-  updatedAt: Date;
+  fileUrl: string | null;
+  fileName: string | null;
+  fileSize: number | null;
+  mimeType: string | null;
+  linkUrl: string | null;
+  sortOrder: number;
 };
 
 export type SiteSettingsEntity = {
@@ -229,8 +197,6 @@ export type UserEntity = {
 export type UserResourceHistoryResourceType =
   | "activity"
   | "exhibition"
-  | "generation_notice"
-  | "global_notice"
   | "linktree"
   | "linktree_item";
 
@@ -249,6 +215,10 @@ export type UserResourceHistoryItemEntity = {
 
 export type UserResourceHistoryEntity = {
   items: UserResourceHistoryItemEntity[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
 };
 
 export type AdminDashboardStatsEntity = {
@@ -259,6 +229,32 @@ export type AdminDashboardStatsEntity = {
   selectedGenerationActivitiesTotal: number;
   selectedGenerationExhibitionsTotal: number;
   linktreeLinksTotal: number;
+};
+
+export type PageViewStatsEntity = {
+  totalViews: number;
+  homeViews: number;
+  activityViews: number;
+  exhibitionViews: number;
+  noticeViews: number;
+  topActivities: Array<{ resourceId: string; count: number }>;
+  topExhibitions: Array<{ resourceId: string; count: number }>;
+  dailyTrend: Array<{ date: string; count: number }>;
+};
+
+export type DashboardPageViewStatsEntity = {
+  today: {
+    count: number;
+    prevCount: number; // yesterday
+  };
+  thisWeek: {
+    count: number;
+    prevCount: number; // last week
+  };
+  dailyTrend: Array<{
+    date: string;
+    count: number;
+  }>;
 };
 
 export type DataService = {
@@ -329,24 +325,26 @@ export type DataService = {
   deleteActivity: (id: string) => Promise<boolean>;
   addActivityImage: (
     activityId: string,
-    input: { imageUrl: string; sortOrder: number },
+    input: ImageDimensionsInput & { imageUrl: string; sortOrder: number },
   ) => Promise<ActivityImageEntity | null>;
   addActivityImages: (
     activityId: string,
-    input: Array<{ imageUrl: string; sortOrder: number }>,
+    input: Array<ImageDimensionsInput & { imageUrl: string; sortOrder: number }>,
   ) => Promise<ActivityImageEntity[] | null>;
   updateActivityImage: (
     activityId: string,
     imageId: string,
-    input: Partial<{ imageUrl: string; sortOrder: number }>,
+    input: Partial<{ imageUrl: string; sortOrder: number }> & ImageDimensionsInput,
   ) => Promise<ActivityImageEntity | null>;
   updateActivityImages: (
     activityId: string,
-    input: Array<{
-      imageId: string;
-      imageUrl?: string;
-      sortOrder?: number;
-    }>,
+    input: Array<
+      ImageDimensionsInput & {
+        imageId: string;
+        imageUrl?: string;
+        sortOrder?: number;
+      }
+    >,
   ) => Promise<ActivityImageEntity[] | null>;
   deleteActivityImage: (activityId: string, imageId: string) => Promise<boolean>;
 
@@ -377,24 +375,26 @@ export type DataService = {
   deleteExhibition: (id: string) => Promise<boolean>;
   addExhibitionImage: (
     exhibitionId: string,
-    input: { imageUrl: string; sortOrder: number },
+    input: ImageDimensionsInput & { imageUrl: string; sortOrder: number },
   ) => Promise<ExhibitionImageEntity | null>;
   addExhibitionImages: (
     exhibitionId: string,
-    input: Array<{ imageUrl: string; sortOrder: number }>,
+    input: Array<ImageDimensionsInput & { imageUrl: string; sortOrder: number }>,
   ) => Promise<ExhibitionImageEntity[] | null>;
   updateExhibitionImage: (
     exhibitionId: string,
     imageId: string,
-    input: Partial<{ imageUrl: string; sortOrder: number }>,
+    input: Partial<{ imageUrl: string; sortOrder: number }> & ImageDimensionsInput,
   ) => Promise<ExhibitionImageEntity | null>;
   updateExhibitionImages: (
     exhibitionId: string,
-    input: Array<{
-      imageId: string;
-      imageUrl?: string;
-      sortOrder?: number;
-    }>,
+    input: Array<
+      ImageDimensionsInput & {
+        imageId: string;
+        imageUrl?: string;
+        sortOrder?: number;
+      }
+    >,
   ) => Promise<ExhibitionImageEntity[] | null>;
   deleteExhibitionImage: (
     exhibitionId: string,
@@ -420,108 +420,19 @@ export type DataService = {
   ) => Promise<LinktreeItemEntity | null>;
   deleteLinktreeItem: (linktreeId: string, itemId: string) => Promise<boolean>;
 
-  listGenerationNotices: (generationId: string) => Promise<GenerationNoticeEntity[]>;
-  createGenerationNotice: (
-    generationId: string,
-    input: {
-      title: string;
-      content: string;
-      imageUrls: string[];
-      authorId: string;
-    },
-  ) => Promise<GenerationNoticeEntity | null>;
-  getGenerationNoticeById: (
-    generationId: string,
-    noticeId: string,
-  ) => Promise<GenerationNoticeEntity | null>;
-  updateGenerationNotice: (
-    generationId: string,
-    noticeId: string,
-    input: Partial<{
-      title: string;
-      content: string;
-      imageUrls: string[];
-    }>,
-  ) => Promise<GenerationNoticeEntity | null>;
-  deleteGenerationNotice: (generationId: string, noticeId: string) => Promise<boolean>;
-
-  listGlobalNotices: () => Promise<GlobalNoticeEntity[]>;
-  createGlobalNotice: (input: {
-    title: string;
-    content: string;
-    imageUrls: string[];
-    authorId: string;
-  }) => Promise<GlobalNoticeEntity | null>;
-  getGlobalNoticeById: (noticeId: string) => Promise<GlobalNoticeEntity | null>;
-  updateGlobalNotice: (
-    noticeId: string,
-    input: Partial<{
-      title: string;
-      content: string;
-      imageUrls: string[];
-    }>,
-  ) => Promise<GlobalNoticeEntity | null>;
-  deleteGlobalNotice: (noticeId: string) => Promise<boolean>;
-
-  listMarketItems: (input: {
-    status?: MarketItemStatus;
-    sellerId?: string;
-    page?: number;
-    pageSize?: number;
-  }) => Promise<MarketItemEntity[]>;
-  createMarketItem: (input: {
-    sellerId: string;
-    name: string;
-    imageUrls: string[];
-    manufacturer: string | null;
-    productCode: string | null;
-    conditionGrade: MarketConditionGrade | null;
-    description: string | null;
-    price: number;
-  }) => Promise<MarketItemEntity | null>;
-  getMarketItemById: (id: string) => Promise<MarketItemEntity | null>;
-  updateMarketItem: (
+  listAttachments: (
+    scope: AttachmentScope,
+    resourceId: string | null,
+  ) => Promise<AttachmentEntity[]>;
+  getAttachmentById: (id: string) => Promise<AttachmentEntity | null>;
+  addAttachment: (
+    input: CreateAttachmentInput,
+  ) => Promise<AttachmentEntity | null>;
+  updateAttachment: (
     id: string,
-    input: Partial<{
-      name: string;
-      imageUrls: string[];
-      manufacturer: string | null;
-      productCode: string | null;
-      conditionGrade: MarketConditionGrade | null;
-      description: string | null;
-      price: number;
-    }>,
-  ) => Promise<MarketItemEntity | null>;
-  updateMarketItemStatus: (
-    id: string,
-    status: MarketItemStatus,
-  ) => Promise<MarketItemEntity | null>;
-  deleteMarketItem: (id: string) => Promise<boolean>;
-  listMarketCommentsByItemId: (itemId: string) => Promise<MarketCommentEntity[]>;
-  createMarketComment: (input: {
-    itemId: string;
-    authorId: string;
-    content: string;
-  }) => Promise<MarketCommentEntity | null>;
-  getMarketCommentById: (id: string) => Promise<MarketCommentEntity | null>;
-  updateMarketComment: (
-    id: string,
-    input: Partial<{ content: string }>,
-  ) => Promise<MarketCommentEntity | null>;
-  deleteMarketComment: (id: string) => Promise<boolean>;
-  upsertMarketPushSubscription: (input: {
-    userId: string;
-    endpoint: string;
-    p256dh: string;
-    auth: string;
-  }) => Promise<MarketPushSubscriptionEntity | null>;
-  deleteMarketPushSubscription: (input: {
-    userId: string;
-    endpoint: string;
-  }) => Promise<boolean>;
-  listMarketPushSubscriptionsByUserId: (
-    userId: string,
-  ) => Promise<MarketPushSubscriptionEntity[]>;
+    input: Partial<{ title: string; sortOrder: number }>,
+  ) => Promise<AttachmentEntity | null>;
+  deleteAttachment: (id: string) => Promise<boolean>;
 
   getSiteSettings: () => Promise<SiteSettingsEntity>;
   updateSiteSettings: (
@@ -547,10 +458,15 @@ export type DataService = {
   }) => Promise<RecruitingPlanEntity>;
 
   listUsers: () => Promise<UserEntity[]>;
+  listUsersByIds: (userIds: string[]) => Promise<UserEntity[]>;
+  listUsersByGenerationIds: (generationIds: string[]) => Promise<UserEntity[]>;
+  countUsersByRole: (role: string) => Promise<number>;
   getUserById: (id: string) => Promise<UserEntity | null>;
   listUserResourceHistory: (input: {
     userId: string;
-    limit: number;
+    page: number;
+    pageSize: number;
+    action?: AuditAction;
   }) => Promise<UserResourceHistoryEntity>;
   updateUser: (
     id: string,
@@ -576,14 +492,24 @@ export type DataService = {
     role: string;
   }) => Promise<UserEntity[]>;
   getAdminDashboardStats: (generationSortOrder: number | null) => Promise<AdminDashboardStatsEntity>;
+  isActiveViewResource: (
+    pageType: PageViewType,
+    resourceId: string | undefined,
+  ) => Promise<boolean>;
+  recordPageView: (
+    pageType: PageViewType,
+    resourceId: string | undefined,
+  ) => Promise<void>;
+  getPageViewStats: () => Promise<PageViewStatsEntity>;
+  getDashboardPageViewStats: () => Promise<DashboardPageViewStatsEntity>;
   deleteUser: (id: string) => Promise<boolean>;
 };
 
 export type PresignService = {
   issuePresignedPutUrl: (input: {
     actorId: string;
-    resource: "activities" | "exhibitions" | "users" | "notices" | "market";
-    slot: "cover" | "detail" | "profile" | "image";
+    resource: "activities" | "exhibitions" | "users" | "notices" | "site";
+    slot: "cover" | "detail" | "profile" | "image" | "file";
     fileName: string;
     contentType: string;
     fileSize: number;
@@ -595,8 +521,8 @@ export type PresignService = {
   }>;
   initiateMultipartUpload: (input: {
     actorId: string;
-    resource: "activities" | "exhibitions" | "users" | "notices" | "market";
-    slot: "cover" | "detail" | "profile" | "image";
+    resource: "activities" | "exhibitions" | "users" | "notices" | "site";
+    slot: "cover" | "detail" | "profile" | "image" | "file";
     fileName: string;
     contentType: string;
     fileSize: number;
@@ -611,6 +537,7 @@ export type PresignService = {
     uploadId: string;
     objectKey: string;
     partNumber: number;
+    contentLength: number;
   }) => Promise<{
     uploadUrl: string;
     requiredHeaders: Record<string, string>;

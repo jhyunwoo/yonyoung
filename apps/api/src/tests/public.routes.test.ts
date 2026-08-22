@@ -1,9 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { buildSignedPublicObjectUrl } from "../lib/storage/presign";
 import {
   IDs,
   createActivity,
+  createActivityImage,
   createDataServiceMock,
   createExhibition,
+  createExhibitionImage,
   createGeneration,
   createLinktree,
   createLinktreeItem,
@@ -15,7 +18,154 @@ import {
   readJson,
 } from "./test-helpers";
 
+const PUBLIC_MEDIA_SECRET =
+  "test-public-media-signing-secret-at-least-32-chars";
+const LEGACY_RECRUITING_RICH_TEXT =
+  '<h2>공개 모집 안내</h2><p>정상 공개 본문</p><a href="https://apply.example" data-validation-marker="present">지원하기</a>';
+
+const createImageBody = () =>
+  new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(new Uint8Array([1, 2, 3]));
+      controller.close();
+    },
+  });
+
+const createR2BucketMock = (object: R2ObjectBody | null): R2Bucket =>
+  ({
+    get: vi.fn(async () => object),
+    put: vi.fn(),
+    head: vi.fn(),
+    delete: vi.fn(),
+    list: vi.fn(),
+  }) as unknown as R2Bucket;
+
 describe("public routes", () => {
+  it("서명된 공개 미디어 URL로 이미지를 조회한다", async () => {
+    const objectKey = "notices/user-member-0001/image/example-image.jpeg";
+    const publicUrl = await buildSignedPublicObjectUrl({
+      baseUrl: "https://example.com",
+      objectKey,
+      signingSecret: PUBLIC_MEDIA_SECRET,
+    });
+    const bucket = createR2BucketMock({
+      body: createImageBody(),
+      size: 3,
+      httpEtag: '"etag-1"',
+      httpMetadata: {
+        contentType: "image/jpeg",
+      },
+    } as R2ObjectBody);
+    const app = createTestApp({
+      actor: null,
+    });
+
+    const response = await app.request(
+      publicUrl,
+      {},
+      {
+        BETTER_AUTH_SECRET: PUBLIC_MEDIA_SECRET,
+        r2: bucket,
+      },
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("image/jpeg");
+    expect(response.headers.get("etag")).toBe('"etag-1"');
+    expect(response.headers.get("cache-control")).toContain("max-age=300");
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(
+      new Uint8Array([1, 2, 3]),
+    );
+  });
+
+  it("R2 메타데이터의 content-type이 비어 있어도 파일 확장자로 복구한다", async () => {
+    const objectKey = "notices/user-member-0001/image/example-image.jpeg";
+    const publicUrl = await buildSignedPublicObjectUrl({
+      baseUrl: "https://example.com",
+      objectKey,
+      signingSecret: PUBLIC_MEDIA_SECRET,
+    });
+    const app = createTestApp({
+      actor: null,
+    });
+
+    const response = await app.request(
+      publicUrl,
+      {},
+      {
+        BETTER_AUTH_SECRET: PUBLIC_MEDIA_SECRET,
+        r2: createR2BucketMock({
+          body: createImageBody(),
+          size: 3,
+          httpMetadata: {},
+        } as R2ObjectBody),
+      },
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("image/jpeg");
+  });
+
+  it("전용 공개 URL 시크릿이 추가되어도 기존 BETTER_AUTH_SECRET 서명을 허용한다", async () => {
+    const objectKey = "notices/user-member-0001/image/example-image.jpeg";
+    const publicUrl = await buildSignedPublicObjectUrl({
+      baseUrl: "https://example.com",
+      objectKey,
+      signingSecret: PUBLIC_MEDIA_SECRET,
+    });
+    const app = createTestApp({
+      actor: null,
+    });
+
+    const response = await app.request(
+      publicUrl,
+      {},
+      {
+        BETTER_AUTH_SECRET: PUBLIC_MEDIA_SECRET,
+        R2_PUBLIC_URL_SIGNING_SECRET:
+          "new-dedicated-public-media-secret-at-least-32-chars",
+        r2: createR2BucketMock({
+          body: createImageBody(),
+          size: 3,
+          httpMetadata: {
+            contentType: "image/jpeg",
+          },
+        } as R2ObjectBody),
+      },
+    );
+
+    expect(response.status).toBe(200);
+  });
+
+  it("서명 시크릿 회전 중 이전 전용 시크릿으로 발급된 URL도 허용한다", async () => {
+    const objectKey = "notices/user-member-0001/image/example-image.jpeg";
+    const previousSecret =
+      "previous-public-media-signing-secret-at-least-32-chars";
+    const publicUrl = await buildSignedPublicObjectUrl({
+      baseUrl: "https://example.com",
+      objectKey,
+      signingSecret: previousSecret,
+    });
+    const app = createTestApp({ actor: null });
+
+    const response = await app.request(
+      publicUrl,
+      {},
+      {
+        R2_PUBLIC_URL_SIGNING_SECRET:
+          "current-public-media-signing-secret-at-least-32-chars",
+        R2_PUBLIC_URL_SIGNING_SECRET_PREVIOUS: previousSecret,
+        r2: createR2BucketMock({
+          body: createImageBody(),
+          size: 3,
+          httpMetadata: { contentType: "image/jpeg" },
+        } as R2ObjectBody),
+      },
+    );
+
+    expect(response.status).toBe(200);
+  });
+
   it("비로그인 접근 시 공개 활동 목록을 조회한다", async () => {
     const listPublicActivities = fn(async () => [
       createActivity({
@@ -36,7 +186,7 @@ describe("public routes", () => {
 
     const response = await app.request("/api/public/activities");
     expect(response.status).toBe(200);
-    expect(response.headers.get("cache-control")).toContain("s-maxage=60");
+    expect(response.headers.get("cache-control")).toContain("s-maxage=120");
 
     const body = await readJson<{ data: Array<{ id: string }> }>(response);
     expect(body.data.map((item) => item.id)).toEqual([
@@ -44,6 +194,93 @@ describe("public routes", () => {
       "20000000-0000-4000-8000-000000000011",
     ]);
     expect(listPublicActivities).toHaveBeenCalledTimes(1);
+  });
+
+  it("공개 활동 목록은 안전한 미디어 URL만 노출하고 unsafe 대표 이미지 항목을 제외한다", async () => {
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({
+        listPublicActivities: async () => [
+          createActivity({
+            id: IDs.activity,
+            description:
+              '<p onclick="alert(1)">공개 활동</p><script>alert(2)</script>',
+            detailImages: [
+              createActivityImage({
+                imageUrl: "https://safe.example/activity-detail.jpg",
+              }),
+              createActivityImage({
+                id: IDs.otherUuid,
+                imageUrl: "data:image/svg+xml,<svg onload=alert(1) />",
+              }),
+            ],
+          }),
+          createActivity({
+            id: IDs.otherUuid,
+            coverImageUrl: "javascript:alert(1)",
+          }),
+        ],
+      }),
+    });
+
+    const response = await app.request("/api/public/activities");
+    const body = await readJson<{
+      data: Array<{
+        id: string;
+        description: string;
+        detailImages: Array<{ imageUrl: string }>;
+      }>;
+    }>(response);
+
+    expect(response.status).toBe(200);
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0]?.id).toBe(IDs.activity);
+    expect(body.data[0]?.detailImages.map((image) => image.imageUrl)).toEqual([
+      "https://safe.example/activity-detail.jpg",
+    ]);
+    expect(body.data[0]?.description).toContain("<p>공개 활동</p>");
+    expect(body.data[0]?.description).not.toContain("<script");
+    expect(body.data[0]?.description).not.toContain("onclick=");
+  });
+
+  it("공개 세부 이미지 응답은 원본 픽셀 크기를 노출하고 레거시 행은 null로 내려준다", async () => {
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({
+        listPublicActivities: async () => [
+          createActivity({
+            id: IDs.activity,
+            detailImages: [
+              createActivityImage({
+                imageUrl: "https://safe.example/measured.jpg",
+                width: 4000,
+                height: 3000,
+              }),
+              createActivityImage({
+                id: IDs.otherUuid,
+                imageUrl: "https://safe.example/legacy.jpg",
+              }),
+            ],
+          }),
+        ],
+      }),
+    });
+
+    const response = await app.request("/api/public/activities");
+    const body = await readJson<{
+      data: Array<{
+        detailImages: Array<{
+          width: number | null;
+          height: number | null;
+        }>;
+      }>;
+    }>(response);
+
+    expect(response.status).toBe(200);
+    expect(body.data[0]?.detailImages).toEqual([
+      expect.objectContaining({ width: 4000, height: 3000 }),
+      expect.objectContaining({ width: null, height: null }),
+    ]);
   });
 
   it("비로그인 접근 시 공개 활동 상세를 조회한다", async () => {
@@ -57,12 +294,54 @@ describe("public routes", () => {
 
     const response = await app.request(`/api/public/activities/${IDs.activity}`);
     expect(response.status).toBe(200);
-    expect(response.headers.get("cache-control")).toContain("s-maxage=60");
+    expect(response.headers.get("cache-control")).toContain("s-maxage=120");
 
     const body = await readJson<{ data: { id: string; title: string } }>(response);
     expect(body.data.id).toBe(IDs.activity);
     expect(body.data.title).toBe("활동 상세");
     expect(getActivityById).toHaveBeenCalledWith(IDs.activity);
+  });
+
+  it("공개 활동 상세는 unsafe 세부 이미지를 제외하고 unsafe 대표 이미지는 404로 숨긴다", async () => {
+    const getActivityById = fn(async (id: string) =>
+      id === IDs.activity
+        ? createActivity({
+            id,
+            detailImages: [
+              createActivityImage({
+                imageUrl: "http://safe.example/activity-detail.jpg",
+              }),
+              createActivityImage({
+                id: IDs.otherUuid,
+                imageUrl: "vbscript:msgbox(1)",
+              }),
+            ],
+          })
+        : createActivity({
+            id,
+            coverImageUrl: "data:image/svg+xml,<svg onload=alert(1) />",
+          }),
+    );
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({ getActivityById }),
+    });
+
+    const safeResponse = await app.request(
+      `/api/public/activities/${IDs.activity}`,
+    );
+    const safeBody = await readJson<{
+      data: { detailImages: Array<{ imageUrl: string }> };
+    }>(safeResponse);
+    const unsafeCoverResponse = await app.request(
+      `/api/public/activities/${IDs.otherUuid}`,
+    );
+
+    expect(safeResponse.status).toBe(200);
+    expect(safeBody.data.detailImages.map((image) => image.imageUrl)).toEqual([
+      "http://safe.example/activity-detail.jpg",
+    ]);
+    expect(unsafeCoverResponse.status).toBe(404);
   });
 
   it("공개 활동 상세가 없으면 404를 반환한다", async () => {
@@ -94,7 +373,7 @@ describe("public routes", () => {
 
     const response = await app.request("/api/public/exhibitions");
     expect(response.status).toBe(200);
-    expect(response.headers.get("cache-control")).toContain("s-maxage=60");
+    expect(response.headers.get("cache-control")).toContain("s-maxage=120");
 
     const body = await readJson<{ data: Array<{ id: string }> }>(response);
     expect(body.data.map((item) => item.id)).toEqual([
@@ -102,6 +381,53 @@ describe("public routes", () => {
       "40000000-0000-4000-8000-000000000011",
     ]);
     expect(listPublicExhibitions).toHaveBeenCalledTimes(1);
+  });
+
+  it("공개 전시 목록은 안전한 미디어 URL만 노출하고 unsafe 대표 이미지 항목을 제외한다", async () => {
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({
+        listPublicExhibitions: async () => [
+          createExhibition({
+            id: IDs.exhibition,
+            description:
+              '<h3>전시</h3><p onclick="alert(1)">공개 본문</p><script>alert(2)</script>',
+            detailImages: [
+              createExhibitionImage({
+                imageUrl: "https://safe.example/exhibition-detail.jpg",
+              }),
+              createExhibitionImage({
+                id: IDs.otherUuid,
+                imageUrl: "javascript:alert(1)",
+              }),
+            ],
+          }),
+          createExhibition({
+            id: IDs.otherUuid,
+            coverImageUrl: "file:///etc/passwd",
+          }),
+        ],
+      }),
+    });
+
+    const response = await app.request("/api/public/exhibitions");
+    const body = await readJson<{
+      data: Array<{
+        id: string;
+        description: string;
+        detailImages: Array<{ imageUrl: string }>;
+      }>;
+    }>(response);
+
+    expect(response.status).toBe(200);
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0]?.id).toBe(IDs.exhibition);
+    expect(body.data[0]?.detailImages.map((image) => image.imageUrl)).toEqual([
+      "https://safe.example/exhibition-detail.jpg",
+    ]);
+    expect(body.data[0]?.description).toContain("<p>공개 본문</p>");
+    expect(body.data[0]?.description).not.toContain("<script");
+    expect(body.data[0]?.description).not.toContain("onclick=");
   });
 
   it("공개 전시 응답의 설명 HTML은 sanitize 된다", async () => {
@@ -138,12 +464,54 @@ describe("public routes", () => {
 
     const response = await app.request(`/api/public/exhibitions/${IDs.exhibition}`);
     expect(response.status).toBe(200);
-    expect(response.headers.get("cache-control")).toContain("s-maxage=60");
+    expect(response.headers.get("cache-control")).toContain("s-maxage=120");
 
     const body = await readJson<{ data: { id: string; title: string } }>(response);
     expect(body.data.id).toBe(IDs.exhibition);
     expect(body.data.title).toBe("전시 상세");
     expect(getExhibitionById).toHaveBeenCalledWith(IDs.exhibition);
+  });
+
+  it("공개 전시 상세는 unsafe 세부 이미지를 제외하고 unsafe 대표 이미지는 404로 숨긴다", async () => {
+    const getExhibitionById = fn(async (id: string) =>
+      id === IDs.exhibition
+        ? createExhibition({
+            id,
+            detailImages: [
+              createExhibitionImage({
+                imageUrl: "https://safe.example/exhibition-detail.jpg",
+              }),
+              createExhibitionImage({
+                id: IDs.otherUuid,
+                imageUrl: "data:image/svg+xml,<svg onload=alert(1) />",
+              }),
+            ],
+          })
+        : createExhibition({
+            id,
+            coverImageUrl: "javascript:alert(1)",
+          }),
+    );
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({ getExhibitionById }),
+    });
+
+    const safeResponse = await app.request(
+      `/api/public/exhibitions/${IDs.exhibition}`,
+    );
+    const safeBody = await readJson<{
+      data: { detailImages: Array<{ imageUrl: string }> };
+    }>(safeResponse);
+    const unsafeCoverResponse = await app.request(
+      `/api/public/exhibitions/${IDs.otherUuid}`,
+    );
+
+    expect(safeResponse.status).toBe(200);
+    expect(safeBody.data.detailImages.map((image) => image.imageUrl)).toEqual([
+      "https://safe.example/exhibition-detail.jpg",
+    ]);
+    expect(unsafeCoverResponse.status).toBe(404);
   });
 
   it("공개 전시 상세 응답도 설명 HTML을 sanitize 한다", async () => {
@@ -200,11 +568,42 @@ describe("public routes", () => {
 
     const response = await app.request("/api/public/linktree");
     expect(response.status).toBe(200);
-    expect(response.headers.get("cache-control")).toContain("s-maxage=60");
+    expect(response.headers.get("cache-control")).toContain("s-maxage=120");
 
     const body = await readJson<{ data: Array<{ id: string }> }>(response);
     expect(body.data).toHaveLength(1);
     expect(body.data[0]?.id).toBe(IDs.linktree);
+  });
+
+  it("공개 링크트리에서 레거시 비-HTTP(S) 링크를 제외한다", async () => {
+    const listLinktrees = fn(async () => [
+      createLinktree({
+        items: [
+          createLinktreeItem({
+            id: IDs.linktreeItem,
+            link: "https://safe.example/profile",
+          }),
+          createLinktreeItem({
+            id: IDs.otherUuid,
+            link: "javascript:alert(1)",
+          }),
+        ],
+      }),
+    ]);
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({ listLinktrees }),
+    });
+
+    const response = await app.request("/api/public/linktree");
+    expect(response.status).toBe(200);
+
+    const body = await readJson<{
+      data: Array<{ items: Array<{ link: string }> }>;
+    }>(response);
+    expect(body.data[0]?.items.map((item) => item.link)).toEqual([
+      "https://safe.example/profile",
+    ]);
   });
 
   it("공개 사이트 기본 설정은 비로그인 상태에서도 조회할 수 있다", async () => {
@@ -220,11 +619,29 @@ describe("public routes", () => {
 
     const response = await app.request("/api/public/site-settings");
     expect(response.status).toBe(200);
-    expect(response.headers.get("cache-control")).toContain("s-maxage=60");
+    expect(response.headers.get("cache-control")).toContain("s-maxage=120");
 
     const body = await readJson<{ data: { footerInstagramId: string } }>(response);
     expect(body.data.footerInstagramId).toBe("yonyoung_archive");
     expect(getSiteSettings).toHaveBeenCalledTimes(1);
+  });
+
+  it("공개 사이트 설정의 레거시 비-HTTP(S) 링크는 안전한 기본값으로 대체한다", async () => {
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({
+        getSiteSettings: async () =>
+          createSiteSettings({ footerOpenChatUrl: "data:text/html,unsafe" }),
+      }),
+    });
+
+    const response = await app.request("/api/public/site-settings");
+    const body = await readJson<{ data: { footerOpenChatUrl: string } }>(response);
+
+    expect(response.status).toBe(200);
+    expect(body.data.footerOpenChatUrl).toBe(
+      createSiteSettings().footerOpenChatUrl,
+    );
   });
 
   it("공개 현재 연도 모집 계획은 비로그인 상태에서도 조회할 수 있다", async () => {
@@ -241,12 +658,31 @@ describe("public routes", () => {
 
     const response = await app.request("/api/public/recruiting-plan/current");
     expect(response.status).toBe(200);
-    expect(response.headers.get("cache-control")).toContain("s-maxage=60");
+    expect(response.headers.get("cache-control")).toContain("s-maxage=120");
 
     const body = await readJson<{ data: { year: number; title: string } }>(response);
     expect(body.data.year).toBe(2031);
     expect(body.data.title).toBe("2031 모집");
     expect(getCurrentRecruitingPlan).toHaveBeenCalledTimes(1);
+  });
+
+  it("공개 모집 계획 응답에서 레거시 리치텍스트 속성을 제거한다", async () => {
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({
+        getCurrentRecruitingPlan: async () =>
+          createRecruitingPlan({ content: LEGACY_RECRUITING_RICH_TEXT }),
+      }),
+    });
+
+    const response = await app.request("/api/public/recruiting-plan/current");
+    const body = await readJson<{ data: { content: string } }>(response);
+
+    expect(response.status).toBe(200);
+    expect(body.data.content).toContain("<h2>공개 모집 안내</h2>");
+    expect(body.data.content).toContain("<p>정상 공개 본문</p>");
+    expect(body.data.content).toContain('href="https://apply.example"');
+    expect(body.data.content).not.toContain("data-validation-marker");
   });
 
   it("공개 현재 연도 모집 계획이 없으면 null을 반환한다", async () => {
@@ -258,11 +694,36 @@ describe("public routes", () => {
 
     const response = await app.request("/api/public/recruiting-plan/current");
     expect(response.status).toBe(200);
-    expect(response.headers.get("cache-control")).toContain("s-maxage=60");
+    expect(response.headers.get("cache-control")).toContain("s-maxage=120");
 
     const body = await readJson<{ data: null }>(response);
     expect(body.data).toBeNull();
     expect(getCurrentRecruitingPlan).toHaveBeenCalledTimes(1);
+  });
+
+  it("공개 모집 계획에서 레거시 비-HTTP(S) 이미지 URL을 제외한다", async () => {
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({
+        getCurrentRecruitingPlan: async () =>
+          createRecruitingPlan({
+            promotionImageUrls: [
+              "https://safe.example/recruiting.jpg",
+              "data:image/svg+xml,unsafe",
+            ],
+          }),
+      }),
+    });
+
+    const response = await app.request("/api/public/recruiting-plan/current");
+    const body = await readJson<{
+      data: { promotionImageUrls: string[] };
+    }>(response);
+
+    expect(response.status).toBe(200);
+    expect(body.data.promotionImageUrls).toEqual([
+      "https://safe.example/recruiting.jpg",
+    ]);
   });
 
   it("공개 기수 목록은 sortOrder 기준 오름차순으로 정렬된다", async () => {
@@ -283,7 +744,7 @@ describe("public routes", () => {
 
     const response = await app.request("/api/public/generations");
     expect(response.status).toBe(200);
-    expect(response.headers.get("cache-control")).toContain("s-maxage=60");
+    expect(response.headers.get("cache-control")).toContain("s-maxage=120");
 
     const body = await readJson<{ data: Array<{ id: string }> }>(response);
     expect(body.data.map((item) => item.id)).toEqual([
@@ -348,7 +809,7 @@ describe("public routes", () => {
 
     const response = await app.request("/api/public/photographers");
     expect(response.status).toBe(200);
-    expect(response.headers.get("cache-control")).toContain("s-maxage=60");
+    expect(response.headers.get("cache-control")).toContain("s-maxage=120");
 
     const body = await readJson<{
       data: Array<{
@@ -375,6 +836,44 @@ describe("public routes", () => {
     expect(body.data[0]?.members[0]).not.toHaveProperty("studentNumber");
     expect(listGenerations).toHaveBeenCalledTimes(1);
     expect(listUsers).toHaveBeenCalledTimes(1);
+  });
+
+  it("공개 사진가 응답에서 레거시 비-HTTP(S) 프로필 URL을 제거한다", async () => {
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({
+        listGenerations: async () => [createGeneration()],
+        listUsers: async () => [
+          createUser({
+            generationId: IDs.generation,
+            image: "javascript:alert(1)",
+            showcaseImageUrls: [
+              "https://safe.example/showcase.jpg",
+              "data:image/svg+xml,unsafe",
+            ],
+            personalLink: "javascript:alert(2)",
+          }),
+        ],
+      }),
+    });
+
+    const response = await app.request("/api/public/photographers");
+    const body = await readJson<{
+      data: Array<{
+        members: Array<{
+          image: string | null;
+          showcaseImageUrls: string[];
+          personalLink: string | null;
+        }>;
+      }>;
+    }>(response);
+
+    expect(response.status).toBe(200);
+    expect(body.data[0]?.members[0]).toMatchObject({
+      image: null,
+      showcaseImageUrls: ["https://safe.example/showcase.jpg"],
+      personalLink: null,
+    });
   });
 
   it("공개 활동 목록은 cache hit 시 데이터 서비스를 재호출하지 않는다", async () => {

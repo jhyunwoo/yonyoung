@@ -1,8 +1,8 @@
 import {
   isMemberLikeRoleValue,
   normalizeLegacyRole,
-} from "@repo/shared-auth/roles";
-import { Action, Resource, Role } from "./types";
+} from "../../shared/auth/roles";
+import { type Action, type Resource, type Role } from "./types";
 
 type PermissionMatrix = Record<Role, Record<Resource, Record<Action, boolean>>>;
 
@@ -45,13 +45,6 @@ export const normalizeRole = (rawRole: string | null | undefined): Role => {
   return normalizeLegacyRole(rawRole);
 };
 
-/**
- * canAssignRole 조건을 평가해 사용 가능 여부를 판별합니다.
- * @param actorRole 권한 판단에 사용되는 역할 정보입니다.
- * @param targetRoleRaw 권한 판단에 사용되는 역할 정보입니다.
- * @returns 조건 판별 결과(boolean)를 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 export const canAssignRole = (
   actorRole: Role,
   targetRoleRaw: string | null | undefined,
@@ -60,90 +53,74 @@ export const canAssignRole = (
   return roleLevel[targetRole] <= roleLevel[actorRole];
 };
 
-/**
- * isMemberLikeRole 조건을 평가해 사용 가능 여부를 판별합니다.
- * @param role 권한 판단에 사용되는 역할 정보입니다.
- * @returns 조건 판별 결과(boolean)를 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 export const isMemberLikeRole = (role: Role): boolean => {
   return isMemberLikeRoleValue(role);
+};
+
+/** 관리자, 부회장, 회장 역할인지 확인한다. */
+export const isManagerLikeRole = (role: Role): boolean => {
+  return roleLevel[role] >= roleLevel.manager;
 };
 
 const permissionMatrix: PermissionMatrix = {
   president: {
     generation: { ...allTrue },
     activity: { ...allTrue },
-    notice: { ...allTrue },
-    market: { ...allTrue },
     exhibition: { ...allTrue },
     linktree: { ...allTrue },
     user: { ...allTrue },
+    site_setting: { ...allTrue },
   },
   vice_president: {
     generation: { ...allTrue, delete: false },
     activity: { ...allTrue },
-    notice: { ...allTrue },
-    market: { ...allTrue },
     exhibition: { ...allTrue, delete: false },
     linktree: { ...allTrue },
     user: { ...allTrue },
+    site_setting: { ...allTrue },
   },
   manager: {
     generation: { ...readOnly },
     activity: { create: true, read: true, update: true, delete: true },
-    notice: { create: true, read: true, update: true, delete: true },
-    market: { create: true, read: true, update: true, delete: true },
     exhibition: { create: true, read: true, update: true, delete: false },
     linktree: { create: true, read: true, update: true, delete: true },
     user: { ...readOnly },
+    site_setting: { ...readOnly },
   },
   new_member: {
     generation: { ...readOnly },
-    activity: { create: true, read: true, update: true, delete: false },
-    notice: { ...readOnly },
-    market: { create: true, read: true, update: true, delete: true },
+    activity: { ...readOnly },
     exhibition: { ...readOnly },
     linktree: { ...readOnly },
-    user: { ...noAccess },
+    user: { ...readOnly },
+    site_setting: { ...readOnly },
   },
   associate_member: {
     generation: { ...readOnly },
-    activity: { create: true, read: true, update: true, delete: false },
-    notice: { ...readOnly },
-    market: { create: true, read: true, update: true, delete: true },
+    activity: { ...readOnly },
     exhibition: { ...readOnly },
     linktree: { ...readOnly },
-    user: { ...noAccess },
+    user: { ...readOnly },
+    site_setting: { ...readOnly },
   },
   regular_member: {
     generation: { ...readOnly },
-    activity: { create: true, read: true, update: true, delete: false },
-    notice: { ...readOnly },
-    market: { create: true, read: true, update: true, delete: true },
+    activity: { ...readOnly },
     exhibition: { ...readOnly },
     linktree: { ...readOnly },
-    user: { ...noAccess },
+    user: { ...readOnly },
+    site_setting: { ...readOnly },
   },
   unverified: {
     generation: { ...noAccess },
     activity: { ...noAccess },
-    notice: { ...noAccess },
-    market: { ...noAccess },
     exhibition: { ...noAccess },
     linktree: { ...noAccess },
     user: { ...noAccess },
+    site_setting: { ...noAccess },
   },
 };
 
-/**
- * can 조건을 평가해 사용 가능 여부를 판별합니다.
- * @param role 권한 판단에 사용되는 역할 정보입니다.
- * @param resource 응답 데이터 또는 응답 객체입니다.
- * @param action 함수 로직에서 사용하는 입력값입니다.
- * @returns 조건 판별 결과(boolean)를 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 export const can = (role: Role, resource: Resource, action: Action): boolean => {
   return permissionMatrix[role][resource][action];
 };

@@ -1,15 +1,15 @@
 import { expect, vi } from "vitest";
-import { DEFAULT_SITE_SETTINGS } from "@repo/shared-api-contracts";
+import { createHmac } from "node:crypto";
+import { DEFAULT_SITE_SETTINGS } from "../shared/api-contracts";
 import { createApp } from "../app";
 import type { Actor, Role } from "../lib/authorization/types";
 import type {
   ActivityEntity,
   ActivityImageEntity,
+  AttachmentEntity,
   DataService,
   ExhibitionEntity,
   ExhibitionImageEntity,
-  GenerationNoticeEntity,
-  GlobalNoticeEntity,
   GenerationEntity,
   LinktreeEntity,
   LinktreeItemEntity,
@@ -19,6 +19,18 @@ import type {
   UserEntity,
 } from "../lib/services/types";
 import type { OpenAPIDocument } from "../lib/openapi/merge";
+import type { R2UsageScanResult } from "../lib/storage/usage";
+import type {
+  ViewCountStore,
+} from "../lib/views/view-counts";
+import {
+  createMemoryMultipartUploadStateStore,
+  type MultipartUploadStateStore,
+} from "../lib/uploads/multipart-state";
+import {
+  createMemoryUploadReservationStore,
+  type UploadReservationStore,
+} from "../lib/uploads/upload-reservation";
 
 export const IDs = {
   generation: "10000000-0000-4000-8000-000000000001",
@@ -27,10 +39,9 @@ export const IDs = {
   activityImage: "21000000-0000-4000-8000-000000000001",
   exhibition: "40000000-0000-4000-8000-000000000001",
   exhibitionImage: "41000000-0000-4000-8000-000000000001",
-  generationNotice: "42000000-0000-4000-8000-000000000001",
-  globalNotice: "43000000-0000-4000-8000-000000000001",
   linktree: "50000000-0000-4000-8000-000000000001",
   linktreeItem: "51000000-0000-4000-8000-000000000001",
+  attachment: "70000000-0000-4000-8000-000000000001",
   otherUuid: "90000000-0000-4000-8000-000000000001",
   member: "user-member-0001",
   otherUser: "user-member-0002",
@@ -41,28 +52,17 @@ export const IDs = {
 
 const BASE_DATE = new Date("2030-01-01T00:00:00.000Z");
 
-/**
- * createActor 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
- * @param role 권한 판단에 사용되는 역할 정보입니다.
- * @param id 대상을 식별하기 위한 ID 값입니다.
- * @returns 처리 결과 값을 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 export const createActor = (role: Role, id: string = IDs.member): Actor => ({
   id,
   role,
   rawRole: role,
   name: `${role}-name`,
+  familyName: null,
+  givenName: null,
   email: `${role}@example.com`,
   generationId: null,
 });
 
-/**
- * createGeneration 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
- * @param overrides 대상을 식별하기 위한 ID 값입니다.
- * @returns 처리 결과 값을 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 export const createGeneration = (
   overrides: Partial<GenerationEntity> = {},
 ): GenerationEntity => ({
@@ -77,12 +77,6 @@ export const createGeneration = (
   ...overrides,
 });
 
-/**
- * createActivityImage 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
- * @param overrides 대상을 식별하기 위한 ID 값입니다.
- * @returns 처리 결과 값을 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 export const createActivityImage = (
   overrides: Partial<ActivityImageEntity> = {},
 ): ActivityImageEntity => ({
@@ -90,17 +84,13 @@ export const createActivityImage = (
   activityId: IDs.activity,
   imageUrl: "https://example.com/activity-detail.jpg",
   sortOrder: 0,
+  width: null,
+  height: null,
   createdAt: BASE_DATE,
   updatedAt: BASE_DATE,
   ...overrides,
 });
 
-/**
- * createActivity 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
- * @param overrides 대상을 식별하기 위한 ID 값입니다.
- * @returns 처리 결과 값을 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 export const createActivity = (
   overrides: Partial<ActivityEntity> = {},
 ): ActivityEntity => ({
@@ -118,12 +108,6 @@ export const createActivity = (
   ...overrides,
 });
 
-/**
- * createExhibitionImage 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
- * @param overrides 대상을 식별하기 위한 ID 값입니다.
- * @returns 처리 결과 값을 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 export const createExhibitionImage = (
   overrides: Partial<ExhibitionImageEntity> = {},
 ): ExhibitionImageEntity => ({
@@ -131,17 +115,13 @@ export const createExhibitionImage = (
   exhibitionId: IDs.exhibition,
   imageUrl: "https://example.com/exhibition-detail.jpg",
   sortOrder: 0,
+  width: null,
+  height: null,
   createdAt: BASE_DATE,
   updatedAt: BASE_DATE,
   ...overrides,
 });
 
-/**
- * createExhibition 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
- * @param overrides 대상을 식별하기 위한 ID 값입니다.
- * @returns 처리 결과 값을 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 export const createExhibition = (
   overrides: Partial<ExhibitionEntity> = {},
 ): ExhibitionEntity => ({
@@ -160,12 +140,6 @@ export const createExhibition = (
   ...overrides,
 });
 
-/**
- * createLinktreeItem 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
- * @param overrides 대상을 식별하기 위한 ID 값입니다.
- * @returns 처리 결과 값을 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 export const createLinktreeItem = (
   overrides: Partial<LinktreeItemEntity> = {},
 ): LinktreeItemEntity => ({
@@ -179,12 +153,6 @@ export const createLinktreeItem = (
   ...overrides,
 });
 
-/**
- * createLinktree 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
- * @param overrides 대상을 식별하기 위한 ID 값입니다.
- * @returns 처리 결과 값을 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 export const createLinktree = (
   overrides: Partial<LinktreeEntity> = {},
 ): LinktreeEntity => ({
@@ -197,42 +165,47 @@ export const createLinktree = (
   ...overrides,
 });
 
-export const createGenerationNotice = (
-  overrides: Partial<GenerationNoticeEntity> = {},
-): GenerationNoticeEntity => ({
-  id: IDs.generationNotice,
-  generationId: IDs.generation,
-  title: "기수 공지 제목",
-  content: "기수 공지 본문",
-  imageUrls: [],
-  author: {
-    id: IDs.manager,
-    name: "manager-name",
-    image: null,
-    role: "manager",
-  },
-  createdAt: BASE_DATE,
-  updatedAt: BASE_DATE,
-  updatedBy: null,
-  ...overrides,
-});
+export const MANAGED_FILE_TEST_ENV = {
+  BETTER_AUTH_URL: "https://api.yonyoung.example",
+  R2_PUBLIC_URL_SIGNING_SECRET:
+    "test-managed-file-signing-secret-at-least-32-chars",
+} as const;
 
-export const createGlobalNotice = (
-  overrides: Partial<GlobalNoticeEntity> = {},
-): GlobalNoticeEntity => ({
-  id: IDs.globalNotice,
-  title: "전체 공지 제목",
-  content: "전체 공지 본문",
-  imageUrls: [],
-  author: {
-    id: IDs.vicePresident,
-    name: "vice-name",
-    image: null,
-    role: "vice_president",
-  },
+/** presign이 발급하는 서명된 공개 미디어 URL 형식을 그대로 따른다. */
+export const buildManagedFileUrl = (
+  resourcePath: "site" | "activities",
+  actorId: string = IDs.president,
+): string => {
+  const objectKey = `${resourcePath}/${actorId}/file/11111111-1111-4111-8111-111111111111-report.pdf`;
+  const signature = createHmac(
+    "sha256",
+    MANAGED_FILE_TEST_ENV.R2_PUBLIC_URL_SIGNING_SECRET,
+  )
+    .update(objectKey)
+    .digest("base64url");
+  const url = new URL(
+    `/api/public/media/${objectKey}`,
+    MANAGED_FILE_TEST_ENV.BETTER_AUTH_URL,
+  );
+  url.searchParams.set("sig", signature);
+  return url.toString();
+};
+
+export const createAttachment = (
+  overrides: Partial<AttachmentEntity> = {},
+): AttachmentEntity => ({
+  id: IDs.attachment,
+  scope: "site_donate",
+  resourceId: null,
+  title: "2026년 6월 회계 내역",
+  fileUrl: buildManagedFileUrl("site"),
+  fileName: "2026-06-회계내역.pdf",
+  fileSize: 1048576,
+  mimeType: "application/pdf",
+  linkUrl: null,
+  sortOrder: 0,
   createdAt: BASE_DATE,
   updatedAt: BASE_DATE,
-  updatedBy: null,
   ...overrides,
 });
 
@@ -260,12 +233,6 @@ export const createRecruitingPlan = (
   ...overrides,
 });
 
-/**
- * createUser 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
- * @param overrides 대상을 식별하기 위한 ID 값입니다.
- * @returns 처리 결과 값을 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 export const createUser = (
   overrides: Partial<UserEntity> = {},
 ): UserEntity => ({
@@ -290,12 +257,6 @@ export const createUser = (
   ...overrides,
 });
 
-/**
- * createDataServiceMock 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
- * @param overrides 대상을 식별하기 위한 ID 값입니다.
- * @returns 처리 결과 값을 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 export const createDataServiceMock = (
   overrides: Partial<DataService> = {},
 ): DataService => {
@@ -304,52 +265,43 @@ export const createDataServiceMock = (
     listAuditLogs: async () => [],
     getLatestAuditActor: async () => null,
     listLatestAuditActors: async () => ({}),
-    listUserResourceHistory: async () => ({ items: [] }),
+    listUsers: async () => [],
+    listUsersByIds: async () => [],
+    listUsersByGenerationIds: async () => [],
+    countUsersByRole: async () => 0,
+    isActiveViewResource: async () => true,
+    listUserResourceHistory: async () => ({
+      items: [],
+      page: 1,
+      pageSize: 10,
+      total: 0,
+      totalPages: 0,
+    }),
   };
 
   const merged = { ...base, ...overrides } as DataService;
 
   return new Proxy(merged, {
-    /**
-     * get 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
-     * @param target 함수 로직에서 사용하는 입력값입니다.
-     * @param prop 함수 로직에서 사용하는 입력값입니다.
-     * @returns 조회/계산된 결과 값을 반환합니다.
-     * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-     */
     get(target, prop) {
       if (prop in target) {
         return target[prop as keyof DataService];
       }
-      return /** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+      return async () => {
         throw new Error(`Unexpected DataService call: ${String(prop)}`);
       };
     },
   }) as DataService;
 };
 
-/**
- * createPresignServiceMock 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
- * @param overrides 대상을 식별하기 위한 ID 값입니다.
- * @returns 처리 결과 값을 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 export const createPresignServiceMock = (
   overrides: Partial<PresignService> = {},
 ): PresignService => {
   return new Proxy(overrides as PresignService, {
-    /**
-     * get 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
-     * @param target 함수 로직에서 사용하는 입력값입니다.
-     * @param prop 함수 로직에서 사용하는 입력값입니다.
-     * @returns 조회/계산된 결과 값을 반환합니다.
-     * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-     */
     get(target, prop) {
       if (prop in target) {
         return target[prop as keyof PresignService];
       }
-      return /** 반환 값 계산 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ async () => {
+      return async () => {
         throw new Error(`Unexpected PresignService call: ${String(prop)}`);
       };
     },
@@ -362,71 +314,80 @@ const defaultAuthOpenApiSchema: OpenAPIDocument = {
   paths: {},
 };
 
-/**
- * createTestApp 생성/등록 절차를 수행해 시스템 상태를 갱신합니다.
- * @param input 함수 로직에서 사용하는 입력값입니다.
- * @returns 처리 결과 값을 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
+/** 테스트에서 사용량을 숫자로만 지정해도 되도록 완전한 스캔 결과로 감싼다. */
+export const toUsageScanResult = (
+  value: number | R2UsageScanResult,
+): R2UsageScanResult => {
+  if (typeof value !== "number") {
+    return value;
+  }
+
+  return {
+    totalUsageBytes: value,
+    objectCount: 0,
+    pages: 1,
+    complete: true,
+    elapsedMs: 0,
+    observedAt: Date.now(),
+  };
+};
+
 export const createTestApp = (input: {
   actor: Actor | null;
   resolveActor?: () => Promise<Actor | null>;
   dataService?: DataService;
   presignService?: PresignService;
-  readR2TotalUsageBytes?: () => Promise<number> | number;
+  readR2TotalUsageBytes?: () =>
+    | Promise<number | R2UsageScanResult>
+    | number
+    | R2UsageScanResult;
   getAuthOpenApiSchema?: () => Promise<OpenAPIDocument>;
-  shouldRequireDocsAuth?: boolean;
+  isDocsEnabled?: boolean;
+  viewCountStore?: ViewCountStore;
+  allowPageViewWrite?: () => Promise<boolean> | boolean;
+  multipartUploadStateStore?: MultipartUploadStateStore;
+  uploadReservationStore?: UploadReservationStore;
 }) => {
+  const noopViewCountStore: ViewCountStore = {
+    recordView: async () => undefined,
+    getViewCounts: async () => ({}),
+  };
+  const multipartUploadStateStore =
+    input.multipartUploadStateStore ?? createMemoryMultipartUploadStateStore();
+  const uploadReservationStore =
+    input.uploadReservationStore ?? createMemoryUploadReservationStore();
+
   return createApp({
-    /**
-     * resolveActor 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
-     * @returns 조회/계산된 결과 값을 반환합니다.
-     * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-     */
     resolveActor: input.resolveActor ?? (async () => input.actor),
-    /**
-     * getDataService 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
-     * @returns 조회/계산된 결과 값을 반환합니다.
-     * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-     */
     getDataService: () => input.dataService ?? createDataServiceMock(),
-    /**
-     * getPresignService 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
-     * @returns 조회/계산된 결과 값을 반환합니다.
-     * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
-     */
     getPresignService: () => input.presignService ?? createPresignServiceMock(),
     readR2TotalUsageBytes: async () =>
-      input.readR2TotalUsageBytes === undefined
-        ? 0
-        : await input.readR2TotalUsageBytes(),
+      toUsageScanResult(
+        input.readR2TotalUsageBytes === undefined
+          ? 0
+          : await input.readR2TotalUsageBytes(),
+      ),
     getAuthOpenApiSchema:
       input.getAuthOpenApiSchema ??
-      /** createApp 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 비동기 처리 결과를 Promise로 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (async () =>
+(async () =>
         defaultAuthOpenApiSchema),
-    shouldRequireDocsAuth:
-      /** createApp 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ () =>
-        input.shouldRequireDocsAuth ?? false,
+    isDocsEnabled:
+() =>
+        input.isDocsEnabled ?? true,
+    getViewCountStore: () => input.viewCountStore ?? noopViewCountStore,
+    allowPageViewWrite: async () =>
+      input.allowPageViewWrite === undefined
+        ? true
+        : await input.allowPageViewWrite(),
+    getMultipartUploadStateStore: () => multipartUploadStateStore,
+    getUploadReservationStore: () => uploadReservationStore,
   });
 };
 
-/**
- * readJson 외부 또는 내부 소스에서 데이터를 읽어오는 로직을 수행합니다.
- * @param response 응답 데이터 또는 응답 객체입니다.
- * @returns 외부 소스에서 읽어 온 결과를 Promise로 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 export const readJson = async <T>(response: Response): Promise<T> => {
   return (await response.json()) as T;
 };
 
-/**
- * expectErrorCode의 핵심 비즈니스 로직을 수행합니다 (비동기 처리 포함).
- * @param response 응답 데이터 또는 응답 객체입니다.
- * @param code 함수 로직에서 사용하는 입력값입니다.
- * @returns 비동기 처리 결과를 Promise로 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 export const expectErrorCode = async (
   response: Response,
   code:
