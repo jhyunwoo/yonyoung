@@ -1,0 +1,135 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "dev"]
+  pull_request:
+    branches: ["main", "dev"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  API_BASE_URL: http://127.0.0.1:4010
+  CI: "true"
+  NEXT_PUBLIC_IMAGE_CDN_BASE_URL: https://storage.yonyoung.moveto.kr
+  NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3005
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+
+jobs:
+  quality-gates:
+    name: Quality gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    outputs:
+      web-affected: ${{ steps.affected.outputs.web }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
+
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+
+      - name: Determine affected packages
+        id: affected
+        run: |
+          pnpm turbo ls --affected --output=json > "$RUNNER_TEMP/affected.json"
+          node -e 'const fs=require("node:fs");const data=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+"/affected.json","utf8"));const names=new Set(data.packages.items.map((item)=>item.name));fs.appendFileSync(process.env.GITHUB_OUTPUT,`web=${names.has("@yonyoung/web")}\n`);'
+
+      - name: Check root formatting
+        run: pnpm exec prettier --check . --ignore-unknown
+
+      - name: Check package boundaries
+        run: pnpm boundaries
+
+      - name: Check vendored fonts when web is affected
+        run: pnpm turbo run fonts:check --affected
+
+      - name: Affected checks with deterministic Web build API
+        if: ${{ steps.affected.outputs.web == 'true' }}
+        run: node tooling/run-with-web-mock-api.mjs pnpm turbo run format:check lint typecheck test:coverage build --affected
+
+      - name: Affected checks without Web
+        if: ${{ steps.affected.outputs.web != 'true' }}
+        run: pnpm turbo run format:check lint typecheck test:coverage build --affected
+
+      - name: Upload coverage reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            apps/api/coverage
+            apps/web/coverage
+            packages/contracts/coverage
+          if-no-files-found: ignore
+          retention-days: 7
+
+  e2e:
+    name: E2E (Chromium)
+    needs: quality-gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: No affected web package
+        if: ${{ needs.quality-gates.outputs.web-affected != 'true' }}
+        run: echo "Web is not affected; E2E is a successful no-op."
+
+      - name: Checkout
+        if: ${{ needs.quality-gates.outputs.web-affected == 'true' }}
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup pnpm
+        if: ${{ needs.quality-gates.outputs.web-affected == 'true' }}
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        if: ${{ needs.quality-gates.outputs.web-affected == 'true' }}
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
+
+      - name: Install workspace
+        if: ${{ needs.quality-gates.outputs.web-affected == 'true' }}
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium and system dependencies
+        if: ${{ needs.quality-gates.outputs.web-affected == 'true' }}
+        run: pnpm --filter @yonyoung/web exec playwright install --with-deps chromium
+
+      - name: Run E2E tests (mock API + production build)
+        if: ${{ needs.quality-gates.outputs.web-affected == 'true' }}
+        run: pnpm --filter @yonyoung/web test:e2e:full
+
+      - name: Upload E2E failure artifacts
+        if: ${{ failure() && needs.quality-gates.outputs.web-affected == 'true' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-results-${{ github.run_id }}-${{ github.run_attempt }}
+          path: apps/web/test-results/playwright
+          if-no-files-found: ignore
+          retention-days: 7
