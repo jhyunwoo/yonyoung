@@ -2,13 +2,19 @@ import {
   AbortMultipartUploadCommand,
   CompleteMultipartUploadCommand,
   CreateMultipartUploadCommand,
+  NoSuchUpload,
   PutObjectCommand,
   S3Client,
   UploadPartCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { timingSafeEqual } from "node:crypto";
 import type { AppBindings } from "../../types/honoAppType";
 import type { PresignService } from "../services/types";
+import { ALLOWED_ATTACHMENT_CONTENT_TYPES } from "@yonyoung/contracts/attachments";
+import { ALLOWED_IMAGE_CONTENT_TYPES } from "@yonyoung/contracts/uploads";
+
+export { ALLOWED_ATTACHMENT_CONTENT_TYPES, ALLOWED_IMAGE_CONTENT_TYPES };
 
 export const UPLOAD_LIMITS = {
   maxSinglePartBytes: 1024 * 1024 * 1024,
@@ -17,32 +23,62 @@ export const UPLOAD_LIMITS = {
   multipartMaxParts: 10_000,
 } as const;
 
-export const ALLOWED_IMAGE_CONTENT_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-  "image/avif",
-  "image/heic",
-  "image/heif",
+export const MANAGED_UPLOAD_RESOURCE_PATHS = [
+  "activities",
+  "exhibitions",
+  "users",
+  // notices 경로는 모집(recruiting) 이미지와 레거시 공지 이미지 objectKey가 사용한다
+  "notices",
+  "site",
 ] as const;
+
+export const MANAGED_UPLOAD_SLOTS = [
+  "cover",
+  "detail",
+  "profile",
+  "image",
+  "file",
+] as const;
+
+export type ManagedUploadResourcePath =
+  (typeof MANAGED_UPLOAD_RESOURCE_PATHS)[number];
+export type ManagedUploadSlot = (typeof MANAGED_UPLOAD_SLOTS)[number];
 
 type StorageEnv = {
   endpoint: string;
   accessKeyId: string;
   secretAccessKey: string;
   bucket: string;
-  publicBaseUrl?: string;
+  publicReadBaseUrl: string;
+  publicUrlSigningSecret: string;
 };
 
-const PRESIGNED_URL_EXPIRES_IN_SECONDS = 3600;
+export const PRESIGNED_URL_EXPIRES_IN_SECONDS = 3600;
+const PUBLIC_MEDIA_ROUTE_PREFIX = "/api/public/media";
+const PUBLIC_URL_SIGNING_SECRET_ENV_KEY = "R2_PUBLIC_URL_SIGNING_SECRET";
+const PREVIOUS_PUBLIC_URL_SIGNING_SECRET_ENV_KEY =
+  "R2_PUBLIC_URL_SIGNING_SECRET_PREVIOUS";
+const LEGACY_PUBLIC_URL_SIGNING_SECRET_ENV_KEY = "BETTER_AUTH_SECRET";
+const PUBLIC_URL_SIGNING_SECRET_MIN_LENGTH = 32;
+const SAFE_OBJECT_SEGMENT_PATTERN = /^[A-Za-z0-9._-]{1,160}$/;
+const SAFE_ACTOR_ID_PATTERN = /^[A-Za-z0-9_-]{1,120}$/;
+const SLOT_ALLOWLIST_BY_PATH: Record<
+  ManagedUploadResourcePath,
+  readonly ManagedUploadSlot[]
+> = {
+  activities: ["cover", "detail", "file"],
+  exhibitions: ["cover", "detail"],
+  users: ["profile"],
+  notices: ["image"],
+  site: ["file"],
+};
+const textEncoder = new TextEncoder();
 
 const storageEnvKeyMap = {
   endpoint: "R2_S3_ENDPOINT",
   accessKeyId: "R2_ACCESS_KEY_ID",
   secretAccessKey: "R2_SECRET_ACCESS_KEY",
   bucket: "R2_BUCKET",
-  publicBaseUrl: "R2_PUBLIC_BASE_URL",
 } as const;
 
 type StorageEnvKey = keyof typeof storageEnvKeyMap;
@@ -75,6 +111,79 @@ const getEnvValue = (
   return undefined;
 };
 
+const readRuntimeValue = (
+  env: AppBindings,
+  key: keyof AppBindings,
+): string | undefined => {
+  const bindingValue = env[key];
+  if (typeof bindingValue === "string" && bindingValue.trim()) {
+    return bindingValue.trim();
+  }
+
+  const processValue = process.env[String(key)];
+  if (processValue?.trim()) {
+    return processValue.trim();
+  }
+
+  return undefined;
+};
+
+export const resolvePublicObjectSigningSecret = (
+  env: AppBindings,
+): string | undefined => {
+  const secret = readRuntimeValue(
+    env,
+    PUBLIC_URL_SIGNING_SECRET_ENV_KEY as keyof AppBindings,
+  );
+  return secret && secret.length >= PUBLIC_URL_SIGNING_SECRET_MIN_LENGTH
+    ? secret
+    : undefined;
+};
+
+export const resolvePublicObjectSigningSecrets = (
+  env: AppBindings,
+): string[] => {
+  const candidates = [
+    readRuntimeValue(
+      env,
+      PUBLIC_URL_SIGNING_SECRET_ENV_KEY as keyof AppBindings,
+    ),
+    readRuntimeValue(
+      env,
+      PREVIOUS_PUBLIC_URL_SIGNING_SECRET_ENV_KEY as keyof AppBindings,
+    ),
+    readRuntimeValue(
+      env,
+      LEGACY_PUBLIC_URL_SIGNING_SECRET_ENV_KEY as keyof AppBindings,
+    ),
+  ].filter(
+    (value): value is string =>
+      typeof value === "string" &&
+      value.length >= PUBLIC_URL_SIGNING_SECRET_MIN_LENGTH,
+  );
+
+  return [...new Set(candidates)];
+};
+
+export const resolvePublicObjectBaseOrigin = (
+  env: AppBindings,
+): string | undefined => {
+  const configuredUrl = readRuntimeValue(env, "BETTER_AUTH_URL");
+  if (!configuredUrl) {
+    return undefined;
+  }
+
+  try {
+    const parsed = new URL(configuredUrl);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      return undefined;
+    }
+    return parsed.origin;
+  } catch {
+    return undefined;
+  }
+};
+
 const sanitizeFileName = (fileName: string): string => {
   const trimmed = fileName.trim();
   if (!trimmed) {
@@ -91,19 +200,63 @@ const encodeKeyForPublicUrl = (key: string) => {
     .join("/");
 };
 
-const buildPublicUrl = (input: {
-  objectKey: string;
-  uploadUrl: string;
-  configuredPublicBaseUrl?: string;
-}): string => {
-  const encodedKey = encodeKeyForPublicUrl(input.objectKey);
+const createFileToken = (fileName: string): string => {
+  const safeFileName = sanitizeFileName(fileName);
+  return `${crypto.randomUUID()}-${safeFileName}`;
+};
 
-  if (input.configuredPublicBaseUrl) {
-    return `${input.configuredPublicBaseUrl}/${encodedKey}`;
+const isManagedResourcePath = (
+  value: string,
+): value is ManagedUploadResourcePath => {
+  return (MANAGED_UPLOAD_RESOURCE_PATHS as readonly string[]).includes(value);
+};
+
+const isManagedUploadSlot = (value: string): value is ManagedUploadSlot => {
+  return (MANAGED_UPLOAD_SLOTS as readonly string[]).includes(value);
+};
+
+export const parseManagedObjectKey = (
+  objectKey: string,
+): {
+  resourcePath: ManagedUploadResourcePath;
+  actorId: string;
+  slot: ManagedUploadSlot;
+  fileToken: string;
+} | null => {
+  const segments = objectKey.split("/");
+  if (segments.length !== 4) {
+    return null;
   }
 
-  const parsedUploadUrl = new URL(input.uploadUrl);
-  return `${parsedUploadUrl.origin}${parsedUploadUrl.pathname}`;
+  const [resourcePath, actorId, slot, fileToken] = segments;
+  if (
+    !resourcePath ||
+    !actorId ||
+    !slot ||
+    !fileToken ||
+    !isManagedResourcePath(resourcePath) ||
+    !isManagedUploadSlot(slot)
+  ) {
+    return null;
+  }
+
+  if (!SLOT_ALLOWLIST_BY_PATH[resourcePath].includes(slot)) {
+    return null;
+  }
+
+  if (
+    !SAFE_ACTOR_ID_PATTERN.test(actorId) ||
+    !SAFE_OBJECT_SEGMENT_PATTERN.test(fileToken)
+  ) {
+    return null;
+  }
+
+  return {
+    resourcePath,
+    actorId,
+    slot,
+    fileToken,
+  };
 };
 
 const resolveStorageEnv = (env: AppBindings): StorageEnv => {
@@ -111,7 +264,8 @@ const resolveStorageEnv = (env: AppBindings): StorageEnv => {
   const accessKeyId = getEnvValue(env, "accessKeyId");
   const secretAccessKey = getEnvValue(env, "secretAccessKey");
   const bucket = getEnvValue(env, "bucket");
-  const publicBaseUrl = getEnvValue(env, "publicBaseUrl");
+  const publicReadBaseUrl = resolvePublicObjectBaseOrigin(env);
+  const publicUrlSigningSecret = resolvePublicObjectSigningSecret(env);
 
   const missingKeys: string[] = [];
   if (!endpoint) {
@@ -125,6 +279,12 @@ const resolveStorageEnv = (env: AppBindings): StorageEnv => {
   }
   if (!bucket) {
     missingKeys.push(storageEnvKeyMap.bucket);
+  }
+  if (!publicReadBaseUrl) {
+    missingKeys.push("BETTER_AUTH_URL");
+  }
+  if (!publicUrlSigningSecret) {
+    missingKeys.push(PUBLIC_URL_SIGNING_SECRET_ENV_KEY);
   }
 
   if (missingKeys.length > 0) {
@@ -141,18 +301,119 @@ const resolveStorageEnv = (env: AppBindings): StorageEnv => {
     accessKeyId: resolvedAccessKeyId,
     secretAccessKey: resolvedSecretAccessKey,
     bucket: resolvedBucket,
-    publicBaseUrl: publicBaseUrl?.replace(/\/+$/, ""),
+    publicReadBaseUrl: publicReadBaseUrl as string,
+    publicUrlSigningSecret: publicUrlSigningSecret as string,
   };
 };
 
 const buildObjectKey = (input: {
   actorId: string;
-  resource: "activities" | "exhibitions" | "users" | "notices" | "market";
-  slot: "cover" | "detail" | "profile" | "image";
+  resource: ManagedUploadResourcePath;
+  slot: ManagedUploadSlot;
   fileName: string;
 }): string => {
-  const safeFileName = sanitizeFileName(input.fileName);
-  return `${input.resource}/${input.actorId}/${input.slot}/${Date.now()}-${safeFileName}`;
+  return `${input.resource}/${input.actorId}/${input.slot}/${createFileToken(input.fileName)}`;
+};
+
+const signObjectKey = async (
+  objectKey: string,
+  secret: string,
+): Promise<string> => {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    textEncoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signatureBuffer = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    textEncoder.encode(objectKey),
+  );
+  return Buffer.from(signatureBuffer).toString("base64url");
+};
+
+const timingSafeEqualString = (left: string, right: string): boolean => {
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+  if (leftBuffer.length !== rightBuffer.length) {
+    return false;
+  }
+
+  return timingSafeEqual(leftBuffer, rightBuffer);
+};
+
+/**
+ * AWS SDK v3 exposes NoSuchUpload as a modeled client exception. R2's
+ * S3-compatible endpoint may preserve only the service error name, so accept
+ * that exact modeled name as a fallback without swallowing other 4xx/5xx or
+ * transport failures.
+ */
+export const isNoSuchMultipartUploadError = (error: unknown): boolean => {
+  if (error instanceof NoSuchUpload) {
+    return true;
+  }
+
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+
+  const serviceError = error as {
+    name?: unknown;
+    $fault?: unknown;
+    $metadata?: { httpStatusCode?: unknown };
+  };
+  return (
+    serviceError.name === "NoSuchUpload" &&
+    serviceError.$fault === "client" &&
+    serviceError.$metadata?.httpStatusCode === 404
+  );
+};
+
+export const buildSignedPublicObjectUrl = async (input: {
+  baseUrl: string;
+  objectKey: string;
+  signingSecret: string;
+}): Promise<string> => {
+  const signature = await signObjectKey(input.objectKey, input.signingSecret);
+  const encodedKey = encodeKeyForPublicUrl(input.objectKey);
+  const url = new URL(
+    `${PUBLIC_MEDIA_ROUTE_PREFIX}/${encodedKey}`,
+    input.baseUrl,
+  );
+  url.searchParams.set("sig", signature);
+  return url.toString();
+};
+
+export const verifySignedPublicObjectSignature = async (input: {
+  objectKey: string;
+  signature: string | null | undefined;
+  signingSecret?: string;
+  signingSecrets?: readonly string[];
+}): Promise<boolean> => {
+  const signature = input.signature?.trim();
+  if (!signature) {
+    return false;
+  }
+
+  const signingSecrets = input.signingSecrets ?? [];
+  const candidateSecrets =
+    input.signingSecret === undefined
+      ? [...signingSecrets]
+      : [input.signingSecret, ...signingSecrets];
+  const uniqueSecrets = [
+    ...new Set(candidateSecrets.filter((value) => value.length > 0)),
+  ];
+
+  for (const secret of uniqueSecrets) {
+    const expected = await signObjectKey(input.objectKey, secret);
+    if (timingSafeEqualString(expected, signature)) {
+      return true;
+    }
+  }
+
+  return false;
 };
 
 export const createR2PresignService = (env: AppBindings): PresignService => {
@@ -160,17 +421,18 @@ export const createR2PresignService = (env: AppBindings): PresignService => {
   const client = new S3Client({
     region: "auto",
     endpoint: storageEnv.endpoint,
+    requestChecksumCalculation: "WHEN_REQUIRED",
     credentials: {
       accessKeyId: storageEnv.accessKeyId,
       secretAccessKey: storageEnv.secretAccessKey,
     },
   });
 
-  const resolvePublicUrlFromSignedUrl = (uploadUrl: string, objectKey: string) => {
-    return buildPublicUrl({
+  const resolvePublicUrlFromObjectKey = async (objectKey: string) => {
+    return buildSignedPublicObjectUrl({
+      baseUrl: storageEnv.publicReadBaseUrl,
       objectKey,
-      uploadUrl,
-      configuredPublicBaseUrl: storageEnv.publicBaseUrl,
+      signingSecret: storageEnv.publicUrlSigningSecret,
     });
   };
 
@@ -192,7 +454,7 @@ export const createR2PresignService = (env: AppBindings): PresignService => {
       return {
         uploadUrl,
         objectKey,
-        publicUrl: resolvePublicUrlFromSignedUrl(uploadUrl, objectKey),
+        publicUrl: await resolvePublicUrlFromObjectKey(objectKey),
         requiredHeaders: {
           "Content-Type": input.contentType,
         },
@@ -221,9 +483,7 @@ export const createR2PresignService = (env: AppBindings): PresignService => {
       return {
         uploadId: created.UploadId,
         objectKey,
-        publicUrl: storageEnv.publicBaseUrl
-          ? `${storageEnv.publicBaseUrl}/${encodeKeyForPublicUrl(objectKey)}`
-          : `${storageEnv.endpoint.replace(/\/+$/, "")}/${storageEnv.bucket}/${encodeKeyForPublicUrl(objectKey)}`,
+        publicUrl: await resolvePublicUrlFromObjectKey(objectKey),
         partSize: UPLOAD_LIMITS.multipartPartSizeBytes,
         maxPartNumber,
       };
@@ -235,6 +495,7 @@ export const createR2PresignService = (env: AppBindings): PresignService => {
         Key: input.objectKey,
         UploadId: input.uploadId,
         PartNumber: input.partNumber,
+        ContentLength: input.contentLength,
       });
 
       const uploadUrl = await getSignedUrl(client, command, {
@@ -243,7 +504,9 @@ export const createR2PresignService = (env: AppBindings): PresignService => {
 
       return {
         uploadUrl,
-        requiredHeaders: {},
+        requiredHeaders: {
+          "Content-Length": String(input.contentLength),
+        },
       };
     },
 
@@ -264,11 +527,9 @@ export const createR2PresignService = (env: AppBindings): PresignService => {
         }),
       );
 
-      const fallbackUploadUrl = `${storageEnv.endpoint.replace(/\/+$/, "")}/${storageEnv.bucket}/${encodeKeyForPublicUrl(input.objectKey)}`;
-
       return {
         objectKey: input.objectKey,
-        publicUrl: resolvePublicUrlFromSignedUrl(fallbackUploadUrl, input.objectKey),
+        publicUrl: await resolvePublicUrlFromObjectKey(input.objectKey),
       };
     },
 

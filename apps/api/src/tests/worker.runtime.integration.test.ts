@@ -13,10 +13,16 @@ describe("worker runtime integration", () => {
       vars: {
         BETTER_AUTH_URL: "http://localhost:8787",
         BETTER_AUTH_TRUSTED_ORIGINS: "http://localhost:3000",
+        BETTER_AUTH_SECRET:
+          "test-only-better-auth-secret-at-least-32-characters",
+        GOOGLE_CLIENT_ID: "test-google-client-id",
+        GOOGLE_CLIENT_SECRET: "test-google-client-secret",
         R2_S3_ENDPOINT: "https://example-account.r2.cloudflarestorage.com",
         R2_ACCESS_KEY_ID: "key",
         R2_SECRET_ACCESS_KEY: "secret",
         R2_BUCKET: "yonyoung-storage",
+        R2_PUBLIC_URL_SIGNING_SECRET:
+          "test-public-url-signing-secret-at-least-32-characters",
       },
     });
   }, 120_000);
@@ -33,17 +39,24 @@ describe("worker runtime integration", () => {
     async () => {
       const response = await worker!.fetch("/health");
 
-      expect([200, 503]).toContain(response.status);
+      expect(response.status).toBe(200);
       const body = (await response.json()) as {
         status: string;
         checks: Array<{ service: string; status: string }>;
       };
-      if (response.status === 200) {
-        expect(body.status).toBe("healthy");
-      } else {
-        expect(body.status).toBe("unhealthy");
-      }
+      expect(body.status).toBe("healthy");
+      // 실제 런타임에서는 얕은 점검이 서비스별 결과를 채워야 한다.
       expect(body.checks.length).toBeGreaterThan(0);
+      for (const service of ["d1", "r2", "r2_presign", "auth_config"]) {
+        expect(
+          body.checks.some(
+            (check) => check.service === service && check.status === "healthy",
+          ),
+        ).toBe(true);
+      }
+      // 공개 응답에는 바인딩 이름/상세가 포함되지 않아야 한다.
+      expect(JSON.stringify(body)).not.toContain('"binding"');
+      expect(JSON.stringify(body)).not.toContain('"detail"');
       expect(response.headers.get("x-request-id")).toBeTruthy();
       expect(response.headers.get("server-timing")).toContain("total;dur=");
     },
@@ -56,11 +69,28 @@ describe("worker runtime integration", () => {
       const response = await worker!.fetch("/api/unknown-endpoint");
 
       expect(response.status).toBe(404);
-      expect(response.headers.get("content-security-policy-report-only")).toContain(
+      expect(response.headers.get("content-security-policy")).toContain(
         "default-src 'none'",
       );
-      expect(response.headers.get("content-security-policy")).toBeNull();
+      expect(response.headers.get("content-security-policy-report-only")).toBeNull();
       expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+    },
+    15_000,
+  );
+
+  it(
+    "/ responds with HTML page containing status hooks",
+    async () => {
+      const response = await worker!.fetch("/");
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("content-type")).toContain("text/html");
+
+      const html = await response.text();
+      expect(html).toContain('id="error-banner"');
+      expect(html).toContain('id="health-refresh-btn"');
+      expect(html).toContain('data-health-endpoint="/health"');
+      expect(html).toContain("fetch(healthEndpoint");
     },
     15_000,
   );

@@ -44,12 +44,6 @@ const readOnlyErrorGuide = [
   "`404`: 조회 대상이 없는 경우 반환합니다.",
 ] as const;
 
-/**
- * mkSpec의 핵심 비즈니스 로직을 수행합니다.
- * @param spec 함수 로직에서 사용하는 입력값입니다.
- * @returns 함수 실행 결과를 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 const mkSpec = (spec: OperationDocSpec): OperationDocSpec => spec;
 
 const internalOperationSpecs: Record<string, OperationDocSpec> = {
@@ -236,7 +230,7 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     errorGuide: [...commonErrorGuide],
     permission: [
       "`activity:create` 권한이 필요합니다.",
-      "미승인(unverified)을 제외한 모든 역할이 생성할 수 있습니다.",
+      "회장/부회장/부장만 생성할 수 있습니다.",
     ],
   }),
   getActivityById: mkSpec({
@@ -273,7 +267,7 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     errorGuide: [...commonErrorGuide],
     permission: [
       "`activity:update` 권한 필요",
-      "미승인(unverified)을 제외한 모든 역할이 수정할 수 있습니다.",
+      "회장/부회장/부장만 수정할 수 있습니다.",
     ],
   }),
   deleteActivity: mkSpec({
@@ -288,7 +282,7 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     ],
     responseGuide: ["`204`: 본문 없이 삭제 완료"],
     errorGuide: [...readOnlyErrorGuide],
-    permission: ["`activity:delete` 권한 필요"],
+    permission: ["`activity:delete` 권한 필요(회장/부회장/부장만 삭제 가능)"],
   }),
   addActivityImage: mkSpec({
     summary: "활동 세부 이미지 추가",
@@ -306,9 +300,7 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     ],
     responseGuide: ["`201`: 생성된 `ApiActivityImage` 반환"],
     errorGuide: [...commonErrorGuide],
-    permission: [
-      "세부 이미지 추가/수정은 활동 업데이트 권한(`activity:update`)으로 통합 관리합니다.",
-    ],
+    permission: ["회장/부회장/부장만 활동 세부 이미지를 추가/수정할 수 있습니다."],
   }),
   updateActivityImage: mkSpec({
     summary: "활동 세부 이미지 수정",
@@ -329,7 +321,7 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     ],
     responseGuide: ["`200`: 수정된 `ApiActivityImage` 반환"],
     errorGuide: [...commonErrorGuide],
-    permission: ["`activity:update` 권한 필요"],
+    permission: ["`activity:update` 권한 필요(회장/부회장/부장만 수정 가능)"],
   }),
   deleteActivityImage: mkSpec({
     summary: "활동 세부 이미지 삭제",
@@ -346,7 +338,7 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     ],
     responseGuide: ["`204`: 본문 없이 삭제 완료"],
     errorGuide: [...readOnlyErrorGuide],
-    permission: ["`activity:delete` 권한 필요"],
+    permission: ["`activity:delete` 권한 필요(회장/부회장/부장만 삭제 가능)"],
   }),
   listExhibitions: mkSpec({
     summary: "전시 목록 조회",
@@ -667,7 +659,9 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
       "특정 사용자의 리소스 생성/수정/삭제 이력을 조회합니다. 감사 로그(actorId)와 리소스 메타 정보를 조합해 화면 표시용 데이터를 제공합니다.",
     parameters: [
       "`id` (path): 조회 대상 사용자 식별자(better-auth user.id)",
-      "`limit` (query, optional): 조회 최대 건수(기본 100, 최소 1, 최대 100)",
+      "`page` (query, optional): 조회할 페이지 번호(기본 1)",
+      "`pageSize` (query, optional): 페이지당 조회 건수(기본 10, 최소 1, 최대 100)",
+      "`action` (query, optional): create/update/delete 중 특정 액션만 조회",
     ],
     requestBody: ["요청 본문은 사용하지 않습니다."],
     internalFlow: [
@@ -676,11 +670,11 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
       "audit_logs(actorId) 기준으로 대상 리소스 타입의 이력을 최신순 조회하고 리소스 메타를 병합해 반환합니다.",
     ],
     responseGuide: [
-      "`200`: `{ items: ApiUserResourceHistoryItem[] }` 반환",
+      "`200`: `{ items: ApiUserResourceHistoryItem[], page, pageSize, total, totalPages }` 반환",
       "`items`에는 리소스 타입/제목/액션/삭제 여부/연결용 보조 ID(generationId/linktreeId)가 포함됩니다.",
     ],
     errorGuide: [
-      "`400`: 사용자 ID 형식 또는 limit 쿼리 검증 실패",
+      "`400`: 사용자 ID 형식 또는 page/pageSize/action 쿼리 검증 실패",
       "`401`: 인증 없음",
       "`403`: 회장/부회장이 아닌 역할",
       "`404`: 대상 사용자 없음",
@@ -787,7 +781,7 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
       "클라이언트는 `uploadUrl`로 PUT 업로드 후 `publicUrl`을 본문 API에 저장합니다.",
     ],
     errorGuide: [...commonErrorGuide],
-    permission: ["미승인(unverified)을 제외한 활동 생성/수정 권한 역할만 발급 가능"],
+    permission: ["회장/부회장/부장처럼 활동 생성/수정 권한이 있는 역할만 발급 가능합니다."],
   }),
   issueActivityDetailPresign: mkSpec({
     summary: "활동 세부 이미지 업로드 URL 발급",
@@ -802,7 +796,7 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     ],
     responseGuide: ["`201`: presign 발급 정보 반환"],
     errorGuide: [...commonErrorGuide],
-    permission: ["미승인(unverified)을 제외한 활동 생성/수정 권한 필요"],
+    permission: ["회장/부회장/부장처럼 활동 생성/수정 권한이 있는 역할만 발급 가능합니다."],
   }),
   issueExhibitionCoverPresign: mkSpec({
     summary: "전시 대표 이미지 업로드 URL 발급",
@@ -861,10 +855,7 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     ],
     responseGuide: ["`200`: OpenAPI 3.1 JSON 문서 반환"],
     errorGuide: ["`500`: 스키마 병합 또는 생성 실패"],
-    permission: [
-      "`DOCS_AUTH_IN_PROD`가 `true`인 환경에서는 로그인 세션이 필요합니다.",
-      "플래그가 비활성화된 환경에서는 공개 접근이 가능합니다.",
-    ],
+    permission: ["공개 엔드포인트입니다."],
   }),
   getScalarApiReference: mkSpec({
     summary: "Scalar API 문서 UI 조회",
@@ -877,26 +868,55 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
     ],
     responseGuide: ["`200`: `text/html` 문서 UI 반환"],
     errorGuide: ["일반적으로 문서 렌더링 실패 외 비즈니스 오류를 반환하지 않습니다."],
-    permission: [
-      "`DOCS_AUTH_IN_PROD`가 `true`인 환경에서는 로그인 세션이 필요합니다.",
-      "플래그가 비활성화된 환경에서는 공개 접근이 가능합니다.",
-    ],
+    permission: ["공개 엔드포인트입니다."],
   }),
   getHealth: mkSpec({
-    summary: "시스템 인프라 헬스 체크",
+    summary: "공개 인프라 헬스 체크",
     overview:
-      "D1, R2, Durable Object, ASSETS 등 Cloudflare 의존 서비스 상태를 점검한 종합 결과를 반환합니다.",
+      "D1, R2, 인증 설정, rate limit 등 필수 의존성을 부작용 없이 점검한 요약 결과를 반환합니다.",
     parameters: ["파라미터를 사용하지 않습니다."],
     requestBody: ["요청 본문은 사용하지 않습니다."],
     internalFlow: [
-      "D1 쿼리, R2 put/head/delete, R2 presign 생성, Durable Object/ASSETS 바인딩 점검을 수행합니다.",
-      "각 체크 결과를 집계해 전체 상태를 계산하고 JSON으로 반환합니다.",
+      "쓰기 없는 shallow 점검만 수행합니다: D1 `SELECT 1`, R2 `list` 읽기, R2 presign 서명 생성, 인증 환경 변수 검증, rate limit/Analytics Engine 바인딩 확인, ASSETS/Service binding fetch.",
+      "공개 응답에서는 binding 이름, 점검 상세, 에러 문자열을 제거하고 서비스명/상태/지연시간만 노출합니다.",
+      "공개 엔드포인트 남용을 막기 위해 결과를 isolate 단위로 최대 10초 재사용합니다.",
     ],
     responseGuide: [
       "`200`: 모든 필수 체크가 `healthy`인 경우 헬스 체크 JSON을 반환합니다.",
-      "`503`: 하나 이상의 체크가 `unhealthy`인 경우 헬스 체크 JSON을 반환합니다.",
+      "`503`: 하나 이상의 체크가 `unhealthy`인 경우 동일한 형식의 JSON을 반환합니다.",
     ],
-    errorGuide: ["체크 실패 시에도 가능한 한 실패 원인을 포함한 JSON을 반환합니다."],
+    errorGuide: [
+      "실패 원인 상세는 노출하지 않습니다. 원인 확인은 `/api/health/readiness`를 사용하세요.",
+    ],
+    permission: ["공개 엔드포인트입니다."],
+  }),
+  getReadiness: mkSpec({
+    summary: "상세 인프라 readiness 점검",
+    overview:
+      "공개 헬스 체크 항목에 더해 D1 조회수 기록 왕복, R2 put/head/delete 왕복, D1 스키마 존재 여부까지 검증한 상세 결과를 반환합니다.",
+    parameters: ["파라미터를 사용하지 않습니다."],
+    requestBody: ["요청 본문은 사용하지 않습니다."],
+    internalFlow: [
+      "세션을 확인하고 관리자 페이지 접근 가능한 역할인지 검사합니다.",
+      "deep 점검을 수행해 binding 이름/점검 상세/실패 원인을 포함한 결과를 반환합니다.",
+    ],
+    responseGuide: [
+      "`200`: 모든 필수 체크가 `healthy`인 경우 상세 헬스 체크 JSON을 반환합니다.",
+      "`503`: 하나 이상의 체크가 `unhealthy`인 경우 동일한 형식의 JSON을 반환합니다.",
+    ],
+    errorGuide: [
+      "체크 실패 시에도 가능한 한 실패 원인(`error`)을 포함한 JSON을 반환합니다.",
+    ],
+    permission: ["관리자 페이지 접근 역할 필요"],
+  }),
+  getStatus: mkSpec({
+    summary: "API 메타 정보 조회",
+    overview: "API 이름, 배포 버전, 서버 시각을 반환합니다.",
+    parameters: ["파라미터를 사용하지 않습니다."],
+    requestBody: ["요청 본문은 사용하지 않습니다."],
+    internalFlow: ["package.json 버전과 현재 시각을 조합해 반환합니다."],
+    responseGuide: ["`200`: API 메타 정보 JSON 반환"],
+    errorGuide: ["비즈니스 오류를 반환하지 않습니다."],
     permission: ["공개 엔드포인트입니다."],
   }),
 };
@@ -1004,13 +1024,6 @@ const authSpecMap: AuthSpecMap = {
   },
 };
 
-/**
- * buildUnknownAuthSpec 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
- * @param path 리소스 경로 또는 라우팅 경로 문자열입니다.
- * @param method 함수 로직에서 사용하는 입력값입니다.
- * @returns 조회/계산된 결과 값을 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 const buildUnknownAuthSpec = (
   path: string,
   method: HttpMethod,
@@ -1041,25 +1054,13 @@ const buildUnknownAuthSpec = (
   });
 };
 
-/**
- * formatList의 핵심 비즈니스 로직을 수행합니다.
- * @param items 반복 처리 중인 현재 항목입니다.
- * @returns 함수 실행 결과를 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 const formatList = (items: string[]): string => {
   if (items.length === 0) {
     return "- 해당 사항이 없습니다.";
   }
-  return items.map(/** items.map 실행 과정에서 필요한 연산을 수행하는 콜백 함수입니다. @param item 반복 처리 중인 현재 항목입니다. @returns 함수 실행 결과를 반환합니다. @remarks 상위 함수의 호출 시점과 조건에 따라 실행 순서가 달라질 수 있습니다. */ (item) => `- ${item}`).join("\n");
+  return items.map((item) => `- ${item}`).join("\n");
 };
 
-/**
- * renderOperationDescription의 핵심 비즈니스 로직을 수행합니다.
- * @param spec 함수 로직에서 사용하는 입력값입니다.
- * @returns 함수 실행 결과를 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 export const renderOperationDescription = (spec: OperationDocSpec): string => {
   const sections = [
     `${REQUIRED_DESCRIPTION_SECTIONS[0]}\n${spec.overview}`,
@@ -1073,12 +1074,6 @@ export const renderOperationDescription = (spec: OperationDocSpec): string => {
   return sections.join("\n\n");
 };
 
-/**
- * asMethod의 핵심 비즈니스 로직을 수행합니다.
- * @param method 함수 로직에서 사용하는 입력값입니다.
- * @returns 함수 실행 결과를 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 const asMethod = (method: string): HttpMethod | null => {
   const normalized = method.toLowerCase();
   if (
@@ -1096,12 +1091,6 @@ const asMethod = (method: string): HttpMethod | null => {
   return null;
 };
 
-/**
- * getInternalOperationDocSpec 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
- * @param operationId 대상을 식별하기 위한 ID 값입니다.
- * @returns 조회/계산된 결과 값을 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 export const getInternalOperationDocSpec = (
   operationId: string | undefined,
 ): OperationDocSpec | null => {
@@ -1111,13 +1100,6 @@ export const getInternalOperationDocSpec = (
   return internalOperationSpecs[operationId] ?? null;
 };
 
-/**
- * getAuthOperationDocSpec 값을 조회하거나 입력을 가공해 필요한 결과를 생성합니다.
- * @param path 리소스 경로 또는 라우팅 경로 문자열입니다.
- * @param method 함수 로직에서 사용하는 입력값입니다.
- * @returns 조회/계산된 결과 값을 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
 export const getAuthOperationDocSpec = (
   path: string,
   method: string,

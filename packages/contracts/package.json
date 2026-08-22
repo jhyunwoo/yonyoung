@@ -1,0 +1,49 @@
+{
+  "name": "@yonyoung/contracts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/api-contracts.ts",
+    "./schemas": "./src/api-schemas.ts",
+    "./auth-profile": "./src/auth-profile.ts",
+    "./auth-roles": "./src/auth-roles.ts",
+    "./activities": "./src/api/activities.ts",
+    "./attachments": "./src/api/attachments.ts",
+    "./audit": "./src/api/audit.ts",
+    "./common": "./src/api/common.ts",
+    "./dashboard": "./src/api/dashboard.ts",
+    "./exhibitions": "./src/api/exhibitions.ts",
+    "./generations": "./src/api/generations.ts",
+    "./linktree": "./src/api/linktree.ts",
+    "./recruiting": "./src/api/recruiting.ts",
+    "./site-settings": "./src/api/site-settings.ts",
+    "./uploads": "./src/api/uploads.ts",
+    "./users": "./src/api/users.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "lint": "eslint src tests --max-warnings 0",
+    "format:check": "prettier --check . --ignore-unknown",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "@types/node": "20.19.43",
+    "@vitest/coverage-v8": "4.1.10",
+    "@yonyoung/eslint-config": "workspace:*",
+    "@yonyoung/typescript-config": "workspace:*",
+    "eslint": "9.39.5",
+    "prettier": "3.9.6",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.67.0",
+    "vitest": "4.1.10"
+  }
+}

@@ -1,120 +1,58 @@
-import { defineConfig } from "@playwright/test";
-import {
-  loadE2eEnv,
-  readE2eEnv,
-  readE2eUploadMode,
-  readE2eSuiteMode,
-} from "./tests/e2e/env";
-
-loadE2eEnv();
-if (!process.env.E2E_UPLOAD_MODE) {
-  process.env.E2E_UPLOAD_MODE = "real";
-}
-
-const uploadMode = readE2eUploadMode();
-if (uploadMode !== "real") {
-  throw new Error(
-    "E2E_UPLOAD_MODE=real 설정이 필요합니다. 파일 업로드 E2E는 real 모드만 지원합니다.",
-  );
-}
-
-const baseURL = readE2eEnv("E2E_BASE_URL", "http://localhost:3000");
-const apiURL = readE2eEnv("E2E_API_URL", "http://localhost:8787");
-
-const resolvePort = (urlValue: string, fallback: number): number => {
-  try {
-    const parsed = new URL(urlValue);
-    if (parsed.port) {
-      return Number.parseInt(parsed.port, 10);
-    }
-    return parsed.protocol === "https:" ? 443 : 80;
-  } catch {
-    return fallback;
-  }
-};
-
-const webPort = resolvePort(baseURL, 3000);
-const apiPort = resolvePort(apiURL, 8787);
-const suiteMode = readE2eSuiteMode();
-
-const publicTestMatches = [
-  "**/public-home.spec.ts",
-  "**/public-navigation-theme.spec.ts",
-  "**/public-pages-content.spec.ts",
-];
-
-const desktopSmokeTestMatches = [
-  "**/public-home.spec.ts",
-  "**/public-navigation-theme.spec.ts",
-  "**/public-pages-content.spec.ts",
-  "**/auth-flow.spec.ts",
-  "**/admin-shell.spec.ts",
-  "**/generations-crud.spec.ts",
-];
+import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  testDir: "./tests/e2e",
-  testMatch: "**/*.spec.ts",
-  fullyParallel: false,
-  workers: 1,
-  retries: suiteMode === "full" ? 1 : 0,
-  timeout: 120_000,
+  testDir: "tests/e2e",
+  timeout: 45_000,
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 2 : undefined,
+  reporter: process.env.CI ? "dot" : "list",
+  outputDir: "test-results/playwright",
   expect: {
-    timeout: 30_000,
+    toHaveScreenshot: {
+      maxDiffPixelRatio: 0.03,
+    },
   },
-  globalSetup: "./tests/e2e/global-setup.ts",
-  reporter: [["list"], ["html", { open: "never" }]],
+  use: {
+    baseURL: "http://127.0.0.1:3005",
+    trace: "retain-on-failure",
+    video: "retain-on-failure",
+    screenshot: "only-on-failure",
+  },
   webServer: [
     {
-      command: `pnpm --filter api run dev -- --port ${apiPort}`,
-      url: `${apiURL}/health`,
-      reuseExistingServer: true,
+      command: "pnpm tsx tests/e2e/mock-api/server.ts",
+      url: "http://127.0.0.1:4010/__test/health",
+      reuseExistingServer: !process.env.CI,
       timeout: 120_000,
+      stdout: "pipe",
+      stderr: "pipe",
+      env: {
+        MOCK_API_PORT: "4010",
+      },
     },
     {
-      command: `pnpm exec next dev --port ${webPort}`,
-      url: baseURL,
-      reuseExistingServer: true,
-      timeout: 120_000,
+      command: "pnpm build && pnpm start --hostname 127.0.0.1 --port 3005",
+      url: "http://127.0.0.1:3005",
+      reuseExistingServer: !process.env.CI,
+      timeout: 420_000,
+      stdout: "pipe",
+      stderr: "pipe",
+      env: {
+        API_BASE_URL: "http://127.0.0.1:4010",
+        NEXT_PUBLIC_SITE_URL: "http://127.0.0.1:3005",
+      },
     },
   ],
-  use: {
-    baseURL,
-    storageState: "tests/e2e/.auth/admin.json",
-    trace: "retain-on-failure",
-    screenshot: "only-on-failure",
-    video: "retain-on-failure",
-  },
-  projects:
-    suiteMode === "full"
-      ? [
-          {
-            name: "desktop-full",
-            testMatch: "**/*.spec.ts",
-          },
-          {
-            name: "mobile-full",
-            testMatch: publicTestMatches,
-            use: {
-              viewport: { width: 390, height: 844 },
-              isMobile: true,
-              hasTouch: true,
-            },
-          },
-        ]
-      : [
-          {
-            name: "desktop-smoke",
-            testMatch: desktopSmokeTestMatches,
-          },
-          {
-            name: "mobile-smoke",
-            testMatch: publicTestMatches,
-            use: {
-              viewport: { width: 390, height: 844 },
-              isMobile: true,
-              hasTouch: true,
-            },
-          },
-        ],
+  projects: [
+    {
+      name: "desktop-chromium",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "mobile-chromium",
+      use: { ...devices["Pixel 7"] },
+    },
+  ],
 });

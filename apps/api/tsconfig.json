@@ -1,18 +1,6 @@
 {
+  "extends": "@yonyoung/typescript-config/worker.json",
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "strict": true,
-    "skipLibCheck": true,
-    "lib": [
-      "ESNext"
-    ],
-    "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx",
-    "types": [
-        "./worker-configuration.d.ts",
-        "node"
-    ]
-  },
+    "types": ["./worker-configuration.d.ts", "node"]
+  }
 }

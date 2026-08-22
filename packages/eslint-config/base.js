@@ -1,32 +1,26 @@
-import js from "@eslint/js";
-import eslintConfigPrettier from "eslint-config-prettier";
-import turboPlugin from "eslint-plugin-turbo";
-import tseslint from "typescript-eslint";
-import onlyWarn from "eslint-plugin-only-warn";
+export const commonIgnores = [
+  "**/node_modules/**",
+  "**/.turbo/**",
+  "**/coverage/**",
+  "**/dist/**",
+];
 
-/**
- * A shared ESLint configuration for the repository.
- *
- * @type {import("eslint").Linter.Config[]}
- * */
-export const config = [
-  js.configs.recommended,
-  eslintConfigPrettier,
-  ...tseslint.configs.recommended,
+export const packageBoundaryPatterns = [
   {
-    plugins: {
-      turbo: turboPlugin,
-    },
-    rules: {
-      "turbo/no-undeclared-env-vars": "warn",
-    },
+    group: ["@yonyoung/*/src/**", "@yonyoung/*/src"],
+    message: "Import a workspace package through one of its public exports.",
   },
   {
-    plugins: {
-      onlyWarn,
-    },
-  },
-  {
-    ignores: ["dist/**"],
+    group: ["packages/**/src/**", "../packages/**", "../../packages/**"],
+    message: "Import a workspace package by its @yonyoung/* package name.",
   },
 ];
+
+export const boundaryRule = (additionalPatterns = []) => ({
+  "no-restricted-imports": [
+    "error",
+    {
+      patterns: [...packageBoundaryPatterns, ...additionalPatterns],
+    },
+  ],
+});

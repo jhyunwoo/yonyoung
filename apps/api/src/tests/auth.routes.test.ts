@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { registerAuthRoutes } from "../modules/auth";
+import { registerAuthRoutes } from "../features/auth/auth.routes";
 import type HonoAppType from "../types/honoAppType";
 
 vi.mock("../lib/auth", () => ({
@@ -30,6 +30,10 @@ describe("auth routes", () => {
 
     expect(response.status).toBe(200);
     expect(mockCreateAuth).toHaveBeenCalledTimes(1);
+    expect(mockCreateAuth).toHaveBeenCalledWith(bindings.db, {
+      ...bindings,
+      BETTER_AUTH_URL: "http://localhost",
+    });
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
@@ -50,6 +54,10 @@ describe("auth routes", () => {
 
     expect(response.status).toBe(200);
     expect(mockCreateAuth).toHaveBeenCalledTimes(1);
+    expect(mockCreateAuth).toHaveBeenCalledWith(bindings.db, {
+      ...bindings,
+      BETTER_AUTH_URL: "http://localhost",
+    });
     expect(handler).toHaveBeenCalledTimes(1);
   });
 });

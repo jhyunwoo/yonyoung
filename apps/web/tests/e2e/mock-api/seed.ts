@@ -1,0 +1,401 @@
+import { DEFAULT_SITE_SETTINGS } from "@yonyoung/contracts";
+import type { ApiAuditActor } from "@yonyoung/contracts";
+import type { MockRole, MockState } from "./contracts";
+
+const now = Date.now();
+
+const actor = (
+  id: string,
+  name: string,
+  role: string | null,
+  familyName: string | null = null,
+  givenName: string | null = null,
+): ApiAuditActor => ({ id, name, familyName, givenName, role });
+
+const users = [
+  {
+    id: "user-president",
+    name: "김회장",
+    email: "president@yonyoung.test",
+    image: "https://images.mock.local/users/president.jpg",
+    showcaseImageUrls: ["https://images.mock.local/showcase/president-1.jpg"],
+    familyName: "김",
+    givenName: "회장",
+    college: "문과대학",
+    department: "국어국문학과",
+    studentNumber: "2019000001",
+    phoneNumber: "010-1111-1111",
+    collaborationAvailable: true,
+    personalLink: "https://instagram.com/president",
+    role: "president",
+    generationId: "gen-59",
+    generationIds: ["gen-59", "gen-58"],
+    createdAt: now - 1000 * 60 * 60 * 24 * 500,
+    updatedAt: now - 1000 * 60 * 60 * 24,
+    updatedBy: null,
+  },
+  {
+    id: "user-vice",
+    name: "이부회장",
+    email: "vice@yonyoung.test",
+    image: "https://images.mock.local/users/vice.jpg",
+    showcaseImageUrls: ["https://images.mock.local/showcase/vice-1.jpg"],
+    familyName: "이",
+    givenName: "부회장",
+    college: "공과대학",
+    department: "전기전자공학과",
+    studentNumber: "2020000002",
+    phoneNumber: "010-2222-2222",
+    collaborationAvailable: true,
+    personalLink: "https://instagram.com/vice",
+    role: "vice_president",
+    generationId: "gen-59",
+    generationIds: ["gen-59"],
+    createdAt: now - 1000 * 60 * 60 * 24 * 400,
+    updatedAt: now - 1000 * 60 * 60 * 24,
+    updatedBy: null,
+  },
+  {
+    id: "user-manager",
+    name: "박부장",
+    email: "manager@yonyoung.test",
+    image: "https://images.mock.local/users/manager.jpg",
+    showcaseImageUrls: ["https://images.mock.local/showcase/manager-1.jpg"],
+    familyName: "박",
+    givenName: "부장",
+    college: "사회과학대학",
+    department: "정치외교학과",
+    studentNumber: "2021000003",
+    phoneNumber: "010-3333-3333",
+    collaborationAvailable: true,
+    personalLink: "https://instagram.com/manager",
+    role: "manager",
+    generationId: "gen-59",
+    generationIds: ["gen-59"],
+    createdAt: now - 1000 * 60 * 60 * 24 * 350,
+    updatedAt: now - 1000 * 60 * 60 * 24,
+    updatedBy: null,
+  },
+  {
+    id: "user-member",
+    name: "최부원",
+    email: "member@yonyoung.test",
+    image: "https://images.mock.local/users/member.jpg",
+    showcaseImageUrls: ["https://images.mock.local/showcase/member-1.jpg"],
+    familyName: "최",
+    givenName: "부원",
+    college: "공과대학",
+    department: "컴퓨터과학과",
+    studentNumber: "2022000004",
+    phoneNumber: "010-4444-4444",
+    collaborationAvailable: true,
+    personalLink: "https://instagram.com/member",
+    role: "regular_member",
+    generationId: "gen-59",
+    generationIds: ["gen-59"],
+    createdAt: now - 1000 * 60 * 60 * 24 * 200,
+    updatedAt: now - 1000 * 60 * 60 * 24,
+    updatedBy: null,
+  },
+  {
+    id: "user-unverified",
+    name: "신규회원",
+    // 공백 없는 긴 이메일 — 좁은 화면에서 카드/상세를 밀어내지 않는지 검증하는 값이다.
+    email: "unverified.extremely.long.mailbox.name.for.overflow@department.yonyoung.test",
+    image: null,
+    showcaseImageUrls: [],
+    familyName: "신",
+    givenName: "규회원",
+    college: "공과대학",
+    department: "산업공학과",
+    studentNumber: "2023000005",
+    phoneNumber: "010-5555-5555",
+    collaborationAvailable: false,
+    personalLink: null,
+    role: "unverified",
+    generationId: "gen-59",
+    generationIds: ["gen-59"],
+    createdAt: now - 1000 * 60 * 60 * 24 * 20,
+    updatedAt: now - 1000 * 60 * 60 * 24,
+    updatedBy: null,
+  },
+] as const;
+
+const generations = [
+  {
+    id: "gen-58",
+    name: "58기",
+    sortOrder: 58,
+    startDate: new Date("2023-03-01").getTime(),
+    endDate: new Date("2024-02-29").getTime(),
+    createdAt: now - 1000 * 60 * 60 * 24 * 700,
+    updatedAt: now - 1000 * 60 * 60 * 24,
+    updatedBy: actor("user-president", "김회장", "president", "김", "회장"),
+  },
+  {
+    id: "gen-59",
+    name: "59기",
+    sortOrder: 59,
+    startDate: new Date("2024-03-01").getTime(),
+    endDate: new Date("2025-02-28").getTime(),
+    createdAt: now - 1000 * 60 * 60 * 24 * 300,
+    updatedAt: now - 1000 * 60 * 60 * 24,
+    updatedBy: actor("user-president", "김회장", "president", "김", "회장"),
+  },
+];
+
+const activities = [
+  {
+    id: "act-1",
+    title: "교내 출사",
+    description: "<p>봄 학기 교내 출사 활동입니다.</p>",
+    startDate: new Date("2025-03-10").getTime(),
+    endDate: new Date("2025-03-10").getTime(),
+    coverImageUrl: "https://images.mock.local/activities/act-1-cover.jpg",
+    generationId: "gen-59",
+    createdAt: now - 1000 * 60 * 60 * 48,
+    updatedAt: now - 1000 * 60 * 60 * 24,
+    updatedBy: actor("user-manager", "박부장", "manager", "박", "부장"),
+    // justified rows 검증용 구성: 가로 3장(데스크탑 첫 행) + 세로 2장 + 레거시 1장
+    detailImages: [
+      {
+        id: "act-1-img-1",
+        activityId: "act-1",
+        imageUrl: "https://images.mock.local/activities/act-1-1.jpg",
+        sortOrder: 0,
+        // 가로 3:2 — 데스크탑 한 행에 3장이 들어가는 기준 비율
+        width: 3000,
+        height: 2000,
+        createdAt: now - 1000 * 60 * 60 * 48,
+        updatedAt: now - 1000 * 60 * 60 * 48,
+      },
+      {
+        id: "act-1-img-2",
+        activityId: "act-1",
+        imageUrl: "https://images.mock.local/activities/act-1-2.jpg",
+        sortOrder: 1,
+        width: 3000,
+        height: 2000,
+        createdAt: now - 1000 * 60 * 60 * 48,
+        updatedAt: now - 1000 * 60 * 60 * 48,
+      },
+      {
+        id: "act-1-img-3",
+        activityId: "act-1",
+        imageUrl: "https://images.mock.local/activities/act-1-3.jpg",
+        sortOrder: 2,
+        // 가로 4:3 — 비율이 섞여도 행 높이가 통일되는지 검증
+        width: 1600,
+        height: 1200,
+        createdAt: now - 1000 * 60 * 60 * 48,
+        updatedAt: now - 1000 * 60 * 60 * 48,
+      },
+      {
+        id: "act-1-img-4",
+        activityId: "act-1",
+        imageUrl: "https://images.mock.local/activities/act-1-4.jpg",
+        sortOrder: 3,
+        // 세로 2:3
+        width: 2000,
+        height: 3000,
+        createdAt: now - 1000 * 60 * 60 * 48,
+        updatedAt: now - 1000 * 60 * 60 * 48,
+      },
+      {
+        id: "act-1-img-5",
+        activityId: "act-1",
+        imageUrl: "https://images.mock.local/activities/act-1-5.jpg",
+        sortOrder: 4,
+        width: 2000,
+        height: 3000,
+        createdAt: now - 1000 * 60 * 60 * 48,
+        updatedAt: now - 1000 * 60 * 60 * 48,
+      },
+      {
+        id: "act-1-img-6",
+        activityId: "act-1",
+        imageUrl: "https://images.mock.local/activities/act-1-6.jpg",
+        sortOrder: 5,
+        // 레거시 이미지 (치수 미저장) — 폴백 비율 분기 검증용
+        width: null,
+        height: null,
+        createdAt: now - 1000 * 60 * 60 * 48,
+        updatedAt: now - 1000 * 60 * 60 * 48,
+      },
+    ],
+  },
+  {
+    id: "act-2",
+    title: "연고전 보도",
+    description: "<p>연고전 보도 사진 촬영.</p>",
+    startDate: new Date("2025-10-01").getTime(),
+    endDate: new Date("2025-10-03").getTime(),
+    coverImageUrl: "https://images.mock.local/activities/act-2-cover.jpg",
+    generationId: "gen-58",
+    createdAt: now - 1000 * 60 * 60 * 72,
+    updatedAt: now - 1000 * 60 * 60 * 48,
+    updatedBy: actor("user-manager", "박부장", "manager", "박", "부장"),
+    detailImages: [],
+  },
+];
+
+const exhibitions = [
+  {
+    id: "exh-1",
+    title: "정기 사진전",
+    startDate: new Date("2025-08-10").getTime(),
+    endDate: new Date("2025-08-16").getTime(),
+    generationId: "gen-59",
+    place: "연세대학교 학생회관",
+    coverImageUrl: "https://images.mock.local/exhibitions/exh-1-cover.jpg",
+    description: "<p>59기 정기 사진전입니다.</p>",
+    createdAt: now - 1000 * 60 * 60 * 96,
+    updatedAt: now - 1000 * 60 * 60 * 48,
+    updatedBy: actor("user-vice", "이부회장", "vice_president", "이", "부회장"),
+    detailImages: [
+      {
+        id: "exh-1-img-1",
+        exhibitionId: "exh-1",
+        imageUrl: "https://images.mock.local/exhibitions/exh-1-1.jpg",
+        sortOrder: 0,
+        // 세로 사진 (치수 저장됨) — 원본 비율로 렌더링하는 분기 검증용
+        width: 1200,
+        height: 1800,
+        createdAt: now - 1000 * 60 * 60 * 96,
+        updatedAt: now - 1000 * 60 * 60 * 96,
+      },
+    ],
+  },
+];
+
+const linktrees = [
+  {
+    id: "linktree-1",
+    name: "공식 채널",
+    createdAt: now - 1000 * 60 * 60 * 100,
+    updatedAt: now - 1000 * 60 * 60 * 20,
+    updatedBy: actor("user-manager", "박부장", "manager", "박", "부장"),
+    items: [
+      {
+        id: "linktree-item-1",
+        linktreeId: "linktree-1",
+        name: "Instagram",
+        link: "https://instagram.com/yonyongpage",
+        createdAt: now - 1000 * 60 * 60 * 100,
+        updatedAt: now - 1000 * 60 * 60 * 20,
+        updatedBy: actor("user-manager", "박부장", "manager", "박", "부장"),
+      },
+      // 공백 없는 아주 긴 이름/주소 — 모바일 가로 깨짐 회귀를 잡기 위한 값이다.
+      {
+        id: "linktree-item-long",
+        linktreeId: "linktree-1",
+        name: "AbnormallyLongLinkTitleWithoutAnySpacesToStressTestTruncation",
+        link: "https://example.com/very/long/path/segment/that/never/breaks/because-it-has-no-spaces-at-all?utm_source=yonyoung&utm_medium=dashboard&utm_campaign=overflow-regression-check",
+        createdAt: now - 1000 * 60 * 60 * 99,
+        updatedAt: now - 1000 * 60 * 60 * 19,
+        updatedBy: actor("user-manager", "박부장", "manager", "박", "부장"),
+      },
+    ],
+  },
+];
+
+// 후원 페이지 자료(파일 1건 + 링크 1건) + 활동 자료 1건 (다운로드/링크 렌더링 e2e 검증용)
+const attachments = [
+  {
+    id: "attach-1",
+    scope: "site_donate" as const,
+    resourceId: null,
+    title: "2026년 상반기 회계 내역",
+    fileUrl:
+      "https://images.mock.local/api/public/media/site/user-president/file/9b2143ea-1111-4222-8333-444455556666-report.pdf?sig=mock",
+    fileName: "2026-상반기-회계내역.pdf",
+    fileSize: 1048576,
+    mimeType: "application/pdf",
+    linkUrl: null,
+    sortOrder: 0,
+    createdAt: now - 1000 * 60 * 60 * 24,
+    updatedAt: now - 1000 * 60 * 60 * 24,
+  },
+  {
+    id: "attach-2",
+    scope: "activity" as const,
+    resourceId: "act-1",
+    title: "월간연영회 2026년 3월호",
+    fileUrl:
+      "https://images.mock.local/api/public/media/activities/user-manager/file/9b2143ea-1111-4222-8333-444455556667-monthly.pdf?sig=mock",
+    fileName: "월간연영회-2026-03.pdf",
+    fileSize: 2097152,
+    mimeType: "application/pdf",
+    linkUrl: null,
+    sortOrder: 0,
+    createdAt: now - 1000 * 60 * 60 * 12,
+    updatedAt: now - 1000 * 60 * 60 * 12,
+  },
+  {
+    id: "attach-3",
+    scope: "site_donate" as const,
+    resourceId: null,
+    title: "2026년 회계 구글 시트",
+    fileUrl: null,
+    fileName: null,
+    fileSize: null,
+    mimeType: null,
+    linkUrl: "https://docs.google.com/spreadsheets/d/mock-sheet-id",
+    sortOrder: 1,
+    createdAt: now - 1000 * 60 * 60 * 6,
+    updatedAt: now - 1000 * 60 * 60 * 6,
+  },
+];
+
+const recruitingPlan = {
+  year: 2026,
+  title: "2026 상반기 연영회 모집",
+  content: "<p>모집 일정 안내</p>",
+  promotionImageUrls: ["https://images.mock.local/recruiting/banner.jpg"],
+  recruitmentStartAt: new Date("2026-03-01").getTime(),
+  recruitmentEndAt: new Date("2026-03-20").getTime(),
+  createdAt: now - 1000 * 60 * 60 * 24 * 7,
+  updatedAt: now - 1000 * 60 * 60 * 24,
+};
+
+const auditLogs = [
+  {
+    id: "audit-1",
+    resourceType: "activity",
+    resourceId: "act-1",
+    action: "create",
+    actor: actor("user-manager", "박부장", "manager", "박", "부장"),
+    changedFields: ["title", "description"],
+    createdAt: now - 1000 * 60 * 60 * 12,
+  },
+];
+
+export const defaultRoleUserId: Record<Exclude<MockRole, "guest">, string> = {
+  president: "user-president",
+  vice_president: "user-vice",
+  manager: "user-manager",
+  member: "user-member",
+  unverified: "user-unverified",
+};
+
+export const createMockState = (): MockState => ({
+  users: users.map((user) => ({ ...user })),
+  generations: generations.map((generation) => ({ ...generation })),
+  activities: activities.map((activity) => ({
+    ...activity,
+    detailImages: activity.detailImages.map((image) => ({ ...image })),
+  })),
+  attachments: attachments.map((attachment) => ({ ...attachment })),
+  exhibitions: exhibitions.map((exhibition) => ({
+    ...exhibition,
+    detailImages: exhibition.detailImages.map((image) => ({ ...image })),
+  })),
+  linktrees: linktrees.map((linktree) => ({
+    ...linktree,
+    items: linktree.items.map((item) => ({ ...item })),
+  })),
+  recruitingPlan: { ...recruitingPlan },
+  siteSettings: { ...DEFAULT_SITE_SETTINGS },
+  uploads: {},
+  auditLogs: auditLogs.map((log) => ({ ...log, changedFields: [...log.changedFields] })),
+});

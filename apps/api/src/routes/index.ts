@@ -1,19 +1,19 @@
 import { OpenAPIHono, type OpenAPIHonoOptions } from "@hono/zod-openapi";
-import { registerActivityRoutes } from "../modules/activities";
-import { registerAuditRoutes } from "../modules/audit";
-import { registerAuthRoutes } from "../modules/auth";
-import { registerDashboardRoutes } from "../modules/dashboard";
-import { registerDocsRoutes } from "../modules/docs";
-import { registerExhibitionRoutes } from "../modules/exhibitions";
-import { registerGenerationRoutes } from "../modules/generations";
-import { registerLinktreeRoutes } from "../modules/linktree";
-import { registerMarketRoutes } from "../modules/market";
-import { registerNoticeRoutes } from "../modules/notices";
-import { registerPublicRoutes } from "../modules/public";
-import { registerRecruitingPlanRoutes } from "../modules/recruiting-plan";
-import { registerSiteSettingsRoutes } from "../modules/site-settings";
-import { registerUploadRoutes } from "../modules/uploads";
-import { registerUserRoutes } from "../modules/users";
+import { registerActivityRoutes } from "../features/activities/activity.routes";
+import { registerAttachmentRoutes } from "../features/attachments/attachment.routes";
+import { registerAuditRoutes } from "../features/audit/audit.routes";
+import { registerAuthRoutes } from "../features/auth/auth.routes";
+import { registerDashboardRoutes } from "../features/dashboard/dashboard.routes";
+import { registerDocsRoutes } from "../app/docs/docs.routes";
+import { registerExhibitionRoutes } from "../features/exhibitions/exhibition.routes";
+import { registerGenerationRoutes } from "../features/generations/generation.routes";
+import { registerLinktreeRoutes } from "../features/linktree/linktree.routes";
+import { registerPageViewRoutes } from "../features/page-views/page-view.routes";
+import { registerPublicRoutes } from "../features/public/public.routes";
+import { registerRecruitingPlanRoutes } from "../features/recruiting-plan/recruiting-plan.routes";
+import { registerSiteSettingsRoutes } from "../features/site-settings/site-settings.routes";
+import { registerUploadRoutes } from "../features/uploads/upload.routes";
+import { registerUserRoutes } from "../features/users/user.routes";
 import type { AppDependencies } from "../lib/services/dependencies";
 import type HonoAppType from "../types/honoAppType";
 
@@ -50,13 +50,12 @@ export const mountDomainRouters = (
     app,
     createDomainRouter((router) => {
       registerGenerationRoutes(router, dependencies);
-      registerNoticeRoutes(router, dependencies);
-      registerMarketRoutes(router, dependencies);
       registerActivityRoutes(router, dependencies);
       registerExhibitionRoutes(router, dependencies);
       registerLinktreeRoutes(router, dependencies);
       registerUserRoutes(router, dependencies);
       registerSiteSettingsRoutes(router, dependencies);
+      registerAttachmentRoutes(router, dependencies);
       registerRecruitingPlanRoutes(router, dependencies);
       registerDashboardRoutes(router, dependencies);
       registerAuditRoutes(router, dependencies);
@@ -68,6 +67,7 @@ export const mountDomainRouters = (
     createDomainRouter((router) => {
       registerUploadRoutes(router, dependencies);
       registerPublicRoutes(router, dependencies);
+      registerPageViewRoutes(router, dependencies);
     }, defaultHook),
   );
 

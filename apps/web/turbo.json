@@ -1,0 +1,78 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "env": [
+        "API_BASE_URL",
+        "NEXT_PUBLIC_IMAGE_CDN_BASE_URL",
+        "NEXT_PUBLIC_SITE_URL",
+        "NODE_ENV"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env",
+        ".env.*",
+        "next.config.ts",
+        "postcss.config.mjs",
+        "tsconfig.json"
+      ],
+      "outputs": [".next/**", "!.next/cache/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "typecheck": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "next.config.ts",
+        "tsconfig.json",
+        "tsconfig.typecheck.json"
+      ],
+      "outputs": [".next/types/**"]
+    },
+    "test:unit": {
+      "env": ["API_BASE_URL", "NEXT_PUBLIC_SITE_URL", "NODE_ENV"],
+      "inputs": ["$TURBO_DEFAULT$", "vitest.config.ts", "tests/setup/**"],
+      "outputs": []
+    },
+    "test:coverage": {
+      "env": ["API_BASE_URL", "NEXT_PUBLIC_SITE_URL", "NODE_ENV"],
+      "inputs": ["$TURBO_DEFAULT$", "vitest.config.ts", "tests/setup/**"],
+      "outputs": ["coverage/**"]
+    },
+    "test:e2e": {
+      "cache": false,
+      "env": [
+        "API_BASE_URL",
+        "CI",
+        "MOCK_API_PORT",
+        "NEXT_PUBLIC_IMAGE_CDN_BASE_URL",
+        "NEXT_PUBLIC_SITE_URL",
+        "NODE_ENV"
+      ]
+    },
+    "test:e2e:full": {
+      "cache": false,
+      "env": [
+        "API_BASE_URL",
+        "CI",
+        "MOCK_API_PORT",
+        "NEXT_PUBLIC_IMAGE_CDN_BASE_URL",
+        "NEXT_PUBLIC_SITE_URL",
+        "NODE_ENV"
+      ]
+    },
+    "test:e2e:full:repeat": {
+      "cache": false,
+      "env": [
+        "API_BASE_URL",
+        "CI",
+        "MOCK_API_PORT",
+        "NEXT_PUBLIC_IMAGE_CDN_BASE_URL",
+        "NEXT_PUBLIC_SITE_URL",
+        "NODE_ENV"
+      ]
+    }
+  }
+}

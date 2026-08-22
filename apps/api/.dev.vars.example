@@ -1,0 +1,12 @@
+# Copy to apps/api/.dev.vars for local Wrangler development.
+# Values below are placeholders; never commit real credentials.
+BETTER_AUTH_SECRET=replace-with-at-least-32-random-characters
+BETTER_AUTH_EMAIL_AND_PASSWORD_ENABLED=false
+GOOGLE_CLIENT_ID=replace-with-google-oauth-client-id
+GOOGLE_CLIENT_SECRET=replace-with-google-oauth-client-secret
+R2_S3_ENDPOINT=https://replace-account-id.r2.cloudflarestorage.com
+R2_ACCESS_KEY_ID=replace-with-r2-access-key-id
+R2_SECRET_ACCESS_KEY=replace-with-r2-secret-access-key
+R2_PUBLIC_URL_SIGNING_SECRET=replace-with-at-least-32-random-characters
+# Keep only while rotating the public URL signing secret.
+# R2_PUBLIC_URL_SIGNING_SECRET_PREVIOUS=replace-with-previous-secret
