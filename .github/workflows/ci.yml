@@ -15,10 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  API_BASE_URL: http://127.0.0.1:4010
   CI: "true"
-  NEXT_PUBLIC_IMAGE_CDN_BASE_URL: https://storage.yonyoung.moveto.kr
-  NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3005
   TURBO_TEAM: ${{ vars.TURBO_TEAM }}
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
 
@@ -53,7 +50,7 @@ jobs:
         id: affected
         run: |
           pnpm turbo ls --affected --output=json > "$RUNNER_TEMP/affected.json"
-          node -e 'const fs=require("node:fs");const data=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+"/affected.json","utf8"));const names=new Set(data.packages.items.map((item)=>item.name));fs.appendFileSync(process.env.GITHUB_OUTPUT,`web=${names.has("@yonyoung/web")}\n`);'
+          node -e 'const fs=require("node:fs");const raw=fs.readFileSync(process.env.RUNNER_TEMP+"/affected.json","utf8");const start=raw.indexOf("{");if(start<0)throw new Error("Turbo affected JSON was not found");const data=JSON.parse(raw.slice(start));const names=new Set(data.packages.items.map((item)=>item.name));fs.appendFileSync(process.env.GITHUB_OUTPUT,`web=${names.has("@yonyoung/web")}\n`);'
 
       - name: Check root formatting
         run: pnpm exec prettier --check . --ignore-unknown
@@ -64,13 +61,20 @@ jobs:
       - name: Check vendored fonts when web is affected
         run: pnpm turbo run fonts:check --affected
 
-      - name: Affected checks with deterministic Web build API
-        if: ${{ steps.affected.outputs.web == 'true' }}
-        run: node tooling/run-with-web-mock-api.mjs pnpm turbo run format:check lint typecheck test:coverage build --affected
+      - name: Run affected quality checks
+        run: pnpm turbo run format:check lint typecheck test:coverage --affected
 
-      - name: Affected checks without Web
+      - name: Build affected packages with deterministic Web API
+        if: ${{ steps.affected.outputs.web == 'true' }}
+        env:
+          API_BASE_URL: http://127.0.0.1:4010
+          NEXT_PUBLIC_IMAGE_CDN_BASE_URL: https://storage.yonyoung.moveto.kr
+          NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3005
+        run: node tooling/run-with-web-mock-api.mjs pnpm turbo run build --affected
+
+      - name: Build affected packages without Web
         if: ${{ steps.affected.outputs.web != 'true' }}
-        run: pnpm turbo run format:check lint typecheck test:coverage build --affected
+        run: pnpm turbo run build --affected
 
       - name: Upload coverage reports
         if: ${{ !cancelled() }}
@@ -123,6 +127,10 @@ jobs:
 
       - name: Run E2E tests (mock API + production build)
         if: ${{ needs.quality-gates.outputs.web-affected == 'true' }}
+        env:
+          API_BASE_URL: http://127.0.0.1:4010
+          NEXT_PUBLIC_IMAGE_CDN_BASE_URL: https://storage.yonyoung.moveto.kr
+          NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3005
         run: pnpm --filter @yonyoung/web test:e2e:full
 
       - name: Upload E2E failure artifacts

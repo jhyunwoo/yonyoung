@@ -7,8 +7,10 @@ returns a status and uses Turbo affected execution for formatting, lint,
 typecheck, coverage, and builds. Font drift runs only when the web package is in
 the affected graph. The E2E job remains present but avoids browser installation
 when web is unaffected; failures upload `apps/web/test-results/playwright`.
-The quality build owns a short-lived Web mock API, so Next static generation is
-deterministic and does not depend on a production or staging API origin.
+Quality checks run without production-build environment overrides. The build
+step alone owns a short-lived Web mock API and its task-scoped URL variables, so
+Next static generation is deterministic without changing unit-test origin/CSRF
+semantics or depending on a production or staging API origin.
 
 `API Runtime CI` keeps Cloudflare binding drift, Workers-runtime tests,
 integration tests, production Wrangler dry-run, and the production dependency

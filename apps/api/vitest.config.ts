@@ -24,6 +24,8 @@ export default defineConfig({
         "src/platform/db/data-service-composition.ts",
         // Compile-time producer/consumer assertions; executed by `pnpm typecheck` only.
         "src/tests/contract-compatibility.types.ts",
+        // Test harness infrastructure; it only removes generated Wrangler output.
+        "scripts/clean-generated-dry-run.mjs",
       ],
       thresholds: {
         lines: 80,

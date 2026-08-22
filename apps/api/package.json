@@ -20,13 +20,14 @@
     "db:studio": "drizzle-kit studio",
     "backfill:image-dimensions": "node scripts/backfill-image-dimensions.mjs",
     "check-types": "pnpm run typecheck",
+    "clean:dry-run": "node scripts/clean-generated-dry-run.mjs",
     "test:node": "vitest run",
     "test:workers": "vitest run -c vitest.workers.config.ts",
     "test:unit": "vitest run",
     "test": "pnpm run test:node && pnpm run test:workers",
     "test:integration": "vitest run -c vitest.integration.config.ts",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "pnpm run clean:dry-run && vitest run --coverage",
     "security:audit": "node ../../tooling/audit-api-production.mjs"
   },
   "dependencies": {
