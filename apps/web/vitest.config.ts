@@ -1,37 +1,49 @@
+import path from "node:path";
 import { defineConfig } from "vitest/config";
 
-export default defineConfig({
+const vitestInlineConfig = {
   test: {
     environment: "jsdom",
-    setupFiles: ["./src/test/setup.ts"],
-    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    testTimeout: 10_000,
+    environmentMatchGlobs: [
+      ["tests/unit/**/*.test.tsx", "node"],
+      ["tests/unit/**/*.test.ts", "node"],
+      ["features/**/*.test.ts", "node"],
+    ],
+    include: ["**/*.test.ts", "**/*.test.tsx"],
+    setupFiles: ["tests/setup/vitest.setup.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
+      reportsDirectory: "coverage",
       include: [
-        "src/lib/admin-api/http.ts",
-        "src/lib/admin-api/resources.ts",
-        "src/lib/admin-api/upload.ts",
-        "src/lib/audit-display.ts",
-        "src/lib/auth-shared.ts",
-        "src/lib/date-formatters.ts",
-        "src/lib/image-upload-state.ts",
-        "src/lib/image-utils.ts",
-        "src/lib/member-display-name.ts",
-        "src/lib/member-role-label.ts",
-        "src/lib/opengraph-image.ts",
-        "src/lib/public-exhibition.ts",
-        "src/lib/rich-text-content.tsx",
-        "src/lib/rich-text.ts",
-        "src/lib/seo.ts",
-        "src/lib/use-image-upload-state.ts",
+        "shared/http/http.ts",
+        "server/http/fetch-with-timeout.ts",
+        "server/http/hono-client.ts",
+        "shared/contracts/auth-profile.ts",
+        "shared/contracts/auth-roles.ts",
+        "shared/utils/date-formatters.ts",
+        "features/media/rich-text/rich-text.ts",
+        "features/media/images/read-image-dimensions.ts",
+        "features/media/upload/image-upload-state.ts",
+        "features/auth/model/auth-shared.ts",
+        "features/dashboard/actions/admin-write-access.ts",
       ],
       thresholds: {
-        lines: 85,
-        functions: 85,
-        statements: 85,
-        branches: 80,
+        lines: 95,
+        branches: 90,
+        functions: 95,
+        statements: 95,
       },
     },
   },
-});
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "."),
+      "next/cache": path.resolve(__dirname, "tests/unit/stubs/next-cache.ts"),
+      "server-only": path.resolve(__dirname, "tests/unit/stubs/server-only.ts"),
+    },
+  },
+} as const;
+
+export default defineConfig(vitestInlineConfig as never);
