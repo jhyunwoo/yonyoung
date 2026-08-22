@@ -1,4 +1,4 @@
-import { CORE_ROLE_VALUES, type CoreRole } from "@/shared/contracts/auth-roles";
+import { CORE_ROLE_VALUES, type CoreRole } from "@yonyoung/contracts/auth-roles";
 import { buildMemberRoleLabel } from "@/features/dashboard/members/member-role-label";
 
 export type MemberRoleValue = CoreRole;

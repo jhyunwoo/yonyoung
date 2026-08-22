@@ -29,7 +29,7 @@ import {
   buildDashboardViewerProfile,
   toEditableUserProfile,
 } from "@/features/dashboard/members/user-profile";
-import type { ApiUser } from "@/shared/contracts/api-contracts";
+import type { ApiUser } from "@yonyoung/contracts";
 
 describe("features/dashboard/members", () => {
   it("builds display names and initials", () => {

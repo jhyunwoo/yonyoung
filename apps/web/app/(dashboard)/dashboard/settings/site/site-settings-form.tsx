@@ -1,6 +1,6 @@
 "use client";
 
-import { DEFAULT_SITE_SETTINGS } from "@/shared/contracts/api-contracts";
+import { DEFAULT_SITE_SETTINGS } from "@yonyoung/contracts";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
@@ -8,8 +8,8 @@ import { AdminApiError } from "@/shared/http/http";
 import {
   type ApiSiteSettings,
   type ApiUpdateSiteSettingsInput,
-} from "@/shared/contracts/api-contracts";
-import { apiUpdateSiteSettingsInputSchema } from "@/shared/contracts/api-schemas";
+} from "@yonyoung/contracts";
+import { apiUpdateSiteSettingsInputSchema } from "@yonyoung/contracts/schemas";
 import { Skeleton } from "@/components/ui/skeleton";
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { ApiGenerationMemberSummary } from "@/shared/contracts/api-contracts";
+import type { ApiGenerationMemberSummary } from "@yonyoung/contracts";
 import { AdminApiError } from "@/shared/http/http";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import {

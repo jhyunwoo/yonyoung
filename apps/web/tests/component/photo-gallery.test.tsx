@@ -76,8 +76,8 @@ describe("PhotoGallery 레이아웃", () => {
   it("사진을 입력 순서 그대로(가로 우선) 배치한다", () => {
     renderGallery();
 
-    const tileAlts = getTiles().map(
-      (tile) => tile.querySelector("img")?.getAttribute("alt"),
+    const tileAlts = getTiles().map((tile) =>
+      tile.querySelector("img")?.getAttribute("alt"),
     );
     expect(tileAlts).toEqual(["가로 사진", "레거시 사진"]);
   });
@@ -115,10 +115,9 @@ describe("PhotoGallery 라이트박스", () => {
 
     expect(screen.getByTestId("gallery-lightbox")).toBeInTheDocument();
     expect(screen.getByTestId("gallery-lightbox-counter")).toHaveTextContent("1 / 2");
-    expect(screen.getByTestId("gallery-lightbox-frame").querySelector("img")).toHaveAttribute(
-      "alt",
-      "가로 사진",
-    );
+    expect(
+      screen.getByTestId("gallery-lightbox-frame").querySelector("img"),
+    ).toHaveAttribute("alt", "가로 사진");
   });
 
   it("좌우 버튼으로 순환 이동한다", async () => {
@@ -247,9 +246,27 @@ describe("PhotoGallery 라이트박스", () => {
 
 describe("PhotoGallery 확대 이미지 미리 로딩", () => {
   const makeThreeItems = (): PhotoGalleryItem[] => [
-    { key: "a", imageUrl: "https://images.mock.local/a.jpg", alt: "A", width: 1600, height: 1200 },
-    { key: "b", imageUrl: "https://images.mock.local/b.jpg", alt: "B", width: 1600, height: 1200 },
-    { key: "c", imageUrl: "https://images.mock.local/c.jpg", alt: "C", width: 1600, height: 1200 },
+    {
+      key: "a",
+      imageUrl: "https://images.mock.local/a.jpg",
+      alt: "A",
+      width: 1600,
+      height: 1200,
+    },
+    {
+      key: "b",
+      imageUrl: "https://images.mock.local/b.jpg",
+      alt: "B",
+      width: 1600,
+      height: 1200,
+    },
+    {
+      key: "c",
+      imageUrl: "https://images.mock.local/c.jpg",
+      alt: "C",
+      width: 1600,
+      height: 1200,
+    },
   ];
 
   it("라이트박스를 열면 앞뒤 사진만 미리 받아둔다", async () => {

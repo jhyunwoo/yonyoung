@@ -1,7 +1,7 @@
 "use client";
 
 import { useResetOnChange } from "@/shared/react/use-reset-on-change";
-import type { ApiPublicGenerationWithMembers } from "@/shared/contracts/api-contracts";
+import type { ApiPublicGenerationWithMembers } from "@yonyoung/contracts";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";

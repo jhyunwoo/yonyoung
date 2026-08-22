@@ -1,4 +1,4 @@
-import type { CoreRole } from "../../shared/auth/roles";
+import type { CoreRole } from "@yonyoung/contracts/auth-roles";
 
 export type Role = CoreRole;
 

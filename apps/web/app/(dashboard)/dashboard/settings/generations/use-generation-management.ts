@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import type { ApiGeneration, ApiUser } from "@/shared/contracts/api-contracts";
+import type { ApiGeneration, ApiUser } from "@yonyoung/contracts";
 import { AdminApiError } from "@/shared/http/http";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { useConfirm } from "@/app/(dashboard)/_components/ui/confirm-provider";

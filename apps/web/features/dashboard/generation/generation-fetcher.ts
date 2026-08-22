@@ -1,7 +1,7 @@
 import { resolveApiBaseUrl } from "@/shared/http/http";
 import { cacheTag } from "next/cache";
 import { CACHE_TAGS } from "@/server/cache/tags";
-import type { ApiGeneration, DataEnvelope } from "@/shared/contracts/api-contracts";
+import type { ApiGeneration, DataEnvelope } from "@yonyoung/contracts";
 
 const PUBLIC_GENERATIONS_PATH = "/api/public/generations";
 

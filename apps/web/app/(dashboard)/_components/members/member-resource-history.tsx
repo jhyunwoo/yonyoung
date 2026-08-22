@@ -11,7 +11,7 @@ import { buildDashboardGenerationPath } from "@/features/dashboard/generation/da
 import type {
   ApiUserResourceHistory,
   ApiUserResourceHistoryItem,
-} from "@/shared/contracts/api-contracts";
+} from "@yonyoung/contracts";
 import { AdminApiError } from "@/shared/http/http";
 import { formatKoreanDate } from "@/shared/utils/date-formatters";
 import { Skeleton } from "@/components/ui/skeleton";

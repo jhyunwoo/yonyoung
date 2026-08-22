@@ -15,7 +15,7 @@ import type {
   ApiSiteSettings,
   ApiUser,
   ApiUserResourceHistory,
-} from "@/shared/contracts/api-contracts";
+} from "@yonyoung/contracts";
 import { adminRequest } from "@/features/dashboard/api/admin-api/http";
 import { bindAdminWriteAction } from "@/features/dashboard/api/admin-api/action-results";
 import {

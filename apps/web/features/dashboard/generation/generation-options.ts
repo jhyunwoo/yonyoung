@@ -1,4 +1,4 @@
-import type { ApiGeneration } from "@/shared/contracts/api-contracts";
+import type { ApiGeneration } from "@yonyoung/contracts";
 import { getAccessibleGenerations } from "@/features/dashboard/generation/generation-access";
 import { fetchGenerationsFromServer } from "@/features/dashboard/generation/generation-fetcher";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";

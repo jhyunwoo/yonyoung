@@ -6,7 +6,7 @@ import {
   EXAMPLE_PARENT_ID,
   EXAMPLE_USER_ID,
 } from "../../shared/openapi/field-builders";
-import { API_ERROR_CODES } from "../../shared/api-contracts";
+import { API_ERROR_CODES } from "@yonyoung/contracts";
 
 const ApiErrorCodeSchema = z.enum(API_ERROR_CODES).openapi("ApiErrorCode");
 

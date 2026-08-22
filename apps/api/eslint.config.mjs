@@ -1,6 +1,8 @@
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
 
+import { workerArchitectureRules } from "@yonyoung/eslint-config/worker";
+
 export default tseslint.config(
   {
     ignores: [
@@ -12,6 +14,10 @@ export default tseslint.config(
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
+  {
+    files: ["src/**/*.ts", "tests/**/*.ts"],
+    rules: workerArchitectureRules,
+  },
   {
     languageOptions: {
       parserOptions: {

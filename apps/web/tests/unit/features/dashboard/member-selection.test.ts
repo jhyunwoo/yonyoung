@@ -17,12 +17,7 @@ describe("member selection", () => {
   });
 
   it("현재 목록 전체 선택은 기존 선택을 유지하고 중복을 만들지 않는다", () => {
-    expect(addVisibleUserIds(["a", "z"], ["a", "b", "c"])).toEqual([
-      "a",
-      "z",
-      "b",
-      "c",
-    ]);
+    expect(addVisibleUserIds(["a", "z"], ["a", "b", "c"])).toEqual(["a", "z", "b", "c"]);
   });
 
   it("필터에 가려진 선택도 개수로 구분해 보고한다", () => {
@@ -42,7 +37,10 @@ describe("member selection", () => {
   });
 
   it("일괄 변경 응답은 기존 목록의 순서를 유지한 채 병합한다", () => {
-    const users = [{ id: "a", role: "member" }, { id: "b", role: "member" }];
+    const users = [
+      { id: "a", role: "member" },
+      { id: "b", role: "member" },
+    ];
     const updated = [{ id: "b", role: "manager" }];
 
     expect(mergeUpdatedUsers(users, updated)).toEqual([
@@ -53,9 +51,7 @@ describe("member selection", () => {
 
   it("응답에 없는 사용자는 그대로 둔다", () => {
     const users = [{ id: "a", role: "member" }];
-    expect(mergeUpdatedUsers(users, [{ id: "zzz", role: "manager" }])).toEqual(
-      users,
-    );
+    expect(mergeUpdatedUsers(users, [{ id: "zzz", role: "manager" }])).toEqual(users);
   });
 
   it("공백만 있는 검색어는 활성 필터로 보지 않는다", () => {

@@ -6,7 +6,7 @@ import type {
   ApiAdminUpdateUserInput,
   ApiGeneration,
   ApiUser,
-} from "@/shared/contracts/api-contracts";
+} from "@yonyoung/contracts";
 import { AdminApiError } from "@/shared/http/http";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import {

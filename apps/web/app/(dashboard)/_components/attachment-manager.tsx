@@ -6,7 +6,7 @@ import {
   ATTACHMENT_ACCEPT,
   type ApiAttachment,
   type ApiAttachmentScope,
-} from "@/shared/contracts/api-contracts";
+} from "@yonyoung/contracts";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import {
   PRESIGN_PATHS,

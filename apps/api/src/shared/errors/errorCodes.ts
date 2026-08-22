@@ -1,4 +1,4 @@
-import type { ApiErrorCode } from "../../shared/api-contracts";
+import type { ApiErrorCode } from "@yonyoung/contracts";
 
 export const ERROR_CODES = {
   BAD_REQUEST: "BAD_REQUEST",

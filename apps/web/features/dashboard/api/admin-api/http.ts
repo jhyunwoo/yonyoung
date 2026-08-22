@@ -1,4 +1,4 @@
-import type { DataEnvelope } from "@/shared/contracts/api-contracts";
+import type { DataEnvelope } from "@yonyoung/contracts";
 import {
   AdminApiError,
   clearTimeoutController,

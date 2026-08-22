@@ -9,7 +9,7 @@ import {
   apiLinktreeSchema,
   apiRecruitingPlanSchema,
   apiSiteSettingsSchema,
-} from "@/shared/contracts/api-schemas";
+} from "@yonyoung/contracts/schemas";
 
 type CapturedWriteRequest = {
   path: string;

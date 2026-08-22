@@ -3,6 +3,8 @@ import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 import tseslint from "typescript-eslint";
 
+import { nextArchitectureRules } from "@yonyoung/eslint-config/next";
+
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
@@ -12,6 +14,10 @@ const eslintConfig = defineConfig([
       "react-hooks/purity": "error",
       "react-hooks/refs": "error",
     },
+  },
+  {
+    files: ["**/*.ts", "**/*.tsx"],
+    rules: nextArchitectureRules,
   },
   // 타입 정보를 쓰는 검사. 타입 체커가 놓치는 Promise 오용과 누락된 분기를 잡는다.
   {

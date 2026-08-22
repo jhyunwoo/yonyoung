@@ -1,7 +1,7 @@
 import type {
   ApiExhibition,
   ApiUpdateExhibitionImageBatchItemInput,
-} from "@/shared/contracts/api-contracts";
+} from "@yonyoung/contracts";
 import { AdminApiError } from "@/shared/http/http";
 import {
   hasMeaningfulRichTextHtml,

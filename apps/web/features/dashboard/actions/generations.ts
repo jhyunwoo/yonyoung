@@ -10,12 +10,12 @@ import {
   apiCreateGenerationInputSchema,
   apiGenerationSchema,
   apiUpdateGenerationInputSchema,
-} from "@/shared/contracts/api-schemas";
+} from "@yonyoung/contracts/schemas";
 import type {
   ApiCreateGenerationInput,
   ApiGeneration,
   ApiUpdateGenerationInput,
-} from "@/shared/contracts/api-contracts";
+} from "@yonyoung/contracts";
 
 const GENERATION_CACHE_TAGS = [
   CACHE_TAGS.admin.generations,

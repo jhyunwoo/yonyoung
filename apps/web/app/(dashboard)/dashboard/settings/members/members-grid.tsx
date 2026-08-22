@@ -1,7 +1,7 @@
 "use client";
 
 import { useDeferredValue, useMemo, useState } from "react";
-import type { ApiGeneration, ApiUser } from "@/shared/contracts/api-contracts";
+import type { ApiGeneration, ApiUser } from "@yonyoung/contracts";
 import { AdminApiError } from "@/shared/http/http";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { type BulkMemberRoleValue } from "@/features/dashboard/members/member-role-options";

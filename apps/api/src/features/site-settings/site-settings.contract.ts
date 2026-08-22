@@ -4,7 +4,7 @@ import {
   phoneNumberField,
   urlField,
 } from "../../shared/openapi/field-builders";
-import { DEFAULT_SITE_SETTINGS } from "../../shared/api-contracts";
+import { DEFAULT_SITE_SETTINGS } from "@yonyoung/contracts";
 
 const ApiInstagramIdFieldSchema = z
   .string()

@@ -1,38 +1,11 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
-  "ui": "tui",
+  "globalDependencies": [".nvmrc", "pnpm-workspace.yaml"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"],
-      "env": [
-        "AUTH_API_URL",
-        "NEXTJS_ENV",
-        "NEXT_PUBLIC_AUTH_API_URL",
-        "NEXT_PUBLIC_SITE_URL",
-        "NODE_ENV",
-        "REVALIDATE_SECRET"
-      ]
-    },
-    "lint": {
-      "dependsOn": ["^lint"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "env": [
-        "AUTH_API_URL",
-        "E2E_API_URL",
-        "NEXT_PUBLIC_AUTH_API_URL",
-        "NEXT_PUBLIC_SITE_URL",
-        "CSP_REPORT_ONLY",
-        "NODE_ENV",
-        "REVALIDATE_SECRET",
-        "E2E_SUITE_MODE"
-      ]
-    },
-    "check-types": {
-      "dependsOn": ["^check-types"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "cache": true
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": ["dist/**"]
     },
     "dev": {
       "cache": false,
@@ -42,150 +15,99 @@
       "cache": false,
       "persistent": true
     },
-    "deploy": {
-      "cache": true,
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [],
-      "env": [
-        "AUTH_API_URL",
-        "NEXT_PUBLIC_AUTH_API_URL",
-        "NEXT_PUBLIC_SITE_URL",
-        "NEXT_PUBLIC_VAPID_PUBLIC_KEY",
-        "CSP_REPORT_ONLY",
-        "REVALIDATE_SECRET"
-      ]
+    "lint": {
+      "dependsOn": ["^lint"],
+      "inputs": ["$TURBO_DEFAULT$"]
+    },
+    "format": {
+      "cache": false
+    },
+    "format:check": {
+      "dependsOn": ["^format:check"],
+      "inputs": ["$TURBO_DEFAULT$"]
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck"],
+      "inputs": ["$TURBO_DEFAULT$"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "test:unit": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": []
+    },
+    "test:coverage": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": ["coverage/**"]
+    },
+    "test:integration": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "test:workers": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "test:e2e": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "test:e2e:full": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "test:e2e:full:repeat": {
+      "dependsOn": ["^build"],
+      "cache": false
     },
     "cf-typegen": {
       "cache": false
     },
-    "test": {
-      "cache": true,
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [],
-      "env": [
-        "AUTH_API_URL",
-        "E2E_API_URL",
-        "NEXT_PUBLIC_AUTH_API_URL",
-        "NEXT_PUBLIC_SITE_URL",
-        "NODE_ENV",
-        "REVALIDATE_SECRET"
-      ]
+    "deploy:dry-run": {
+      "dependsOn": ["^build"],
+      "cache": false
     },
-    "test:integration": {
-      "cache": false,
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [],
-      "env": [
-        "AUTH_API_URL",
-        "BETTER_AUTH_*",
-        "E2E_API_URL",
-        "GOOGLE_CLIENT_ID",
-        "GOOGLE_CLIENT_SECRET",
-        "NEXT_PUBLIC_AUTH_API_URL",
-        "NEXT_PUBLIC_SITE_URL",
-        "NODE_ENV",
-        "R2_*",
-        "REVALIDATE_SECRET"
-      ]
-    },
-    "test:watch": {
-      "cache": false,
-      "persistent": true
-    },
-    "test:coverage": {
-      "cache": true,
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["coverage/**"],
-      "env": [
-        "AUTH_API_URL",
-        "E2E_API_URL",
-        "NEXT_PUBLIC_AUTH_API_URL",
-        "NEXT_PUBLIC_SITE_URL",
-        "NODE_ENV",
-        "REVALIDATE_SECRET"
-      ]
-    },
-    "test:unit": {
-      "cache": true,
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [],
-      "env": [
-        "AUTH_API_URL",
-        "NEXT_PUBLIC_AUTH_API_URL",
-        "NEXT_PUBLIC_SITE_URL",
-        "NODE_ENV",
-        "REVALIDATE_SECRET"
-      ]
-    },
-    "test:unit:coverage": {
-      "cache": true,
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["coverage/**"],
-      "env": [
-        "AUTH_API_URL",
-        "NEXT_PUBLIC_AUTH_API_URL",
-        "NEXT_PUBLIC_SITE_URL",
-        "NODE_ENV",
-        "REVALIDATE_SECRET"
-      ]
-    },
-    "test:e2e:smoke": {
-      "cache": true,
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [],
-      "env": [
-        "AUTH_API_URL",
-        "E2E_*",
-        "NEXT_PUBLIC_AUTH_API_URL",
-        "NEXT_PUBLIC_SITE_URL",
-        "NODE_ENV",
-        "PLAYWRIGHT_*",
-        "REVALIDATE_SECRET"
-      ]
-    },
-    "test:e2e:full": {
-      "cache": true,
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [],
-      "env": [
-        "AUTH_API_URL",
-        "E2E_*",
-        "NEXT_PUBLIC_AUTH_API_URL",
-        "NEXT_PUBLIC_SITE_URL",
-        "NODE_ENV",
-        "PLAYWRIGHT_*",
-        "REVALIDATE_SECRET"
-      ]
-    },
-    "perf:budget": {
+    "deploy": {
       "dependsOn": ["build"],
       "cache": false,
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": []
+      "passThroughEnv": ["CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_API_TOKEN"]
     },
-    "perf:lighthouse": {
+    "db:generate": {
       "cache": false,
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["artifacts/lighthouse/**"],
-      "env": ["LIGHTHOUSE_BASE_URL"]
+      "passThroughEnv": [
+        "CLOUDFLARE_ACCOUNT_ID",
+        "CLOUDFLARE_DATABASE_ID",
+        "CLOUDFLARE_D1_TOKEN"
+      ]
     },
-    "db:generation": {
+    "db:migrate:local": {
       "cache": false
     },
-    "db:migrate": {
-      "cache": false
-    },
-    "db:push": {
-      "cache": false
+    "db:migrate:remote": {
+      "cache": false,
+      "passThroughEnv": ["CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_API_TOKEN"]
     },
     "db:studio": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "passThroughEnv": [
+        "CLOUDFLARE_ACCOUNT_ID",
+        "CLOUDFLARE_DATABASE_ID",
+        "CLOUDFLARE_D1_TOKEN"
+      ]
     },
-    "quality:deadcode": {
+    "security:audit": {
       "cache": false
     },
-    "quality:deps": {
+    "fonts:check": {
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": []
+    },
+    "fonts:sync": {
       "cache": false
     }
   }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { ApiPageViewStats } from "@/shared/contracts/api-contracts";
+import type { ApiPageViewStats } from "@yonyoung/contracts";
 import PageViewChart from "@/app/(dashboard)/_components/dashboard-page-views-chart";
 import { ArrowDownIcon, ArrowUpIcon, BarChart3 } from "lucide-react";
 import { Card, CardHeader } from "@/app/(dashboard)/_components/ui/card";

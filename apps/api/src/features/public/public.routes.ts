@@ -54,7 +54,7 @@ import {
   normalizePageViewResourceId,
 } from "../../lib/views/page-view-target";
 import { isHttpUrl } from "../../lib/validation/url";
-import { DEFAULT_SITE_SETTINGS } from "../../shared/api-contracts";
+import { DEFAULT_SITE_SETTINGS } from "@yonyoung/contracts";
 import { AppError } from "../../shared/errors/AppError";
 import { readValidated } from "../../shared/http/validated-input";
 

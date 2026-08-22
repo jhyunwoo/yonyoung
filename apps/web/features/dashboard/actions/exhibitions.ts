@@ -15,7 +15,7 @@ import {
   apiUpdateExhibitionImageBatchItemInputSchema,
   apiUpdateExhibitionImageInputSchema,
   apiUpdateExhibitionInputSchema,
-} from "@/shared/contracts/api-schemas";
+} from "@yonyoung/contracts/schemas";
 import type {
   ApiCreateExhibitionImageInput,
   ApiCreateExhibitionInput,
@@ -24,7 +24,7 @@ import type {
   ApiUpdateExhibitionImageBatchItemInput,
   ApiUpdateExhibitionImageInput,
   ApiUpdateExhibitionInput,
-} from "@/shared/contracts/api-contracts";
+} from "@yonyoung/contracts";
 
 const EXHIBITION_CACHE_TAGS = [
   CACHE_TAGS.admin.exhibitions,

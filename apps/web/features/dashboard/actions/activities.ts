@@ -15,7 +15,7 @@ import {
   apiUpdateActivityImageBatchItemInputSchema,
   apiUpdateActivityImageInputSchema,
   apiUpdateActivityInputSchema,
-} from "@/shared/contracts/api-schemas";
+} from "@yonyoung/contracts/schemas";
 import type {
   ApiActivity,
   ApiActivityImage,
@@ -24,7 +24,7 @@ import type {
   ApiUpdateActivityImageBatchItemInput,
   ApiUpdateActivityImageInput,
   ApiUpdateActivityInput,
-} from "@/shared/contracts/api-contracts";
+} from "@yonyoung/contracts";
 
 const ACTIVITY_CACHE_TAGS = [
   CACHE_TAGS.admin.activities,

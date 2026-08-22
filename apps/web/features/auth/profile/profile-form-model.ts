@@ -2,8 +2,8 @@ import {
   STUDENT_NUMBER_REGEX,
   formatKoreanMobilePhoneNumber,
   isKoreanMobilePhoneNumber,
-} from "@/shared/contracts/auth-profile";
-import type { ApiMemberProfileUpdateInput } from "@/shared/contracts/api-contracts";
+} from "@yonyoung/contracts/auth-profile";
+import type { ApiMemberProfileUpdateInput } from "@yonyoung/contracts";
 
 export type ProfileFormValues = {
   familyName: string;

@@ -11,6 +11,10 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { timingSafeEqual } from "node:crypto";
 import type { AppBindings } from "../../types/honoAppType";
 import type { PresignService } from "../services/types";
+import { ALLOWED_ATTACHMENT_CONTENT_TYPES } from "@yonyoung/contracts/attachments";
+import { ALLOWED_IMAGE_CONTENT_TYPES } from "@yonyoung/contracts/uploads";
+
+export { ALLOWED_ATTACHMENT_CONTENT_TYPES, ALLOWED_IMAGE_CONTENT_TYPES };
 
 export const UPLOAD_LIMITS = {
   maxSinglePartBytes: 1024 * 1024 * 1024,
@@ -18,28 +22,6 @@ export const UPLOAD_LIMITS = {
   multipartPartSizeBytes: 8 * 1024 * 1024,
   multipartMaxParts: 10_000,
 } as const;
-
-export const ALLOWED_IMAGE_CONTENT_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-  "image/avif",
-  "image/heic",
-  "image/heif",
-] as const;
-
-export const ALLOWED_ATTACHMENT_CONTENT_TYPES = [
-  "application/pdf",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "application/vnd.ms-excel",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/x-hwp",
-  "application/haansofthwp",
-  "application/vnd.hancom.hwp",
-  "application/vnd.hancom.hwpx",
-  "application/zip",
-] as const;
 
 export const MANAGED_UPLOAD_RESOURCE_PATHS = [
   "activities",
@@ -58,7 +40,8 @@ export const MANAGED_UPLOAD_SLOTS = [
   "file",
 ] as const;
 
-export type ManagedUploadResourcePath = (typeof MANAGED_UPLOAD_RESOURCE_PATHS)[number];
+export type ManagedUploadResourcePath =
+  (typeof MANAGED_UPLOAD_RESOURCE_PATHS)[number];
 export type ManagedUploadSlot = (typeof MANAGED_UPLOAD_SLOTS)[number];
 
 type StorageEnv = {
@@ -79,7 +62,10 @@ const LEGACY_PUBLIC_URL_SIGNING_SECRET_ENV_KEY = "BETTER_AUTH_SECRET";
 const PUBLIC_URL_SIGNING_SECRET_MIN_LENGTH = 32;
 const SAFE_OBJECT_SEGMENT_PATTERN = /^[A-Za-z0-9._-]{1,160}$/;
 const SAFE_ACTOR_ID_PATTERN = /^[A-Za-z0-9_-]{1,120}$/;
-const SLOT_ALLOWLIST_BY_PATH: Record<ManagedUploadResourcePath, readonly ManagedUploadSlot[]> = {
+const SLOT_ALLOWLIST_BY_PATH: Record<
+  ManagedUploadResourcePath,
+  readonly ManagedUploadSlot[]
+> = {
   activities: ["cover", "detail", "file"],
   exhibitions: ["cover", "detail"],
   users: ["profile"],
@@ -125,7 +111,10 @@ const getEnvValue = (
   return undefined;
 };
 
-const readRuntimeValue = (env: AppBindings, key: keyof AppBindings): string | undefined => {
+const readRuntimeValue = (
+  env: AppBindings,
+  key: keyof AppBindings,
+): string | undefined => {
   const bindingValue = env[key];
   if (typeof bindingValue === "string" && bindingValue.trim()) {
     return bindingValue.trim();
@@ -155,7 +144,10 @@ export const resolvePublicObjectSigningSecrets = (
   env: AppBindings,
 ): string[] => {
   const candidates = [
-    readRuntimeValue(env, PUBLIC_URL_SIGNING_SECRET_ENV_KEY as keyof AppBindings),
+    readRuntimeValue(
+      env,
+      PUBLIC_URL_SIGNING_SECRET_ENV_KEY as keyof AppBindings,
+    ),
     readRuntimeValue(
       env,
       PREVIOUS_PUBLIC_URL_SIGNING_SECRET_ENV_KEY as keyof AppBindings,
@@ -213,7 +205,9 @@ const createFileToken = (fileName: string): string => {
   return `${crypto.randomUUID()}-${safeFileName}`;
 };
 
-const isManagedResourcePath = (value: string): value is ManagedUploadResourcePath => {
+const isManagedResourcePath = (
+  value: string,
+): value is ManagedUploadResourcePath => {
   return (MANAGED_UPLOAD_RESOURCE_PATHS as readonly string[]).includes(value);
 };
 
@@ -223,14 +217,12 @@ const isManagedUploadSlot = (value: string): value is ManagedUploadSlot => {
 
 export const parseManagedObjectKey = (
   objectKey: string,
-):
-  | {
-      resourcePath: ManagedUploadResourcePath;
-      actorId: string;
-      slot: ManagedUploadSlot;
-      fileToken: string;
-    }
-  | null => {
+): {
+  resourcePath: ManagedUploadResourcePath;
+  actorId: string;
+  slot: ManagedUploadSlot;
+  fileToken: string;
+} | null => {
   const segments = objectKey.split("/");
   if (segments.length !== 4) {
     return null;
@@ -252,7 +244,10 @@ export const parseManagedObjectKey = (
     return null;
   }
 
-  if (!SAFE_ACTOR_ID_PATTERN.test(actorId) || !SAFE_OBJECT_SEGMENT_PATTERN.test(fileToken)) {
+  if (
+    !SAFE_ACTOR_ID_PATTERN.test(actorId) ||
+    !SAFE_OBJECT_SEGMENT_PATTERN.test(fileToken)
+  ) {
     return null;
   }
 
@@ -320,7 +315,10 @@ const buildObjectKey = (input: {
   return `${input.resource}/${input.actorId}/${input.slot}/${createFileToken(input.fileName)}`;
 };
 
-const signObjectKey = async (objectKey: string, secret: string): Promise<string> => {
+const signObjectKey = async (
+  objectKey: string,
+  secret: string,
+): Promise<string> => {
   const key = await crypto.subtle.importKey(
     "raw",
     textEncoder.encode(secret),
@@ -404,7 +402,9 @@ export const verifySignedPublicObjectSignature = async (input: {
     input.signingSecret === undefined
       ? [...signingSecrets]
       : [input.signingSecret, ...signingSecrets];
-  const uniqueSecrets = [...new Set(candidateSecrets.filter((value) => value.length > 0))];
+  const uniqueSecrets = [
+    ...new Set(candidateSecrets.filter((value) => value.length > 0)),
+  ];
 
   for (const secret of uniqueSecrets) {
     const expected = await signObjectKey(input.objectKey, secret);

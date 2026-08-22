@@ -1,7 +1,7 @@
 import {
   isMemberLikeRoleValue,
   normalizeLegacyRole,
-} from "../../shared/auth/roles";
+} from "@yonyoung/contracts/auth-roles";
 import { type Action, type Resource, type Role } from "./types";
 
 type PermissionMatrix = Record<Role, Record<Resource, Record<Action, boolean>>>;

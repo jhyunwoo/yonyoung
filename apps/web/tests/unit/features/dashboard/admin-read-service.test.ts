@@ -122,9 +122,7 @@ describe("admin read service", () => {
 
     await getAdminDashboardStats(null, 12);
 
-    expect(String(fetchMock.mock.calls[0]?.[0])).toContain(
-      "generationSortOrder=12",
-    );
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain("generationSortOrder=12");
   });
 
   it("generationSortOrder가 없으면 쿼리를 붙이지 않는다", async () => {

@@ -2,7 +2,7 @@ import { HardDrive } from "lucide-react";
 
 import { Card, CardHeader } from "@/app/(dashboard)/_components/ui/card";
 import { EmptyState } from "@/app/(dashboard)/_components/ui/empty-state";
-import type { ApiAdminDashboardStats } from "@/shared/contracts/api-contracts";
+import type { ApiAdminDashboardStats } from "@yonyoung/contracts";
 
 const DEFAULT_R2_STORAGE_LIMIT_BYTES = 10 * 1024 * 1024 * 1024;
 

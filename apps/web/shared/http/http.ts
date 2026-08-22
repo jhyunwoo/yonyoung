@@ -1,6 +1,6 @@
-import type { ApiErrorEnvelope, DataEnvelope } from "@/shared/contracts/api-contracts";
+import type { ApiErrorEnvelope, DataEnvelope } from "@yonyoung/contracts";
 
-export type { DataEnvelope } from "@/shared/contracts/api-contracts";
+export type { DataEnvelope } from "@yonyoung/contracts";
 
 export const normalizeBaseUrl = (value: string): string => value.replace(/\/+$/, "");
 

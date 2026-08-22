@@ -1,5 +1,5 @@
-import { DEFAULT_SITE_SETTINGS } from "../../../shared/contracts/api-contracts";
-import type { ApiAuditActor } from "../../../shared/contracts/api-contracts";
+import { DEFAULT_SITE_SETTINGS } from "@yonyoung/contracts";
+import type { ApiAuditActor } from "@yonyoung/contracts";
 import type { MockRole, MockState } from "./contracts";
 
 const now = Date.now();

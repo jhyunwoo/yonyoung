@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
-import type { ApiActivity, ApiExhibition } from "@/shared/contracts/api-contracts";
+import type { ApiActivity, ApiExhibition } from "@yonyoung/contracts";
 import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 

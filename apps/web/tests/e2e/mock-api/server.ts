@@ -14,7 +14,7 @@ import type {
   ApiRecruitingPlan,
   ApiUser,
   ApiUserResourceHistory,
-} from "../../../shared/contracts/api-contracts";
+} from "@yonyoung/contracts";
 import type { MockRole, MockSessionUser, MockState } from "./contracts";
 import { createMockState, defaultRoleUserId } from "./seed";
 import { handleAttachmentRoutes } from "./attachments-handlers";

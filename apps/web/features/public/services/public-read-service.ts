@@ -10,7 +10,7 @@ import {
   apiPublicGenerationWithMembersSchema,
   apiRecruitingPlanSchema,
   apiSiteSettingsSchema,
-} from "@/shared/contracts/api-schemas";
+} from "@yonyoung/contracts/schemas";
 import type {
   ApiActivity,
   ApiAttachment,
@@ -22,8 +22,8 @@ import type {
   ApiPublicGenerationWithMembers,
   ApiRecruitingPlan,
   ApiSiteSettings,
-} from "@/shared/contracts/api-contracts";
-import { DEFAULT_SITE_SETTINGS } from "@/shared/contracts/api-contracts";
+} from "@yonyoung/contracts";
+import { DEFAULT_SITE_SETTINGS } from "@yonyoung/contracts";
 import { HonoApiError, honoRequest } from "@/server/http/hono-client";
 import { CACHE_TAGS } from "@/server/cache/tags";
 import { logger } from "@/server/observability/logger";

@@ -6,7 +6,7 @@ import { PageHeader } from "@/app/(dashboard)/_components/ui/page-header";
 import { isPresidentOrVicePresidentRole } from "@/features/auth/model/auth-shared";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { buildDashboardSettingsMenuItems } from "@/features/dashboard/settings/dashboard-settings-menu";
-import { isMemberLikeRoleValue } from "@/shared/contracts/auth-roles";
+import { isMemberLikeRoleValue } from "@yonyoung/contracts/auth-roles";
 
 export default async function SettingsPage() {
   const session = await serverAuthGuard.requireSession();

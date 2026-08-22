@@ -44,7 +44,7 @@ import type {
   ApiGeneration,
   ApiLinktree,
   ApiUser,
-} from "@/shared/contracts/api-contracts";
+} from "@yonyoung/contracts";
 
 describe("dashboard shared helpers", () => {
   it("handles linktree helpers", () => {

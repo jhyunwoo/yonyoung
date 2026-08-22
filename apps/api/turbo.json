@@ -1,0 +1,65 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "drizzle.config.ts",
+        "drizzle/**",
+        "public/**",
+        "wrangler.jsonc"
+      ],
+      "outputs": [".wrangler/dry-run/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "test": {
+      "cache": false,
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "vitest.config.ts",
+        "vitest.workers.config.ts",
+        "wrangler.jsonc"
+      ]
+    },
+    "test:unit": {
+      "inputs": ["$TURBO_DEFAULT$", "vitest.config.ts"],
+      "outputs": []
+    },
+    "test:workers": {
+      "cache": false,
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "vitest.workers.config.ts",
+        "wrangler.jsonc"
+      ]
+    },
+    "test:coverage": {
+      "inputs": ["$TURBO_DEFAULT$", "vitest.config.ts"],
+      "outputs": ["coverage/**"]
+    },
+    "test:integration": {
+      "cache": false,
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "vitest.integration.config.ts",
+        "wrangler.jsonc"
+      ]
+    },
+    "cf-typegen": {
+      "cache": false,
+      "inputs": ["wrangler.jsonc"],
+      "outputs": ["worker-configuration.d.ts"]
+    },
+    "deploy:dry-run": {
+      "cache": false,
+      "inputs": ["$TURBO_DEFAULT$", "public/**", "wrangler.jsonc"]
+    },
+    "deploy": {
+      "cache": false,
+      "passThroughEnv": ["CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_API_TOKEN"]
+    }
+  }
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import type { ApiPageViewStats } from "@/shared/contracts/api-contracts";
+import type { ApiPageViewStats } from "@yonyoung/contracts";
 import PageViewChart from "@/app/(dashboard)/_components/dashboard-page-views-chart";
 import { BarChart3Icon, CalendarIcon, MonitorIcon } from "lucide-react";
 import { Card, CardHeader } from "@/app/(dashboard)/_components/ui/card";

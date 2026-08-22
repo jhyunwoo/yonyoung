@@ -79,9 +79,9 @@ test("갤러리가 justified rows 로 배치된다", async ({ page }, testInfo) 
   for (const row of rows.slice(0, -1)) {
     const lastTile = row.at(-1);
     const rowRight = (lastTile?.x ?? 0) + (lastTile?.width ?? 0);
-    expect(Math.abs(rowRight - ((galleryBox?.x ?? 0) + (galleryBox?.width ?? 0)))).toBeLessThan(
-      2,
-    );
+    expect(
+      Math.abs(rowRight - ((galleryBox?.x ?? 0) + (galleryBox?.width ?? 0))),
+    ).toBeLessThan(2);
   }
 
   if (testInfo.project.name === "mobile-chromium") {
@@ -101,9 +101,9 @@ test("갤러리가 justified rows 로 배치된다", async ({ page }, testInfo) 
 test("사진 순서가 DOM 상에서 sortOrder 를 따른다", async ({ page }) => {
   const gallery = await openGallery(page);
 
-  const testIds = await gallery.locator("li button").evaluateAll((nodes) =>
-    nodes.map((node) => node.getAttribute("data-testid")),
-  );
+  const testIds = await gallery
+    .locator("li button")
+    .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-testid")));
 
   expect(testIds).toEqual([
     "gallery-photo-button-act-1-img-1",
@@ -148,7 +148,9 @@ test("라이트박스가 화면 전체를 덮는다", async ({ page }) => {
   expect(Math.abs((box?.height ?? 0) - (viewport?.height ?? 0))).toBeLessThanOrEqual(2);
 });
 
-test("닫기 버튼 · Escape · 사진 밖 영역 클릭으로 라이트박스를 닫는다", async ({ page }) => {
+test("닫기 버튼 · Escape · 사진 밖 영역 클릭으로 라이트박스를 닫는다", async ({
+  page,
+}) => {
   await openGallery(page);
   const lightbox = page.getByTestId("gallery-lightbox");
   const firstPhoto = page.getByTestId("gallery-photo-button-act-1-img-1");

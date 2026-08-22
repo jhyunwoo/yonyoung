@@ -1,6 +1,6 @@
 "use client";
 
-import type { ApiLinktree } from "@/shared/contracts/api-contracts";
+import type { ApiLinktree } from "@yonyoung/contracts";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

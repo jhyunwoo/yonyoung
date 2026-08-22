@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { DEFAULT_SITE_SETTINGS } from "@/shared/contracts/api-contracts";
+import { DEFAULT_SITE_SETTINGS } from "@yonyoung/contracts";
 
 const refreshMock = vi.hoisted(() => vi.fn());
 const getSiteSettingsMock = vi.hoisted(() => vi.fn());

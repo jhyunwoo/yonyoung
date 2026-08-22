@@ -27,8 +27,7 @@ const readOverflowCulprits = async (page: Page): Promise<OverflowCulprit[]> =>
       }
 
       const testId = element.getAttribute("data-testid");
-      const className =
-        typeof element.className === "string" ? element.className : "";
+      const className = typeof element.className === "string" ? element.className : "";
       culprits.push({
         selector: [
           element.tagName.toLowerCase(),
@@ -58,7 +57,9 @@ export const assertNoHorizontalOverflow = async (
 
   const culprits = await readOverflowCulprits(page);
   const detail = culprits
-    .map((culprit) => `  - ${culprit.selector} (right=${culprit.right}) "${culprit.text}"`)
+    .map(
+      (culprit) => `  - ${culprit.selector} (right=${culprit.right}) "${culprit.text}"`,
+    )
     .join("\n");
 
   expect(

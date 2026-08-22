@@ -20,8 +20,6 @@ const vitestInlineConfig = {
         "shared/http/http.ts",
         "server/http/fetch-with-timeout.ts",
         "server/http/hono-client.ts",
-        "shared/contracts/auth-profile.ts",
-        "shared/contracts/auth-roles.ts",
         "shared/utils/date-formatters.ts",
         "features/media/rich-text/rich-text.ts",
         "features/media/images/read-image-dimensions.ts",

@@ -7,7 +7,7 @@ import { Input, Select } from "@/app/(dashboard)/_components/ui/input";
 import { buildMemberDisplayName } from "@/features/dashboard/members/display-name";
 import { buildMemberRoleLabel } from "@/features/dashboard/members/member-role-label";
 import { readNormalizedGenerationIds } from "@/app/(dashboard)/dashboard/settings/generations/generation-management-shared";
-import type { ApiGeneration, ApiUser } from "@/shared/contracts/api-contracts";
+import type { ApiGeneration, ApiUser } from "@yonyoung/contracts";
 import { UsersRound } from "lucide-react";
 
 type GenerationMemberAssignPanelProps = {

@@ -116,9 +116,7 @@ test("archive dropdown opens on tap instead of navigating away", async ({
  * 두 번째 탭은 닫는다. 하이드레이션 이후 data-open 이 유일한 근거이므로
  * sticky hover 가 남아 있어도 화면과 상태가 어긋나지 않아야 한다.
  */
-test("a second tap on the trigger closes the dropdown", async ({
-  browser,
-}, testInfo) => {
+test("a second tap on the trigger closes the dropdown", async ({ browser }, testInfo) => {
   const { context, page } = await openDesktopContext(browser, testInfo, {
     hasTouch: true,
   });
@@ -141,9 +139,7 @@ test("a second tap on the trigger closes the dropdown", async ({
   }
 });
 
-test("tapping outside closes the tap-opened dropdown", async ({
-  browser,
-}, testInfo) => {
+test("tapping outside closes the tap-opened dropdown", async ({ browser }, testInfo) => {
   const { context, page } = await openDesktopContext(browser, testInfo, {
     hasTouch: true,
   });

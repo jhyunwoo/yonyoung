@@ -22,7 +22,7 @@ import { signOut } from "@/features/auth/client/auth-actions";
 import { isPresidentOrVicePresidentRole } from "@/features/auth/model/auth-shared";
 import type { DashboardGenerationOption } from "@/features/dashboard/generation/generation-options";
 import { buildDashboardSettingsMenuItems } from "@/features/dashboard/settings/dashboard-settings-menu";
-import { isMemberLikeRoleValue } from "@/shared/contracts/auth-roles";
+import { isMemberLikeRoleValue } from "@yonyoung/contracts/auth-roles";
 
 export type { DashboardViewer } from "@/app/(dashboard)/_components/shell/dashboard-shell-types";
 

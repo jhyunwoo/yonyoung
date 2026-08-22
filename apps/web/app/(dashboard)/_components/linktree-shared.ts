@@ -1,4 +1,4 @@
-import type { ApiLinktree, ApiLinktreeItem } from "@/shared/contracts/api-contracts";
+import type { ApiLinktree, ApiLinktreeItem } from "@yonyoung/contracts";
 import { AdminApiError } from "@/shared/http/http";
 
 export const readLinktreeErrorMessage = (error: unknown): string => {

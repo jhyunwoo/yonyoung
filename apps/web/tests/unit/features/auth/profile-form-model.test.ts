@@ -29,9 +29,9 @@ describe("profile form validation", () => {
   });
 
   it("학번이 10자리가 아니면 거절한다", () => {
-    expect(
-      validateProfileForm({ ...VALID, studentNumber: "12345" }).studentNumber,
-    ).toBe("학번은 숫자 10자리여야 합니다.");
+    expect(validateProfileForm({ ...VALID, studentNumber: "12345" }).studentNumber).toBe(
+      "학번은 숫자 10자리여야 합니다.",
+    );
   });
 
   it("휴대폰 형식이 아니면 거절한다", () => {

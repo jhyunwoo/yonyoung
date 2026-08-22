@@ -107,7 +107,6 @@ describe("LinktreeGroupDetail", () => {
   });
 
   it("shows validation error when sub-link URL is invalid", async () => {
-
     const user = userEvent.setup();
     render(
       <LinktreeGroupDetail

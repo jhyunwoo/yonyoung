@@ -1,8 +1,5 @@
 import type { ServerResponse } from "node:http";
-import type {
-  ApiAttachment,
-  ApiAttachmentScope,
-} from "../../../shared/contracts/api-contracts";
+import type { ApiAttachment, ApiAttachmentScope } from "@yonyoung/contracts";
 import type { MockRole, MockState } from "./contracts";
 
 /**

@@ -13,7 +13,7 @@ import {
   useGenerationManagement,
 } from "@/app/(dashboard)/dashboard/settings/generations/use-generation-management";
 import type { GenerationFormValues } from "@/app/(dashboard)/dashboard/settings/generations/generation-management-selectors";
-import type { ApiGeneration, ApiUser } from "@/shared/contracts/api-contracts";
+import type { ApiGeneration, ApiUser } from "@yonyoung/contracts";
 import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
 import { FolderKanban } from "lucide-react";
 

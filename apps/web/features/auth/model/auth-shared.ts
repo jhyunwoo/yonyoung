@@ -4,8 +4,8 @@ import {
   isAdminRoleValue,
   isUnverifiedRoleValue,
   type CoreRole,
-} from "@/shared/contracts/auth-roles";
-import { hasCompletedRequiredProfileFields } from "@/shared/contracts/auth-profile";
+} from "@yonyoung/contracts/auth-roles";
+import { hasCompletedRequiredProfileFields } from "@yonyoung/contracts/auth-profile";
 
 type KnownAuthRole = CoreRole;
 type AuthRole = KnownAuthRole | (string & {});

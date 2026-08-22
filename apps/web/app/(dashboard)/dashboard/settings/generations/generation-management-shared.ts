@@ -2,7 +2,7 @@ import type {
   ApiCreateGenerationInput,
   ApiGeneration,
   ApiUser,
-} from "@/shared/contracts/api-contracts";
+} from "@yonyoung/contracts";
 import { isUnverifiedRole } from "@/features/auth/model/auth-shared";
 import { buildMemberDisplayName } from "@/features/dashboard/members/display-name";
 

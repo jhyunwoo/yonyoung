@@ -12,7 +12,7 @@ import {
   timestampField,
   urlField,
 } from "../../shared/openapi/field-builders";
-import { KOREAN_MOBILE_PHONE_REGEX } from "../../shared/auth/profile";
+import { KOREAN_MOBILE_PHONE_REGEX } from "@yonyoung/contracts/auth-profile";
 import { ApiAuditActorSchema } from "../audit/audit.contract";
 
 const ApiShowcaseImageUrlsSchema = z

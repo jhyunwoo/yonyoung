@@ -1,5 +1,5 @@
 import { isPresidentOrVicePresidentRole } from "@/features/auth/model/auth-shared";
-import type { ApiGeneration } from "@/shared/contracts/api-contracts";
+import type { ApiGeneration } from "@yonyoung/contracts";
 
 type GenerationLike = Pick<ApiGeneration, "id" | "name" | "sortOrder">;
 type SessionWithGenerationRole =

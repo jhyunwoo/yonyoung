@@ -11,13 +11,13 @@ import {
   apiAttachmentSchema,
   apiCreateAttachmentInputSchema,
   apiUpdateAttachmentInputSchema,
-} from "@/shared/contracts/api-schemas";
+} from "@yonyoung/contracts/schemas";
 import type {
   ApiAttachment,
   ApiAttachmentScope,
   ApiCreateAttachmentInput,
   ApiUpdateAttachmentInput,
-} from "@/shared/contracts/api-contracts";
+} from "@yonyoung/contracts";
 
 /**
  * 첨부파일(회계 자료, 월간연영회 PDF 등) 관리자 서버 액션.

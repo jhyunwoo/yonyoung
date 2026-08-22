@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { ApiUser } from "@/shared/contracts/api-contracts";
+import type { ApiUser } from "@yonyoung/contracts";
 import { AdminApiError } from "@/shared/http/http";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { formatKoreanDate } from "@/shared/utils/date-formatters";

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DEFAULT_SITE_SETTINGS } from "@/shared/contracts/api-contracts";
+import { DEFAULT_SITE_SETTINGS } from "@yonyoung/contracts";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
 import {

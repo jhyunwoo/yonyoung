@@ -15,7 +15,7 @@ import type {
   ApiLinktree,
   ApiPageViewStats,
   ApiUser,
-} from "@/shared/contracts/api-contracts";
+} from "@yonyoung/contracts";
 import {
   apiActivitySchema,
   apiAdminDashboardStatsSchema,
@@ -25,7 +25,7 @@ import {
   apiLinktreeSchema,
   apiPageViewStatsSchema,
   apiUserSchema,
-} from "@/shared/contracts/api-schemas";
+} from "@yonyoung/contracts/schemas";
 
 const ADMIN_API_BASE_PATH = "/api";
 

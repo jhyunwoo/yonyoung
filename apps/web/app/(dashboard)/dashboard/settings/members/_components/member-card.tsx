@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { ApiUser } from "@/shared/contracts/api-contracts";
+import type { ApiUser } from "@yonyoung/contracts";
 import {
   buildMemberDisplayInitial,
   buildMemberDisplayName,

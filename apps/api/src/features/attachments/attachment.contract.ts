@@ -3,7 +3,7 @@ import {
   httpUrlInputField,
   timestampField,
 } from "../../shared/openapi/field-builders";
-import { ALLOWED_ATTACHMENT_CONTENT_TYPES } from "../../lib/storage/presign";
+import { ALLOWED_ATTACHMENT_CONTENT_TYPES } from "@yonyoung/contracts/attachments";
 
 const EXAMPLE_ATTACHMENT_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const EXAMPLE_ATTACHMENT_RESOURCE_ID = "20000000-0000-4000-8000-000000000001";

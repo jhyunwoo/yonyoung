@@ -14,13 +14,13 @@ import {
   apiMemberProfileUpdateInputSchema,
   apiUpdateUserInputSchema,
   apiUserSchema,
-} from "@/shared/contracts/api-schemas";
+} from "@yonyoung/contracts/schemas";
 import type {
   ApiBulkUpdateUserRoleInput,
   ApiMemberProfileUpdateInput,
   ApiUpdateUserInput,
   ApiUser,
-} from "@/shared/contracts/api-contracts";
+} from "@yonyoung/contracts";
 
 const USER_CACHE_TAGS = [
   CACHE_TAGS.admin.users,

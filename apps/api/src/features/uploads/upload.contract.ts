@@ -1,8 +1,6 @@
 import { z } from "../../shared/openapi/zod";
-import {
-  ALLOWED_IMAGE_CONTENT_TYPES,
-  UPLOAD_LIMITS,
-} from "../../lib/storage/presign";
+import { ALLOWED_IMAGE_CONTENT_TYPES } from "@yonyoung/contracts/uploads";
+import { UPLOAD_LIMITS } from "../../lib/storage/presign";
 
 export const ApiPresignRequestSchema = z
   .object({

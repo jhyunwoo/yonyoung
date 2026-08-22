@@ -1,7 +1,7 @@
 import type {
   ApiActivity,
   ApiUpdateActivityImageBatchItemInput,
-} from "@/shared/contracts/api-contracts";
+} from "@yonyoung/contracts";
 import { AdminApiError } from "@/shared/http/http";
 import { summarizeRichTextHtml } from "@/features/media/rich-text/rich-text";
 

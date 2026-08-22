@@ -1,4 +1,4 @@
-import type { ApiExhibition } from "@/shared/contracts/api-contracts";
+import type { ApiExhibition } from "@yonyoung/contracts";
 
 /**
  * 홈 히어로에 노출할 전시를 선택한다.

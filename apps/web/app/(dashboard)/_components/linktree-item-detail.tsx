@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { ApiLinktree, ApiLinktreeItem } from "@/shared/contracts/api-contracts";
+import type { ApiLinktree, ApiLinktreeItem } from "@yonyoung/contracts";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { formatKoreanDate } from "@/shared/utils/date-formatters";
 import AuditHistoryPanel from "@/app/(dashboard)/_components/audit-history-panel";

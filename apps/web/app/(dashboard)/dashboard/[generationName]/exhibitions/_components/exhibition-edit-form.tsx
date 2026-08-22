@@ -4,7 +4,7 @@ import { type ChangeEvent, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { ApiExhibition } from "@/shared/contracts/api-contracts";
+import type { ApiExhibition } from "@yonyoung/contracts";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import {
   readNewUploadImageItems,

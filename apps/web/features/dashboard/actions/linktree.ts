@@ -13,7 +13,7 @@ import {
   apiLinktreeSchema,
   apiUpdateLinktreeInputSchema,
   apiUpdateLinktreeItemInputSchema,
-} from "@/shared/contracts/api-schemas";
+} from "@yonyoung/contracts/schemas";
 import type {
   ApiCreateLinktreeInput,
   ApiCreateLinktreeItemInput,
@@ -21,7 +21,7 @@ import type {
   ApiLinktreeItem,
   ApiUpdateLinktreeInput,
   ApiUpdateLinktreeItemInput,
-} from "@/shared/contracts/api-contracts";
+} from "@yonyoung/contracts";
 
 const LINKTREE_CACHE_TAGS = [
   CACHE_TAGS.admin.linktree,

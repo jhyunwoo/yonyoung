@@ -1,4 +1,4 @@
-import type { ApiGeneration } from "@/shared/contracts/api-contracts";
+import type { ApiGeneration } from "@yonyoung/contracts";
 
 type GenerationLike = Pick<ApiGeneration, "name">;
 

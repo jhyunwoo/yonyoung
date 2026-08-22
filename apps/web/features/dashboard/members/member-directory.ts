@@ -1,4 +1,4 @@
-import type { ApiGeneration, ApiUser } from "@/shared/contracts/api-contracts";
+import type { ApiGeneration, ApiUser } from "@yonyoung/contracts";
 import { buildMemberDisplayName } from "@/features/dashboard/members/display-name";
 
 const koreanCollator = new Intl.Collator("ko");

@@ -1,0 +1,8 @@
+apps/
+packages/
+node_modules/
+.turbo/
+.turbo-cache/
+coverage/
+artifacts/
+pnpm-lock.yaml

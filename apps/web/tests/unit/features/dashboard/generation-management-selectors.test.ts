@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ApiGeneration, ApiUser } from "@/shared/contracts/api-contracts";
+import type { ApiGeneration, ApiUser } from "@yonyoung/contracts";
 import {
   EMPTY_GENERATION_FORM_VALUES,
   buildGenerationAssignTargets,
@@ -28,9 +28,7 @@ const createGeneration = (
   ...overrides,
 });
 
-const createUser = (
-  overrides: Partial<ApiUser> & Pick<ApiUser, "id">,
-): ApiUser => ({
+const createUser = (overrides: Partial<ApiUser> & Pick<ApiUser, "id">): ApiUser => ({
   name: "tester",
   email: "tester@example.com",
   image: null,
@@ -63,9 +61,9 @@ describe("role filter options", () => {
   });
 
   it("unverified 사용자는 옵션을 만들지 않는다", () => {
-    expect(
-      buildRoleFilterOptions([createUser({ id: "a", role: "unverified" })]),
-    ).toEqual([USER_ROLE_FILTER_ALL]);
+    expect(buildRoleFilterOptions([createUser({ id: "a", role: "unverified" })])).toEqual(
+      [USER_ROLE_FILTER_ALL],
+    );
   });
 
   it("역할이 비어 있는 사용자는 '미지정' 옵션으로 묶는다", () => {
@@ -82,12 +80,7 @@ describe("role filter options", () => {
       createUser({ id: "c", role: "manager" }),
     ]);
 
-    expect(options).toEqual([
-      USER_ROLE_FILTER_ALL,
-      "manager",
-      "custom_a",
-      "custom_z",
-    ]);
+    expect(options).toEqual([USER_ROLE_FILTER_ALL, "manager", "custom_a", "custom_z"]);
   });
 
   it("선택한 필터가 목록에서 사라지면 전체로 되돌린다", () => {
@@ -97,9 +90,9 @@ describe("role filter options", () => {
   });
 
   it("선택한 필터가 아직 유효하면 그대로 둔다", () => {
-    expect(
-      resolveActiveRoleFilter("manager", [USER_ROLE_FILTER_ALL, "manager"]),
-    ).toBe("manager");
+    expect(resolveActiveRoleFilter("manager", [USER_ROLE_FILTER_ALL, "manager"])).toBe(
+      "manager",
+    );
   });
 
   it("특수 필터 값은 사람이 읽는 라벨로 바꾼다", () => {

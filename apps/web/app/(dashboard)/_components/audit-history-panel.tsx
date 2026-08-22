@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
-import type { ApiAuditLog, ApiAuditResourceType } from "@/shared/contracts/api-contracts";
+import type { ApiAuditLog, ApiAuditResourceType } from "@yonyoung/contracts";
 import { formatKoreanDate } from "@/shared/utils/date-formatters";
 import {
   formatAuditActionLabel,

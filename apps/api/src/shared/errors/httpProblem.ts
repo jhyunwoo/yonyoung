@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import type { ApiErrorCode } from "../../shared/api-contracts";
+import type { ApiErrorCode } from "@yonyoung/contracts";
 import { type AppError } from "./AppError";
 import { resolveApiErrorCode, type ErrorCode } from "./errorCodes";
 

@@ -8,11 +8,11 @@ import { CACHE_TAGS } from "@/server/cache/tags";
 import {
   apiRecruitingPlanSchema,
   apiUpsertCurrentRecruitingPlanInputSchema,
-} from "@/shared/contracts/api-schemas";
+} from "@yonyoung/contracts/schemas";
 import type {
   ApiRecruitingPlan,
   ApiUpsertCurrentRecruitingPlanInput,
-} from "@/shared/contracts/api-contracts";
+} from "@yonyoung/contracts";
 
 export const upsertCurrentRecruitingPlanAction = async (
   input: ApiUpsertCurrentRecruitingPlanInput,

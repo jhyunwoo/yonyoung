@@ -1,5 +1,5 @@
 import { ExternalLink, FileText } from "lucide-react";
-import type { ApiAttachment } from "@/shared/contracts/api-contracts";
+import type { ApiAttachment } from "@yonyoung/contracts";
 
 type AttachmentListProps = {
   attachments: ApiAttachment[];

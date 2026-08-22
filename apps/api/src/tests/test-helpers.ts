@@ -1,6 +1,6 @@
 import { expect, vi } from "vitest";
 import { createHmac } from "node:crypto";
-import { DEFAULT_SITE_SETTINGS } from "../shared/api-contracts";
+import { DEFAULT_SITE_SETTINGS } from "@yonyoung/contracts";
 import { createApp } from "../app";
 import type { Actor, Role } from "../lib/authorization/types";
 import type {

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { renderWithDashboardProviders as render } from "@/tests/setup/dashboard-providers";
-import type { ApiGeneration, ApiUser } from "@/shared/contracts/api-contracts";
+import type { ApiGeneration, ApiUser } from "@yonyoung/contracts";
 import { AdminApiError } from "@/shared/http/http";
 const bulkUpdateUsersRoleMock = vi.hoisted(() => vi.fn());
 

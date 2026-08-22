@@ -1,4 +1,4 @@
-import type { ApiAuditActor } from "@/shared/contracts/api-contracts";
+import type { ApiAuditActor } from "@yonyoung/contracts";
 import { formatKoreanDate } from "@/shared/utils/date-formatters";
 import { formatAuditActor } from "@/features/dashboard/ui/audit-display";
 

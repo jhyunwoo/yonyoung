@@ -1,7 +1,7 @@
 import type * as HttpModule from "@/shared/http/http";
 import type * as HonoClientModule from "@/server/http/hono-client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { ApiUser } from "@/shared/contracts/api-contracts";
+import type { ApiUser } from "@yonyoung/contracts";
 
 const headersMock = vi.hoisted(() => vi.fn());
 const updateTagMock = vi.hoisted(() => vi.fn());

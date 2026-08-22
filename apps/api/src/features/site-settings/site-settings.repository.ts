@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { DEFAULT_SITE_SETTINGS } from "../../shared/api-contracts";
+import { DEFAULT_SITE_SETTINGS } from "@yonyoung/contracts";
 import type createDB from "../../lib/db";
 import { siteSettings } from "../../platform/db/schema";
 import type { SiteSettingsEntity } from "../../lib/services/types";

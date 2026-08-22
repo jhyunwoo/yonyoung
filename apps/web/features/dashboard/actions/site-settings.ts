@@ -8,11 +8,8 @@ import { CACHE_TAGS } from "@/server/cache/tags";
 import {
   apiSiteSettingsSchema,
   apiUpdateSiteSettingsInputSchema,
-} from "@/shared/contracts/api-schemas";
-import type {
-  ApiSiteSettings,
-  ApiUpdateSiteSettingsInput,
-} from "@/shared/contracts/api-contracts";
+} from "@yonyoung/contracts/schemas";
+import type { ApiSiteSettings, ApiUpdateSiteSettingsInput } from "@yonyoung/contracts";
 
 export const updateSiteSettingsAction = async (
   input: ApiUpdateSiteSettingsInput,

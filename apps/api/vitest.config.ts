@@ -22,6 +22,8 @@ export default defineConfig({
         "src/lib/validation/request.ts",
         "src/platform/db/schema/**",
         "src/platform/db/data-service-composition.ts",
+        // Compile-time producer/consumer assertions; executed by `pnpm typecheck` only.
+        "src/tests/contract-compatibility.types.ts",
       ],
       thresholds: {
         lines: 80,

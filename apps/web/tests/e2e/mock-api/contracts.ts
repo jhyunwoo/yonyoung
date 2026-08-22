@@ -8,7 +8,7 @@ import type {
   ApiRecruitingPlan,
   ApiSiteSettings,
   ApiUser,
-} from "../../../shared/contracts/api-contracts";
+} from "@yonyoung/contracts";
 
 export type MockRole =
   "guest" | "unverified" | "member" | "manager" | "vice_president" | "president";

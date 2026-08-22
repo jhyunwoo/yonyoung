@@ -1,4 +1,4 @@
-import type { ApiAuditActor, ApiAuditLog } from "@/shared/contracts/api-contracts";
+import type { ApiAuditActor, ApiAuditLog } from "@yonyoung/contracts";
 import { buildMemberRoleLabel } from "@/features/dashboard/members/member-role-label";
 import { buildMemberDisplayName } from "@/features/dashboard/members/display-name";
 

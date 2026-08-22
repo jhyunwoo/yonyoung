@@ -1,4 +1,4 @@
-import type { ApiGeneration, ApiUser } from "@/shared/contracts/api-contracts";
+import type { ApiGeneration, ApiUser } from "@yonyoung/contracts";
 import { buildMemberRoleLabel } from "@/features/dashboard/members/member-role-label";
 import {
   USER_ROLE_FILTER_ALL,

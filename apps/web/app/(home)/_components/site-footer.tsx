@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { Suspense } from "react";
-import { DEFAULT_SITE_SETTINGS } from "@/shared/contracts/api-contracts";
+import { DEFAULT_SITE_SETTINGS } from "@yonyoung/contracts";
 import { getPublicSiteSettings } from "@/features/public/services/public-read-service";
 import CurrentYear from "@/app/(home)/_components/current-year";
 

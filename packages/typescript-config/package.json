@@ -1,9 +1,25 @@
 {
-  "name": "@repo/typescript-config",
-  "version": "0.0.0",
+  "name": "@yonyoung/typescript-config",
+  "version": "1.0.0",
   "private": true,
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
+  "type": "module",
+  "exports": {
+    "./base.json": "./base.json",
+    "./nextjs.json": "./nextjs.json",
+    "./worker.json": "./worker.json"
+  },
+  "files": [
+    "base.json",
+    "nextjs.json",
+    "worker.json"
+  ],
+  "scripts": {
+    "build": "node scripts/validate.mjs",
+    "lint": "node scripts/validate.mjs",
+    "format:check": "prettier --check . --ignore-unknown",
+    "typecheck": "node scripts/validate.mjs"
+  },
+  "devDependencies": {
+    "prettier": "3.9.6"
   }
 }
