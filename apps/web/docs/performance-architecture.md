@@ -1,7 +1,7 @@
 # 성능 아키텍처 (apps/web)
 
 Next.js 16.3 / React 19.2 기준. 이 문서는 "무엇이 왜 그렇게 되어 있는가"를 적는다.
-수치는 `docs/performance-baseline.md` 에 따로 둔다.
+측정 결과(before/after)는 [`performance-baseline.md`](performance-baseline.md) 에 따로 둔다.
 
 ## 1. 렌더링 모델
 
