@@ -525,6 +525,30 @@ const upsertGeneration = (
   return created;
 };
 
+/*
+  업스트림 API 호출 계측기.
+
+  성능 회귀 테스트(tests/e2e/perf-*.spec.ts)와 `scripts/perf/measure.mjs` 가
+  "네비게이션 1회당 API 왕복이 몇 번이었는지"를 확인하는 데 쓴다. 특히 대시보드
+  세션 조회(`/api/auth/get-session`)가 프록시와 레이아웃에서 두 번 나가던 회귀를
+  잡는 것이 목적이라, 요청 수는 반드시 서버 쪽에서 세야 한다 — 브라우저에서는
+  서버→API 호출이 보이지 않는다.
+*/
+type UpstreamCounts = Record<string, number>;
+
+const upstreamCountsByNamespace = new Map<string, UpstreamCounts>();
+
+const countUpstreamRequest = (
+  namespace: string,
+  method: string,
+  pathname: string,
+): void => {
+  const counts = upstreamCountsByNamespace.get(namespace) ?? {};
+  const key = `${method} ${pathname}`;
+  counts[key] = (counts[key] ?? 0) + 1;
+  upstreamCountsByNamespace.set(namespace, counts);
+};
+
 const server = createServer((request, response) => {
   void handleRequest(request, response);
 });
@@ -551,7 +575,26 @@ const handleRequest = async (
       return;
     }
 
+    if (pathname === "/__test/upstream-requests" && method === "GET") {
+      sendJson(response, 200, {
+        namespace,
+        counts: upstreamCountsByNamespace.get(namespace) ?? {},
+      });
+      return;
+    }
+
+    if (pathname === "/__test/upstream-requests" && method === "DELETE") {
+      upstreamCountsByNamespace.delete(namespace);
+      sendJson(response, 200, { namespace, counts: {} });
+      return;
+    }
+
+    if (pathname.startsWith("/api/")) {
+      countUpstreamRequest(namespace, method, pathname);
+    }
+
     if (pathname === "/__test/reset" && method === "POST") {
+      upstreamCountsByNamespace.delete(namespace);
       const state = resetState(namespace);
       sendJson(response, 200, {
         ok: true,

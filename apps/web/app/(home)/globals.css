@@ -123,6 +123,259 @@ body {
   }
 }
 
+/*
+ * 스크롤 등장 애니메이션 (`app/(home)/_components/reveal.tsx`).
+ *
+ * framer-motion `whileInView` 를 대체한다. 값은 예전 구현과 동일하다:
+ * opacity 0 → 1, translateY 18px → 0, 0.6s, cubic-bezier(0.22, 1, 0.36, 1),
+ * `--reveal-delay` 로 스태거.
+ *
+ * transform 이 아니라 translate 롱핸드를 쓰는 이유는 `.pressable` 과 같다 —
+ * 자식/호버 유틸이 쓰는 다른 변환을 덮어쓰지 않는다.
+ *
+ * 감소 모드에서는 이 블록 자체가 적용되지 않아 콘텐츠가 처음부터 보인다
+ * (framer 시절 `shouldReduceMotion` 분기와 동일한 결과).
+ */
+@media (prefers-reduced-motion: no-preference) {
+  /*
+   * will-change 를 쓰지 않는다. 홈 한 페이지에만 등장 대상이 15개가 넘는데,
+   * 전부 미리 합성 레이어로 승격시키면 저사양 기기에서 메모리만 먹는다.
+   * opacity/translate 전환은 힌트 없이도 브라우저가 전환 중에만 승격시킨다.
+   */
+  [data-reveal] {
+    opacity: 0;
+    translate: 0 var(--reveal-y, 18px);
+  }
+
+  [data-reveal][data-reveal-shown] {
+    opacity: 1;
+    translate: 0 0;
+    transition:
+      opacity 600ms cubic-bezier(0.22, 1, 0.36, 1) var(--reveal-delay, 0s),
+      translate 600ms cubic-bezier(0.22, 1, 0.36, 1) var(--reveal-delay, 0s);
+  }
+}
+
+/*
+ * JS 가 없으면 옵저버가 돌지 않아 콘텐츠가 영영 투명한 채로 남는다.
+ * framer 구현에도 없던 폴백이라 여기서 함께 고친다.
+ */
+@media (scripting: none) {
+  [data-reveal] {
+    opacity: 1;
+    translate: none;
+  }
+}
+
+/*
+ * 홈 히어로 패럴랙스 (`app/(home)/_components/hero-parallax.tsx`).
+ *
+ * framer-motion `useScroll` + `useTransform` 을 대체한다. 스크롤 진행도는
+ * 클라이언트 아일랜드가 rAF 로 --hero-progress (0~1) 에만 써 넣고, 실제 이동량
+ * 계산과 페인팅은 CSS 가 한다. 감소 모드에서는 아일랜드가 리스너를 걸지 않고
+ * 아래 규칙이 이동을 0 으로 못 박는다.
+ */
+.hero-parallax-text {
+  translate: 0 calc(var(--hero-progress, 0) * -80px);
+}
+
+.hero-parallax-image {
+  translate: 0 calc(var(--hero-progress, 0) * 110px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-parallax-text,
+  .hero-parallax-image {
+    translate: none;
+  }
+}
+
+/*
+ * 히어로 카드 호버 리프트.
+ * framer 의 spring(stiffness 260, damping 20)을 살짝 오버슈트하는
+ * cubic-bezier 로 재현한다. 터치 기기의 sticky hover 를 피하려고
+ * hover: hover 로 가둔다 — framer 의 whileHover 도 마우스에서만 걸렸다.
+ */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .hero-lift {
+    transition:
+      translate 340ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      scale 340ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .hero-lift-card:hover .hero-lift {
+    translate: 0 -4px;
+    scale: 1.01;
+  }
+
+  .hero-lift-tile {
+    transition: translate 340ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .hero-lift-tile:hover {
+    translate: 0 -4px;
+  }
+}
+
+/*
+ * 오버레이 공통 등장/퇴장 (`shared/react/use-mount-transition.ts`).
+ *
+ * AnimatePresence 를 대체한다. 훅이 data-state 를 entering → open → closing 으로
+ * 옮기고, 퇴장 시간이 지난 뒤에야 언마운트하므로 나가는 애니메이션이 보인다.
+ */
+/*
+ * 헤더 로고 — 테마별로 다른 파일을 CSS 가 고른다 (`site-header.tsx` 주석 참고).
+ * 이미지 두 장을 DOM 에 두면 감춰진 쪽까지 받아 가지만, 배경 이미지는 실제로
+ * 매칭된 규칙의 것만 받는다. `.dark` 는 theme-init.js 가 첫 페인트 전에 붙인다.
+ *
+ * 로고 원본은 정사각(192px)이라 aspect-ratio 1 로 폭을 잡는다 —
+ * 예전 `<Image width={40} height={40} className="h-full w-auto">` 와 같은 기하다.
+ */
+.public-header-logo {
+  aspect-ratio: 1;
+  background-image: url("/yonyoung-logo-black.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.dark .public-header-logo {
+  background-image: url("/yonyong-logo-white.png");
+}
+
+/*
+ * 스크롤된 헤더의 테두리·그림자.
+ * `site-header-scroll-state.tsx` 가 `<html>` 에 붙이는 속성 하나로만 바뀌므로
+ * 스크롤 중 React 리렌더가 일어나지 않는다.
+ */
+html[data-public-scrolled] .public-header {
+  border-bottom-color: var(--surface-border);
+  box-shadow: 0 2px 10px var(--shadow-strong);
+}
+
+/*
+ * 모바일 메뉴 등장/퇴장 (`site-header-mobile-nav.tsx`).
+ * framer 시절 값 그대로: 배경 0.2s 페이드, 패널은 -20px 에서 스프링으로 내려온다.
+ * 스프링(stiffness 360, damping 30, mass 0.62)은 약간 오버슈트하는
+ * cubic-bezier 로 재현한다.
+ */
+.public-mobile-nav-backdrop {
+  opacity: 1;
+  transition: opacity 200ms ease-out;
+}
+
+.public-mobile-nav-backdrop[data-state="entering"] {
+  opacity: 0;
+}
+
+.public-mobile-nav-backdrop[data-state="closing"] {
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+}
+
+.public-mobile-nav-panel {
+  opacity: 1;
+  translate: 0 0;
+  transition:
+    opacity 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    translate 380ms cubic-bezier(0.2, 1.25, 0.4, 1);
+}
+
+.public-mobile-nav-panel[data-state="entering"] {
+  opacity: 0;
+  translate: 0 -20px;
+}
+
+.public-mobile-nav-panel[data-state="closing"] {
+  opacity: 0;
+  translate: 0 -20px;
+  transition:
+    opacity 200ms ease-out,
+    translate 200ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-mobile-nav-backdrop,
+  .public-mobile-nav-panel {
+    transition: none;
+  }
+
+  .public-mobile-nav-panel[data-state="entering"] {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+/*
+ * 사진가 상세 모달 등장/퇴장 (`about/photographers/generation-members-grid.tsx`).
+ * framer 시절 값: 배경 0.24s 페이드, 카드는 y 28px·scale 0.96 에서 스프링으로 올라오고
+ * 퇴장은 y 16px·scale 0.98.
+ */
+.photographer-modal-overlay {
+  opacity: 1;
+  transition: opacity 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.photographer-modal-overlay[data-state="entering"],
+.photographer-modal-overlay[data-state="closing"] {
+  opacity: 0;
+}
+
+.photographer-modal-card {
+  opacity: 1;
+  translate: 0 0;
+  scale: 1;
+  transition:
+    opacity 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    translate 380ms cubic-bezier(0.2, 1.2, 0.4, 1),
+    scale 380ms cubic-bezier(0.2, 1.2, 0.4, 1);
+}
+
+.photographer-modal-card[data-state="entering"] {
+  opacity: 0;
+  translate: 0 28px;
+  scale: 0.96;
+}
+
+.photographer-modal-card[data-state="closing"] {
+  opacity: 0;
+  translate: 0 16px;
+  scale: 0.98;
+  transition:
+    opacity 200ms ease-out,
+    translate 200ms ease-out,
+    scale 200ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photographer-modal-overlay,
+  .photographer-modal-card {
+    transition: none;
+  }
+
+  .photographer-modal-card[data-state="entering"] {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+[data-overlay-fade] {
+  opacity: 1;
+  transition: opacity 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-overlay-fade][data-state="entering"],
+[data-overlay-fade][data-state="closing"] {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-overlay-fade] {
+    transition: none;
+  }
+}
+
 .exhibition-description,
 .record-description {
   color: var(--text-secondary);

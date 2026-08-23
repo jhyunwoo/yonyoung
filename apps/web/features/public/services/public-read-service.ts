@@ -25,7 +25,7 @@ import type {
 } from "@yonyoung/contracts";
 import { DEFAULT_SITE_SETTINGS } from "@yonyoung/contracts";
 import { HonoApiError, honoRequest } from "@/server/http/hono-client";
-import { CACHE_TAGS } from "@/server/cache/tags";
+import { CACHE_TAGS, publicActivityTag, publicExhibitionTag } from "@/server/cache/tags";
 import { logger } from "@/server/observability/logger";
 import { pickFeaturedPublicExhibition } from "@/features/public/model/public-exhibition";
 
@@ -100,11 +100,18 @@ export const listPublicActivities = async (): Promise<ApiActivity[]> => {
   });
 };
 
+/**
+ * 활동 하나의 상세.
+ *
+ * 컬렉션 태그(`public:activities`)를 붙이지 않고 엔티티 태그만 붙인다. 활동 A 를
+ * 고쳤을 때 B·C·D 의 상세 캐시까지 버리지 않기 위해서다 — 자세한 근거와, 이를
+ * 고정하는 테스트는 `server/cache/tags.ts` 주석 참고.
+ */
 export const getPublicActivityById = async (id: string): Promise<ApiActivity> => {
   "use cache";
 
   cacheLife(ARCHIVE_CACHE_PROFILE);
-  cacheTag(PUBLIC_CACHE_TAGS.activities);
+  cacheTag(publicActivityTag(id));
 
   return readPublic<ApiActivity>(`/api/public/activities/${id}`, apiActivitySchema);
 };
@@ -123,11 +130,12 @@ export const listPublicExhibitions = async (): Promise<ApiExhibition[]> => {
   });
 };
 
+/** 전시 하나의 상세. 활동 상세와 같은 이유로 엔티티 태그만 붙인다. */
 export const getPublicExhibitionById = async (id: string): Promise<ApiExhibition> => {
   "use cache";
 
   cacheLife(ARCHIVE_CACHE_PROFILE);
-  cacheTag(PUBLIC_CACHE_TAGS.exhibitions);
+  cacheTag(publicExhibitionTag(id));
 
   return readPublic<ApiExhibition>(`/api/public/exhibitions/${id}`, apiExhibitionSchema);
 };

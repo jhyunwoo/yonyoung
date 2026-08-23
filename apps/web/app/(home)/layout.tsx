@@ -8,6 +8,7 @@ import PublicHeaderSafeArea from "@/app/(home)/_components/public-header-safe-ar
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
 import { WebVitalsReporter } from "@/app/_components/web-vitals-reporter";
+import RevealObserver from "@/app/(home)/_components/reveal-observer";
 
 const ROOT_FONT_FAMILY =
   '"Pretendard Variable", "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
@@ -53,19 +54,18 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <WebVitalsReporter />
         </Suspense>
-        <Suspense
-          fallback={
-            <div
-              className="h-(--public-header-height-mobile) md:h-(--public-header-height-desktop)"
-              aria-hidden="true"
-            />
-          }
-        >
-          <SiteHeader />
-        </Suspense>
+        {/*
+          예전에는 헤더 파일 전체가 클라이언트 컴포넌트라 여기서 Suspense 로 감싸고
+          빈 자리표시자를 폴백으로 줬다. 그래서 App Shell 에 헤더가 아예 없었다.
+          지금은 SiteHeader 가 서버 컴포넌트라 프레임과 로고가 셸에 그대로 들어가고,
+          경계는 경로에 의존하는 내비 아일랜드에만 남아 있다(site-header.tsx 참고).
+        */}
+        <SiteHeader />
         <main>
           <PublicHeaderSafeArea>{children}</PublicHeaderSafeArea>
         </main>
+        {/* 등장 애니메이션 트리거 — 공개 라우트 전체에서 옵저버는 이 하나뿐이다. */}
+        <RevealObserver />
         <Suspense fallback={null}>
           <SiteFooter />
         </Suspense>

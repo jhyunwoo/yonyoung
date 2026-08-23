@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
-import MotionReveal from "@/app/(home)/_components/motion-reveal";
+import Reveal from "@/app/(home)/_components/reveal";
 import SectionShell from "@/app/(home)/_components/section-shell";
 import HeroShowcase from "@/app/(home)/_components/hero-showcase";
 import PageViewTracker from "@/app/_components/page-view-tracker";
@@ -52,7 +52,7 @@ const HomeQuickLinksSection = async () => {
           </div>
         ) : (
           quickLinks.map((item, index) => (
-            <MotionReveal key={item.id} delay={index * 0.04} className="min-w-0 h-full">
+            <Reveal key={item.id} delay={index * 0.04} className="min-w-0 h-full">
               <a
                 href={item.link}
                 target="_blank"
@@ -70,12 +70,12 @@ const HomeQuickLinksSection = async () => {
                 </p>
                 <p className="mt-1 truncate text-xs text-(--text-muted)">{item.link}</p>
               </a>
-            </MotionReveal>
+            </Reveal>
           ))
         )}
       </div>
 
-      <MotionReveal className="mt-8">
+      <Reveal className="mt-8">
         <div className="border border-(--surface-strong-border) bg-(--surface-elevated) p-6 text-center">
           <p className="text-sm text-(--text-muted)">
             연영회의 더 많은 전시와 활동을 아카이브에서 확인해보세요.
@@ -88,10 +88,20 @@ const HomeQuickLinksSection = async () => {
             아카이브 보러가기
           </Link>
         </div>
-      </MotionReveal>
+      </Reveal>
     </SectionShell>
   );
 };
+
+/**
+ * Instant Navigation 계약 (Next.js 16.3).
+ *
+ * 이 라우트로 이동할 때 요청 시점 작업을 기다리지 않고 곧바로 의미 있는 UI 가
+ * 나와야 한다는 선언이다. 빌드가 이를 검증하므로, 나중에 누군가 이 트리 위쪽에서
+ * `cookies()` · `headers()` · `await params` · 캐시되지 않은 fetch 를 하면 빌드가
+ * 깨진다 — 성능 회귀가 리뷰가 아니라 CI 에서 잡힌다.
+ */
+export const instant = true;
 
 export default async function HomePage() {
   const [activities, featuredExhibition] = await getHomePrimaryData();
@@ -158,7 +168,7 @@ export default async function HomePage() {
             </div>
           ) : (
             recentActivities.map((activity, index) => (
-              <MotionReveal key={activity.id} delay={index * 0.04} className="h-full">
+              <Reveal key={activity.id} delay={index * 0.04} className="h-full">
                 <Link
                   href={`/archive/records/${activity.id}`}
                   className="group flex flex-col h-full overflow-hidden border border-(--surface-strong-border) bg-(--surface-elevated) transition-transform duration-300 hover:scale-[1.03]"
@@ -187,7 +197,7 @@ export default async function HomePage() {
                     </p>
                   </div>
                 </Link>
-              </MotionReveal>
+              </Reveal>
             ))
           )}
         </div>

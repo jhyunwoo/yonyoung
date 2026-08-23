@@ -1,25 +1,6 @@
-import { createElement, type ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-
-vi.mock("framer-motion", () => {
-  const motionProxy = new Proxy(
-    {},
-    {
-      get: (_target, tagName: string) => {
-        return ({ children, ...props }: Record<string, unknown>) =>
-          createElement(tagName, props, children);
-      },
-    },
-  );
-
-  return {
-    AnimatePresence: ({ children }: { children: ReactNode }) => children,
-    motion: motionProxy,
-    useReducedMotion: () => true,
-  };
-});
 
 import {
   PhotoGallery,
@@ -158,7 +139,8 @@ describe("PhotoGallery 라이트박스", () => {
     await user.click(screen.getByTestId("gallery-photo-button-with-dimensions"));
     await user.click(screen.getByTestId("gallery-lightbox-close"));
 
-    expect(screen.queryByTestId("gallery-lightbox")).toBeNull();
+    // 퇴장 애니메이션(CSS 전환) 동안에는 DOM 에 남아 있다가 사라진다.
+    await waitFor(() => expect(screen.queryByTestId("gallery-lightbox")).toBeNull());
   });
 
   it("사진 밖 어두운 영역을 클릭하면 닫힌다", async () => {
@@ -168,7 +150,7 @@ describe("PhotoGallery 라이트박스", () => {
     await user.click(screen.getByTestId("gallery-photo-button-with-dimensions"));
     await user.click(screen.getByTestId("gallery-lightbox-backdrop"));
 
-    expect(screen.queryByTestId("gallery-lightbox")).toBeNull();
+    await waitFor(() => expect(screen.queryByTestId("gallery-lightbox")).toBeNull());
   });
 
   it("Escape 키로 닫힌다", async () => {
@@ -178,7 +160,7 @@ describe("PhotoGallery 라이트박스", () => {
     await user.click(screen.getByTestId("gallery-photo-button-with-dimensions"));
     fireEvent.keyDown(window, { key: "Escape" });
 
-    expect(screen.queryByTestId("gallery-lightbox")).toBeNull();
+    await waitFor(() => expect(screen.queryByTestId("gallery-lightbox")).toBeNull());
   });
 
   it("사진이 한 장뿐이면 좌우 이동 버튼과 카운터를 렌더링하지 않는다", async () => {
@@ -240,7 +222,7 @@ describe("PhotoGallery 라이트박스", () => {
     expect(document.body.style.overflow).toBe("hidden");
 
     await user.click(screen.getByTestId("gallery-lightbox-close"));
-    expect(document.body.style.overflow).not.toBe("hidden");
+    await waitFor(() => expect(document.body.style.overflow).not.toBe("hidden"));
   });
 });
 

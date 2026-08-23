@@ -769,24 +769,27 @@ inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold
 
 ### 표준 값
 
-| 상황                         | 값                                                                 |
-| ---------------------------- | ------------------------------------------------------------------ |
-| 스크롤 등장 (`MotionReveal`) | `opacity 0→1`, `y 18→0`, `duration 0.6`, `ease [0.22, 1, 0.36, 1]` |
-| 등장 뷰포트                  | `{ once: true, margin: "-10% 0px" }` — **한 번만 재생**            |
-| 목록 스태거                  | `delay = index * 0.04`                                             |
-| CSS 전환 (기본)              | `transition duration-300`                                          |
-| CSS 전환 (색상)              | `transition-colors duration-200`                                   |
-| 카드 hover 스프링            | `{ type: "spring", damping: 20, stiffness: 260 }`                  |
-| 모바일 메뉴 스프링           | `{ type: "spring", stiffness: 360, damping: 30, mass: 0.62 }`      |
-| 라이트박스 페이드            | `duration 0.2`, `ease [0.22, 1, 0.36, 1]`                          |
-| 히어로 패럴랙스              | 텍스트 `y 0→-80`, 이미지 `y 0→110` (스크롤 진행률 연동)            |
+| 상황                   | 값                                                                 |
+| ---------------------- | ------------------------------------------------------------------ |
+| 스크롤 등장 (`Reveal`) | `opacity 0→1`, `y 18→0`, `duration 0.6`, `ease [0.22, 1, 0.36, 1]` |
+| 등장 뷰포트            | `{ once: true, margin: "-10% 0px" }` — **한 번만 재생**            |
+| 목록 스태거            | `delay = index * 0.04`                                             |
+| CSS 전환 (기본)        | `transition duration-300`                                          |
+| CSS 전환 (색상)        | `transition-colors duration-200`                                   |
+| 카드 hover 스프링      | `{ type: "spring", damping: 20, stiffness: 260 }`                  |
+| 모바일 메뉴 스프링     | `{ type: "spring", stiffness: 360, damping: 30, mass: 0.62 }`      |
+| 라이트박스 페이드      | `duration 0.2`, `ease [0.22, 1, 0.36, 1]`                          |
+| 히어로 패럴랙스        | 텍스트 `y 0→-80`, 이미지 `y 0→110` (스크롤 진행률 연동)            |
 
 ### 규칙
 
-1. **`useReducedMotion` 게이트는 의무다.** 예외 없음. `MotionReveal`은 아예 일반 `<div>`로 폴백하고, 패럴랙스는 `style={undefined}`로 끈다.
+1. **감소 모드 게이트는 의무다.** 예외 없음. 등장/패럴랙스/호버 리프트는 전부 `@media (prefers-reduced-motion: ...)` 안에서만 정의하고, 감소 모드에서는 콘텐츠가 처음부터 최종 위치에 보인다.
 2. 스크롤 등장은 **`once: true`** — 스크롤을 되돌릴 때 다시 재생하지 않는다.
 3. hover 이동량은 작게: `scale-[1.03]` 또는 `-translate-y-[2px]`~`[5px]`.
 4. **`scroll-behavior: smooth`**가 `html`에 전역 적용되어 있다.
+5. **공개 라우트에서 framer-motion 을 쓰지 않는다.** 위 값들은 전부 `globals.css` 의
+   CSS 전환과 아일랜드 두 개(`RevealObserver`, `HeroParallax`)로 구현돼 있다. 라이브러리를
+   다시 들이면 공개 번들이 gzip 43KB 늘어난다 — `docs/performance-architecture.md` 참고.
 
 > ⚠️ hover 효과가 현재 페이지마다 다르다(`scale-[1.03]` / `scale-[1.02]` / `-translate-y-[5px]` / `-translate-y-[2px]`). 신규 코드는 **미디어 카드 = `hover:scale-[1.03]`**, **목록 행 = `hover:-translate-y-[2px]`** 두 가지만 쓴다.
 

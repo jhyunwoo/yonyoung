@@ -19,6 +19,21 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * Instant Navigation 예외 — 의도적으로 블로킹하는 라우트다.
+ *
+ * 이 페이지에는 셸로 내보낼 수 있는 것이 없다. 화면의 모든 요소가 세션에 의존하고
+ * (역할·프로필 완성 여부·이메일), 애초에 이 라우트의 일은 "사용자를 어디로 보낼지
+ * 정하는 것"이라 판단 전에 무언가를 그리는 것 자체가 의미가 없다. 승인 대기 화면을
+ * 먼저 보여 준 뒤 프로필 작성으로 튕겨내는 것보다, 잠깐 기다렸다가 맞는 곳으로
+ * 보내는 편이 낫다.
+ *
+ * 예전에는 라우트 그룹 공용 `loading.tsx`(홈 모양 스켈레톤)가 이 요구를 조용히
+ * 만족시키고 있었다 — 승인 대기 페이지 자리에 홈 히어로 스켈레톤이 떴다는 뜻이다.
+ * 그 파일을 없애면서 이 라우트가 블로킹이라는 사실이 드러났고, 감추는 대신 선언한다.
+ */
+export const instant = false;
+
 export default async function PendingApprovalPage() {
   const session = await serverAuthGuard.requireSession();
   const profile = await serverAuthGuard.getCurrentUserProfile(session);

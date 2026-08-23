@@ -2,14 +2,17 @@
 
 import { useResetOnChange } from "@/shared/react/use-reset-on-change";
 import type { ApiPublicGenerationWithMembers } from "@yonyoung/contracts";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
+import { useMountTransition } from "@/shared/react/use-mount-transition";
 import {
   buildMemberDisplayInitial,
   buildMemberDisplayName,
 } from "@/features/dashboard/members/display-name";
 import { buildMemberRoleLabel } from "@/features/dashboard/members/member-role-label";
+
+/** 모달 퇴장 시간 — globals.css 의 `.photographer-modal-*` 전환과 같아야 한다. */
+const MODAL_EXIT_MS = 200;
 
 type GenerationMembersGridProps = {
   generation: Pick<
@@ -21,8 +24,9 @@ type GenerationMembersGridProps = {
 export default function GenerationMembersGrid({
   generation,
 }: GenerationMembersGridProps) {
+  // 닫아도 id 는 지우지 않는다 — 퇴장 애니메이션 동안 같은 멤버가 그대로 보여야 한다.
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
-  const shouldReduceMotion = useReducedMotion();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const selectedMember = useMemo(() => {
     if (!selectedMemberId) {
@@ -31,11 +35,19 @@ export default function GenerationMembersGrid({
     return generation.members.find((member) => member.id === selectedMemberId) ?? null;
   }, [generation.members, selectedMemberId]);
 
+  // 닫히는 동안에도 마운트를 유지해 퇴장 애니메이션이 보이게 한다(AnimatePresence 대체).
+  const isModalVisible = isModalOpen && selectedMember !== null;
+  const { isMounted: isModalMounted, state: modalState } = useMountTransition(
+    isModalVisible,
+    MODAL_EXIT_MS,
+  );
+  const displayedMember = selectedMember;
+
   // 다른 기수를 보여 주기 시작하면 열려 있던 멤버 상세를 닫는다.
-  useResetOnChange(generation.id, () => setSelectedMemberId(null));
+  useResetOnChange(generation.id, () => setIsModalOpen(false));
 
   useEffect(() => {
-    if (!selectedMember) {
+    if (!isModalVisible) {
       return;
     }
 
@@ -44,7 +56,7 @@ export default function GenerationMembersGrid({
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setSelectedMemberId(null);
+        setIsModalOpen(false);
       }
     };
 
@@ -53,14 +65,14 @@ export default function GenerationMembersGrid({
       document.body.style.overflow = originalOverflow;
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [selectedMember]);
+  }, [isModalVisible]);
 
   const closeModal = () => {
-    setSelectedMemberId(null);
+    setIsModalOpen(false);
   };
 
-  const selectedMemberDisplayName = selectedMember
-    ? buildMemberDisplayName(selectedMember)
+  const selectedMemberDisplayName = displayedMember
+    ? buildMemberDisplayName(displayedMember)
     : "이름 미등록";
   const generationDisplayName = (() => {
     const trimmedName = generation.name.trim();
@@ -71,13 +83,13 @@ export default function GenerationMembersGrid({
     }
     return trimmedName;
   })();
-  const selectedMemberRoleLabel = selectedMember
-    ? buildMemberRoleLabel(selectedMember.role)
+  const selectedMemberRoleLabel = displayedMember
+    ? buildMemberRoleLabel(displayedMember.role)
     : "역할 미지정";
-  const selectedMemberPersonalLink = selectedMember?.personalLink?.trim().length
-    ? selectedMember.personalLink.trim()
+  const selectedMemberPersonalLink = displayedMember?.personalLink?.trim().length
+    ? displayedMember.personalLink.trim()
     : null;
-  const collaborationStatus = selectedMember?.collaborationAvailable
+  const collaborationStatus = displayedMember?.collaborationAvailable
     ? {
         label: "가능",
         badgeClassName: "border-emerald-200 bg-emerald-50 text-emerald-700",
@@ -101,7 +113,10 @@ export default function GenerationMembersGrid({
                 type="button"
                 className="flex w-full flex-col items-center gap-2 text-center"
                 aria-label={`${displayName} 상세 정보 보기`}
-                onClick={() => setSelectedMemberId(member.id)}
+                onClick={() => {
+                  setSelectedMemberId(member.id);
+                  setIsModalOpen(true);
+                }}
                 data-testid={`about-photographers-member-button-${member.id}`}
               >
                 <div
@@ -137,154 +152,131 @@ export default function GenerationMembersGrid({
         })}
       </ul>
 
-      <AnimatePresence>
-        {selectedMember ? (
-          <motion.div
-            className="fixed inset-0 z-[1100] flex items-end justify-center bg-black/60 px-3 py-3 backdrop-blur-sm sm:items-center sm:px-4 sm:py-8"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="about-photographers-member-modal-title"
-            data-testid="about-photographers-member-modal"
-            initial={shouldReduceMotion ? false : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={
-              shouldReduceMotion
-                ? { duration: 0 }
-                : { duration: 0.24, ease: [0.22, 1, 0.36, 1] }
-            }
+      {isModalMounted && displayedMember ? (
+        <div
+          className="photographer-modal-overlay fixed inset-0 z-[1100] flex items-end justify-center bg-black/60 px-3 py-3 backdrop-blur-sm sm:items-center sm:px-4 sm:py-8"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="about-photographers-member-modal-title"
+          data-testid="about-photographers-member-modal"
+          data-state={modalState}
+        >
+          <button
+            type="button"
+            data-testid="about-photographers-member-modal-close-overlay"
+            className="absolute inset-0"
+            onClick={closeModal}
+            aria-label="사용자 정보 모달 닫기"
+          />
+          <div
+            className="photographer-modal-card relative z-10 flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[620px] flex-col overflow-hidden rounded-2xl border border-(--surface-border) bg-(--surface-elevated) shadow-[0_30px_80px_rgba(8,10,19,0.34)] ring-1 ring-black/5 will-change-transform sm:max-h-[calc(100dvh-4rem)]"
+            data-testid="about-photographers-member-modal-card"
+            data-state={modalState}
           >
-            <button
-              type="button"
-              data-testid="about-photographers-member-modal-close-overlay"
-              className="absolute inset-0"
-              onClick={closeModal}
-              aria-label="사용자 정보 모달 닫기"
+            <div
+              className="pointer-events-none absolute inset-x-16 top-2 -z-10 h-12 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(122,132,148,0.2),rgba(122,132,148,0))] blur-xl"
+              aria-hidden="true"
             />
-            <motion.div
-              className="relative z-10 flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[620px] flex-col overflow-hidden rounded-2xl border border-(--surface-border) bg-(--surface-elevated) shadow-[0_30px_80px_rgba(8,10,19,0.34)] ring-1 ring-black/5 will-change-transform sm:max-h-[calc(100dvh-4rem)]"
-              data-testid="about-photographers-member-modal-card"
-              initial={shouldReduceMotion ? false : { opacity: 0, y: 28, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={
-                shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.98 }
-              }
-              transition={
-                shouldReduceMotion
-                  ? { duration: 0 }
-                  : {
-                      type: "spring",
-                      stiffness: 360,
-                      damping: 30,
-                      mass: 0.82,
-                    }
-              }
+            <div className="flex shrink-0 justify-center bg-(--surface-muted) px-6 pt-8 pb-2">
+              <div className="relative aspect-square w-40 overflow-hidden rounded-2xl border border-(--surface-border) bg-(--surface-border) md:w-56">
+                {displayedMember.image ? (
+                  <Image
+                    src={displayedMember.image}
+                    alt={`${selectedMemberDisplayName} 프로필`}
+                    fill
+                    unoptimized
+                    sizes="(min-width: 768px) 224px, 160px"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-5xl font-semibold text-(--text-muted)">
+                    {buildMemberDisplayInitial(selectedMemberDisplayName)}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div
+              className="overflow-y-auto overscroll-contain p-5 sm:p-6 md:p-8"
+              data-testid="about-photographers-member-modal-content"
             >
-              <div
-                className="pointer-events-none absolute inset-x-16 top-2 -z-10 h-12 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(122,132,148,0.2),rgba(122,132,148,0))] blur-xl"
-                aria-hidden="true"
-              />
-              <div className="flex shrink-0 justify-center bg-(--surface-muted) px-6 pt-8 pb-2">
-                <div className="relative aspect-square w-40 overflow-hidden rounded-2xl border border-(--surface-border) bg-(--surface-border) md:w-56">
-                  {selectedMember.image ? (
-                    <Image
-                      src={selectedMember.image}
-                      alt={`${selectedMemberDisplayName} 프로필`}
-                      fill
-                      unoptimized
-                      sizes="(min-width: 768px) 224px, 160px"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-5xl font-semibold text-(--text-muted)">
-                      {buildMemberDisplayInitial(selectedMemberDisplayName)}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div
-                className="overflow-y-auto overscroll-contain p-5 sm:p-6 md:p-8"
-                data-testid="about-photographers-member-modal-content"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h3
-                      id="about-photographers-member-modal-title"
-                      className="text-xl font-semibold text-(--text-primary) sm:text-2xl"
-                    >
-                      {selectedMemberDisplayName}
-                    </h3>
-                    <p className="mt-2 text-base text-(--text-secondary) sm:text-xl">
-                      {generationDisplayName} · {selectedMemberRoleLabel}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="rounded-lg border border-(--surface-border) px-3 py-1.5 text-sm text-(--text-primary)"
-                    onClick={closeModal}
-                    data-testid="about-photographers-member-modal-close"
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3
+                    id="about-photographers-member-modal-title"
+                    className="text-xl font-semibold text-(--text-primary) sm:text-2xl"
                   >
-                    닫기
-                  </button>
+                    {selectedMemberDisplayName}
+                  </h3>
+                  <p className="mt-2 text-base text-(--text-secondary) sm:text-xl">
+                    {generationDisplayName} · {selectedMemberRoleLabel}
+                  </p>
                 </div>
-
-                <dl className="mt-8 border-t border-(--surface-border) text-sm">
-                  <div className="flex items-center justify-between gap-3 border-b border-(--surface-border) py-4">
-                    <dt className="text-(--text-muted)">기수</dt>
-                    <dd className="font-medium text-(--text-primary)">
-                      {generationDisplayName}
-                    </dd>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 border-b border-(--surface-border) py-4">
-                    <dt className="text-(--text-muted)">역할</dt>
-                    <dd className="font-medium text-(--text-primary)">
-                      {selectedMemberRoleLabel}
-                    </dd>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 border-b border-(--surface-border) py-4">
-                    <dt className="text-(--text-muted)">협업 가능 여부</dt>
-                    <dd className="font-medium text-(--text-primary)">
-                      <span
-                        className={[
-                          "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold",
-                          collaborationStatus.badgeClassName,
-                        ]
-                          .join(" ")
-                          .trim()}
-                        data-testid="about-photographers-member-collaboration-status"
-                      >
-                        <span
-                          className={`h-1.5 w-1.5 rounded-full ${collaborationStatus.dotClassName}`}
-                          aria-hidden="true"
-                        />
-                        {collaborationStatus.label}
-                      </span>
-                    </dd>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 border-b border-(--surface-border) py-4">
-                    <dt className="text-(--text-muted)">개인 링크</dt>
-                    <dd className="font-medium text-(--text-primary)">
-                      {selectedMemberPersonalLink ? (
-                        <a
-                          href={selectedMemberPersonalLink}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-(--text-primary) underline underline-offset-2"
-                        >
-                          바로가기
-                        </a>
-                      ) : (
-                        "미등록"
-                      )}
-                    </dd>
-                  </div>
-                </dl>
+                <button
+                  type="button"
+                  className="rounded-lg border border-(--surface-border) px-3 py-1.5 text-sm text-(--text-primary)"
+                  onClick={closeModal}
+                  data-testid="about-photographers-member-modal-close"
+                >
+                  닫기
+                </button>
               </div>
-            </motion.div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+
+              <dl className="mt-8 border-t border-(--surface-border) text-sm">
+                <div className="flex items-center justify-between gap-3 border-b border-(--surface-border) py-4">
+                  <dt className="text-(--text-muted)">기수</dt>
+                  <dd className="font-medium text-(--text-primary)">
+                    {generationDisplayName}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-3 border-b border-(--surface-border) py-4">
+                  <dt className="text-(--text-muted)">역할</dt>
+                  <dd className="font-medium text-(--text-primary)">
+                    {selectedMemberRoleLabel}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-3 border-b border-(--surface-border) py-4">
+                  <dt className="text-(--text-muted)">협업 가능 여부</dt>
+                  <dd className="font-medium text-(--text-primary)">
+                    <span
+                      className={[
+                        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold",
+                        collaborationStatus.badgeClassName,
+                      ]
+                        .join(" ")
+                        .trim()}
+                      data-testid="about-photographers-member-collaboration-status"
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${collaborationStatus.dotClassName}`}
+                        aria-hidden="true"
+                      />
+                      {collaborationStatus.label}
+                    </span>
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-3 border-b border-(--surface-border) py-4">
+                  <dt className="text-(--text-muted)">개인 링크</dt>
+                  <dd className="font-medium text-(--text-primary)">
+                    {selectedMemberPersonalLink ? (
+                      <a
+                        href={selectedMemberPersonalLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-(--text-primary) underline underline-offset-2"
+                      >
+                        바로가기
+                      </a>
+                    ) : (
+                      "미등록"
+                    )}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

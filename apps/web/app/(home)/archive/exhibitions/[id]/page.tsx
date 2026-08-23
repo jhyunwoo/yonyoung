@@ -200,6 +200,16 @@ async function ExhibitionDetailContent({ params }: ExhibitionDetailPageProps) {
   );
 }
 
+/**
+ * Instant Navigation 계약 (Next.js 16.3).
+ *
+ * 이 라우트로 이동할 때 요청 시점 작업을 기다리지 않고 곧바로 의미 있는 UI 가
+ * 나와야 한다는 선언이다. 빌드가 이를 검증하므로, 나중에 누군가 이 트리 위쪽에서
+ * `cookies()` · `headers()` · `await params` · 캐시되지 않은 fetch 를 하면 빌드가
+ * 깨진다 — 성능 회귀가 리뷰가 아니라 CI 에서 잡힌다.
+ */
+export const instant = true;
+
 export default function ExhibitionDetailPage({ params }: ExhibitionDetailPageProps) {
   return (
     <div className="min-h-screen bg-(--bg-primary) pb-9 pt-3 md:pb-12 md:pt-4">

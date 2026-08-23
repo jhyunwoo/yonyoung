@@ -6,7 +6,7 @@ import {
   writeRequest,
   type AdminWriteActionResult,
 } from "@/features/dashboard/actions/admin-write-core";
-import { CACHE_TAGS } from "@/server/cache/tags";
+import { CACHE_TAGS, publicExhibitionTag } from "@/server/cache/tags";
 import {
   apiCreateExhibitionImageInputSchema,
   apiCreateExhibitionInputSchema,
@@ -26,10 +26,18 @@ import type {
   ApiUpdateExhibitionInput,
 } from "@yonyoung/contracts";
 
-const EXHIBITION_CACHE_TAGS = [
+/** 목록(과 홈 히어로의 노출 전시 선택)에 영향을 주는 태그. */
+const EXHIBITION_COLLECTION_TAGS = [
   CACHE_TAGS.admin.exhibitions,
   CACHE_TAGS.public.exhibitions,
 ] as const;
+
+/**
+ * 전시 하나를 건드리는 쓰기의 무효화 집합 = 목록 + 그 전시의 상세.
+ * 근거는 `activities.ts` 의 `activityTags` 와 같다.
+ */
+const exhibitionTags = (id: string) =>
+  [...EXHIBITION_COLLECTION_TAGS, publicExhibitionTag(id)] as const;
 
 export const createExhibitionAction = async (
   input: ApiCreateExhibitionInput,
@@ -41,7 +49,7 @@ export const createExhibitionAction = async (
     body: payload,
     responseSchema: apiExhibitionSchema,
     accessScope: "manager",
-    tags: EXHIBITION_CACHE_TAGS,
+    tags: EXHIBITION_COLLECTION_TAGS,
   });
 };
 
@@ -56,7 +64,7 @@ export const updateExhibitionAction = async (
     body: payload,
     responseSchema: apiExhibitionSchema,
     accessScope: "manager",
-    tags: EXHIBITION_CACHE_TAGS,
+    tags: exhibitionTags(id),
   });
 };
 
@@ -68,7 +76,7 @@ export const deleteExhibitionAction = async (
     method: "DELETE",
     responseSchema: readNoContentSchema,
     accessScope: "leadership",
-    tags: EXHIBITION_CACHE_TAGS,
+    tags: exhibitionTags(id),
   });
 };
 
@@ -83,7 +91,7 @@ export const addExhibitionImageAction = async (
     body: payload,
     responseSchema: apiExhibitionImageSchema,
     accessScope: "manager",
-    tags: EXHIBITION_CACHE_TAGS,
+    tags: exhibitionTags(id),
   });
 };
 
@@ -98,7 +106,7 @@ export const addExhibitionImagesAction = async (
     body: payload,
     responseSchema: z.array(apiExhibitionImageSchema),
     accessScope: "manager",
-    tags: EXHIBITION_CACHE_TAGS,
+    tags: exhibitionTags(id),
   });
 };
 
@@ -114,7 +122,7 @@ export const updateExhibitionImageAction = async (
     body: payload,
     responseSchema: apiExhibitionImageSchema,
     accessScope: "manager",
-    tags: EXHIBITION_CACHE_TAGS,
+    tags: exhibitionTags(id),
   });
 };
 
@@ -129,7 +137,7 @@ export const updateExhibitionImagesAction = async (
     body: payload,
     responseSchema: z.array(apiExhibitionImageSchema),
     accessScope: "manager",
-    tags: EXHIBITION_CACHE_TAGS,
+    tags: exhibitionTags(id),
   });
 };
 
@@ -142,6 +150,6 @@ export const deleteExhibitionImageAction = async (
     method: "DELETE",
     responseSchema: readNoContentSchema,
     accessScope: "manager",
-    tags: EXHIBITION_CACHE_TAGS,
+    tags: exhibitionTags(id),
   });
 };

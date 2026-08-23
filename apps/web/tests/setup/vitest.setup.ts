@@ -55,6 +55,37 @@ if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
   });
 }
 
+/*
+  jsdom 은 IntersectionObserver 를 구현하지 않는다. 공개 헤더의 스크롤 상태와
+  등장 애니메이션 옵저버가 이걸 쓰므로, 관찰만 받아 두고 아무것도 통지하지 않는
+  최소 스텁을 둔다(초기 상태 = 관찰 콜백 미호출 = 스크롤 안 됨/미노출).
+*/
+if (typeof window !== "undefined" && typeof window.IntersectionObserver !== "function") {
+  class IntersectionObserverStub implements IntersectionObserver {
+    readonly root: Element | Document | null = null;
+    readonly rootMargin: string = "0px";
+    readonly thresholds: ReadonlyArray<number> = [0];
+    constructor() {}
+    disconnect(): void {}
+    observe(): void {}
+    unobserve(): void {}
+    takeRecords(): IntersectionObserverEntry[] {
+      return [];
+    }
+  }
+
+  Object.defineProperty(window, "IntersectionObserver", {
+    configurable: true,
+    writable: true,
+    value: IntersectionObserverStub,
+  });
+  Object.defineProperty(globalThis, "IntersectionObserver", {
+    configurable: true,
+    writable: true,
+    value: IntersectionObserverStub,
+  });
+}
+
 if (
   typeof window !== "undefined" &&
   (typeof window.localStorage === "undefined" ||

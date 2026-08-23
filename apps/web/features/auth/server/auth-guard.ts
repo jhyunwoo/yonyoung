@@ -101,36 +101,61 @@ const getSession = cache(async (): Promise<AuthSession | null> => {
   return fetchSessionFromApi(cookieHeader);
 });
 
+/** 사용자 조회 요청에 붙일 헤더. 쿠키가 없으면 인증 없이 나가고 API 가 거절한다. */
+const buildForwardedHeaders = async (): Promise<Headers> => {
+  const cookieHeader = await readCookieHeader();
+  const headers = new Headers({
+    Accept: "application/json",
+  });
+  if (!cookieHeader) {
+    return headers;
+  }
+
+  headers.set("cookie", cookieHeader);
+  applyForwardedRequestContextHeaders(headers, await readServerForwardedRequestContext());
+  return headers;
+};
+
+/**
+ * `GET /api/users/me` — 세션을 인자로 받지 않는다.
+ *
+ * 쿠키만 있으면 되는 요청이라 세션 조회가 끝나기를 기다릴 이유가 없다. 이렇게
+ * 떼어 두면 호출부가 `Promise.all([getSession(), getCurrentUserMe()])` 로 두 왕복을
+ * 겹칠 수 있다 — 대시보드 진입 경로에서 직렬 왕복이 하나 줄어든다.
+ * `cache()` 로 감싸 요청당 한 번만 나간다.
+ */
+const getCurrentUserMe = cache(async (): Promise<Record<string, unknown> | null> => {
+  const headers = await buildForwardedHeaders();
+
+  try {
+    const response = await fetch(`${resolveApiBaseUrl()}${CURRENT_USER_PATH}`, {
+      method: "GET",
+      headers,
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = (await response.json().catch(() => null)) as unknown;
+    return sanitizeProfileRecord(unwrapDataEnvelope(payload));
+  } catch {
+    return null;
+  }
+});
+
 // getSession이 캐시되어 동일 요청 내 session 객체 참조가 같으므로 인자 기반 dedupe가 성립
 const getCurrentUserProfile = cache(
   async (session: AuthSession): Promise<Record<string, unknown> | null> => {
-    const cookieHeader = await readCookieHeader();
-    const headers = new Headers({
-      Accept: "application/json",
-    });
-    if (cookieHeader) {
-      headers.set("cookie", cookieHeader);
-      applyForwardedRequestContextHeaders(
-        headers,
-        await readServerForwardedRequestContext(),
-      );
+    const fromCurrentUser = await getCurrentUserMe();
+    if (fromCurrentUser) {
+      return fromCurrentUser;
     }
 
+    const headers = await buildForwardedHeaders();
+
     try {
-      const currentUserResponse = await fetch(
-        `${resolveApiBaseUrl()}${CURRENT_USER_PATH}`,
-        {
-          method: "GET",
-          headers,
-          cache: "no-store",
-        },
-      );
-
-      if (currentUserResponse.ok) {
-        const payload = (await currentUserResponse.json().catch(() => null)) as unknown;
-        return sanitizeProfileRecord(unwrapDataEnvelope(payload));
-      }
-
       const userByIdResponse = await fetch(
         `${resolveApiBaseUrl()}${USER_PATH_PREFIX}/${encodeURIComponent(session.user.id)}`,
         {
@@ -260,6 +285,7 @@ const requireGlobalUserManagementAccess = async (): Promise<AuthSession> => {
 
 export const serverAuthGuard = {
   getSession,
+  getCurrentUserMe,
   requireSession,
   requireAccess,
   requireAdminPageAccess,

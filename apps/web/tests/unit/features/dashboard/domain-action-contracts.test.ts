@@ -143,7 +143,7 @@ const actionContracts: ActionContract[] = [
     path: "/activities/activity-1",
     method: "PATCH",
     accessScope: "manager",
-    tags: ["admin:activities", "public:activities"],
+    tags: ["admin:activities", "public:activities", "public:activity:activity-1"],
     responseSchema: apiActivitySchema,
   },
   {
@@ -152,7 +152,7 @@ const actionContracts: ActionContract[] = [
     path: "/activities/activity-1",
     method: "DELETE",
     accessScope: "manager",
-    tags: ["admin:activities", "public:activities"],
+    tags: ["admin:activities", "public:activities", "public:activity:activity-1"],
     responseSchema: noContentSchema,
   },
   {
@@ -161,7 +161,7 @@ const actionContracts: ActionContract[] = [
     path: "/activities/activity-1/images",
     method: "POST",
     accessScope: "manager",
-    tags: ["admin:activities", "public:activities"],
+    tags: ["admin:activities", "public:activities", "public:activity:activity-1"],
     responseSchema: apiActivityImageSchema,
   },
   {
@@ -170,7 +170,7 @@ const actionContracts: ActionContract[] = [
     path: "/activities/activity-1/images/batch",
     method: "POST",
     accessScope: "manager",
-    tags: ["admin:activities", "public:activities"],
+    tags: ["admin:activities", "public:activities", "public:activity:activity-1"],
     responseSchema: "array",
   },
   {
@@ -179,7 +179,7 @@ const actionContracts: ActionContract[] = [
     path: "/activities/activity-1/images/image-1",
     method: "PATCH",
     accessScope: "manager",
-    tags: ["admin:activities", "public:activities"],
+    tags: ["admin:activities", "public:activities", "public:activity:activity-1"],
     responseSchema: apiActivityImageSchema,
   },
   {
@@ -189,7 +189,7 @@ const actionContracts: ActionContract[] = [
     path: "/activities/activity-1/images/batch",
     method: "PATCH",
     accessScope: "manager",
-    tags: ["admin:activities", "public:activities"],
+    tags: ["admin:activities", "public:activities", "public:activity:activity-1"],
     responseSchema: "array",
   },
   {
@@ -198,7 +198,7 @@ const actionContracts: ActionContract[] = [
     path: "/activities/activity-1/images/image-1",
     method: "DELETE",
     accessScope: "manager",
-    tags: ["admin:activities", "public:activities"],
+    tags: ["admin:activities", "public:activities", "public:activity:activity-1"],
     responseSchema: noContentSchema,
   },
   {
@@ -216,7 +216,7 @@ const actionContracts: ActionContract[] = [
     path: "/exhibitions/exhibition-1",
     method: "PATCH",
     accessScope: "manager",
-    tags: ["admin:exhibitions", "public:exhibitions"],
+    tags: ["admin:exhibitions", "public:exhibitions", "public:exhibition:exhibition-1"],
     responseSchema: apiExhibitionSchema,
   },
   {
@@ -225,7 +225,7 @@ const actionContracts: ActionContract[] = [
     path: "/exhibitions/exhibition-1",
     method: "DELETE",
     accessScope: "leadership",
-    tags: ["admin:exhibitions", "public:exhibitions"],
+    tags: ["admin:exhibitions", "public:exhibitions", "public:exhibition:exhibition-1"],
     responseSchema: noContentSchema,
   },
   {
@@ -234,7 +234,7 @@ const actionContracts: ActionContract[] = [
     path: "/exhibitions/exhibition-1/images",
     method: "POST",
     accessScope: "manager",
-    tags: ["admin:exhibitions", "public:exhibitions"],
+    tags: ["admin:exhibitions", "public:exhibitions", "public:exhibition:exhibition-1"],
     responseSchema: apiExhibitionImageSchema,
   },
   {
@@ -243,7 +243,7 @@ const actionContracts: ActionContract[] = [
     path: "/exhibitions/exhibition-1/images/batch",
     method: "POST",
     accessScope: "manager",
-    tags: ["admin:exhibitions", "public:exhibitions"],
+    tags: ["admin:exhibitions", "public:exhibitions", "public:exhibition:exhibition-1"],
     responseSchema: "array",
   },
   {
@@ -253,7 +253,7 @@ const actionContracts: ActionContract[] = [
     path: "/exhibitions/exhibition-1/images/image-1",
     method: "PATCH",
     accessScope: "manager",
-    tags: ["admin:exhibitions", "public:exhibitions"],
+    tags: ["admin:exhibitions", "public:exhibitions", "public:exhibition:exhibition-1"],
     responseSchema: apiExhibitionImageSchema,
   },
   {
@@ -265,7 +265,7 @@ const actionContracts: ActionContract[] = [
     path: "/exhibitions/exhibition-1/images/batch",
     method: "PATCH",
     accessScope: "manager",
-    tags: ["admin:exhibitions", "public:exhibitions"],
+    tags: ["admin:exhibitions", "public:exhibitions", "public:exhibition:exhibition-1"],
     responseSchema: "array",
   },
   {
@@ -274,7 +274,7 @@ const actionContracts: ActionContract[] = [
     path: "/exhibitions/exhibition-1/images/image-1",
     method: "DELETE",
     accessScope: "manager",
-    tags: ["admin:exhibitions", "public:exhibitions"],
+    tags: ["admin:exhibitions", "public:exhibitions", "public:exhibition:exhibition-1"],
     responseSchema: noContentSchema,
   },
   {

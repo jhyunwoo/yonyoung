@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { headers } from "next/headers";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
@@ -62,6 +63,9 @@ const readRecruitingStatus = (
   return "open";
 };
 
+const STATUS_BADGE_CLASS =
+  "inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold";
+
 const RECRUITING_STATUS_META: Record<
   RecruitingStatus,
   { label: string; className: string }
@@ -80,20 +84,50 @@ const RECRUITING_STATUS_META: Record<
   },
 };
 
-export default async function RecruitingPage() {
+/**
+ * 모집 상태 배지 — 이 페이지에서 요청 시각이 필요한 **유일한** 조각이다.
+ *
+ * 예전에는 페이지 최상단에서 `await headers()` 를 불러 라우트 전체를 요청 시점
+ * 렌더로 만들었다. 그러면 제목·모집 안내·지원 자격·지원 방법처럼 완전히 정적인
+ * 부분까지 셸 밖으로 밀려나고, 그 자리를 라우트 그룹 공용 `loading.tsx`(홈 모양
+ * 스켈레톤)가 대신 채웠다 — 리크루팅 페이지인데 홈 스켈레톤이 보였다.
+ *
+ * "지금"이 필요한 곳만 이 컴포넌트로 좁혀서, 나머지는 전부 App Shell 에 남긴다.
+ */
+async function RecruitingStatusBadge({
+  startAt,
+  endAt,
+}: {
+  startAt: number;
+  endAt: number;
+}) {
+  // 요청 시점 렌더로 확정한다. `Date.now()` 를 읽는 근거가 이 한 줄이다.
   await headers();
+  const status = readRecruitingStatus(
+    // 서버 컴포넌트이고 위에서 동적 렌더링으로 확정됐으므로 요청 시각을 읽는 것이
+    // 맞다. 클라이언트 렌더 규칙을 보는 react-hooks/purity 는 여기에 해당하지 않는다.
+    // eslint-disable-next-line react-hooks/purity
+    Date.now(),
+    startAt,
+    endAt,
+  );
+  const meta = RECRUITING_STATUS_META[status];
+
+  return <span className={`${STATUS_BADGE_CLASS} ${meta.className}`}>{meta.label}</span>;
+}
+
+/**
+ * Instant Navigation 계약 (Next.js 16.3).
+ *
+ * 이 라우트로 이동할 때 요청 시점 작업을 기다리지 않고 곧바로 의미 있는 UI 가
+ * 나와야 한다는 선언이다. 빌드가 이를 검증하므로, 나중에 누군가 이 트리 위쪽에서
+ * `cookies()` · `headers()` · `await params` · 캐시되지 않은 fetch 를 하면 빌드가
+ * 깨진다 — 성능 회귀가 리뷰가 아니라 CI 에서 잡힌다.
+ */
+export const instant = true;
+
+export default async function RecruitingPage() {
   const currentRecruitingPlan = await getPublicCurrentRecruitingPlan();
-  const recruitingStatus = currentRecruitingPlan
-    ? readRecruitingStatus(
-        // 서버 컴포넌트다. 위에서 headers()를 await 해 이미 동적 렌더링으로
-        // 확정됐으므로 요청 시각을 읽는 것이 맞고, 클라이언트 렌더 규칙을 보는
-        // react-hooks/purity 는 여기에 해당하지 않는다.
-        // eslint-disable-next-line react-hooks/purity
-        Date.now(),
-        currentRecruitingPlan.recruitmentStartAt,
-        currentRecruitingPlan.recruitmentEndAt,
-      )
-    : null;
 
   return (
     <div className="min-h-screen bg-(--bg-primary)" data-testid="about-recruiting-page">
@@ -123,11 +157,21 @@ export default async function RecruitingPage() {
                   <h3 className="text-xl font-semibold text-(--text-primary)">
                     {currentRecruitingPlan.title}
                   </h3>
-                  <span
-                    className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${RECRUITING_STATUS_META[recruitingStatus!].className}`}
+                  <Suspense
+                    fallback={
+                      <span
+                        className={`${STATUS_BADGE_CLASS} border-(--surface-border) bg-(--surface-muted) text-transparent`}
+                        aria-hidden="true"
+                      >
+                        모집 상태
+                      </span>
+                    }
                   >
-                    {RECRUITING_STATUS_META[recruitingStatus!].label}
-                  </span>
+                    <RecruitingStatusBadge
+                      startAt={currentRecruitingPlan.recruitmentStartAt}
+                      endAt={currentRecruitingPlan.recruitmentEndAt}
+                    />
+                  </Suspense>
                 </div>
 
                 <p className="text-sm text-(--text-muted)">

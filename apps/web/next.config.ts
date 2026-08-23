@@ -104,6 +104,24 @@ const nextConfig: NextConfig = {
   experimental: {
     authInterrupts: true,
   },
+  /*
+   * React Compiler 는 켜지 않는다 — 측정한 뒤 되돌린 결정이다.
+   *
+   * 실측(2026-08, 같은 머신, 콜드 빌드):
+   *   끔        빌드 87.8s / 공개 `/` 151.8KB gz / 대시보드 212.0KB gz
+   *   Babel     빌드 143.0s / 153.9KB / 216.4KB
+   *   Rust 포트 빌드 113.6s / 153.9KB / 216.4KB
+   *
+   * 공개 라우트는 이미 클라이언트 컴포넌트를 아일랜드 몇 개로 줄여 둬서 자동
+   * 메모이제이션이 줄일 리렌더가 거의 없는데, 번들은 확실히 늘고 빌드는 29~63%
+   * 느려진다. 대시보드는 상태가 많아 이득이 있을 수 있지만 그것을 뒷받침하는
+   * 런타임 측정이 아직 없다.
+   *
+   * 다시 켤 조건: 대시보드에서 리렌더/INP 개선이 실제로 측정되고, 그 이득이
+   * 위 빌드 비용을 넘는다는 것이 확인될 때. 그때 Rust 포트가 Babel 보다 빠르므로
+   * `reactCompiler: true` + `experimental.turbopackRustReactCompiler: true` 를
+   * 함께 검토한다(16.3.x 의 소스맵 이슈 상태를 먼저 확인할 것).
+   */
   cacheComponents: true,
   // Partial Prefetching (Next 16.3, cacheComponents 필수).
   // 링크마다 대상 라우트를 통째로 프리페치하지 않고 라우트당 App Shell 하나를 받아

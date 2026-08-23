@@ -41,8 +41,13 @@ const readDashboardLayoutData = async (): Promise<{
   generationOptions: Awaited<ReturnType<typeof getAccessibleDashboardGenerationOptions>>;
   viewer: DashboardViewer | null;
 }> => {
+  // 세션과 현재 사용자 프로필은 서로 독립적인 API 왕복이고, 둘 다 쿠키만 있으면 된다.
+  // await 하기 전에 요청을 띄워 두 왕복을 겹친다 — `cache()` 로 감싸여 있어 아래
+  // `getCurrentUserProfile` 이 같은 결과를 재사용한다(왕복은 여전히 요청당 1회).
+  const currentUserRequest = serverAuthGuard.getCurrentUserMe();
   const session = await serverAuthGuard.getSession();
   if (!session) {
+    await currentUserRequest;
     return {
       generationOptions: [],
       viewer: null,

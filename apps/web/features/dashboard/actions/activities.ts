@@ -6,7 +6,7 @@ import {
   writeRequest,
   type AdminWriteActionResult,
 } from "@/features/dashboard/actions/admin-write-core";
-import { CACHE_TAGS } from "@/server/cache/tags";
+import { CACHE_TAGS, publicActivityTag } from "@/server/cache/tags";
 import {
   apiActivityImageSchema,
   apiActivitySchema,
@@ -26,10 +26,21 @@ import type {
   ApiUpdateActivityInput,
 } from "@yonyoung/contracts";
 
-const ACTIVITY_CACHE_TAGS = [
+/** 목록에 영향을 주는 태그. 항목이 추가·수정·삭제되면 언제나 함께 버린다. */
+const ACTIVITY_COLLECTION_TAGS = [
   CACHE_TAGS.admin.activities,
   CACHE_TAGS.public.activities,
 ] as const;
+
+/**
+ * 활동 하나를 건드리는 쓰기의 무효화 집합 = 목록 + 그 활동의 상세.
+ *
+ * 다른 활동의 상세(`public:activity:<other>`)는 건드리지 않는다. 예전에는 상세도
+ * `public:activities` 하나로 묶여 있어서, 활동 하나만 고쳐도 사전 렌더된 상세
+ * 페이지 전부가 무효화되고 다음 방문마다 Worker 왕복이 되살아났다.
+ */
+const activityTags = (id: string) =>
+  [...ACTIVITY_COLLECTION_TAGS, publicActivityTag(id)] as const;
 
 export const createActivityAction = async (
   input: ApiCreateActivityInput,
@@ -41,7 +52,7 @@ export const createActivityAction = async (
     body: payload,
     responseSchema: apiActivitySchema,
     accessScope: "manager",
-    tags: ACTIVITY_CACHE_TAGS,
+    tags: ACTIVITY_COLLECTION_TAGS,
   });
 };
 
@@ -56,7 +67,7 @@ export const updateActivityAction = async (
     body: payload,
     responseSchema: apiActivitySchema,
     accessScope: "manager",
-    tags: ACTIVITY_CACHE_TAGS,
+    tags: activityTags(id),
   });
 };
 
@@ -68,7 +79,7 @@ export const deleteActivityAction = async (
     method: "DELETE",
     responseSchema: readNoContentSchema,
     accessScope: "manager",
-    tags: ACTIVITY_CACHE_TAGS,
+    tags: activityTags(id),
   });
 };
 
@@ -83,7 +94,7 @@ export const addActivityImageAction = async (
     body: payload,
     responseSchema: apiActivityImageSchema,
     accessScope: "manager",
-    tags: ACTIVITY_CACHE_TAGS,
+    tags: activityTags(id),
   });
 };
 
@@ -98,7 +109,7 @@ export const addActivityImagesAction = async (
     body: payload,
     responseSchema: z.array(apiActivityImageSchema),
     accessScope: "manager",
-    tags: ACTIVITY_CACHE_TAGS,
+    tags: activityTags(id),
   });
 };
 
@@ -114,7 +125,7 @@ export const updateActivityImageAction = async (
     body: payload,
     responseSchema: apiActivityImageSchema,
     accessScope: "manager",
-    tags: ACTIVITY_CACHE_TAGS,
+    tags: activityTags(id),
   });
 };
 
@@ -129,7 +140,7 @@ export const updateActivityImagesAction = async (
     body: payload,
     responseSchema: z.array(apiActivityImageSchema),
     accessScope: "manager",
-    tags: ACTIVITY_CACHE_TAGS,
+    tags: activityTags(id),
   });
 };
 
@@ -142,6 +153,6 @@ export const deleteActivityImageAction = async (
     method: "DELETE",
     responseSchema: readNoContentSchema,
     accessScope: "manager",
-    tags: ACTIVITY_CACHE_TAGS,
+    tags: activityTags(id),
   });
 };

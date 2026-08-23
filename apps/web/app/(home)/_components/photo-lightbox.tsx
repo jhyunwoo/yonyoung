@@ -1,7 +1,7 @@
 "use client";
 
 import { useIsMounted } from "@/shared/react/use-is-mounted";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useMountTransition } from "@/shared/react/use-mount-transition";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, type CSSProperties } from "react";
@@ -19,7 +19,9 @@ type PhotoLightboxProps = {
   items: PhotoLightboxItem[];
   /** items 와 같은 순서의 사진 비율(가로/세로) */
   aspects: number[];
-  /** null 이면 닫힌 상태 */
+  /** 열려 있는지. 닫혀도 `openIndex` 는 유지돼 퇴장 애니메이션 동안 사진이 남는다. */
+  isOpen: boolean;
+  /** 마지막으로 보여 준(=지금 보여 줄) 사진의 index. 한 번도 안 열었으면 null */
   openIndex: number | null;
   onClose: () => void;
   /** delta 만큼 이동(끝에서 순환) */
@@ -32,6 +34,9 @@ type PhotoLightboxProps = {
   loadedKeys: Record<string, true>;
   onImageLoaded: (key: string) => void;
 };
+
+/** 오버레이 퇴장 시간 — globals.css 의 `[data-overlay-fade]` 전환과 같아야 한다. */
+const EXIT_MS = 200;
 
 const BUTTON_CLASS =
   "pressable flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
@@ -51,6 +56,7 @@ const BUTTON_CLASS =
 export function PhotoLightbox({
   items,
   aspects,
+  isOpen,
   openIndex,
   onClose,
   onStep,
@@ -64,12 +70,17 @@ export function PhotoLightbox({
 
   const activeIndex =
     openIndex !== null && openIndex >= 0 && openIndex < items.length ? openIndex : null;
-  const isOpen = activeIndex !== null;
-  const shouldReduceMotion = useReducedMotion();
+  const isVisible = isOpen && activeIndex !== null;
+  // 닫히는 동안에도 마운트를 유지해 페이드아웃이 보이게 한다(AnimatePresence 대체).
+  // `openIndex` 는 닫을 때 지워지지 않으므로 퇴장 중에도 같은 사진이 그대로 보인다.
+  const { isMounted: isOverlayMounted, state: overlayState } = useMountTransition(
+    isVisible,
+    EXIT_MS,
+  );
 
   // 배경 스크롤 잠금 + 포커스 이동/복귀
   useEffect(() => {
-    if (!isOpen) {
+    if (!isVisible) {
       return;
     }
 
@@ -83,11 +94,11 @@ export function PhotoLightbox({
       document.body.style.overflow = originalOverflow;
       restoreFocusRef.current?.focus();
     };
-  }, [isOpen]);
+  }, [isVisible]);
 
   // 키보드 조작 — 핸들러 identity 가 바뀌어도 리스너 재등록은 저렴하다
   useEffect(() => {
-    if (!isOpen) {
+    if (!isVisible) {
       return;
     }
 
@@ -114,129 +125,123 @@ export function PhotoLightbox({
     return () => {
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [isOpen, items.length, onClose, onStep]);
+  }, [isVisible, items.length, onClose, onStep]);
 
   if (!isMounted) {
     return null;
   }
 
   const activeItem = activeIndex === null ? null : items[activeIndex];
+
+  if (!isOverlayMounted || activeIndex === null || !activeItem) {
+    return null;
+  }
+
   // 인덱스·사진·비율을 한 객체로 묶어야 JSX 안에서 좁히기가 유지된다
-  const active =
-    activeIndex !== null && activeItem
-      ? { index: activeIndex, item: activeItem, aspect: aspects[activeIndex] ?? 1 }
-      : null;
+  const active = {
+    index: activeIndex,
+    item: activeItem,
+    aspect: aspects[activeIndex] ?? 1,
+  };
   const hasMultiple = items.length > 1;
-  const isActiveLoaded = active !== null && loadedKeys[active.item.key] === true;
+  const isActiveLoaded = loadedKeys[active.item.key] === true;
 
   return createPortal(
-    <AnimatePresence>
-      {active ? (
-        <motion.div
-          ref={panelRef}
-          tabIndex={-1}
-          role="dialog"
-          aria-modal="true"
-          aria-label="사진 크게 보기"
-          data-testid="gallery-lightbox"
-          className="fixed inset-0 z-[1200] bg-black/90 outline-none"
-          initial={shouldReduceMotion ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={
-            shouldReduceMotion
-              ? { duration: 0 }
-              : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }
+    <div
+      ref={panelRef}
+      tabIndex={-1}
+      role="dialog"
+      aria-modal="true"
+      aria-label="사진 크게 보기"
+      data-testid="gallery-lightbox"
+      data-overlay-fade=""
+      data-state={overlayState}
+      className="fixed inset-0 z-[1200] bg-black/90 outline-none"
+    >
+      {/* 사진 밖 어두운 영역 클릭 시 닫기. Esc·닫기 버튼이 키보드 경로를 커버하므로 aria-hidden */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0"
+        data-testid="gallery-lightbox-backdrop"
+        onClick={onClose}
+      />
+
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div
+          className="pointer-events-auto relative"
+          data-testid="gallery-lightbox-frame"
+          style={
+            {
+              "--photo-aspect": active.aspect.toFixed(4),
+              width: "min(90vw, calc(82svh * var(--photo-aspect)))",
+              aspectRatio: "var(--photo-aspect)",
+            } as CSSProperties
           }
         >
-          {/* 사진 밖 어두운 영역 클릭 시 닫기. Esc·닫기 버튼이 키보드 경로를 커버하므로 aria-hidden */}
-          <div
-            aria-hidden="true"
-            className="absolute inset-0"
-            data-testid="gallery-lightbox-backdrop"
-            onClick={onClose}
-          />
-
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          {/* 프레임 = 사진 크기이므로 스켈레톤이 곧 로딩될 사진의 자리 그대로다 */}
+          {isActiveLoaded ? null : (
             <div
-              className="pointer-events-auto relative"
-              data-testid="gallery-lightbox-frame"
-              style={
-                {
-                  "--photo-aspect": active.aspect.toFixed(4),
-                  width: "min(90vw, calc(82svh * var(--photo-aspect)))",
-                  aspectRatio: "var(--photo-aspect)",
-                } as CSSProperties
-              }
-            >
-              {/* 프레임 = 사진 크기이므로 스켈레톤이 곧 로딩될 사진의 자리 그대로다 */}
-              {isActiveLoaded ? null : (
-                <div
-                  aria-hidden="true"
-                  data-testid="gallery-lightbox-skeleton"
-                  className={`absolute inset-0 bg-white/10 ${
-                    shouldReduceMotion ? "" : "animate-pulse"
-                  }`}
-                />
-              )}
-              <Image
-                key={active.item.key}
-                src={active.item.imageUrl}
-                alt={active.item.alt}
-                fill
-                unoptimized={shouldUseUnoptimizedImage(active.item.imageUrl)}
-                className={`object-contain transition-opacity duration-300 ${
-                  isActiveLoaded ? "opacity-100" : "opacity-0"
-                }`}
-                sizes={LIGHTBOX_IMAGE_SIZES}
-                onLoad={() => onImageLoaded(active.item.key)}
-                onError={() => onImageLoaded(active.item.key)}
-              />
-            </div>
-          </div>
+              aria-hidden="true"
+              data-testid="gallery-lightbox-skeleton"
+              className="absolute inset-0 animate-pulse bg-white/10 motion-reduce:animate-none"
+            />
+          )}
+          <Image
+            key={active.item.key}
+            src={active.item.imageUrl}
+            alt={active.item.alt}
+            fill
+            unoptimized={shouldUseUnoptimizedImage(active.item.imageUrl)}
+            className={`object-contain transition-opacity duration-300 ${
+              isActiveLoaded ? "opacity-100" : "opacity-0"
+            }`}
+            sizes={LIGHTBOX_IMAGE_SIZES}
+            onLoad={() => onImageLoaded(active.item.key)}
+            onError={() => onImageLoaded(active.item.key)}
+          />
+        </div>
+      </div>
 
+      <button
+        type="button"
+        className={`absolute right-3 top-3 ${BUTTON_CLASS}`}
+        aria-label="사진 보기 닫기"
+        data-testid="gallery-lightbox-close"
+        onClick={onClose}
+      >
+        <X aria-hidden="true" className="h-5 w-5" />
+      </button>
+
+      {hasMultiple ? (
+        <>
           <button
             type="button"
-            className={`absolute right-3 top-3 ${BUTTON_CLASS}`}
-            aria-label="사진 보기 닫기"
-            data-testid="gallery-lightbox-close"
-            onClick={onClose}
+            className={`absolute left-2 top-1/2 -translate-y-1/2 sm:left-4 ${BUTTON_CLASS}`}
+            aria-label="이전 사진"
+            data-testid="gallery-lightbox-prev"
+            onClick={() => onStep(-1)}
           >
-            <X aria-hidden="true" className="h-5 w-5" />
+            <ChevronLeft aria-hidden="true" className="h-6 w-6" />
           </button>
-
-          {hasMultiple ? (
-            <>
-              <button
-                type="button"
-                className={`absolute left-2 top-1/2 -translate-y-1/2 sm:left-4 ${BUTTON_CLASS}`}
-                aria-label="이전 사진"
-                data-testid="gallery-lightbox-prev"
-                onClick={() => onStep(-1)}
-              >
-                <ChevronLeft aria-hidden="true" className="h-6 w-6" />
-              </button>
-              <button
-                type="button"
-                className={`absolute right-2 top-1/2 -translate-y-1/2 sm:right-4 ${BUTTON_CLASS}`}
-                aria-label="다음 사진"
-                data-testid="gallery-lightbox-next"
-                onClick={() => onStep(1)}
-              >
-                <ChevronRight aria-hidden="true" className="h-6 w-6" />
-              </button>
-              <p
-                aria-live="polite"
-                className="pointer-events-none absolute bottom-4 left-1/2 m-0 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-sm text-white"
-                data-testid="gallery-lightbox-counter"
-              >
-                {active.index + 1} / {items.length}
-              </p>
-            </>
-          ) : null}
-        </motion.div>
+          <button
+            type="button"
+            className={`absolute right-2 top-1/2 -translate-y-1/2 sm:right-4 ${BUTTON_CLASS}`}
+            aria-label="다음 사진"
+            data-testid="gallery-lightbox-next"
+            onClick={() => onStep(1)}
+          >
+            <ChevronRight aria-hidden="true" className="h-6 w-6" />
+          </button>
+          <p
+            aria-live="polite"
+            className="pointer-events-none absolute bottom-4 left-1/2 m-0 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-sm text-white"
+            data-testid="gallery-lightbox-counter"
+          >
+            {active.index + 1} / {items.length}
+          </p>
+        </>
       ) : null}
-    </AnimatePresence>,
+    </div>,
     document.body,
   );
 }
