@@ -123,14 +123,34 @@ export default function HeroShowcase({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="hero-lift-tile border border-(--surface-border) bg-(--surface-elevated) p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-(--text-muted)">
-                Recent Activity
-              </p>
-              <p className="mt-2 line-clamp-2 text-sm font-medium text-(--text-primary)">
-                {firstActivity?.title ?? "활동 업데이트 예정"}
-              </p>
-            </div>
+            {/*
+              타일이 보여주는 활동이 곧 링크 대상이다. 공개된 활동이 없을 때는
+              갈 곳이 없으므로 링크가 아닌 정적 타일로 남긴다.
+            */}
+            {firstActivity ? (
+              <Link
+                href={`/archive/records/${firstActivity.id}`}
+                data-testid={`home-hero-activity-card-${firstActivity.id}`}
+                aria-label={`${firstActivity.title} 상세 보기`}
+                className="hero-lift-tile block border border-(--surface-border) bg-(--surface-elevated) p-4 hover:border-(--surface-strong-border) hover:bg-(--surface-muted) focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-(--text-primary)"
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-(--text-muted)">
+                  Recent Activity
+                </p>
+                <p className="mt-2 line-clamp-2 text-sm font-medium text-(--text-primary)">
+                  {firstActivity.title}
+                </p>
+              </Link>
+            ) : (
+              <div className="hero-lift-tile border border-(--surface-border) bg-(--surface-elevated) p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-(--text-muted)">
+                  Recent Activity
+                </p>
+                <p className="mt-2 line-clamp-2 text-sm font-medium text-(--text-primary)">
+                  활동 업데이트 예정
+                </p>
+              </div>
+            )}
             <div className="hero-lift-tile border border-(--surface-border) bg-(--surface-elevated) p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-(--text-muted)">
                 Since

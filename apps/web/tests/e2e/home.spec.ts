@@ -20,6 +20,22 @@ test("home recent activity card navigates to the record detail page", async ({
   await expect(page.getByTestId("record-detail-gallery")).toBeVisible();
 });
 
+test("home hero recent activity tile navigates to the record detail page", async ({
+  page,
+}) => {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+
+  const heroActivityTile = page
+    .locator("[data-testid^='home-hero-activity-card-']")
+    .first();
+  await expect(heroActivityTile).toHaveAttribute("href", /\/archive\/records\/[^/]+$/);
+
+  await heroActivityTile.click();
+
+  await expect(page).toHaveURL(/\/archive\/records\/[^/]+$/);
+  await expect(page.getByTestId("record-detail-gallery")).toBeVisible();
+});
+
 test("home latest exhibition card navigates to the exhibition detail page", async ({
   page,
 }) => {
