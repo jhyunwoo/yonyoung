@@ -9,7 +9,7 @@ import type { PageMetadataInput } from "@/features/seo/metadata/seo";
  */
 export const PAGE_SEO = {
   home: {
-    title: "연영회 | 1966년 창립 연세대학교 중앙사진동아리",
+    title: "연영회 | 연세대학교 중앙사진동아리",
     description:
       "1966년 창단한 연세대학교 중앙사진동아리 연영회입니다. 출사와 사진 프로젝트, 정기 전시, 리크루팅 소식을 한곳에서 만나보세요.",
     path: "/",
