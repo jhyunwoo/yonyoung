@@ -1,14 +1,23 @@
  
 export type OpenAPIDocument = {
-  openapi?: string;
-  info?: any;
-  paths?: Record<string, Record<string, any>>;
+  openapi: string;
+  info: Record<string, any>;
+  paths: Record<string, Record<string, any>>;
   components?: {
     schemas?: Record<string, any>;
     securitySchemes?: Record<string, any>;
     [key: string]: any;
   };
   tags?: Array<{ name: string; [key: string]: any }>;
+  [key: string]: any;
+};
+
+type OpenAPIDocumentInput = {
+  openapi?: string;
+  info?: Record<string, any>;
+  paths?: Record<string, any>;
+  components?: OpenAPIDocument["components"];
+  tags?: OpenAPIDocument["tags"];
   [key: string]: any;
 };
 
@@ -72,8 +81,8 @@ const mergeTags = (
 };
 
 const mergePaths = (
-  internalPaths: OpenAPIDocument["paths"] | undefined,
-  authPaths: OpenAPIDocument["paths"] | undefined,
+  internalPaths: OpenAPIDocumentInput["paths"],
+  authPaths: OpenAPIDocumentInput["paths"],
 ) => {
   const mergedPaths = { ...(internalPaths ?? {}) };
   const existingOperationIds = new Set<string>();
@@ -141,8 +150,8 @@ const mergePaths = (
 };
 
 export const mergeOpenApiDocuments = (
-  internalDoc: OpenAPIDocument,
-  authDoc: OpenAPIDocument,
+  internalDoc: OpenAPIDocumentInput,
+  authDoc: OpenAPIDocumentInput,
 ): OpenAPIDocument => {
   const internalComponents = isRecord(internalDoc.components)
     ? internalDoc.components
@@ -152,6 +161,7 @@ export const mergeOpenApiDocuments = (
   return {
     ...internalDoc,
     openapi: "3.1.1",
+    info: isRecord(internalDoc.info) ? internalDoc.info : {},
     paths: mergePaths(internalDoc.paths, authDoc.paths),
     components: {
       ...internalComponents,

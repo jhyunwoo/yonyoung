@@ -1,4 +1,4 @@
-import { FilterXSS } from "xss";
+import filterXss, { type IFilterXSSOptions } from "xss";
 
 const RICH_TEXT_TAG_PATTERN = /<[^>]*>/g;
 const NON_BREAKING_SPACE_PATTERN = /(?:\u00a0|&nbsp;|&#160;)/gi;
@@ -55,7 +55,7 @@ const readPositiveNumberAttribute = (value: string): string => {
   return String(parsed);
 };
 
-const sanitizeFilter = new FilterXSS({
+const SANITIZE_OPTIONS: IFilterXSSOptions = {
   whiteList: Object.fromEntries(
     ALLOWED_TAGS.map((tag) => [
       tag,
@@ -84,7 +84,7 @@ const sanitizeFilter = new FilterXSS({
 
     return "";
   },
-});
+};
 
 const ensureSafeLinkRel = (html: string): string => {
   return html.replace(/<a\b([^>]*?)>/gi, (fullMatch, attributes: string) => {
@@ -104,7 +104,7 @@ const ensureSafeLinkRel = (html: string): string => {
 };
 
 export const sanitizeRichTextHtml = (html: string): string => {
-  return ensureSafeLinkRel(sanitizeFilter.process(html));
+  return ensureSafeLinkRel(filterXss(html, SANITIZE_OPTIONS));
 };
 
 const stripRichTextHtml = (html: string): string => {

@@ -97,10 +97,10 @@ const isInvalidPathSegment = (segment: string): boolean => {
   );
 };
 
-export const enforceRequestBodyLimit = (
+export const enforceRequestBodyLimit = async (
   request: NextRequest,
   maxBytes: number,
-): NextResponse<{ ok: false; message: string }> | null => {
+): Promise<NextResponse<{ ok: false; message: string }> | null> => {
   const method = request.method.toUpperCase();
   if (SAFE_METHODS.has(method)) {
     return null;
@@ -111,7 +111,29 @@ export const enforceRequestBodyLimit = (
     return createJsonErrorResponse(413, "Request body is too large.");
   }
 
-  return null;
+  const reader = request.clone().body?.getReader();
+  if (!reader) {
+    return null;
+  }
+
+  let bytesRead = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        return null;
+      }
+
+      bytesRead += value.byteLength;
+      if (bytesRead > maxBytes) {
+        void reader.cancel().catch(() => undefined);
+        return createJsonErrorResponse(413, "Request body is too large.");
+      }
+    }
+  } catch {
+    void reader.cancel().catch(() => undefined);
+    return createJsonErrorResponse(413, "Request body is too large.");
+  }
 };
 
 export const enforceSameOriginProtection = (

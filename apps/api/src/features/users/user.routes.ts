@@ -58,9 +58,13 @@ type UserUrlFields = {
   image: string | null;
   showcaseImageUrls: string[];
   personalLink: string | null;
+  generationId: string | null;
+  generationIds?: string[];
 };
 
-const sanitizeUserUrlFields = <T extends UserUrlFields>(user: T): T => {
+const sanitizeUserUrlFields = <T extends UserUrlFields>(
+  user: T,
+): T & { generationIds: string[] } => {
   const image = user.image?.trim() ?? null;
   const personalLink = user.personalLink?.trim() ?? null;
   return {
@@ -70,6 +74,8 @@ const sanitizeUserUrlFields = <T extends UserUrlFields>(user: T): T => {
       .map((url) => url.trim())
       .filter(isHttpUrl),
     personalLink: personalLink && isHttpUrl(personalLink) ? personalLink : null,
+    generationIds:
+      user.generationIds ?? (user.generationId ? [user.generationId] : []),
   };
 };
 

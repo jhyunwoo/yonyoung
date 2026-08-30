@@ -1,4 +1,8 @@
-import { FilterXSS, escapeAttrValue } from "xss";
+import filterXss, { type EscapeHandler, type IFilterXSSOptions } from "xss";
+
+const { escapeAttrValue } = filterXss as unknown as {
+  escapeAttrValue: EscapeHandler;
+};
 
 const ALLOWED_TAGS = [
   "h2",
@@ -53,7 +57,7 @@ const buildWhiteList = (): Record<string, string[]> => {
   );
 };
 
-const sanitizeFilter = new FilterXSS({
+const SANITIZE_OPTIONS: IFilterXSSOptions = {
   whiteList: buildWhiteList(),
   stripIgnoreTag: true,
   stripIgnoreTagBody: ["script", "style", "iframe", "object", "embed"],
@@ -77,13 +81,13 @@ const sanitizeFilter = new FilterXSS({
 
     return "";
   },
-});
+};
 
 const normalizeWhitespace = (value: string): string =>
   value.replace(/\u00a0|&#160;|&nbsp;/gi, " ").replace(/\s+/g, " ").trim();
 
 export const sanitizeRichTextHtml = (rawHtml: string): string => {
-  return sanitizeFilter.process(rawHtml);
+  return filterXss(rawHtml, SANITIZE_OPTIONS);
 };
 
 export const stripRichTextHtmlToText = (rawHtml: string): string => {

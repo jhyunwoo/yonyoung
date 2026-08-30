@@ -102,4 +102,23 @@ describe("app/api/internal/client-error/route", () => {
     });
     expect(logger.info).not.toHaveBeenCalled();
   });
+
+  it("rejects an oversized body without relying on content-length", async () => {
+    const { POST } = await import("@/app/api/internal/client-error/route");
+    const response = await POST(
+      new NextRequest("https://app.example.com/api/internal/client-error", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "https://app.example.com",
+          "sec-fetch-site": "same-origin",
+        },
+        body: "x".repeat(64 * 1024 + 1),
+      }),
+    );
+
+    expect(response.status).toBe(413);
+    expect(logger.info).not.toHaveBeenCalled();
+    expect(logger.warn).not.toHaveBeenCalled();
+  });
 });

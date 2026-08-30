@@ -13,10 +13,12 @@ const createRequest = (input: {
   url?: string;
   method?: string;
   headers?: Record<string, string>;
+  body?: BodyInit;
 }) =>
   new NextRequest(input.url ?? "https://app.example.com/api/market/items", {
     method: input.method ?? "POST",
     headers: input.headers,
+    body: input.body,
   });
 
 describe("server/security/request-guards", () => {
@@ -112,7 +114,7 @@ describe("server/security/request-guards", () => {
     ).toBe(403);
   });
 
-  it("blocks oversized mutation requests before reading the body", () => {
+  it("blocks oversized mutation requests before reading the body", async () => {
     const request = createRequest({
       headers: {
         "content-length": String(API_PROXY_BODY_LIMIT_BYTES + 1),
@@ -120,9 +122,30 @@ describe("server/security/request-guards", () => {
       },
     });
 
-    expect(enforceRequestBodyLimit(request, API_PROXY_BODY_LIMIT_BYTES)?.status).toBe(
+    expect(
+      (await enforceRequestBodyLimit(request, API_PROXY_BODY_LIMIT_BYTES))?.status,
+    ).toBe(413);
+  });
+
+  it("counts streamed bytes when content-length is missing or understated", async () => {
+    const oversizedBody = "x".repeat(33);
+    const missingLengthRequest = createRequest({ body: oversizedBody });
+    const understatedLengthRequest = createRequest({
+      headers: { "content-length": "1" },
+      body: oversizedBody,
+    });
+
+    expect((await enforceRequestBodyLimit(missingLengthRequest, 32))?.status).toBe(413);
+    expect((await enforceRequestBodyLimit(understatedLengthRequest, 32))?.status).toBe(
       413,
     );
+  });
+
+  it("preserves an allowed request body for downstream parsing", async () => {
+    const request = createRequest({ body: "12345678" });
+
+    await expect(enforceRequestBodyLimit(request, 8)).resolves.toBeNull();
+    await expect(request.text()).resolves.toBe("12345678");
   });
 
   it("normalizes valid proxy paths and rejects blocked path traversal attempts", () => {

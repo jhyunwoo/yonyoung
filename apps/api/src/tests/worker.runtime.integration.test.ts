@@ -36,6 +36,7 @@ describe("worker runtime integration", () => {
 
   it(
     "/health responds in Workers runtime with request tracking headers",
+    { timeout: 15_000 },
     async () => {
       const response = await worker!.fetch("/health");
 
@@ -60,11 +61,11 @@ describe("worker runtime integration", () => {
       expect(response.headers.get("x-request-id")).toBeTruthy();
       expect(response.headers.get("server-timing")).toContain("total;dur=");
     },
-    15_000,
   );
 
   it(
     "/api/* not-found responses still include edge security headers",
+    { timeout: 15_000 },
     async () => {
       const response = await worker!.fetch("/api/unknown-endpoint");
 
@@ -75,11 +76,11 @@ describe("worker runtime integration", () => {
       expect(response.headers.get("content-security-policy-report-only")).toBeNull();
       expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     },
-    15_000,
   );
 
   it(
     "/ responds with HTML page containing status hooks",
+    { timeout: 15_000 },
     async () => {
       const response = await worker!.fetch("/");
 
@@ -92,6 +93,5 @@ describe("worker runtime integration", () => {
       expect(html).toContain('data-health-endpoint="/health"');
       expect(html).toContain("fetch(healthEndpoint");
     },
-    15_000,
   );
 });

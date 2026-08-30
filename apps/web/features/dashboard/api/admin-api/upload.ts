@@ -202,6 +202,10 @@ const runUploadWithUppy = async (input: {
   file: File;
   onProgress?: (progressPercent: number) => void;
 }) => {
+  const contentType =
+    Object.entries(input.uploadHeaders).find(
+      ([name]) => name.toLowerCase() === "content-type",
+    )?.[1] ?? input.file.type;
   const uppy = new Uppy({
     autoProceed: false,
     restrictions: {
@@ -218,18 +222,20 @@ const runUploadWithUppy = async (input: {
   try {
     uppy.use(AwsS3, {
       limit: 1,
-      retryDelays: [0, 1000, 3000, 5000],
       shouldUseMultipart: false,
-      getUploadParameters: async () => ({
-        method: "PUT",
-        url: input.uploadUrl,
-        headers: input.uploadHeaders,
-      }),
+      generateObjectKey: () => input.file.name,
+      signRequest: async (request) => {
+        if (request.method !== "PUT" || "uploadId" in request) {
+          throw toUploadError();
+        }
+
+        return { url: input.uploadUrl };
+      },
     });
 
     uppy.addFile({
       name: input.file.name,
-      type: input.file.type,
+      type: contentType,
       data: input.file,
       source: "local",
     });

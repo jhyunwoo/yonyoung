@@ -5,9 +5,13 @@ import { z } from "../../shared/openapi/zod";
 export const healthCheckSchema = z.object({
   service: z.enum([
     "d1",
+    "db_schema",
     "view_counts",
     "r2",
     "r2_presign",
+    "auth_config",
+    "rate_limiter",
+    "analytics_engine",
     "durable_object",
     "assets",
     "service_binding",

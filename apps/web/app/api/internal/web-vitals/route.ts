@@ -46,7 +46,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return csrfProtectionResponse;
   }
 
-  const bodyLimitResponse = enforceRequestBodyLimit(
+  const bodyLimitResponse = await enforceRequestBodyLimit(
     request,
     INTERNAL_EVENT_BODY_LIMIT_BYTES,
   );

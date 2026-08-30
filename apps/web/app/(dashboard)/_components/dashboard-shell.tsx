@@ -2,7 +2,7 @@
 
 import { Menu } from "lucide-react";
 import { useResetOnChange } from "@/shared/react/use-reset-on-change";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 
 import {
@@ -52,6 +52,7 @@ export default function DashboardShell({
   viewer,
 }: DashboardShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isSignOutPending, setIsSignOutPending] = useState(false);
 
@@ -107,7 +108,8 @@ export default function DashboardShell({
     setIsSignOutPending(false);
 
     if (result.ok) {
-      window.location.href = "/auth/sign-in";
+      router.replace("/auth/sign-in");
+      router.refresh();
     }
   };
 

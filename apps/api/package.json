@@ -31,32 +31,32 @@
     "security:audit": "node ../../tooling/audit-api-production.mjs"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.1109.0",
-    "@aws-sdk/s3-request-presigner": "3.1109.0",
-    "@hono/zod-openapi": "1.5.2",
-    "@scalar/hono-api-reference": "0.9.48",
+    "@aws-sdk/client-s3": "3.1121.0",
+    "@aws-sdk/s3-request-presigner": "3.1121.0",
+    "@hono/zod-openapi": "1.6.1",
+    "@scalar/hono-api-reference": "0.12.0",
     "@yonyoung/contracts": "workspace:*",
-    "better-auth": "1.6.27",
+    "better-auth": "1.7.2",
     "dotenv": "17.4.2",
     "drizzle-orm": "0.45.2",
-    "hono": "4.13.1",
+    "hono": "4.13.5",
     "xss": "1.0.15",
-    "zod": "4.4.3"
+    "zod": "4.5.4"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "0.10.15",
-    "@eslint/js": "10.0.1",
-    "@types/node": "25.9.5",
-    "@vitest/coverage-v8": "3.2.7",
+    "@cloudflare/vitest-pool-workers": "0.22.0",
+    "@eslint/js": "9.39.5",
+    "@types/node": "26.4.0",
+    "@vitest/coverage-v8": "4.1.11",
     "@yonyoung/eslint-config": "workspace:*",
     "@yonyoung/typescript-config": "workspace:*",
     "drizzle-kit": "0.31.10",
     "eslint": "9.39.5",
     "prettier": "3.9.6",
-    "typescript": "6.0.2",
-    "typescript-eslint": "8.67.0",
-    "vitest": "3.2.7",
-    "wrangler": "4.122.0"
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.68.0",
+    "vitest": "4.1.11",
+    "wrangler": "4.127.1"
   },
-  "packageManager": "pnpm@11.21.0+sha512.521705bce689924eac72f5a3587122f362689ef6571e55ba80076fd637c11132ecffada26fad4ea79c485bfddbfd3d5a2a5b05805a77e893de71ec8a6cca3bb1"
+  "packageManager": "pnpm@11.24.0+sha512.bd27e345e976dcb0be0b7a1228217b049a817e21b1f355c90dbe7dc46671895a8bc1e6d06c24554505ea93ea0b45f489a27ec1bfbc8de6a9659fca0f16fa0000"
 }

@@ -115,7 +115,10 @@ const handle = async (
     return csrfProtectionResponse;
   }
 
-  const bodyLimitResponse = enforceRequestBodyLimit(request, API_PROXY_BODY_LIMIT_BYTES);
+  const bodyLimitResponse = await enforceRequestBodyLimit(
+    request,
+    API_PROXY_BODY_LIMIT_BYTES,
+  );
   if (bodyLimitResponse) {
     return bodyLimitResponse;
   }

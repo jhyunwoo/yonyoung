@@ -11,6 +11,73 @@ const COVER_QUALITY = 80;
 const MAX_COVER_BYTES = 4 * 1024 * 1024;
 
 const COVER_FETCH_TIMEOUT_MS = 8_000;
+const PUBLIC_MEDIA_PATH_PREFIX = "/api/public/media/";
+
+const parseHttpUrl = (value: string, base?: string): URL | null => {
+  try {
+    const url = base ? new URL(value, base) : new URL(value);
+    if (
+      (url.protocol !== "http:" && url.protocol !== "https:") ||
+      url.username ||
+      url.password
+    ) {
+      return null;
+    }
+
+    return url;
+  } catch {
+    return null;
+  }
+};
+
+const resolveOrigin = (value: string | null | undefined): string | null => {
+  const normalized = value?.trim();
+  return normalized ? (parseHttpUrl(normalized)?.origin ?? null) : null;
+};
+
+export const resolveTrustedOgCoverUrl = (
+  coverImageUrl: string,
+  options: {
+    siteUrl: string | null | undefined;
+    cdnBaseUrl: string | null | undefined;
+  },
+): string | null => {
+  const cdnOrigin = resolveOrigin(options.cdnBaseUrl);
+  const transformedUrl = buildCloudflareTransformUrl(coverImageUrl, options.cdnBaseUrl, {
+    width: COVER_WIDTH,
+    height: COVER_HEIGHT,
+    quality: COVER_QUALITY,
+    format: "jpeg",
+    fit: "cover",
+  });
+
+  if (transformedUrl) {
+    const transformed = parseHttpUrl(transformedUrl);
+    return transformed && cdnOrigin && transformed.origin === cdnOrigin
+      ? transformed.toString()
+      : null;
+  }
+
+  const siteOrigin = resolveOrigin(options.siteUrl);
+  const candidate = parseHttpUrl(coverImageUrl, siteOrigin ?? undefined);
+  if (!candidate) {
+    return null;
+  }
+
+  if (
+    siteOrigin &&
+    candidate.origin === siteOrigin &&
+    candidate.pathname.startsWith(PUBLIC_MEDIA_PATH_PREFIX)
+  ) {
+    return candidate.toString();
+  }
+
+  if (cdnOrigin && candidate.origin === cdnOrigin) {
+    return candidate.toString();
+  }
+
+  return null;
+};
 
 /**
  * 대표 이미지를 OG 카드에 넣을 수 있는 data URI로 만든다.
@@ -35,27 +102,24 @@ export const loadOgCoverImage = async (
     return null;
   }
 
-  // CDN이 설정돼 있고 R2 미디어면 변환본을, 아니면 원본 절대 URL을 받는다.
-  const transformedUrl = buildCloudflareTransformUrl(
-    coverImageUrl,
-    process.env.NEXT_PUBLIC_IMAGE_CDN_BASE_URL,
-    {
-      width: COVER_WIDTH,
-      height: COVER_HEIGHT,
-      quality: COVER_QUALITY,
-      format: "jpeg",
-      fit: "cover",
-    },
-  );
-  const targetUrl = transformedUrl ?? coverImageUrl;
-
-  if (!URL.canParse(targetUrl)) {
+  // 애플리케이션이 관리하는 공개 미디어와 명시적으로 설정된 CDN만 가져온다.
+  const targetUrl = resolveTrustedOgCoverUrl(coverImageUrl, {
+    siteUrl: process.env.NEXT_PUBLIC_SITE_URL,
+    cdnBaseUrl: process.env.NEXT_PUBLIC_IMAGE_CDN_BASE_URL,
+  });
+  if (!targetUrl) {
     return null;
   }
 
+  /*
+   * 리다이렉트는 자동으로 따라가지 않는다. 신뢰한 CDN/미디어 경로가 공격자 제어 호스트로
+   * 리다이렉트되면 목적지 검증을 우회할 수 있기 때문이다. 변환 실패 시에는 텍스트 카드로
+   * 폴백한다.
+   */
   try {
     const response = await fetch(targetUrl, {
       cache: "force-cache",
+      redirect: "error",
       signal: AbortSignal.timeout(COVER_FETCH_TIMEOUT_MS),
     });
 
