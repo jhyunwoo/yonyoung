@@ -70,7 +70,11 @@ export default function HeroShowcase({
                   data-testid={`home-hero-exhibition-card-${featuredExhibition.id}`}
                   aria-label={`${featuredExhibition.title} 상세 보기`}
                 >
-                  <div className="relative aspect-4/3">
+                  <div
+                    className="relative aspect-4/3"
+                    data-image-skeleton
+                    suppressHydrationWarning
+                  >
                     <Image
                       src={featuredExhibition.coverImageUrl}
                       alt={featuredExhibition.title}

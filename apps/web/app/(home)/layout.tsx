@@ -9,6 +9,7 @@ import { createPageMetadata } from "@/features/seo/metadata/seo";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
 import { WebVitalsReporter } from "@/app/_components/web-vitals-reporter";
 import RevealObserver from "@/app/(home)/_components/reveal-observer";
+import ImageSkeletonObserver from "@/app/(home)/_components/image-skeleton-observer";
 
 const ROOT_FONT_FAMILY =
   '"Pretendard Variable", "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
@@ -66,6 +67,8 @@ export default function RootLayout({
         </main>
         {/* 등장 애니메이션 트리거 — 공개 라우트 전체에서 옵저버는 이 하나뿐이다. */}
         <RevealObserver />
+        {/* 이미지 로딩 스켈레톤 해제 — 이미지 장수와 무관하게 이것 하나뿐이다. */}
+        <ImageSkeletonObserver />
         <Suspense fallback={null}>
           <SiteFooter />
         </Suspense>

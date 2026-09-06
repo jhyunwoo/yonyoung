@@ -33,6 +33,10 @@ export function PhotoGalleryTile({ item, aspect, index }: PhotoGalleryTileProps)
       className="photo-gallery-item border border-(--surface-border) bg-(--surface-muted)"
       style={{ "--photo-aspect": aspect.toFixed(4) } as CSSProperties}
       data-photo-index={index}
+      // 로딩 스켈레톤. 타일에 핸들러를 붙이지 않으려고 상태가 아니라 속성으로 표시한다.
+      // 아일랜드가 하이드레이션 전에 data-image-loaded 를 붙일 수 있어 경고를 끈다
+      data-image-skeleton
+      suppressHydrationWarning
       // 치수를 모르는 사진만 로드 후 측정이 필요하다는 표시
       {...(hasStoredSize ? {} : { "data-photo-measure": "" })}
     >

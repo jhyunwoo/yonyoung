@@ -123,7 +123,12 @@ export default function GenerationMembersGrid({
                   className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-(--surface-strong-border) bg-(--surface-muted) p-0.5 shadow-[0_0_0_1px_rgba(15,16,24,0.08)] md:h-14 md:w-14"
                   data-testid={`about-photographers-member-avatar-${member.id}`}
                 >
-                  <div className="relative h-full w-full overflow-hidden rounded-full bg-(--surface-border)">
+                  <div
+                    className="relative h-full w-full overflow-hidden rounded-full bg-(--surface-border)"
+                    // 사진이 없으면 이니셜만 그리므로 기다릴 이미지도 없다
+                    data-image-skeleton={member.image ? "" : undefined}
+                    suppressHydrationWarning
+                  >
                     {member.image ? (
                       <Image
                         src={member.image}
@@ -178,7 +183,11 @@ export default function GenerationMembersGrid({
               aria-hidden="true"
             />
             <div className="flex shrink-0 justify-center bg-(--surface-muted) px-6 pt-8 pb-2">
-              <div className="relative aspect-square w-40 overflow-hidden rounded-2xl border border-(--surface-border) bg-(--surface-border) md:w-56">
+              <div
+                className="relative aspect-square w-40 overflow-hidden rounded-2xl border border-(--surface-border) bg-(--surface-border) md:w-56"
+                data-image-skeleton={displayedMember.image ? "" : undefined}
+                suppressHydrationWarning
+              >
                 {displayedMember.image ? (
                   <Image
                     src={displayedMember.image}

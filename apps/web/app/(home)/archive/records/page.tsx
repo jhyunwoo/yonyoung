@@ -62,7 +62,11 @@ export default async function ArchiveRecordsPage() {
                   data-testid={`archive-record-card-${activity.id}`}
                   aria-label={`${activity.title} 상세 보기`}
                 >
-                  <div className="relative h-full w-full">
+                  <div
+                    className="relative h-full w-full"
+                    data-image-skeleton
+                    suppressHydrationWarning
+                  >
                     <Image
                       src={activity.coverImageUrl}
                       alt={activity.title}

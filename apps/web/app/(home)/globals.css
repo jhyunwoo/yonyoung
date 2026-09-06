@@ -31,6 +31,12 @@
   --footer-bg: #1a1a1a;
   --footer-text: #ffffff;
   --footer-muted: #999999;
+  /*
+   * 이미지 로딩 스켈레톤. base 는 --surface-muted 와 --surface-border 사이의 자리표시자
+   * 톤이고, sheen 은 그보다 밝아야 띠가 "훑고 지나간다"로 읽힌다(어두우면 그림자가 된다).
+   */
+  --skeleton-base: #e2e7f0;
+  --skeleton-sheen: #f7f9fd;
 }
 
 .dark {
@@ -49,6 +55,8 @@
   --footer-bg: #0b0d11;
   --footer-text: #f3f4f6;
   --footer-muted: #97a0ad;
+  --skeleton-base: #232932;
+  --skeleton-sheen: #333c49;
 }
 
 * {
@@ -455,6 +463,80 @@ html[data-public-scrolled] .public-header {
 
 .dark .recruiting-rich-text-contrast a {
   color: #90c5ff !important;
+}
+
+/*
+ * 이미지 로딩 스켈레톤 — 좌에서 우로 훑고 지나가는 띠.
+ *
+ * `::before` 는 DOM 순서상 이미지보다 앞이라 항상 이미지 "아래" 에 깔린다.
+ * 이 순서 하나로 두 가지가 따라온다:
+ *   ① JS 가 죽어도 사진은 그대로 보인다 — 뒤에서 애니메이션만 돌 뿐이다.
+ *      이미지를 opacity:0 으로 숨겼다가 켜는 방식은 이 성질을 잃는다.
+ *   ② 캐시된 이미지는 아일랜드가 붙기 전에 이미 위를 덮으므로 깜빡임이 없다.
+ *
+ * 대신 프레임을 꽉 채우는 불투명 이미지에만 쓴다(대상이 전부 object-cover 다).
+ * 투명 PNG 나 object-contain 은 뒤가 비쳐 보이므로 대상이 아니다 — 푸터 로고가 그 예다.
+ *
+ * 해제(= data-image-loaded)는 `_components/image-skeleton-observer.tsx` 가 붙인다.
+ */
+@layer base {
+  /*
+   * ::before 의 기준 상자.
+   * utilities 레이어가 뒤에 오므로 호출부가 absolute/fixed 를 쓰면 그쪽이 이긴다 —
+   * 여기서는 positioning 유틸이 없는 프레임만 받쳐 준다.
+   */
+  [data-image-skeleton] {
+    position: relative;
+  }
+}
+
+[data-image-skeleton]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* 둥근 프레임(프로필 사진)에서 모서리가 삐져나오지 않게 */
+  border-radius: inherit;
+  background-color: var(--skeleton-base);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--skeleton-sheen) 50%,
+    transparent 100%
+  );
+  background-repeat: no-repeat;
+  /* 훑고 지나갈 띠의 폭. 아래 keyframes 의 양 끝 값이 이 값에서 나온다 */
+  background-size: 60% 100%;
+  /* 등속이어야 "훑고 지나간다" 로 읽힌다 — ease 계열은 양 끝에서 띠가 머문다 */
+  animation: image-skeleton-sweep 1.4s linear infinite;
+  /* 클릭·hover 는 위에 있는 버튼/링크가 받아야 한다 */
+  pointer-events: none;
+}
+
+/*
+ * no-repeat 에서 background-position 의 p% 는 띠 왼쪽 모서리를 p% * (100% - 60%) 에 놓는다.
+ * 따라서 완전히 왼쪽 밖(왼쪽 모서리 -60%)은 -150%, 완전히 오른쪽 밖(100%)은 250% 다.
+ * 폭을 바꾸면 이 두 값도 같이 다시 계산해야 한다.
+ */
+@keyframes image-skeleton-sweep {
+  from {
+    background-position: -150% 0;
+  }
+  to {
+    background-position: 250% 0;
+  }
+}
+
+/* 로드가 끝나면 상자째 없앤다 — 보이지 않는 애니메이션이 계속 도는 것을 막는다 */
+[data-image-skeleton][data-image-loaded]::before {
+  content: none;
+}
+
+/* 감소 모드: 끄는 게 아니라 순화 — 기존 스켈레톤과 같은 단색으로 자리만 지킨다 */
+@media (prefers-reduced-motion: reduce) {
+  [data-image-skeleton]::before {
+    background-image: none;
+    animation: none;
+  }
 }
 
 /*

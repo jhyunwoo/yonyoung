@@ -175,7 +175,11 @@ export default async function HomePage() {
                   data-testid={`home-activity-card-${activity.id}`}
                   aria-label={`${activity.title} 상세 보기`}
                 >
-                  <div className="relative shrink-0 aspect-4/3 overflow-hidden">
+                  <div
+                    className="relative shrink-0 aspect-4/3 overflow-hidden"
+                    data-image-skeleton
+                    suppressHydrationWarning
+                  >
                     <Image
                       src={activity.coverImageUrl}
                       alt={activity.title}

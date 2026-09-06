@@ -66,7 +66,11 @@ export default async function ArchiveExhibitionsPage() {
                     data-testid={`archive-exhibition-card-${exhibition.id}`}
                     aria-label={`${exhibition.title} 상세 보기`}
                   >
-                    <div className="absolute inset-0">
+                    <div
+                      className="absolute inset-0"
+                      data-image-skeleton
+                      suppressHydrationWarning
+                    >
                       <Image
                         src={exhibition.coverImageUrl}
                         alt={exhibition.title}
