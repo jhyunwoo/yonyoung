@@ -13,6 +13,7 @@ export const API_PROXY_ALLOWED_PREFIXES = [
   "recruiting-plan",
   "site",
   "site-settings",
+  "uploads",
   "users",
 ] as const;
 

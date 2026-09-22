@@ -66,6 +66,7 @@ exports[`openapi contract > 경로/메서드/operationId/스키마 구조가 리
     "ApiUpdateLinktreeItemInput",
     "ApiUpdateSiteSettingsInput",
     "ApiUpdateUserRequest",
+    "ApiUploadSettleRequest",
     "ApiUpsertCurrentRecruitingPlanInput",
     "ApiUser",
     "ApiUserResourceHistory",
@@ -7179,6 +7180,74 @@ exports[`openapi contract > 경로/메서드/operationId/스키마 구조가 리
             },
           },
           "description": "요청 구조는 유효하지만 의미적으로 처리할 수 없습니다. 업로드 파트/ETag 정보를 점검하세요.",
+        },
+        "500": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiErrorResponse",
+              },
+            },
+          },
+          "description": "서버 내부 예외 또는 외부 의존성(Auth/R2/DB) 오류로 요청 처리에 실패했습니다. 서버는 INTERNAL_ERROR를 반환하며, 클라이언트는 사용자에게 재시도/잠시 후 다시 시도 안내를 제공해야 합니다.",
+        },
+      },
+      "security": [
+        {
+          "cookieAuth": [],
+        },
+      ],
+      "tags": [
+        "Uploads",
+      ],
+    },
+    "POST /api/uploads/settle": {
+      "operationId": "settleUploadReservation",
+      "parameters": undefined,
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiUploadSettleRequest",
+            },
+          },
+        },
+        "description": "단일 업로드 용량 예약 정산",
+        "required": true,
+      },
+      "responses": {
+        "204": {
+          "description": "요청이 정상 처리되었으며 반환 본문은 없습니다. 클라이언트에서는 상태 코드(204)만 확인하면 됩니다.",
+        },
+        "400": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiErrorResponse",
+              },
+            },
+          },
+          "description": "요청 본문/파라미터 검증에 실패했습니다. 발생 조건: UUID 형식 오류, 필수 필드 누락, 스키마 타입 불일치, 빈 PATCH payload 등. 서버는 검증 단계에서 요청을 중단하고 BAD_REQUEST를 반환하며, 클라이언트는 입력값을 보정한 뒤 재요청해야 합니다.",
+        },
+        "401": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiErrorResponse",
+              },
+            },
+          },
+          "description": "인증 세션이 없거나 만료되었습니다. 서버는 세션 확인 단계에서 요청을 거부하고 UNAUTHORIZED를 반환합니다. 클라이언트는 재로그인 후 동일 요청을 재시도해야 합니다.",
+        },
+        "403": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiErrorResponse",
+              },
+            },
+          },
+          "description": "역할 기반 권한 정책에 의해 요청이 거부되었습니다. 서버는 인증 이후 권한 검사(requirePermission/can)에서 접근 가능 여부를 판단하고 FORBIDDEN을 반환합니다. 클라이언트는 권한 범위 내 기능만 노출해야 합니다.",
         },
         "500": {
           "content": {

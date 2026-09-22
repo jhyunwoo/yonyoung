@@ -23,9 +23,23 @@ export const apiPresignResponseSchema = z.object({
   objectKey: z.string(),
   publicUrl: z.url(),
   requiredHeaders: z.record(z.string(), z.string()).optional(),
+  // 업로드가 끝난 뒤 용량 예약을 정산할 때 쓴다. API 배포가 웹보다 늦을 수 있어
+  // 선택 항목으로 둔다 — 값이 없으면 소비자는 정산을 건너뛴다.
+  reservationId: z.string().optional(),
 });
 
 export type ApiPresignResponse = z.infer<typeof apiPresignResponseSchema>;
+
+export const UPLOAD_SETTLE_OUTCOMES = ["completed", "aborted"] as const;
+
+export const apiUploadSettleRequestSchema = z.object({
+  reservationId: z.string().min(1),
+  outcome: z.enum(UPLOAD_SETTLE_OUTCOMES),
+});
+
+export type ApiUploadSettleRequest = z.infer<
+  typeof apiUploadSettleRequestSchema
+>;
 
 export type ApiMultipartUploadInitRequest = {
   fileName: string;

@@ -320,6 +320,158 @@ describe("upload presign routes",() => {
     });
   });
 
+  describe("단일 업로드 정산", () => {
+    const reserveFor = async (
+      store: UploadReservationStore,
+      id: string,
+      actorId: string,
+    ) => {
+      await store.reserve({
+        id,
+        actorId,
+        fileSize: 1024,
+        observedUsedBytes: 0,
+        observedAt: Date.now(),
+        grantExpiresAt: Date.now() + 60_000,
+        expiresAt: Date.now() + 120_000,
+      });
+    };
+
+    const settleRequest = (
+      app: ReturnType<typeof createTestApp>,
+      body: unknown,
+    ) =>
+      app.request("/api/uploads/settle", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+    it("단일 presign 응답이 정산에 사용할 reservationId를 내려준다", async () => {
+      const observedStore = createObservedUploadReservationStore();
+      const app = createTestApp({
+        actor: createActor("manager", IDs.manager),
+        presignService: createPresignServiceMock({
+          issuePresignedPutUrl: fn(async () => ({
+            uploadUrl: "https://upload.example.com/signed",
+            objectKey: "object-key",
+            publicUrl: "https://cdn.example.com/object-key",
+            requiredHeaders: { "Content-Type": "image/png" },
+          })),
+        }),
+        uploadReservationStore: observedStore.store,
+      });
+
+      const response = await app.request("/api/activities/presign/detail", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          fileName: "cover.png",
+          contentType: "image/png",
+          fileSize: 1024,
+        }),
+      });
+
+      expect(response.status).toBe(201);
+      const body = await readJson<{ data: { reservationId: string } }>(response);
+      expect(observedStore.reservedIds).toContain(body.data.reservationId);
+    });
+
+    it("업로드 완료 정산은 동시 예약 슬롯을 반납한다", async () => {
+      const observedStore = createObservedUploadReservationStore();
+      await reserveFor(observedStore.store, "settle-me", IDs.manager);
+      const app = createTestApp({
+        actor: createActor("manager", IDs.manager),
+        uploadReservationStore: observedStore.store,
+      });
+
+      const response = await settleRequest(app, {
+        reservationId: "settle-me",
+        outcome: "completed",
+      });
+
+      expect(response.status).toBe(204);
+      expect(observedStore.settledIds).toContain("settle-me");
+      const settled = await observedStore.store.get("settle-me");
+      expect(settled?.grantExpiresAt).toBeLessThanOrEqual(Date.now());
+    });
+
+    it("업로드 실패 정산은 예약을 제거한다", async () => {
+      const observedStore = createObservedUploadReservationStore();
+      await reserveFor(observedStore.store, "drop-me", IDs.manager);
+      const app = createTestApp({
+        actor: createActor("manager", IDs.manager),
+        uploadReservationStore: observedStore.store,
+      });
+
+      const response = await settleRequest(app, {
+        reservationId: "drop-me",
+        outcome: "aborted",
+      });
+
+      expect(response.status).toBe(204);
+      expect(observedStore.removedIds).toContain("drop-me");
+      expect(await observedStore.store.get("drop-me")).toBeNull();
+    });
+
+    it("다른 사용자의 예약은 정산할 수 없다", async () => {
+      const observedStore = createObservedUploadReservationStore();
+      await reserveFor(observedStore.store, "not-mine", IDs.president);
+      const app = createTestApp({
+        actor: createActor("manager", IDs.manager),
+        uploadReservationStore: observedStore.store,
+      });
+
+      const response = await settleRequest(app, {
+        reservationId: "not-mine",
+        outcome: "completed",
+      });
+
+      expect(response.status).toBe(403);
+      expect(observedStore.settledIds).not.toContain("not-mine");
+      expect(await observedStore.store.get("not-mine")).not.toBeNull();
+    });
+
+    it("이미 사라진 예약 정산은 멱등 성공으로 처리한다", async () => {
+      const observedStore = createObservedUploadReservationStore();
+      const app = createTestApp({
+        actor: createActor("manager", IDs.manager),
+        uploadReservationStore: observedStore.store,
+      });
+
+      const response = await settleRequest(app, {
+        reservationId: "gone",
+        outcome: "completed",
+      });
+
+      expect(response.status).toBe(204);
+    });
+
+    it("인증되지 않은 정산 요청에 401을 반환한다", async () => {
+      const app = createTestApp({ actor: null });
+
+      const response = await settleRequest(app, {
+        reservationId: "whatever",
+        outcome: "completed",
+      });
+
+      expect(response.status).toBe(401);
+    });
+
+    it("정산 본문이 유효하지 않으면 400을 반환한다", async () => {
+      const app = createTestApp({
+        actor: createActor("manager", IDs.manager),
+      });
+
+      const response = await settleRequest(app, {
+        reservationId: "whatever",
+        outcome: "maybe",
+      });
+
+      expect(response.status).toBe(400);
+    });
+  });
+
   for (const route of resourceRoutes) {
     it(`${route.path}는 인증되지 않은 요청에 401을 반환한다`,async () => {
       const app = createTestApp({ actor: null });

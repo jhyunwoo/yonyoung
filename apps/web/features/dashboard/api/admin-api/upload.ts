@@ -2,7 +2,7 @@ import Uppy from "@uppy/core";
 import AwsS3 from "@uppy/aws-s3";
 import { AdminApiError } from "@/shared/http/http";
 import { adminRequest } from "@/features/dashboard/api/admin-api/http";
-import type { ApiPresignResponse } from "@yonyoung/contracts";
+import type { ApiPresignResponse, ApiUploadSettleRequest } from "@yonyoung/contracts";
 
 export const PRESIGN_PATHS = {
   activityCover: "/activities/presign/cover",
@@ -255,6 +255,34 @@ const runUploadWithUppy = async (input: {
   }
 };
 
+const UPLOAD_SETTLE_PATH = "/uploads/settle";
+
+/**
+ * 단일 PUT 업로드는 R2가 서버에 완료를 알려주지 않는다. 정산하지 않으면 용량 예약이
+ * presign 서명 수명(1시간) 동안 동시 예약 슬롯을 붙들어, 업로드가 모두 성공해도
+ * 같은 관리자가 시간당 10건에서 409로 막힌다.
+ *
+ * 정산 실패가 이미 끝난 업로드를 되돌려서는 안 되므로 항상 best-effort로 호출한다.
+ * reservationId가 없으면(구버전 API) 조용히 건너뛴다.
+ */
+const settleUpload = async (
+  reservationId: string | undefined,
+  outcome: ApiUploadSettleRequest["outcome"],
+): Promise<void> => {
+  if (!reservationId) {
+    return;
+  }
+
+  try {
+    await adminRequest<void>(UPLOAD_SETTLE_PATH, "POST", {
+      reservationId,
+      outcome,
+    } satisfies ApiUploadSettleRequest);
+  } catch {
+    // 예약은 만료로도 회수되므로 무시한다.
+  }
+};
+
 export const uploadWithPresign = async (input: {
   presignPath: PresignPath;
   file: File;
@@ -273,27 +301,34 @@ export const uploadWithPresign = async (input: {
     input.onProgress(0);
   }
 
-  if (shouldUseUppyUploader()) {
-    await runUploadWithUppy({
-      uploadUrl: presign.uploadUrl,
-      uploadHeaders,
-      file: input.file,
-      onProgress: input.onProgress,
-    });
-  } else if (input.onProgress && typeof XMLHttpRequest !== "undefined") {
-    await runUploadWithXhr({
-      uploadUrl: presign.uploadUrl,
-      uploadHeaders,
-      file: input.file,
-      onProgress: input.onProgress,
-    });
-  } else {
-    await runUploadWithFetch({
-      uploadUrl: presign.uploadUrl,
-      uploadHeaders,
-      file: input.file,
-    });
+  try {
+    if (shouldUseUppyUploader()) {
+      await runUploadWithUppy({
+        uploadUrl: presign.uploadUrl,
+        uploadHeaders,
+        file: input.file,
+        onProgress: input.onProgress,
+      });
+    } else if (input.onProgress && typeof XMLHttpRequest !== "undefined") {
+      await runUploadWithXhr({
+        uploadUrl: presign.uploadUrl,
+        uploadHeaders,
+        file: input.file,
+        onProgress: input.onProgress,
+      });
+    } else {
+      await runUploadWithFetch({
+        uploadUrl: presign.uploadUrl,
+        uploadHeaders,
+        file: input.file,
+      });
+    }
+  } catch (error) {
+    await settleUpload(presign.reservationId, "aborted");
+    throw error;
   }
+
+  await settleUpload(presign.reservationId, "completed");
 
   if (input.onProgress) {
     input.onProgress(100);
