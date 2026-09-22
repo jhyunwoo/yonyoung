@@ -5,6 +5,7 @@ import {
   primaryKey,
   sqliteTable,
   text,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 import { generations } from "./generations";
 
@@ -95,6 +96,9 @@ export const account = sqliteTable(
   "account",
   {
     id: text("id").primaryKey(),
+    // Better Auth 1.7부터 계정 정체성은 (issuer, accountId)로 스코프된다.
+    // providerId는 앱 내부 라벨일 뿐이고, 동일 subject 충돌을 막는 것은 issuer다.
+    issuer: text("issuer").notNull(),
     accountId: text("account_id").notNull(),
     providerId: text("provider_id").notNull(),
     userId: text("user_id")
@@ -118,7 +122,13 @@ export const account = sqliteTable(
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
-  (table) => [index("account_userId_idx").on(table.userId)],
+  (table) => [
+    index("account_userId_idx").on(table.userId),
+    uniqueIndex("account_issuer_accountId_idx").on(
+      table.issuer,
+      table.accountId,
+    ),
+  ],
 );
 
 export const verification = sqliteTable(
