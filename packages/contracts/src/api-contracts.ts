@@ -98,4 +98,5 @@ export type {
   ApiMultipartUploadPartResponse,
   ApiPresignRequest,
   ApiPresignResponse,
+  ApiUploadSettleRequest,
 } from "./api/uploads";

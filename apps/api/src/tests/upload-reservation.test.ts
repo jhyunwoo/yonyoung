@@ -157,6 +157,28 @@ describe("memory upload reservation store", () => {
     ).rejects.toBeInstanceOf(UploadReservationObservationStaleError);
   });
 
+  it("정산된 예약은 동시 예약 슬롯을 즉시 반납한다", async () => {
+    const store = createMemoryUploadReservationStore();
+    for (let index = 0; index < 10; index += 1) {
+      await store.reserve(activeReservation(`reservation-${index}`));
+    }
+    await expect(
+      store.reserve(activeReservation("reservation-10")),
+    ).rejects.toBeInstanceOf(UploadReservationLimitError);
+
+    await store.settle(
+      "reservation-0",
+      Date.now() + UPLOAD_RESERVATION_SETTLEMENT_GRACE_MS,
+    );
+
+    await expect(
+      store.reserve(activeReservation("reservation-10")),
+    ).resolves.toBeUndefined();
+    // 슬롯만 반납하고, 정산 유예 동안 용량은 계속 점유해야 한다.
+    const settled = await store.get("reservation-0");
+    expect(settled?.expiresAt).toBeGreaterThan(Date.now());
+  });
+
   it("예약을 명시적으로 제거한다", async () => {
     const store = createMemoryUploadReservationStore();
     await store.reserve(activeReservation("removable"));

@@ -47,8 +47,28 @@ export const ApiPresignResponseSchema = z
         "Content-Type": "image/jpeg",
       },
     }),
+    reservationId: z.string().openapi({
+      description:
+        "업로드 종료 후 POST /api/uploads/settle에 전달할 용량 예약 ID",
+      example: "8f14e45f-ceea-467a-9575-9b5a4a4c1234",
+    }),
   })
   .openapi("ApiPresignResponse");
+
+export const ApiUploadSettleRequestSchema = z
+  .object({
+    reservationId: z.string().min(1).openapi({
+      description: "presign 응답으로 받은 용량 예약 ID",
+      example: "8f14e45f-ceea-467a-9575-9b5a4a4c1234",
+    }),
+    outcome: z.enum(["completed", "aborted"]).openapi({
+      description:
+        "completed는 업로드 성공(용량은 정산 유예 동안 유지), aborted는 업로드 실패(예약 즉시 폐기)",
+      example: "completed",
+    }),
+  })
+  .strict()
+  .openapi("ApiUploadSettleRequest");
 
 export const ApiMultipartUploadInitRequestSchema = z
   .object({

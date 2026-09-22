@@ -32,6 +32,7 @@ import {
   ApiMultipartUploadPartResponseSchema,
   ApiPresignRequestSchema,
   ApiPresignResponseSchema,
+  ApiUploadSettleRequestSchema,
 } from "./upload.contract";
 import {
   MULTIPART_UPLOAD_CAPACITY_RESERVATION_TTL_MS,
@@ -163,7 +164,7 @@ const registerResourcePresignRoute = (
           contentType: body.contentType,
           fileSize: body.fileSize,
         });
-      return ok(c, data, 201);
+      return ok(c, { ...data, reservationId: reservation.id }, 201);
     } catch (error) {
       await releaseUploadReservation(reservation);
       throw toUploadFailureError(error, "업로드 URL 발급에 실패했습니다.");
@@ -379,6 +380,24 @@ const multipartAbortRoute = createRoute({
   },
 });
 
+const uploadSettleRoute = createRoute({
+  method: "post",
+  path: "/api/uploads/settle",
+  tags: ["Uploads"],
+  operationId: "settleUploadReservation",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: jsonBody(ApiUploadSettleRequestSchema, "단일 업로드 용량 예약 정산"),
+  },
+  responses: {
+    204: noContentResponse,
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    500: errorResponses[500],
+  },
+});
+
 export const registerUploadRoutes = (
   app: App,
   dependencies: AppDependencies,
@@ -496,7 +515,7 @@ export const registerUploadRoutes = (
           contentType: body.contentType,
           fileSize: body.fileSize,
         });
-      return ok(c, data, 201);
+      return ok(c, { ...data, reservationId: reservation.id }, 201);
     } catch (error) {
       await releaseUploadReservation(reservation);
       throw toUploadFailureError(error, "업로드 URL 발급에 실패했습니다.");
@@ -719,5 +738,33 @@ export const registerUploadRoutes = (
         "멀티파트 업로드 중단 처리에 실패했습니다.",
       );
     }
+  });
+
+  /**
+   * 단일 PUT 업로드에는 R2가 알려주는 완료 신호가 없다. 정산 호출이 없으면 예약이
+   * presign 서명 수명(1시간) 내내 동시 예약 슬롯을 붙들어, 업로드가 모두 성공해도
+   * 같은 사용자가 시간당 10건에서 막힌다. 클라이언트가 업로드 종료를 알려준다.
+   */
+  app.openapi(uploadSettleRoute, async (c) => {
+    const actor = await requireAuthenticatedActor(c, dependencies);
+    const body = readValidated(c, "json", ApiUploadSettleRequestSchema);
+
+    const store = dependencies.getUploadReservationStore(c);
+    const reservation = await store.get(body.reservationId);
+    // 만료 회수나 재시도로 이미 사라졌을 수 있다. 정산은 멱등이어야 한다.
+    if (!reservation) {
+      return noContent(c);
+    }
+    if (reservation.actorId !== actor.id) {
+      throw AppError.forbidden();
+    }
+
+    if (body.outcome === "completed") {
+      await settleUploadReservation(store, reservation.id, c);
+    } else {
+      await store.remove(reservation.id).catch(() => undefined);
+    }
+
+    return noContent(c);
   });
 };
