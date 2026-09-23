@@ -65,7 +65,7 @@ export default async function AboutPage() {
               id="about-identity"
               className="text-[2rem] font-semibold text-(--text-primary)"
             >
-              사진으로 배우고, 기록하고, 전시합니다
+              대학교 사진 동아리에서는 어떤 활동을 하나요?
             </h2>
             <p className="text-base leading-8 text-(--text-muted)">
               연영회는 사진 이론과 촬영, 보정 경험을 나누는 세미나와 정기 출사를

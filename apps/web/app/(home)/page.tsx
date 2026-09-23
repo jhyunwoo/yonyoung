@@ -15,6 +15,7 @@ import {
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import { summarizeRichTextHtml } from "@/features/media/rich-text/rich-text";
 import { resolveSiteUrl } from "@/features/seo/metadata/seo";
+import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
 import JsonLd from "@/features/seo/structured-data/json-ld";
 import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
 
@@ -119,8 +120,7 @@ export default async function HomePage() {
     url: siteUrl,
     logo: `${siteUrl}/android-chrome-512x512.png`,
     image: `${siteUrl}/android-chrome-512x512.png`,
-    description:
-      "1966년 창단한 연세대학교 중앙사진동아리로, 사진 촬영과 전시, 교류 활동을 이어가고 있습니다.",
+    description: PAGE_SEO.home.description,
     foundingDate: "1966",
     sameAs: ["https://www.instagram.com/yonyoungpage"],
     parentOrganization: {
