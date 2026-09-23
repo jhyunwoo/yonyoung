@@ -1,6 +1,7 @@
 "use client";
 
 import { RotateCcw } from "lucide-react";
+import { captureException } from "@sentry/nextjs";
 import { useEffect } from "react";
 
 import { Alert } from "@/app/(dashboard)/_components/ui/alert";
@@ -15,6 +16,7 @@ type DashboardErrorPageProps = {
 
 export default function DashboardErrorPage({ error, reset }: DashboardErrorPageProps) {
   useEffect(() => {
+    captureException(error);
     navigator.sendBeacon(
       "/api/internal/client-error",
       new Blob(

@@ -7,7 +7,9 @@ describe("public API cached entrypoint", () => {
     const publicFetch = vi.fn(async (request: Request) => {
       expect(request.headers.get("authorization")).toBeNull();
       expect(request.headers.get("cookie")).toBeNull();
-      expect(request.headers.get("origin")).toBe("https://yonyoung.yonsei.ac.kr");
+      expect(request.headers.get("origin")).toBe(
+        "https://yonyoung.yonsei.ac.kr",
+      );
       expect(request.headers.get("x-request-id")).toBe("incoming-request-id");
 
       return new Response(JSON.stringify({ data: [] }), {
@@ -21,6 +23,7 @@ describe("public API cached entrypoint", () => {
       });
     });
     const ctx = {
+      waitUntil: vi.fn(),
       exports: {
         PublicApi: {
           fetch: publicFetch,

@@ -1,8 +1,12 @@
+import { instrumentSentryHandler } from "./shared/observability/sentry-handler";
 import { WorkerEntrypoint } from "cloudflare:workers";
 import { createApp } from "./app";
 import type { Bindings } from "./bindings/types";
 
 const app = createApp();
+const monitoredApp = instrumentSentryHandler({
+  fetch: async (request, env, ctx) => app.fetch(request, env, ctx),
+});
 
 const isPublicApiRequest = (request: Request): boolean => {
   if (request.method !== "GET" && request.method !== "HEAD") {
@@ -58,11 +62,11 @@ const addGatewayTiming = (
  */
 export class PublicApi extends WorkerEntrypoint<Bindings> {
   override async fetch(request: Request): Promise<Response> {
-    return app.fetch(request, this.env, this.ctx);
+    return monitoredApp.fetch(request, this.env, this.ctx);
   }
 }
 
-export default {
+export default instrumentSentryHandler({
   async fetch(
     request: Request,
     env: Bindings,
@@ -80,4 +84,4 @@ export default {
 
     return addGatewayTiming(response, { requestId, startedAt });
   },
-} satisfies ExportedHandler<Bindings>;
+} satisfies ExportedHandler<Bindings>);

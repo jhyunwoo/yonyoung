@@ -2,6 +2,9 @@ import type { Actor } from "../lib/authorization/types";
 import type { DataService } from "../lib/services/types";
 
 type RuntimeBindingOverrides = {
+  SENTRY_DSN?: string;
+  SENTRY_ENVIRONMENT?: string;
+  SENTRY_RELEASE?: string;
   DB?: D1Database;
   db?: D1Database;
   R2?: R2Bucket;

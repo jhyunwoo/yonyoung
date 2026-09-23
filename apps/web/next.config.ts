@@ -1,3 +1,4 @@
+import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -12,7 +13,12 @@ type RemoteImagePattern = {
   pathname: string;
   port?: string;
 };
-const CSP_CONNECT_SOURCES = ["'self'", "https://*.r2.cloudflarestorage.com"] as const;
+const CSP_CONNECT_SOURCES = ["'self'", "https://*.r2.cloudflarestorage.com"];
+// Permit only the configured ingest origin; never widen connect-src to all HTTPS.
+if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
+  const origin = new URL(process.env.NEXT_PUBLIC_SENTRY_DSN).origin;
+  CSP_CONNECT_SOURCES.push(origin);
+}
 
 const buildPublicMediaRemotePatterns = (): RemoteImagePattern[] => {
   const candidateOrigins = new Set<string>(DEFAULT_PUBLIC_MEDIA_IMAGE_ORIGINS);
@@ -183,4 +189,14 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.CI,
+  telemetry: false,
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+    deleteSourcemapsAfterUpload: true,
+  },
+});

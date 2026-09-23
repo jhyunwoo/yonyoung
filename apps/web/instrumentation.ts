@@ -1,7 +1,14 @@
+import * as Sentry from "@sentry/nextjs";
 import type { Instrumentation } from "next";
 import { logger } from "@/server/observability/logger";
 
-export function register(): void {
+export async function register(): Promise<void> {
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    await import("./sentry.server.config");
+  }
+  if (process.env.NEXT_RUNTIME === "edge") {
+    await import("./sentry.edge.config");
+  }
   logger.info({
     event: "instrumentation.register",
   });
@@ -26,6 +33,7 @@ export const onRequestError: Instrumentation.onRequestError = (
   errorRequest,
   errorContext,
 ) => {
+  Sentry.captureRequestError(error, errorRequest, errorContext);
   logger.error({
     event: "request.error",
     route: errorContext.routePath,
