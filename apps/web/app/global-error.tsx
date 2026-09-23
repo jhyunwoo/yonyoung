@@ -1,6 +1,6 @@
 "use client";
 
-import { captureException } from "@sentry/nextjs";
+import { captureBrowserException } from "@/lib/observability/sentry-client";
 import { useEffect } from "react";
 
 export default function GlobalError({
@@ -11,7 +11,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    captureException(error);
+    void captureBrowserException(error);
   }, [error]);
   return (
     <html lang="ko">

@@ -1,19 +1,6 @@
-import * as Sentry from "@sentry/nextjs";
-import { scrubSentryEvent } from "@/lib/observability/sentry";
+import { initializeBrowserSentry } from "@/lib/observability/sentry-client";
 
-if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
-  Sentry.init({
-    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-    environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ?? process.env.NODE_ENV,
-    initialScope: { tags: { service: "web" } },
-    sendDefaultPii: false,
-    tracesSampleRate: 0,
-    replaysSessionSampleRate: 0,
-    replaysOnErrorSampleRate: 0,
-    enableLogs: false,
-    beforeSend: scrubSentryEvent,
-  });
-}
+void initializeBrowserSentry();
 
 type ClientErrorPayload = {
   event: "client.error" | "client.unhandledrejection" | "router.transition.start";

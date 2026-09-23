@@ -1,9 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { captureException } from "@sentry/nextjs";
+import { captureBrowserException } from "@/lib/observability/sentry-client";
 import HomeErrorPage from "../../app/(home)/error";
 
-vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
+vi.mock("@/lib/observability/sentry-client", () => ({
+  captureBrowserException: vi.fn().mockResolvedValue(undefined),
+}));
 
 describe("Sentry error boundary", () => {
   it("reports the original error and retains the retry action", () => {
@@ -14,7 +16,7 @@ describe("Sentry error boundary", () => {
     const error = new Error("render failure");
     const reset = vi.fn();
     render(<HomeErrorPage error={error} reset={reset} />);
-    expect(captureException).toHaveBeenCalledWith(error);
+    expect(captureBrowserException).toHaveBeenCalledWith(error);
     screen.getByTestId("home-error-reset").click();
     expect(reset).toHaveBeenCalledOnce();
   });
