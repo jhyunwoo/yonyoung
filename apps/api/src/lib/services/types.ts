@@ -299,6 +299,14 @@ export type DataService = {
       endDate: number;
     }>,
   ) => Promise<GenerationEntity | null>;
+  /** 여러 기수의 정렬 순서를 한 트랜잭션으로 바꾼다(자리 맞바꾸기 포함). */
+  reorderGenerations: (
+    items: { id: string; sortOrder: number }[],
+  ) => Promise<
+    | { status: "ok"; changedIds: string[] }
+    | { status: "not_found" }
+    | { status: "conflict" }
+  >;
   deleteGeneration: (id: string) => Promise<boolean>;
 
   listActivities: (generationId?: string) => Promise<ActivityEntity[]>;

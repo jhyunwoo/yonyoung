@@ -26,6 +26,7 @@ import {
 import {
   ApiCreateGenerationSchema,
   ApiGenerationSchema,
+  ApiReorderGenerationsSchema,
   ApiUpdateGenerationSchema,
 } from "./generation.contract";
 import { ApiGenerationMemberSummarySchema } from "../users/user.contract";
@@ -114,6 +115,32 @@ const listGenerationMembersRoute = createRoute({
   },
 });
 
+const reorderGenerationsRoute = createRoute({
+  method: "post",
+  path: "/api/generations/reorder",
+  tags: ["Generations"],
+  operationId: "reorderGenerations",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: jsonBody(
+      ApiReorderGenerationsSchema,
+      "기수 정렬 순서 일괄 변경 요청",
+    ),
+  },
+  responses: {
+    200: dataResponse(
+      ApiGenerationSchema.array(),
+      "정렬 순서 변경 성공 (변경 후 전체 기수 목록)",
+    ),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+    409: errorResponses[409],
+    500: errorResponses[500],
+  },
+});
+
 const updateGenerationRoute = createRoute({
   method: "patch",
   path: "/api/generations/{id}",
@@ -170,7 +197,7 @@ const readUniqueConflictMessage = (error: unknown): string => {
   }
 
   if (error.message.includes("generations.sort_order")) {
-    return "sortOrder 값이 이미 존재합니다.";
+    return "다른 기수가 이미 이 정렬 순서를 쓰고 있습니다. 두 기수의 자리를 바꾸려면 목록의 위/아래 이동 버튼을 사용해 주세요.";
   }
 
   return "중복된 값이 이미 존재합니다.";
@@ -215,6 +242,40 @@ export const registerGenerationRoutes = (
   app: App,
   dependencies: GenerationRouteDependencies,
 ) => {
+  // `/api/generations/{id}` 계열보다 먼저 등록한다.
+  app.openapi(reorderGenerationsRoute, async (c) => {
+    const actor = await requireAuthenticatedActor(c, dependencies);
+    assertPermission(actor, "generation", "update");
+
+    const { items } = readValidated(c, "json", ApiReorderGenerationsSchema);
+    const dataService = dependencies.getDataService(c);
+    const result = await dataService.reorderGenerations(items);
+
+    if (result.status === "not_found") {
+      throw AppError.notFound(
+        "순서를 바꿀 기수를 찾을 수 없습니다. 목록을 새로고침해 주세요.",
+      );
+    }
+    if (result.status === "conflict") {
+      throw AppError.conflict(
+        "요청하지 않은 다른 기수가 이미 그 정렬 순서를 쓰고 있습니다. 두 기수를 함께 옮겨 주세요.",
+      );
+    }
+
+    for (const id of result.changedIds) {
+      await recordAuditLog({
+        dataService,
+        actor,
+        resourceType: "generation",
+        resourceId: id,
+        action: "update",
+        changedFields: ["sortOrder", "updatedAt"],
+      });
+    }
+
+    return ok(c, await dataService.listGenerations());
+  });
+
   app.openapi(listGenerationsRoute, async (c) => {
     const actor = await requireAuthenticatedActor(c, dependencies);
 

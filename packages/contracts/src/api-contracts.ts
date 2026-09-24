@@ -21,6 +21,7 @@ export type {
   ApiGenerationMemberSummary,
   ApiPublicGenerationMember,
   ApiPublicGenerationWithMembers,
+  ApiReorderGenerationsInput,
   ApiUpdateGenerationInput,
 } from "./api/generations";
 

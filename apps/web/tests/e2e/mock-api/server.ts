@@ -914,6 +914,24 @@ const handleRequest = async (
       sendData(response, state.generations);
       return;
     }
+    if (pathname === "/api/generations/reorder" && method === "POST") {
+      if (!requireWritableRole(response, role)) {
+        return;
+      }
+      const items = Array.isArray(body?.items)
+        ? (body.items as Array<{ id?: unknown; sortOrder?: unknown }>)
+        : [];
+      for (const item of items) {
+        const target = state.generations.find((generation) => generation.id === item.id);
+        if (target && typeof item.sortOrder === "number") {
+          target.sortOrder = item.sortOrder;
+          target.updatedAt = now();
+          target.updatedBy = buildAuditActor(actorUser);
+        }
+      }
+      sendData(response, state.generations);
+      return;
+    }
     if (pathname === "/api/generations" && method === "POST") {
       if (!requireWritableRole(response, role)) {
         return;

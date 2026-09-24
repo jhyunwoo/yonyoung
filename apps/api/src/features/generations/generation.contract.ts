@@ -72,3 +72,37 @@ export const ApiUpdateGenerationSchema = GenerationInputObjectSchema.partial()
     },
   )
   .openapi("ApiUpdateGenerationInput");
+
+export const ApiReorderGenerationsSchema = z
+  .object({
+    items: z
+      .array(
+        z
+          .object({
+            id: z.string().uuid("id 형식이 올바르지 않습니다.").openapi({
+              description: "순서를 바꿀 기수 UUID",
+              example: EXAMPLE_GENERATION_ID,
+            }),
+            sortOrder: z.number().int().nonnegative().openapi({
+              description: "새 정렬 순서(0 이상)",
+              example: 12,
+            }),
+          })
+          .strict(),
+      )
+      .min(1, "순서를 바꿀 기수를 하나 이상 전달해야 합니다.")
+      .max(100, "한 번에 최대 100개 기수까지 순서를 바꿀 수 있습니다.")
+      .refine(
+        (items) => new Set(items.map((item) => item.id)).size === items.length,
+        {
+          message: "중복된 기수 id를 전달할 수 없습니다.",
+        },
+      )
+      .refine(
+        (items) =>
+          new Set(items.map((item) => item.sortOrder)).size === items.length,
+        { message: "같은 정렬 순서를 두 기수에 줄 수 없습니다." },
+      ),
+  })
+  .strict()
+  .openapi("ApiReorderGenerationsInput");

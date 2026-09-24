@@ -51,6 +51,7 @@ exports[`openapi contract > 경로/메서드/operationId/스키마 구조가 리
     "ApiRecordPageViewResponse",
     "ApiRecordViewBody",
     "ApiRecruitingPlan",
+    "ApiReorderGenerationsInput",
     "ApiSiteSettings",
     "ApiUpdateActivityImageBatchInput",
     "ApiUpdateActivityImageBatchItemInput",
@@ -6446,6 +6447,112 @@ exports[`openapi contract > 경로/메서드/operationId/스키마 구조가 리
             },
           },
           "description": "역할 기반 권한 정책에 의해 요청이 거부되었습니다. 서버는 인증 이후 권한 검사(requirePermission/can)에서 접근 가능 여부를 판단하고 FORBIDDEN을 반환합니다. 클라이언트는 권한 범위 내 기능만 노출해야 합니다.",
+        },
+        "409": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiErrorResponse",
+              },
+            },
+          },
+          "description": "리소스 제약 조건 충돌이 발생했습니다(예: generation.sortOrder UNIQUE 충돌). 서버는 데이터 무결성 위반을 감지하면 CONFLICT를 반환하며, 클라이언트는 중복 값을 조정한 뒤 재시도해야 합니다.",
+        },
+        "500": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiErrorResponse",
+              },
+            },
+          },
+          "description": "서버 내부 예외 또는 외부 의존성(Auth/R2/DB) 오류로 요청 처리에 실패했습니다. 서버는 INTERNAL_ERROR를 반환하며, 클라이언트는 사용자에게 재시도/잠시 후 다시 시도 안내를 제공해야 합니다.",
+        },
+      },
+      "security": [
+        {
+          "cookieAuth": [],
+        },
+      ],
+      "tags": [
+        "Generations",
+      ],
+    },
+    "POST /api/generations/reorder": {
+      "operationId": "reorderGenerations",
+      "parameters": undefined,
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiReorderGenerationsInput",
+            },
+          },
+        },
+        "description": "기수 정렬 순서 일괄 변경 요청",
+        "required": true,
+      },
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "data": {
+                    "items": {
+                      "$ref": "#/components/schemas/ApiGeneration",
+                    },
+                    "type": "array",
+                  },
+                },
+                "required": [
+                  "data",
+                ],
+                "type": "object",
+              },
+            },
+          },
+          "description": "정렬 순서 변경 성공 (변경 후 전체 기수 목록)",
+        },
+        "400": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiErrorResponse",
+              },
+            },
+          },
+          "description": "요청 본문/파라미터 검증에 실패했습니다. 발생 조건: UUID 형식 오류, 필수 필드 누락, 스키마 타입 불일치, 빈 PATCH payload 등. 서버는 검증 단계에서 요청을 중단하고 BAD_REQUEST를 반환하며, 클라이언트는 입력값을 보정한 뒤 재요청해야 합니다.",
+        },
+        "401": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiErrorResponse",
+              },
+            },
+          },
+          "description": "인증 세션이 없거나 만료되었습니다. 서버는 세션 확인 단계에서 요청을 거부하고 UNAUTHORIZED를 반환합니다. 클라이언트는 재로그인 후 동일 요청을 재시도해야 합니다.",
+        },
+        "403": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiErrorResponse",
+              },
+            },
+          },
+          "description": "역할 기반 권한 정책에 의해 요청이 거부되었습니다. 서버는 인증 이후 권한 검사(requirePermission/can)에서 접근 가능 여부를 판단하고 FORBIDDEN을 반환합니다. 클라이언트는 권한 범위 내 기능만 노출해야 합니다.",
+        },
+        "404": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiErrorResponse",
+              },
+            },
+          },
+          "description": "요청한 리소스를 찾을 수 없습니다. 서버는 식별자 조회 결과가 없을 때 NOT_FOUND를 반환합니다. 클라이언트는 최신 목록을 다시 조회해 유효한 ID인지 확인해야 합니다.",
         },
         "409": {
           "content": {

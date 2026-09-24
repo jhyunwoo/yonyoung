@@ -63,6 +63,7 @@ import {
 import {
   createGenerationAction,
   deleteGenerationAction,
+  reorderGenerationsAction,
   updateGenerationAction,
 } from "@/features/dashboard/actions/generations";
 import {
@@ -310,6 +311,26 @@ const actionContracts: ActionContract[] = [
       "public:photographers",
     ],
     responseSchema: apiGenerationSchema,
+  },
+  {
+    name: "기수 순서 변경",
+    invoke: () =>
+      reorderGenerationsAction({
+        items: [
+          { id: "generation-1", sortOrder: 59 },
+          { id: "generation-2", sortOrder: 58 },
+        ],
+      }),
+    path: "/generations/reorder",
+    method: "POST",
+    accessScope: "leadership",
+    tags: [
+      "admin:generations",
+      "admin:users",
+      "public:generations",
+      "public:photographers",
+    ],
+    responseSchema: "array",
   },
   {
     name: "기수 삭제",

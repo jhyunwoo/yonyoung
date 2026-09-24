@@ -10,11 +10,13 @@ import { CACHE_TAGS } from "@/server/cache/tags";
 import {
   apiCreateGenerationInputSchema,
   apiGenerationSchema,
+  apiReorderGenerationsInputSchema,
   apiUpdateGenerationInputSchema,
 } from "@yonyoung/contracts/schemas";
 import type {
   ApiCreateGenerationInput,
   ApiGeneration,
+  ApiReorderGenerationsInput,
   ApiUpdateGenerationInput,
 } from "@yonyoung/contracts";
 
@@ -57,6 +59,24 @@ export const updateGenerationAction = async (
     method: "PATCH",
     body: payload,
     responseSchema: apiGenerationSchema,
+    accessScope: "leadership",
+    tags: GENERATION_CACHE_TAGS,
+  });
+};
+
+/** 기수 정렬 순서를 한 트랜잭션으로 바꾼다. 응답은 변경 후 전체 기수 목록이다. */
+export const reorderGenerationsAction = async (
+  input: ApiReorderGenerationsInput,
+): Promise<AdminWriteActionResult<ApiGeneration[]>> => {
+  const parsedPayload = parseActionInput(apiReorderGenerationsInputSchema, input);
+  if (!parsedPayload.ok) {
+    return parsedPayload;
+  }
+  return writeRequest({
+    path: "/generations/reorder",
+    method: "POST",
+    body: parsedPayload.data,
+    responseSchema: apiGenerationSchema.array(),
     accessScope: "leadership",
     tags: GENERATION_CACHE_TAGS,
   });
