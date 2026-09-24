@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ApiActivity } from "@yonyoung/contracts";
+import { IMAGE_UPLOAD_ACCEPT } from "@yonyoung/contracts";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import {
   PRESIGN_PATHS,
@@ -345,7 +346,7 @@ export default function ActivityEditForm({
           <input
             ref={coverFileInputRef}
             type="file"
-            accept="image/*"
+            accept={IMAGE_UPLOAD_ACCEPT}
             onChange={selectCoverFile}
             disabled={isSaving}
             className="sr-only"
@@ -385,7 +386,7 @@ export default function ActivityEditForm({
             <input
               ref={detailFileInputRef}
               type="file"
-              accept="image/*"
+              accept={IMAGE_UPLOAD_ACCEPT}
               multiple
               onChange={handleAddDetailFiles}
               disabled={isSaving}

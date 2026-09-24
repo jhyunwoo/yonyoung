@@ -1,4 +1,9 @@
-import { can, isMemberLikeRole } from "../../lib/authorization/policy";
+import { normalizeUploadContentType } from "@yonyoung/contracts/uploads";
+import {
+  can,
+  isManagerLikeRole,
+  isMemberLikeRole,
+} from "../../lib/authorization/policy";
 import type { Actor, Resource, Role } from "../../lib/authorization/types";
 import {
   ALLOWED_IMAGE_CONTENT_TYPES,
@@ -28,9 +33,30 @@ export const resourceByPath: Record<UploadResourcePath, Resource | "user"> = {
   site: "site_setting",
 };
 
+/**
+ * 본인 프로필 사진 업로드 허용 여부.
+ * 부장(manager)처럼 사용자 관리 권한은 없지만 인증된 역할도 본인 프로필은 수정할 수 있어야 한다.
+ * 미인증(unverified) 사용자만 막는다.
+ */
 export const isUserProfileUploadAllowed = (role: Role): boolean => {
-  return can(role, "user", "update") || isMemberLikeRole(role);
+  return (
+    can(role, "user", "update") ||
+    isMemberLikeRole(role) ||
+    isManagerLikeRole(role)
+  );
 };
+
+/**
+ * 브라우저가 보낸 Content-Type을 표준 이름으로 맞춘다.
+ * Windows의 `application/x-zip-compressed` 같은 별칭이 allowlist에서 415로 거절되지 않게 하고,
+ * presign 서명과 저장되는 객체의 Content-Type도 표준 이름으로 통일한다.
+ */
+export const normalizeUploadRequest = <T extends { contentType: string }>(
+  body: T,
+): T => ({
+  ...body,
+  contentType: normalizeUploadContentType(body.contentType),
+});
 
 export const assertCanCreateOrUpdate = (
   role: Role,

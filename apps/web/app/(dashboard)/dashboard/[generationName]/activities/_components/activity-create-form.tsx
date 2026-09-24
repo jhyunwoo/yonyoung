@@ -1,5 +1,6 @@
 "use client";
 
+import { IMAGE_UPLOAD_ACCEPT } from "@yonyoung/contracts";
 import { type ChangeEvent, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -250,7 +251,7 @@ export default function ActivityCreateForm({
           <input
             ref={coverFileInputRef}
             type="file"
-            accept="image/*"
+            accept={IMAGE_UPLOAD_ACCEPT}
             onChange={selectCoverFile}
             disabled={isSaving}
             className="sr-only"
@@ -287,7 +288,7 @@ export default function ActivityCreateForm({
             <input
               ref={detailFileInputRef}
               type="file"
-              accept="image/*"
+              accept={IMAGE_UPLOAD_ACCEPT}
               multiple
               onChange={handleDetailFilesChange}
               disabled={isSaving}

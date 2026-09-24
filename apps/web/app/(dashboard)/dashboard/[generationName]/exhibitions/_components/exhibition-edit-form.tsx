@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ApiExhibition } from "@yonyoung/contracts";
+import { IMAGE_UPLOAD_ACCEPT } from "@yonyoung/contracts";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import {
   readNewUploadImageItems,
@@ -368,7 +369,7 @@ export default function ExhibitionEditForm({
           <input
             ref={coverFileInputRef}
             type="file"
-            accept="image/*"
+            accept={IMAGE_UPLOAD_ACCEPT}
             onChange={selectCoverFile}
             disabled={isSaving}
             className="sr-only"
@@ -408,7 +409,7 @@ export default function ExhibitionEditForm({
             <input
               ref={detailFileInputRef}
               type="file"
-              accept="image/*"
+              accept={IMAGE_UPLOAD_ACCEPT}
               multiple
               onChange={handleAddDetailFiles}
               disabled={isSaving}

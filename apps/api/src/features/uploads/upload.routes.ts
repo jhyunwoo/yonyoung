@@ -52,6 +52,7 @@ import {
   assertMultipartOwnership,
   assertUploadPayloadAllowed,
   isUserProfileUploadAllowed,
+  normalizeUploadRequest,
   type ManagedResource,
   type UploadResourcePath,
   type UploadSlot,
@@ -138,7 +139,9 @@ const registerResourcePresignRoute = (
     const actor = await requireAuthenticatedActor(c, dependencies);
     assertCanCreateOrUpdate(actor.role, options.resource);
 
-    const body = readValidated(c, "json", ApiPresignRequestSchema);
+    const body = normalizeUploadRequest(
+      readValidated(c, "json", ApiPresignRequestSchema),
+    );
     assertUploadPayloadAllowed(body, {
       maxFileSizeBytes: UPLOAD_LIMITS.maxSinglePartBytes,
       allowedContentTypes: options.allowedContentTypes,
@@ -208,7 +211,9 @@ const registerResourceMultipartInitRoute = (
     const actor = await requireAuthenticatedActor(c, dependencies);
     assertCanCreateOrUpdate(actor.role, options.resource);
 
-    const body = readValidated(c, "json", ApiMultipartUploadInitRequestSchema);
+    const body = normalizeUploadRequest(
+      readValidated(c, "json", ApiMultipartUploadInitRequestSchema),
+    );
     assertUploadPayloadAllowed(body, {
       maxFileSizeBytes: UPLOAD_LIMITS.maxMultipartBytes,
       allowedContentTypes: options.allowedContentTypes,
@@ -490,7 +495,9 @@ export const registerUploadRoutes = (
       throw AppError.forbidden();
     }
 
-    const body = readValidated(c, "json", ApiPresignRequestSchema);
+    const body = normalizeUploadRequest(
+      readValidated(c, "json", ApiPresignRequestSchema),
+    );
     assertUploadPayloadAllowed(body, {
       maxFileSizeBytes: UPLOAD_LIMITS.maxSinglePartBytes,
     });
@@ -528,7 +535,9 @@ export const registerUploadRoutes = (
       throw AppError.forbidden();
     }
 
-    const body = readValidated(c, "json", ApiMultipartUploadInitRequestSchema);
+    const body = normalizeUploadRequest(
+      readValidated(c, "json", ApiMultipartUploadInitRequestSchema),
+    );
     assertUploadPayloadAllowed(body, {
       maxFileSizeBytes: UPLOAD_LIMITS.maxMultipartBytes,
     });

@@ -7,6 +7,7 @@ import type {
   ApiGeneration,
   ApiUser,
 } from "@yonyoung/contracts";
+import { IMAGE_UPLOAD_ACCEPT } from "@yonyoung/contracts";
 import { AdminApiError } from "@/shared/http/http";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import {
@@ -312,7 +313,7 @@ export default function MemberEditForm({
             <input
               ref={profileFileInputRef}
               type="file"
-              accept="image/*"
+              accept={IMAGE_UPLOAD_ACCEPT}
               disabled={isSaving}
               onChange={handleImageChange}
               className="sr-only"
