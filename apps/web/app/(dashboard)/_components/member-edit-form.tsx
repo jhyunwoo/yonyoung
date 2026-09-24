@@ -21,6 +21,7 @@ import {
 } from "@/features/dashboard/members/member-role-options";
 import { Skeleton } from "@/components/ui/skeleton";
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
+import { useGuardedSubmit } from "@/shared/react/use-guarded-submit";
 import UploadProgressBar from "@/app/(dashboard)/_components/upload-progress-bar";
 
 type MemberEditFormProps = {
@@ -205,7 +206,9 @@ export default function MemberEditForm({
         department: toNullableText(department),
         studentNumber: toNullableText(studentNumber),
         phoneNumber: toNullableText(phoneNumber),
-        role,
+        // 역할은 바꿨을 때만 보낸다. 역할이 비어 있거나 알 수 없는 사용자는 선택 상자에
+        // 기본값(정회원)으로 보이는데, 그대로 보내면 이름만 고쳐도 역할이 조용히 바뀐다.
+        ...(role !== coerceMemberRoleValue(user.role) ? { role } : {}),
         generationIds,
       };
 
@@ -226,6 +229,7 @@ export default function MemberEditForm({
       setIsSaving(false);
     }
   };
+  const submitForm = useGuardedSubmit(handleSubmit);
 
   const handleProfileImageUploadClick = () => {
     if (isSaving) {
@@ -250,7 +254,7 @@ export default function MemberEditForm({
         권한이 있는 운영자는 사용자 정보를 수정할 수 있습니다.
       </p>
 
-      <form className="mt-5 space-y-4" action={handleSubmit} noValidate>
+      <form className="mt-5 space-y-4" onSubmit={submitForm} noValidate>
         <div className="grid gap-4 md:grid-cols-2">
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium">Google 이름</span>
@@ -437,6 +441,7 @@ export default function MemberEditForm({
 
         <div className="flex items-center gap-2">
           <FormSubmitButton
+            pending={isSaving}
             data-testid="member-edit-submit"
             disabled={isSaving}
             className="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition hover:bg-primary-active disabled:cursor-not-allowed disabled:opacity-60"

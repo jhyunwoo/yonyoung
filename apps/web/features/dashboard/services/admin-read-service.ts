@@ -16,6 +16,7 @@ import type {
   ApiGeneration,
   ApiLinktree,
   ApiPageViewStats,
+  ApiSiteSettings,
   ApiUser,
 } from "@yonyoung/contracts";
 import {
@@ -26,6 +27,7 @@ import {
   apiGenerationSchema,
   apiLinktreeSchema,
   apiPageViewStatsSchema,
+  apiSiteSettingsSchema,
   apiUserSchema,
 } from "@yonyoung/contracts/schemas";
 
@@ -214,6 +216,15 @@ export const getAdminLinktreeById = (
     cookieHeader,
     apiLinktreeSchema,
   );
+
+/**
+ * 편집 화면용 사이트 설정. 실패를 기본값으로 바꾸지 않는다 — 기본값이 채워진 폼을
+ * 저장하면 실제 연락처·후원 계좌가 예시 값으로 덮어써진다.
+ */
+export const getAdminSiteSettings = (
+  cookieHeader: string | null,
+): Promise<AdminReadResult<ApiSiteSettings>> =>
+  readAdminResource("/site-settings", cookieHeader, apiSiteSettingsSchema);
 
 export const listAdminUsers = (
   cookieHeader: string | null,

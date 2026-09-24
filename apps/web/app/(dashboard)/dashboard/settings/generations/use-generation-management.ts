@@ -246,18 +246,51 @@ export const useGenerationManagement = ({
     clearMessages();
 
     try {
-      const updatedUsers = await Promise.all(
+      // 사용자별 요청이라 일부만 실패할 수 있다(예: 본인보다 높은 등급의 사용자 → 403).
+      // Promise.all 로 묶으면 성공한 변경이 로컬 목록에 반영되지 않고, 그 낡은 목록으로
+      // 다음 배정을 계산하면 방금 성공한 변경을 조용히 되돌린다. 성공분은 반드시 반영한다.
+      const results = await Promise.allSettled(
         input.targets.map((target) =>
           adminResourceApi.updateUser(target.userId, {
             generationIds: target.generationIds,
           }),
         ),
       );
+      const updatedUsers = results.flatMap((result) =>
+        result.status === "fulfilled" ? [result.value] : [],
+      );
+      const failures = results.flatMap((result, index) =>
+        result.status === "rejected"
+          ? [{ target: input.targets[index], error: result.reason }]
+          : [],
+      );
 
-      setUsers((previous) => mergeUpdatedUsers(previous, updatedUsers));
-      setSelectedUserIds([]);
-      setSuccessMessage(input.successMessage(updatedUsers.length));
-      router.refresh();
+      if (updatedUsers.length > 0) {
+        setUsers((previous) => mergeUpdatedUsers(previous, updatedUsers));
+        router.refresh();
+      }
+
+      if (failures.length === 0) {
+        setSelectedUserIds([]);
+        setSuccessMessage(input.successMessage(updatedUsers.length));
+        return;
+      }
+
+      const failedUserIds = new Set(
+        failures.flatMap(({ target }) => (target ? [target.userId] : [])),
+      );
+      const failedNames = users
+        .filter((user) => failedUserIds.has(user.id))
+        .map((user) => user.name)
+        .join(", ");
+      // 실패한 사용자만 선택 상태로 남겨 바로 다시 시도할 수 있게 한다.
+      setSelectedUserIds((previous) => previous.filter((id) => failedUserIds.has(id)));
+      if (updatedUsers.length > 0) {
+        setSuccessMessage(input.successMessage(updatedUsers.length));
+      }
+      setErrorMessage(
+        `${failures.length}명은 변경하지 못했습니다${failedNames ? ` (${failedNames})` : ""}: ${readErrorMessage(failures[0]?.error)}`,
+      );
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {

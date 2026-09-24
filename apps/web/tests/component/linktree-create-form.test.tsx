@@ -71,4 +71,46 @@ describe("LinktreeCreateForm", () => {
       expect(refreshMock).toHaveBeenCalled();
     });
   });
+
+  it("링크 추가가 중간에 실패하면 재시도 때 분류를 다시 만들지 않고 남은 링크만 추가한다", async () => {
+    createLinktreeMock.mockResolvedValue({ id: "linktree-7" });
+    addLinktreeItemMock
+      .mockResolvedValueOnce({ id: "item-1" })
+      .mockRejectedValueOnce(new Error("일시 오류"))
+      .mockResolvedValue({ id: "item-2" });
+
+    const user = userEvent.setup();
+    render(<LinktreeCreateForm canWrite listPath="/dashboard/settings/linktree" />);
+
+    await user.type(screen.getByTestId("linktree-group-name-input"), "공식 채널");
+    await user.type(screen.getByTestId("linktree-item-name-input-0"), "Instagram");
+    await user.type(
+      screen.getByTestId("linktree-item-link-input-0"),
+      "https://instagram.com/yonyoung",
+    );
+    await user.click(screen.getByTestId("linktree-item-add-button"));
+    await user.type(screen.getByTestId("linktree-item-name-input-1"), "YouTube");
+    await user.type(
+      screen.getByTestId("linktree-item-link-input-1"),
+      "https://youtube.com/@yonyoung",
+    );
+
+    await user.click(screen.getByTestId("linktree-create-submit"));
+    expect(
+      await screen.findByText(/다시 저장하면 남은 링크만 추가합니다/),
+    ).toBeInTheDocument();
+    expect(replaceMock).not.toHaveBeenCalled();
+
+    await user.click(screen.getByTestId("linktree-create-submit"));
+
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledWith("/dashboard/settings/linktree/linktree-7");
+    });
+    expect(createLinktreeMock).toHaveBeenCalledTimes(1);
+    expect(addLinktreeItemMock).toHaveBeenCalledTimes(3);
+    expect(addLinktreeItemMock).toHaveBeenLastCalledWith("linktree-7", {
+      name: "YouTube",
+      link: "https://youtube.com/@yonyoung",
+    });
+  });
 });

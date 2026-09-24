@@ -27,6 +27,8 @@ export default async function SettingsGenerationsPage() {
 
   return (
     <PageContainer>
+      {/* 사용자 목록을 못 읽었으면 배정 패널이 "사용자 없음"처럼 보인다. 원인을 따로 알린다. */}
+      {!usersResult.ok ? <AdminReadErrorNotice error={usersResult.error} /> : null}
       <GenerationManagementClient
         initialGenerations={generationsResult.data}
         initialUsers={usersResult.ok ? usersResult.data : []}

@@ -154,6 +154,30 @@ export const useImageUploadState = (options: UseImageUploadStateOptions = {}) =>
     setItems((previousItems) => reorderUploadImageItems(previousItems, orderedIds));
   }, []);
 
+  /**
+   * 서버에 등록된 새 사진을 "existing" 항목으로 바꾼다 (id는 서버 id, 미리보기는 공개 URL).
+   * 저장이 도중에 실패해도 다시 저장할 때 같은 사진이 중복 등록되지 않게 한다.
+   */
+  const markItemsPersisted = useCallback(
+    (persisted: ReadonlyMap<string, { id: string; imageUrl: string }>) => {
+      if (persisted.size === 0) {
+        return;
+      }
+
+      setItems((previousItems) =>
+        previousItems.map((item) => {
+          const saved = persisted.get(item.id);
+          if (!saved) {
+            return item;
+          }
+          revokeUploadImageItem(item);
+          return createExistingUploadImageItem(saved);
+        }),
+      );
+    },
+    [],
+  );
+
   const clear = useCallback(() => {
     setItems((previousItems) => {
       revokeUploadImageItems(previousItems);
@@ -168,6 +192,7 @@ export const useImageUploadState = (options: UseImageUploadStateOptions = {}) =>
     appendExistingUrls,
     removeItemById,
     reorderByIds,
+    markItemsPersisted,
     clear,
   };
 };
