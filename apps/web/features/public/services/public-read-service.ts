@@ -25,6 +25,7 @@ import type {
 } from "@yonyoung/contracts";
 import { DEFAULT_SITE_SETTINGS } from "@yonyoung/contracts";
 import { HonoApiError, honoRequest } from "@/server/http/hono-client";
+import { toFreshPublicReadPath } from "@/server/http/fresh-public-read";
 import { CACHE_TAGS, publicActivityTag, publicExhibitionTag } from "@/server/cache/tags";
 import { logger } from "@/server/observability/logger";
 import { pickFeaturedPublicExhibition } from "@/features/public/model/public-exhibition";
@@ -49,7 +50,7 @@ type PublicLinkItem = ApiLinktreeItem & {
 
 const readPublic = async <T>(path: string, schema: z.ZodType<T>): Promise<T> => {
   return honoRequest<T>({
-    path,
+    path: toFreshPublicReadPath(path),
     method: "GET",
     responseSchema: schema,
     timeoutMs: 10_000,

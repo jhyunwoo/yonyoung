@@ -393,4 +393,32 @@ describe("public cache helpers", () => {
     expect(kv.get).not.toHaveBeenCalled();
     expect(kv.put).not.toHaveBeenCalled();
   });
+
+  it("fresh=1 요청은 어떤 캐시도 읽거나 쓰지 않고 no-store로 응답한다", async () => {
+    const edgeCache = createCacheMock();
+    edgeCache.match.mockResolvedValue(
+      withPublicCacheHeaders(new Response("stale", { status: 200 })),
+    );
+    vi.stubGlobal("caches", { default: edgeCache });
+    const kv = createKvMock();
+    const collector = createWaitUntilCollector();
+    const c = createContext({
+      url: "https://example.com/api/public/activities?fresh=1",
+      waitUntil: collector.waitUntil,
+      kv: kv.binding,
+    });
+
+    const response = await respondWithPublicCache(c, async () =>
+      Response.json({ data: "latest" }),
+    );
+    await collector.flush();
+
+    await expect(response.json()).resolves.toEqual({ data: "latest" });
+    expect(response.headers.get("cache-control")).toBe("private, no-store, max-age=0");
+    expect(response.headers.get("x-public-cache-status")).toBe("bypass");
+    expect(edgeCache.match).not.toHaveBeenCalled();
+    expect(edgeCache.put).not.toHaveBeenCalled();
+    expect(kv.binding.get).not.toHaveBeenCalled();
+    expect(kv.binding.put).not.toHaveBeenCalled();
+  });
 });
