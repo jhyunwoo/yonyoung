@@ -1,5 +1,6 @@
 "use client";
 
+import { IMAGE_UPLOAD_ACCEPT } from "@yonyoung/contracts";
 import { type ChangeEvent, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -17,6 +18,7 @@ import { createWeightedUploadProgressTracker } from "@/features/media/upload/wei
 import { useSelectedImageFile } from "@/features/media/upload/use-selected-image-file";
 import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
+import { useGuardedSubmit } from "@/shared/react/use-guarded-submit";
 import SortableImageGrid from "@/app/(dashboard)/_components/sortable-image-grid";
 import UploadProgressBar from "@/app/(dashboard)/_components/upload-progress-bar";
 import ExhibitionRichTextEditor from "@/app/(dashboard)/dashboard/[generationName]/exhibitions/_components/exhibition-rich-text-editor";
@@ -54,6 +56,7 @@ export default function ExhibitionCreateForm({
     openFilePicker: openCoverFilePicker,
   } = useSelectedImageFile();
   const detailFileInputRef = useRef<HTMLInputElement | null>(null);
+  const uploadedCoverRef = useRef<{ file: File; url: string } | null>(null);
   const {
     items: detailImages,
     appendFiles,
@@ -144,11 +147,19 @@ export default function ExhibitionCreateForm({
         onProgress: setUploadProgressPercent,
       });
 
-      const coverImageUrl = await uploadWithPresign({
-        presignPath: PRESIGN_PATHS.exhibitionCover,
-        file: coverFile,
-        onProgress: uploadProgress.reportCoverProgress,
-      });
+      // 등록 요청이 실패해 다시 저장할 때 같은 대표 사진을 R2에 또 올리지 않는다.
+      let coverImageUrl: string;
+      if (uploadedCoverRef.current?.file === coverFile) {
+        coverImageUrl = uploadedCoverRef.current.url;
+        uploadProgress.reportCoverProgress(100);
+      } else {
+        coverImageUrl = await uploadWithPresign({
+          presignPath: PRESIGN_PATHS.exhibitionCover,
+          file: coverFile,
+          onProgress: uploadProgress.reportCoverProgress,
+        });
+        uploadedCoverRef.current = { file: coverFile, url: coverImageUrl };
+      }
 
       const createdExhibition = await adminResourceApi.createExhibition({
         title: trimmedTitle,
@@ -193,6 +204,7 @@ export default function ExhibitionCreateForm({
       setUploadProgressPercent(null);
     }
   };
+  const submitForm = useGuardedSubmit(handleSubmit);
 
   return (
     <section className="mx-auto w-full max-w-5xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
@@ -206,7 +218,7 @@ export default function ExhibitionCreateForm({
         대표 사진은 꼭 등록해야 하며, 세부 사진은 필요할 때 여러 장 추가할 수 있습니다.
       </p>
 
-      <form className="mt-6 space-y-4" action={handleSubmit}>
+      <form className="mt-6 space-y-4" onSubmit={submitForm}>
         <label className="block space-y-1">
           <span className="text-sm font-semibold text-ink">전시 제목</span>
           <input
@@ -275,7 +287,7 @@ export default function ExhibitionCreateForm({
           <input
             ref={coverFileInputRef}
             type="file"
-            accept="image/*"
+            accept={IMAGE_UPLOAD_ACCEPT}
             onChange={selectCoverFile}
             disabled={isSaving}
             className="sr-only"
@@ -312,7 +324,7 @@ export default function ExhibitionCreateForm({
             <input
               ref={detailFileInputRef}
               type="file"
-              accept="image/*"
+              accept={IMAGE_UPLOAD_ACCEPT}
               multiple
               onChange={handleDetailFilesChange}
               disabled={isSaving}
@@ -349,6 +361,7 @@ export default function ExhibitionCreateForm({
 
         <div className="flex flex-wrap gap-2">
           <FormSubmitButton
+            pending={isSaving}
             data-testid="exhibition-create-submit"
             disabled={isSubmitDisabled}
             className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary disabled:cursor-not-allowed disabled:opacity-60"

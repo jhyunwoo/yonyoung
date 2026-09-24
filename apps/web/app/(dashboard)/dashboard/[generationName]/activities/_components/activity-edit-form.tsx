@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ApiActivity } from "@yonyoung/contracts";
+import { IMAGE_UPLOAD_ACCEPT } from "@yonyoung/contracts";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import {
   PRESIGN_PATHS,
@@ -16,8 +17,9 @@ import {
 } from "@/features/media/upload/image-upload-state";
 import {
   readNewUploadImageItems,
-  uploadDetailImages,
+  type UploadedDetailImage,
 } from "@/features/media/upload/detail-image-upload";
+import { syncDetailImages } from "@/features/media/upload/detail-image-sync";
 import { createWeightedUploadProgressTracker } from "@/features/media/upload/weighted-upload-progress";
 import { useSelectedImageFile } from "@/features/media/upload/use-selected-image-file";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
@@ -25,6 +27,7 @@ import { hasMeaningfulRichTextHtml } from "@/features/media/rich-text/rich-text"
 import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";
 import AuditHistoryPanel from "@/app/(dashboard)/_components/audit-history-panel";
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
+import { useGuardedSubmit } from "@/shared/react/use-guarded-submit";
 import LastUpdatedMeta from "@/app/(dashboard)/_components/last-updated-meta";
 import RichTextEditor from "@/app/(dashboard)/_components/rich-text-editor";
 import SortableImageGrid from "@/app/(dashboard)/_components/sortable-image-grid";
@@ -89,8 +92,12 @@ export default function ActivityEditForm({
     appendFiles,
     removeItemById,
     reorderByIds,
+    markItemsPersisted,
   } = useImageUploadState({ initialItems: toSortedDetailImageItems(activity) });
   const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]);
+  // 저장이 중간에 실패했을 때 재시도가 이미 끝난 업로드를 반복하지 않도록 결과를 기억한다.
+  const uploadedCoverRef = useRef<{ file: File; url: string } | null>(null);
+  const detailUploadCacheRef = useRef(new Map<string, UploadedDetailImage>());
   const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
 
   const isSubmitDisabled =
@@ -175,11 +182,19 @@ export default function ActivityEditForm({
 
       let nextCoverImageUrl = activity.coverImageUrl;
       if (coverFile) {
-        nextCoverImageUrl = await uploadWithPresign({
-          presignPath: PRESIGN_PATHS.activityCover,
-          file: coverFile,
-          onProgress: uploadProgress.reportCoverProgress,
-        });
+        // 이전 시도에서 이미 올린 대표 사진이면 다시 올리지 않는다.
+        const uploadedCover = uploadedCoverRef.current;
+        if (uploadedCover?.file === coverFile) {
+          nextCoverImageUrl = uploadedCover.url;
+          uploadProgress.reportCoverProgress(100);
+        } else {
+          nextCoverImageUrl = await uploadWithPresign({
+            presignPath: PRESIGN_PATHS.activityCover,
+            file: coverFile,
+            onProgress: uploadProgress.reportCoverProgress,
+          });
+          uploadedCoverRef.current = { file: coverFile, url: nextCoverImageUrl };
+        }
       }
 
       await adminResourceApi.updateActivity(activity.id, {
@@ -191,59 +206,26 @@ export default function ActivityEditForm({
         generationId,
       });
 
-      if (deletedImageIds.length > 0) {
-        await Promise.all(
-          deletedImageIds.map((imageId) =>
+      await syncDetailImages({
+        presignPath: PRESIGN_PATHS.activityDetail,
+        items: detailImages,
+        deletedImageIds,
+        uploadCache: detailUploadCacheRef.current,
+        onProgress: uploadProgress.reportDetailProgress,
+        api: {
+          deleteImage: (imageId) =>
             adminResourceApi.deleteActivityImage(activity.id, imageId),
-          ),
-        );
-      }
-
-      const existingOrder = detailImages.filter((image) => image.source === "existing");
-
-      const createdMap = new Map<string, string>();
-      if (newOrder.length > 0) {
-        const uploadedDetailImages = await uploadDetailImages({
-          presignPath: PRESIGN_PATHS.activityDetail,
-          items: newOrder,
-          startSortOrder: existingOrder.length,
-          onProgress: uploadProgress.reportDetailProgress,
-        });
-
-        const created = await adminResourceApi.addActivityImages(
-          activity.id,
-          uploadedDetailImages,
-        );
-
-        created.forEach((row, index) => {
-          const local = newOrder[index];
-          if (local) {
-            createdMap.set(local.id, row.id);
-          }
-        });
-      }
-
-      const finalOrder = detailImages
-        .map((image) => {
-          if (image.source === "existing") {
-            return image.id;
-          }
-
-          return createdMap.get(image.id) ?? null;
-        })
-        .filter((id): id is string => Boolean(id));
-
-      // If only newly uploaded images remain, sortOrder is already assigned in addActivityImages.
-      // Reordering batch is only required when existing persisted images are still present.
-      if (existingOrder.length > 0 && finalOrder.length > 0) {
-        await adminResourceApi.updateActivityImages(
-          activity.id,
-          finalOrder.map((imageId, sortOrder) => ({
-            imageId,
-            sortOrder,
-          })),
-        );
-      }
+          addImages: (images) => adminResourceApi.addActivityImages(activity.id, images),
+          reorderImages: (items) =>
+            adminResourceApi.updateActivityImages(activity.id, items),
+        },
+        onImagesDeleted: (imageIds) => {
+          setDeletedImageIds((previous) =>
+            previous.filter((id) => !imageIds.includes(id)),
+          );
+        },
+        onImagesPersisted: markItemsPersisted,
+      });
 
       router.push(`${generationPath}/activities/${activity.id}`);
     } catch (error) {
@@ -253,6 +235,7 @@ export default function ActivityEditForm({
       setUploadProgressPercent(null);
     }
   };
+  const submitForm = useGuardedSubmit(handleSubmit);
 
   return (
     <section className="mx-auto w-full max-w-5xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
@@ -278,7 +261,7 @@ export default function ActivityEditForm({
         </p>
       ) : null}
 
-      <form className="mt-6 space-y-6" action={handleSubmit}>
+      <form className="mt-6 space-y-6" onSubmit={submitForm}>
         <label className="block space-y-1">
           <span className="text-sm font-semibold text-ink">활동 제목</span>
           <input
@@ -345,7 +328,7 @@ export default function ActivityEditForm({
           <input
             ref={coverFileInputRef}
             type="file"
-            accept="image/*"
+            accept={IMAGE_UPLOAD_ACCEPT}
             onChange={selectCoverFile}
             disabled={isSaving}
             className="sr-only"
@@ -385,7 +368,7 @@ export default function ActivityEditForm({
             <input
               ref={detailFileInputRef}
               type="file"
-              accept="image/*"
+              accept={IMAGE_UPLOAD_ACCEPT}
               multiple
               onChange={handleAddDetailFiles}
               disabled={isSaving}
@@ -424,6 +407,7 @@ export default function ActivityEditForm({
 
         <div className="flex flex-wrap gap-2">
           <FormSubmitButton
+            pending={isSaving}
             data-testid="activity-edit-submit"
             disabled={isSubmitDisabled}
             className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary disabled:cursor-not-allowed disabled:opacity-60"

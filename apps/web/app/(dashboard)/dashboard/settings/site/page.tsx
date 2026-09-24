@@ -1,13 +1,32 @@
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import SiteSettingsForm from "@/app/(dashboard)/dashboard/settings/site/site-settings-form";
 import AttachmentManager from "@/app/(dashboard)/_components/attachment-manager";
+import AdminReadErrorNotice from "@/app/(dashboard)/_components/admin-read-error";
+import { getAdminSiteSettings } from "@/features/dashboard/services/admin-read-service";
+import { readCookieHeader } from "@/shared/http/http";
 
 export default async function SettingsSitePage() {
   await serverAuthGuard.requirePresidentAccess();
+  const settingsResult = await getAdminSiteSettings(await readCookieHeader());
 
   return (
     <div className="space-y-8 px-4 py-6 md:px-8 md:py-8">
-      <SiteSettingsForm />
+      {settingsResult.ok ? (
+        <SiteSettingsForm initialSettings={settingsResult.data} />
+      ) : (
+        // 읽기 실패 시 기본값 폼을 보여 주면 저장 한 번에 실제 설정이 예시 값으로 바뀐다.
+        <section
+          className="mx-auto w-full max-w-4xl rounded-lg border border-hairline bg-surface p-6 md:p-8"
+          data-testid="site-settings-load-error"
+        >
+          <h1 className="text-2xl font-bold text-ink md:text-3xl">기본 설정</h1>
+          <AdminReadErrorNotice error={settingsResult.error} />
+          <p className="mt-3 text-sm text-ink-muted">
+            현재 설정을 불러오지 못해 편집을 막았습니다. 페이지를 새로고침해 다시 시도해
+            주세요.
+          </p>
+        </section>
+      )}
 
       {/* 후원 페이지에 공개되는 자료 (회계 내역, 월간연영회 PDF 등) */}
       <section className="mx-auto w-full max-w-4xl rounded-lg border border-hairline bg-surface p-6 md:p-8">

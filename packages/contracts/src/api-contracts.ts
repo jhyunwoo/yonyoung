@@ -1,5 +1,5 @@
 // 기존 import 경로 호환용 facade. 새 코드는 bounded context 모듈을 직접 사용한다.
-export { API_ERROR_CODES } from "./api/common";
+export { API_ERROR_CODES, IMAGE_BATCH_MAX_ITEMS } from "./api/common";
 export type {
   ApiErrorCode,
   ApiErrorEnvelope,
@@ -46,7 +46,15 @@ export type {
   ApiUpdateExhibitionInput,
 } from "./api/exhibitions";
 
-export { ATTACHMENT_ACCEPT } from "./api/attachments";
+export {
+  ALLOWED_ATTACHMENT_CONTENT_TYPES,
+  ATTACHMENT_ACCEPT,
+} from "./api/attachments";
+export {
+  ALLOWED_IMAGE_CONTENT_TYPES,
+  IMAGE_UPLOAD_ACCEPT,
+  normalizeUploadContentType,
+} from "./api/uploads";
 export type {
   ApiAttachment,
   ApiAttachmentScope,

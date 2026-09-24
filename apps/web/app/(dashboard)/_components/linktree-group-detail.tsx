@@ -9,6 +9,7 @@ import { formatAuditActor } from "@/features/dashboard/ui/audit-display";
 import { formatKoreanDate } from "@/shared/utils/date-formatters";
 import AuditHistoryPanel from "@/app/(dashboard)/_components/audit-history-panel";
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
+import { useGuardedSubmit } from "@/shared/react/use-guarded-submit";
 import LastUpdatedMeta from "@/app/(dashboard)/_components/last-updated-meta";
 import {
   normalizeLinktreeItemInput,
@@ -95,18 +96,31 @@ export default function LinktreeGroupDetail({
     setErrorMessage(null);
 
     try {
-      await adminResourceApi.addLinktreeItem(linktreeId, normalizedItem);
-      const refreshedLinktree = await adminResourceApi.getLinktreeById(linktreeId);
-      setLinktree(refreshedLinktree);
+      const createdItem = await adminResourceApi.addLinktreeItem(
+        linktreeId,
+        normalizedItem,
+      );
+      // 추가가 성공하면 곧바로 입력을 비운다. 이어지는 재조회가 실패했을 때 입력이 남아 있으면
+      // 관리자가 다시 눌러 같은 링크를 중복 추가하게 된다.
       setNewItemName("");
       setNewItemLink("");
+      setLinktree((previous) => ({
+        ...previous,
+        items: [...previous.items, createdItem],
+      }));
       router.refresh();
+      try {
+        setLinktree(await adminResourceApi.getLinktreeById(linktreeId));
+      } catch {
+        // 목록 재조회 실패는 무시한다 — 추가된 항목은 이미 화면에 반영했다.
+      }
     } catch (error) {
       setErrorMessage(readLinktreeErrorMessage(error));
     } finally {
       setIsAddingItem(false);
     }
   };
+  const submitAddItem = useGuardedSubmit(handleAddItem);
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
@@ -171,7 +185,7 @@ export default function LinktreeGroupDetail({
         <p className="text-sm font-semibold text-ink">하위 링크</p>
 
         {canWrite ? (
-          <form action={handleAddItem} className="mt-3 space-y-2">
+          <form onSubmit={submitAddItem} className="mt-3 space-y-2">
             <div className="grid gap-2 md:grid-cols-2">
               <input
                 data-testid="linktree-group-item-name-input"
@@ -191,6 +205,7 @@ export default function LinktreeGroupDetail({
               />
             </div>
             <FormSubmitButton
+              pending={isAddingItem}
               data-testid="linktree-group-item-add-submit"
               disabled={isAddingItem || isDeleting}
               className="rounded-lg border border-hairline-strong px-3 py-1.5 text-xs font-semibold text-ink-secondary transition hover:bg-canvas-soft disabled:cursor-not-allowed disabled:opacity-60"

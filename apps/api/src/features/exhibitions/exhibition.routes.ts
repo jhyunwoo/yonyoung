@@ -1,4 +1,8 @@
 import { type OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import {
+  assertDateRangeAfterPatch,
+  isOneSidedDateRangePatch,
+} from "../../lib/validation/date-range";
 import type HonoAppType from "../../types/honoAppType";
 import { noContent, ok } from "../../lib/http/response";
 import { type AppDependencies } from "../../lib/services/dependencies";
@@ -344,6 +348,20 @@ export const registerExhibitionRoutes = (
 
     if (Object.keys(nextBody).length === 0) {
       throw AppError.badRequest("수정할 필드를 하나 이상 전달해야 합니다.");
+    }
+
+    if (isOneSidedDateRangePatch(nextBody)) {
+      const stored = await dependencies
+        .getDataService(c)
+        .getExhibitionById(params.id);
+      if (!stored) {
+        throw AppError.notFound();
+      }
+      assertDateRangeAfterPatch(
+        stored,
+        nextBody,
+        "전시 종료 시각은 시작 시각보다 빠를 수 없습니다.",
+      );
     }
 
     const dataService = dependencies.getDataService(c);

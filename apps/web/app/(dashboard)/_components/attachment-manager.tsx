@@ -10,6 +10,7 @@ import {
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import {
   PRESIGN_PATHS,
+  resolveUploadContentType,
   uploadWithPresign,
 } from "@/features/dashboard/api/admin-api/upload";
 import { AdminApiError } from "@/shared/http/http";
@@ -45,6 +46,23 @@ const readErrorMessage = (error: unknown): string => {
   return "첨부파일 처리 중 오류가 발생했습니다.";
 };
 
+const ATTACHMENT_TITLE_MAX_LENGTH = 200;
+const ATTACHMENT_FILE_NAME_MAX_LENGTH = 255;
+
+/** API 한도(255자)를 넘는 파일명은 확장자를 살려 앞부분만 남긴다. */
+export const truncateFileName = (fileName: string): string => {
+  if (fileName.length <= ATTACHMENT_FILE_NAME_MAX_LENGTH) {
+    return fileName;
+  }
+  const extensionMatch = /\.[^.]{1,16}$/.exec(fileName);
+  const extension = extensionMatch?.[0] ?? "";
+  return `${fileName.slice(0, ATTACHMENT_FILE_NAME_MAX_LENGTH - extension.length)}${extension}`;
+};
+
+/** 목록 끝에 붙일 sortOrder. 삭제로 번호가 비어도 기존 항목과 겹치지 않게 최댓값 + 1을 쓴다. */
+export const nextAttachmentSortOrder = (attachments: readonly ApiAttachment[]): number =>
+  attachments.reduce((max, attachment) => Math.max(max, attachment.sortOrder), -1) + 1;
+
 const isValidHttpUrl = (value: string): boolean => {
   try {
     const parsed = new URL(value);
@@ -74,6 +92,8 @@ export default function AttachmentManager({ scope, resourceId }: AttachmentManag
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [linkUrl, setLinkUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  // 업로드는 끝났지만 메타데이터 등록이 실패한 파일. 재시도 때 같은 파일을 다시 올리지 않는다.
+  const uploadedFileRef = useRef<{ file: File; fileUrl: string } | null>(null);
 
   const reloadAttachments = useCallback(async () => {
     const rows = await adminResourceApi.listAttachments(scope, resourceId);
@@ -115,9 +135,11 @@ export default function AttachmentManager({ scope, resourceId }: AttachmentManag
     }
 
     setSelectedFile(nextFile);
-    // 제목 미입력 시 확장자를 뗀 파일명을 기본 제목으로 제안
+    // 제목 미입력 시 확장자를 뗀 파일명을 기본 제목으로 제안 (API 한도 200자)
     if (title.trim().length === 0) {
-      setTitle(nextFile.name.replace(/\.[^.]+$/, ""));
+      setTitle(
+        nextFile.name.replace(/\.[^.]+$/, "").slice(0, ATTACHMENT_TITLE_MAX_LENGTH),
+      );
     }
   };
 
@@ -152,28 +174,38 @@ export default function AttachmentManager({ scope, resourceId }: AttachmentManag
           resourceId: resourceId ?? null,
           title: trimmedTitle,
           linkUrl: trimmedLinkUrl,
-          sortOrder: attachments.length,
+          sortOrder: nextAttachmentSortOrder(attachments),
         });
         setLinkUrl("");
       } else if (selectedFile) {
-        setUploadProgressPercent(0);
-        const fileUrl = await uploadWithPresign({
-          presignPath:
-            scope === "site_donate" ? PRESIGN_PATHS.siteFile : PRESIGN_PATHS.activityFile,
-          file: selectedFile,
-          onProgress: setUploadProgressPercent,
-        });
+        let fileUrl: string;
+        if (uploadedFileRef.current?.file === selectedFile) {
+          fileUrl = uploadedFileRef.current.fileUrl;
+        } else {
+          setUploadProgressPercent(0);
+          fileUrl = await uploadWithPresign({
+            presignPath:
+              scope === "site_donate"
+                ? PRESIGN_PATHS.siteFile
+                : PRESIGN_PATHS.activityFile,
+            file: selectedFile,
+            onProgress: setUploadProgressPercent,
+          });
+          uploadedFileRef.current = { file: selectedFile, fileUrl };
+        }
 
         await adminResourceApi.createAttachment({
           scope,
           resourceId: resourceId ?? null,
           title: trimmedTitle,
           fileUrl,
-          fileName: selectedFile.name,
+          fileName: truncateFileName(selectedFile.name),
           fileSize: selectedFile.size,
-          mimeType: selectedFile.type || "application/pdf",
-          sortOrder: attachments.length,
+          // presign 때와 같은 값을 기록해야 공개 목록의 형식 표시가 실제 파일과 일치한다.
+          mimeType: resolveUploadContentType(selectedFile),
+          sortOrder: nextAttachmentSortOrder(attachments),
         });
+        uploadedFileRef.current = null;
         setSelectedFile(null);
       }
 
@@ -204,32 +236,41 @@ export default function AttachmentManager({ scope, resourceId }: AttachmentManag
     }
   };
 
-  /** 인접한 항목과 sortOrder를 맞바꿔 순서를 이동합니다. */
+  /**
+   * 인접한 항목과 자리를 바꿉니다.
+   * 바뀐 목록 전체의 sortOrder를 0..n-1로 다시 매기고 값이 달라진 항목만 저장한다. 과거 삭제로
+   * 번호가 비었거나 겹친 경우에도 순서가 정확히 맞춰지며, 중간에 실패해도 서버 상태를 다시
+   * 읽어 화면이 실제 순서와 어긋나지 않게 한다.
+   */
   const handleMove = async (index: number, direction: -1 | 1) => {
     const targetIndex = index + direction;
     if (isSaving || targetIndex < 0 || targetIndex >= attachments.length) {
       return;
     }
 
-    const current = attachments[index];
-    const target = attachments[targetIndex];
-    if (!current || !target) {
+    const reordered = [...attachments];
+    const [moved] = reordered.splice(index, 1);
+    if (!moved) {
       return;
     }
+    reordered.splice(targetIndex, 0, moved);
 
     setIsSaving(true);
     setErrorMessage(null);
     try {
-      await adminResourceApi.updateAttachment(current.id, scope, {
-        sortOrder: targetIndex,
-      });
-      await adminResourceApi.updateAttachment(target.id, scope, {
-        sortOrder: index,
-      });
-      await reloadAttachments();
+      for (const [sortOrder, attachment] of reordered.entries()) {
+        if (attachment.sortOrder !== sortOrder) {
+          await adminResourceApi.updateAttachment(attachment.id, scope, { sortOrder });
+        }
+      }
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
+      try {
+        await reloadAttachments();
+      } catch {
+        // 목록 재조회 실패는 위 오류 메시지로 충분하다.
+      }
       setIsSaving(false);
     }
   };

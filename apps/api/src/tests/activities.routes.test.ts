@@ -349,6 +349,29 @@ describe("activity routes",() => {
     await expectErrorCode(response, "NOT_FOUND");
   });
 
+  it("시작일만 바꿔 저장된 종료일보다 늦어지면 400을 반환한다", async () => {
+    const updateActivity = fn(async () => createActivity());
+    const getActivityById = fn(async () =>
+      createActivity({
+        startDate: new Date("2030-03-01T00:00:00.000Z"),
+        endDate: new Date("2030-03-31T00:00:00.000Z"),
+      }),
+    );
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ updateActivity, getActivityById }),
+    });
+
+    const response = await app.request(`/api/activities/${IDs.activity}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ startDate: Date.parse("2030-04-15T00:00:00.000Z") }),
+    });
+
+    expect(response.status).toBe(400);
+    expect(updateActivity).not.toHaveBeenCalled();
+  });
+
   it("manager는 활동을 수정할 수 있다",async () => {
     const updateActivity = fn(async () => createActivity({ title: "수정" }));
     const app = createTestApp({

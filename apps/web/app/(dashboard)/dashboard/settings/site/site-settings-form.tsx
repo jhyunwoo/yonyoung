@@ -1,7 +1,6 @@
 "use client";
 
-import { DEFAULT_SITE_SETTINGS } from "@yonyoung/contracts";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { AdminApiError } from "@/shared/http/http";
@@ -10,8 +9,8 @@ import {
   type ApiUpdateSiteSettingsInput,
 } from "@yonyoung/contracts";
 import { apiUpdateSiteSettingsInputSchema } from "@yonyoung/contracts/schemas";
-import { Skeleton } from "@/components/ui/skeleton";
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
+import { useGuardedSubmit } from "@/shared/react/use-guarded-submit";
 
 const inputClassName =
   "w-full rounded-lg border border-hairline-strong px-3 py-2 text-sm text-ink outline-none transition focus-visible:border-primary focus-visible:shadow-(--shadow-focus)";
@@ -91,48 +90,18 @@ const buildSiteSettingsFieldErrors = (
   return errors;
 };
 
-export default function SiteSettingsForm() {
+type SiteSettingsFormProps = {
+  /** 서버 컴포넌트가 읽어 내려 준 현재 설정. 읽기에 실패하면 폼 자체를 렌더링하지 않는다. */
+  initialSettings: ApiSiteSettings;
+};
+
+export default function SiteSettingsForm({ initialSettings }: SiteSettingsFormProps) {
   const router = useRouter();
-  const [formState, setFormState] = useState<ApiSiteSettings>({
-    ...DEFAULT_SITE_SETTINGS,
-  });
-  const [isLoading, setIsLoading] = useState(true);
+  const [formState, setFormState] = useState<ApiSiteSettings>(initialSettings);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<SiteSettingsFieldErrors>({});
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadSiteSettings = async () => {
-      setIsLoading(true);
-      setErrorMessage(null);
-
-      try {
-        const data = await adminResourceApi.getSiteSettings();
-        if (!isMounted) {
-          return;
-        }
-        setFormState(data);
-      } catch (error) {
-        if (!isMounted) {
-          return;
-        }
-        setErrorMessage(readErrorMessage(error));
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    void loadSiteSettings();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   const updateField = (field: keyof ApiSiteSettings, value: string) => {
     setFormState((previous) => ({
@@ -174,27 +143,7 @@ export default function SiteSettingsForm() {
       setIsSaving(false);
     }
   };
-
-  if (isLoading) {
-    return (
-      <section className="mx-auto w-full max-w-4xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
-        <div className="space-y-4" aria-hidden="true">
-          <Skeleton className="h-4 w-28" />
-          <Skeleton className="h-8 w-36" />
-          <Skeleton className="h-3 w-full max-w-lg" />
-          <div className="grid gap-5 md:grid-cols-2">
-            {Array.from({ length: 8 }).map((_, index) => (
-              <div key={`site-settings-loading-field-${index + 1}`} className="space-y-2">
-                <Skeleton className="h-3 w-24" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-            ))}
-          </div>
-          <Skeleton className="h-10 w-24" />
-        </div>
-      </section>
-    );
-  }
+  const submitForm = useGuardedSubmit(handleSubmit);
 
   return (
     <section className="mx-auto w-full max-w-4xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
@@ -218,7 +167,7 @@ export default function SiteSettingsForm() {
         </p>
       ) : null}
 
-      <form action={handleSubmit} className="mt-6 space-y-6" noValidate>
+      <form onSubmit={submitForm} className="mt-6 space-y-6" noValidate>
         <div className="grid gap-5 md:grid-cols-2">
           <label className="flex flex-col gap-2">
             <span className="text-sm font-semibold text-ink-secondary">
@@ -376,6 +325,7 @@ export default function SiteSettingsForm() {
 
         <div className="flex justify-end">
           <FormSubmitButton
+            pending={isSaving}
             data-testid="site-settings-submit"
             disabled={isSaving}
             className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition hover:bg-primary-active disabled:cursor-not-allowed disabled:bg-hairline-strong"

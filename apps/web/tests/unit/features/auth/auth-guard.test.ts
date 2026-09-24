@@ -24,6 +24,13 @@ vi.mock("@/shared/http/http", () => {
 
   return {
     asRecord,
+    createTimeoutController: () => ({
+      controller: new AbortController(),
+      timeoutId: setTimeout(() => undefined, 0),
+    }),
+    clearTimeoutController: (timeoutId: ReturnType<typeof setTimeout>) => {
+      clearTimeout(timeoutId);
+    },
     applyForwardedRequestContextHeaders: (
       headers: Headers,
       context: { host: string | null; protocol: "http" | "https"; origin: string | null },

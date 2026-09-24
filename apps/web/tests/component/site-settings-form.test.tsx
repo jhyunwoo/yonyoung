@@ -30,9 +30,20 @@ describe("SiteSettingsForm", () => {
     getSiteSettingsMock.mockResolvedValue({ ...DEFAULT_SITE_SETTINGS });
   });
 
+  it("서버가 내려 준 실제 설정으로 폼을 채우고 마운트 시 다시 읽지 않는다", () => {
+    render(
+      <SiteSettingsForm
+        initialSettings={{ ...DEFAULT_SITE_SETTINGS, footerEmail: "real@yonsei.ac.kr" }}
+      />,
+    );
+
+    expect(screen.getByLabelText("이메일")).toHaveValue("real@yonsei.ac.kr");
+    expect(getSiteSettingsMock).not.toHaveBeenCalled();
+  });
+
   it("shows email validation error and blocks submit when email format is invalid", async () => {
     const user = userEvent.setup();
-    render(<SiteSettingsForm />);
+    render(<SiteSettingsForm initialSettings={{ ...DEFAULT_SITE_SETTINGS }} />);
 
     await screen.findByLabelText("이메일");
     await user.clear(screen.getByLabelText("이메일"));
@@ -54,7 +65,7 @@ describe("SiteSettingsForm", () => {
     updateSiteSettingsMock.mockResolvedValue(updatedSettings);
 
     const user = userEvent.setup();
-    render(<SiteSettingsForm />);
+    render(<SiteSettingsForm initialSettings={{ ...DEFAULT_SITE_SETTINGS }} />);
 
     await screen.findByPlaceholderText("yonyoungpage");
     await user.clear(screen.getByPlaceholderText("yonyoungpage"));
@@ -77,7 +88,7 @@ describe("SiteSettingsForm", () => {
 
   it("shows donate account number validation error and blocks submit when format is invalid", async () => {
     const user = userEvent.setup();
-    render(<SiteSettingsForm />);
+    render(<SiteSettingsForm initialSettings={{ ...DEFAULT_SITE_SETTINGS }} />);
 
     await screen.findByLabelText("계좌번호");
     await user.clear(screen.getByLabelText("계좌번호"));

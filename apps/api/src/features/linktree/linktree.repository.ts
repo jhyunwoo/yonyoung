@@ -1,4 +1,5 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
+import { runAtomically } from "../../platform/db/batch";
 import type createDB from "../../lib/db";
 import { linktree, linktreeItems } from "../../platform/db/schema";
 import type {
@@ -142,19 +143,23 @@ export const createLinktreeRepository = (db: Database) => {
       if (!exists) {
         return false;
       }
-      await db
-        .update(linktree)
-        .set({ deletedAt: new Date(), updatedAt: new Date() })
-        .where(and(eq(linktree.id, id), isNull(linktree.deletedAt)));
-      await db
-        .update(linktreeItems)
-        .set({ deletedAt: new Date(), updatedAt: new Date() })
-        .where(
-          and(
-            eq(linktreeItems.linktreeId, id),
-            isNull(linktreeItems.deletedAt),
+      // 부모와 자식 soft delete를 한 트랜잭션으로 묶어 자식만 남는 상태를 만들지 않는다.
+      const deletedAt = new Date();
+      await runAtomically(db, [
+        db
+          .update(linktree)
+          .set({ deletedAt, updatedAt: deletedAt })
+          .where(and(eq(linktree.id, id), isNull(linktree.deletedAt))),
+        db
+          .update(linktreeItems)
+          .set({ deletedAt, updatedAt: deletedAt })
+          .where(
+            and(
+              eq(linktreeItems.linktreeId, id),
+              isNull(linktreeItems.deletedAt),
+            ),
           ),
-        );
+      ]);
       return true;
     },
 

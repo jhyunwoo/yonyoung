@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
+import { useGuardedSubmit } from "@/shared/react/use-guarded-submit";
 import {
   normalizeLinktreeItemInput,
   normalizeLinktreeName,
@@ -48,6 +49,8 @@ export default function LinktreeCreateForm({
   const [nextItemId, setNextItemId] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const createdLinktreeRef = useRef<{ id: string; name: string } | null>(null);
+  const addedDraftIdsRef = useRef(new Set<number>());
 
   useEffect(() => {
     if (canWrite) {
@@ -85,9 +88,10 @@ export default function LinktreeCreateForm({
       return;
     }
 
-    const normalizedItems = itemDrafts
-      .map((item) => normalizeLinktreeItemInput(item))
-      .filter((item) => item.name.length > 0 || item.link.length > 0);
+    const normalizedDrafts = itemDrafts
+      .map((draft) => ({ draftId: draft.id, item: normalizeLinktreeItemInput(draft) }))
+      .filter(({ item }) => item.name.length > 0 || item.link.length > 0);
+    const normalizedItems = normalizedDrafts.map(({ item }) => item);
 
     if (normalizedItems.length === 0) {
       setErrorMessage("링크를 1개 이상 입력해 주세요.");
@@ -113,22 +117,42 @@ export default function LinktreeCreateForm({
     setErrorMessage(null);
 
     try {
-      const createdLinktree = await adminResourceApi.createLinktree({
-        name: normalizedGroupName,
-      });
-
-      for (const item of normalizedItems) {
-        await adminResourceApi.addLinktreeItem(createdLinktree.id, item);
+      // 분류 생성과 링크 추가는 별도 요청이다. 중간에 실패한 뒤 다시 저장하면 같은 분류가
+      // 하나 더 생기고 앞의 링크도 중복되므로, 이미 끝난 단계는 기억해 두고 건너뛴다.
+      let linktreeId = createdLinktreeRef.current?.id ?? null;
+      if (linktreeId === null) {
+        const createdLinktree = await adminResourceApi.createLinktree({
+          name: normalizedGroupName,
+        });
+        linktreeId = createdLinktree.id;
+        createdLinktreeRef.current = { id: linktreeId, name: normalizedGroupName };
+      } else if (createdLinktreeRef.current?.name !== normalizedGroupName) {
+        await adminResourceApi.updateLinktree(linktreeId, { name: normalizedGroupName });
+        createdLinktreeRef.current = { id: linktreeId, name: normalizedGroupName };
       }
 
-      router.replace(`${listPath}/${createdLinktree.id}`);
+      for (const { draftId, item } of normalizedDrafts) {
+        if (addedDraftIdsRef.current.has(draftId)) {
+          continue;
+        }
+        await adminResourceApi.addLinktreeItem(linktreeId, item);
+        addedDraftIdsRef.current.add(draftId);
+      }
+
+      router.replace(`${listPath}/${linktreeId}`);
       router.refresh();
     } catch (error) {
-      setErrorMessage(readLinktreeErrorMessage(error));
+      const message = readLinktreeErrorMessage(error);
+      setErrorMessage(
+        createdLinktreeRef.current
+          ? `${message} 이미 저장된 분류와 링크는 유지되며, 다시 저장하면 남은 링크만 추가합니다.`
+          : message,
+      );
     } finally {
       setIsSaving(false);
     }
   };
+  const submitForm = useGuardedSubmit(handleSubmit);
 
   if (!canWrite) {
     return (
@@ -161,7 +185,7 @@ export default function LinktreeCreateForm({
       <form
         data-testid="linktree-create-form"
         className="mt-6 space-y-4 rounded-lg border border-hairline bg-surface-sunken p-4"
-        action={handleSubmit}
+        onSubmit={submitForm}
       >
         <label className="block space-y-1">
           <span className="text-sm font-semibold text-ink">분류 이름</span>
@@ -230,6 +254,7 @@ export default function LinktreeCreateForm({
 
         <div className="flex flex-wrap items-center gap-2">
           <FormSubmitButton
+            pending={isSaving}
             data-testid="linktree-create-submit"
             disabled={isSaving}
             className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-on-primary disabled:cursor-not-allowed disabled:opacity-60"

@@ -447,7 +447,7 @@ describe("dashboard domain action contracts", () => {
           sortOrder: 0,
         },
       ]),
-    ).rejects.toThrow();
+    ).resolves.toMatchObject({ ok: false, status: 400, code: "VALIDATION_ERROR" });
     await expect(
       updateExhibitionImagesAction("exhibition-1", [
         {
@@ -455,7 +455,7 @@ describe("dashboard domain action contracts", () => {
           sortOrder: 1.5,
         },
       ]),
-    ).rejects.toThrow();
+    ).resolves.toMatchObject({ ok: false, status: 400, code: "VALIDATION_ERROR" });
     expect(writeRequestMock).not.toHaveBeenCalled();
   });
 });

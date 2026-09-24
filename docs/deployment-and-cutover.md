@@ -79,6 +79,25 @@ These settings cannot be inferred from Git and must be confirmed during cutover.
 - preserve health checks, deployment webhook, volumes and `.next/cache` decision;
 - verify the deployment trigger includes `apps/web` and its internal dependencies.
 
+### Optional operational settings
+
+These are off by default; the service behaves as before until they are set.
+
+- **Visitor IP for page-view rate limiting.** Browsers reach the API through
+  the web BFF, so without this every visitor shares the web server's IP and
+  one 30/min page-view bucket. Generate one random value (32+ characters) and
+  set it as the Worker secret `PROXY_CLIENT_IP_SECRET`
+  (`wrangler secret put PROXY_CLIENT_IP_SECRET`) and as the Dokploy web
+  environment variable of the same name. The API only trusts the forwarded
+  IP when the values match.
+- **R2 orphan cleanup.** A daily cron (`17 18 * * *` UTC, 03:17 KST) scans R2
+  for uploads no longer referenced by any row. It runs in dry-run mode and only
+  logs `r2.orphan_sweep.completed` with counts and sample keys. After reviewing
+  a few dry-run logs, set `R2_ORPHAN_SWEEP_ENABLED=true` (Worker var or
+  secret) to delete up to 200 objects per run. Objects uploaded within 7 days,
+  and objects referenced by rows soft-deleted within 30 days, are always kept.
+  `env.dev` disables the cron because it currently shares production D1/R2.
+
 ### GitHub
 
 - update branch protection to require the stable `Quality gates`,

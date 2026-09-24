@@ -1,6 +1,7 @@
 import { resolveApiBaseUrl } from "@/shared/http/http";
 import { cacheTag } from "next/cache";
 import { CACHE_TAGS } from "@/server/cache/tags";
+import { toFreshPublicReadPath } from "@/server/http/fresh-public-read";
 import type { ApiGeneration, DataEnvelope } from "@yonyoung/contracts";
 
 const PUBLIC_GENERATIONS_PATH = "/api/public/generations";
@@ -41,12 +42,15 @@ export const fetchGenerationsFromServer = async (): Promise<ApiGeneration[]> => 
   cacheTag(CACHE_TAGS.admin.generations);
 
   try {
-    const response = await fetch(`${resolveApiBaseUrl()}${PUBLIC_GENERATIONS_PATH}`, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
+    const response = await fetch(
+      `${resolveApiBaseUrl()}${toFreshPublicReadPath(PUBLIC_GENERATIONS_PATH)}`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
       },
-    });
+    );
 
     if (!response.ok) {
       return [];

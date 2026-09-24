@@ -2,6 +2,9 @@ import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/uploa
 import type { PresignPath } from "@/features/dashboard/api/admin-api/upload";
 import { readImageDimensions } from "@/features/media/images/read-image-dimensions";
 import type { UploadImageItem } from "@/features/media/upload/image-upload-state";
+import { mapWithConcurrency } from "@/shared/utils/map-with-concurrency";
+
+const DIMENSION_READ_CONCURRENCY = 2;
 
 export type UploadedDetailImage = {
   imageUrl: string;
@@ -35,8 +38,12 @@ export const uploadDetailImages = async (input: {
     return [];
   }
 
-  const dimensionList = await Promise.all(
-    input.items.map((item) => readImageDimensions(item.file)),
+  // 크기 측정은 이미지를 통째로 디코딩한다. 수십 장을 한꺼번에 풀면 비트맵이 메모리에
+  // 동시에 올라가 저사양 기기에서 탭이 죽을 수 있어 두 장씩만 처리한다.
+  const dimensionList = await mapWithConcurrency(
+    input.items,
+    DIMENSION_READ_CONCURRENCY,
+    (item) => readImageDimensions(item.file),
   );
 
   const uploadedUrls = await uploadFilesWithPresign({

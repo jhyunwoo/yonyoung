@@ -31,28 +31,44 @@ export const ApiGenerationSchema = z
   })
   .openapi("ApiGeneration");
 
-export const ApiCreateGenerationSchema = z
-  .object({
-    name: z.string().trim().min(1, "name은 필수입니다.").openapi({
-      description: "생성할 기수 이름",
-      example: "12기",
-    }),
-    sortOrder: z.number().int().nonnegative().openapi({
-      description: "기수 정렬 순서(0 이상, UNIQUE)",
-      example: 12,
-    }),
-    startDate: z.number().int().positive().openapi({
-      description:
-        "기수 시작일시 (Unix timestamp(ms), 클라이언트에서 연-월-일 포맷으로 변환)",
-      example: EXAMPLE_TIMESTAMP_MS,
-    }),
-    endDate: z.number().int().positive().openapi({
-      description:
-        "기수 종료일시 (Unix timestamp(ms), 클라이언트에서 연-월-일 포맷으로 변환)",
-      example: EXAMPLE_TIMESTAMP_MS_END,
-    }),
-  })
-  .openapi("ApiCreateGenerationInput");
+const GenerationInputObjectSchema = z.object({
+  name: z.string().trim().min(1, "name은 필수입니다.").openapi({
+    description: "생성할 기수 이름",
+    example: "12기",
+  }),
+  sortOrder: z.number().int().nonnegative().openapi({
+    description: "기수 정렬 순서(0 이상, UNIQUE)",
+    example: 12,
+  }),
+  startDate: z.number().int().positive().openapi({
+    description:
+      "기수 시작일시 (Unix timestamp(ms), 클라이언트에서 연-월-일 포맷으로 변환)",
+    example: EXAMPLE_TIMESTAMP_MS,
+  }),
+  endDate: z.number().int().positive().openapi({
+    description:
+      "기수 종료일시 (Unix timestamp(ms), 클라이언트에서 연-월-일 포맷으로 변환)",
+    example: EXAMPLE_TIMESTAMP_MS_END,
+  }),
+});
 
-export const ApiUpdateGenerationSchema =
-  ApiCreateGenerationSchema.partial().openapi("ApiUpdateGenerationInput");
+export const ApiCreateGenerationSchema = GenerationInputObjectSchema.refine(
+  (value) => value.startDate <= value.endDate,
+  {
+    message: "기수 종료일은 시작일보다 빠를 수 없습니다.",
+    path: ["endDate"],
+  },
+).openapi("ApiCreateGenerationInput");
+
+export const ApiUpdateGenerationSchema = GenerationInputObjectSchema.partial()
+  .refine(
+    (value) =>
+      value.startDate === undefined ||
+      value.endDate === undefined ||
+      value.startDate <= value.endDate,
+    {
+      message: "기수 종료일은 시작일보다 빠를 수 없습니다.",
+      path: ["endDate"],
+    },
+  )
+  .openapi("ApiUpdateGenerationInput");

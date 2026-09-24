@@ -49,7 +49,8 @@ export const readImageDimensions = async (
 ): Promise<ImageDimensions | null> => {
   if (typeof createImageBitmap === "function") {
     try {
-      const bitmap = await createImageBitmap(file);
+      // EXIF 회전을 반영해야 세로 사진의 가로/세로가 뒤바뀌어 저장되지 않는다.
+      const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
       const dimensions =
         bitmap.width > 0 && bitmap.height > 0
           ? { width: bitmap.width, height: bitmap.height }

@@ -47,6 +47,10 @@ describe("public-read-service", () => {
 
     expect(result).toHaveLength(1);
     expect(result[0]?.id).toBe("act-1");
+    // 관리자 쓰기 직후 재조회가 API 공개 캐시의 옛 응답을 받지 않도록 fresh 표식을 붙인다.
+    expect(vi.mocked(fetch).mock.calls[0]?.[0]).toBe(
+      "https://api.example.com/api/public/activities?fresh=1",
+    );
   });
 
   it("returns fallback empty list when schema validation fails", async () => {

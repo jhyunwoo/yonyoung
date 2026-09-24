@@ -16,8 +16,14 @@ type RemoteImagePattern = {
 const CSP_CONNECT_SOURCES = ["'self'", "https://*.r2.cloudflarestorage.com"];
 // Permit only the configured ingest origin; never widen connect-src to all HTTPS.
 if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
-  const origin = new URL(process.env.NEXT_PUBLIC_SENTRY_DSN).origin;
-  CSP_CONNECT_SOURCES.push(origin);
+  // 잘못된 DSN 하나로 설정 로드(=빌드 전체)가 실패하지 않게 한다. 이 경우 Sentry 전송만 CSP로 막힌다.
+  try {
+    CSP_CONNECT_SOURCES.push(new URL(process.env.NEXT_PUBLIC_SENTRY_DSN).origin);
+  } catch {
+    console.warn(
+      "[next.config] NEXT_PUBLIC_SENTRY_DSN is not a valid URL; skipping CSP entry.",
+    );
+  }
 }
 
 const buildPublicMediaRemotePatterns = (): RemoteImagePattern[] => {

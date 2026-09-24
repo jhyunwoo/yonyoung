@@ -489,11 +489,9 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
       return ok(c, sanitizeUserUrlFields(withUpdatedByActor(data, actor)));
     }
 
-    // member 계열 role 및 unverified는 본인 프로필 필드만 수정 가능하다.
-    if (
-      (isMemberLikeRole(actor.role) || actor.role === "unverified") &&
-      isSelf
-    ) {
+    // 사용자 관리 권한이 없는 역할(부장·회원 계열·미인증)은 본인 프로필 필드만 수정할 수 있다.
+    // 부장도 대시보드 프로필 화면을 쓰므로 여기서 막으면 저장이 403으로 실패한다.
+    if (isSelf) {
       const body = await parseBody(c, ApiMemberProfileUpdateSchema);
       if (!body.success) {
         throw AppError.badRequest(body.message);

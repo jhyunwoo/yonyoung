@@ -1,4 +1,5 @@
 import type { Context } from "hono";
+import { resolveTrustedClientIp } from "../http/client-ip";
 import { getActorFromSession } from "../auth/session";
 import { createAuth } from "../auth";
 import { type Actor } from "../authorization/types";
@@ -121,7 +122,7 @@ export const createDefaultDependencies = (): AppDependencies => ({
       return false;
     }
 
-    const clientKey = c.req.header("cf-connecting-ip")?.trim() || "unknown";
+    const clientKey = resolveTrustedClientIp(c);
     try {
       const result = await limiter.limit({
         key: `anonymous-page-view:${clientKey}`,

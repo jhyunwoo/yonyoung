@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
+import { runAtomically } from "../../platform/db/batch";
 import type createDB from "../../lib/db";
 import { activities, activityImages } from "../../platform/db/schema";
 import type {
@@ -8,6 +9,7 @@ import type {
 } from "../../lib/services/types";
 import { selectInChunks } from "../../platform/db/query-chunking";
 import {
+  sortBySortOrder,
   toImageDimensionsPatch,
   toTimestampDate,
 } from "../../platform/db/row-values";
@@ -349,19 +351,23 @@ export const createActivityRepository = (
       if (!exists) {
         return false;
       }
-      await db
-        .update(activities)
-        .set({ deletedAt: new Date(), updatedAt: new Date() })
-        .where(and(eq(activities.id, id), isNull(activities.deletedAt)));
-      await db
-        .update(activityImages)
-        .set({ deletedAt: new Date(), updatedAt: new Date() })
-        .where(
-          and(
-            eq(activityImages.activityId, id),
-            isNull(activityImages.deletedAt),
+      // 부모와 자식 soft delete를 한 트랜잭션으로 묶어 자식만 남는 상태를 만들지 않는다.
+      const deletedAt = new Date();
+      await runAtomically(db, [
+        db
+          .update(activities)
+          .set({ deletedAt, updatedAt: deletedAt })
+          .where(and(eq(activities.id, id), isNull(activities.deletedAt))),
+        db
+          .update(activityImages)
+          .set({ deletedAt, updatedAt: deletedAt })
+          .where(
+            and(
+              eq(activityImages.activityId, id),
+              isNull(activityImages.deletedAt),
+            ),
           ),
-        );
+      ]);
       return true;
     },
 
@@ -430,16 +436,19 @@ export const createActivityRepository = (
         return [];
       }
 
-      return db
-        .select()
-        .from(activityImages)
-        .where(
-          and(
-            inArray(activityImages.id, createdIds),
-            isNull(activityImages.deletedAt),
-          ),
-        )
-        .orderBy(asc(activityImages.sortOrder));
+      return sortBySortOrder(
+        await selectInChunks(createdIds, (chunk) =>
+          db
+            .select()
+            .from(activityImages)
+            .where(
+              and(
+                inArray(activityImages.id, chunk),
+                isNull(activityImages.deletedAt),
+              ),
+            ),
+        ),
+      );
     },
 
     async updateActivityImage(
@@ -501,52 +510,65 @@ export const createActivityRepository = (
       if (imageIds.length === 0) {
         return [];
       }
-      const existing = await db
-        .select({ id: activityImages.id })
-        .from(activityImages)
-        .where(
-          and(
-            eq(activityImages.activityId, activityId),
-            inArray(activityImages.id, imageIds),
-            isNull(activityImages.deletedAt),
+      // D1은 쿼리당 바인딩 100개가 한도라 id 목록은 나눠서 확인한다.
+      const existing = await selectInChunks(imageIds, (chunk) =>
+        db
+          .select({ id: activityImages.id })
+          .from(activityImages)
+          .where(
+            and(
+              eq(activityImages.activityId, activityId),
+              inArray(activityImages.id, chunk),
+              isNull(activityImages.deletedAt),
+            ),
           ),
-        );
+      );
 
       if (existing.length !== imageIds.length) {
         return null;
       }
 
-      for (const item of input) {
-        await db
-          .update(activityImages)
-          .set({
-            ...(item.imageUrl !== undefined ? { imageUrl: item.imageUrl } : {}),
-            ...(item.sortOrder !== undefined
-              ? { sortOrder: item.sortOrder }
-              : {}),
-            ...toImageDimensionsPatch(item),
-            updatedAt: new Date(),
-          })
-          .where(
-            and(
-              eq(activityImages.id, item.imageId),
-              eq(activityImages.activityId, activityId),
-              isNull(activityImages.deletedAt),
+      // 순서 변경은 전부 반영되거나 전혀 반영되지 않아야 한다(중간 실패 시 순서가 섞인다).
+      const updatedAt = new Date();
+      await runAtomically(
+        db,
+        input.map((item) =>
+          db
+            .update(activityImages)
+            .set({
+              ...(item.imageUrl !== undefined
+                ? { imageUrl: item.imageUrl }
+                : {}),
+              ...(item.sortOrder !== undefined
+                ? { sortOrder: item.sortOrder }
+                : {}),
+              ...toImageDimensionsPatch(item),
+              updatedAt,
+            })
+            .where(
+              and(
+                eq(activityImages.id, item.imageId),
+                eq(activityImages.activityId, activityId),
+                isNull(activityImages.deletedAt),
+              ),
             ),
-          );
-      }
+        ),
+      );
       await touchActivity(activityId);
 
-      return db
-        .select()
-        .from(activityImages)
-        .where(
-          and(
-            inArray(activityImages.id, imageIds),
-            isNull(activityImages.deletedAt),
-          ),
-        )
-        .orderBy(asc(activityImages.sortOrder));
+      return sortBySortOrder(
+        await selectInChunks(imageIds, (chunk) =>
+          db
+            .select()
+            .from(activityImages)
+            .where(
+              and(
+                inArray(activityImages.id, chunk),
+                isNull(activityImages.deletedAt),
+              ),
+            ),
+        ),
+      );
     },
 
     async deleteActivityImage(

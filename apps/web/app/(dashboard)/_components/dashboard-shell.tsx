@@ -1,5 +1,6 @@
 "use client";
 
+import SessionKeepAlive from "@/app/(dashboard)/_components/session-keep-alive";
 import { Menu } from "lucide-react";
 import { useResetOnChange } from "@/shared/react/use-reset-on-change";
 import { usePathname, useRouter } from "next/navigation";
@@ -137,6 +138,7 @@ export default function DashboardShell({
     <ToastProvider>
       <ConfirmProvider>
         <div className="min-h-dvh bg-canvas text-ink">
+          {viewer ? <SessionKeepAlive /> : null}
           <SkipLink targetId={MAIN_CONTENT_ID} />
 
           {/* md–lg 는 좁은 레일, lg 이상은 전체 폭 */}

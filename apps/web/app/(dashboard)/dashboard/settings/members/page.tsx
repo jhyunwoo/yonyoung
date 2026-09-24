@@ -27,6 +27,9 @@ export default async function SettingsMembersPage() {
           전체 멤버의 권한, 소속 기수, 기본 정보를 보고 검색과 필터로 원하는 사용자를
           빠르게 찾을 수 있으며, 여러 명을 선택해 권한을 한 번에 수정할 수 있습니다.
         </p>
+        {usersResult.ok && !generationsResult.ok ? (
+          <AdminReadErrorNotice error={generationsResult.error} />
+        ) : null}
         {usersResult.ok ? (
           <MembersGrid
             initialUsers={usersResult.data}

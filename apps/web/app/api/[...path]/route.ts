@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getApiBaseUrl } from "@/server/env";
+import { getApiBaseUrl, getProxyClientIpSecret } from "@/server/env";
 import {
   API_PROXY_BODY_LIMIT_BYTES,
   buildUpstreamProxyHeaders,
@@ -37,6 +37,26 @@ const resolveForwardedProtocol = (request: NextRequest): "http" | "https" => {
   return request.nextUrl.protocol === "http:" ? "http" : "https";
 };
 
+/**
+ * 방문자 IP를 API에 전달한다(조회수 rate limit 키). API는 공유 비밀이 일치할 때만 이 값을
+ * 믿는다 — 비밀이 없으면 아무것도 보내지 않는다. 들어온 요청의 같은 이름 헤더는
+ * `buildUpstreamProxyHeaders`의 allowlist에 없어 그대로 전달되지 않는다.
+ */
+const buildClientIpHeaders = (request: NextRequest): Record<string, string> => {
+  const secret = getProxyClientIpSecret();
+  const clientIp =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip")?.trim();
+  if (!secret || !clientIp) {
+    return {};
+  }
+
+  return {
+    "x-yonyoung-client-ip": clientIp,
+    "x-yonyoung-proxy-auth": secret,
+  };
+};
+
 const copyResponse = (upstream: Response): NextResponse => {
   const response = new NextResponse(upstream.body, {
     status: upstream.status,
@@ -44,11 +64,17 @@ const copyResponse = (upstream: Response): NextResponse => {
   });
 
   upstream.headers.forEach((value, key) => {
-    if (HOP_BY_HOP_HEADERS.has(key.toLowerCase())) {
+    const normalizedKey = key.toLowerCase();
+    // set-cookie는 여러 개일 수 있어 set()으로 복사하면 마지막 하나만 남는다. 아래에서 개별 append 한다.
+    if (HOP_BY_HOP_HEADERS.has(normalizedKey) || normalizedKey === "set-cookie") {
       return;
     }
     response.headers.set(key, value);
   });
+
+  for (const cookie of upstream.headers.getSetCookie()) {
+    response.headers.append("set-cookie", cookie);
+  }
 
   return response;
 };
@@ -120,6 +146,7 @@ const handle = async (
           extraHeaders: {
             "x-forwarded-host": request.nextUrl.host,
             "x-forwarded-proto": resolveForwardedProtocol(request),
+            ...buildClientIpHeaders(request),
           },
         }),
         body: requestBody,

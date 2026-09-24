@@ -57,7 +57,7 @@ export type ApiListActivitiesQuery = {
 
 export const apiCreateActivityImageInputSchema = z.object({
   imageUrl: z.url(),
-  sortOrder: z.number().int(),
+  sortOrder: z.number().int().nonnegative(),
   width: z.number().int().positive().optional(),
   height: z.number().int().positive().optional(),
 });
@@ -74,7 +74,9 @@ export type ApiUpdateActivityImageInput = Partial<ApiCreateActivityImageInput>;
 export const apiUpdateActivityImageBatchItemInputSchema = z.object({
   imageId: z.string(),
   imageUrl: z.url().optional(),
-  sortOrder: z.number().int().optional(),
+  sortOrder: z.number().int().nonnegative().optional(),
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
 });
 
 export type ApiUpdateActivityImageBatchItemInput = z.infer<

@@ -268,6 +268,47 @@ describe("activity repository", () => {
     expect(fake.updatesFor("activity_images")).toHaveLength(2);
   });
 
+  it("이미지가 100장을 넘어도 D1 바인딩 한도 안에서 조회하고 순서 변경은 한 트랜잭션으로 반영한다", async () => {
+    const { fake, repository } = createRepository();
+    const ids = Array.from({ length: 150 }, (_, index) => `image-${index}`);
+    fake.queueFindFirst("activities", activityRow());
+    // 존재 확인: 45개 단위 청크 4번
+    for (let start = 0; start < ids.length; start += 45) {
+      fake.queueSelect(
+        activityImages,
+        ids.slice(start, start + 45).map((id) => ({ id })),
+      );
+    }
+    // 결과 조회: 청크 4번 (청크 사이 순서는 섞여서 온다)
+    for (let start = 0; start < ids.length; start += 45) {
+      fake.queueSelect(
+        activityImages,
+        ids
+          .slice(start, start + 45)
+          .map((id) => imageRow({ id, sortOrder: ids.length - ids.indexOf(id) })),
+      );
+    }
+
+    const result = await repository.updateActivityImages(
+      ACTIVITY_ID,
+      ids.map((imageId, sortOrder) => ({ imageId, sortOrder })),
+    );
+
+    expect(fake.batches).toEqual([150]);
+    expect(result).toHaveLength(150);
+    const sortOrders = (result ?? []).map((row) => row.sortOrder);
+    expect(sortOrders).toEqual([...sortOrders].sort((left, right) => left - right));
+  });
+
+  it("활동 삭제는 활동과 세부 이미지 soft delete를 한 트랜잭션으로 묶는다", async () => {
+    const { fake, repository } = createRepository();
+    fake.queueFindFirst("activities", activityRow());
+
+    await repository.deleteActivity(ACTIVITY_ID);
+
+    expect(fake.batches).toEqual([2]);
+  });
+
   it("빈 목록 일괄 수정은 조회 없이 빈 배열을 반환한다", async () => {
     const { fake, repository } = createRepository();
     fake.queueFindFirst("activities", activityRow());

@@ -5,6 +5,7 @@ import {
   writeRequest,
   type AdminWriteActionResult,
 } from "@/features/dashboard/actions/admin-write-core";
+import { parseActionInput } from "@/features/dashboard/actions/action-input";
 import { CACHE_TAGS } from "@/server/cache/tags";
 import {
   apiCreateGenerationInputSchema,
@@ -27,7 +28,11 @@ const GENERATION_CACHE_TAGS = [
 export const createGenerationAction = async (
   input: ApiCreateGenerationInput,
 ): Promise<AdminWriteActionResult<ApiGeneration>> => {
-  const payload = apiCreateGenerationInputSchema.parse(input);
+  const parsedPayload = parseActionInput(apiCreateGenerationInputSchema, input);
+  if (!parsedPayload.ok) {
+    return parsedPayload;
+  }
+  const payload = parsedPayload.data;
   return writeRequest({
     path: "/generations",
     method: "POST",
@@ -42,7 +47,11 @@ export const updateGenerationAction = async (
   id: string,
   input: ApiUpdateGenerationInput,
 ): Promise<AdminWriteActionResult<ApiGeneration>> => {
-  const payload = apiUpdateGenerationInputSchema.parse(input);
+  const parsedPayload = parseActionInput(apiUpdateGenerationInputSchema, input);
+  if (!parsedPayload.ok) {
+    return parsedPayload;
+  }
+  const payload = parsedPayload.data;
   return writeRequest({
     path: `/generations/${id}`,
     method: "PATCH",

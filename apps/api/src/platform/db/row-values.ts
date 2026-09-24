@@ -61,3 +61,8 @@ export const toImageDimensionsPatch = (input: {
   ...(input.width !== undefined ? { width: input.width } : {}),
   ...(input.height !== undefined ? { height: input.height } : {}),
 });
+
+/** 청크로 나눠 읽은 결과는 청크 사이 순서가 보장되지 않으므로 sortOrder로 다시 정렬한다. */
+export const sortBySortOrder = <T extends { sortOrder: number }>(
+  rows: T[],
+): T[] => rows.slice().sort((left, right) => left.sortOrder - right.sortOrder);
