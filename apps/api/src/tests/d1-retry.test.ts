@@ -64,6 +64,18 @@ describe("d1 write retry", () => {
       isRetryableD1WriteError(new Error("D1_ERROR: LAST_ACTIVE_PRESIDENT_REQUIRED: SQLITE_CONSTRAINT")),
     ).toBe(false);
     expect(isRetryableD1WriteError(new Error("D1_ERROR: no such column: foo"))).toBe(false);
+    expect(
+      isRetryableD1WriteError(
+        new Error(
+          "D1_ERROR: Internal error while starting up D1 DB storage caused object to be reset.",
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      isRetryableD1WriteError(
+        new Error("D1_ERROR: Cannot resolve D1 DB due to transient issue on remote node."),
+      ),
+    ).toBe(true);
     expect(isRetryableD1WriteError("database is locked")).toBe(false);
   });
 

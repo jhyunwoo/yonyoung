@@ -12,6 +12,10 @@ const RETRYABLE_D1_PATTERNS = [
   /storage busy/i,
   /overloaded/i,
   /internal error.*try again/i,
+  // Cloudflare 문서가 재시도하라고 안내하는 D1 일시 오류들
+  /caused object to be reset/i,
+  /reset because its code was updated/i,
+  /transient issue/i,
 ] as const;
 
 // 재시도해도 결과가 같은 오류. 특히 첫 시도가 실제로는 커밋된 뒤 응답만 끊긴 경우

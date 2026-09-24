@@ -18,6 +18,7 @@ import type {
 import type { MockRole, MockSessionUser, MockState } from "./contracts";
 import { createMockState, defaultRoleUserId } from "./seed";
 import { handleAttachmentRoutes } from "./attachments-handlers";
+import { reserveMockUpload, settleMockUpload } from "./upload-reservation-handlers";
 
 const HOST = "127.0.0.1";
 const PORT = Number(process.env.MOCK_API_PORT ?? "4010");
@@ -85,6 +86,18 @@ const readRole = (request: IncomingMessage): MockRole => {
       return "guest";
   }
 };
+
+/**
+ * 장애 주입: `mock_fail` 쿠키에 쉼표로 나열한 키의 관리자 읽기를 500으로 실패시킨다.
+ * 웹 서버가 쿠키를 그대로 API에 전달하므로 서버 컴포넌트의 읽기 실패 화면을 검증할 수 있다.
+ */
+const readFailureKeys = (request: IncomingMessage): Set<string> =>
+  new Set(
+    (parseCookies(request).mock_fail ?? "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter((value) => value.length > 0),
+  );
 
 const readProfileMode = (request: IncomingMessage): "complete" | "incomplete" => {
   const cookies = parseCookies(request);
@@ -740,7 +753,27 @@ const handleRequest = async (
       if (!requireWritableRole(response, role)) {
         return;
       }
-      sendData(response, createUploadPresign(state, requestUrl, body));
+      const reservationId = reserveMockUpload(state);
+      if (!reservationId) {
+        sendError(
+          response,
+          409,
+          "CONFLICT",
+          "동시에 예약할 수 있는 업로드 수 또는 용량을 초과했습니다.",
+        );
+        return;
+      }
+      sendData(response, {
+        ...createUploadPresign(state, requestUrl, body),
+        reservationId,
+      });
+      return;
+    }
+
+    if (pathname === "/api/uploads/settle" && method === "POST") {
+      settleMockUpload(state, body?.reservationId);
+      response.statusCode = 204;
+      response.end();
       return;
     }
 
@@ -1500,6 +1533,10 @@ const handleRequest = async (
 
     // Site settings
     if (pathname === "/api/site-settings" && method === "GET") {
+      if (readFailureKeys(request).has("site-settings")) {
+        sendError(response, 500, "INTERNAL_ERROR", "Injected site settings failure.");
+        return;
+      }
       sendData(response, state.siteSettings);
       return;
     }
