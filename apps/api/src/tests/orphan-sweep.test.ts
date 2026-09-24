@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   ORPHAN_SWEEP_MIN_OBJECT_AGE_MS,
   ORPHAN_SWEEP_SOFT_DELETE_GRACE_MS,
+  ORPHAN_SWEEP_STATE_KEY,
   extractManagedObjectKeys,
   runR2OrphanSweep,
 } from "../lib/storage/orphan-sweep";
@@ -40,13 +41,24 @@ const createDatabase = (tables: Record<string, Record<string, unknown>[]>, fail 
   })),
 });
 
-const createBucket = (objects: { key: string; uploaded: Date }[]) => ({
-  list: vi.fn(async ({ prefix }: { prefix?: string }) => ({
-    objects: objects.filter((object) => object.key.startsWith(prefix ?? "")),
-    truncated: false,
-  })),
-  delete: vi.fn(async () => undefined),
-});
+const createBucket = (objects: { key: string; uploaded: Date }[]) => {
+  const stored = new Map<string, string>();
+  return {
+    stored,
+    list: vi.fn(async ({ prefix }: { prefix?: string }) => ({
+      objects: objects.filter((object) => object.key.startsWith(prefix ?? "")),
+      truncated: false,
+    })),
+    delete: vi.fn(async () => undefined),
+    get: vi.fn(async (key: string) => {
+      const value = stored.get(key);
+      return value === undefined ? null : { json: async () => JSON.parse(value) };
+    }),
+    put: vi.fn(async (key: string, value: string) => {
+      stored.set(key, value);
+    }),
+  };
+};
 
 const fixture = () => {
   const database = createDatabase({
@@ -131,5 +143,95 @@ describe("R2 orphan sweep", () => {
     ).rejects.toThrow();
     expect(bucket.delete).not.toHaveBeenCalled();
     expect(bucket.list).not.toHaveBeenCalled();
+  });
+
+  it("페이지 상한에 걸린 접두사는 다음 실행에서 커서부터 이어서 본다", async () => {
+    // 한 페이지에 객체 1개씩 돌려주는 버킷: 상한(50페이지)보다 많은 60개
+    const keys = Array.from(
+      { length: 60 },
+      (_, index) => `users/user-1/profile/${String(index).padStart(4, "0")}-p.jpg`,
+    );
+    const bucket = createBucket([]);
+    bucket.list.mockImplementation(
+      async ({ prefix, cursor }: { prefix?: string; cursor?: string }) => {
+        if (prefix !== "users/") {
+          return { objects: [], truncated: false };
+        }
+        const start = cursor ? Number(cursor) : 0;
+        const key = keys[start];
+        const next = start + 1;
+        return {
+          objects: key ? [{ key, uploaded: OLD }] : [],
+          truncated: next < keys.length,
+          ...(next < keys.length ? { cursor: String(next) } : {}),
+        } as never;
+      },
+    );
+    const database = createDatabase({});
+
+    const first = await runR2OrphanSweep({
+      database: database as never,
+      bucket: bucket as never,
+      enabled: false,
+      now: NOW,
+    });
+    const second = await runR2OrphanSweep({
+      database: database as never,
+      bucket: bucket as never,
+      enabled: false,
+      now: NOW,
+    });
+    const third = await runR2OrphanSweep({
+      database: database as never,
+      bucket: bucket as never,
+      enabled: false,
+      now: NOW,
+    });
+
+    expect(first.scannedObjects).toBe(50);
+    expect(second.scannedObjects).toBe(10);
+    // 끝까지 본 뒤에는 커서를 지우고 처음부터 다시 본다.
+    expect(third.scannedObjects).toBe(50);
+    expect(JSON.parse(bucket.stored.get(ORPHAN_SWEEP_STATE_KEY) ?? "{}")).toEqual({
+      cursors: { "users/": "50" },
+    });
+  });
+
+  it("한도 때문에 못 지운 고아가 남은 접두사는 커서를 전진시키지 않는다", async () => {
+    const keys = Array.from(
+      { length: 60 },
+      (_, index) => `users/user-1/profile/${String(index).padStart(4, "0")}-p.jpg`,
+    );
+    const bucket = createBucket([]);
+    bucket.list.mockImplementation(
+      async ({ prefix, cursor }: { prefix?: string; cursor?: string }) => {
+        if (prefix !== "users/") {
+          return { objects: [], truncated: false };
+        }
+        const start = cursor ? Number(cursor) : 0;
+        const key = keys[start];
+        const next = start + 1;
+        return {
+          objects: key ? [{ key, uploaded: OLD }] : [],
+          truncated: next < keys.length,
+          ...(next < keys.length ? { cursor: String(next) } : {}),
+        } as never;
+      },
+    );
+    const database = createDatabase({});
+
+    const first = await runR2OrphanSweep({
+      database: database as never,
+      bucket: bucket as never,
+      enabled: true,
+      now: NOW,
+      maxDeletes: 10,
+    });
+
+    // 50개를 봤지만 10개만 지웠으므로 다음 실행도 같은 구간(처음)부터 다시 본다.
+    expect(first).toMatchObject({ scannedObjects: 50, orphanCount: 50, deletedCount: 10 });
+    expect(JSON.parse(bucket.stored.get(ORPHAN_SWEEP_STATE_KEY) ?? "{}")).toEqual({
+      cursors: {},
+    });
   });
 });

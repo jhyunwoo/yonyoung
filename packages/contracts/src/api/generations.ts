@@ -36,6 +36,32 @@ export const apiUpdateGenerationInputSchema =
 
 export type ApiUpdateGenerationInput = Partial<ApiCreateGenerationInput>;
 
+/** 여러 기수의 정렬 순서를 한 번에 바꾸는 요청 (자리 맞바꾸기). */
+export const apiReorderGenerationsInputSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        sortOrder: z.number().int().nonnegative(),
+      }),
+    )
+    .min(1)
+    .max(100)
+    .refine(
+      (items) => new Set(items.map((item) => item.id)).size === items.length,
+      "중복된 기수를 전달할 수 없습니다.",
+    )
+    .refine(
+      (items) =>
+        new Set(items.map((item) => item.sortOrder)).size === items.length,
+      "같은 정렬 순서를 두 기수에 줄 수 없습니다.",
+    ),
+});
+
+export type ApiReorderGenerationsInput = z.infer<
+  typeof apiReorderGenerationsInputSchema
+>;
+
 export const apiGenerationMemberSummarySchema = z.object({
   id: z.string(),
   generationId: z.string(),

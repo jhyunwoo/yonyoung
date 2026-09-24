@@ -18,7 +18,8 @@ export type AuditResourceType =
   | "linktree"
   | "linktree_item"
   | "user"
-  | "attachment";
+  | "attachment"
+  | "site_settings";
 
 export type AuditAction = "create" | "update" | "delete";
 
@@ -298,6 +299,14 @@ export type DataService = {
       endDate: number;
     }>,
   ) => Promise<GenerationEntity | null>;
+  /** 여러 기수의 정렬 순서를 한 트랜잭션으로 바꾼다(자리 맞바꾸기 포함). */
+  reorderGenerations: (
+    items: { id: string; sortOrder: number }[],
+  ) => Promise<
+    | { status: "ok"; changedIds: string[] }
+    | { status: "not_found" }
+    | { status: "conflict" }
+  >;
   deleteGeneration: (id: string) => Promise<boolean>;
 
   listActivities: (generationId?: string) => Promise<ActivityEntity[]>;
@@ -446,7 +455,12 @@ export type DataService = {
       donateAccountNumber: string;
       donateAccountHolder: string;
     }>,
-  ) => Promise<SiteSettingsEntity>;
+  ) => Promise<{
+    /** 저장 직후 값 */
+    settings: SiteSettingsEntity;
+    /** 같은 트랜잭션에서 실제로 값이 바뀐 항목 (감사 로그용) */
+    changedFields: (keyof SiteSettingsEntity)[];
+  }>;
 
   getCurrentRecruitingPlan: () => Promise<RecruitingPlanEntity | null>;
   upsertCurrentRecruitingPlan: (input: {

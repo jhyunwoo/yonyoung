@@ -15,6 +15,8 @@ type AuditHistoryPanelProps = {
   resourceId: string;
   limit?: number;
   title?: string;
+  /** 값이 바뀌면 이력을 다시 읽는다(같은 화면에서 저장한 직후 새 이력을 보여 줄 때). */
+  refreshKey?: number;
 };
 
 export default function AuditHistoryPanel({
@@ -22,6 +24,7 @@ export default function AuditHistoryPanel({
   resourceId,
   limit = 20,
   title = "변경 이력",
+  refreshKey = 0,
 }: AuditHistoryPanelProps) {
   const [logs, setLogs] = useState<ApiAuditLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,7 +67,7 @@ export default function AuditHistoryPanel({
     return () => {
       isMounted = false;
     };
-  }, [limit, resourceId, resourceType]);
+  }, [limit, resourceId, resourceType, refreshKey]);
 
   return (
     <section className="rounded-lg border border-hairline p-4">

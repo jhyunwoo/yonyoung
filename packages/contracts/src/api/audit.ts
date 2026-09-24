@@ -14,6 +14,7 @@ export const apiAuditResourceTypeSchema = z.enum([
   "linktree_item",
   "user",
   "attachment",
+  "site_settings",
 ]);
 
 export type ApiAuditResourceType = z.infer<typeof apiAuditResourceTypeSchema>;

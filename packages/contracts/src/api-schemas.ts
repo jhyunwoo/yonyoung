@@ -14,6 +14,7 @@ export {
   apiGenerationSchema,
   apiPublicGenerationMemberSchema,
   apiPublicGenerationWithMembersSchema,
+  apiReorderGenerationsInputSchema,
   apiUpdateGenerationInputSchema,
 } from "./api/generations";
 

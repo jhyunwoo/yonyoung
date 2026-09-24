@@ -9,6 +9,7 @@ import {
   type ApiUpdateSiteSettingsInput,
 } from "@yonyoung/contracts";
 import { apiUpdateSiteSettingsInputSchema } from "@yonyoung/contracts/schemas";
+import AuditHistoryPanel from "@/app/(dashboard)/_components/audit-history-panel";
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import { useGuardedSubmit } from "@/shared/react/use-guarded-submit";
 
@@ -102,6 +103,8 @@ export default function SiteSettingsForm({ initialSettings }: SiteSettingsFormPr
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<SiteSettingsFieldErrors>({});
+  // 저장할 때마다 올려서 변경 이력 패널이 방금 남긴 기록을 다시 읽게 한다.
+  const [savedCount, setSavedCount] = useState(0);
 
   const updateField = (field: keyof ApiSiteSettings, value: string) => {
     setFormState((previous) => ({
@@ -135,6 +138,7 @@ export default function SiteSettingsForm({ initialSettings }: SiteSettingsFormPr
     try {
       const updated = await adminResourceApi.updateSiteSettings(payload);
       setFormState(updated);
+      setSavedCount((count) => count + 1);
       setSuccessMessage("기본 설정을 저장했습니다.");
       router.refresh();
     } catch (error) {
@@ -146,194 +150,212 @@ export default function SiteSettingsForm({ initialSettings }: SiteSettingsFormPr
   const submitForm = useGuardedSubmit(handleSubmit);
 
   return (
-    <section className="mx-auto w-full max-w-4xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
-      <p className="text-xs font-semibold tracking-[0.12em] text-ink-muted uppercase">
-        Settings / Site
-      </p>
-      <h1 className="mt-2 text-2xl font-bold text-ink md:text-3xl">기본 설정</h1>
-      <p className="mt-3 text-sm leading-relaxed text-ink-muted md:text-base">
-        홈페이지 하단 연락처와 후원 계좌 정보를 수정할 수 있습니다. 저장하면 홈페이지와
-        후원 페이지에 바로 반영됩니다.
-      </p>
-
-      {errorMessage ? (
-        <p className="mt-4 rounded-lg border border-danger-hairline bg-danger-soft px-4 py-3 text-sm text-danger-text">
-          {errorMessage}
+    <>
+      <section className="mx-auto w-full max-w-4xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
+        <p className="text-xs font-semibold tracking-[0.12em] text-ink-muted uppercase">
+          Settings / Site
         </p>
-      ) : null}
-      {successMessage ? (
-        <p className="mt-4 rounded-lg border border-success-hairline bg-success-soft px-4 py-3 text-sm text-success-text">
-          {successMessage}
+        <h1 className="mt-2 text-2xl font-bold text-ink md:text-3xl">기본 설정</h1>
+        <p className="mt-3 text-sm leading-relaxed text-ink-muted md:text-base">
+          홈페이지 하단 연락처와 후원 계좌 정보를 수정할 수 있습니다. 저장하면 홈페이지와
+          후원 페이지에 바로 반영됩니다.
         </p>
-      ) : null}
 
-      <form onSubmit={submitForm} className="mt-6 space-y-6" noValidate>
-        <div className="grid gap-5 md:grid-cols-2">
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-ink-secondary">
-              오픈 카톡방 링크
-            </span>
-            <input
-              type="url"
-              value={formState.footerOpenChatUrl}
-              onChange={(event) => updateField("footerOpenChatUrl", event.target.value)}
-              aria-invalid={Boolean(fieldErrors.footerOpenChatUrl)}
-              className={inputClassName}
-              placeholder="https://open.kakao.com/..."
-              required
-            />
-            {fieldErrors.footerOpenChatUrl ? (
-              <span className="text-xs text-danger-text">
-                {fieldErrors.footerOpenChatUrl}
-              </span>
-            ) : null}
-          </label>
+        {errorMessage ? (
+          <p className="mt-4 rounded-lg border border-danger-hairline bg-danger-soft px-4 py-3 text-sm text-danger-text">
+            {errorMessage}
+          </p>
+        ) : null}
+        {successMessage ? (
+          <p className="mt-4 rounded-lg border border-success-hairline bg-success-soft px-4 py-3 text-sm text-success-text">
+            {successMessage}
+          </p>
+        ) : null}
 
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-ink-secondary">
-              인스타그램 아이디
-            </span>
-            <div className="flex items-center gap-1">
-              <p>@</p>
-              <input
-                type="text"
-                value={formState.footerInstagramId}
-                onChange={(event) => updateField("footerInstagramId", event.target.value)}
-                aria-invalid={Boolean(fieldErrors.footerInstagramId)}
-                className={inputClassName}
-                placeholder="yonyoungpage"
-                required
-              />
-            </div>
-            {fieldErrors.footerInstagramId ? (
-              <span className="text-xs text-danger-text">
-                {fieldErrors.footerInstagramId}
-              </span>
-            ) : null}
-            <span className="text-xs text-ink-muted">
-              @ 없이 아이디만 입력하면 됩니다.
-            </span>
-          </label>
-
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-ink-secondary">이메일</span>
-            <input
-              type="email"
-              value={formState.footerEmail}
-              onChange={(event) => updateField("footerEmail", event.target.value)}
-              aria-invalid={Boolean(fieldErrors.footerEmail)}
-              className={inputClassName}
-              placeholder="example@yonyoung.com"
-              required
-            />
-            {fieldErrors.footerEmail ? (
-              <span className="text-xs text-danger-text">{fieldErrors.footerEmail}</span>
-            ) : null}
-          </label>
-
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-ink-secondary">전화번호</span>
-            <input
-              type="text"
-              value={formState.footerPhone}
-              onChange={(event) => updateField("footerPhone", event.target.value)}
-              aria-invalid={Boolean(fieldErrors.footerPhone)}
-              className={inputClassName}
-              placeholder="010-0000-0000"
-              required
-            />
-            {fieldErrors.footerPhone ? (
-              <span className="text-xs text-danger-text">{fieldErrors.footerPhone}</span>
-            ) : null}
-          </label>
-        </div>
-
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-semibold text-ink-secondary">주소</span>
-          <textarea
-            value={formState.footerAddress}
-            onChange={(event) => updateField("footerAddress", event.target.value)}
-            aria-invalid={Boolean(fieldErrors.footerAddress)}
-            className={`${inputClassName} min-h-24 resize-y`}
-            placeholder="주소를 입력하세요."
-            required
-          />
-          {fieldErrors.footerAddress ? (
-            <span className="text-xs text-danger-text">{fieldErrors.footerAddress}</span>
-          ) : null}
-        </label>
-
-        <section className="rounded-lg border border-hairline bg-surface-sunken p-4 md:p-5">
-          <h2 className="text-base font-semibold text-ink">후원 계좌 설정</h2>
-          <div className="mt-4 grid gap-4 md:grid-cols-3">
+        <form onSubmit={submitForm} className="mt-6 space-y-6" noValidate>
+          <div className="grid gap-5 md:grid-cols-2">
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-ink-secondary">은행</span>
+              <span className="text-sm font-semibold text-ink-secondary">
+                오픈 카톡방 링크
+              </span>
               <input
-                type="text"
-                value={formState.donateBankName}
-                onChange={(event) => updateField("donateBankName", event.target.value)}
-                aria-invalid={Boolean(fieldErrors.donateBankName)}
+                type="url"
+                value={formState.footerOpenChatUrl}
+                onChange={(event) => updateField("footerOpenChatUrl", event.target.value)}
+                aria-invalid={Boolean(fieldErrors.footerOpenChatUrl)}
                 className={inputClassName}
+                placeholder="https://open.kakao.com/..."
                 required
               />
-              {fieldErrors.donateBankName ? (
+              {fieldErrors.footerOpenChatUrl ? (
                 <span className="text-xs text-danger-text">
-                  {fieldErrors.donateBankName}
+                  {fieldErrors.footerOpenChatUrl}
                 </span>
               ) : null}
             </label>
 
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-ink-secondary">계좌번호</span>
+              <span className="text-sm font-semibold text-ink-secondary">
+                인스타그램 아이디
+              </span>
+              <div className="flex items-center gap-1">
+                <p>@</p>
+                <input
+                  type="text"
+                  value={formState.footerInstagramId}
+                  onChange={(event) =>
+                    updateField("footerInstagramId", event.target.value)
+                  }
+                  aria-invalid={Boolean(fieldErrors.footerInstagramId)}
+                  className={inputClassName}
+                  placeholder="yonyoungpage"
+                  required
+                />
+              </div>
+              {fieldErrors.footerInstagramId ? (
+                <span className="text-xs text-danger-text">
+                  {fieldErrors.footerInstagramId}
+                </span>
+              ) : null}
+              <span className="text-xs text-ink-muted">
+                @ 없이 아이디만 입력하면 됩니다.
+              </span>
+            </label>
+
+            <label className="flex flex-col gap-2">
+              <span className="text-sm font-semibold text-ink-secondary">이메일</span>
               <input
-                type="text"
-                value={formState.donateAccountNumber}
-                onChange={(event) =>
-                  updateField("donateAccountNumber", event.target.value)
-                }
-                aria-invalid={Boolean(fieldErrors.donateAccountNumber)}
+                type="email"
+                value={formState.footerEmail}
+                onChange={(event) => updateField("footerEmail", event.target.value)}
+                aria-invalid={Boolean(fieldErrors.footerEmail)}
                 className={inputClassName}
+                placeholder="example@yonyoung.com"
                 required
               />
-              {fieldErrors.donateAccountNumber ? (
+              {fieldErrors.footerEmail ? (
                 <span className="text-xs text-danger-text">
-                  {fieldErrors.donateAccountNumber}
+                  {fieldErrors.footerEmail}
                 </span>
               ) : null}
             </label>
 
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-ink-secondary">예금주</span>
+              <span className="text-sm font-semibold text-ink-secondary">전화번호</span>
               <input
                 type="text"
-                value={formState.donateAccountHolder}
-                onChange={(event) =>
-                  updateField("donateAccountHolder", event.target.value)
-                }
-                aria-invalid={Boolean(fieldErrors.donateAccountHolder)}
+                value={formState.footerPhone}
+                onChange={(event) => updateField("footerPhone", event.target.value)}
+                aria-invalid={Boolean(fieldErrors.footerPhone)}
                 className={inputClassName}
+                placeholder="010-0000-0000"
                 required
               />
-              {fieldErrors.donateAccountHolder ? (
+              {fieldErrors.footerPhone ? (
                 <span className="text-xs text-danger-text">
-                  {fieldErrors.donateAccountHolder}
+                  {fieldErrors.footerPhone}
                 </span>
               ) : null}
             </label>
           </div>
-        </section>
 
-        <div className="flex justify-end">
-          <FormSubmitButton
-            pending={isSaving}
-            data-testid="site-settings-submit"
-            disabled={isSaving}
-            className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition hover:bg-primary-active disabled:cursor-not-allowed disabled:bg-hairline-strong"
-            idleLabel="저장"
-            pendingLabel="저장 중..."
-          />
-        </div>
-      </form>
-    </section>
+          <label className="flex flex-col gap-2">
+            <span className="text-sm font-semibold text-ink-secondary">주소</span>
+            <textarea
+              value={formState.footerAddress}
+              onChange={(event) => updateField("footerAddress", event.target.value)}
+              aria-invalid={Boolean(fieldErrors.footerAddress)}
+              className={`${inputClassName} min-h-24 resize-y`}
+              placeholder="주소를 입력하세요."
+              required
+            />
+            {fieldErrors.footerAddress ? (
+              <span className="text-xs text-danger-text">
+                {fieldErrors.footerAddress}
+              </span>
+            ) : null}
+          </label>
+
+          <section className="rounded-lg border border-hairline bg-surface-sunken p-4 md:p-5">
+            <h2 className="text-base font-semibold text-ink">후원 계좌 설정</h2>
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              <label className="flex flex-col gap-2">
+                <span className="text-sm font-semibold text-ink-secondary">은행</span>
+                <input
+                  type="text"
+                  value={formState.donateBankName}
+                  onChange={(event) => updateField("donateBankName", event.target.value)}
+                  aria-invalid={Boolean(fieldErrors.donateBankName)}
+                  className={inputClassName}
+                  required
+                />
+                {fieldErrors.donateBankName ? (
+                  <span className="text-xs text-danger-text">
+                    {fieldErrors.donateBankName}
+                  </span>
+                ) : null}
+              </label>
+
+              <label className="flex flex-col gap-2">
+                <span className="text-sm font-semibold text-ink-secondary">계좌번호</span>
+                <input
+                  type="text"
+                  value={formState.donateAccountNumber}
+                  onChange={(event) =>
+                    updateField("donateAccountNumber", event.target.value)
+                  }
+                  aria-invalid={Boolean(fieldErrors.donateAccountNumber)}
+                  className={inputClassName}
+                  required
+                />
+                {fieldErrors.donateAccountNumber ? (
+                  <span className="text-xs text-danger-text">
+                    {fieldErrors.donateAccountNumber}
+                  </span>
+                ) : null}
+              </label>
+
+              <label className="flex flex-col gap-2">
+                <span className="text-sm font-semibold text-ink-secondary">예금주</span>
+                <input
+                  type="text"
+                  value={formState.donateAccountHolder}
+                  onChange={(event) =>
+                    updateField("donateAccountHolder", event.target.value)
+                  }
+                  aria-invalid={Boolean(fieldErrors.donateAccountHolder)}
+                  className={inputClassName}
+                  required
+                />
+                {fieldErrors.donateAccountHolder ? (
+                  <span className="text-xs text-danger-text">
+                    {fieldErrors.donateAccountHolder}
+                  </span>
+                ) : null}
+              </label>
+            </div>
+          </section>
+
+          <div className="flex justify-end">
+            <FormSubmitButton
+              pending={isSaving}
+              data-testid="site-settings-submit"
+              disabled={isSaving}
+              className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition hover:bg-primary-active disabled:cursor-not-allowed disabled:bg-hairline-strong"
+              idleLabel="저장"
+              pendingLabel="저장 중..."
+            />
+          </div>
+        </form>
+      </section>
+      {/* 후원 계좌·연락처는 공개 페이지에 노출되므로 누가 언제 바꿨는지 보여 준다. */}
+      <section className="mx-auto w-full max-w-4xl">
+        <AuditHistoryPanel
+          resourceType="site_settings"
+          resourceId="default"
+          refreshKey={savedCount}
+        />
+      </section>
+    </>
   );
 }

@@ -79,6 +79,15 @@ These settings cannot be inferred from Git and must be confirmed during cutover.
 - preserve health checks, deployment webhook, volumes and `.next/cache` decision;
 - verify the deployment trigger includes `apps/web` and its internal dependencies.
 
+### Pending data migration
+
+- `0010_release_deleted_user_identities` is a data-only migration (no schema
+  change). It releases the email and Google account link of users who were
+  deleted before deletion started doing so, which lets those members sign in
+  again as a new, unverified account. Apply it with the normal, explicit
+  `pnpm db:migrate:remote` step; it is never run as a build side effect and is
+  safe to re-run.
+
 ### Optional operational settings
 
 These are off by default; the service behaves as before until they are set.

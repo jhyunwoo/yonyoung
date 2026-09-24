@@ -203,6 +203,40 @@ export const useGenerationManagement = ({
     }
   };
 
+  /**
+   * 목록에서 한 칸 위/아래 기수와 자리를 바꾼다. 목록은 정렬 순서 내림차순이다.
+   * 두 기수의 sortOrder를 한 번의 요청으로 맞바꿔야 유니크 제약에 걸리지 않는다.
+   */
+  const handleMoveGeneration = async (generationId: string, direction: "up" | "down") => {
+    const index = generations.findIndex((generation) => generation.id === generationId);
+    const neighbor = generations[direction === "up" ? index - 1 : index + 1];
+    const current = generations[index];
+    if (!current || !neighbor || isSavingGeneration) {
+      return;
+    }
+
+    setIsSavingGeneration(true);
+    clearMessages();
+
+    try {
+      const reordered = await adminResourceApi.reorderGenerations({
+        items: [
+          { id: current.id, sortOrder: neighbor.sortOrder },
+          { id: neighbor.id, sortOrder: current.sortOrder },
+        ],
+      });
+      setGenerations(sortGenerationsBySortOrderDesc(reordered));
+      // 편집 중이던 정렬 순서 값은 이제 틀리므로 서버 값으로 되돌린다.
+      setEditDraft(null);
+      setSuccessMessage(`"${current.name}"의 순서를 바꿨습니다.`);
+      router.refresh();
+    } catch (error) {
+      setErrorMessage(readErrorMessage(error));
+    } finally {
+      setIsSavingGeneration(false);
+    }
+  };
+
   const handleDeleteGeneration = async () => {
     if (!selectedGeneration) {
       return;
@@ -412,6 +446,7 @@ export const useGenerationManagement = ({
 
     handleCreateGeneration,
     handleUpdateGeneration,
+    handleMoveGeneration,
     handleDeleteGeneration,
     handleToggleUser: (userId: string) =>
       setSelectedUserIds((previous) => toggleSelectedUserId(previous, userId)),
