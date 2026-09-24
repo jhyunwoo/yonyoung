@@ -455,7 +455,12 @@ export type DataService = {
       donateAccountNumber: string;
       donateAccountHolder: string;
     }>,
-  ) => Promise<SiteSettingsEntity>;
+  ) => Promise<{
+    /** 저장 직후 값 */
+    settings: SiteSettingsEntity;
+    /** 같은 트랜잭션에서 실제로 값이 바뀐 항목 (감사 로그용) */
+    changedFields: (keyof SiteSettingsEntity)[];
+  }>;
 
   getCurrentRecruitingPlan: () => Promise<RecruitingPlanEntity | null>;
   upsertCurrentRecruitingPlan: (input: {

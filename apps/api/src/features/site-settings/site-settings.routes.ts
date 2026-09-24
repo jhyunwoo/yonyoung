@@ -18,7 +18,6 @@ import {
 import { AppError } from "../../shared/errors/AppError";
 import {
   SITE_SETTINGS_AUDIT_RESOURCE_ID,
-  readChangedFields,
   recordAuditLog,
 } from "../../lib/audit";
 
@@ -106,24 +105,19 @@ export const registerSiteSettingsRoutes = (
     };
 
     const dataService = dependencies.getDataService(c);
-    // 웹 폼은 저장할 때 모든 항목을 보내므로, 요청 키가 아니라 실제로 값이 바뀐 항목만 기록한다.
-    const before = await dataService.getSiteSettings();
-    const changedKeys = (
-      Object.keys(normalized) as (keyof typeof normalized)[]
-    ).filter((key) => normalized[key] !== before[key]);
-    const data = await dataService.updateSiteSettings(normalized);
+    // 웹 폼은 저장할 때 모든 항목을 보낸다. 요청 키가 아니라, 저장과 같은 트랜잭션에서
+    // 실제로 값이 바뀐 항목만 기록한다(동시 저장 시에도 커밋된 전이와 일치).
+    const { settings: data, changedFields } =
+      await dataService.updateSiteSettings(normalized);
     // 후원 계좌·연락처는 공개 페이지에 그대로 노출되므로 누가 언제 바꿨는지 남긴다.
-    if (changedKeys.length > 0) {
+    if (changedFields.length > 0) {
       await recordAuditLog({
         dataService,
         actor,
         resourceType: "site_settings",
         resourceId: SITE_SETTINGS_AUDIT_RESOURCE_ID,
         action: "update",
-        changedFields: readChangedFields(
-          Object.fromEntries(changedKeys.map((key) => [key, true])),
-          ["updatedAt"],
-        ),
+        changedFields: [...changedFields].sort(),
       });
     }
     return ok(c, data);
