@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type createDB from "../../lib/db";
 import {
+  account,
   activities,
   auditLogs,
   exhibitions,
@@ -206,6 +207,10 @@ const replaceUserGenerations = async (
     primaryGenerationId,
   };
 };
+
+/** 삭제된 사용자의 이메일을 대체하는 비식별 주소 `deleted+<id>@deleted.invalid` (RFC 2606 .invalid) */
+const DELETED_USER_EMAIL_PREFIX = "deleted+";
+const DELETED_USER_EMAIL_DOMAIN = "@deleted.invalid";
 
 export type UpdateUserInput = Partial<{
   name: string;
@@ -667,18 +672,29 @@ export const createUserRepository = (db: Database) => {
       return mapUsersWithGenerations(db, rows);
     },
 
+    /**
+     * 사용자를 soft delete 하면서 로그인 정체성을 풀어 준다.
+     *
+     * 행은 감사 기록을 위해 남기지만, 이메일(unique)과 Google 계정 연결(account)이 그대로면
+     * 같은 사람이 다시 로그인했을 때 Better Auth가 삭제된 행으로 로그인시키고, 모든 요청이
+     * 401이 되어 영영 들어올 수 없다. 이메일을 비식별 주소로 바꾸고 account/session을
+     * 지우면 다음 로그인은 새 계정(unverified)으로 만들어져 관리자가 다시 승인할 수 있다.
+     * 기존에 삭제된 사용자는 마이그레이션 0010이 같은 방식으로 정리한다.
+     */
     async deleteUser(id: string): Promise<boolean> {
       const now = new Date();
       const [updatedUsers] = await db.batch([
         db
           .update(user)
           .set({
+            email: sql`${DELETED_USER_EMAIL_PREFIX} || ${user.id} || ${DELETED_USER_EMAIL_DOMAIN}`,
             deletedAt: now,
             updatedAt: now,
           })
           .where(and(eq(user.id, id), isNull(user.deletedAt)))
           .returning({ id: user.id }),
         db.delete(session).where(eq(session.userId, id)),
+        db.delete(account).where(eq(account.userId, id)),
       ]);
 
       return updatedUsers.length > 0;
