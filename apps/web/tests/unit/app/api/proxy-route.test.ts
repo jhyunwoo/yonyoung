@@ -165,4 +165,61 @@ describe("app/api/[...path]/route", () => {
       "b=2; Path=/; HttpOnly",
     ]);
   });
+
+  it("공유 비밀이 설정되면 방문자 IP를 API에 전달하고, 들어온 위조 헤더는 버린다", async () => {
+    process.env.PROXY_CLIENT_IP_SECRET = "shared-secret-for-client-ip";
+    const fetchSpy = vi.fn(async () => new Response("{}", { status: 200 }));
+    vi.stubGlobal("fetch", fetchSpy);
+
+    try {
+      const handlers = await import("@/app/api/[...path]/route");
+      const request = new NextRequest("https://yonyoung.yonsei.ac.kr/api/public/page-views", {
+        method: "POST",
+        headers: {
+          origin: "https://yonyoung.yonsei.ac.kr",
+          "sec-fetch-site": "same-origin",
+          "content-type": "application/json",
+          "x-forwarded-for": "203.0.113.7, 10.0.0.1",
+          "x-yonyoung-client-ip": "198.51.100.1",
+          "x-yonyoung-proxy-auth": "forged",
+          [CSRF_HEADER_NAME]: CSRF_HEADER_VALUE,
+        },
+        body: JSON.stringify({ pageType: "home" }),
+      });
+
+      await handlers.POST(request, {
+        params: Promise.resolve({ path: ["public", "page-views"] }),
+      });
+
+      const [, init] = fetchSpy.mock.calls[0] as unknown as [string, RequestInit];
+      const headers = init.headers as Headers;
+      expect(headers.get("x-yonyoung-client-ip")).toBe("203.0.113.7");
+      expect(headers.get("x-yonyoung-proxy-auth")).toBe("shared-secret-for-client-ip");
+    } finally {
+      delete process.env.PROXY_CLIENT_IP_SECRET;
+    }
+  });
+
+  it("공유 비밀이 없으면 방문자 IP 헤더를 보내지 않는다", async () => {
+    const fetchSpy = vi.fn(async () => new Response("{}", { status: 200 }));
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const handlers = await import("@/app/api/[...path]/route");
+    const request = new NextRequest("https://yonyoung.yonsei.ac.kr/api/users/me", {
+      method: "GET",
+      headers: {
+        origin: "https://yonyoung.yonsei.ac.kr",
+        "sec-fetch-site": "same-origin",
+        "x-forwarded-for": "203.0.113.7",
+        "x-yonyoung-proxy-auth": "forged",
+      },
+    });
+
+    await handlers.GET(request, { params: Promise.resolve({ path: ["users", "me"] }) });
+
+    const [, init] = fetchSpy.mock.calls[0] as unknown as [string, RequestInit];
+    const headers = init.headers as Headers;
+    expect(headers.get("x-yonyoung-client-ip")).toBeNull();
+    expect(headers.get("x-yonyoung-proxy-auth")).toBeNull();
+  });
 });
