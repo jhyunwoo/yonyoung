@@ -147,11 +147,15 @@ const toUploadTimeoutError = () =>
   new AdminApiError({
     status: 408,
     code: "UPLOAD_TIMEOUT",
-    message: "파일 업로드가 오래 멈춰 있어 중단했습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.",
+    message:
+      "파일 업로드가 오래 멈춰 있어 중단했습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.",
   });
 
 /** 진행 신호가 올 때마다 다시 감기는 정지 감지 타이머. */
-const createStallWatchdog = (onStall: () => void, timeoutMs = UPLOAD_STALL_TIMEOUT_MS) => {
+const createStallWatchdog = (
+  onStall: () => void,
+  timeoutMs = UPLOAD_STALL_TIMEOUT_MS,
+) => {
   let timer: ReturnType<typeof setTimeout> | null = null;
   const clear = () => {
     if (timer !== null) {

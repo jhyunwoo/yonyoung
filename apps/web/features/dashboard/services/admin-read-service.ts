@@ -2,6 +2,8 @@ import "server-only";
 import type { ZodType } from "zod";
 import {
   applyForwardedRequestContextHeaders,
+  clearTimeoutController,
+  createTimeoutController,
   resolveApiBaseUrl,
   unwrapDataEnvelope,
 } from "@/shared/http/http";
@@ -28,6 +30,9 @@ import {
 } from "@yonyoung/contracts/schemas";
 
 const ADMIN_API_BASE_PATH = "/api";
+
+/** API가 응답하지 않을 때 대시보드 렌더가 무한히 매달리지 않도록 하는 상한 */
+const ADMIN_READ_TIMEOUT_MS = 15_000;
 
 /**
  * 관리자 화면의 읽기는 항상 `cache: "no-store"`다. 권한별로 응답이 갈리는 데이터를
@@ -84,21 +89,29 @@ const readAdminResource = async <T>(
   schema: ZodType<T>,
 ): Promise<AdminReadResult<T>> => {
   let response: Response;
+  const { controller, timeoutId } = createTimeoutController(ADMIN_READ_TIMEOUT_MS);
   try {
     response = await fetch(`${resolveApiBaseUrl()}${ADMIN_API_BASE_PATH}${path}`, {
       method: "GET",
       headers: await buildAdminHeaders(cookieHeader),
       cache: "no-store",
+      signal: controller.signal,
     });
   } catch (error) {
     return {
       ok: false,
       error: {
         reason: "request_failed",
-        message: error instanceof Error ? error.message : String(error),
+        message: controller.signal.aborted
+          ? "API 응답이 너무 늦어 데이터를 불러오지 못했습니다."
+          : error instanceof Error
+            ? error.message
+            : String(error),
         status: null,
       },
     };
+  } finally {
+    clearTimeoutController(timeoutId);
   }
 
   if (!response.ok) {

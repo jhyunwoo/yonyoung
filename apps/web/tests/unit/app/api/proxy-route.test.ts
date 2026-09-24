@@ -138,4 +138,31 @@ describe("app/api/[...path]/route", () => {
     expect(response.status).toBe(502);
     expect(response.headers.get("cache-control")).toBe("private, no-store, max-age=0");
   });
+  it("업스트림의 Set-Cookie가 여러 개여도 모두 전달한다", async () => {
+    const upstreamHeaders = new Headers({ "content-type": "application/json" });
+    upstreamHeaders.append("set-cookie", "a=1; Path=/; HttpOnly");
+    upstreamHeaders.append("set-cookie", "b=2; Path=/; HttpOnly");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("{}", { status: 200, headers: upstreamHeaders })),
+    );
+
+    const handlers = await import("@/app/api/[...path]/route");
+    const request = new NextRequest("https://yonyoung.yonsei.ac.kr/api/users/me", {
+      method: "GET",
+      headers: {
+        origin: "https://yonyoung.yonsei.ac.kr",
+        "sec-fetch-site": "same-origin",
+      },
+    });
+
+    const response = await handlers.GET(request, {
+      params: Promise.resolve({ path: ["users", "me"] }),
+    });
+
+    expect(response.headers.getSetCookie()).toEqual([
+      "a=1; Path=/; HttpOnly",
+      "b=2; Path=/; HttpOnly",
+    ]);
+  });
 });

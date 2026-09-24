@@ -77,10 +77,10 @@ describe("attachments server actions", () => {
     expect(arg.accessScope).toBe("leadership");
   });
 
-  it("잘못된 생성 입력은 zod 검증에서 예외를 던진다", async () => {
+  it("잘못된 생성 입력은 zod 검증 실패 결과를 돌려준다", async () => {
     await expect(
       createAttachmentAction({ ...baseCreateInput, title: "" }),
-    ).rejects.toThrow();
+    ).resolves.toMatchObject({ ok: false, status: 400, code: "VALIDATION_ERROR" });
     expect(writeRequestMock).not.toHaveBeenCalled();
   });
 
@@ -99,35 +99,35 @@ describe("attachments server actions", () => {
     expect(arg.body.fileUrl).toBeUndefined();
   });
 
-  it("파일 필드 세트와 linkUrl을 동시에 전달하면 zod 검증에서 예외를 던진다", async () => {
+  it("파일 필드 세트와 linkUrl을 동시에 전달하면 zod 검증 실패 결과를 돌려준다", async () => {
     await expect(
       createAttachmentAction({
         ...baseCreateInput,
         linkUrl: "https://docs.google.com/spreadsheets/d/abc",
       }),
-    ).rejects.toThrow();
+    ).resolves.toMatchObject({ ok: false, status: 400, code: "VALIDATION_ERROR" });
     expect(writeRequestMock).not.toHaveBeenCalled();
   });
 
-  it("파일 필드 세트가 불완전하면 zod 검증에서 예외를 던진다", async () => {
+  it("파일 필드 세트가 불완전하면 zod 검증 실패 결과를 돌려준다", async () => {
     await expect(
       createAttachmentAction({
         scope: "site_donate",
         title: "회계 자료",
         fileUrl: "https://api.example.com/api/public/media/site/u/file/x.pdf?sig=a",
       }),
-    ).rejects.toThrow();
+    ).resolves.toMatchObject({ ok: false, status: 400, code: "VALIDATION_ERROR" });
     expect(writeRequestMock).not.toHaveBeenCalled();
   });
 
-  it("http(s)가 아닌 linkUrl은 zod 검증에서 예외를 던진다", async () => {
+  it("http(s)가 아닌 linkUrl은 zod 검증 실패 결과를 돌려준다", async () => {
     await expect(
       createAttachmentAction({
         scope: "site_donate",
         title: "회계 자료",
         linkUrl: "ftp://example.com/report.pdf",
       }),
-    ).rejects.toThrow();
+    ).resolves.toMatchObject({ ok: false, status: 400, code: "VALIDATION_ERROR" });
     expect(writeRequestMock).not.toHaveBeenCalled();
   });
 });

@@ -137,7 +137,9 @@ export default function AttachmentManager({ scope, resourceId }: AttachmentManag
     setSelectedFile(nextFile);
     // 제목 미입력 시 확장자를 뗀 파일명을 기본 제목으로 제안 (API 한도 200자)
     if (title.trim().length === 0) {
-      setTitle(nextFile.name.replace(/\.[^.]+$/, "").slice(0, ATTACHMENT_TITLE_MAX_LENGTH));
+      setTitle(
+        nextFile.name.replace(/\.[^.]+$/, "").slice(0, ATTACHMENT_TITLE_MAX_LENGTH),
+      );
     }
   };
 
@@ -183,7 +185,9 @@ export default function AttachmentManager({ scope, resourceId }: AttachmentManag
           setUploadProgressPercent(0);
           fileUrl = await uploadWithPresign({
             presignPath:
-              scope === "site_donate" ? PRESIGN_PATHS.siteFile : PRESIGN_PATHS.activityFile,
+              scope === "site_donate"
+                ? PRESIGN_PATHS.siteFile
+                : PRESIGN_PATHS.activityFile,
             file: selectedFile,
             onProgress: setUploadProgressPercent,
           });

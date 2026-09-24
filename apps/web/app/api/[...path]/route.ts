@@ -44,11 +44,17 @@ const copyResponse = (upstream: Response): NextResponse => {
   });
 
   upstream.headers.forEach((value, key) => {
-    if (HOP_BY_HOP_HEADERS.has(key.toLowerCase())) {
+    const normalizedKey = key.toLowerCase();
+    // set-cookie는 여러 개일 수 있어 set()으로 복사하면 마지막 하나만 남는다. 아래에서 개별 append 한다.
+    if (HOP_BY_HOP_HEADERS.has(normalizedKey) || normalizedKey === "set-cookie") {
       return;
     }
     response.headers.set(key, value);
   });
+
+  for (const cookie of upstream.headers.getSetCookie()) {
+    response.headers.append("set-cookie", cookie);
+  }
 
   return response;
 };
