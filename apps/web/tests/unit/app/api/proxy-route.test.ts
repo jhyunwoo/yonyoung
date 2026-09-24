@@ -173,19 +173,22 @@ describe("app/api/[...path]/route", () => {
 
     try {
       const handlers = await import("@/app/api/[...path]/route");
-      const request = new NextRequest("https://yonyoung.yonsei.ac.kr/api/public/page-views", {
-        method: "POST",
-        headers: {
-          origin: "https://yonyoung.yonsei.ac.kr",
-          "sec-fetch-site": "same-origin",
-          "content-type": "application/json",
-          "x-forwarded-for": "203.0.113.7, 10.0.0.1",
-          "x-yonyoung-client-ip": "198.51.100.1",
-          "x-yonyoung-proxy-auth": "forged",
-          [CSRF_HEADER_NAME]: CSRF_HEADER_VALUE,
+      const request = new NextRequest(
+        "https://yonyoung.yonsei.ac.kr/api/public/page-views",
+        {
+          method: "POST",
+          headers: {
+            origin: "https://yonyoung.yonsei.ac.kr",
+            "sec-fetch-site": "same-origin",
+            "content-type": "application/json",
+            "x-forwarded-for": "203.0.113.7, 10.0.0.1",
+            "x-yonyoung-client-ip": "198.51.100.1",
+            "x-yonyoung-proxy-auth": "forged",
+            [CSRF_HEADER_NAME]: CSRF_HEADER_VALUE,
+          },
+          body: JSON.stringify({ pageType: "home" }),
         },
-        body: JSON.stringify({ pageType: "home" }),
-      });
+      );
 
       await handlers.POST(request, {
         params: Promise.resolve({ path: ["public", "page-views"] }),
