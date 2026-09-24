@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "@testing-library/react";
-import SessionKeepAlive from "@/app/(dashboard)/_components/session-keep-alive";
+import SessionKeepAlive, {
+  SESSION_KEEP_ALIVE_CHECK_INTERVAL_MS,
+} from "@/app/(dashboard)/_components/session-keep-alive";
 
 const KEY = "yonyoung:session-refreshed-at";
 const HOUR = 60 * 60 * 1000;
@@ -43,5 +45,21 @@ describe("SessionKeepAlive", () => {
       expect.objectContaining({ credentials: "same-origin" }),
     );
     expect(Number(window.localStorage.getItem(KEY))).toBeGreaterThan(Date.now() - HOUR);
+  });
+
+  it("탭을 계속 열어 두어도 주기적으로 다시 확인해 12시간마다 갱신한다", () => {
+    vi.useFakeTimers();
+    try {
+      render(<SessionKeepAlive />);
+      expect(fetchMock).not.toHaveBeenCalled();
+
+      // 13시간이 지나는 동안 마운트는 그대로다(대시보드 셸 유지).
+      vi.advanceTimersByTime(13 * HOUR);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(SESSION_KEEP_ALIVE_CHECK_INTERVAL_MS).toBeLessThanOrEqual(HOUR);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

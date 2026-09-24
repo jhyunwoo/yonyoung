@@ -106,30 +106,90 @@ export const collectReferencedObjectKeys = async (
   return referenced;
 };
 
-type SweepBucket = Pick<R2Bucket, "list" | "delete">;
+type SweepBucket = Pick<R2Bucket, "list" | "delete" | "get" | "put">;
+
+/**
+ * 접두사별 이어서 볼 목록 커서. 관리 접두사 밖에 두어 정리 대상이 되지 않는다.
+ * 한 번에 볼 수 있는 페이지 수에 상한이 있어서, 커서를 남기지 않으면 객체가 많은 접두사는
+ * 매일 처음 5만 개만 다시 보고 그 뒤의 고아는 영영 검사하지 못한다.
+ */
+export const ORPHAN_SWEEP_STATE_KEY = "_system/r2-orphan-sweep-state.json";
+
+type SweepState = { cursors: Partial<Record<string, string>> };
+
+const readSweepState = async (bucket: SweepBucket): Promise<SweepState> => {
+  try {
+    const object = await bucket.get(ORPHAN_SWEEP_STATE_KEY);
+    const parsed = object ? ((await object.json()) as Partial<SweepState>) : null;
+    return { cursors: parsed?.cursors ?? {} };
+  } catch {
+    return { cursors: {} };
+  }
+};
+
+const saveSweepState = async (bucket: SweepBucket, state: SweepState): Promise<void> => {
+  try {
+    await bucket.put(ORPHAN_SWEEP_STATE_KEY, JSON.stringify(state), {
+      httpMetadata: { contentType: "application/json" },
+    });
+  } catch (error) {
+    // 저장에 실패하면 다음 실행이 처음부터 다시 볼 뿐이다.
+    logger.warn({
+      event: "r2.orphan_sweep.state_save_failed",
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+};
+
+const listPrefixPages = async (
+  bucket: SweepBucket,
+  prefix: string,
+  startCursor: string | undefined,
+): Promise<{ objects: { key: string; uploadedAt: number }[]; nextCursor?: string }> => {
+  const objects: { key: string; uploadedAt: number }[] = [];
+  let cursor = startCursor;
+  for (let page = 0; page < R2_LIST_MAX_PAGES_PER_PREFIX; page += 1) {
+    const listed = await bucket.list({
+      prefix,
+      limit: R2_LIST_PAGE_LIMIT,
+      ...(cursor ? { cursor } : {}),
+    });
+    for (const object of listed.objects) {
+      objects.push({ key: object.key, uploadedAt: object.uploaded.getTime() });
+    }
+    if (!listed.truncated) {
+      // 끝까지 봤으면 다음 실행은 처음부터 다시 본다.
+      return { objects };
+    }
+    cursor = listed.cursor;
+  }
+  return { objects, nextCursor: cursor };
+};
 
 const listManagedObjects = async (
   bucket: SweepBucket,
-): Promise<{ key: string; uploadedAt: number }[]> => {
+  state: SweepState,
+): Promise<{ objects: { key: string; uploadedAt: number }[]; nextState: SweepState }> => {
   const objects: { key: string; uploadedAt: number }[] = [];
+  const nextState: SweepState = { cursors: {} };
   for (const resourcePath of MANAGED_UPLOAD_RESOURCE_PATHS) {
-    let cursor: string | undefined;
-    for (let page = 0; page < R2_LIST_MAX_PAGES_PER_PREFIX; page += 1) {
-      const listed = await bucket.list({
-        prefix: `${resourcePath}/`,
-        limit: R2_LIST_PAGE_LIMIT,
-        ...(cursor ? { cursor } : {}),
-      });
-      for (const object of listed.objects) {
-        objects.push({ key: object.key, uploadedAt: object.uploaded.getTime() });
+    const prefix = `${resourcePath}/`;
+    let listed: Awaited<ReturnType<typeof listPrefixPages>>;
+    try {
+      listed = await listPrefixPages(bucket, prefix, state.cursors[prefix]);
+    } catch (error) {
+      // 저장된 커서가 만료·무효이면 처음부터 다시 본다.
+      if (!state.cursors[prefix]) {
+        throw error;
       }
-      if (!listed.truncated) {
-        break;
-      }
-      cursor = listed.cursor;
+      listed = await listPrefixPages(bucket, prefix, undefined);
+    }
+    objects.push(...listed.objects);
+    if (listed.nextCursor) {
+      nextState.cursors[prefix] = listed.nextCursor;
     }
   }
-  return objects;
+  return { objects, nextState };
 };
 
 export type OrphanSweepResult = {
@@ -152,7 +212,10 @@ export const runR2OrphanSweep = async (input: {
 
   // 참조 수집이 실패하면 예외가 그대로 전파되어 아래 삭제 단계에 도달하지 않는다.
   const referenced = await collectReferencedObjectKeys(input.database, now);
-  const objects = await listManagedObjects(input.bucket);
+  const { objects, nextState } = await listManagedObjects(
+    input.bucket,
+    await readSweepState(input.bucket),
+  );
 
   const orphans = objects
     .filter(
@@ -167,6 +230,8 @@ export const runR2OrphanSweep = async (input: {
   for (let index = 0; index < toDelete.length; index += R2_DELETE_BATCH_SIZE) {
     await input.bucket.delete(toDelete.slice(index, index + R2_DELETE_BATCH_SIZE));
   }
+
+  await saveSweepState(input.bucket, nextState);
 
   const result: OrphanSweepResult = {
     mode: input.enabled ? "delete" : "dry-run",

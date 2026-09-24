@@ -37,30 +37,58 @@ const recordRefreshedAt = (at: number): boolean => {
  * 처음 본 브라우저는 시각만 기록하고 요청하지 않는다(방금 로그인했다면 쿠키가 새것이다).
  * 대시보드 진입마다 세션 왕복을 늘리지 않기 위함이다.
  */
+/** 한 번 확인한다. 12시간이 지났으면 세션을 조회해 갱신 쿠키를 받는다. */
+const refreshSessionIfDue = (): void => {
+  const now = Date.now();
+  const lastRefreshedAt = readLastRefreshedAt();
+  if (lastRefreshedAt === null) {
+    recordRefreshedAt(now);
+    return;
+  }
+
+  if (now - lastRefreshedAt < SESSION_REFRESH_INTERVAL_MS) {
+    return;
+  }
+
+  // 저장소를 쓸 수 없으면 매 진입마다 요청하게 되므로 아예 건너뛴다.
+  if (!recordRefreshedAt(now)) {
+    return;
+  }
+
+  void fetch("/api/auth/get-session", {
+    method: "GET",
+    credentials: "same-origin",
+    cache: "no-store",
+    headers: { Accept: "application/json" },
+  }).catch(() => undefined);
+};
+
+/**
+ * 대시보드 셸은 하위 페이지 이동 사이에 유지되므로 마운트 때 한 번만 확인하면, 탭을 며칠씩
+ * 열어 둔 관리자는 다시 확인받지 못한다. 마운트 시 한 번, 이후 주기적으로, 그리고 탭이 다시
+ * 보일 때(잠자기에서 깨어난 경우) 확인한다. 실제 요청은 12시간에 한 번뿐이다.
+ */
+export const SESSION_KEEP_ALIVE_CHECK_INTERVAL_MS = 60 * 60 * 1000;
+
 export default function SessionKeepAlive() {
   useEffect(() => {
-    const now = Date.now();
-    const lastRefreshedAt = readLastRefreshedAt();
-    if (lastRefreshedAt === null) {
-      recordRefreshedAt(now);
-      return;
-    }
+    refreshSessionIfDue();
 
-    if (now - lastRefreshedAt < SESSION_REFRESH_INTERVAL_MS) {
-      return;
-    }
+    const intervalId = window.setInterval(
+      refreshSessionIfDue,
+      SESSION_KEEP_ALIVE_CHECK_INTERVAL_MS,
+    );
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshSessionIfDue();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    // 저장소를 쓸 수 없으면 매 진입마다 요청하게 되므로 아예 건너뛴다.
-    if (!recordRefreshedAt(now)) {
-      return;
-    }
-
-    void fetch("/api/auth/get-session", {
-      method: "GET",
-      credentials: "same-origin",
-      cache: "no-store",
-      headers: { Accept: "application/json" },
-    }).catch(() => undefined);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   return null;
