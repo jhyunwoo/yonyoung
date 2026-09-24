@@ -45,3 +45,5 @@ minimumReleaseAgeExclude:
   - "@sentry/server-utils@10.75.2"
   - "@sentry/vercel-edge@10.75.2"
   - "@sentry/cloudflare@10.75.2"
+  - miniflare@5.20260921.1-alpha
+  - wrangler@4.138.0
