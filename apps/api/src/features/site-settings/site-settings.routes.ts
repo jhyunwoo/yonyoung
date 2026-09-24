@@ -16,6 +16,11 @@ import {
   ApiUpdateSiteSettingsSchema,
 } from "./site-settings.contract";
 import { AppError } from "../../shared/errors/AppError";
+import {
+  SITE_SETTINGS_AUDIT_RESOURCE_ID,
+  readChangedFields,
+  recordAuditLog,
+} from "../../lib/audit";
 
 type App = OpenAPIHono<HonoAppType>;
 
@@ -100,9 +105,17 @@ export const registerSiteSettingsRoutes = (
         : {}),
     };
 
-    const data = await dependencies
-      .getDataService(c)
-      .updateSiteSettings(normalized);
+    const dataService = dependencies.getDataService(c);
+    const data = await dataService.updateSiteSettings(normalized);
+    // 후원 계좌·연락처는 공개 페이지에 그대로 노출되므로 누가 언제 바꿨는지 남긴다.
+    await recordAuditLog({
+      dataService,
+      actor,
+      resourceType: "site_settings",
+      resourceId: SITE_SETTINGS_AUDIT_RESOURCE_ID,
+      action: "update",
+      changedFields: readChangedFields(normalized, ["updatedAt"]),
+    });
     return ok(c, data);
   });
 };

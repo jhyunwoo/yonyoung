@@ -205,4 +205,45 @@ describe("site settings routes", () => {
       donateBankName: "테스트은행",
     });
   });
+
+  it("사이트 설정 수정은 바뀐 항목을 감사 로그로 남긴다", async () => {
+    const updateSiteSettings = fn(async () => createSiteSettings());
+    const createAuditLog = fn(async () => undefined);
+    const app = createTestApp({
+      actor: createActor("president", IDs.president),
+      dataService: createDataServiceMock({ updateSiteSettings, createAuditLog }),
+    });
+
+    const response = await app.request("/api/site-settings", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ donateBankName: "테스트은행", donateAccountHolder: "연영회" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(createAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resourceType: "site_settings",
+        resourceId: "default",
+        action: "update",
+        actorId: IDs.president,
+        changedFields: ["donateAccountHolder", "donateBankName"],
+      }),
+    );
+  });
+
+  it("사이트 설정 감사 로그는 singleton id로만 조회할 수 있다", async () => {
+    const listAuditLogs = fn(async () => []);
+    const app = createTestApp({
+      actor: createActor("president", IDs.president),
+      dataService: createDataServiceMock({ listAuditLogs }),
+    });
+
+    const okResponse = await app.request("/api/audit/site_settings/default");
+    const badResponse = await app.request("/api/audit/site_settings/other");
+
+    expect(okResponse.status).toBe(200);
+    expect(listAuditLogs).toHaveBeenCalledWith("site_settings", "default", 20);
+    expect(badResponse.status).toBe(400);
+  });
 });

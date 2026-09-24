@@ -3,6 +3,9 @@ import { logger } from "../shared/logging/logger";
 import type { Actor } from "./authorization/types";
 import type { AuditAction, AuditResourceType, DataService } from "./services/types";
 
+/** 사이트 설정(행이 하나뿐인 싱글턴) 감사 로그의 resourceId */
+export const SITE_SETTINGS_AUDIT_RESOURCE_ID = "default";
+
 const toAuditActor = (actor: Actor) => ({
   id: actor.id,
   name: actor.name,

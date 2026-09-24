@@ -18,7 +18,8 @@ export type AuditResourceType =
   | "linktree"
   | "linktree_item"
   | "user"
-  | "attachment";
+  | "attachment"
+  | "site_settings";
 
 export type AuditAction = "create" | "update" | "delete";
 
