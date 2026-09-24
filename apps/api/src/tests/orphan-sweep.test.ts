@@ -196,4 +196,42 @@ describe("R2 orphan sweep", () => {
       cursors: { "users/": "50" },
     });
   });
+
+  it("한도 때문에 못 지운 고아가 남은 접두사는 커서를 전진시키지 않는다", async () => {
+    const keys = Array.from(
+      { length: 60 },
+      (_, index) => `users/user-1/profile/${String(index).padStart(4, "0")}-p.jpg`,
+    );
+    const bucket = createBucket([]);
+    bucket.list.mockImplementation(
+      async ({ prefix, cursor }: { prefix?: string; cursor?: string }) => {
+        if (prefix !== "users/") {
+          return { objects: [], truncated: false };
+        }
+        const start = cursor ? Number(cursor) : 0;
+        const key = keys[start];
+        const next = start + 1;
+        return {
+          objects: key ? [{ key, uploaded: OLD }] : [],
+          truncated: next < keys.length,
+          ...(next < keys.length ? { cursor: String(next) } : {}),
+        } as never;
+      },
+    );
+    const database = createDatabase({});
+
+    const first = await runR2OrphanSweep({
+      database: database as never,
+      bucket: bucket as never,
+      enabled: true,
+      now: NOW,
+      maxDeletes: 10,
+    });
+
+    // 50개를 봤지만 10개만 지웠으므로 다음 실행도 같은 구간(처음)부터 다시 본다.
+    expect(first).toMatchObject({ scannedObjects: 50, orphanCount: 50, deletedCount: 10 });
+    expect(JSON.parse(bucket.stored.get(ORPHAN_SWEEP_STATE_KEY) ?? "{}")).toEqual({
+      cursors: {},
+    });
+  });
 });

@@ -131,6 +131,24 @@ describe("POST /api/generations/reorder", () => {
     expect((await request(notFoundApp, body)).status).toBe(404);
   });
 
+  it("확인 뒤 다른 요청과 경합해 유니크 인덱스에 걸리면 500이 아니라 409다", async () => {
+    const app = createTestApp({
+      actor: createActor("president", IDs.president),
+      dataService: createDataServiceMock({
+        reorderGenerations: fn(async () => {
+          throw new Error(
+            "D1_ERROR: UNIQUE constraint failed: generations.sort_order: SQLITE_CONSTRAINT",
+          );
+        }),
+      }),
+    });
+
+    const response = await request(app, { items: [{ id: GEN_A, sortOrder: 60 }] });
+
+    expect(response.status).toBe(409);
+    await expectErrorCode(response, "CONFLICT");
+  });
+
   it("중복 id·중복 순서는 400으로 거절한다", async () => {
     const reorderGenerations = fn(async () => ({ status: "ok" as const, changedIds: [] }));
     const app = createTestApp({

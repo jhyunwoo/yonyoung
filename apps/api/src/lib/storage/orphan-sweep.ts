@@ -212,10 +212,8 @@ export const runR2OrphanSweep = async (input: {
 
   // 참조 수집이 실패하면 예외가 그대로 전파되어 아래 삭제 단계에 도달하지 않는다.
   const referenced = await collectReferencedObjectKeys(input.database, now);
-  const { objects, nextState } = await listManagedObjects(
-    input.bucket,
-    await readSweepState(input.bucket),
-  );
+  const previousState = await readSweepState(input.bucket);
+  const { objects, nextState } = await listManagedObjects(input.bucket, previousState);
 
   const orphans = objects
     .filter(
@@ -229,6 +227,24 @@ export const runR2OrphanSweep = async (input: {
   const toDelete = input.enabled ? orphans.slice(0, maxDeletes) : [];
   for (let index = 0; index < toDelete.length; index += R2_DELETE_BATCH_SIZE) {
     await input.bucket.delete(toDelete.slice(index, index + R2_DELETE_BATCH_SIZE));
+  }
+
+  // 한 번에 지울 수 있는 수를 넘겨 남은 고아가 있는 접두사는 커서를 전진시키지 않는다.
+  // 전진시키면 남은 후보는 전체 순회가 한 바퀴 돌아올 때까지 다시 검사되지 않는다.
+  const deletedKeys = new Set(toDelete);
+  if (input.enabled) {
+    for (const key of orphans) {
+      if (deletedKeys.has(key)) {
+        continue;
+      }
+      const prefix = `${key.split("/")[0]}/`;
+      const previousCursor = previousState.cursors[prefix];
+      if (previousCursor) {
+        nextState.cursors[prefix] = previousCursor;
+      } else {
+        delete nextState.cursors[prefix];
+      }
+    }
   }
 
   await saveSweepState(input.bucket, nextState);

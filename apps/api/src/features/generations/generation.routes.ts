@@ -249,7 +249,19 @@ export const registerGenerationRoutes = (
 
     const { items } = readValidated(c, "json", ApiReorderGenerationsSchema);
     const dataService = dependencies.getDataService(c);
-    const result = await dataService.reorderGenerations(items);
+    let result: Awaited<ReturnType<typeof dataService.reorderGenerations>>;
+    try {
+      result = await dataService.reorderGenerations(items);
+    } catch (error) {
+      // 사전 확인 뒤, batch 실행 전에 다른 요청이 같은 순서를 차지하면 유니크 인덱스가 막는다.
+      // 목록이 낡았다는 뜻이므로 500이 아니라 409로 새로고침을 안내한다.
+      if (isUniqueError(error)) {
+        throw AppError.conflict(
+          "그사이 다른 변경으로 기수 순서가 바뀌었습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.",
+        );
+      }
+      throw error;
+    }
 
     if (result.status === "not_found") {
       throw AppError.notFound(
