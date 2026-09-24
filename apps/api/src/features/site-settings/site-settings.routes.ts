@@ -106,16 +106,26 @@ export const registerSiteSettingsRoutes = (
     };
 
     const dataService = dependencies.getDataService(c);
+    // 웹 폼은 저장할 때 모든 항목을 보내므로, 요청 키가 아니라 실제로 값이 바뀐 항목만 기록한다.
+    const before = await dataService.getSiteSettings();
+    const changedKeys = (
+      Object.keys(normalized) as (keyof typeof normalized)[]
+    ).filter((key) => normalized[key] !== before[key]);
     const data = await dataService.updateSiteSettings(normalized);
     // 후원 계좌·연락처는 공개 페이지에 그대로 노출되므로 누가 언제 바꿨는지 남긴다.
-    await recordAuditLog({
-      dataService,
-      actor,
-      resourceType: "site_settings",
-      resourceId: SITE_SETTINGS_AUDIT_RESOURCE_ID,
-      action: "update",
-      changedFields: readChangedFields(normalized, ["updatedAt"]),
-    });
+    if (changedKeys.length > 0) {
+      await recordAuditLog({
+        dataService,
+        actor,
+        resourceType: "site_settings",
+        resourceId: SITE_SETTINGS_AUDIT_RESOURCE_ID,
+        action: "update",
+        changedFields: readChangedFields(
+          Object.fromEntries(changedKeys.map((key) => [key, true])),
+          ["updatedAt"],
+        ),
+      });
+    }
     return ok(c, data);
   });
 };

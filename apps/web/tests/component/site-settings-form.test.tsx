@@ -6,6 +6,7 @@ import { DEFAULT_SITE_SETTINGS } from "@yonyoung/contracts";
 const refreshMock = vi.hoisted(() => vi.fn());
 const getSiteSettingsMock = vi.hoisted(() => vi.fn());
 const updateSiteSettingsMock = vi.hoisted(() => vi.fn());
+const listAuditLogsMock = vi.hoisted(() => vi.fn());
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -17,6 +18,7 @@ vi.mock("@/features/dashboard/api/admin-api/resources", () => ({
   adminResourceApi: {
     getSiteSettings: getSiteSettingsMock,
     updateSiteSettings: updateSiteSettingsMock,
+    listAuditLogs: listAuditLogsMock,
   },
 }));
 
@@ -28,6 +30,8 @@ describe("SiteSettingsForm", () => {
     getSiteSettingsMock.mockReset();
     updateSiteSettingsMock.mockReset();
     getSiteSettingsMock.mockResolvedValue({ ...DEFAULT_SITE_SETTINGS });
+    listAuditLogsMock.mockReset();
+    listAuditLogsMock.mockResolvedValue([]);
   });
 
   it("서버가 내려 준 실제 설정으로 폼을 채우고 마운트 시 다시 읽지 않는다", () => {
@@ -99,5 +103,22 @@ describe("SiteSettingsForm", () => {
       await screen.findByText("계좌번호는 숫자와 -만 입력할 수 있으며 최대 50자입니다."),
     ).toBeInTheDocument();
     expect(updateSiteSettingsMock).not.toHaveBeenCalled();
+  });
+
+  it("저장에 성공하면 변경 이력을 다시 읽어 방금 남긴 기록을 보여 준다", async () => {
+    updateSiteSettingsMock.mockResolvedValue({ ...DEFAULT_SITE_SETTINGS });
+    const user = userEvent.setup();
+    render(<SiteSettingsForm initialSettings={{ ...DEFAULT_SITE_SETTINGS }} />);
+
+    await waitFor(() => {
+      expect(listAuditLogsMock).toHaveBeenCalledWith("site_settings", "default", 20);
+    });
+    expect(listAuditLogsMock).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByTestId("site-settings-submit"));
+
+    await waitFor(() => {
+      expect(listAuditLogsMock).toHaveBeenCalledTimes(2);
+    });
   });
 });

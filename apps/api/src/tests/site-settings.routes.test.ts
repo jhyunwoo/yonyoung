@@ -105,7 +105,10 @@ describe("site settings routes", () => {
 
     const app = createTestApp({
       actor: createActor("vice_president", IDs.vicePresident),
-      dataService: createDataServiceMock({ updateSiteSettings }),
+      dataService: createDataServiceMock({
+        updateSiteSettings,
+        getSiteSettings: fn(async () => createSiteSettings()),
+      }),
     });
 
     const response = await app.request("/api/site-settings", {
@@ -179,7 +182,10 @@ describe("site settings routes", () => {
 
     const app = createTestApp({
       actor: createActor("president", IDs.president),
-      dataService: createDataServiceMock({ updateSiteSettings }),
+      dataService: createDataServiceMock({
+        updateSiteSettings,
+        getSiteSettings: fn(async () => createSiteSettings()),
+      }),
     });
 
     const response = await app.request("/api/site-settings", {
@@ -206,14 +212,22 @@ describe("site settings routes", () => {
     });
   });
 
-  it("사이트 설정 수정은 바뀐 항목을 감사 로그로 남긴다", async () => {
+  it("사이트 설정 수정은 실제로 값이 바뀐 항목만 감사 로그로 남긴다", async () => {
     const updateSiteSettings = fn(async () => createSiteSettings());
+    const getSiteSettings = fn(async () =>
+      createSiteSettings({ donateBankName: "기존은행", donateAccountHolder: "연영회" }),
+    );
     const createAuditLog = fn(async () => undefined);
     const app = createTestApp({
       actor: createActor("president", IDs.president),
-      dataService: createDataServiceMock({ updateSiteSettings, createAuditLog }),
+      dataService: createDataServiceMock({
+        updateSiteSettings,
+        getSiteSettings,
+        createAuditLog,
+      }),
     });
 
+    // 웹 폼처럼 바뀌지 않은 항목(예금주)도 함께 보낸다.
     const response = await app.request("/api/site-settings", {
       method: "PATCH",
       headers: { "content-type": "application/json" },
@@ -227,9 +241,31 @@ describe("site settings routes", () => {
         resourceId: "default",
         action: "update",
         actorId: IDs.president,
-        changedFields: ["donateAccountHolder", "donateBankName"],
+        changedFields: ["donateBankName"],
       }),
     );
+  });
+
+  it("바뀐 값이 없으면 감사 로그를 남기지 않는다", async () => {
+    const settings = createSiteSettings({ donateBankName: "같은은행" });
+    const createAuditLog = fn(async () => undefined);
+    const app = createTestApp({
+      actor: createActor("president", IDs.president),
+      dataService: createDataServiceMock({
+        updateSiteSettings: fn(async () => settings),
+        getSiteSettings: fn(async () => settings),
+        createAuditLog,
+      }),
+    });
+
+    const response = await app.request("/api/site-settings", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ donateBankName: "같은은행" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(createAuditLog).not.toHaveBeenCalled();
   });
 
   it("사이트 설정 감사 로그는 singleton id로만 조회할 수 있다", async () => {
