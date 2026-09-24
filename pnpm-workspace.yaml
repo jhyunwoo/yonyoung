@@ -6,6 +6,9 @@ autoInstallPeers: false
 
 overrides:
   "@esbuild-kit/core-utils>esbuild": "0.28.2"
+  # wrangler → miniflare가 고정한 sharp 0.35.2에 libheif 취약점(GHSA-rgj7-g3m4-5g8c)이 있다.
+  # 같은 minor의 패치 버전(웹이 이미 쓰는 0.35.4)으로 올린다.
+  "miniflare>sharp": "0.35.4"
 
 allowBuilds:
   "@sentry/cli": true
