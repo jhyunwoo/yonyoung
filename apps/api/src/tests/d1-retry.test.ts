@@ -51,6 +51,19 @@ describe("d1 write retry", () => {
       true,
     );
     expect(isRetryableD1WriteError(new Error("constraint failed"))).toBe(false);
+    expect(
+      isRetryableD1WriteError(new Error("D1_ERROR: Network connection lost.")),
+    ).toBe(true);
+    // D1_ERROR 접두사만으로는 재시도하지 않는다.
+    expect(
+      isRetryableD1WriteError(
+        new Error("D1_ERROR: UNIQUE constraint failed: activity_images.id: SQLITE_CONSTRAINT"),
+      ),
+    ).toBe(false);
+    expect(
+      isRetryableD1WriteError(new Error("D1_ERROR: LAST_ACTIVE_PRESIDENT_REQUIRED: SQLITE_CONSTRAINT")),
+    ).toBe(false);
+    expect(isRetryableD1WriteError(new Error("D1_ERROR: no such column: foo"))).toBe(false);
     expect(isRetryableD1WriteError("database is locked")).toBe(false);
   });
 

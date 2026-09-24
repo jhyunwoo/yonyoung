@@ -82,7 +82,15 @@ export const createFakeDatabase = () => {
     })),
   };
 
+  const batches: number[] = [];
+  // Drizzle `db.batch([...])`: 전달된 쿼리(thenable)를 모두 실행하고 배치 크기를 기록한다.
+  (db as Record<string, unknown>).batch = vi.fn(async (queries: unknown[]) => {
+    batches.push(queries.length);
+    return Promise.all(queries);
+  });
+
   return {
+    batches,
     /** repository가 기대하는 Drizzle 인스턴스 자리에 그대로 넣는다. */
     db: db as never,
     inserts,

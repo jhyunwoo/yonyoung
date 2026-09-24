@@ -1,4 +1,8 @@
 import { type OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import {
+  assertDateRangeAfterPatch,
+  isOneSidedDateRangePatch,
+} from "../../lib/validation/date-range";
 import type HonoAppType from "../../types/honoAppType";
 import type { Actor } from "../../lib/authorization/types";
 import { noContent, ok } from "../../lib/http/response";
@@ -353,6 +357,18 @@ export const registerActivityRoutes = (
 
     if (Object.keys(patch).length === 0) {
       throw AppError.badRequest("수정할 필드를 하나 이상 전달해야 합니다.");
+    }
+
+    if (isOneSidedDateRangePatch(patch)) {
+      const stored = await dependencies.getDataService(c).getActivityById(id);
+      if (!stored) {
+        throw AppError.notFound();
+      }
+      assertDateRangeAfterPatch(
+        stored,
+        patch,
+        "활동 종료 시각은 시작 시각보다 빠를 수 없습니다.",
+      );
     }
 
     const dataService = dependencies.getDataService(c);

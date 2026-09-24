@@ -59,7 +59,7 @@ export type ApiListExhibitionsQuery = {
 
 export const apiCreateExhibitionImageInputSchema = z.object({
   imageUrl: z.url(),
-  sortOrder: z.number().int(),
+  sortOrder: z.number().int().nonnegative(),
   width: z.number().int().positive().optional(),
   height: z.number().int().positive().optional(),
 });
@@ -77,7 +77,9 @@ export type ApiUpdateExhibitionImageInput =
 export const apiUpdateExhibitionImageBatchItemInputSchema = z.object({
   imageId: z.string(),
   imageUrl: z.url().optional(),
-  sortOrder: z.number().int().optional(),
+  sortOrder: z.number().int().nonnegative().optional(),
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
 });
 
 export type ApiUpdateExhibitionImageBatchItemInput = z.infer<

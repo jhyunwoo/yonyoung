@@ -802,7 +802,7 @@ async () => {
     }
   });
 
-  it("/api/users/presign/profile는 manager에게 403을 반환한다",async () => {
+  it("/api/users/presign/profile는 미인증(unverified) 사용자에게 403을 반환한다",async () => {
     const issuePresignedPutUrl = fn(
 async () => ({
         uploadUrl: "https://upload.example.com/signed",
@@ -812,7 +812,7 @@ async () => ({
       }),
     );
     const app = createTestApp({
-      actor: createActor("manager", IDs.manager),
+      actor: createActor("unverified", IDs.manager),
       presignService: createPresignServiceMock({ issuePresignedPutUrl }),
     });
 
@@ -1250,13 +1250,13 @@ async () => {
     expect(issueMultipartUploadPartUrl).not.toHaveBeenCalled();
   });
 
-  it("멀티파트 part 요청은 user profile objectKey에서 manager 권한을 거부한다", async () => {
+  it("멀티파트 part 요청은 user profile objectKey에서 미인증 사용자 권한을 거부한다", async () => {
     const issueMultipartUploadPartUrl = fn(async () => ({
       uploadUrl: "https://upload.example.com/multipart/part-1",
       requiredHeaders: {},
     }));
     const app = createTestApp({
-      actor: createActor("manager", IDs.manager),
+      actor: createActor("unverified", IDs.manager),
       presignService: createPresignServiceMock({ issueMultipartUploadPartUrl }),
     });
 
@@ -2124,7 +2124,7 @@ async () => {
     });
   });
 
-  it("/api/users/multipart/profile/init은 manager에게 403을 반환한다", async () => {
+  it("/api/users/multipart/profile/init은 미인증(unverified) 사용자에게 403을 반환한다", async () => {
     const initiateMultipartUpload = fn(async () => ({
       uploadId: "profile-upload-id",
       objectKey: `users/${IDs.manager}/profile/profile-key`,
@@ -2133,7 +2133,7 @@ async () => {
       maxPartNumber: 5,
     }));
     const app = createTestApp({
-      actor: createActor("manager", IDs.manager),
+      actor: createActor("unverified", IDs.manager),
       presignService: createPresignServiceMock({ initiateMultipartUpload }),
     });
 

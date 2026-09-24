@@ -18,6 +18,7 @@ import type {
   UserResourceHistoryItemEntity,
   UserResourceHistoryResourceType,
 } from "../../lib/services/types";
+import { runAtomically } from "../../platform/db/batch";
 import { chunkArray, selectInChunks } from "../../platform/db/query-chunking";
 import { parseJsonStringArray } from "../../platform/db/row-values";
 import { isMissingUserGenerationsTableError } from "../../platform/db/legacy-schema";
@@ -161,35 +162,40 @@ const replaceUserGenerations = async (
   const { generationIds: activeGenerationIds, latestSortOrder } =
     await selectActiveGenerationIds(db, generationIds);
 
+  const primaryGenerationId = activeGenerationIds[0] ?? null;
+  const buildUserUpdate = () =>
+    db
+      .update(user)
+      .set({
+        generationId: primaryGenerationId,
+        latestGenerationSortOrder: latestSortOrder,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(user.id, userId), isNull(user.deletedAt)));
+
+  // 삭제 → 삽입 → 사용자 갱신을 한 트랜잭션으로 묶는다. 순차 실행 중 실패하면 사용자가
+  // 소속 기수를 모두 잃고, 부장은 기수 범위 권한까지 잃는다.
   let canUseUserGenerationsTable = true;
   try {
-    await db.delete(userGenerations).where(eq(userGenerations.userId, userId));
-
-    if (activeGenerationIds.length > 0) {
-      await db.insert(userGenerations).values(
-        activeGenerationIds.map((generationId) => ({
-          userId,
-          generationId,
-        })),
-      );
-    }
+    await runAtomically(db, [
+      db.delete(userGenerations).where(eq(userGenerations.userId, userId)),
+      ...chunkArray(activeGenerationIds).map((chunk) =>
+        db.insert(userGenerations).values(
+          chunk.map((generationId) => ({
+            userId,
+            generationId,
+          })),
+        ),
+      ),
+      buildUserUpdate(),
+    ]);
   } catch (error) {
-    if (isMissingUserGenerationsTableError(error)) {
-      canUseUserGenerationsTable = false;
-    } else {
+    if (!isMissingUserGenerationsTableError(error)) {
       throw error;
     }
+    canUseUserGenerationsTable = false;
+    await buildUserUpdate();
   }
-
-  const primaryGenerationId = activeGenerationIds[0] ?? null;
-  await db
-    .update(user)
-    .set({
-      generationId: primaryGenerationId,
-      latestGenerationSortOrder: latestSortOrder,
-      updatedAt: new Date(),
-    })
-    .where(and(eq(user.id, userId), isNull(user.deletedAt)));
 
   return {
     generationIds: canUseUserGenerationsTable

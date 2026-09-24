@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
+import { runAtomically } from "../../platform/db/batch";
 import type createDB from "../../lib/db";
 import { exhibitionImages, exhibitions } from "../../platform/db/schema";
 import type {
@@ -7,7 +8,10 @@ import type {
   ImageDimensionsInput,
 } from "../../lib/services/types";
 import { selectInChunks } from "../../platform/db/query-chunking";
-import { toImageDimensionsPatch } from "../../platform/db/row-values";
+import {
+  sortBySortOrder,
+  toImageDimensionsPatch,
+} from "../../platform/db/row-values";
 import { listLatestAuditActorsByResourceId } from "../audit/audit.repository";
 
 type Database = ReturnType<typeof createDB>;
@@ -194,19 +198,23 @@ export const createExhibitionRepository = (
       if (!exists) {
         return false;
       }
-      await db
-        .update(exhibitions)
-        .set({ deletedAt: new Date(), updatedAt: new Date() })
-        .where(and(eq(exhibitions.id, id), isNull(exhibitions.deletedAt)));
-      await db
-        .update(exhibitionImages)
-        .set({ deletedAt: new Date(), updatedAt: new Date() })
-        .where(
-          and(
-            eq(exhibitionImages.exhibitionId, id),
-            isNull(exhibitionImages.deletedAt),
+      // 부모와 자식 soft delete를 한 트랜잭션으로 묶어 자식만 남는 상태를 만들지 않는다.
+      const deletedAt = new Date();
+      await runAtomically(db, [
+        db
+          .update(exhibitions)
+          .set({ deletedAt, updatedAt: deletedAt })
+          .where(and(eq(exhibitions.id, id), isNull(exhibitions.deletedAt))),
+        db
+          .update(exhibitionImages)
+          .set({ deletedAt, updatedAt: deletedAt })
+          .where(
+            and(
+              eq(exhibitionImages.exhibitionId, id),
+              isNull(exhibitionImages.deletedAt),
+            ),
           ),
-        );
+      ]);
       return true;
     },
 
@@ -275,16 +283,19 @@ export const createExhibitionRepository = (
         return [];
       }
 
-      return db
-        .select()
-        .from(exhibitionImages)
-        .where(
-          and(
-            inArray(exhibitionImages.id, createdIds),
-            isNull(exhibitionImages.deletedAt),
-          ),
-        )
-        .orderBy(asc(exhibitionImages.sortOrder));
+      return sortBySortOrder(
+        await selectInChunks(createdIds, (chunk) =>
+          db
+            .select()
+            .from(exhibitionImages)
+            .where(
+              and(
+                inArray(exhibitionImages.id, chunk),
+                isNull(exhibitionImages.deletedAt),
+              ),
+            ),
+        ),
+      );
     },
 
     async updateExhibitionImage(
@@ -346,52 +357,65 @@ export const createExhibitionRepository = (
       if (imageIds.length === 0) {
         return [];
       }
-      const existing = await db
-        .select({ id: exhibitionImages.id })
-        .from(exhibitionImages)
-        .where(
-          and(
-            eq(exhibitionImages.exhibitionId, exhibitionId),
-            inArray(exhibitionImages.id, imageIds),
-            isNull(exhibitionImages.deletedAt),
+      // D1은 쿼리당 바인딩 100개가 한도라 id 목록은 나눠서 확인한다.
+      const existing = await selectInChunks(imageIds, (chunk) =>
+        db
+          .select({ id: exhibitionImages.id })
+          .from(exhibitionImages)
+          .where(
+            and(
+              eq(exhibitionImages.exhibitionId, exhibitionId),
+              inArray(exhibitionImages.id, chunk),
+              isNull(exhibitionImages.deletedAt),
+            ),
           ),
-        );
+      );
 
       if (existing.length !== imageIds.length) {
         return null;
       }
 
-      for (const item of input) {
-        await db
-          .update(exhibitionImages)
-          .set({
-            ...(item.imageUrl !== undefined ? { imageUrl: item.imageUrl } : {}),
-            ...(item.sortOrder !== undefined
-              ? { sortOrder: item.sortOrder }
-              : {}),
-            ...toImageDimensionsPatch(item),
-            updatedAt: new Date(),
-          })
-          .where(
-            and(
-              eq(exhibitionImages.id, item.imageId),
-              eq(exhibitionImages.exhibitionId, exhibitionId),
-              isNull(exhibitionImages.deletedAt),
+      // 순서 변경은 전부 반영되거나 전혀 반영되지 않아야 한다(중간 실패 시 순서가 섞인다).
+      const updatedAt = new Date();
+      await runAtomically(
+        db,
+        input.map((item) =>
+          db
+            .update(exhibitionImages)
+            .set({
+              ...(item.imageUrl !== undefined
+                ? { imageUrl: item.imageUrl }
+                : {}),
+              ...(item.sortOrder !== undefined
+                ? { sortOrder: item.sortOrder }
+                : {}),
+              ...toImageDimensionsPatch(item),
+              updatedAt,
+            })
+            .where(
+              and(
+                eq(exhibitionImages.id, item.imageId),
+                eq(exhibitionImages.exhibitionId, exhibitionId),
+                isNull(exhibitionImages.deletedAt),
+              ),
             ),
-          );
-      }
+        ),
+      );
       await touchExhibition(exhibitionId);
 
-      return db
-        .select()
-        .from(exhibitionImages)
-        .where(
-          and(
-            inArray(exhibitionImages.id, imageIds),
-            isNull(exhibitionImages.deletedAt),
-          ),
-        )
-        .orderBy(asc(exhibitionImages.sortOrder));
+      return sortBySortOrder(
+        await selectInChunks(imageIds, (chunk) =>
+          db
+            .select()
+            .from(exhibitionImages)
+            .where(
+              and(
+                inArray(exhibitionImages.id, chunk),
+                isNull(exhibitionImages.deletedAt),
+              ),
+            ),
+        ),
+      );
     },
 
     async deleteExhibitionImage(

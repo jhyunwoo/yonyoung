@@ -26,6 +26,7 @@ import type {
   ApiUpdateExhibitionImageInput,
   ApiUpdateExhibitionInput,
 } from "@yonyoung/contracts";
+import { IMAGE_BATCH_MAX_ITEMS } from "@yonyoung/contracts";
 
 /** 목록(과 홈 히어로의 노출 전시 선택)에 영향을 주는 태그. */
 const EXHIBITION_COLLECTION_TAGS = [
@@ -113,7 +114,7 @@ export const addExhibitionImagesAction = async (
   inputs: ApiCreateExhibitionImageInput[],
 ): Promise<AdminWriteActionResult<ApiExhibitionImage[]>> => {
   const parsedPayload = parseActionInput(
-    z.array(apiCreateExhibitionImageInputSchema),
+    z.array(apiCreateExhibitionImageInputSchema).max(IMAGE_BATCH_MAX_ITEMS),
     inputs,
   );
   if (!parsedPayload.ok) {
@@ -155,7 +156,7 @@ export const updateExhibitionImagesAction = async (
   inputs: ApiUpdateExhibitionImageBatchItemInput[],
 ): Promise<AdminWriteActionResult<ApiExhibitionImage[]>> => {
   const parsedPayload = parseActionInput(
-    z.array(apiUpdateExhibitionImageBatchItemInputSchema),
+    z.array(apiUpdateExhibitionImageBatchItemInputSchema).max(IMAGE_BATCH_MAX_ITEMS),
     inputs,
   );
   if (!parsedPayload.ok) {

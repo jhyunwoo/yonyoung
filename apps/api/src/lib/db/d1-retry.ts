@@ -1,11 +1,27 @@
+// 일시적 장애로 볼 수 있는 메시지만 재시도한다. 예전에는 `D1_ERROR` 접두사만 보고
+// 모든 D1 오류를 재시도해, 제약 조건 위반·트리거 중단처럼 다시 해도 똑같이 실패하는
+// 오류까지 지연을 늘렸다.
 const RETRYABLE_D1_PATTERNS = [
   /database is locked/i,
   /temporarily unavailable/i,
   /too many requests/i,
   /timeout/i,
   /network error/i,
+  /network connection lost/i,
+  /connection (?:was )?reset/i,
   /storage busy/i,
-  /d1_error/i,
+  /overloaded/i,
+  /internal error.*try again/i,
+] as const;
+
+// 재시도해도 결과가 같은 오류. 특히 첫 시도가 실제로는 커밋된 뒤 응답만 끊긴 경우
+// 재시도가 PK 충돌로 바뀌므로, 제약·트리거 오류는 절대 재시도하지 않는다.
+const NON_RETRYABLE_D1_PATTERNS = [
+  /constraint/i,
+  /sqlite_abort/i,
+  /no such (?:table|column)/i,
+  /syntax error/i,
+  /too many sql variables/i,
 ] as const;
 
 export type D1WriteRetryOptions = {
@@ -49,6 +65,10 @@ const computeBackoffDelay = (
 
 export const isRetryableD1WriteError = (error: unknown): boolean => {
   if (!(error instanceof Error)) {
+    return false;
+  }
+
+  if (NON_RETRYABLE_D1_PATTERNS.some((pattern) => pattern.test(error.message))) {
     return false;
   }
 

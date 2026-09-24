@@ -53,6 +53,11 @@ export const createSiteSettingsRepository = (db: Database) => {
       };
 
       next.footerInstagramId = normalizeInstagramId(next.footerInstagramId);
+      const changedColumns: Partial<SiteSettingsEntity> = Object.fromEntries(
+        (Object.keys(input) as (keyof SiteSettingsEntity)[])
+          .filter((key) => input[key] !== undefined)
+          .map((key) => [key, next[key]]),
+      );
 
       await db
         .insert(siteSettings)
@@ -69,20 +74,15 @@ export const createSiteSettingsRepository = (db: Database) => {
         })
         .onConflictDoUpdate({
           target: siteSettings.id,
+          // 전달된 필드만 갱신한다. 읽은 값 전체를 되쓰면, 두 관리자가 서로 다른 항목을
+          // 동시에 저장했을 때 나중 요청이 앞 요청의 변경을 옛 값으로 덮어쓴다.
           set: {
-            footerOpenChatUrl: next.footerOpenChatUrl,
-            footerInstagramId: next.footerInstagramId,
-            footerEmail: next.footerEmail,
-            footerPhone: next.footerPhone,
-            footerAddress: next.footerAddress,
-            donateBankName: next.donateBankName,
-            donateAccountNumber: next.donateAccountNumber,
-            donateAccountHolder: next.donateAccountHolder,
+            ...changedColumns,
             updatedAt: new Date(),
           },
         });
 
-      return next;
+      return getSiteSettings();
     },
   };
 };

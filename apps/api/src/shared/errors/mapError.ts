@@ -46,22 +46,39 @@ const mapLegacyHttpError = (error: LegacyHttpErrorLike): AppError => {
   });
 };
 
+/**
+ * 요청 본문 JSON 파싱 실패만 400으로 본다. 메시지에 "JSON"이 들어간 임의의 오류까지
+ * 400으로 돌리면 서버 버그가 클라이언트 잘못처럼 보이고 로그·Sentry에도 남지 않는다.
+ */
 const looksLikeMalformedJson = (error: Error): boolean => {
-  return MALFORMED_JSON_MESSAGES.some((needle) =>
-    error.message.includes(needle),
+  return (
+    error instanceof SyntaxError &&
+    MALFORMED_JSON_MESSAGES.some((needle) => error.message.includes(needle))
   );
 };
 
-const looksLikeAuthError = (error: Error): boolean => {
-  const message = error.message.toLowerCase();
+type StatusCodeError = Error & { statusCode: number };
+
+/**
+ * Better Auth(better-call)의 APIError처럼 HTTP 상태 코드를 직접 들고 있는 오류.
+ * 예전에는 메시지에 "auth"/"session"이 있으면 무조건 401로 바꿨는데, 설정 누락
+ * ("BETTER_AUTH_SECRET is not set")이나 코드 버그("reading 'session'")까지 조용한 401이
+ * 되어 관리자가 이유 없이 로그인 화면으로 튕기고 원인은 어디에도 기록되지 않았다.
+ * 이제 상태 코드를 명시한 오류만 그대로 따르고, 나머지는 기록되는 500으로 둔다.
+ */
+const isClientStatusCodeError = (error: Error): error is StatusCodeError => {
+  const statusCode = (error as Partial<StatusCodeError>).statusCode;
   return (
-    message.includes("auth") ||
-    message.includes("session") ||
-    message.includes("unauthorized") ||
-    message.includes("not authenticated") ||
-    message.includes("invalid token")
+    error.name === "APIError" &&
+    typeof statusCode === "number" &&
+    statusCode >= 400 &&
+    statusCode < 500
   );
 };
+
+/** 존재하지 않는(또는 삭제된) 기수 등 다른 행을 가리키는 id — 충돌(409)이 아니라 잘못된 요청이다. */
+const looksLikeForeignKeyViolation = (error: Error): boolean =>
+  error.message.toLowerCase().includes("foreign key constraint");
 
 const looksLikeD1ConstraintError = (error: Error): boolean => {
   const message = error.message.toLowerCase();
@@ -158,11 +175,25 @@ export const mapErrorToAppError = (error: unknown): AppError => {
       });
     }
 
-    if (looksLikeAuthError(error)) {
+    if (isClientStatusCodeError(error)) {
+      const isAuthStatus = error.statusCode === 401 || error.statusCode === 403;
       return new AppError({
-        httpStatus: 401,
-        code: ERROR_CODES.AUTH_ERROR,
-        message: "인증 정보가 유효하지 않습니다.",
+        httpStatus: error.statusCode,
+        code: isAuthStatus ? ERROR_CODES.AUTH_ERROR : ERROR_CODES.BAD_REQUEST,
+        message: isAuthStatus
+          ? "인증 정보가 유효하지 않습니다."
+          : error.message || "요청을 처리할 수 없습니다.",
+        cause: error,
+      });
+    }
+
+    if (looksLikeForeignKeyViolation(error)) {
+      return new AppError({
+        httpStatus: 400,
+        code: ERROR_CODES.BAD_REQUEST,
+        message:
+          "연결하려는 항목(기수 등)을 찾을 수 없습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.",
+        details: { reason: "foreign_key_violation" },
         cause: error,
       });
     }

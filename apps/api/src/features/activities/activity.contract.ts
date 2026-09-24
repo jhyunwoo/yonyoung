@@ -1,4 +1,5 @@
 import { z } from "../../shared/openapi/zod";
+import { IMAGE_BATCH_MAX_ITEMS } from "@yonyoung/contracts/common";
 import {
   EXAMPLE_GENERATION_ID,
   EXAMPLE_IMAGE_ID,
@@ -207,6 +208,10 @@ export const ApiUpdateActivityImageSchema = z
 export const ApiCreateActivityImageBatchSchema = z
   .array(ApiCreateActivityImageSchema)
   .min(1, "세부 이미지를 하나 이상 전달해야 합니다.")
+  .max(
+    IMAGE_BATCH_MAX_ITEMS,
+    `세부 이미지는 한 번에 최대 ${IMAGE_BATCH_MAX_ITEMS}장까지 처리할 수 있습니다.`,
+  )
   .openapi("ApiCreateActivityImageBatchInput");
 
 const ApiUpdateActivityImageBatchItemSchema = z
@@ -242,6 +247,10 @@ const ApiUpdateActivityImageBatchItemSchema = z
 export const ApiUpdateActivityImageBatchSchema = z
   .array(ApiUpdateActivityImageBatchItemSchema)
   .min(1, "세부 이미지를 하나 이상 전달해야 합니다.")
+  .max(
+    IMAGE_BATCH_MAX_ITEMS,
+    `세부 이미지는 한 번에 최대 ${IMAGE_BATCH_MAX_ITEMS}장까지 처리할 수 있습니다.`,
+  )
   .refine(
     (items) => new Set(items.map((item) => item.imageId)).size === items.length,
     {

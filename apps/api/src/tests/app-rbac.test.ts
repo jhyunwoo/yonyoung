@@ -618,6 +618,32 @@ describe("RBAC routes",() => {
     expect(updateUser).toHaveBeenCalledTimes(1);
   });
 
+  it("감사 로그 기록이 실패해도 이미 커밋된 쓰기는 성공으로 응답한다",async () => {
+    const updateUser = vi.fn(async () => createUser(IDs.member));
+    const createAuditLog = vi.fn(async () => {
+      throw new Error("D1_ERROR: audit insert failed");
+    });
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({
+        updateUser,
+        createAuditLog,
+      }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.member}`, {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ familyName: "김" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(updateUser).toHaveBeenCalledTimes(1);
+    expect(createAuditLog).toHaveBeenCalledTimes(1);
+  });
+
   it("부장은 다른 사용자의 프로필을 수정할 수 없다",async () => {
     const updateUser = vi.fn(async () => createUser(IDs.member));
     const app = createTestApp({

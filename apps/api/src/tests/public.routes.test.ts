@@ -302,6 +302,31 @@ describe("public routes", () => {
     expect(getActivityById).toHaveBeenCalledWith(IDs.activity);
   });
 
+  it("공개 활동 상세에는 마지막 수정 관리자 정보를 싣지 않는다", async () => {
+    const getActivityById = fn(async () =>
+      createActivity({
+        id: IDs.activity,
+        updatedBy: {
+          id: IDs.president,
+          name: "관리자",
+          familyName: null,
+          givenName: null,
+          role: "president",
+        },
+      }),
+    );
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({ getActivityById }),
+    });
+
+    const response = await app.request(`/api/public/activities/${IDs.activity}`);
+    const body = await readJson<{ data: { updatedBy: unknown } }>(response);
+
+    expect(response.status).toBe(200);
+    expect(body.data.updatedBy).toBeNull();
+  });
+
   it("공개 활동 상세는 unsafe 세부 이미지를 제외하고 unsafe 대표 이미지는 404로 숨긴다", async () => {
     const getActivityById = fn(async (id: string) =>
       id === IDs.activity

@@ -26,6 +26,7 @@ import type {
   ApiUpdateActivityImageInput,
   ApiUpdateActivityInput,
 } from "@yonyoung/contracts";
+import { IMAGE_BATCH_MAX_ITEMS } from "@yonyoung/contracts";
 
 /** 목록에 영향을 주는 태그. 항목이 추가·수정·삭제되면 언제나 함께 버린다. */
 const ACTIVITY_COLLECTION_TAGS = [
@@ -116,7 +117,7 @@ export const addActivityImagesAction = async (
   inputs: ApiCreateActivityImageInput[],
 ): Promise<AdminWriteActionResult<ApiActivityImage[]>> => {
   const parsedPayload = parseActionInput(
-    z.array(apiCreateActivityImageInputSchema),
+    z.array(apiCreateActivityImageInputSchema).max(IMAGE_BATCH_MAX_ITEMS),
     inputs,
   );
   if (!parsedPayload.ok) {
@@ -158,7 +159,7 @@ export const updateActivityImagesAction = async (
   inputs: ApiUpdateActivityImageBatchItemInput[],
 ): Promise<AdminWriteActionResult<ApiActivityImage[]>> => {
   const parsedPayload = parseActionInput(
-    z.array(apiUpdateActivityImageBatchItemInputSchema),
+    z.array(apiUpdateActivityImageBatchItemInputSchema).max(IMAGE_BATCH_MAX_ITEMS),
     inputs,
   );
   if (!parsedPayload.ok) {
