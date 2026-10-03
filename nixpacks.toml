@@ -1,0 +1,17 @@
+# Nixpacks 1.41 ships Node 24.10 with Corepack 0.34.0, which cannot run pnpm 12.
+# Corepack 0.34.6 supports pnpm 12 and this Node version; 0.35+ requires Node 24.15+.
+[phases.setup]
+cmds = [
+  "npm install --global --prefix /opt/yonyoung-corepack corepack@0.34.6",
+  "/opt/yonyoung-corepack/bin/corepack enable --install-directory /opt/yonyoung-corepack/bin",
+]
+paths = ["/opt/yonyoung-corepack/bin"]
+
+[phases.install]
+cmds = ["corepack enable && pnpm install --frozen-lockfile"]
+
+[phases.build]
+cmds = ["pnpm turbo run build --filter=@yonyoung/web..."]
+
+[start]
+cmd = "pnpm --filter @yonyoung/web start"

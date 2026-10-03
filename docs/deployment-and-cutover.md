@@ -7,6 +7,12 @@
 Use the monorepo root as the Git/build context so the lockfile and internal
 packages are available.
 
+The root `nixpacks.toml` installs Corepack 0.34.6 before dependency installation
+and puts it first on `PATH`. Nixpacks 1.41's bundled Corepack 0.34.0 cannot
+launch pnpm 12; newer Corepack 0.35+ requires a newer Node version than the
+image's Node 24.10. Keep the setup phase enabled even when Dokploy overrides
+the install/build/start commands.
+
 ```bash
 corepack enable
 pnpm install --frozen-lockfile
