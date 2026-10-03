@@ -55,3 +55,13 @@ pnpm test:e2e:full  # Playwright 전체 (mock API 서버 + 프로덕션 빌드�
 - 공개 페이지는 `export const instant = true` 를 선언한다. 라우트 위쪽에서 `cookies()`/`headers()`/`await params`/캐시되지 않은 `fetch()` 를 하면 **빌드가 깨진다** — 의도된 안전장치다
 - **`proxy.ts` 는 인가 경계가 아니다.** 추적 헤더만 전파하고 네트워크 호출을 하지 않는다. 권한 판정은 대시보드 레이아웃 · 페이지 가드 · 서버 액션 · API RBAC 이 한다. 여기에 세션 fetch 를 다시 넣으면 대시보드 진입마다 직렬 왕복이 하나 늘어난다(`tests/e2e/dashboard-session-requests.spec.ts` 가 잡는다)
 - CSP·보안 헤더는 `next.config.ts` — img-src는 실제 미디어 호스트 allowlist 유지
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
