@@ -5,6 +5,8 @@
  * depending on Cloudflare Analytics Engine aggregation latency.
  */
 
+import { chunkArray } from "../../platform/db/query-chunking";
+
 export type ViewResourceType = "activity" | "exhibition" | "home" | "notice";
 
 const VALID_RESOURCE_TYPES = new Set<ViewResourceType>([
@@ -90,18 +92,26 @@ export const createD1ViewCountStore = (
       return {};
     }
 
-    const placeholders = ids.map(() => "?").join(", ");
-    const rows = await database
-      .prepare(
-        `
+    // D1 바인딩 한도(100)를 넘지 않도록 resource_type(1) + id 묶음으로 나눠 조회한다.
+    const chunkResults = await Promise.all(
+      chunkArray(ids).map((chunk) => {
+        const placeholders = chunk.map(() => "?").join(", ");
+        return database
+          .prepare(
+            `
           SELECT resource_id, view_count
           FROM view_counts
           WHERE resource_type = ?
             AND resource_id IN (${placeholders})
         `,
-      )
-      .bind(resourceType, ...ids)
-      .all<{ resource_id: string; view_count: number | string }>();
+          )
+          .bind(resourceType, ...chunk)
+          .all<{ resource_id: string; view_count: number | string }>();
+      }),
+    );
+    const rows = {
+      results: chunkResults.flatMap((result) => result.results ?? []),
+    };
 
     const counts: Record<string, number> = {};
     for (const row of rows.results ?? []) {

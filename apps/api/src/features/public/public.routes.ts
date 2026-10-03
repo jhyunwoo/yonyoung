@@ -110,22 +110,33 @@ const sanitizePublicMediaUrls = <T extends PublicMediaEntity>(
   };
 };
 
+/**
+ * 공개 응답에는 마지막 수정자(관리자 id·이름·역할)를 싣지 않는다. 관리자 화면에서만 쓰는
+ * 정보이고 공개 캐시에 그대로 남는다. 계약상 nullable 이라 null로 비운다.
+ */
+const withoutEditorInfo = <T extends { updatedBy?: unknown }>(entity: T): T =>
+  "updatedBy" in entity ? { ...entity, updatedBy: null } : entity;
+
 const sanitizePublicActivity = <
-  T extends PublicMediaEntity & { description: string },
+  T extends PublicMediaEntity & { description: string; updatedBy?: unknown },
 >(
   activity: T,
 ): T | null => {
   const sanitized = sanitizePublicMediaUrls(activity);
-  return sanitized ? sanitizeActivityDescriptionField(sanitized) : null;
+  return sanitized
+    ? withoutEditorInfo(sanitizeActivityDescriptionField(sanitized))
+    : null;
 };
 
 const sanitizePublicExhibition = <
-  T extends PublicMediaEntity & { description: string },
+  T extends PublicMediaEntity & { description: string; updatedBy?: unknown },
 >(
   exhibition: T,
 ): T | null => {
   const sanitized = sanitizePublicMediaUrls(exhibition);
-  return sanitized ? sanitizeExhibitionDescriptionField(sanitized) : null;
+  return sanitized
+    ? withoutEditorInfo(sanitizeExhibitionDescriptionField(sanitized))
+    : null;
 };
 
 const sanitizePublicLinktree = <

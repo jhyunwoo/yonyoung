@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { ApiLinktree, ApiLinktreeItem } from "@yonyoung/contracts";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
+import { useGuardedSubmit } from "@/shared/react/use-guarded-submit";
 import {
   normalizeLinktreeItemInput,
   readLinktreeErrorMessage,
@@ -66,6 +67,7 @@ export default function LinktreeItemEditForm({
       setIsSaving(false);
     }
   };
+  const submitForm = useGuardedSubmit(handleSubmit);
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
@@ -85,7 +87,7 @@ export default function LinktreeItemEditForm({
 
       <form
         className="mt-6 space-y-3 rounded-lg border border-hairline bg-surface-sunken p-4"
-        action={handleSubmit}
+        onSubmit={submitForm}
       >
         <p className="text-sm font-semibold text-ink">분류: {linktree.name}</p>
 
@@ -111,6 +113,7 @@ export default function LinktreeItemEditForm({
 
         <div className="flex flex-wrap items-center gap-2">
           <FormSubmitButton
+            pending={isSaving}
             data-testid="linktree-item-edit-submit"
             disabled={isSaving}
             className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-on-primary disabled:cursor-not-allowed disabled:opacity-60"

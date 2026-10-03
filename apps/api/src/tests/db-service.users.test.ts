@@ -1,7 +1,7 @@
 import type { SQL } from "drizzle-orm";
 import { SQLiteSyncDialect } from "drizzle-orm/sqlite-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { generations, session, user } from "../platform/db/schema";
+import { account, generations, session, user } from "../platform/db/schema";
 
 const createDBMock = vi.hoisted(() => vi.fn());
 
@@ -17,12 +17,16 @@ const toSql = (value: unknown): string =>
 const createMockDb = () => {
   const updateQuery = { kind: "soft-delete-user" };
   const sessionDeleteQuery = { kind: "delete-user-sessions" };
+  const accountDeleteQuery = { kind: "delete-user-accounts" };
   const returning = vi.fn(() => updateQuery);
   const updateWhere = vi.fn(() => ({ returning }));
   const set = vi.fn(() => ({ where: updateWhere }));
   const update = vi.fn(() => ({ set }));
   const deleteWhere = vi.fn(() => sessionDeleteQuery);
-  const remove = vi.fn(() => ({ where: deleteWhere }));
+  const accountDeleteWhere = vi.fn(() => accountDeleteQuery);
+  const remove = vi.fn((table: unknown) => ({
+    where: table === account ? accountDeleteWhere : deleteWhere,
+  }));
   const batch = vi.fn();
 
   return {
@@ -34,6 +38,8 @@ const createMockDb = () => {
     },
     updateQuery,
     sessionDeleteQuery,
+    accountDeleteQuery,
+    accountDeleteWhere,
     returning,
     updateWhere,
     set,
@@ -50,7 +56,7 @@ describe("db service user deletion", () => {
     createDBMock.mockReset();
   });
 
-  it("사용자 soft-delete와 모든 Better Auth session 삭제를 한 batch로 실행한다", async () => {
+  it("사용자 soft-delete, 이메일 해제, session·account 삭제를 한 batch로 실행한다", async () => {
     const mockDb = createMockDb();
     mockDb.batch.mockResolvedValue([[{ id: "user-1" }], { success: true }]);
     createDBMock.mockReturnValue(mockDb.db);
@@ -61,15 +67,25 @@ describe("db service user deletion", () => {
     expect(mockDb.update).toHaveBeenCalledWith(user);
     expect(mockDb.remove).toHaveBeenCalledWith(session);
     expect(mockDb.batch).toHaveBeenCalledTimes(1);
+    expect(mockDb.remove).toHaveBeenCalledWith(account);
     expect(mockDb.batch).toHaveBeenCalledWith([
       mockDb.updateQuery,
       mockDb.sessionDeleteQuery,
+      mockDb.accountDeleteQuery,
     ]);
-    const timestamps = (mockDb.set.mock.calls as unknown[][])[0]?.[0] as {
+    const setValues = (mockDb.set.mock.calls as unknown[][])[0]?.[0] as {
+      email: unknown;
       deletedAt: Date;
       updatedAt: Date;
     };
-    expect(timestamps.deletedAt).toBe(timestamps.updatedAt);
+    expect(setValues.deletedAt).toBe(setValues.updatedAt);
+    // 같은 사람이 다시 로그인하면 새 계정이 만들어지도록 이메일을 비식별 주소로 바꾼다.
+    const emailSql = new SQLiteSyncDialect().sqlToQuery(setValues.email as SQL);
+    expect(emailSql.sql).toContain('"user"."id"');
+    expect(emailSql.params).toEqual(["deleted+", "@deleted.invalid"]);
+    expect(
+      toSql((mockDb.accountDeleteWhere.mock.calls as unknown[][])[0]?.[0]),
+    ).toContain('"account"."user_id" = ?');
     expect(toSql((mockDb.updateWhere.mock.calls as unknown[][])[0]?.[0])).toContain(
       '"user"."deleted_at" is null',
     );
@@ -89,6 +105,7 @@ describe("db service user deletion", () => {
     expect(mockDb.batch).toHaveBeenCalledWith([
       mockDb.updateQuery,
       mockDb.sessionDeleteQuery,
+      mockDb.accountDeleteQuery,
     ]);
   });
 });

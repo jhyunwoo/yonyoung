@@ -8,6 +8,7 @@ import DashboardShell, {
   type DashboardViewer,
 } from "@/app/(dashboard)/_components/dashboard-shell";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
+import { isSessionUnavailableError } from "@/features/auth/server/auth-server";
 import { getAccessibleDashboardGenerationOptions } from "@/features/dashboard/generation/generation-options";
 import { buildDashboardViewerProfile } from "@/features/dashboard/members/user-profile";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,7 +46,21 @@ const readDashboardLayoutData = async (): Promise<{
   // await 하기 전에 요청을 띄워 두 왕복을 겹친다 — `cache()` 로 감싸여 있어 아래
   // `getCurrentUserProfile` 이 같은 결과를 재사용한다(왕복은 여전히 요청당 1회).
   const currentUserRequest = serverAuthGuard.getCurrentUserMe();
-  const session = await serverAuthGuard.getSession();
+  let session: Awaited<ReturnType<typeof serverAuthGuard.getSession>>;
+  try {
+    session = await serverAuthGuard.getSession();
+  } catch (error) {
+    // 세션 API 장애: 셸은 비어 있는 상태로 그리고, 같은 오류를 받는 페이지가
+    // 대시보드 오류 경계(다시 시도)를 보여 준다. 레이아웃이 던지면 전역 오류 화면이 뜬다.
+    if (!isSessionUnavailableError(error)) {
+      throw error;
+    }
+    await currentUserRequest;
+    return {
+      generationOptions: [],
+      viewer: null,
+    };
+  }
   if (!session) {
     await currentUserRequest;
     return {

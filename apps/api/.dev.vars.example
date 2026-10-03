@@ -10,3 +10,6 @@ R2_SECRET_ACCESS_KEY=replace-with-r2-secret-access-key
 R2_PUBLIC_URL_SIGNING_SECRET=replace-with-at-least-32-random-characters
 # Keep only while rotating the public URL signing secret.
 # R2_PUBLIC_URL_SIGNING_SECRET_PREVIOUS=replace-with-previous-secret
+# 선택: 웹 BFF가 전달한 방문자 IP를 조회수 rate limit 키로 신뢰하기 위한 공유 비밀.
+# 웹의 PROXY_CLIENT_IP_SECRET과 같은 값이어야 한다. 비워 두면 cf-connecting-ip를 쓴다.
+# PROXY_CLIENT_IP_SECRET=replace-with-at-least-32-random-characters

@@ -94,9 +94,19 @@ describe("features/seo/og/og-cover-image", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       `${SITE_URL}/api/public/media/activities/photo.png?sig=abc`,
       expect.objectContaining({
-        cache: "force-cache",
         redirect: "error",
       }),
     );
+  });
+
+  // 실패를 예외로 던지면 캐시에 남지 않아 OG 프리렌더의 두 번째 실행이 다시 네트워크를 탄다
+  // (Sentry: "used IO that was not cached"). 실패도 null 값으로 돌려줘 캐시되게 한다.
+  it("returns null instead of throwing when the CDN responds with an error", async () => {
+    fetchMock.mockResolvedValue(new Response("boom", { status: 500 }));
+
+    await expect(
+      loadOgCoverImage(`${SITE_URL}/api/public/media/activities/photo.jpg?sig=abc`),
+    ).resolves.toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

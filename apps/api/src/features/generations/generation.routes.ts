@@ -1,4 +1,8 @@
 import { type OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import {
+  assertDateRangeAfterPatch,
+  isOneSidedDateRangePatch,
+} from "../../lib/validation/date-range";
 import type HonoAppType from "../../types/honoAppType";
 import { noContent, ok } from "../../lib/http/response";
 import { type AppDependencies } from "../../lib/services/dependencies";
@@ -22,6 +26,7 @@ import {
 import {
   ApiCreateGenerationSchema,
   ApiGenerationSchema,
+  ApiReorderGenerationsSchema,
   ApiUpdateGenerationSchema,
 } from "./generation.contract";
 import { ApiGenerationMemberSummarySchema } from "../users/user.contract";
@@ -110,6 +115,32 @@ const listGenerationMembersRoute = createRoute({
   },
 });
 
+const reorderGenerationsRoute = createRoute({
+  method: "post",
+  path: "/api/generations/reorder",
+  tags: ["Generations"],
+  operationId: "reorderGenerations",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: jsonBody(
+      ApiReorderGenerationsSchema,
+      "기수 정렬 순서 일괄 변경 요청",
+    ),
+  },
+  responses: {
+    200: dataResponse(
+      ApiGenerationSchema.array(),
+      "정렬 순서 변경 성공 (변경 후 전체 기수 목록)",
+    ),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+    404: errorResponses[404],
+    409: errorResponses[409],
+    500: errorResponses[500],
+  },
+});
+
 const updateGenerationRoute = createRoute({
   method: "patch",
   path: "/api/generations/{id}",
@@ -166,7 +197,7 @@ const readUniqueConflictMessage = (error: unknown): string => {
   }
 
   if (error.message.includes("generations.sort_order")) {
-    return "sortOrder 값이 이미 존재합니다.";
+    return "다른 기수가 이미 이 정렬 순서를 쓰고 있습니다. 두 기수의 자리를 바꾸려면 목록의 위/아래 이동 버튼을 사용해 주세요.";
   }
 
   return "중복된 값이 이미 존재합니다.";
@@ -211,6 +242,52 @@ export const registerGenerationRoutes = (
   app: App,
   dependencies: GenerationRouteDependencies,
 ) => {
+  // `/api/generations/{id}` 계열보다 먼저 등록한다.
+  app.openapi(reorderGenerationsRoute, async (c) => {
+    const actor = await requireAuthenticatedActor(c, dependencies);
+    assertPermission(actor, "generation", "update");
+
+    const { items } = readValidated(c, "json", ApiReorderGenerationsSchema);
+    const dataService = dependencies.getDataService(c);
+    let result: Awaited<ReturnType<typeof dataService.reorderGenerations>>;
+    try {
+      result = await dataService.reorderGenerations(items);
+    } catch (error) {
+      // 사전 확인 뒤, batch 실행 전에 다른 요청이 같은 순서를 차지하면 유니크 인덱스가 막는다.
+      // 목록이 낡았다는 뜻이므로 500이 아니라 409로 새로고침을 안내한다.
+      if (isUniqueError(error)) {
+        throw AppError.conflict(
+          "그사이 다른 변경으로 기수 순서가 바뀌었습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.",
+        );
+      }
+      throw error;
+    }
+
+    if (result.status === "not_found") {
+      throw AppError.notFound(
+        "순서를 바꿀 기수를 찾을 수 없습니다. 목록을 새로고침해 주세요.",
+      );
+    }
+    if (result.status === "conflict") {
+      throw AppError.conflict(
+        "요청하지 않은 다른 기수가 이미 그 정렬 순서를 쓰고 있습니다. 두 기수를 함께 옮겨 주세요.",
+      );
+    }
+
+    for (const id of result.changedIds) {
+      await recordAuditLog({
+        dataService,
+        actor,
+        resourceType: "generation",
+        resourceId: id,
+        action: "update",
+        changedFields: ["sortOrder", "updatedAt"],
+      });
+    }
+
+    return ok(c, await dataService.listGenerations());
+  });
+
   app.openapi(listGenerationsRoute, async (c) => {
     const actor = await requireAuthenticatedActor(c, dependencies);
 
@@ -325,6 +402,20 @@ export const registerGenerationRoutes = (
 
     if (Object.keys(body).length === 0) {
       throw AppError.badRequest("수정할 필드를 하나 이상 전달해야 합니다.");
+    }
+
+    if (isOneSidedDateRangePatch(body)) {
+      const stored = await dependencies
+        .getDataService(c)
+        .getGenerationById(params.id);
+      if (!stored) {
+        throw AppError.notFound();
+      }
+      assertDateRangeAfterPatch(
+        stored,
+        body,
+        "기수 종료일은 시작일보다 빠를 수 없습니다.",
+      );
     }
 
     try {

@@ -1,5 +1,6 @@
 "use client";
 
+import { IMAGE_UPLOAD_ACCEPT } from "@yonyoung/contracts";
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
@@ -338,7 +339,7 @@ export default function RecruitingPlanSettingsForm() {
           <input
             ref={promotionFileInputRef}
             type="file"
-            accept="image/*"
+            accept={IMAGE_UPLOAD_ACCEPT}
             multiple
             onChange={(event) => void handleUploadPromotionImages(event)}
             className="sr-only"

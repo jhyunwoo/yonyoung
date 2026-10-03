@@ -10,6 +10,11 @@ import {
   readJson,
 } from "./test-helpers";
 
+const updated = (
+  settings: ReturnType<typeof createSiteSettings>,
+  changedFields: (keyof ReturnType<typeof createSiteSettings>)[] = [],
+) => ({ settings, changedFields });
+
 describe("site settings routes", () => {
   it("미로그인 사용자는 사이트 설정 조회 시 401을 반환한다", async () => {
     const getSiteSettings = fn(async () => createSiteSettings());
@@ -78,7 +83,7 @@ describe("site settings routes", () => {
   });
 
   it("회장/부회장이 아니면 사이트 설정 수정이 불가하다", async () => {
-    const updateSiteSettings = fn(async () => createSiteSettings());
+    const updateSiteSettings = fn(async () => updated(createSiteSettings()));
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
       dataService: createDataServiceMock({ updateSiteSettings }),
@@ -97,15 +102,17 @@ describe("site settings routes", () => {
 
   it("부회장은 사이트 설정을 수정할 수 있다", async () => {
     const updateSiteSettings = fn(async () =>
-      createSiteSettings({
+      updated(createSiteSettings({
         footerInstagramId: "vice_page",
         footerPhone: "010-9876-5432",
-      }),
+      })),
     );
 
     const app = createTestApp({
       actor: createActor("vice_president", IDs.vicePresident),
-      dataService: createDataServiceMock({ updateSiteSettings }),
+      dataService: createDataServiceMock({
+        updateSiteSettings,
+      }),
     });
 
     const response = await app.request("/api/site-settings", {
@@ -130,7 +137,7 @@ describe("site settings routes", () => {
   });
 
   it("사이트 설정 수정 본문이 비어있으면 400을 반환한다", async () => {
-    const updateSiteSettings = fn(async () => createSiteSettings());
+    const updateSiteSettings = fn(async () => updated(createSiteSettings()));
     const app = createTestApp({
       actor: createActor("president", IDs.president),
       dataService: createDataServiceMock({ updateSiteSettings }),
@@ -148,7 +155,7 @@ describe("site settings routes", () => {
   });
 
   it("사이트 설정 수정 본문에 잘못된 url/email이 있으면 400을 반환한다", async () => {
-    const updateSiteSettings = fn(async () => createSiteSettings());
+    const updateSiteSettings = fn(async () => updated(createSiteSettings()));
     const app = createTestApp({
       actor: createActor("president", IDs.president),
       dataService: createDataServiceMock({ updateSiteSettings }),
@@ -170,16 +177,18 @@ describe("site settings routes", () => {
 
   it("회장은 사이트 설정을 수정할 수 있고 인스타 아이디는 @가 제거된다", async () => {
     const updateSiteSettings = fn(async () =>
-      createSiteSettings({
+      updated(createSiteSettings({
         footerInstagramId: "yonyongpage",
         footerPhone: "010-1234-5678",
         donateBankName: "테스트은행",
-      }),
+      })),
     );
 
     const app = createTestApp({
       actor: createActor("president", IDs.president),
-      dataService: createDataServiceMock({ updateSiteSettings }),
+      dataService: createDataServiceMock({
+        updateSiteSettings,
+      }),
     });
 
     const response = await app.request("/api/site-settings", {
@@ -204,5 +213,69 @@ describe("site settings routes", () => {
       footerPhone: "010-1234-5678",
       donateBankName: "테스트은행",
     });
+  });
+
+  it("저장 트랜잭션이 알려 준 실제로 바뀐 항목만 감사 로그로 남긴다", async () => {
+    const updateSiteSettings = fn(async () =>
+      updated(createSiteSettings({ donateBankName: "테스트은행" }), ["donateBankName"]),
+    );
+    const createAuditLog = fn(async () => undefined);
+    const app = createTestApp({
+      actor: createActor("president", IDs.president),
+      dataService: createDataServiceMock({ updateSiteSettings, createAuditLog }),
+    });
+
+    // 웹 폼처럼 바뀌지 않은 항목(예금주)도 함께 보낸다.
+    const response = await app.request("/api/site-settings", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ donateBankName: "테스트은행", donateAccountHolder: "연영회" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(createAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resourceType: "site_settings",
+        resourceId: "default",
+        action: "update",
+        actorId: IDs.president,
+        changedFields: ["donateBankName"],
+      }),
+    );
+  });
+
+  it("바뀐 값이 없으면 감사 로그를 남기지 않는다", async () => {
+    const createAuditLog = fn(async () => undefined);
+    const app = createTestApp({
+      actor: createActor("president", IDs.president),
+      dataService: createDataServiceMock({
+        updateSiteSettings: fn(async () => updated(createSiteSettings(), [])),
+        createAuditLog,
+      }),
+    });
+
+    const response = await app.request("/api/site-settings", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ donateBankName: "같은은행" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(createAuditLog).not.toHaveBeenCalled();
+  });
+
+  it("사이트 설정 감사 로그는 singleton id로만 조회할 수 있다", async () => {
+    const listAuditLogs = fn(async () => []);
+    const app = createTestApp({
+      actor: createActor("president", IDs.president),
+      dataService: createDataServiceMock({ listAuditLogs }),
+    });
+
+    const okResponse = await app.request("/api/audit/site_settings/default");
+    const badResponse = await app.request("/api/audit/site_settings/other");
+
+    expect(okResponse.status).toBe(200);
+    expect(listAuditLogs).toHaveBeenCalledWith("site_settings", "default", 20);
+    expect(badResponse.status).toBe(400);
   });
 });

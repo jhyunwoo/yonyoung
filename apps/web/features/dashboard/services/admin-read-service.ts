@@ -2,6 +2,8 @@ import "server-only";
 import type { ZodType } from "zod";
 import {
   applyForwardedRequestContextHeaders,
+  clearTimeoutController,
+  createTimeoutController,
   resolveApiBaseUrl,
   unwrapDataEnvelope,
 } from "@/shared/http/http";
@@ -14,6 +16,7 @@ import type {
   ApiGeneration,
   ApiLinktree,
   ApiPageViewStats,
+  ApiSiteSettings,
   ApiUser,
 } from "@yonyoung/contracts";
 import {
@@ -24,10 +27,14 @@ import {
   apiGenerationSchema,
   apiLinktreeSchema,
   apiPageViewStatsSchema,
+  apiSiteSettingsSchema,
   apiUserSchema,
 } from "@yonyoung/contracts/schemas";
 
 const ADMIN_API_BASE_PATH = "/api";
+
+/** API가 응답하지 않을 때 대시보드 렌더가 무한히 매달리지 않도록 하는 상한 */
+const ADMIN_READ_TIMEOUT_MS = 15_000;
 
 /**
  * 관리자 화면의 읽기는 항상 `cache: "no-store"`다. 권한별로 응답이 갈리는 데이터를
@@ -84,21 +91,29 @@ const readAdminResource = async <T>(
   schema: ZodType<T>,
 ): Promise<AdminReadResult<T>> => {
   let response: Response;
+  const { controller, timeoutId } = createTimeoutController(ADMIN_READ_TIMEOUT_MS);
   try {
     response = await fetch(`${resolveApiBaseUrl()}${ADMIN_API_BASE_PATH}${path}`, {
       method: "GET",
       headers: await buildAdminHeaders(cookieHeader),
       cache: "no-store",
+      signal: controller.signal,
     });
   } catch (error) {
     return {
       ok: false,
       error: {
         reason: "request_failed",
-        message: error instanceof Error ? error.message : String(error),
+        message: controller.signal.aborted
+          ? "API 응답이 너무 늦어 데이터를 불러오지 못했습니다."
+          : error instanceof Error
+            ? error.message
+            : String(error),
         status: null,
       },
     };
+  } finally {
+    clearTimeoutController(timeoutId);
   }
 
   if (!response.ok) {
@@ -201,6 +216,15 @@ export const getAdminLinktreeById = (
     cookieHeader,
     apiLinktreeSchema,
   );
+
+/**
+ * 편집 화면용 사이트 설정. 실패를 기본값으로 바꾸지 않는다 — 기본값이 채워진 폼을
+ * 저장하면 실제 연락처·후원 계좌가 예시 값으로 덮어써진다.
+ */
+export const getAdminSiteSettings = (
+  cookieHeader: string | null,
+): Promise<AdminReadResult<ApiSiteSettings>> =>
+  readAdminResource("/site-settings", cookieHeader, apiSiteSettingsSchema);
 
 export const listAdminUsers = (
   cookieHeader: string | null,

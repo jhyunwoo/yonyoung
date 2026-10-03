@@ -7,6 +7,7 @@ import {
   writeRequest,
   type AdminWriteActionResult,
 } from "@/features/dashboard/actions/admin-write-core";
+import { parseActionInput } from "@/features/dashboard/actions/action-input";
 import {
   apiAttachmentSchema,
   apiCreateAttachmentInputSchema,
@@ -39,7 +40,11 @@ const accessScopeByAttachmentScope = (scope: ApiAttachmentScope) =>
 export const createAttachmentAction = async (
   input: ApiCreateAttachmentInput,
 ): Promise<AdminWriteActionResult<ApiAttachment>> => {
-  const payload = apiCreateAttachmentInputSchema.parse(input);
+  const parsedPayload = parseActionInput(apiCreateAttachmentInputSchema, input);
+  if (!parsedPayload.ok) {
+    return parsedPayload;
+  }
+  const payload = parsedPayload.data;
   return writeRequest({
     path: "/attachments",
     method: "POST",
@@ -55,7 +60,11 @@ export const updateAttachmentAction = async (
   scope: ApiAttachmentScope,
   input: ApiUpdateAttachmentInput,
 ): Promise<AdminWriteActionResult<ApiAttachment>> => {
-  const payload = apiUpdateAttachmentInputSchema.parse(input);
+  const parsedPayload = parseActionInput(apiUpdateAttachmentInputSchema, input);
+  if (!parsedPayload.ok) {
+    return parsedPayload;
+  }
+  const payload = parsedPayload.data;
   return writeRequest({
     path: `/attachments/${id}`,
     method: "PATCH",
@@ -70,7 +79,11 @@ export const deleteAttachmentAction = async (
   id: string,
   scope: ApiAttachmentScope,
 ): Promise<AdminWriteActionResult<undefined>> => {
-  const parsedId = z.string().min(1).parse(id);
+  const idResult = parseActionInput(z.string().min(1), id);
+  if (!idResult.ok) {
+    return idResult;
+  }
+  const parsedId = idResult.data;
   return writeRequest({
     path: `/attachments/${parsedId}`,
     method: "DELETE",

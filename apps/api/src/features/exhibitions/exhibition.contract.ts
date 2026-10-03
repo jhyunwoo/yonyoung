@@ -1,4 +1,5 @@
 import { z } from "../../shared/openapi/zod";
+import { IMAGE_BATCH_MAX_ITEMS } from "@yonyoung/contracts/common";
 import {
   EXAMPLE_GENERATION_ID,
   EXAMPLE_IMAGE_ID,
@@ -83,44 +84,60 @@ export const ApiExhibitionSchema = z
   })
   .openapi("ApiExhibition");
 
-export const ApiCreateExhibitionSchema = z
-  .object({
-    title: z.string().min(1).openapi({
-      description: "전시 제목",
-      example: "2026 정기 사진전",
+const ExhibitionInputObjectSchema = z.object({
+  title: z.string().min(1).openapi({
+    description: "전시 제목",
+    example: "2026 정기 사진전",
+  }),
+  startDate: z.number().int().positive().openapi({
+    description: "전시 시작 시각 (Unix timestamp(ms))",
+    example: EXAMPLE_TIMESTAMP_MS,
+  }),
+  endDate: z.number().int().positive().openapi({
+    description: "전시 종료 시각 (Unix timestamp(ms))",
+    example: EXAMPLE_TIMESTAMP_MS_END,
+  }),
+  generationId: z
+    .string()
+    .uuid("generationId 형식이 올바르지 않습니다.")
+    .openapi({
+      description: "연결할 기수 UUID",
+      example: EXAMPLE_GENERATION_ID,
     }),
-    startDate: z.number().int().positive().openapi({
-      description: "전시 시작 시각 (Unix timestamp(ms))",
-      example: EXAMPLE_TIMESTAMP_MS,
-    }),
-    endDate: z.number().int().positive().openapi({
-      description: "전시 종료 시각 (Unix timestamp(ms))",
-      example: EXAMPLE_TIMESTAMP_MS_END,
-    }),
-    generationId: z
-      .string()
-      .uuid("generationId 형식이 올바르지 않습니다.")
-      .openapi({
-        description: "연결할 기수 UUID",
-        example: EXAMPLE_GENERATION_ID,
-      }),
-    place: z.string().min(1).openapi({
-      description: "전시 장소",
-      example: "서울시 성동구 아트홀 2관",
-    }),
-    coverImageUrl: httpUrlInputField(
-      "전시 대표 이미지 공개 URL",
-      "https://cdn.yonyoung.example/exhibitions/cover/new-cover.jpg",
-    ),
-    description: z.string().min(1).openapi({
-      description: "전시 설명 리치텍스트 HTML 본문",
-      example: "<p>도시의 밤 풍경을 기록한 작품들을 전시합니다.</p>",
-    }),
-  })
-  .openapi("ApiCreateExhibitionInput");
+  place: z.string().min(1).openapi({
+    description: "전시 장소",
+    example: "서울시 성동구 아트홀 2관",
+  }),
+  coverImageUrl: httpUrlInputField(
+    "전시 대표 이미지 공개 URL",
+    "https://cdn.yonyoung.example/exhibitions/cover/new-cover.jpg",
+  ),
+  description: z.string().min(1).openapi({
+    description: "전시 설명 리치텍스트 HTML 본문",
+    example: "<p>도시의 밤 풍경을 기록한 작품들을 전시합니다.</p>",
+  }),
+});
 
-export const ApiUpdateExhibitionSchema =
-  ApiCreateExhibitionSchema.partial().openapi("ApiUpdateExhibitionInput");
+export const ApiCreateExhibitionSchema = ExhibitionInputObjectSchema.refine(
+  (value) => value.startDate <= value.endDate,
+  {
+    message: "전시 종료 시각은 시작 시각보다 빠를 수 없습니다.",
+    path: ["endDate"],
+  },
+).openapi("ApiCreateExhibitionInput");
+
+export const ApiUpdateExhibitionSchema = ExhibitionInputObjectSchema.partial()
+  .refine(
+    (value) =>
+      value.startDate === undefined ||
+      value.endDate === undefined ||
+      value.startDate <= value.endDate,
+    {
+      message: "전시 종료 시각은 시작 시각보다 빠를 수 없습니다.",
+      path: ["endDate"],
+    },
+  )
+  .openapi("ApiUpdateExhibitionInput");
 
 export const ApiListExhibitionsQuerySchema = z
   .object({
@@ -169,6 +186,10 @@ export const ApiUpdateExhibitionImageSchema = z
 export const ApiCreateExhibitionImageBatchSchema = z
   .array(ApiCreateExhibitionImageSchema)
   .min(1, "세부 이미지를 하나 이상 전달해야 합니다.")
+  .max(
+    IMAGE_BATCH_MAX_ITEMS,
+    `세부 이미지는 한 번에 최대 ${IMAGE_BATCH_MAX_ITEMS}장까지 처리할 수 있습니다.`,
+  )
   .openapi("ApiCreateExhibitionImageBatchInput");
 
 const ApiUpdateExhibitionImageBatchItemSchema = z
@@ -204,6 +225,10 @@ const ApiUpdateExhibitionImageBatchItemSchema = z
 export const ApiUpdateExhibitionImageBatchSchema = z
   .array(ApiUpdateExhibitionImageBatchItemSchema)
   .min(1, "세부 이미지를 하나 이상 전달해야 합니다.")
+  .max(
+    IMAGE_BATCH_MAX_ITEMS,
+    `세부 이미지는 한 번에 최대 ${IMAGE_BATCH_MAX_ITEMS}장까지 처리할 수 있습니다.`,
+  )
   .refine(
     (items) => new Set(items.map((item) => item.imageId)).size === items.length,
     {

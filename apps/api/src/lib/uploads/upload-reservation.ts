@@ -203,9 +203,17 @@ export const createD1UploadReservationStore = (
     },
 
     async settle(id, expiresAt) {
+      // 정산은 업로드가 끝났다는 뜻이다. 용량은 정산 유예 동안 계속 점유하되,
+      // 동시 예약 슬롯(grant)은 즉시 반납해야 다음 업로드가 막히지 않는다.
       await database
-        .prepare("UPDATE upload_reservations SET expires_at = ? WHERE id = ?")
-        .bind(expiresAt, id)
+        .prepare(
+          `
+          UPDATE upload_reservations
+          SET expires_at = ?, grant_expires_at = MIN(grant_expires_at, ?)
+          WHERE id = ?
+          `,
+        )
+        .bind(expiresAt, Date.now(), id)
         .run();
     },
   };
@@ -297,7 +305,11 @@ export const createMemoryUploadReservationStore = (): UploadReservationStore => 
     async settle(id, expiresAt) {
       const reservation = reservations.get(id);
       if (reservation) {
-        reservations.set(id, { ...reservation, expiresAt });
+        reservations.set(id, {
+          ...reservation,
+          expiresAt,
+          grantExpiresAt: Math.min(reservation.grantExpiresAt, Date.now()),
+        });
       }
     },
   };

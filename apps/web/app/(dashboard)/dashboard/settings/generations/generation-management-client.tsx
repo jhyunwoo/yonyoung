@@ -2,6 +2,7 @@
 
 import { Alert } from "@/app/(dashboard)/_components/ui/alert";
 import { EmptyState } from "@/app/(dashboard)/_components/ui/empty-state";
+import { IconButton } from "@/app/(dashboard)/_components/ui/icon-button";
 import { PageHeader } from "@/app/(dashboard)/_components/ui/page-header";
 import {
   GenerationCreatePanel,
@@ -15,7 +16,7 @@ import {
 import type { GenerationFormValues } from "@/app/(dashboard)/dashboard/settings/generations/generation-management-selectors";
 import type { ApiGeneration, ApiUser } from "@yonyoung/contracts";
 import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
-import { FolderKanban } from "lucide-react";
+import { ArrowDown, ArrowUp, FolderKanban } from "lucide-react";
 
 /** 패널이 쓰는 필드 키를 훅의 값 키로 옮긴다. */
 const FORM_FIELD_KEYS = {
@@ -84,17 +85,19 @@ export default function GenerationManagementClient({
               />
             ) : (
               <ul className="mt-3 space-y-2">
-                {state.generations.map((generation) => {
+                {state.generations.map((generation, index) => {
                   const isSelected = generation.id === state.selectedGenerationId;
+                  const isFirst = index === 0;
+                  const isLast = index === state.generations.length - 1;
 
                   return (
-                    <li key={generation.id}>
+                    <li key={generation.id} className="flex items-stretch gap-2">
                       <button
                         type="button"
                         data-testid={`generation-select-${generation.id}`}
                         aria-pressed={isSelected}
                         onClick={() => state.setSelectedGenerationId(generation.id)}
-                        className={`w-full rounded-lg border px-3 py-3 text-left transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) ${
+                        className={`min-w-0 flex-1 rounded-lg border px-3 py-3 text-left transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) ${
                           isSelected
                             ? "border-primary bg-primary-soft text-ink"
                             : "border-hairline bg-surface text-ink hover:border-hairline-strong"
@@ -111,6 +114,29 @@ export default function GenerationManagementClient({
                           )}
                         </span>
                       </button>
+                      {/* 이웃 기수와 자리 맞바꾸기 (한 번의 요청으로 두 기수를 함께 옮긴다) */}
+                      <div className="flex flex-col gap-1">
+                        <IconButton
+                          data-testid={`generation-move-up-${generation.id}`}
+                          label={`${generation.name} 위로 이동`}
+                          icon={<ArrowUp className="h-4 w-4" />}
+                          variant="utility"
+                          disabled={isFirst || state.isSavingGeneration}
+                          onClick={() =>
+                            void state.handleMoveGeneration(generation.id, "up")
+                          }
+                        />
+                        <IconButton
+                          data-testid={`generation-move-down-${generation.id}`}
+                          label={`${generation.name} 아래로 이동`}
+                          icon={<ArrowDown className="h-4 w-4" />}
+                          variant="utility"
+                          disabled={isLast || state.isSavingGeneration}
+                          onClick={() =>
+                            void state.handleMoveGeneration(generation.id, "down")
+                          }
+                        />
+                      </div>
                     </li>
                   );
                 })}

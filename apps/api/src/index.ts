@@ -1,8 +1,16 @@
+import { instrumentSentryHandler } from "./shared/observability/sentry-handler";
 import { WorkerEntrypoint } from "cloudflare:workers";
 import { createApp } from "./app";
 import type { Bindings } from "./bindings/types";
+import { resolveD1Database } from "./infra/db/client";
+import { resolveR2Bucket } from "./infra/r2/client";
+import { runR2OrphanSweep } from "./lib/storage/orphan-sweep";
+import { logger } from "./shared/logging/logger";
 
 const app = createApp();
+const monitoredApp = instrumentSentryHandler({
+  fetch: async (request, env, ctx) => app.fetch(request, env, ctx),
+});
 
 const isPublicApiRequest = (request: Request): boolean => {
   if (request.method !== "GET" && request.method !== "HEAD") {
@@ -58,11 +66,11 @@ const addGatewayTiming = (
  */
 export class PublicApi extends WorkerEntrypoint<Bindings> {
   override async fetch(request: Request): Promise<Response> {
-    return app.fetch(request, this.env, this.ctx);
+    return monitoredApp.fetch(request, this.env, this.ctx);
   }
 }
 
-export default {
+const monitoredGateway = instrumentSentryHandler({
   async fetch(
     request: Request,
     env: Bindings,
@@ -80,4 +88,33 @@ export default {
 
     return addGatewayTiming(response, { requestId, startedAt });
   },
+});
+
+/**
+ * 매일 한 번 R2 고아 객체를 정리한다(`wrangler.jsonc`의 triggers.crons).
+ * 기본은 dry-run이며 `R2_ORPHAN_SWEEP_ENABLED="true"`일 때만 실제로 삭제한다.
+ */
+const scheduled: ExportedHandlerScheduledHandler<Bindings> = async (
+  _controller,
+  env,
+  ctx,
+) => {
+  ctx.waitUntil(
+    (async () =>
+      runR2OrphanSweep({
+        database: resolveD1Database(env),
+        bucket: resolveR2Bucket(env),
+        enabled: env.R2_ORPHAN_SWEEP_ENABLED === "true",
+      }))().catch((error: unknown) => {
+      logger.error({
+        event: "r2.orphan_sweep.failed",
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }),
+  );
+};
+
+export default {
+  fetch: monitoredGateway.fetch,
+  scheduled,
 } satisfies ExportedHandler<Bindings>;

@@ -1,5 +1,6 @@
 "use client";
 
+import { captureBrowserException } from "@/lib/observability/sentry-client";
 import { useEffect } from "react";
 
 type HomeErrorPageProps = {
@@ -9,6 +10,7 @@ type HomeErrorPageProps = {
 
 export default function HomeErrorPage({ error, reset }: HomeErrorPageProps) {
   useEffect(() => {
+    void captureBrowserException(error);
     navigator.sendBeacon(
       "/api/internal/client-error",
       new Blob(

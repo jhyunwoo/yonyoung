@@ -42,6 +42,7 @@ export const createDbDataService = (database: D1Database): DataService => {
     createGeneration: generationRepository.createGeneration,
     getGenerationById: generationRepository.getGenerationById,
     updateGeneration: generationRepository.updateGeneration,
+    reorderGenerations: generationRepository.reorderGenerations,
     deleteGeneration: generationRepository.deleteGeneration,
 
     listActivities: activityRepository.listActivities,

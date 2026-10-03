@@ -14,6 +14,8 @@ import type { AuthSession } from "@/features/auth/model/auth-shared";
 import {
   asRecord,
   applyForwardedRequestContextHeaders,
+  clearTimeoutController,
+  createTimeoutController,
   readCookieHeader,
   resolveApiBaseUrl,
   unwrapDataEnvelope,
@@ -23,6 +25,8 @@ import { readServerForwardedRequestContext } from "@/server/http/request-context
 const SIGN_IN_PATH = "/auth/sign-in";
 const USER_PATH_PREFIX = "/api/users";
 const CURRENT_USER_PATH = `${USER_PATH_PREFIX}/me`;
+/** 프로필 조회는 보조 정보라 실패하면 세션 값으로 폴백한다. 렌더가 매달리지 않게 상한을 둔다. */
+const PROFILE_REQUEST_TIMEOUT_MS = 8000;
 
 const readTrimmedString = (value: unknown): string | null => {
   if (typeof value !== "string") {
@@ -126,12 +130,14 @@ const buildForwardedHeaders = async (): Promise<Headers> => {
  */
 const getCurrentUserMe = cache(async (): Promise<Record<string, unknown> | null> => {
   const headers = await buildForwardedHeaders();
+  const { controller, timeoutId } = createTimeoutController(PROFILE_REQUEST_TIMEOUT_MS);
 
   try {
     const response = await fetch(`${resolveApiBaseUrl()}${CURRENT_USER_PATH}`, {
       method: "GET",
       headers,
       cache: "no-store",
+      signal: controller.signal,
     });
 
     if (!response.ok) {
@@ -142,6 +148,8 @@ const getCurrentUserMe = cache(async (): Promise<Record<string, unknown> | null>
     return sanitizeProfileRecord(unwrapDataEnvelope(payload));
   } catch {
     return null;
+  } finally {
+    clearTimeoutController(timeoutId);
   }
 });
 

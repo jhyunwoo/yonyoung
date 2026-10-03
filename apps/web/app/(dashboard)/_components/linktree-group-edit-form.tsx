@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
+import { useGuardedSubmit } from "@/shared/react/use-guarded-submit";
 import {
   normalizeLinktreeName,
   readLinktreeErrorMessage,
@@ -48,6 +49,7 @@ export default function LinktreeGroupEditForm({
       setIsSaving(false);
     }
   };
+  const submitForm = useGuardedSubmit(handleSubmit);
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
@@ -67,7 +69,7 @@ export default function LinktreeGroupEditForm({
 
       <form
         className="mt-6 space-y-3 rounded-lg border border-hairline bg-surface-sunken p-4"
-        action={handleSubmit}
+        onSubmit={submitForm}
       >
         <label className="block space-y-1">
           <span className="text-sm font-semibold text-ink">분류 이름</span>
@@ -81,6 +83,7 @@ export default function LinktreeGroupEditForm({
 
         <div className="flex flex-wrap items-center gap-2">
           <FormSubmitButton
+            pending={isSaving}
             data-testid="linktree-group-edit-submit"
             disabled={isSaving}
             className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-on-primary disabled:cursor-not-allowed disabled:opacity-60"

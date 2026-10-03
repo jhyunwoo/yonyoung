@@ -68,6 +68,22 @@ const hasHeaderValue = (
 const shouldBypassPublicCache = (request: Request): boolean =>
   hasHeaderValue(request.headers, PERSONALIZATION_HEADERS);
 
+/**
+ * 웹 서버(Next.js)의 공개 읽기는 `?fresh=1`을 붙인다.
+ *
+ * 웹은 관리자 쓰기 직후 `updateTag`로 자기 캐시를 버리고 곧바로 다시 읽는데, 그 요청이
+ * 여기 엣지/KV 캐시(최대 120초 + stale 300초)에 걸리면 수정 전 데이터를 받아 며칠짜리
+ * Next 캐시에 다시 굽는다. 이 요청은 어떤 캐시 계층도 읽거나 쓰지 않고, 응답을
+ * `no-store`로 표시해 엔트리포인트 캐시(Workers Caching)에도 남지 않게 한다.
+ * 임의의 쿼리 문자열로도 캐시를 우회할 수 있는 것은 원래와 같다.
+ */
+export const PUBLIC_CACHE_FRESH_QUERY_PARAM = "fresh";
+
+const isFreshReadRequest = (request: Request): boolean =>
+  new URL(request.url).searchParams.get(PUBLIC_CACHE_FRESH_QUERY_PARAM) === "1";
+
+const PUBLIC_FRESH_CACHE_CONTROL = "private, no-store, max-age=0";
+
 const isCacheableResponse = (response: Response): boolean => {
   if (!response.ok) {
     return false;
@@ -312,6 +328,19 @@ const respondFromPublicCache = async (
   buildResponse: () => Promise<Response>,
 ): Promise<Response> => {
   const request = c.req.raw;
+  if (isFreshReadRequest(request)) {
+    setCacheStatusVariable(c, "bypass");
+    const origin = await buildResponse();
+    const headers = new Headers(origin.headers);
+    headers.set("Cache-Control", PUBLIC_FRESH_CACHE_CONTROL);
+    const fresh = new Response(origin.body, {
+      status: origin.status,
+      statusText: origin.statusText,
+      headers,
+    });
+    return addCacheResultHeaders(fresh, "bypass", "origin");
+  }
+
   if (shouldBypassPublicCache(request)) {
     setCacheStatusVariable(c, "bypass");
     const response = withPublicCacheHeaders(await buildResponse());

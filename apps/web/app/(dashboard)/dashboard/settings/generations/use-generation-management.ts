@@ -203,6 +203,40 @@ export const useGenerationManagement = ({
     }
   };
 
+  /**
+   * 목록에서 한 칸 위/아래 기수와 자리를 바꾼다. 목록은 정렬 순서 내림차순이다.
+   * 두 기수의 sortOrder를 한 번의 요청으로 맞바꿔야 유니크 제약에 걸리지 않는다.
+   */
+  const handleMoveGeneration = async (generationId: string, direction: "up" | "down") => {
+    const index = generations.findIndex((generation) => generation.id === generationId);
+    const neighbor = generations[direction === "up" ? index - 1 : index + 1];
+    const current = generations[index];
+    if (!current || !neighbor || isSavingGeneration) {
+      return;
+    }
+
+    setIsSavingGeneration(true);
+    clearMessages();
+
+    try {
+      const reordered = await adminResourceApi.reorderGenerations({
+        items: [
+          { id: current.id, sortOrder: neighbor.sortOrder },
+          { id: neighbor.id, sortOrder: current.sortOrder },
+        ],
+      });
+      setGenerations(sortGenerationsBySortOrderDesc(reordered));
+      // 편집 중이던 정렬 순서 값은 이제 틀리므로 서버 값으로 되돌린다.
+      setEditDraft(null);
+      setSuccessMessage(`"${current.name}"의 순서를 바꿨습니다.`);
+      router.refresh();
+    } catch (error) {
+      setErrorMessage(readErrorMessage(error));
+    } finally {
+      setIsSavingGeneration(false);
+    }
+  };
+
   const handleDeleteGeneration = async () => {
     if (!selectedGeneration) {
       return;
@@ -246,18 +280,51 @@ export const useGenerationManagement = ({
     clearMessages();
 
     try {
-      const updatedUsers = await Promise.all(
+      // 사용자별 요청이라 일부만 실패할 수 있다(예: 본인보다 높은 등급의 사용자 → 403).
+      // Promise.all 로 묶으면 성공한 변경이 로컬 목록에 반영되지 않고, 그 낡은 목록으로
+      // 다음 배정을 계산하면 방금 성공한 변경을 조용히 되돌린다. 성공분은 반드시 반영한다.
+      const results = await Promise.allSettled(
         input.targets.map((target) =>
           adminResourceApi.updateUser(target.userId, {
             generationIds: target.generationIds,
           }),
         ),
       );
+      const updatedUsers = results.flatMap((result) =>
+        result.status === "fulfilled" ? [result.value] : [],
+      );
+      const failures = results.flatMap((result, index) =>
+        result.status === "rejected"
+          ? [{ target: input.targets[index], error: result.reason }]
+          : [],
+      );
 
-      setUsers((previous) => mergeUpdatedUsers(previous, updatedUsers));
-      setSelectedUserIds([]);
-      setSuccessMessage(input.successMessage(updatedUsers.length));
-      router.refresh();
+      if (updatedUsers.length > 0) {
+        setUsers((previous) => mergeUpdatedUsers(previous, updatedUsers));
+        router.refresh();
+      }
+
+      if (failures.length === 0) {
+        setSelectedUserIds([]);
+        setSuccessMessage(input.successMessage(updatedUsers.length));
+        return;
+      }
+
+      const failedUserIds = new Set(
+        failures.flatMap(({ target }) => (target ? [target.userId] : [])),
+      );
+      const failedNames = users
+        .filter((user) => failedUserIds.has(user.id))
+        .map((user) => user.name)
+        .join(", ");
+      // 실패한 사용자만 선택 상태로 남겨 바로 다시 시도할 수 있게 한다.
+      setSelectedUserIds((previous) => previous.filter((id) => failedUserIds.has(id)));
+      if (updatedUsers.length > 0) {
+        setSuccessMessage(input.successMessage(updatedUsers.length));
+      }
+      setErrorMessage(
+        `${failures.length}명은 변경하지 못했습니다${failedNames ? ` (${failedNames})` : ""}: ${readErrorMessage(failures[0]?.error)}`,
+      );
     } catch (error) {
       setErrorMessage(readErrorMessage(error));
     } finally {
@@ -379,6 +446,7 @@ export const useGenerationManagement = ({
 
     handleCreateGeneration,
     handleUpdateGeneration,
+    handleMoveGeneration,
     handleDeleteGeneration,
     handleToggleUser: (userId: string) =>
       setSelectedUserIds((previous) => toggleSelectedUserId(previous, userId)),

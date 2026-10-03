@@ -5,6 +5,7 @@ import {
   writeRequest,
   type AdminWriteActionResult,
 } from "@/features/dashboard/actions/admin-write-core";
+import { parseActionInput } from "@/features/dashboard/actions/action-input";
 import { CACHE_TAGS } from "@/server/cache/tags";
 import {
   apiCreateLinktreeInputSchema,
@@ -31,7 +32,11 @@ const LINKTREE_CACHE_TAGS = [
 export const createLinktreeAction = async (
   input: ApiCreateLinktreeInput,
 ): Promise<AdminWriteActionResult<ApiLinktree>> => {
-  const payload = apiCreateLinktreeInputSchema.parse(input);
+  const parsedPayload = parseActionInput(apiCreateLinktreeInputSchema, input);
+  if (!parsedPayload.ok) {
+    return parsedPayload;
+  }
+  const payload = parsedPayload.data;
   return writeRequest({
     path: "/linktree",
     method: "POST",
@@ -46,7 +51,11 @@ export const updateLinktreeAction = async (
   id: string,
   input: ApiUpdateLinktreeInput,
 ): Promise<AdminWriteActionResult<ApiLinktree>> => {
-  const payload = apiUpdateLinktreeInputSchema.parse(input);
+  const parsedPayload = parseActionInput(apiUpdateLinktreeInputSchema, input);
+  if (!parsedPayload.ok) {
+    return parsedPayload;
+  }
+  const payload = parsedPayload.data;
   return writeRequest({
     path: `/linktree/${id}`,
     method: "PATCH",
@@ -73,7 +82,11 @@ export const addLinktreeItemAction = async (
   id: string,
   input: ApiCreateLinktreeItemInput,
 ): Promise<AdminWriteActionResult<ApiLinktreeItem>> => {
-  const payload = apiCreateLinktreeItemInputSchema.parse(input);
+  const parsedPayload = parseActionInput(apiCreateLinktreeItemInputSchema, input);
+  if (!parsedPayload.ok) {
+    return parsedPayload;
+  }
+  const payload = parsedPayload.data;
   return writeRequest({
     path: `/linktree/${id}/items`,
     method: "POST",
@@ -89,7 +102,11 @@ export const updateLinktreeItemAction = async (
   itemId: string,
   input: ApiUpdateLinktreeItemInput,
 ): Promise<AdminWriteActionResult<ApiLinktreeItem>> => {
-  const payload = apiUpdateLinktreeItemInputSchema.parse(input);
+  const parsedPayload = parseActionInput(apiUpdateLinktreeItemInputSchema, input);
+  if (!parsedPayload.ok) {
+    return parsedPayload;
+  }
+  const payload = parsedPayload.data;
   return writeRequest({
     path: `/linktree/${id}/items/${itemId}`,
     method: "PATCH",

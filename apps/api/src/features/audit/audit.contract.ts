@@ -6,6 +6,7 @@ import {
   EXAMPLE_USER_ID,
   timestampField,
 } from "../../shared/openapi/field-builders";
+import { SITE_SETTINGS_AUDIT_RESOURCE_ID } from "../../lib/audit";
 
 const ApiAuditResourceTypeSchema = z
   .enum([
@@ -16,6 +17,7 @@ const ApiAuditResourceTypeSchema = z
     "linktree_item",
     "user",
     "attachment",
+    "site_settings",
   ])
   .openapi("ApiAuditResourceType");
 
@@ -32,6 +34,18 @@ export const ApiAuditParamSchema = z
   })
   .superRefine((value, context) => {
     if (value.resourceType === "user") {
+      return;
+    }
+
+    // 사이트 설정은 행이 하나뿐인 싱글턴이라 id가 "default"로 고정이다.
+    if (value.resourceType === "site_settings") {
+      if (value.resourceId !== SITE_SETTINGS_AUDIT_RESOURCE_ID) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["resourceId"],
+          message: "resourceId 형식이 올바르지 않습니다.",
+        });
+      }
       return;
     }
 

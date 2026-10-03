@@ -7,7 +7,10 @@ import {
   readNoContentSchema,
   writeRequest,
   type AdminWriteActionResult,
+  toSessionUnavailableFailure,
 } from "@/features/dashboard/actions/admin-write-core";
+import { parseActionInput } from "@/features/dashboard/actions/action-input";
+import { isSessionUnavailableError } from "@/features/auth/server/auth-server";
 import { CACHE_TAGS } from "@/server/cache/tags";
 import {
   apiBulkUpdateUserRoleInputSchema,
@@ -34,12 +37,22 @@ export const updateUserAction = async (
   id: string,
   input: ApiUpdateUserInput,
 ): Promise<AdminWriteActionResult<ApiUser>> => {
-  const session = await serverAuthGuard.requireSession();
+  let session: Awaited<ReturnType<typeof serverAuthGuard.requireSession>>;
+  try {
+    session = await serverAuthGuard.requireSession();
+  } catch (error) {
+    if (isSessionUnavailableError(error)) {
+      return toSessionUnavailableFailure(error);
+    }
+    throw error;
+  }
   const canManageUsers = canManageGlobalUsers(session);
-  let payload: ApiUpdateUserInput | ApiMemberProfileUpdateInput;
+  let parsedPayload:
+    | ReturnType<typeof parseActionInput<ApiUpdateUserInput>>
+    | ReturnType<typeof parseActionInput<ApiMemberProfileUpdateInput>>;
 
   if (canManageUsers) {
-    payload = apiUpdateUserInputSchema.parse(input);
+    parsedPayload = parseActionInput(apiUpdateUserInputSchema, input);
   } else {
     const profile = await serverAuthGuard.getCurrentUserProfile(session);
     const currentProfileId =
@@ -54,8 +67,12 @@ export const updateUserAction = async (
       forbidden();
     }
 
-    payload = apiMemberProfileUpdateInputSchema.parse(input);
+    parsedPayload = parseActionInput(apiMemberProfileUpdateInputSchema, input);
   }
+  if (!parsedPayload.ok) {
+    return parsedPayload;
+  }
+  const payload = parsedPayload.data;
 
   return writeRequest({
     path: `/users/${id}`,
@@ -70,7 +87,11 @@ export const updateUserAction = async (
 export const bulkUpdateUsersRoleAction = async (
   input: ApiBulkUpdateUserRoleInput,
 ): Promise<BulkUpdateUsersRoleActionResult> => {
-  const payload = apiBulkUpdateUserRoleInputSchema.parse(input);
+  const parsedPayload = parseActionInput(apiBulkUpdateUserRoleInputSchema, input);
+  if (!parsedPayload.ok) {
+    return parsedPayload;
+  }
+  const payload = parsedPayload.data;
   return writeRequest({
     path: "/users/bulk-role",
     method: "PATCH",

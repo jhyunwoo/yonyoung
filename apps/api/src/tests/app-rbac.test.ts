@@ -527,9 +527,43 @@ describe("RBAC routes",() => {
     expect(createActivity).not.toHaveBeenCalled();
   });
 
-  it("부장은 사용자 프로필 presign 발급이 불가하다",async () => {
+  it("부장은 본인 사용자 프로필 presign 발급이 가능하다",async () => {
+    const issuePresignedPutUrl = vi.fn(async () => ({
+      uploadUrl: "https://upload.example.com/signed",
+      objectKey: "users/key.png",
+      publicUrl: "https://cdn.example.com/users/key.png",
+      requiredHeaders: {
+        "Content-Type": "image/png",
+      },
+    }));
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
+      presignService: createPresignServiceMock({
+        issuePresignedPutUrl,
+      }),
+    });
+
+    const response = await app.request("/api/users/presign/profile", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        fileName: "profile.png",
+        contentType: "image/png",
+        fileSize: 1024,
+      }),
+    });
+
+    expect(response.status).toBe(201);
+    expect(issuePresignedPutUrl).toHaveBeenCalledWith(
+      expect.objectContaining({ actorId: IDs.manager, resource: "users" }),
+    );
+  });
+
+  it("미인증 사용자는 사용자 프로필 presign 발급이 불가하다",async () => {
+    const app = createTestApp({
+      actor: createActor("unverified", IDs.member),
     });
 
     const response = await app.request("/api/users/presign/profile", {
@@ -545,6 +579,124 @@ describe("RBAC routes",() => {
     });
 
     expect(response.status).toBe(403);
+  });
+
+  it("부장은 본인 프로필을 저장할 수 있지만 역할은 바꿀 수 없다",async () => {
+    const updateUser = vi.fn(async () => createUser(IDs.manager, "manager"));
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({
+        updateUser,
+      }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.manager}`, {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        familyName: "김",
+        image: "https://cdn.example.com/users/profile-manager.png",
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(updateUser).toHaveBeenCalledWith(IDs.manager, {
+      familyName: "김",
+      image: "https://cdn.example.com/users/profile-manager.png",
+    });
+
+    const roleResponse = await app.request(`/api/users/${IDs.manager}`, {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ role: "president" }),
+    });
+    expect(roleResponse.status).toBe(400);
+    expect(updateUser).toHaveBeenCalledTimes(1);
+  });
+
+  it("감사 로그 기록이 실패해도 이미 커밋된 쓰기는 성공으로 응답한다",async () => {
+    const updateUser = vi.fn(async () => createUser(IDs.member));
+    const createAuditLog = vi.fn(async () => {
+      throw new Error("D1_ERROR: audit insert failed");
+    });
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({
+        updateUser,
+        createAuditLog,
+      }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.member}`, {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ familyName: "김" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(updateUser).toHaveBeenCalledTimes(1);
+    expect(createAuditLog).toHaveBeenCalledTimes(1);
+  });
+
+  it("부장은 다른 사용자의 프로필을 수정할 수 없다",async () => {
+    const updateUser = vi.fn(async () => createUser(IDs.member));
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({
+        updateUser,
+      }),
+    });
+
+    const response = await app.request(`/api/users/${IDs.member}`, {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ familyName: "김" }),
+    });
+
+    expect(response.status).toBe(403);
+    expect(updateUser).not.toHaveBeenCalled();
+  });
+
+  it("Windows의 zip 별칭 MIME은 표준 이름으로 정규화해 presign 한다",async () => {
+    const issuePresignedPutUrl = vi.fn(async () => ({
+      uploadUrl: "https://upload.example.com/signed",
+      objectKey: "activities/key.zip",
+      publicUrl: "https://cdn.example.com/activities/key.zip",
+      requiredHeaders: {
+        "Content-Type": "application/zip",
+      },
+    }));
+    const app = createTestApp({
+      actor: createActor("president", IDs.president),
+      presignService: createPresignServiceMock({
+        issuePresignedPutUrl,
+      }),
+    });
+
+    const response = await app.request("/api/activities/presign/file", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        fileName: "자료.zip",
+        contentType: "application/x-zip-compressed",
+        fileSize: 1024,
+      }),
+    });
+
+    expect(response.status).toBe(201);
+    expect(issuePresignedPutUrl).toHaveBeenCalledWith(
+      expect.objectContaining({ contentType: "application/zip" }),
+    );
   });
 
   it("준회원(associate_member)은 사용자 프로필 presign 발급이 가능하다",async () => {

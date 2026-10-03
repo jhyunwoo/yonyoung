@@ -289,12 +289,18 @@ export const getAuthCorsOrigins = (env?: Partial<AppBindings>): string[] => {
   return resolveAuthRuntimeEnv(env, true).trustedOrigins;
 };
 
-type AuthCacheEntry = {
-  envSignature: string;
-  instance: ReturnType<typeof createAuthWithEnv>;
-};
-
-const authCache = new WeakMap<D1Database, AuthCacheEntry>();
+/**
+ * D1 바인딩별 · 설정 서명별 인스턴스 캐시.
+ *
+ * `/api/auth/*`는 요청 오리진을, 나머지 라우트의 세션 조회는 env의 BETTER_AUTH_URL을 baseURL로
+ * 쓴다. 서명 하나만 기억하면 두 경로가 번갈아 들어올 때마다 betterAuth()와 drizzle 어댑터를
+ * 다시 만든다. 서명별로 몇 개만 보관해 재생성을 없앤다.
+ */
+const AUTH_CACHE_MAX_ENTRIES_PER_DATABASE = 4;
+const authCache = new WeakMap<
+  D1Database,
+  Map<string, ReturnType<typeof createAuthWithEnv>>
+>();
 
 const buildAuthCacheSignature = (env: AuthRuntimeEnv): string =>
   [
@@ -313,16 +319,25 @@ export const createAuth = (
   const resolvedEnv = resolveAuthRuntimeEnv(env, false);
   const envSignature = buildAuthCacheSignature(resolvedEnv);
 
-  const cachedAuth = authCache.get(database);
-  if (cachedAuth && cachedAuth.envSignature === envSignature) {
-    return cachedAuth.instance;
+  let instances = authCache.get(database);
+  if (!instances) {
+    instances = new Map();
+    authCache.set(database, instances);
+  }
+
+  const cachedAuth = instances.get(envSignature);
+  if (cachedAuth) {
+    return cachedAuth;
   }
 
   const auth = createAuthWithEnv(database, resolvedEnv);
-  authCache.set(database, {
-    envSignature,
-    instance: auth,
-  });
+  if (instances.size >= AUTH_CACHE_MAX_ENTRIES_PER_DATABASE) {
+    const oldestSignature = instances.keys().next().value;
+    if (oldestSignature !== undefined) {
+      instances.delete(oldestSignature);
+    }
+  }
+  instances.set(envSignature, auth);
 
   return auth;
 };

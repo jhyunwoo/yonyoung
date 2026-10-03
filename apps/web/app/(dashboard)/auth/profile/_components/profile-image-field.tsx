@@ -1,5 +1,6 @@
 "use client";
 
+import { IMAGE_UPLOAD_ACCEPT } from "@yonyoung/contracts";
 import type { ChangeEvent, RefObject } from "react";
 import UploadProgressBar from "@/app/(dashboard)/_components/upload-progress-bar";
 
@@ -59,7 +60,7 @@ export default function ProfileImageField({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept={IMAGE_UPLOAD_ACCEPT}
           disabled={!canEdit || isSaving}
           onChange={onSelectFile}
           className="sr-only"

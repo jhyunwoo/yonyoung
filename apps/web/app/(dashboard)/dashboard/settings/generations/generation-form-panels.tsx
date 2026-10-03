@@ -1,5 +1,6 @@
 "use client";
 
+import { useGuardedSubmit } from "@/shared/react/use-guarded-submit";
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import { Button } from "@/app/(dashboard)/_components/ui/button";
 import { buildButtonClass } from "@/app/(dashboard)/_components/ui/button-styles";
@@ -100,27 +101,32 @@ export const GenerationCreatePanel = ({
   onChange: (key: keyof GenerationFormValues, value: string) => void;
   onSubmit: () => void | Promise<void>;
   disabled: boolean;
-}) => (
-  <article className="rounded-lg border border-hairline p-4">
-    <h2 className="text-title text-ink">기수 생성</h2>
-    <form className="mt-4 space-y-4" action={onSubmit}>
-      <GenerationFormFields
-        values={values}
-        onChange={onChange}
-        disabled={disabled}
-        namePlaceholder="예: 60기"
-        sortOrderPlaceholder="예: 60"
-      />
-      <FormSubmitButton
-        data-testid="generation-create-submit"
-        disabled={disabled}
-        className={buildButtonClass({ variant: "primary" })}
-        idleLabel="기수 생성"
-        pendingLabel="생성 중..."
-      />
-    </form>
-  </article>
-);
+}) => {
+  const submitForm = useGuardedSubmit(onSubmit);
+
+  return (
+    <article className="rounded-lg border border-hairline p-4">
+      <h2 className="text-title text-ink">기수 생성</h2>
+      <form className="mt-4 space-y-4" onSubmit={submitForm}>
+        <GenerationFormFields
+          values={values}
+          onChange={onChange}
+          disabled={disabled}
+          namePlaceholder="예: 60기"
+          sortOrderPlaceholder="예: 60"
+        />
+        <FormSubmitButton
+          data-testid="generation-create-submit"
+          pending={disabled}
+          disabled={disabled}
+          className={buildButtonClass({ variant: "primary" })}
+          idleLabel="기수 생성"
+          pendingLabel="생성 중..."
+        />
+      </form>
+    </article>
+  );
+};
 
 export const GenerationEditPanel = ({
   hasSelection,
@@ -136,35 +142,40 @@ export const GenerationEditPanel = ({
   onSubmit: () => void | Promise<void>;
   onDelete: () => void;
   disabled: boolean;
-}) => (
-  <article className="rounded-lg border border-hairline p-4">
-    <h2 className="text-title text-ink">선택한 기수 수정/삭제</h2>
-    {!hasSelection ? (
-      <p className="mt-3 text-body-sm text-ink-muted">
-        수정할 기수를 먼저 선택해 주세요.
-      </p>
-    ) : (
-      <form className="mt-4 space-y-4" action={onSubmit}>
-        <GenerationFormFields values={values} onChange={onChange} disabled={disabled} />
+}) => {
+  const submitForm = useGuardedSubmit(onSubmit);
 
-        <div className="flex flex-wrap gap-2">
-          <FormSubmitButton
-            data-testid="generation-update-submit"
-            disabled={disabled}
-            className={buildButtonClass({ variant: "primary" })}
-            idleLabel="기수 수정"
-            pendingLabel="저장 중..."
-          />
-          <Button
-            data-testid="generation-delete-button"
-            variant="danger-ghost"
-            onClick={onDelete}
-            disabled={disabled}
-          >
-            기수 삭제
-          </Button>
-        </div>
-      </form>
-    )}
-  </article>
-);
+  return (
+    <article className="rounded-lg border border-hairline p-4">
+      <h2 className="text-title text-ink">선택한 기수 수정/삭제</h2>
+      {!hasSelection ? (
+        <p className="mt-3 text-body-sm text-ink-muted">
+          수정할 기수를 먼저 선택해 주세요.
+        </p>
+      ) : (
+        <form className="mt-4 space-y-4" onSubmit={submitForm}>
+          <GenerationFormFields values={values} onChange={onChange} disabled={disabled} />
+
+          <div className="flex flex-wrap gap-2">
+            <FormSubmitButton
+              data-testid="generation-update-submit"
+              pending={disabled}
+              disabled={disabled}
+              className={buildButtonClass({ variant: "primary" })}
+              idleLabel="기수 수정"
+              pendingLabel="저장 중..."
+            />
+            <Button
+              data-testid="generation-delete-button"
+              variant="danger-ghost"
+              onClick={onDelete}
+              disabled={disabled}
+            >
+              기수 삭제
+            </Button>
+          </div>
+        </form>
+      )}
+    </article>
+  );
+};

@@ -49,6 +49,11 @@ describe("features/auth/model/auth-shared", () => {
     expect(canAccessAdminPage(null)).toBe(false);
     expect(canAccessAdminPage(unverifiedSession)).toBe(false);
     expect(canAccessAdminPage(memberSession)).toBe(true);
+    // API와 같은 정규화: 역할이 없거나 알 수 없으면 미인증, 레거시 member는 정회원
+    expect(canAccessAdminPage({ user: { role: null } })).toBe(false);
+    expect(canAccessAdminPage({ user: { role: "" } })).toBe(false);
+    expect(canAccessAdminPage({ user: { role: "superuser" } })).toBe(false);
+    expect(canAccessAdminPage({ user: { role: "member" } })).toBe(true);
 
     expect(canManageGenerations(null)).toBe(false);
     expect(canManageGenerations(memberSession)).toBe(false);

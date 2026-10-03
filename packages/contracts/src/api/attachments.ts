@@ -62,7 +62,7 @@ export const apiCreateAttachmentInputSchema = z
     fileUrl: z.url().optional(),
     fileName: z.string().trim().min(1).max(255).optional(),
     fileSize: z.number().int().positive().optional(),
-    mimeType: z.string().min(1).optional(),
+    mimeType: z.enum(ALLOWED_ATTACHMENT_CONTENT_TYPES).optional(),
     linkUrl: z
       .url()
       .refine(isHttpUrl, "linkUrl은 http(s) URL만 사용할 수 있습니다.")

@@ -155,18 +155,19 @@ describe("server/http/hono-client", () => {
       honoRequest({ path: "/conflict", responseSchema }),
     ).rejects.toMatchObject({ status: 409, code: "CONFLICT", message: "Conflict" });
 
+    // 연결 실패는 내부 오류 문자열을 노출하지 않고 503으로 알린다.
     fetchWithTimeoutMock.mockRejectedValue(new Error("network"));
     await expect(honoRequest({ path: "/network", responseSchema })).rejects.toMatchObject(
-      { status: 500, code: "UNKNOWN", message: "network" },
+      {
+        status: 503,
+        code: "API_UNAVAILABLE",
+        message: "API 서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      },
     );
 
     fetchWithTimeoutMock.mockRejectedValue("boom");
     await expect(honoRequest({ path: "/network", responseSchema })).rejects.toMatchObject(
-      {
-        status: 500,
-        code: "UNKNOWN",
-        message: "알 수 없는 오류가 발생했습니다.",
-      },
+      { status: 503, code: "API_UNAVAILABLE" },
     );
   });
 
@@ -198,19 +199,20 @@ describe("server/http/hono-client", () => {
     expect(timeoutMs).toBe(55);
   });
 
-  it("returns generic unknown error when success response is not parseable JSON", async () => {
+  it("2xx 응답이 계약과 다르면 INVALID_RESPONSE로 구분한다", async () => {
     fetchWithTimeoutMock.mockResolvedValue(
       new Response("plain text", {
         status: 200,
-        headers: { "content-type": "text/plain" },
+        headers: { "content-type": "text/plain", "x-request-id": "rid-invalid" },
       }),
     );
 
     await expect(
       honoRequest({ path: "/users/plain", responseSchema }),
     ).rejects.toMatchObject({
-      status: 500,
-      code: "UNKNOWN",
+      status: 502,
+      code: "INVALID_RESPONSE",
+      requestId: "rid-invalid",
     });
   });
 });

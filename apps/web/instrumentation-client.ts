@@ -1,3 +1,7 @@
+import { initializeBrowserSentry } from "@/lib/observability/sentry-client";
+
+void initializeBrowserSentry();
+
 type ClientErrorPayload = {
   event: "client.error" | "client.unhandledrejection" | "router.transition.start";
   path: string;

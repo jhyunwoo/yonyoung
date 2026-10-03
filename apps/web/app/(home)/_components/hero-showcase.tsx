@@ -37,10 +37,14 @@ export default function HeroShowcase({
           </p>
           <h1 className="text-6xl leading-[0.96] tracking-[-0.02em] text-(--text-primary) md:text-8xl">
             연영회
+            <span className="mt-4 block text-lg font-medium leading-normal tracking-normal md:text-2xl">
+              연세대학교 사진 동아리
+            </span>
           </h1>
           <p className="mt-4 max-w-xl text-base leading-relaxed text-(--text-muted) md:text-lg">
-            1966년부터 이어온 연세대학교 중앙사진동아리. 기록과 전시, 그리고 서로의 시선이
-            만나는 장소를 만듭니다.
+            1966년부터 이어온 연세대학교 중앙사진동아리 연영회입니다. 사진을 좋아하는
+            대학생들이 정기 출사와 사진 세미나로 함께 배우고, 사진전과 프로젝트를 통해
+            서로의 시선을 나눕니다.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
@@ -55,7 +59,7 @@ export default function HeroShowcase({
               data-testid="home-cta-about"
               className="pressable inline-flex border border-(--surface-strong-border) px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-(--text-primary) transition hover:bg-(--text-primary) hover:text-white"
             >
-              동아리 소개 보기
+              사진 동아리 활동 소개
             </Link>
           </div>
         </div>

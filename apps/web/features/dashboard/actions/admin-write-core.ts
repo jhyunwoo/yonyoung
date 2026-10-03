@@ -5,12 +5,20 @@ import { updateTag } from "next/cache";
 import { z } from "zod";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import {
+  isSessionUnavailableError,
+  type SessionUnavailableError,
+} from "@/features/auth/server/auth-server";
+import {
   assertAdminWriteAccess,
   type AdminWriteAccessScope,
 } from "@/features/dashboard/actions/admin-write-access";
 import { readCookieHeader } from "@/shared/http/http";
 import type { AdminCacheTag, PublicCacheTag } from "@/server/cache/tags";
-import { HonoApiError, honoRequest } from "@/server/http/hono-client";
+import {
+  HonoApiError,
+  INVALID_RESPONSE_CODE,
+  honoRequest,
+} from "@/server/http/hono-client";
 
 /**
  * 관리자 쓰기 서버 액션 공통 코어.
@@ -61,6 +69,17 @@ export const readCorrelationHeaders = async (): Promise<{
   };
 };
 
+/** 세션 API 장애를 서버 액션 실패 결과로 바꾼다 (예외로 던지면 프로덕션에서 원인이 가려진다). */
+export const toSessionUnavailableFailure = (
+  error: SessionUnavailableError,
+): AdminWriteActionFailure => ({
+  ok: false,
+  errorMessage: error.message,
+  status: 503,
+  code: "SESSION_UNAVAILABLE",
+  requestId: null,
+});
+
 /** 세션 확인 + 요청 범위(scope)에 맞는 관리자 쓰기 권한을 검증합니다 (UX 레벨, 최종 권한은 API가 판정). */
 export const requireAdminAccess = async (
   scope: AdminWriteAccessScope = "verified_member",
@@ -100,7 +119,14 @@ export const writeRequest = async <TResponse>(input: {
   accessScope?: AdminWriteAccessScope;
 }): Promise<AdminWriteActionResult<TResponse>> => {
   if (input.requireAdminAccess !== false) {
-    await requireAdminAccess(input.accessScope);
+    try {
+      await requireAdminAccess(input.accessScope);
+    } catch (error) {
+      if (isSessionUnavailableError(error)) {
+        return toSessionUnavailableFailure(error);
+      }
+      throw error;
+    }
   }
 
   const cookieHeader = await readCookieHeader();
@@ -127,6 +153,11 @@ export const writeRequest = async <TResponse>(input: {
     };
   } catch (error) {
     if (error instanceof HonoApiError) {
+      // 2xx였지만 응답을 해석하지 못한 경우 쓰기는 반영됐을 수 있으므로 캐시는 반드시 버린다.
+      // 그렇지 않으면 공개 페이지가 며칠짜리 캐시로 옛 데이터를 계속 보여준다.
+      if (error.code === INVALID_RESPONSE_CODE) {
+        tagsToUpdate(input.tags);
+      }
       return toAdminWriteActionFailure(error);
     }
 

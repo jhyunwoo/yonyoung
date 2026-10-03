@@ -1,9 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { unstable_dev } from "wrangler";
 
-let worker:
-  | Awaited<ReturnType<typeof unstable_dev>>
-  | null = null;
+let worker: Awaited<ReturnType<typeof unstable_dev>> | null = null;
 
 describe("worker runtime integration", () => {
   beforeAll(async () => {
@@ -73,10 +71,25 @@ describe("worker runtime integration", () => {
       expect(response.headers.get("content-security-policy")).toContain(
         "default-src 'none'",
       );
-      expect(response.headers.get("content-security-policy-report-only")).toBeNull();
+      expect(
+        response.headers.get("content-security-policy-report-only"),
+      ).toBeNull();
       expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     },
   );
+
+  it("public requests traverse the instrumented PublicApi entrypoint", async () => {
+    const response = await worker!.fetch("/api/public/unknown-endpoint", {
+      headers: {
+        cookie: "better-auth.session_token=invalid",
+        "x-request-id": "public-sentry-test",
+      },
+    });
+    expect(response.status).toBe(404);
+    expect(response.headers.get("x-request-id")).toBe("public-sentry-test");
+    expect(response.headers.get("set-cookie")).toBeNull();
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+  });
 
   it(
     "/ responds with HTML page containing status hooks",

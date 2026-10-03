@@ -63,6 +63,7 @@ import {
 import {
   createGenerationAction,
   deleteGenerationAction,
+  reorderGenerationsAction,
   updateGenerationAction,
 } from "@/features/dashboard/actions/generations";
 import {
@@ -312,6 +313,26 @@ const actionContracts: ActionContract[] = [
     responseSchema: apiGenerationSchema,
   },
   {
+    name: "기수 순서 변경",
+    invoke: () =>
+      reorderGenerationsAction({
+        items: [
+          { id: "generation-1", sortOrder: 59 },
+          { id: "generation-2", sortOrder: 58 },
+        ],
+      }),
+    path: "/generations/reorder",
+    method: "POST",
+    accessScope: "leadership",
+    tags: [
+      "admin:generations",
+      "admin:users",
+      "public:generations",
+      "public:photographers",
+    ],
+    responseSchema: "array",
+  },
+  {
     name: "기수 삭제",
     invoke: () => deleteGenerationAction("generation-1"),
     path: "/generations/generation-1",
@@ -447,7 +468,7 @@ describe("dashboard domain action contracts", () => {
           sortOrder: 0,
         },
       ]),
-    ).rejects.toThrow();
+    ).resolves.toMatchObject({ ok: false, status: 400, code: "VALIDATION_ERROR" });
     await expect(
       updateExhibitionImagesAction("exhibition-1", [
         {
@@ -455,7 +476,7 @@ describe("dashboard domain action contracts", () => {
           sortOrder: 1.5,
         },
       ]),
-    ).rejects.toThrow();
+    ).resolves.toMatchObject({ ok: false, status: 400, code: "VALIDATION_ERROR" });
     expect(writeRequestMock).not.toHaveBeenCalled();
   });
 });

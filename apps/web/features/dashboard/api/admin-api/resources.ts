@@ -46,6 +46,7 @@ import {
 import {
   createGenerationAction,
   deleteGenerationAction,
+  reorderGenerationsAction,
   updateGenerationAction,
 } from "@/features/dashboard/actions/generations";
 import {
@@ -101,6 +102,7 @@ export const adminResourceApi = {
   listGenerationMembers: (generationId: string) =>
     apiRequest.get<ApiGenerationMemberSummary[]>(`/generations/${generationId}/members`),
   updateGeneration: bindAdminWriteAction(updateGenerationAction),
+  reorderGenerations: bindAdminWriteAction(reorderGenerationsAction),
   deleteGeneration: bindAdminWriteAction(deleteGenerationAction),
 
   listActivities: (input: ApiListActivitiesQuery = {}) =>

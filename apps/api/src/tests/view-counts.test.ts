@@ -129,6 +129,28 @@ describe("D1ViewCountStore", () => {
     });
   });
 
+  it("ID 100개 조회도 D1 바인딩 한도(100)를 넘지 않게 나눠 조회한다", async () => {
+    const database = createViewCountD1Database();
+    const store = createD1ViewCountStore(database);
+    const ids = Array.from(
+      { length: 100 },
+      (_, index) => `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
+    );
+    for (const id of ids.slice(0, 3)) {
+      await store.recordView("activity", id);
+    }
+    const prepare = vi.spyOn(database, "prepare");
+
+    const counts = await store.getViewCounts("activity", ids);
+
+    expect(Object.keys(counts)).toHaveLength(3);
+    for (const [query] of prepare.mock.calls) {
+      const placeholderCount = (query.match(/\?/g) ?? []).length;
+      expect(placeholderCount).toBeLessThanOrEqual(100);
+    }
+    expect(prepare.mock.calls.length).toBeGreaterThan(1);
+  });
+
   it("빈 ID 목록 조회는 D1 쿼리 없이 빈 결과를 반환한다", async () => {
     const database = createViewCountD1Database();
     const prepare = vi.spyOn(database, "prepare");

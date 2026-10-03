@@ -3,6 +3,8 @@ import {
   PRESIDENT_ROLE,
   isAdminRoleValue,
   isUnverifiedRoleValue,
+  normalizeLegacyRole,
+  UNVERIFIED_ROLE,
   type CoreRole,
 } from "@yonyoung/contracts/auth-roles";
 import { hasCompletedRequiredProfileFields } from "@yonyoung/contracts/auth-profile";
@@ -120,7 +122,9 @@ export const canAccessAdminPage = (session: SessionWithRole): boolean => {
     return false;
   }
 
-  return !isUnverifiedRole(getRoleFromSession(session));
+  // API와 같은 규칙으로 정규화한다: 비어 있거나 알 수 없는 역할은 미인증으로 본다.
+  // 그렇지 않으면 대시보드에 들어가서 모든 API 호출이 거절되는 반쯤 깨진 화면을 보게 된다.
+  return normalizeLegacyRole(getRoleFromSession(session)) !== UNVERIFIED_ROLE;
 };
 
 /**
