@@ -68,7 +68,7 @@ pnpm test:integration
 ## Deployment
 
 ```bash
-pnpm --filter @yonyoung/api deploy
+pnpm --filter @yonyoung/api run deploy
 ```
 
 ### Workers Builds troubleshooting

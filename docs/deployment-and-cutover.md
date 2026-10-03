@@ -28,7 +28,7 @@ From the monorepo root:
 
 ```bash
 pnpm --filter @yonyoung/api deploy:dry-run
-pnpm --filter @yonyoung/api deploy
+pnpm --filter @yonyoung/api run deploy
 ```
 
 pnpm executes Wrangler in `apps/api`, preserving all relative config, asset and
@@ -61,7 +61,7 @@ These settings cannot be inferred from Git and must be confirmed during cutover.
 
 - connect `jhyunwoo/yonyoung` and the intended production branch;
 - set root directory/build context to the monorepo root;
-- set deploy command to `pnpm --filter @yonyoung/api deploy` (or make
+- set deploy command to `pnpm --filter @yonyoung/api run deploy` (or make
   `apps/api` the command working directory with equivalent behavior);
 - confirm Wrangler config location `apps/api/wrangler.jsonc`;
 - replace any stale build token without changing the Worker;
