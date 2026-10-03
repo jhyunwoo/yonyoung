@@ -48,9 +48,9 @@ Application-specific architecture remains documented in
 
 ## Prerequisites and install
 
-- Node `22.23.2` (see `.nvmrc`; pnpm 11 requires Node `>=22.13`)
+- Node `22.23.2` (see `.nvmrc`)
 - Corepack
-- pnpm `11.21.0`, pinned by the root `packageManager` field
+- pnpm `12.8.1`, pinned by the root `packageManager` field
 
 ```bash
 nvm use
@@ -178,3 +178,15 @@ complete.
 - [`apps/web/README.md`](apps/web/README.md)
 - [`apps/api/README.md`](apps/api/README.md)
 - [`apps/api/docs/permissions.md`](apps/api/docs/permissions.md)
+
+## Dependency compatibility
+
+Direct dependencies are updated to the npm `latest` releases. The following compatibility constraints are intentional:
+
+- Type checking uses TypeScript 7.0.2 through the `typescript7` alias. TypeScript 6.0.3 supplies the JavaScript compiler API required by TypeScript ESLint 8 and Next.js builds.
+- The web ESLint configuration wraps Next.js plugins with the official `@eslint/compat` adapter to support ESLint 10 while retaining existing React rules.
+- The API keeps Vitest and its coverage/runner/snapshot packages at 4.1.11 because the latest Cloudflare Workers test pool (0.22.0) requires Vitest 4. Web and contracts use Vitest 5 with an explicit Vite dependency.
+
+Recheck these constraints when updating TypeScript ESLint and the Cloudflare Workers test pool.
+
+Better Auth 1.7.3+ removes the account `issuer` requirement introduced in 1.7.0–1.7.2. Apply API migration `0011_goofy_galactus.sql` before deploying the updated API. It preserves account rows, replaces the issuer index with a unique `(provider_id, account_id)` index, and removes `issuer`. Duplicate provider/account identities cause the migration to stop; resolve them without merging different users. Remote migrations are a separate deployment step.

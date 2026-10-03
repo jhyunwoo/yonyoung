@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { useLayoutEffect } from "react";
 import userEvent from "@testing-library/user-event";
 
 import {
@@ -45,6 +46,21 @@ const getPreloadImage = (key: string): HTMLElement =>
   screen.getByTestId(`gallery-preload-${key}`);
 
 describe("PhotoGallery 레이아웃", () => {
+  it("handles a photo click before passive effects attach native listeners", async () => {
+    function ClickDuringMount() {
+      useLayoutEffect(() => {
+        document
+          .querySelector<HTMLButtonElement>(
+            '[data-testid="gallery-photo-button-with-dimensions"]',
+          )
+          ?.click();
+      }, []);
+      return <PhotoGallery items={makeItems()} fallbackAspect={4 / 3} refAspect={1.5} />;
+    }
+    render(<ClickDuringMount />);
+    expect(await screen.findByTestId("gallery-lightbox")).toBeVisible();
+  });
+
   it("justified rows 컨테이너로 렌더링되고 CSS 컬럼을 쓰지 않는다", () => {
     renderGallery();
 

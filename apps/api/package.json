@@ -12,7 +12,7 @@
     "format": "prettier --write . --ignore-unknown",
     "format:check": "prettier --check . --ignore-unknown",
     "lint": "eslint src --max-warnings 0",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "node ./node_modules/typescript7/lib/tsc.js --noEmit",
     "quality": "pnpm run format:check && pnpm run lint && pnpm run typecheck",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply yonyoung-db --local",
@@ -31,33 +31,36 @@
     "security:audit": "node ../../tooling/audit-api-production.mjs"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.1121.0",
-    "@aws-sdk/s3-request-presigner": "3.1121.0",
-    "@hono/zod-openapi": "1.6.1",
-    "@scalar/hono-api-reference": "0.12.0",
-    "@sentry/cloudflare": "10.75.2",
+    "@aws-sdk/client-s3": "3.1145.0",
+    "@aws-sdk/s3-request-presigner": "3.1145.0",
+    "@hono/zod-openapi": "1.6.3",
+    "@scalar/hono-api-reference": "0.12.9",
+    "@sentry/cloudflare": "11.3.0",
     "@yonyoung/contracts": "workspace:*",
-    "better-auth": "1.7.2",
-    "dotenv": "17.4.2",
-    "drizzle-orm": "0.45.2",
-    "hono": "4.13.5",
+    "better-auth": "1.7.7",
+    "dotenv": "18.0.5",
+    "drizzle-orm": "0.45.3",
+    "hono": "4.13.12",
     "xss": "1.0.15",
-    "zod": "4.5.4"
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "0.22.0",
-    "@eslint/js": "9.39.5",
-    "@types/node": "26.4.0",
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.6.4",
     "@vitest/coverage-v8": "4.1.11",
     "@yonyoung/eslint-config": "workspace:*",
     "@yonyoung/typescript-config": "workspace:*",
-    "drizzle-kit": "0.31.10",
-    "eslint": "9.39.5",
-    "prettier": "3.9.6",
+    "drizzle-kit": "0.31.11",
+    "eslint": "10.12.0",
+    "prettier": "3.9.9",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.68.0",
+    "typescript-eslint": "8.71.0",
     "vitest": "4.1.11",
-    "wrangler": "^4.147.0"
+    "wrangler": "^4.147.0",
+    "typescript7": "npm:typescript@7.0.2",
+    "@vitest/runner": "4.1.11",
+    "@vitest/snapshot": "4.1.11"
   },
-  "packageManager": "pnpm@11.24.0+sha512.bd27e345e976dcb0be0b7a1228217b049a817e21b1f355c90dbe7dc46671895a8bc1e6d06c24554505ea93ea0b45f489a27ec1bfbc8de6a9659fca0f16fa0000"
+  "packageManager": "pnpm@12.8.1+sha512.f64ba907507f5ceafe06c8d38e6052d0179444580ec1279ddd5bfc11cb48aa8a2644b66598e07e761da84872a9fc57d5f902b87fa49d024198d558612aabbe45"
 }

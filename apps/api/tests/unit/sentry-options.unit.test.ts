@@ -1,8 +1,27 @@
 import { describe, expect, it } from "vitest";
 import type { ErrorEvent } from "@sentry/cloudflare";
-import { scrubSentryEvent } from "../../src/shared/observability/sentry-options";
+import {
+  scrubSentryEvent,
+  sentryOptions,
+} from "../../src/shared/observability/sentry-options";
 
 describe("Sentry event privacy", () => {
+  it("disables sensitive data collection and drops logs with the v11 options", () => {
+    const options = sentryOptions({ SENTRY_DSN: "https://key@example.com/1" });
+    expect(options.dataCollection).toMatchObject({
+      userInfo: false,
+      cookies: false,
+      httpBodies: [],
+      databaseQueryData: false,
+      genAI: { inputs: false, outputs: false },
+      queues: false,
+      graphQL: { document: false, variables: false },
+    });
+    expect(
+      options.beforeSendLog?.({ level: "info", message: "private log" }),
+    ).toBeNull();
+  });
+
   it("keeps the stack while removing request credentials and user context", () => {
     const event: ErrorEvent = {
       type: undefined,

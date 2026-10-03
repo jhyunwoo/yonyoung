@@ -17,7 +17,7 @@ export function instrumentSentryHandler(
 ): FetchHandler {
   const instrumented = withSentry(options, handler);
   return {
-    // SDK 10.75's invocation wrapper isolates the isolation scope, but reuses
+    // The invocation wrapper isolates the isolation scope, but reuses
     // the current scope. Clone it before init binds a client so concurrent
     // requests cannot overwrite one another's client or deduplication state.
     fetch: (request, env, ctx) =>

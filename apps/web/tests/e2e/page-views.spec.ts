@@ -20,8 +20,7 @@ test.describe("page view tracking", () => {
     });
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(800);
-    expect(pageViewCalled).toBe(true);
+    await expect.poll(() => pageViewCalled).toBe(true);
   });
 
   test("활동 상세 방문 시 activity page view API가 호출된다", async ({ page }) => {
@@ -41,9 +40,12 @@ test.describe("page view tracking", () => {
     });
 
     await page.goto("/archive/records/act-1", { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(800);
-    expect(capturedBody.pageType).toBe("activity");
-    expect(capturedBody.resourceId).toBe("act-1");
+    await expect
+      .poll(() => capturedBody)
+      .toMatchObject({
+        pageType: "activity",
+        resourceId: "act-1",
+      });
   });
 
   test("전시 상세 방문 시 exhibition page view API가 호출된다", async ({ page }) => {
@@ -63,8 +65,11 @@ test.describe("page view tracking", () => {
     });
 
     await page.goto("/archive/exhibitions/exh-1", { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(800);
-    expect(capturedBody.pageType).toBe("exhibition");
-    expect(capturedBody.resourceId).toBe("exh-1");
+    await expect
+      .poll(() => capturedBody)
+      .toMatchObject({
+        pageType: "exhibition",
+        resourceId: "exh-1",
+      });
   });
 });

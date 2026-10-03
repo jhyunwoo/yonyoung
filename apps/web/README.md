@@ -24,14 +24,14 @@
 ### 요구 사항
 
 - Node.js `22.23.2` (저장소 루트 `.nvmrc`)
-- pnpm `11.21.0` (저장소 루트 `package.json#packageManager`)
+- pnpm `12.8.1` (저장소 루트 `package.json#packageManager`)
 - 전체 E2E 테스트를 실행할 경우 Chromium과 Linux 런타임 라이브러리
 
-### TypeScript 5와 7을 함께 설치하는 이유
+### TypeScript 6과 7을 함께 설치하는 이유
 
-`pnpm typecheck`는 네이티브 포팅된 TypeScript 7(`typescript7` alias)로 돌아갑니다. 같은 프로젝트 검사가 TS 5.9 기준 약 45초에서 약 7초로 줄어듭니다.
+`pnpm typecheck`는 TypeScript 7.0.2(`typescript7` alias)의 네이티브 컴파일러로 실행합니다. API와 공용 contracts 패키지도 같은 컴파일러를 사용합니다.
 
-`typescript@5.9.3`도 그대로 남겨 둡니다. TypeScript 7은 JS 컴파일러 API(`lib/typescript.js`)를 더 이상 제공하지 않는데, `eslint-config-next/typescript`가 쓰는 `typescript-eslint`가 그 API를 직접 `require`하기 때문입니다(peer 범위도 `<6.1.0`). 루트 `typescript`를 7로 바꾸면 `pnpm lint`가 깨집니다. `next build`의 내장 타입 검사도 `typescript` 패키지를 resolve해서 그 `tsc`를 실행하므로 TS 5.9를 씁니다. typescript-eslint가 TS 7을 지원하면 alias를 지우고 루트를 7로 올리면 됩니다.
+`typescript@6.0.3`은 TypeScript ESLint와 Next.js 빌드가 사용하는 JS 컴파일러 API를 제공합니다. 현재 TypeScript ESLint 8의 지원 범위는 `<6.1.0`이며 TypeScript 7은 기존 JS API를 제공하지 않습니다. 따라서 CLI 타입 검사는 최신 TypeScript 7로 실행하고, JS API를 사용하는 도구에는 최신 호환 버전인 TypeScript 6을 제공합니다.
 
 Corepack을 쓰는 환경에서는 저장소에 고정된 pnpm 버전을 그대로 사용할 수 있습니다.
 

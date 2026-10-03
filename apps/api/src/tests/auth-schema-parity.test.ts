@@ -4,7 +4,7 @@ import { getAuthTables } from "better-auth/db";
 import { describe, expect, it } from "vitest";
 import { account, session, user, verification } from "../platform/db/schema";
 
-// Better Auth는 버전 업그레이드에서 코어 모델에 필드를 추가한다(1.7의 account.issuer 등).
+// Better Auth는 버전 업그레이드에서 코어 모델에 필드를 추가하거나 제거한다.
 // Drizzle 스키마가 따라가지 않으면 어댑터가 런타임에서만
 // `The field "x" does not exist in the schema for the model "y"`로 터지므로,
 // 여기서 두 스키마의 필드 집합을 정적으로 대조한다.
@@ -27,6 +27,19 @@ describe("Better Auth 코어 스키마 ↔ Drizzle 스키마 정합성", () => {
 
       expect(expectedFields.length).toBeGreaterThan(0);
       expect(declaredFields).toEqual(expect.arrayContaining(expectedFields));
+    },
+  );
+
+  it.each(Object.keys(drizzleTables) as (keyof typeof drizzleTables)[])(
+    "%s 모델에 Better Auth가 쓰지 않는 필수 컬럼이 없다",
+    (model) => {
+      const expectedFields = Object.keys(authTables[model]?.fields ?? {});
+      const unwrittenRequiredFields = Object.entries(getTableColumns(drizzleTables[model]))
+        .filter(([key, column]) =>
+          !expectedFields.includes(key) && column.notNull && !column.hasDefault && !column.primary,
+        )
+        .map(([key]) => key);
+      expect(unwrittenRequiredFields).toEqual([]);
     },
   );
 

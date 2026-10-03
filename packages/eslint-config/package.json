@@ -20,6 +20,6 @@
     "typecheck": "node --check base.js && node --check next.js && node --check worker.js"
   },
   "devDependencies": {
-    "prettier": "3.9.6"
+    "prettier": "3.9.9"
   }
 }

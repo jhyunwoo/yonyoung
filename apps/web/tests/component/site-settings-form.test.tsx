@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import userEvent from "@testing-library/user-event";
 import { DEFAULT_SITE_SETTINGS } from "@yonyoung/contracts";
 
@@ -32,6 +33,21 @@ describe("SiteSettingsForm", () => {
     getSiteSettingsMock.mockResolvedValue({ ...DEFAULT_SITE_SETTINGS });
     listAuditLogsMock.mockReset();
     listAuditLogsMock.mockResolvedValue([]);
+  });
+
+  it("keeps server-rendered controls disabled until event handlers are mounted", () => {
+    const container = document.createElement("div");
+    container.innerHTML = renderToString(
+      <SiteSettingsForm initialSettings={{ ...DEFAULT_SITE_SETTINGS }} />,
+    );
+    const inputs = container.querySelectorAll("input, textarea");
+    expect(inputs.length).toBeGreaterThan(0);
+    for (const input of inputs) {
+      expect(input).toBeDisabled();
+    }
+    expect(
+      container.querySelector('[data-testid="site-settings-submit"]'),
+    ).toBeDisabled();
   });
 
   it("서버가 내려 준 실제 설정으로 폼을 채우고 마운트 시 다시 읽지 않는다", () => {

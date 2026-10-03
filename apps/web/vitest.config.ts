@@ -1,16 +1,27 @@
 import path from "node:path";
 import { defineConfig } from "vitest/config";
 
-const vitestInlineConfig = {
+export default defineConfig({
   test: {
-    environment: "jsdom",
     testTimeout: 10_000,
-    environmentMatchGlobs: [
-      ["tests/unit/**/*.test.tsx", "node"],
-      ["tests/unit/**/*.test.ts", "node"],
-      ["features/**/*.test.ts", "node"],
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "unit",
+          environment: "node",
+          include: ["tests/unit/**/*.test.{ts,tsx}", "features/**/*.test.ts"],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "component",
+          environment: "jsdom",
+          include: ["tests/component/**/*.test.{ts,tsx}"],
+        },
+      },
     ],
-    include: ["**/*.test.ts", "**/*.test.tsx"],
     setupFiles: ["tests/setup/vitest.setup.ts"],
     coverage: {
       provider: "v8",
@@ -42,6 +53,4 @@ const vitestInlineConfig = {
       "server-only": path.resolve(import.meta.dirname, "tests/unit/stubs/server-only.ts"),
     },
   },
-} as const;
-
-export default defineConfig(vitestInlineConfig as never);
+});

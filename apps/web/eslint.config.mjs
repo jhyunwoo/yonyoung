@@ -1,3 +1,4 @@
+import { fixupConfigRules, fixupPluginRules } from "@eslint/compat";
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
@@ -6,8 +7,9 @@ import tseslint from "typescript-eslint";
 import { nextArchitectureRules } from "@yonyoung/eslint-config/next";
 
 const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
+  // Next.js ships React rules that still call context APIs removed in ESLint 10.
+  ...fixupConfigRules(nextVitals),
+  ...fixupConfigRules(nextTs),
   {
     rules: {
       "react-hooks/set-state-in-effect": "error",
@@ -30,7 +32,7 @@ const eslintConfig = defineConfig([
       },
     },
     plugins: {
-      "@typescript-eslint": tseslint.plugin,
+      "@typescript-eslint": fixupPluginRules(tseslint.plugin),
     },
     rules: {
       "@typescript-eslint/await-thenable": "error",

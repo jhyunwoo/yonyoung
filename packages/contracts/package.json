@@ -23,27 +23,29 @@
     "./users": "./src/api/users.ts"
   },
   "scripts": {
-    "build": "tsc --noEmit",
+    "build": "node ./node_modules/typescript7/lib/tsc.js --noEmit",
     "lint": "eslint src tests --max-warnings 0",
     "format:check": "prettier --check . --ignore-unknown",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "node ./node_modules/typescript7/lib/tsc.js --noEmit",
     "test": "vitest run",
     "test:unit": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "zod": "4.5.4"
+    "zod": "4.6.5"
   },
   "devDependencies": {
-    "@eslint/js": "9.39.5",
-    "@types/node": "26.4.0",
-    "@vitest/coverage-v8": "4.1.11",
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.6.4",
+    "@vitest/coverage-v8": "5.0.3",
     "@yonyoung/eslint-config": "workspace:*",
     "@yonyoung/typescript-config": "workspace:*",
-    "eslint": "9.39.5",
-    "prettier": "3.9.6",
-    "typescript": "5.9.3",
-    "typescript-eslint": "8.68.0",
-    "vitest": "4.1.11"
+    "eslint": "10.12.0",
+    "prettier": "3.9.9",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.0",
+    "vitest": "5.0.3",
+    "typescript7": "npm:typescript@7.0.2",
+    "vite": "8.3.2"
   }
 }

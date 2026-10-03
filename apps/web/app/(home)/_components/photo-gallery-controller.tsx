@@ -8,6 +8,7 @@ import {
   useState,
   type CSSProperties,
   type ReactNode,
+  type MouseEvent as ReactMouseEvent,
 } from "react";
 import type { PhotoGalleryItem } from "./photo-gallery";
 import { PhotoLightbox } from "./photo-lightbox";
@@ -81,19 +82,21 @@ export function PhotoGalleryController({
     setLoadedKeys((current) => (current[key] ? current : { ...current, [key]: true }));
   }, []);
 
+  // Use React's delegated handler so clicks during hydration are replayed;
+  // a native listener attached in a passive effect loses those early clicks.
+  const onClick = (event: ReactMouseEvent<HTMLUListElement>) => {
+    const index = readTileIndex(event.target);
+    if (index !== null) {
+      setOpenIndex(index);
+      setIsLightboxOpen(true);
+    }
+  };
+
   useEffect(() => {
     const list = listRef.current;
     if (!list) {
       return;
     }
-
-    const onClick = (event: MouseEvent) => {
-      const index = readTileIndex(event.target);
-      if (index !== null) {
-        setOpenIndex(index);
-        setIsLightboxOpen(true);
-      }
-    };
 
     const onPointerOver = (event: PointerEvent) => {
       const index = readTileIndex(event.target);
@@ -135,13 +138,11 @@ export function PhotoGalleryController({
       );
     };
 
-    list.addEventListener("click", onClick);
     list.addEventListener("pointerover", onPointerOver);
     list.addEventListener("focusin", onFocusIn);
     list.addEventListener("load", onLoadCapture, true);
 
     return () => {
-      list.removeEventListener("click", onClick);
       list.removeEventListener("pointerover", onPointerOver);
       list.removeEventListener("focusin", onFocusIn);
       list.removeEventListener("load", onLoadCapture, true);
@@ -202,6 +203,7 @@ export function PhotoGalleryController({
     <>
       <ul
         ref={listRef}
+        onClick={onClick}
         className="photo-gallery"
         style={{ "--gallery-ref-aspect": String(refAspect) } as CSSProperties}
         data-testid={dataTestId}

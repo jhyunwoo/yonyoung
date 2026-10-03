@@ -35,6 +35,7 @@ describe("admin read service", () => {
   const fetchMock = vi.fn();
 
   beforeEach(() => {
+    vi.stubEnv("API_BASE_URL", "https://api.example.com");
     readServerForwardedRequestContextMock.mockResolvedValue({
       host: "yonyoung.example",
       protocol: "https",
@@ -46,6 +47,7 @@ describe("admin read service", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
   });
 
   it("성공 응답은 계약 스키마로 검증한 데이터를 돌려준다", async () => {

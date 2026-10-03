@@ -164,8 +164,10 @@ const collectViolations = (): ContractViolation[] => {
 };
 
 describe("button testid static contract", () => {
+  // Parsing every app source file with the TS 6 API can exceed the normal
+  // per-test timeout when CI runs lint, coverage, and builds together.
   it("ensures all button-like elements define valid data-testid", () => {
     const violations = collectViolations();
     expect(violations).toEqual([]);
-  });
+  }, 30_000);
 });

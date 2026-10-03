@@ -45,14 +45,23 @@ describe("browser Sentry loading", () => {
     expect(init).toHaveBeenCalledWith(
       expect.objectContaining({
         dsn: "https://key@sentry.invalid/1",
-        sendDefaultPii: false,
+        dataCollection: expect.objectContaining({
+          userInfo: false,
+          cookies: false,
+          httpBodies: [],
+          genAI: { inputs: false, outputs: false },
+          databaseQueryData: false,
+          queues: false,
+          graphQL: { document: false, variables: false },
+        }),
         tracesSampleRate: 0,
         replaysSessionSampleRate: 0,
         replaysOnErrorSampleRate: 0,
-        enableLogs: false,
+        beforeSendLog: expect.any(Function),
         beforeSend: expect.any(Function),
       }),
     );
+    expect(init.mock.calls[0][0].beforeSendLog({ body: "private log" })).toBeNull();
     const scrub = init.mock.calls[0][0].beforeSend;
     expect(scrub({ request: { url: "https://example.com/?token=secret" } })).toEqual(
       scrubSentryEvent({ request: { url: "https://example.com/?token=secret" } }),

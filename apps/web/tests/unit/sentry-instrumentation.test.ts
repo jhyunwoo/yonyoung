@@ -21,7 +21,15 @@ describe("Sentry server initialization", () => {
     expect(init).toHaveBeenCalledWith(
       expect.objectContaining({
         dsn: "https://key@example.com/1",
-        sendDefaultPii: false,
+        dataCollection: expect.objectContaining({
+          userInfo: false,
+          cookies: false,
+          httpBodies: [],
+          genAI: { inputs: false, outputs: false },
+          databaseQueryData: false,
+          queues: false,
+          graphQL: { document: false, variables: false },
+        }),
         tracesSampleRate: 0,
       }),
     );

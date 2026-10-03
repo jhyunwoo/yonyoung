@@ -11,6 +11,7 @@ import {
 import { apiUpdateSiteSettingsInputSchema } from "@yonyoung/contracts/schemas";
 import AuditHistoryPanel from "@/app/(dashboard)/_components/audit-history-panel";
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
+import { useIsMounted } from "@/shared/react/use-is-mounted";
 import { useGuardedSubmit } from "@/shared/react/use-guarded-submit";
 
 const inputClassName =
@@ -98,6 +99,7 @@ type SiteSettingsFormProps = {
 
 export default function SiteSettingsForm({ initialSettings }: SiteSettingsFormProps) {
   const router = useRouter();
+  const isMounted = useIsMounted();
   const [formState, setFormState] = useState<ApiSiteSettings>(initialSettings);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -179,6 +181,7 @@ export default function SiteSettingsForm({ initialSettings }: SiteSettingsFormPr
                 오픈 카톡방 링크
               </span>
               <input
+                disabled={!isMounted}
                 type="url"
                 value={formState.footerOpenChatUrl}
                 onChange={(event) => updateField("footerOpenChatUrl", event.target.value)}
@@ -201,6 +204,7 @@ export default function SiteSettingsForm({ initialSettings }: SiteSettingsFormPr
               <div className="flex items-center gap-1">
                 <p>@</p>
                 <input
+                  disabled={!isMounted}
                   type="text"
                   value={formState.footerInstagramId}
                   onChange={(event) =>
@@ -225,6 +229,7 @@ export default function SiteSettingsForm({ initialSettings }: SiteSettingsFormPr
             <label className="flex flex-col gap-2">
               <span className="text-sm font-semibold text-ink-secondary">이메일</span>
               <input
+                disabled={!isMounted}
                 type="email"
                 value={formState.footerEmail}
                 onChange={(event) => updateField("footerEmail", event.target.value)}
@@ -243,6 +248,7 @@ export default function SiteSettingsForm({ initialSettings }: SiteSettingsFormPr
             <label className="flex flex-col gap-2">
               <span className="text-sm font-semibold text-ink-secondary">전화번호</span>
               <input
+                disabled={!isMounted}
                 type="text"
                 value={formState.footerPhone}
                 onChange={(event) => updateField("footerPhone", event.target.value)}
@@ -262,6 +268,7 @@ export default function SiteSettingsForm({ initialSettings }: SiteSettingsFormPr
           <label className="flex flex-col gap-2">
             <span className="text-sm font-semibold text-ink-secondary">주소</span>
             <textarea
+              disabled={!isMounted}
               value={formState.footerAddress}
               onChange={(event) => updateField("footerAddress", event.target.value)}
               aria-invalid={Boolean(fieldErrors.footerAddress)}
@@ -282,6 +289,7 @@ export default function SiteSettingsForm({ initialSettings }: SiteSettingsFormPr
               <label className="flex flex-col gap-2">
                 <span className="text-sm font-semibold text-ink-secondary">은행</span>
                 <input
+                  disabled={!isMounted}
                   type="text"
                   value={formState.donateBankName}
                   onChange={(event) => updateField("donateBankName", event.target.value)}
@@ -299,6 +307,7 @@ export default function SiteSettingsForm({ initialSettings }: SiteSettingsFormPr
               <label className="flex flex-col gap-2">
                 <span className="text-sm font-semibold text-ink-secondary">계좌번호</span>
                 <input
+                  disabled={!isMounted}
                   type="text"
                   value={formState.donateAccountNumber}
                   onChange={(event) =>
@@ -318,6 +327,7 @@ export default function SiteSettingsForm({ initialSettings }: SiteSettingsFormPr
               <label className="flex flex-col gap-2">
                 <span className="text-sm font-semibold text-ink-secondary">예금주</span>
                 <input
+                  disabled={!isMounted}
                   type="text"
                   value={formState.donateAccountHolder}
                   onChange={(event) =>
@@ -340,7 +350,7 @@ export default function SiteSettingsForm({ initialSettings }: SiteSettingsFormPr
             <FormSubmitButton
               pending={isSaving}
               data-testid="site-settings-submit"
-              disabled={isSaving}
+              disabled={!isMounted || isSaving}
               className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition hover:bg-primary-active disabled:cursor-not-allowed disabled:bg-hairline-strong"
               idleLabel="저장"
               pendingLabel="저장 중..."
