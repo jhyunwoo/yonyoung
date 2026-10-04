@@ -2,6 +2,7 @@
 import "server-only";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { cacheLife } from "next/cache";
 import { ImageResponse } from "next/og";
 
 /** Open Graph 권장 크기. 각 opengraph-image 라우트가 `size`로 그대로 내보낸다. */
@@ -33,7 +34,7 @@ export const truncateOgText = (value: string, maxLength: number): string => {
 };
 
 /**
- * 로컬 자산은 요청과 무관하므로 모듈 스코프에서 한 번만 읽어 data URI로 인라인한다.
+ * 로컬 자산은 요청과 무관하므로 data URI로 인라인한다.
  * 예전 구현은 `headers()`로 요청 origin을 만들어 로고를 HTTP로 가져왔는데, 그 때문에
  * OG 라우트가 요청 시점 렌더링으로 고정돼 크롤러가 올 때마다 오리진에서 PNG를 구웠다.
  */
@@ -41,9 +42,6 @@ const readLogoDataUrl = async (fileName: string): Promise<string> => {
   const bytes = await readFile(join(process.cwd(), "public", fileName), "base64");
   return `data:image/png;base64,${bytes}`;
 };
-
-const blackLogoPromise = readLogoDataUrl("yonyoung-logo-black.png");
-const whiteLogoPromise = readLogoDataUrl("yonyong-logo-white.png");
 
 const loadFont = async (url: string): Promise<ArrayBuffer | null> => {
   try {
@@ -61,14 +59,36 @@ const loadFont = async (url: string): Promise<ArrayBuffer | null> => {
   }
 };
 
-const regularFontPromise = loadFont(FONT_REGULAR_URL);
-const boldFontPromise = loadFont(FONT_BOLD_URL);
+/**
+ * 폰트와 로고를 한 번 읽어 캐시한다.
+ *
+ * 반드시 `"use cache"` 안에서 읽어야 한다. 게시물 OG 라우트는 빌드 뒤 새 id의 첫 요청을
+ * 프리렌더로 처리하는데, 프리렌더는 캐시가 채워지길 기다린 뒤 한 번 더 실행하고 두 번째
+ * 실행이 한 틱 안에 끝나지 않으면 `used IO that was not cached`로 500이 된다. 예전처럼
+ * 모듈 스코프 프로미스로 읽으면 프리렌더가 그 I/O를 추적하지 못해 기다리지 않으므로,
+ * 서버가 막 뜬 뒤 첫 OG 요청이 폰트를 받는 동안 두 번째 실행에 들어가 실패했다.
+ */
+const loadOgAssets = async () => {
+  "use cache";
 
-const getKoreanFonts = async () => {
-  const [regularFont, boldFont] = await Promise.all([
-    regularFontPromise,
-    boldFontPromise,
+  const [regularFont, boldFont, blackLogo, whiteLogo] = await Promise.all([
+    loadFont(FONT_REGULAR_URL),
+    loadFont(FONT_BOLD_URL),
+    readLogoDataUrl("yonyoung-logo-black.png"),
+    readLogoDataUrl("yonyong-logo-white.png"),
   ]);
+
+  // 폰트를 못 받았으면 짧게만 캐시해 몇 분 뒤 다시 시도한다 (`og-cover-image.ts`와 같은 이유로 `minutes`).
+  if (regularFont && boldFont) {
+    cacheLife("max");
+  } else {
+    cacheLife("minutes");
+  }
+
+  return { regularFont, boldFont, blackLogo, whiteLogo };
+};
+
+const toKoreanFonts = (regularFont: ArrayBuffer | null, boldFont: ArrayBuffer | null) => {
   const fonts: Array<{
     name: string;
     data: ArrayBuffer;
@@ -355,11 +375,8 @@ const TextCard = ({
  * @remarks 요청 시점 API를 쓰지 않으므로 이 라우트들은 빌드 시점에 PNG로 구워집니다.
  */
 export const renderOgCard = async (input: OgCardInput): Promise<ImageResponse> => {
-  const [fonts, blackLogo, whiteLogo] = await Promise.all([
-    getKoreanFonts(),
-    blackLogoPromise,
-    whiteLogoPromise,
-  ]);
+  const { regularFont, boldFont, blackLogo, whiteLogo } = await loadOgAssets();
+  const fonts = toKoreanFonts(regularFont, boldFont);
 
   const title = truncateOgText(input.title, MAX_TITLE_LENGTH);
   const description = truncateOgText(input.description, MAX_DESCRIPTION_LENGTH);
