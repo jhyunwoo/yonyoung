@@ -224,12 +224,13 @@ api.yonyoung.moveto.kr/mcp  ──▶  API Worker: MCP 핸들러
    - 토큰은 무작위 256비트 값이다. 10분 동안 유효하고, 한 번만 쓸 수 있으며, 발급한 사용자와 purpose에 묶인다.
 2. Claude가 코드 실행 샌드박스에서 `curl -T /mnt/user-data/uploads/<파일> <put_url>`을 실행한다.
 3. `PUT /mcp/uploads/{token}` 처리 순서는 다음과 같다.
-   1. 토큰 해시로 행을 찾고, 조건부 UPDATE(`WHERE status = 'pending' AND expires_at > now`)로 `pending → receiving`을 전이한다. 영향 행이 0이면 거부한다. 동시 PUT 중 이 전이를 통과하는 요청은 하나뿐이다.
-   2. `Content-Length`가 선언 크기와 같고 100MB 이하인지 확인한다.
-   3. 본문을 R2 바인딩에 직접 스트리밍한다.
-   4. 형식을 검증한다(5.4). 실패하면 `receiving → failed`로 바꾸고, 객체를 지우고, 예약을 해제한다.
-   5. 저장이 끝나면 `receiving → completed`로 바꾸고 용량 예약을 정산한다.
-   - 상태 전이는 모두 조건부 UPDATE로 처리한다. 첫 단계의 `pending → receiving` 전이가 동시 재사용을 막는다.
+   1. 토큰 해시로 행을 찾고, 상태가 `pending`이며 만료 전인지 확인한다.
+   2. `Content-Length`를 확인한다. 없으면 411, 선언 크기와 다르거나 100MB를 넘으면 400으로 거부한다. 이 단계에서 거부되면 행은 `pending`으로 남는다.
+   3. 조건부 UPDATE(`WHERE status = 'pending' AND expires_at > now`)로 `pending → receiving`을 전이한다. 영향 행이 0이면 거부한다. 동시 PUT 중 이 전이를 통과하는 요청은 하나뿐이다.
+   4. 본문을 R2 바인딩에 직접 스트리밍한다.
+   5. 형식을 검증한다(5.4).
+   6. 저장이 끝나면 `receiving → completed`로 바꾸고 용량 예약을 정산한다.
+   - 3단계 이후(스트리밍, 형식 검증, 저장)에 실패하면 `receiving → failed`로 바꾸고, 객체를 지우고, 예약을 해제한다. 전이 이후의 모든 실패 경로는 `failed`로 끝나므로 `receiving` 행이 남지 않는다.
    - 이 요청에는 Bearer 토큰이 필요 없다. URL의 업로드 토큰이 자격 증명이다.
 4. `curl`이 실패하면 Claude가 사용자에게 `browser_url`을 안내한다.
    - 이 페이지는 로그인한 토큰 소유자만 열 수 있다. 끌어다 놓기와 진행률을 보여준다.
@@ -246,7 +247,7 @@ api.yonyoung.moveto.kr/mcp  ──▶  API Worker: MCP 핸들러
 - 실제 크기가 선언 크기와 다르면 거부하고 객체를 지운다.
 - MIME 허용 목록은 기존 `ALLOWED_*_CONTENT_TYPES`를 쓴다. 파일 앞부분의 매직 바이트가 선언 MIME과 맞아야 한다.
 - 이미지는 헤더에서 가로·세로 픽셀을 읽는다(PNG, JPEG, WebP, GIF, AVIF, HEIC 중 허용 목록에 있는 형식). 읽지 못하면 width/height 없이 진행한다. 기존 필드는 선택 값이다.
-- 만료된 `pending` 업로드와 `failed` 업로드는 예약을 해제한다. R2에 남은 객체는 기존 고아 객체 정리 크론(`orphan-sweep.ts`)이 치운다.
+- 만료된 `pending` 행과 `failed` 행은 예약을 해제한다. R2에 남은 객체는 기존 고아 객체 정리 크론(`orphan-sweep.ts`)이 치운다.
 - MCP 업로드 한도는 파일당 100MB다. 넘으면 대시보드에서 올리라고 안내한다. 대시보드 자체의 1GB 한도는 바꾸지 않는다.
 
 ### 5.5 `mcp_uploads` 테이블 (D1)
