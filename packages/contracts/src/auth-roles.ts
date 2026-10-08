@@ -10,6 +10,17 @@ export const CORE_ROLE_VALUES = [
 
 export type CoreRole = (typeof CORE_ROLE_VALUES)[number];
 
+/** 화면 표시용 역할 이름. 웹 `buildMemberRoleLabel`과 같은 값을 쓴다. */
+export const CORE_ROLE_LABELS: Record<CoreRole, string> = {
+  president: "회장",
+  vice_president: "부회장",
+  manager: "부장",
+  new_member: "신입회원",
+  associate_member: "준회원",
+  regular_member: "정회원",
+  unverified: "미승인",
+};
+
 export const ADMIN_ROLE_VALUES = [
   "president",
   "vice_president",
