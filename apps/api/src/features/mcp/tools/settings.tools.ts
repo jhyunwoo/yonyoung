@@ -34,6 +34,13 @@ export const settingsTools = [
     }),
     handler: (args, context) =>
       withUploadErrors(context, async () => {
+        const imageCount =
+          args.data.promotionImageUrls.length +
+          (args.promotion_files?.length ?? 0) +
+          (args.promotion_upload_ids?.length ?? 0);
+        if (imageCount > MAX_PROMOTION_IMAGES) {
+          return toolFailure(`홍보 이미지는 최대 ${MAX_PROMOTION_IMAGES}장입니다.`);
+        }
         const files = await context.files.resolve({
           purpose: "recruiting_image",
           chatGptFiles: args.promotion_files,
@@ -43,9 +50,6 @@ export const settingsTools = [
           ...args.data.promotionImageUrls,
           ...files.map((file) => file.publicUrl),
         ];
-        if (promotionImageUrls.length > MAX_PROMOTION_IMAGES) {
-          return toolFailure(`홍보 이미지는 최대 ${MAX_PROMOTION_IMAGES}장입니다.`);
-        }
         return runWithFiles(
           context,
           files,

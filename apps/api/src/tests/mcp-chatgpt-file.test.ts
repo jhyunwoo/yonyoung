@@ -179,6 +179,26 @@ describe("파일 참조 해석기", () => {
       uploadIds: [uploadId],
     });
     expect(resolved.map((upload) => upload.fileName)).toEqual(["one.png", "prev.png"]);
+    expect(resolved.map((upload) => upload.source)).toEqual(["chatgpt", "upload"]);
+  });
+
+  it("release는 upload_id를 되돌리고 내려받은 ChatGPT 파일은 버린다", async () => {
+    const ctx = setup();
+    const uploadId = await completedUpload(ctx);
+    const resolved = await ctx.files.resolve({
+      purpose: "activity_image",
+      chatGptFiles: [chatGpt("one")],
+      uploadIds: [uploadId],
+    });
+    await ctx.files.claim(resolved);
+    expect(ctx.objects.objects.size).toBe(2);
+
+    await ctx.files.release(resolved);
+
+    const chatGptId = resolved[0]!.uploadId;
+    expect((await ctx.store.getById(chatGptId))?.status).toBe("failed");
+    expect((await ctx.store.getById(uploadId))?.status).toBe("completed");
+    expect(ctx.objects.objects.size).toBe(1);
   });
 
   it("잘못된 upload_id면 아무것도 내려받지 않는다", async () => {

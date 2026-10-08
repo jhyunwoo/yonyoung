@@ -48,6 +48,8 @@ export type ResolvedUpload = {
   size: number;
   width: number | null;
   height: number | null;
+  /** chatgpt는 도구 호출 중에 내려받은 파일이라 호출이 실패하면 버린다. */
+  source: "chatgpt" | "upload";
 };
 
 type FileDeclaration = {
@@ -78,7 +80,10 @@ const sha256Hex = async (value: string): Promise<string> => {
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 };
 
-export const toResolvedUpload = (record: McpUploadRecord): ResolvedUpload => ({
+export const toResolvedUpload = (
+  record: McpUploadRecord,
+  source: ResolvedUpload["source"],
+): ResolvedUpload => ({
   uploadId: record.id,
   publicUrl: record.publicUrl,
   fileName: record.fileName,
@@ -86,6 +91,7 @@ export const toResolvedUpload = (record: McpUploadRecord): ResolvedUpload => ({
   size: record.declaredSize,
   width: record.width,
   height: record.height,
+  source,
 });
 
 export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
@@ -300,7 +306,7 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
             `아직 업로드가 끝나지 않았습니다: ${uploadId} (${record.status}). upload_status로 확인해 주세요.`,
           );
         }
-        resolved.push(toResolvedUpload(record));
+        resolved.push(toResolvedUpload(record, "upload"));
       }
       return resolved;
     },

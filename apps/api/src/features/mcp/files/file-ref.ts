@@ -12,7 +12,7 @@ export type McpFileResolver = {
   }) => Promise<ResolvedUpload[]>;
   /** 도구가 라우트를 부르기 직전에 업로드를 소비 상태로 잡는다. */
   claim: (files: ResolvedUpload[]) => Promise<void>;
-  /** 라우트 호출이 실패하면 되돌려 다시 쓸 수 있게 한다. */
+  /** 라우트 호출이 실패하면 upload_id는 되돌려 다시 쓸 수 있게 하고, ChatGPT 파일은 버린다. */
   release: (files: ResolvedUpload[]) => Promise<void>;
 };
 
@@ -34,7 +34,7 @@ export const createMcpFileResolver = (input: {
           hostSuffixes: input.hostSuffixes,
         });
         const record = await input.uploads.ingest(input.actor, { purpose, ...downloaded });
-        ingested.push(toResolvedUpload(record));
+        ingested.push(toResolvedUpload(record, "chatgpt"));
       }
     } catch (error) {
       await input.uploads.discard(input.actor, ingested);
@@ -43,5 +43,13 @@ export const createMcpFileResolver = (input: {
     return [...ingested, ...fromUploadIds];
   },
   claim: (files) => input.uploads.claim(input.actor, files),
-  release: (files) => input.uploads.release(files),
+  async release(files) {
+    // ChatGPT 파일은 다시 호출하면 새로 내려받으므로 남겨 두면 아무도 쓰지 못한다.
+    // discard는 completed만 바꾸므로 먼저 전부 되돌린다.
+    await input.uploads.release(files);
+    await input.uploads.discard(
+      input.actor,
+      files.filter((file) => file.source === "chatgpt"),
+    );
+  },
 });

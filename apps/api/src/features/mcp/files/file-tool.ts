@@ -1,10 +1,10 @@
 import type { CallToolResult } from "@modelcontextprotocol/server";
-import type { InternalApiRequest } from "../internal-api";
+import type { InternalApiRequest, InternalApiResult } from "../internal-api";
 import type { McpToolContext } from "../tool-definition";
 import { toToolResult } from "../tool-result";
 import { uploadErrorResult, type ResolvedUpload } from "./mcp-upload-service";
 
-/** 업로드를 소비 상태로 잡고 라우트를 부른다. 라우트가 실패하면 업로드를 되돌린다. */
+/** 업로드를 소비 상태로 잡고 라우트를 부른다. 라우트가 실패하거나 호출이 던지면 업로드를 되돌린다. */
 export const runWithFiles = async (
   context: McpToolContext,
   files: ResolvedUpload[],
@@ -12,7 +12,13 @@ export const runWithFiles = async (
   summary: string,
 ): Promise<CallToolResult> => {
   await context.files.claim(files);
-  const result = await context.api.call(request);
+  let result: InternalApiResult;
+  try {
+    result = await context.api.call(request);
+  } catch (error) {
+    await context.files.release(files);
+    throw error;
+  }
   if (!result.ok) {
     await context.files.release(files);
   }

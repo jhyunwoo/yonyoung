@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { MCP_TOOL_CATALOG } from "@yonyoung/contracts/mcp";
+import { IMAGE_BATCH_MAX_ITEMS } from "@yonyoung/contracts/common";
+import { runWithFiles } from "../features/mcp/files/file-tool";
+import { createMemoryMcpObjectStore } from "../features/mcp/files/mcp-object-store";
+import type { ResolvedUpload } from "../features/mcp/files/mcp-upload-service";
 import { createMemoryMcpUploadStore } from "../features/mcp/files/mcp-upload-store";
+import type { McpToolContext } from "../features/mcp/tool-definition";
 import { MCP_TOOL_DEFINITIONS } from "../features/mcp/tools";
 import { pdfBytes, pngBytes } from "./mcp-file-fixtures";
 import {
@@ -235,5 +240,159 @@ describe("attachment_create", () => {
     expect(addAttachment).toHaveBeenCalledWith(
       expect.objectContaining({ fileName: "정산.pdf", mimeType: "application/pdf" }),
     );
+  });
+});
+
+const chatGptFile = (name: string) => ({
+  download_url: `https://files.oaiusercontent.com/${name}`,
+  file_id: name,
+  mime_type: "image/png",
+  file_name: `${name}.png`,
+});
+
+describe("인자만으로 정해지는 검사는 내려받기 전에 한다", () => {
+  const activityData = {
+    title: "봄 출사",
+    description: "<p>출사</p>",
+    startDate: 1735689600000,
+    endDate: 1738368000000,
+    generationId: IDs.generation,
+  };
+  const exhibitionData = { ...activityData, place: "아트홀" };
+  const bothCovers = { cover_file: chatGptFile("cover"), cover_upload_id: "upload-1" };
+  const manyFiles = {
+    files: Array.from({ length: 300 }, (_, index) => chatGptFile(`f${index}`)),
+    upload_ids: Array.from({ length: IMAGE_BATCH_MAX_ITEMS - 299 }, (_, index) => `u${index}`),
+  };
+
+  it.each([
+    ["my_profile_photo_set", { file: chatGptFile("me"), upload_id: "upload-1" }, "이미지 하나를"],
+    ["my_profile_photo_set", {}, "이미지 하나를"],
+    ["activity_create", { data: activityData, ...bothCovers }, "커버 이미지는 하나만"],
+    ["activity_update", { id: IDs.activity, data: {}, ...bothCovers }, "커버 이미지는 하나만"],
+    ["exhibition_create", { data: exhibitionData, ...bothCovers }, "커버 이미지는 하나만"],
+    ["exhibition_update", { id: IDs.exhibition, data: {}, ...bothCovers }, "커버 이미지는 하나만"],
+    [
+      "attachment_create",
+      {
+        data: { scope: "activity", resourceId: IDs.activity, title: "정산" },
+        file: chatGptFile("doc"),
+        upload_id: "upload-1",
+      },
+      "자료 파일은 하나만",
+    ],
+    [
+      "attachment_create",
+      {
+        data: {
+          scope: "activity",
+          resourceId: IDs.activity,
+          title: "정산",
+          linkUrl: "https://docs.google.com/x",
+        },
+        file: chatGptFile("doc"),
+      },
+      "파일과 linkUrl 중 하나만",
+    ],
+    [
+      "recruiting_plan_upsert",
+      {
+        data: {
+          title: "모집",
+          content: "<p>모집</p>",
+          promotionImageUrls: Array.from(
+            { length: 9 },
+            (_, index) => `https://cdn.example.test/recruiting/${index}.png`,
+          ),
+          recruitmentStartAt: 1735689600000,
+          recruitmentEndAt: 1738368000000,
+        },
+        promotion_files: [chatGptFile("p1"), chatGptFile("p2")],
+      },
+      "홍보 이미지는 최대 10장",
+    ],
+    ["activity_images_add", { id: IDs.activity, ...manyFiles }, `최대 ${IMAGE_BATCH_MAX_ITEMS}장`],
+    ["exhibition_images_add", { id: IDs.exhibition, ...manyFiles }, `최대 ${IMAGE_BATCH_MAX_ITEMS}장`],
+    ["activity_images_add", { id: IDs.activity }, "추가할 사진을"],
+  ])("%s 인자 검사 #%#", async (name, args, message) => {
+    const fetchChatGptFile = vi.fn();
+    const app = createMcpTestApp({
+      getActor: () => createActor("president", IDs.president),
+      dataService: createDataServiceMock({
+        getActivityById: async () => createActivity({ detailImages: [] }),
+        getExhibitionById: async () => createExhibition({ detailImages: [] }),
+      }),
+      overrides: { fetchChatGptFile },
+    });
+    const client = await connectMcpClient(app);
+
+    const result = await client.callTool({ name, arguments: args });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toContain(message);
+    expect(fetchChatGptFile).not.toHaveBeenCalled();
+  });
+});
+
+describe("라우트가 실패했을 때 ChatGPT 파일", () => {
+  it("기록을 failed로 바꾸고 저장한 객체를 지운다", async () => {
+    const bytes = pngBytes(2, 2);
+    const uploadStore = createMemoryMcpUploadStore();
+    const objectStore = createMemoryMcpObjectStore();
+    const createdIds: string[] = [];
+    const create = uploadStore.create.bind(uploadStore);
+    uploadStore.create = async (record) => {
+      createdIds.push(record.id);
+      await create(record);
+    };
+    const app = createMcpTestApp({
+      getActor: () => createActor("manager", IDs.manager),
+      uploadStore,
+      objectStore,
+      dataService: createDataServiceMock({
+        getActivityById: async () => createActivity({ detailImages: [] }),
+        addActivityImages: async () => {
+          throw new Error("D1 down");
+        },
+      }),
+      overrides: {
+        fetchChatGptFile: async () =>
+          new Response(bytes, { headers: { "content-length": String(bytes.length) } }),
+      },
+    });
+    const client = await connectMcpClient(app);
+
+    const result = await client.callTool({
+      name: "activity_images_add",
+      arguments: { id: IDs.activity, files: [chatGptFile("a")] },
+    });
+
+    expect(result.isError).toBe(true);
+    expect(createdIds).toHaveLength(1);
+    expect((await uploadStore.getById(createdIds[0]!))?.status).toBe("failed");
+    expect(objectStore.objects.size).toBe(0);
+  });
+});
+
+describe("runWithFiles", () => {
+  it("라우트 호출이 던지면 업로드를 되돌리고 오류를 다시 던진다", async () => {
+    const files = [{ uploadId: "up-1" } as ResolvedUpload];
+    const claim = vi.fn(async () => undefined);
+    const release = vi.fn(async () => undefined);
+    const context = {
+      actor: createActor("manager", IDs.manager),
+      api: {
+        call: async () => {
+          throw new Error("dispatch failed");
+        },
+      },
+      files: { resolve: vi.fn(), claim, release },
+    } as unknown as McpToolContext;
+
+    await expect(
+      runWithFiles(context, files, { method: "POST", path: "/api/x" }, "완료"),
+    ).rejects.toThrow("dispatch failed");
+    expect(claim).toHaveBeenCalledWith(files);
+    expect(release).toHaveBeenCalledWith(files);
   });
 });

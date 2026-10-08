@@ -51,14 +51,14 @@ export const activityTools = [
     }),
     handler: (args, context) =>
       withUploadErrors(context, async () => {
+        if (args.cover_file && args.cover_upload_id) {
+          return toolFailure("커버 이미지는 하나만 넣을 수 있습니다.");
+        }
         const covers = await context.files.resolve({
           purpose: "activity_cover",
           chatGptFiles: args.cover_file ? [args.cover_file] : [],
           uploadIds: args.cover_upload_id ? [args.cover_upload_id] : [],
         });
-        if (covers.length > 1) {
-          return toolFailure("커버 이미지는 하나만 넣을 수 있습니다.");
-        }
         const coverImageUrl = covers[0]?.publicUrl ?? args.data.coverImageUrl;
         if (!coverImageUrl) {
           return toolFailure(
@@ -82,14 +82,14 @@ export const activityTools = [
     }),
     handler: (args, context) =>
       withUploadErrors(context, async () => {
+        if (args.cover_file && args.cover_upload_id) {
+          return toolFailure("커버 이미지는 하나만 넣을 수 있습니다.");
+        }
         const covers = await context.files.resolve({
           purpose: "activity_cover",
           chatGptFiles: args.cover_file ? [args.cover_file] : [],
           uploadIds: args.cover_upload_id ? [args.cover_upload_id] : [],
         });
-        if (covers.length > 1) {
-          return toolFailure("커버 이미지는 하나만 넣을 수 있습니다.");
-        }
         const body = covers[0] ? { ...args.data, coverImageUrl: covers[0].publicUrl } : args.data;
         return runWithFiles(
           context,
@@ -121,6 +121,13 @@ export const activityTools = [
     }),
     handler: (args, context) =>
       withUploadErrors(context, async () => {
+        const fileCount = (args.files?.length ?? 0) + (args.upload_ids?.length ?? 0);
+        if (fileCount === 0) {
+          return toolFailure("추가할 사진을 files 또는 upload_ids로 넣어 주세요.");
+        }
+        if (fileCount > IMAGE_BATCH_MAX_ITEMS) {
+          return toolFailure(`사진은 한 번에 최대 ${IMAGE_BATCH_MAX_ITEMS}장까지 추가할 수 있습니다.`);
+        }
         // 활동이 없으면 파일을 받기 전에 끝낸다.
         const activity = await context.api.call({ method: "GET", path: `/api/activities/${args.id}` });
         if (!activity.ok) {
@@ -131,9 +138,6 @@ export const activityTools = [
           chatGptFiles: args.files,
           uploadIds: args.upload_ids,
         });
-        if (files.length === 0) {
-          return toolFailure("추가할 사진을 files 또는 upload_ids로 넣어 주세요.");
-        }
         const existing =
           (activity.data as { detailImages?: Array<{ sortOrder: number }> }).detailImages ?? [];
         const start = args.start_sort_order ?? nextSortOrder(existing);

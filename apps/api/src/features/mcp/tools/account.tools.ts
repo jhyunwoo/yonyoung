@@ -48,14 +48,14 @@ export const accountTools = [
     }),
     handler: (args, context) =>
       withUploadErrors(context, async () => {
+        if (Boolean(args.file) === Boolean(args.upload_id)) {
+          return toolFailure("프로필 사진으로 쓸 이미지 하나를 file 또는 upload_id로 넣어 주세요.");
+        }
         const files = await context.files.resolve({
           purpose: "profile_image",
           chatGptFiles: args.file ? [args.file] : [],
           uploadIds: args.upload_id ? [args.upload_id] : [],
         });
-        if (files.length !== 1) {
-          return toolFailure("프로필 사진으로 쓸 이미지 하나를 file 또는 upload_id로 넣어 주세요.");
-        }
         return runWithFiles(
           context,
           files,

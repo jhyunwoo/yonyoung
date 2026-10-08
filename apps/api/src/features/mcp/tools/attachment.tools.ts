@@ -35,18 +35,18 @@ export const attachmentTools = [
     }),
     handler: (args, context) =>
       withUploadErrors(context, async () => {
+        if (args.file && args.upload_id) {
+          return toolFailure("자료 파일은 하나만 넣을 수 있습니다.");
+        }
+        if ((args.file || args.upload_id) && args.data.linkUrl) {
+          return toolFailure("파일과 linkUrl 중 하나만 넣어 주세요.");
+        }
         const files = await context.files.resolve({
           purpose: args.data.scope === "site_donate" ? "site_file" : "activity_file",
           chatGptFiles: args.file ? [args.file] : [],
           uploadIds: args.upload_id ? [args.upload_id] : [],
         });
-        if (files.length > 1) {
-          return toolFailure("자료 파일은 하나만 넣을 수 있습니다.");
-        }
         const file = files[0];
-        if (file && args.data.linkUrl) {
-          return toolFailure("파일과 linkUrl 중 하나만 넣어 주세요.");
-        }
         const body = file
           ? {
               ...args.data,
