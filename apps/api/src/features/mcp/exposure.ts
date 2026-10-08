@@ -1,5 +1,6 @@
 import {
   MCP_TOOL_CATALOG,
+  type ApiMcpOverview,
   type McpToolCatalogEntry,
   type McpToolExposure,
 } from "@yonyoung/contracts/mcp";
@@ -26,3 +27,17 @@ export const isToolExposed = (exposure: McpToolExposure, role: Role): boolean =>
 
 export const listExposedTools = (role: Role): McpToolCatalogEntry[] =>
   MCP_TOOL_CATALOG.filter((tool) => isToolExposed(tool.exposure, role));
+
+export const buildMcpOverview = (role: Role, serverUrl: string): ApiMcpOverview => ({
+  serverUrl,
+  role,
+  tools: listExposedTools(role).map((tool) => ({
+    name: tool.name,
+    title: tool.title,
+    description: tool.description,
+    category: tool.category,
+    readOnly: tool.readOnly,
+    destructive: tool.destructive,
+    examplePrompt: tool.examplePrompt,
+  })),
+});

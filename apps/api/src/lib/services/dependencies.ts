@@ -1,3 +1,4 @@
+import { verifyOAuthQueryParams } from "@better-auth/oauth-provider";
 import type { Context } from "hono";
 import { resolveTrustedClientIp } from "../http/client-ip";
 import { getActorFromSession, loadActorByUserId } from "../auth/session";
@@ -93,6 +94,7 @@ export type AppDependencies = {
   getMcpUploadStore: (c: Context<HonoAppType>) => McpUploadStore;
   getMcpObjectStore: (c: Context<HonoAppType>) => McpObjectStore;
   fetchChatGptFile: (request: Request) => Promise<Response>;
+  verifyOAuthConsentQuery: (c: Context<HonoAppType>, query: string) => Promise<boolean>;
 };
 
 // 업로드 예약이 사용하는 관측 신선도 창(30초)보다 짧게 유지한다.
@@ -169,6 +171,12 @@ export const createDefaultDependencies = (): AppDependencies => ({
   getMcpUploadStore: (c) => createD1McpUploadStore(createRequestDatabase(c)),
   getMcpObjectStore: (c) => createR2McpObjectStore(resolveR2Bucket(c.env)),
   fetchChatGptFile: (request) => fetch(request),
+  // 동의 화면에 띄울 정보도 Better Auth가 서명한 쿼리일 때만 준다(문서 권장).
+  verifyOAuthConsentQuery: async (c, query) => {
+    const auth = createAuth(resolveD1Database(c.env), c.env);
+    const { secret } = await auth.$context;
+    return verifyOAuthQueryParams(query, secret);
+  },
   getAuthOpenApiSchema: async (c) => {
     const database = resolveD1Database(c.env);
     const auth = createAuth(database, c.env);

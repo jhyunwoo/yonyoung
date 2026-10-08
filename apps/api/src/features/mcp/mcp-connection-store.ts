@@ -12,6 +12,9 @@ export interface McpConnectionStore {
   list(userId: string): Promise<McpConnection[]>;
   /** 동의를 지우고 그 클라이언트의 토큰을 폐기한다. 지운 동의가 있었으면 true. */
   revoke(userId: string, clientId: string, now: number): Promise<boolean>;
+  getClient(
+    clientId: string,
+  ): Promise<{ clientId: string; name: string | null; uri: string | null } | null>;
 }
 
 type ConnectionDatabase = Pick<D1Database, "prepare" | "batch">;
@@ -93,6 +96,16 @@ export const createD1McpConnectionStore = (
     ]);
     return Number(deleted?.meta.changes ?? 0) > 0;
   },
+
+  async getClient(clientId) {
+    const row = await database
+      .prepare(
+        "SELECT client_id, name, uri FROM oauth_client WHERE client_id = ? AND (disabled IS NULL OR disabled = 0) LIMIT 1",
+      )
+      .bind(clientId)
+      .first<{ client_id: string; name: string | null; uri: string | null }>();
+    return row ? { clientId: row.client_id, name: row.name, uri: row.uri } : null;
+  },
 });
 
 export const createMemoryMcpConnectionStore = (
@@ -123,6 +136,10 @@ export const createMemoryMcpConnectionStore = (
     },
     async revoke(userId, clientId) {
       return consents.delete(key(userId, clientId));
+    },
+    async getClient(clientId) {
+      const consent = [...consents.values()].find((entry) => entry.clientId === clientId);
+      return consent ? { clientId, name: consent.clientName, uri: consent.clientUri } : null;
     },
   };
 };

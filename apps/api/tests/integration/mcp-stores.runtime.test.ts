@@ -63,6 +63,9 @@ describe("D1 MCP 연결 저장소", () => {
       { clientId: "c1", clientName: "Claude", scopes: ["openid", "mcp"] },
     ]);
 
+    expect(await store.getClient("c1")).toEqual({ clientId: "c1", name: "Claude", uri: null });
+    expect(await store.getClient("missing")).toBeNull();
+
     expect(await store.revoke("u1", "c1", 123)).toBe(true);
     expect(await store.hasConsent("u1", "c1")).toBe(false);
     const token = await db

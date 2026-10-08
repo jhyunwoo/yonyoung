@@ -8,6 +8,7 @@ import { getAuthCorsOrigins } from "../../lib/auth";
 import type { Actor } from "../../lib/authorization/types";
 import { resolveMcpRuntimeEnv } from "../../lib/config/runtime-env";
 import type { AppDependencies } from "../../lib/services/dependencies";
+import { AppError } from "../../shared/errors/AppError";
 import { requireAuthenticatedActor } from "../../shared/http/route-guards";
 import type HonoAppType from "../../types/honoAppType";
 import {
@@ -15,6 +16,7 @@ import {
   createRequestMcpUploadService,
 } from "./files/mcp-upload-service";
 import { resolveChatGptFileHostSuffixes } from "./files/chatgpt-file";
+import { buildMcpOverview } from "./exposure";
 import { createMcpFileResolver } from "./files/file-ref";
 import { createInternalApiClient, type InternalDispatch } from "./internal-api";
 import { mcpUnauthorizedResponse } from "./mcp-auth";
@@ -174,5 +176,55 @@ export const registerMcpRoutes = (app: App, dependencies: AppDependencies) => {
       }
       throw error;
     }
+  });
+
+  app.get("/api/mcp/tools", async (c) => {
+    const actor = await requireAuthenticatedActor(c, dependencies);
+    return c.json({ data: buildMcpOverview(actor.role, resolveMcpRuntimeEnv(c.env).resourceUrl) });
+  });
+
+  app.get("/api/mcp/connections", async (c) => {
+    const actor = await requireAuthenticatedActor(c, dependencies);
+    const connections = await dependencies.getMcpConnectionStore(c).list(actor.id);
+    return c.json({
+      data: connections.map((connection) => ({
+        ...connection,
+        connectedAt: new Date(connection.connectedAt).toISOString(),
+        updatedAt: new Date(connection.updatedAt).toISOString(),
+      })),
+    });
+  });
+
+  app.delete("/api/mcp/connections/:clientId", async (c) => {
+    const actor = await requireAuthenticatedActor(c, dependencies);
+    const revoked = await dependencies
+      .getMcpConnectionStore(c)
+      .revoke(actor.id, c.req.param("clientId"), Date.now());
+    if (!revoked) {
+      throw AppError.notFound("연결을 찾을 수 없습니다.");
+    }
+    return c.body(null, 204);
+  });
+
+  app.get("/api/mcp/consent-context", async (c) => {
+    const actor = await requireAuthenticatedActor(c, dependencies);
+    const query = new URL(c.req.url).search.slice(1);
+    if (!(await dependencies.verifyOAuthConsentQuery(c, query))) {
+      throw AppError.badRequest("연결 요청이 만료되었거나 올바르지 않습니다. 처음부터 다시 연결해 주세요.");
+    }
+    const params = new URLSearchParams(query);
+    const client = await dependencies
+      .getMcpConnectionStore(c)
+      .getClient(params.get("client_id") ?? "");
+    if (!client) {
+      throw AppError.notFound("연결하려는 앱을 찾을 수 없습니다.");
+    }
+    return c.json({
+      data: {
+        client,
+        scopes: (params.get("scope") ?? "").split(" ").filter(Boolean),
+        overview: buildMcpOverview(actor.role, resolveMcpRuntimeEnv(c.env).resourceUrl),
+      },
+    });
   });
 };
