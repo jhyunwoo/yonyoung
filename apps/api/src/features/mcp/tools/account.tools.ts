@@ -2,6 +2,8 @@ import { CORE_ROLE_LABELS } from "@yonyoung/contracts/auth-roles";
 import { z } from "zod";
 import { listExposedTools } from "../exposure";
 import { ApiMemberProfileUpdateSchema } from "../../users/user.contract";
+import { chatGptFileSchema, uploadIdSchema } from "../files/chatgpt-file";
+import { runWithFiles, withUploadErrors } from "../files/file-tool";
 import { defineTool, routeTool } from "../tool-definition";
 import { describeApiFailure, toolFailure, toolSuccess } from "../tool-result";
 
@@ -37,5 +39,33 @@ export const accountTools = [
       body: args.data,
     }),
     summary: "내 프로필을 수정했습니다.",
+  }),
+  defineTool({
+    name: "my_profile_photo_set",
+    inputSchema: z.object({
+      file: chatGptFileSchema.optional(),
+      upload_id: uploadIdSchema.optional(),
+    }),
+    handler: (args, context) =>
+      withUploadErrors(context, async () => {
+        const files = await context.files.resolve({
+          purpose: "profile_image",
+          chatGptFiles: args.file ? [args.file] : [],
+          uploadIds: args.upload_id ? [args.upload_id] : [],
+        });
+        if (files.length !== 1) {
+          return toolFailure("프로필 사진으로 쓸 이미지 하나를 file 또는 upload_id로 넣어 주세요.");
+        }
+        return runWithFiles(
+          context,
+          files,
+          {
+            method: "PATCH",
+            path: `/api/users/${encodeURIComponent(context.actor.id)}`,
+            body: { image: files[0]!.publicUrl },
+          },
+          "프로필 사진을 바꿨습니다.",
+        );
+      }),
   }),
 ];
