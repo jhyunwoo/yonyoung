@@ -6,6 +6,7 @@ import {
   type AppDependencies,
   createDefaultDependencies,
 } from "../lib/services/dependencies";
+import { withInternalActorResolution } from "../features/mcp/internal-actor";
 import { mountDomainRouters } from "../routes";
 import { errorHandler } from "./middleware/errorHandler";
 import { loggerMiddleware } from "./middleware/logger";
@@ -89,10 +90,10 @@ export const createApp = (partialDependencies?: Partial<AppDependencies>) => {
     defaultHook: defaultValidationHook,
   });
 
-  const dependencies = {
+  const dependencies = withInternalActorResolution({
     ...createDefaultDependencies(),
     ...partialDependencies,
-  };
+  });
 
   registerSecuritySchemes(app);
   registerMiddleware(app, dependencies);
