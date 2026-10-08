@@ -1,7 +1,8 @@
 import { CORE_ROLE_LABELS } from "@yonyoung/contracts/auth-roles";
 import { z } from "zod";
 import { listExposedTools } from "../exposure";
-import { defineTool } from "../tool-definition";
+import { ApiMemberProfileUpdateSchema } from "../../users/user.contract";
+import { defineTool, routeTool } from "../tool-definition";
 import { describeApiFailure, toolFailure, toolSuccess } from "../tool-result";
 
 export const accountTools = [
@@ -23,5 +24,18 @@ export const accountTools = [
         { user: result.data, role: context.actor.role, roleLabel, tools },
       );
     },
+  }),
+  routeTool({
+    name: "my_profile_update",
+    method: "PATCH",
+    path: "/api/users/{id}",
+    inputSchema: z.object({
+      data: ApiMemberProfileUpdateSchema.describe("바꿀 프로필 필드만 넣습니다."),
+    }),
+    toRequest: (args, context) => ({
+      pathParams: { id: context.actor.id },
+      body: args.data,
+    }),
+    summary: "내 프로필을 수정했습니다.",
   }),
 ];
