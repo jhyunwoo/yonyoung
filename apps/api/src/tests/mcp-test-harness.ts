@@ -3,6 +3,8 @@ import {
   StreamableHTTPClientTransport,
   type CallToolResult,
 } from "@modelcontextprotocol/client";
+import { createMemoryMcpObjectStore, type McpObjectStore } from "../features/mcp/files/mcp-object-store";
+import { createMemoryMcpUploadStore, type McpUploadStore } from "../features/mcp/files/mcp-upload-store";
 import {
   createMemoryMcpConnectionStore,
   type McpConnectionStore,
@@ -10,7 +12,7 @@ import {
 import type { Actor } from "../lib/authorization/types";
 import type { AppDependencies } from "../lib/services/dependencies";
 import type { DataService, PresignService } from "../lib/services/types";
-import { createTestApp } from "./test-helpers";
+import { createPresignServiceMock, createTestApp } from "./test-helpers";
 
 export const TEST_MCP_CLIENT_ID = "test-mcp-client";
 export const TEST_MCP_TOKEN = "test-token";
@@ -27,8 +29,12 @@ export const createMcpTestApp = (input: {
   dataService?: DataService;
   presignService?: PresignService;
   connectionStore?: McpConnectionStore;
+  uploadStore?: McpUploadStore;
+  objectStore?: McpObjectStore;
   overrides?: Partial<AppDependencies>;
 }): TestApp => {
+  const uploadStore = input.uploadStore ?? createMemoryMcpUploadStore();
+  const objectStore = input.objectStore ?? createMemoryMcpObjectStore();
   const initialActor = input.getActor();
   const connectionStore =
     input.connectionStore ??
@@ -41,7 +47,12 @@ export const createMcpTestApp = (input: {
   return createTestApp({
     actor: null,
     dataService: input.dataService,
-    presignService: input.presignService,
+    presignService: input.presignService ?? createPresignServiceMock({
+      allocateManagedObject: async ({ actorId, resource, slot, fileName }) => {
+        const objectKey = `${resource}/${actorId}/${slot}/${crypto.randomUUID()}-${fileName}`;
+        return { objectKey, publicUrl: `https://cdn.example.test/${encodeURI(objectKey)}` };
+      },
+    }),
     overrides: {
       authenticateMcpRequest: async (c, onAuthenticated) => {
         if (c.req.header("authorization") !== `Bearer ${TEST_MCP_TOKEN}`) {
@@ -58,6 +69,8 @@ export const createMcpTestApp = (input: {
         return actor && actor.id === userId ? actor : null;
       },
       getMcpConnectionStore: () => connectionStore,
+      getMcpUploadStore: () => uploadStore,
+      getMcpObjectStore: () => objectStore,
       ...input.overrides,
     },
   });
@@ -84,3 +97,34 @@ export const resultText = (result: CallToolResult): string =>
     .filter((block): block is { type: "text"; text: string } => block.type === "text")
     .map((block) => block.text)
     .join("\n");
+
+/** upload_prepare → put_url로 PUT까지 한다. 돌려받은 upload_id를 파일 도구에 넘긴다. */
+export const uploadViaClaudePath = async (
+  app: TestApp,
+  client: Client,
+  input: { purpose: string; fileName: string; contentType: string; bytes: Uint8Array },
+): Promise<string> => {
+  const prepared = await client.callTool({
+    name: "upload_prepare",
+    arguments: {
+      purpose: input.purpose,
+      file_name: input.fileName,
+      content_type: input.contentType,
+      size: input.bytes.length,
+    },
+  });
+  if (prepared.isError) {
+    throw new Error(resultText(prepared));
+  }
+  const data = (prepared.structuredContent as { data: { upload_id: string; put_url: string } })
+    .data;
+  const response = await app.request(new URL(data.put_url).pathname, {
+    method: "PUT",
+    headers: { "content-length": String(input.bytes.length) },
+    body: input.bytes,
+  });
+  if (response.status !== 200) {
+    throw new Error(`PUT 실패: ${response.status} ${await response.text()}`);
+  }
+  return data.upload_id;
+};

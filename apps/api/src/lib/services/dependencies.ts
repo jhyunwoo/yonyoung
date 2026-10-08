@@ -9,6 +9,14 @@ import {
   createD1McpConnectionStore,
   type McpConnectionStore,
 } from "../../features/mcp/mcp-connection-store";
+import {
+  createR2McpObjectStore,
+  type McpObjectStore,
+} from "../../features/mcp/files/mcp-object-store";
+import {
+  createD1McpUploadStore,
+  type McpUploadStore,
+} from "../../features/mcp/files/mcp-upload-store";
 import { createAuth } from "../auth";
 import { type Actor } from "../authorization/types";
 import type HonoAppType from "../../types/honoAppType";
@@ -82,6 +90,8 @@ export type AppDependencies = {
     userId: string,
   ) => Promise<Actor | null>;
   getMcpConnectionStore: (c: Context<HonoAppType>) => McpConnectionStore;
+  getMcpUploadStore: (c: Context<HonoAppType>) => McpUploadStore;
+  getMcpObjectStore: (c: Context<HonoAppType>) => McpObjectStore;
 };
 
 // 업로드 예약이 사용하는 관측 신선도 창(30초)보다 짧게 유지한다.
@@ -155,6 +165,8 @@ export const createDefaultDependencies = (): AppDependencies => ({
     loadActorByUserId(resolveD1Database(c.env), userId),
   getMcpConnectionStore: (c) =>
     createD1McpConnectionStore(resolveD1Database(c.env)),
+  getMcpUploadStore: (c) => createD1McpUploadStore(createRequestDatabase(c)),
+  getMcpObjectStore: (c) => createR2McpObjectStore(resolveR2Bucket(c.env)),
   getAuthOpenApiSchema: async (c) => {
     const database = resolveD1Database(c.env);
     const auth = createAuth(database, c.env);

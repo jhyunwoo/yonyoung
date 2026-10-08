@@ -9,6 +9,7 @@ import { linktreeTools } from "./linktree.tools";
 import { memberTools } from "./member.tools";
 import { settingsTools } from "./settings.tools";
 import { statsTools } from "./stats.tools";
+import { uploadTools } from "./upload.tools";
 
 const ALL_TOOLS: McpToolDefinition[] = [
   ...accountTools,
@@ -20,6 +21,7 @@ const ALL_TOOLS: McpToolDefinition[] = [
   ...memberTools,
   ...settingsTools,
   ...statsTools,
+  ...uploadTools,
 ];
 
 export const MCP_TOOL_DEFINITIONS: ReadonlyMap<McpToolName, McpToolDefinition> = new Map(

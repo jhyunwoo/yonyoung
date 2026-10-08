@@ -74,6 +74,17 @@ const toRecord = (row: UploadRow): McpUploadRecord => ({
   completedAt: row.completed_at === null ? null : Number(row.completed_at),
 });
 
+// D1은 문 하나에 바인딩 값을 100개까지 받는다. claim은 userId를 하나 더 묶으므로 여유를 둔다.
+const D1_ID_CHUNK_SIZE = 90;
+
+const chunkIds = (ids: string[]): string[][] => {
+  const chunks: string[][] = [];
+  for (let start = 0; start < ids.length; start += D1_ID_CHUNK_SIZE) {
+    chunks.push(ids.slice(start, start + D1_ID_CHUNK_SIZE));
+  }
+  return chunks;
+};
+
 export const createD1McpUploadStore = (
   database: Pick<D1Database, "prepare">,
 ): McpUploadStore => ({
@@ -154,33 +165,33 @@ export const createD1McpUploadStore = (
   },
 
   async claim(ids, userId) {
-    if (ids.length === 0) {
-      return [];
+    const claimed: string[] = [];
+    for (const chunk of chunkIds(ids)) {
+      const placeholders = chunk.map(() => "?").join(", ");
+      const result = await database
+        .prepare(
+          `UPDATE mcp_uploads SET status = 'consumed'
+           WHERE user_id = ? AND status = 'completed' AND id IN (${placeholders})
+           RETURNING id`,
+        )
+        .bind(userId, ...chunk)
+        .all<{ id: string }>();
+      claimed.push(...result.results.map((row) => row.id));
     }
-    const placeholders = ids.map(() => "?").join(", ");
-    const result = await database
-      .prepare(
-        `UPDATE mcp_uploads SET status = 'consumed'
-         WHERE user_id = ? AND status = 'completed' AND id IN (${placeholders})
-         RETURNING id`,
-      )
-      .bind(userId, ...ids)
-      .all<{ id: string }>();
-    return result.results.map((row) => row.id);
+    return claimed;
   },
 
   async release(ids) {
-    if (ids.length === 0) {
-      return;
+    for (const chunk of chunkIds(ids)) {
+      const placeholders = chunk.map(() => "?").join(", ");
+      await database
+        .prepare(
+          `UPDATE mcp_uploads SET status = 'completed'
+           WHERE status = 'consumed' AND id IN (${placeholders})`,
+        )
+        .bind(...chunk)
+        .run();
     }
-    const placeholders = ids.map(() => "?").join(", ");
-    await database
-      .prepare(
-        `UPDATE mcp_uploads SET status = 'completed'
-         WHERE status = 'consumed' AND id IN (${placeholders})`,
-      )
-      .bind(...ids)
-      .run();
   },
 });
 

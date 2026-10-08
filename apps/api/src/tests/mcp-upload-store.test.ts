@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  createD1McpUploadStore,
   createMemoryMcpUploadStore,
   type McpUploadRecord,
 } from "../features/mcp/files/mcp-upload-store";
@@ -62,6 +63,49 @@ describe("메모리 업로드 저장소", () => {
     await store.create(record());
     expect((await store.getByTokenHash("hash-1"))?.id).toBe("up-1");
     expect(await store.getByTokenHash("nope")).toBeNull();
+  });
+});
+
+describe("D1 업로드 저장소", () => {
+  const D1_MAX_BOUND_PARAMETERS = 100;
+
+  /** 바인딩 값이 D1 한도를 넘으면 실제 D1처럼 실패하고, claim은 묶인 ID를 그대로 RETURNING한다. */
+  const createLimitedDatabase = () => {
+    const boundCounts: number[] = [];
+    const database = {
+      prepare: () => ({
+        bind: (...values: unknown[]) => {
+          if (values.length > D1_MAX_BOUND_PARAMETERS) {
+            throw new Error(`too many SQL variables: ${values.length}`);
+          }
+          boundCounts.push(values.length);
+          const ids = values.filter((value): value is string => String(value).startsWith("up-"));
+          return {
+            all: async () => ({ results: ids.map((id) => ({ id })) }),
+            run: async () => ({ meta: { changes: ids.length } }),
+          };
+        },
+      }),
+    } as unknown as Pick<D1Database, "prepare">;
+    return { database, boundCounts };
+  };
+
+  const ids = Array.from({ length: 250 }, (_, index) => `up-${index}`);
+
+  it("claim은 ID를 나눠 묶고 모든 문의 RETURNING ID를 합친다", async () => {
+    const { database, boundCounts } = createLimitedDatabase();
+    const claimed = await createD1McpUploadStore(database).claim(ids, "u1");
+
+    expect(claimed).toEqual(ids);
+    expect(boundCounts.length).toBeGreaterThan(1);
+  });
+
+  it("release는 여러 문으로 나눠 한도를 넘지 않는다", async () => {
+    const { database, boundCounts } = createLimitedDatabase();
+    await createD1McpUploadStore(database).release(ids);
+
+    expect(boundCounts.length).toBeGreaterThan(1);
+    expect(boundCounts.reduce((sum, count) => sum + count, 0)).toBe(ids.length);
   });
 });
 
