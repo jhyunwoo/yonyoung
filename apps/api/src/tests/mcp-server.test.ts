@@ -54,6 +54,55 @@ describe("MCP 엔드포인트 인증", () => {
   });
 });
 
+describe("MCP 엔드포인트 거부 응답", () => {
+  const postInitialize = (app: ReturnType<typeof createMcpTestApp>) =>
+    app.request("/mcp", {
+      method: "POST",
+      headers: {
+        authorization: "Bearer test-token",
+        "content-type": "application/json",
+        accept: "application/json, text/event-stream",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-11-25",
+          capabilities: {},
+          clientInfo: { name: "yonyoung-test", version: "1.0.0" },
+        },
+      }),
+    });
+
+  it("승인 대기 사용자는 403과 안내 문구를 받는다", async () => {
+    const response = await postInitialize(
+      createMcpTestApp({ getActor: () => createActor("unverified") }),
+    );
+    expect(response.status).toBe(403);
+    const body = (await response.json()) as { error: { message: string } };
+    expect(body.error.message).toBe("관리자 승인 후 사용할 수 있습니다.");
+  });
+
+  it("동의가 해제된 연결은 401과 resource_metadata를 받는다", async () => {
+    const response = await postInitialize(
+      createMcpTestApp({ getActor: () => createActor("regular_member"), consent: false }),
+    );
+    expect(response.status).toBe(401);
+    expect(response.headers.get("www-authenticate")).toContain("resource_metadata=");
+  });
+
+  it("삭제된 사용자는 401과 resource_metadata를 받는다", async () => {
+    const actor = createActor("regular_member");
+    let current: typeof actor | null = actor;
+    const app = createMcpTestApp({ getActor: () => current });
+    current = null;
+    const response = await postInitialize(app);
+    expect(response.status).toBe(401);
+    expect(response.headers.get("www-authenticate")).toContain("resource_metadata=");
+  });
+});
+
 describe("역할별 도구 목록", () => {
   it("부원은 조회 도구와 본인 도구만 본다", async () => {
     const names = await listToolNames(() => createActor("regular_member"));
