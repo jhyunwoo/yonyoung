@@ -94,8 +94,8 @@ api.yonyoung.moveto.kr/mcp  ──▶  API Worker: MCP 핸들러
 ### 4.1 노출 규칙
 
 - 도구 정의는 `@yonyoung/contracts/mcp`의 카탈로그 한 곳에 모은다. 각 항목은 이름, 한국어 설명, 분류, 노출 조건, 파일 인자 여부, `readOnly`/`destructive` 표시를 담는다.
-- 노출 조건은 `{ resource, action }` 또는 `"verified"`(승인된 모든 사용자)다. 노출 조건 종류는 네 가지다. `verified`(승인된 모든 사용자), `manager_like`(부장 이상, `isManagerLikeRole`), `leadership`(회장·부회장, `canReadAllUsers`·`isPrivilegedActor` 기준), `permission(anyOf)`(나열한 권한 중 하나라도 있으면 노출)다. 값은 **해당 라우트가 실제로 거는 가드**와 같아야 한다. 예를 들어 사이트 설정 조회 라우트는 `site_setting.update`를 요구하므로 `site_settings_get`의 노출 조건도 `site_setting.update`다.
-- API는 요청마다 `can(actor.role, resource, action)`으로 걸러 해당 도구만 `McpServer`에 등록한다.
+- 노출 조건 종류는 네 가지다. `verified`(승인된 모든 사용자), `manager_like`(부장 이상, `isManagerLikeRole`), `leadership`(회장·부회장), `permission(anyOf)`(나열한 권한 중 하나라도 `can()`이 참이면 노출)다. 값은 **해당 라우트가 실제로 거는 가드**와 같아야 한다. 예를 들어 사이트 설정 조회 라우트는 `site_setting.update`를 요구하므로 `site_settings_get`의 노출 조건도 `site_setting.update`다.
+- API는 요청마다 노출 조건 종류별로 걸러 해당 도구만 `McpServer`에 등록한다. `verified`는 승인된 사용자 전체, `manager_like`와 `leadership`은 역할로 판정하고, `permission(anyOf)`은 `can(actor.role, resource, action)` 중 하나라도 참이면 노출한다.
 - 노출은 UX일 뿐이며, 최종 판정은 항상 기존 라우트가 한다. 서열 규칙처럼 대상에 따라 달라지는 거부는 도구 호출 결과로 전달된다.
 - 조회 도구에는 `readOnlyHint: true`를 붙인다. 삭제, 역할 변경, 멤버 삭제 도구에는 `destructiveHint: true`를 붙여 클라이언트가 실행 전에 확인을 받게 한다.
 - 도구 이름은 영어 snake_case로 짓고, 설명과 인자 설명은 한국어로 쓴다. 인자 스키마는 기존 API 요청 스키마에서 파생해 따로 유지하지 않는다.
@@ -114,7 +114,7 @@ api.yonyoung.moveto.kr/mcp  ──▶  API Worker: MCP 핸들러
 | `exhibition_list` / `exhibition_get` | `GET /api/exhibitions`, `/{id}` | exhibition.read |
 | `linktree_list` / `linktree_get` | `GET /api/linktree`, `/{id}` | linktree.read |
 | `attachment_list` | `GET /api/attachments` | activity.read 또는 site_setting.read (scope별 read는 라우트가 판정) |
-| `member_list` / `member_get` / `member_resource_history` | `GET /api/users`, `/{id}`, `/{id}/resource-history` | user.read (부원은 라우트가 본인만 반환). 단 `member_resource_history`는 `leadership` |
+| `member_list` / `member_get` | `GET /api/users`, `/{id}` | user.read (부원은 라우트가 본인만 반환) |
 | `my_profile_update` | `PATCH /api/users/{본인 id}` (프로필 필드만) | verified |
 | `my_profile_photo_set` | 파일 → `profile_image` 업로드 → `PATCH /api/users/{본인 id}` | verified |
 | `upload_prepare` / `upload_status` | 5장 참고 | verified (purpose별 권한은 5장) |
@@ -148,6 +148,7 @@ api.yonyoung.moveto.kr/mcp  ──▶  API Worker: MCP 핸들러
 | `member_update` | `PATCH /api/users/{id}` (역할, 기수 포함) | user.update |
 | `member_bulk_role` | `PATCH /api/users/bulk-role` | user.update |
 | `member_delete` | `DELETE /api/users/{id}` | user.delete |
+| `member_resource_history` | `GET /api/users/{id}/resource-history` | leadership (회장·부회장) |
 | `site_settings_get` / `site_settings_update` | `GET`/`PATCH /api/site-settings` | site_setting.update |
 | `recruiting_plan_get` / `recruiting_plan_upsert` | `GET`/`PATCH /api/recruiting-plan/current` (이미지 파일 인자) | leadership (`isPrivilegedActor`) |
 
@@ -223,12 +224,12 @@ api.yonyoung.moveto.kr/mcp  ──▶  API Worker: MCP 핸들러
    - 토큰은 무작위 256비트 값이다. 10분 동안 유효하고, 한 번만 쓸 수 있으며, 발급한 사용자와 purpose에 묶인다.
 2. Claude가 코드 실행 샌드박스에서 `curl -T /mnt/user-data/uploads/<파일> <put_url>`을 실행한다.
 3. `PUT /mcp/uploads/{token}` 처리 순서는 다음과 같다.
-   1. 토큰 해시를 조회하고, 상태가 `pending`이며 만료 전인지 확인한다.
+   1. 토큰 해시로 행을 찾고, 조건부 UPDATE(`WHERE status = 'pending' AND expires_at > now`)로 `pending → receiving`을 전이한다. 영향 행이 0이면 거부한다. 동시 PUT 중 이 전이를 통과하는 요청은 하나뿐이다.
    2. `Content-Length`가 선언 크기와 같고 100MB 이하인지 확인한다.
    3. 본문을 R2 바인딩에 직접 스트리밍한다.
-   4. 형식을 검증한다(5.4).
-   5. 상태를 `completed`로 바꾸고 용량 예약을 정산한다.
-   - 상태 전이는 조건부 UPDATE(`WHERE status = 'pending'`)로 처리해 동시 재사용을 막는다.
+   4. 형식을 검증한다(5.4). 실패하면 `receiving → failed`로 바꾸고, 객체를 지우고, 예약을 해제한다.
+   5. 저장이 끝나면 `receiving → completed`로 바꾸고 용량 예약을 정산한다.
+   - 상태 전이는 모두 조건부 UPDATE로 처리한다. 첫 단계의 `pending → receiving` 전이가 동시 재사용을 막는다.
    - 이 요청에는 Bearer 토큰이 필요 없다. URL의 업로드 토큰이 자격 증명이다.
 4. `curl`이 실패하면 Claude가 사용자에게 `browser_url`을 안내한다.
    - 이 페이지는 로그인한 토큰 소유자만 열 수 있다. 끌어다 놓기와 진행률을 보여준다.
@@ -245,7 +246,7 @@ api.yonyoung.moveto.kr/mcp  ──▶  API Worker: MCP 핸들러
 - 실제 크기가 선언 크기와 다르면 거부하고 객체를 지운다.
 - MIME 허용 목록은 기존 `ALLOWED_*_CONTENT_TYPES`를 쓴다. 파일 앞부분의 매직 바이트가 선언 MIME과 맞아야 한다.
 - 이미지는 헤더에서 가로·세로 픽셀을 읽는다(PNG, JPEG, WebP, GIF, AVIF, HEIC 중 허용 목록에 있는 형식). 읽지 못하면 width/height 없이 진행한다. 기존 필드는 선택 값이다.
-- 만료된 `pending` 업로드는 예약을 해제한다. R2에 남은 객체는 기존 고아 객체 정리 크론(`orphan-sweep.ts`)이 치운다.
+- 만료된 `pending` 업로드와 `failed` 업로드는 예약을 해제한다. R2에 남은 객체는 기존 고아 객체 정리 크론(`orphan-sweep.ts`)이 치운다.
 - MCP 업로드 한도는 파일당 100MB다. 넘으면 대시보드에서 올리라고 안내한다. 대시보드 자체의 1GB 한도는 바꾸지 않는다.
 
 ### 5.5 `mcp_uploads` 테이블 (D1)
