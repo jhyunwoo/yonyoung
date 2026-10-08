@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const betterAuthMock = vi.hoisted(() =>
-  vi.fn((options: unknown) => ({ handler: vi.fn(), options })),
+  vi.fn((options: unknown) => ({
+    handler: vi.fn(),
+    options,
+    $context: Promise.resolve({}),
+  })),
 );
 
 vi.mock("better-auth", () => ({ betterAuth: betterAuthMock }));

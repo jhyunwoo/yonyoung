@@ -361,6 +361,14 @@ export const createAuth = (
     }
   }
   instances.set(envSignature, auth);
+  // 플러그인 init(oauth_resource 시드)이 실패하면 $context는 영구히 reject된다.
+  // 실패한 인스턴스를 캐시에 남기면 isolate가 재활용될 때까지 인증이 전부 실패하므로 지운다.
+  // 호출자는 여전히 같은 reject를 받는다.
+  void auth.$context.catch(() => {
+    if (instances.get(envSignature) === auth) {
+      instances.delete(envSignature);
+    }
+  });
 
   return auth;
 };
