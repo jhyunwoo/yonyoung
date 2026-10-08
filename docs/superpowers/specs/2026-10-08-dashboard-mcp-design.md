@@ -26,7 +26,7 @@
 Claude / ChatGPT
    │  ① OAuth (인가 코드 + PKCE)
    ▼
-yonyoung.yonsei.ac.kr/api/auth/*  ──(웹 BFF 프록시)──▶  API Worker: Better Auth (+ jwt, mcp, cimd)
+yonyoung.yonsei.ac.kr/api/auth/*  ──(웹 BFF 프록시)──▶  API Worker: Better Auth (+ jwt, mcp)
    │  ② Bearer JWT
    ▼
 api.yonyoung.moveto.kr/mcp  ──▶  API Worker: MCP 핸들러
@@ -50,9 +50,9 @@ api.yonyoung.moveto.kr/mcp  ──▶  API Worker: MCP 핸들러
 
 - `jwt()`: 액세스 토큰을 JWT로 발급하고 `/api/auth/jwks`를 제공한다.
 - `mcp({ loginPage: "/auth/sign-in", consentPage: "/auth/mcp-consent", resource: "https://api.yonyoung.moveto.kr/mcp", allowDynamicClientRegistration: true, allowUnauthenticatedClientRegistration: true })`
-- `cimd({ fetchClientMetadataResource, metadataProfile: "mcp-2026-07-28" })`: Client ID Metadata Document 방식의 클라이언트를 지원한다.
-
-DCR과 CIMD를 모두 켜는 이유는 Claude와 ChatGPT가 쓰는 등록 방식이 클라이언트 버전에 따라 다르기 때문이다.
+- `disabledPaths: ["/token"]`: jwt 플러그인의 `/token`이 OAuth 토큰 엔드포인트와 겹치므로 끈다(Better Auth 문서 권장).
+- 클라이언트 등록은 DCR만 켠다. `@better-auth/cimd`는 DNS 고정을 보장하는 전송 함수를 요구하는데 Workers `fetch`로는 만들 수 없어 제외한다. Claude와 ChatGPT는 DCR을 지원한다.
+- `jwt({ jwt: { issuer: "<BETTER_AUTH_URL>/api/auth" } })`로 issuer를 고정한다. 기본값은 요청 호스트에 따라 바뀌는 baseURL이다.
 
 - scope는 `openid profile email offline_access mcp`다.
 - 액세스 토큰은 1시간, 리프레시 토큰은 30일 동안 유효하다.
@@ -73,6 +73,7 @@ DCR과 CIMD를 모두 켜는 이유는 Claude와 ChatGPT가 쓰는 등록 방식
 ### 3.3 토큰에서 Actor 만들기
 
 1. `/mcp` 요청이 오면 `@better-auth/mcp`의 `requireMcpAuth`가 JWT의 서명, `iss`, `aud`(=`MCP_RESOURCE_URL`), 만료를 검증한다. 실패하면 401과 `WWW-Authenticate`(resource metadata URL 포함)를 돌려준다.
+1-1. 검증된 토큰의 `(sub, azp)`에 대한 `oauthConsent` 행이 있는지 확인한다. 없으면 401이다. Better Auth의 `delete-consent`는 리프레시 토큰을 남기므로, 연결 해제는 우리 코드가 동의 삭제와 토큰 `revoked` 기록을 함께 한다(6장).
 2. `sub`로 사용자를 조회해 `Actor`를 만든다.
    - `getActorFromSession`(`apps/api/src/lib/auth/session.ts`)의 "사용자 ID → Actor" 부분을 `loadActorByUserId`로 떼어내 두 경로가 함께 쓴다.
    - 삭제된 사용자는 401을, `unverified` 사용자는 403과 "승인 대기 중" 메시지를 받는다.
@@ -93,7 +94,7 @@ DCR과 CIMD를 모두 켜는 이유는 Claude와 ChatGPT가 쓰는 등록 방식
 ### 4.1 노출 규칙
 
 - 도구 정의는 `@yonyoung/contracts/mcp`의 카탈로그 한 곳에 모은다. 각 항목은 이름, 한국어 설명, 분류, 노출 조건, 파일 인자 여부, `readOnly`/`destructive` 표시를 담는다.
-- 노출 조건은 `{ resource, action }` 또는 `"verified"`(승인된 모든 사용자)다. 값은 **해당 라우트가 실제로 거는 가드**와 같아야 한다. 예를 들어 사이트 설정 조회 라우트는 `site_setting.update`를 요구하므로 `site_settings_get`의 노출 조건도 `site_setting.update`다.
+- 노출 조건은 `{ resource, action }` 또는 `"verified"`(승인된 모든 사용자)다. 노출 조건 종류는 네 가지다. `verified`(승인된 모든 사용자), `manager_like`(부장 이상, `isManagerLikeRole`), `leadership`(회장·부회장, `canReadAllUsers`·`isPrivilegedActor` 기준), `permission(anyOf)`(나열한 권한 중 하나라도 있으면 노출)다. 값은 **해당 라우트가 실제로 거는 가드**와 같아야 한다. 예를 들어 사이트 설정 조회 라우트는 `site_setting.update`를 요구하므로 `site_settings_get`의 노출 조건도 `site_setting.update`다.
 - API는 요청마다 `can(actor.role, resource, action)`으로 걸러 해당 도구만 `McpServer`에 등록한다.
 - 노출은 UX일 뿐이며, 최종 판정은 항상 기존 라우트가 한다. 서열 규칙처럼 대상에 따라 달라지는 거부는 도구 호출 결과로 전달된다.
 - 조회 도구에는 `readOnlyHint: true`를 붙인다. 삭제, 역할 변경, 멤버 삭제 도구에는 `destructiveHint: true`를 붙여 클라이언트가 실행 전에 확인을 받게 한다.
@@ -112,11 +113,8 @@ DCR과 CIMD를 모두 켜는 이유는 Claude와 ChatGPT가 쓰는 등록 방식
 | `activity_list` / `activity_get` | `GET /api/activities`, `/{id}` | activity.read |
 | `exhibition_list` / `exhibition_get` | `GET /api/exhibitions`, `/{id}` | exhibition.read |
 | `linktree_list` / `linktree_get` | `GET /api/linktree`, `/{id}` | linktree.read |
-| `attachment_list` | `GET /api/attachments` | verified (scope별 read는 라우트가 판정) |
-| `member_list` / `member_get` / `member_resource_history` | `GET /api/users`, `/{id}`, `/{id}/resource-history` | user.read (부원은 라우트가 본인만 반환) |
-| `audit_log_get` | `GET /api/audit/{resourceType}/{resourceId}` | verified (resourceType별 read는 라우트가 판정) |
-| `dashboard_overview` | `GET /api/admin/dashboard` | user.read |
-| `page_view_stats` / `page_view_dashboard` | `GET /api/admin/page-views/stats`, `/dashboard` | user.read |
+| `attachment_list` | `GET /api/attachments` | activity.read 또는 site_setting.read (scope별 read는 라우트가 판정) |
+| `member_list` / `member_get` / `member_resource_history` | `GET /api/users`, `/{id}`, `/{id}/resource-history` | user.read (부원은 라우트가 본인만 반환). 단 `member_resource_history`는 `leadership` |
 | `my_profile_update` | `PATCH /api/users/{본인 id}` (프로필 필드만) | verified |
 | `my_profile_photo_set` | 파일 → `profile_image` 업로드 → `PATCH /api/users/{본인 id}` | verified |
 | `upload_prepare` / `upload_status` | 5장 참고 | verified (purpose별 권한은 5장) |
@@ -135,7 +133,10 @@ DCR과 CIMD를 모두 켜는 이유는 Claude와 ChatGPT가 쓰는 등록 방식
 | `linktree_create` / `linktree_update` / `linktree_delete` | `/api/linktree` CRUD | linktree.create / update / delete |
 | `linktree_item_add` / `linktree_item_update` | `POST /api/linktree/{id}/items`, `PATCH /{itemId}` | linktree.update |
 | `linktree_item_delete` | `DELETE /api/linktree/{id}/items/{itemId}` | linktree.delete |
-| `attachment_create` / `attachment_update` / `attachment_delete` | `/api/attachments` (파일 인자 또는 `linkUrl`) | activity.create 또는 site_setting.update (scope별 판정은 라우트) |
+| `attachment_create` / `attachment_update` / `attachment_delete` | `/api/attachments` (파일 인자 또는 `linkUrl`) | activity나 site_setting의 create 또는 update (`canCreateOrUpdate`, scope별 판정은 라우트) |
+| `dashboard_overview` | `GET /api/admin/dashboard` | manager_like |
+| `page_view_stats` / `page_view_dashboard` | `GET /api/admin/page-views/stats`, `/dashboard` | manager_like |
+| `audit_log_get` | `GET /api/audit/{resourceType}/{resourceId}` | manager_like (resourceType별 read는 라우트가 판정) |
 
 위 노출 조건은 2026-10-08 기준 라우트의 `assertPermission` 호출에서 옮겨 적었다. 활동 이미지 삭제는 `activity.delete`, 전시 이미지 삭제는 `exhibition.update`처럼 리소스마다 다르다. 이후 라우트가 바뀌면 4.4의 노출 일치 테스트가 실패해 알려준다.
 
@@ -148,7 +149,7 @@ DCR과 CIMD를 모두 켜는 이유는 Claude와 ChatGPT가 쓰는 등록 방식
 | `member_bulk_role` | `PATCH /api/users/bulk-role` | user.update |
 | `member_delete` | `DELETE /api/users/{id}` | user.delete |
 | `site_settings_get` / `site_settings_update` | `GET`/`PATCH /api/site-settings` | site_setting.update |
-| `recruiting_plan_get` / `recruiting_plan_upsert` | `GET`/`PATCH /api/recruiting-plan/current` (이미지 파일 인자) | site_setting.update |
+| `recruiting_plan_get` / `recruiting_plan_upsert` | `GET`/`PATCH /api/recruiting-plan/current` (이미지 파일 인자) | leadership (`isPrivilegedActor`) |
 
 **회장 전용** (president)
 
@@ -258,8 +259,10 @@ DCR과 CIMD를 모두 켜는 이유는 Claude와 ChatGPT가 쓰는 등록 방식
 | `file_name`, `content_type`, `declared_size` | 선언값 |
 | `object_key`, `public_url`, `width`, `height` | 완료 후 채움 |
 | `reservation_id` | 용량 예약 ID |
-| `status` | `pending` → `completed` → `consumed`, 또는 `expired` / `failed` |
+| `status` | `pending` → `receiving` → `completed` → `consumed`, 실패 시 `failed`. 만료는 `expires_at`로 판단한다. |
 | `expires_at`, `created_at`, `completed_at` | 시각 |
+
+`receiving`은 동시 PUT 중 하나만 통과시키는 상태다.
 
 ## 6. 설치 안내 페이지 `/dashboard/mcp`
 
@@ -275,8 +278,7 @@ DCR과 CIMD를 모두 켜는 이유는 Claude와 ChatGPT가 쓰는 등록 방식
 3. **Claude에서 파일 올리기 설정**: 코드 실행을 켜고 네트워크 허용 도메인에 `api.yonyoung.moveto.kr`를 추가하는 방법. 설정하지 않으면 일회용 업로드 링크로 대신 올리게 된다는 설명도 붙인다.
 4. **ChatGPT에 연결**: 개발자 모드 켜기 → 앱(커넥터) 만들기 → URL 입력 → OAuth 로그인. 이용 가능한 요금제를 안내한다.
 5. **내 역할로 쓸 수 있는 도구**
-   - `@yonyoung/contracts/mcp` 카탈로그를 현재 사용자 역할로 걸러 분류별로 보여준다.
-   - 도구마다 예시 문장을 하나씩 붙인다(예: "25기 활동 목록 보여줘").
+   - `GET /api/mcp/tools`가 현재 사용자 역할로 거른 카탈로그와 커넥터 URL을 준다. 웹은 이를 그대로 그린다.
 6. **연결된 앱**
    - 내가 허용한 OAuth 클라이언트의 이름, 연결일, 마지막 사용일을 보여준다.
    - **연결 해제** 버튼은 해당 클라이언트의 동의와 토큰을 폐기한다. Better Auth의 consent API를 API 라우트로 감싸 웹 서버 액션에서 호출한다.
@@ -308,7 +310,7 @@ apps/api/src/features/mcp/
     file-sniff.ts          매직 바이트, 이미지 크기
     mcp-upload.repository.ts
 apps/api/src/lib/auth/session.ts   loadActorByUserId 분리
-apps/api/src/lib/auth.ts           jwt, mcp, cimd 플러그인
+apps/api/src/lib/auth.ts           jwt, mcp 플러그인
 apps/api/drizzle/                  OAuth 테이블, mcp_uploads 마이그레이션
 
 apps/web/app/(dashboard)/auth/mcp-consent/page.tsx
@@ -317,7 +319,7 @@ apps/web/app/(dashboard)/dashboard/mcp/upload/[token]/page.tsx
 apps/web/features/mcp/              안내 페이지 컴포넌트, 연결된 앱 서버 액션
 ```
 
-- 새 의존성은 `@modelcontextprotocol/server`, `@better-auth/mcp`, `@better-auth/cimd`다. 모두 API에만 추가한다.
+- 새 의존성은 `@modelcontextprotocol/server`, `@better-auth/mcp`다. 모두 API에만 추가한다.
 - 버전은 구현 시점의 latest로 고정한다. Better Auth 1.7.7과 호환되는 버전을 확인한다.
 - `tooling/check-boundaries.mjs` 규칙을 지킨다. 웹은 `@yonyoung/contracts/mcp`만 import하고, API 구현 파일은 import하지 않는다.
 
@@ -338,7 +340,7 @@ API는 `src/tests/app-rbac.test.ts`처럼 `createApp`에 메모리 의존성을 
 ## 9. 구현할 때 확인할 위험 요소
 
 1. **프로토콜 버전**: `createMcpHandler`의 `legacy: "reject"`는 2025 프로토콜 클라이언트를 막는다. Claude와 ChatGPT가 쓰는 버전을 확인하고, 필요하면 기존 프로토콜을 허용한다.
-2. **Better Auth 호환성**: `@better-auth/mcp`와 `@better-auth/cimd`가 better-auth 1.7.7, Workers 런타임, D1 drizzle 어댑터에서 동작하는지 확인한다. 기존 `createAuth` 인스턴스 캐시와 baseURL 분기(`/api/auth/*`는 요청 오리진 사용)가 issuer 값을 흔들지 않는지 확인한다.
+2. **Better Auth 호환성**: `@better-auth/mcp`가 better-auth 1.7.7, Workers 런타임, D1 drizzle 어댑터에서 동작하는지 확인한다. 기존 `createAuth` 인스턴스 캐시와 baseURL 분기(`/api/auth/*`는 요청 오리진 사용)가 issuer 값을 흔들지 않는지 확인한다.
 3. **번들 크기**: MCP SDK 추가 후 Worker 크기를 `pnpm deploy:dry-run`으로 확인한다.
 4. **Claude 샌드박스 네트워크**: 네트워크 허용 설정이 요금제나 조직 정책으로 막히면 브라우저 링크 경로가 유일한 수단이 된다. 안내 페이지에 이 점을 명시한다.
 
