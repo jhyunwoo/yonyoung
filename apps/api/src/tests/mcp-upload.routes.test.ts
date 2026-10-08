@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryMcpObjectStore } from "../features/mcp/files/mcp-object-store";
 import { createMemoryMcpUploadStore } from "../features/mcp/files/mcp-upload-store";
+import {
+  UPLOAD_RESERVATION_SETTLEMENT_GRACE_MS,
+  createMemoryUploadReservationStore,
+} from "../lib/uploads/upload-reservation";
 import { jpegBytes, pngBytes } from "./mcp-file-fixtures";
 import {
   connectMcpClient,
@@ -15,10 +19,24 @@ type Prepared = { upload_id: string; put_url: string; browser_url: string; expir
 const setup = async (role: Parameters<typeof createActor>[0] = "manager") => {
   const uploadStore = createMemoryMcpUploadStore();
   const objectStore = createMemoryMcpObjectStore();
+  const reservationStore = createMemoryUploadReservationStore();
   const actor = createActor(role, role === "manager" ? IDs.manager : IDs.member);
-  const app = createMcpTestApp({ getActor: () => actor, uploadStore, objectStore });
+  const app = createMcpTestApp({
+    getActor: () => actor,
+    uploadStore,
+    objectStore,
+    overrides: { getUploadReservationStore: () => reservationStore },
+  });
   const client = await connectMcpClient(app);
-  return { app, client, uploadStore, objectStore, actor };
+  return { app, client, uploadStore, objectStore, reservationStore, actor };
+};
+
+const reservationOf = async (
+  { uploadStore, reservationStore }: Awaited<ReturnType<typeof setup>>,
+  uploadId: string,
+) => {
+  const record = await uploadStore.getById(uploadId);
+  return reservationStore.get(record!.reservationId!);
 };
 
 const prepare = async (
@@ -52,6 +70,24 @@ describe("upload_prepare", () => {
     expect(data.put_url).toMatch(/\/mcp\/uploads\/[A-Za-z0-9_-]{43}$/);
     expect(data.browser_url).toMatch(/\/dashboard\/mcp\/upload\/[A-Za-z0-9_-]{43}$/);
     expect(resultText(result)).toContain("curl");
+  });
+
+  it("용량 예약은 토큰 만료 뒤 1시간까지만 잡아 둔다", async () => {
+    const context = await setup();
+    const before = Date.now();
+    const result = await prepare(context.client, {
+      purpose: "activity_image",
+      file_name: "a.png",
+      content_type: "image/png",
+      size: 33,
+    });
+    const after = Date.now();
+    const { upload_id } = (result.structuredContent as { data: Prepared }).data;
+
+    const reservation = await reservationOf(context, upload_id);
+    const ttl = 10 * 60 * 1000 + 60 * 60 * 1000;
+    expect(reservation!.expiresAt).toBeGreaterThanOrEqual(before + ttl);
+    expect(reservation!.expiresAt).toBeLessThanOrEqual(after + ttl);
   });
 
   it("권한이 없는 용도는 거부한다", async () => {
@@ -88,7 +124,8 @@ describe("upload_prepare", () => {
 
 describe("PUT /mcp/uploads/:token", () => {
   it("파일을 저장하고 이미지 크기를 기록한다", async () => {
-    const { app, client, uploadStore, objectStore } = await setup();
+    const context = await setup();
+    const { app, client, uploadStore, objectStore } = context;
     const bytes = pngBytes(640, 480);
     const uploadId = await uploadViaClaudePath(app, client, {
       purpose: "activity_image",
@@ -96,10 +133,19 @@ describe("PUT /mcp/uploads/:token", () => {
       contentType: "image/png",
       bytes,
     });
+    const settledAt = Date.now();
 
     const record = await uploadStore.getById(uploadId);
     expect(record).toMatchObject({ status: "completed", width: 640, height: 480 });
     expect(objectStore.objects.get(record!.objectKey)?.bytes.length).toBe(bytes.length);
+
+    const reservation = await reservationOf(context, uploadId);
+    expect(reservation!.expiresAt).toBeLessThanOrEqual(
+      settledAt + UPLOAD_RESERVATION_SETTLEMENT_GRACE_MS,
+    );
+    expect(reservation!.expiresAt).toBeGreaterThan(
+      settledAt + UPLOAD_RESERVATION_SETTLEMENT_GRACE_MS - 5_000,
+    );
 
     const status = await client.callTool({ name: "upload_status", arguments: { upload_id: uploadId } });
     expect(resultText(status)).toContain("completed");
@@ -175,8 +221,42 @@ describe("PUT /mcp/uploads/:token", () => {
     expect(objectStore.objects.size).toBe(0);
   });
 
-  it("내용이 선언 형식과 다르면 415다", async () => {
-    const { app, client } = await setup();
+  it("본문 길이가 Content-Length와 다르면 400이고 실패로 정리한다", async () => {
+    const context = await setup();
+    const { app, client, uploadStore, objectStore } = context;
+    const bytes = pngBytes(1, 1);
+    const declaredSize = bytes.length + 5;
+    const prepared = await prepare(client, {
+      purpose: "activity_image",
+      file_name: "a.png",
+      content_type: "image/png",
+      size: declaredSize,
+    });
+    const { upload_id, put_url } = (prepared.structuredContent as { data: Prepared }).data;
+    const reservationId = (await uploadStore.getById(upload_id))!.reservationId!;
+
+    const response = await app.request(new URL(put_url).pathname, {
+      method: "PUT",
+      headers: { "content-length": String(declaredSize) },
+      body: new ReadableStream({
+        start(controller) {
+          controller.enqueue(bytes);
+          controller.close();
+        },
+      }),
+      duplex: "half",
+    } as RequestInit);
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toContain("받은 파일 크기가 선언한 크기와 다릅니다.");
+    expect((await uploadStore.getById(upload_id))?.status).toBe("failed");
+    expect(objectStore.objects.size).toBe(0);
+    expect(await context.reservationStore.get(reservationId)).toBeNull();
+  });
+
+  it("내용이 선언 형식과 다르면 415이고 실패로 정리한다", async () => {
+    const context = await setup();
+    const { app, client, uploadStore, objectStore } = context;
     const bytes = jpegBytes(1, 1);
     const prepared = await prepare(client, {
       purpose: "activity_image",
@@ -184,8 +264,13 @@ describe("PUT /mcp/uploads/:token", () => {
       content_type: "image/png",
       size: bytes.length,
     });
-    const { put_url } = (prepared.structuredContent as { data: Prepared }).data;
+    const { upload_id, put_url } = (prepared.structuredContent as { data: Prepared }).data;
+    const reservationId = (await uploadStore.getById(upload_id))!.reservationId!;
+
     expect((await putBytes(app, put_url, bytes)).status).toBe(415);
+    expect((await uploadStore.getById(upload_id))?.status).toBe("failed");
+    expect(objectStore.objects.size).toBe(0);
+    expect(await context.reservationStore.get(reservationId)).toBeNull();
   });
 
   it("10분이 지나면 410이다", async () => {

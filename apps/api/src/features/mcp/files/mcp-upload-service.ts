@@ -13,7 +13,6 @@ import type { PresignService } from "../../../lib/services/types";
 import { isAppError } from "../../../shared/errors/AppError";
 import type HonoAppType from "../../../types/honoAppType";
 import {
-  SINGLE_UPLOAD_CAPACITY_RESERVATION_TTL_MS,
   reserveStorageCapacityForUpload,
   settleUploadReservation,
 } from "../../uploads/upload-capacity";
@@ -340,7 +339,9 @@ export const createRequestMcpUploadService = (
           actorId,
           fileSize,
           grantTtlMs: MCP_UPLOAD_TTL_MS,
-          capacityTtlMs: SINGLE_UPLOAD_CAPACITY_RESERVATION_TTL_MS,
+          // 버려진 준비도 사용자 용량 한도에 잡힌다. 토큰은 10분 뒤 쓸 수 없으므로
+          // 하루가 아니라 진행 중인 PUT이 끝날 여유(1시간)만 더 잡아 둔다.
+          capacityTtlMs: MCP_UPLOAD_TTL_MS + 60 * 60 * 1000,
         });
       } catch (error) {
         if (isAppError(error)) {
