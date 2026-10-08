@@ -7,6 +7,8 @@ export type AuthRuntimeEnv = {
   googleClientId: string;
   googleClientSecret: string;
   emailAndPasswordEnabled: boolean;
+  mcpResourceUrl: string;
+  mcpIssuer: string;
 };
 
 const AUTH_DEV_DEFAULTS = {
@@ -166,6 +168,8 @@ export const resolveAuthRuntimeEnv = (
     throw new Error("BETTER_AUTH_SECRET must be at least 32 characters long");
   }
 
+  const mcpEnv = resolveMcpRuntimeEnv(env);
+
   return {
     baseURL,
     secret,
@@ -181,6 +185,8 @@ export const resolveAuthRuntimeEnv = (
       allowDevDefaults ? AUTH_DEV_DEFAULTS.googleClientSecret : undefined,
     ),
     emailAndPasswordEnabled,
+    mcpResourceUrl: mcpEnv.resourceUrl,
+    mcpIssuer: mcpEnv.issuer,
   };
 };
 
@@ -202,4 +208,44 @@ export const resolveDocsEnabled = (
   }
 
   return false;
+};
+
+export type McpRuntimeEnv = {
+  resourceUrl: string;
+  issuer: string;
+  jwksUrl: string;
+  resourceMetadataUrl: string;
+};
+
+/**
+ * `/api/auth/*`는 BETTER_AUTH_URL을 요청 오리진으로 덮어쓰므로 issuer를 거기서 계산하면
+ * API 도메인과 웹 도메인 요청이 서로 다른 값을 만든다. 운영에서는 두 값을 명시한다.
+ */
+export const resolveMcpRuntimeEnv = (
+  env: Partial<AppBindings> | undefined,
+): McpRuntimeEnv => {
+  const authBaseUrl = normalizeUrl(
+    readRuntimeString(env, "BETTER_AUTH_URL", AUTH_DEV_DEFAULTS.baseURL),
+    { label: "BETTER_AUTH_URL" },
+  );
+  const resourceUrl = normalizeUrl(
+    readBindingValue(env, "MCP_RESOURCE_URL") ??
+      readProcessValue("MCP_RESOURCE_URL") ??
+      `${authBaseUrl}/mcp`,
+    { label: "MCP_RESOURCE_URL", preservePath: true },
+  );
+  const issuer = normalizeUrl(
+    readBindingValue(env, "MCP_AUTH_ISSUER") ??
+      readProcessValue("MCP_AUTH_ISSUER") ??
+      `${authBaseUrl}/api/auth`,
+    { label: "MCP_AUTH_ISSUER", preservePath: true },
+  );
+  const resource = new URL(resourceUrl);
+
+  return {
+    resourceUrl,
+    issuer,
+    jwksUrl: `${issuer}/jwks`,
+    resourceMetadataUrl: `${resource.origin}/.well-known/oauth-protected-resource${resource.pathname}`,
+  };
 };

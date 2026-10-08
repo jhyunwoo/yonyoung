@@ -1,5 +1,6 @@
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { openAPI } from "better-auth/plugins";
+import { jwt, openAPI } from "better-auth/plugins";
+import { mcp } from "@better-auth/mcp";
 import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";
 import * as schema from "../platform/db/schema";
@@ -12,6 +13,10 @@ import {
 import { isHttpUrl } from "./validation/url";
 
 const LOCAL_HOSTNAME = "localhost";
+
+export const MCP_OAUTH_SCOPES = ["openid", "profile", "email", "offline_access", "mcp"];
+const MCP_ACCESS_TOKEN_TTL_SECONDS = 60 * 60;
+const MCP_REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
 
 const assertSafePublicUserUrls = (user: unknown): void => {
   if (!user || typeof user !== "object") {
@@ -148,7 +153,7 @@ export const shouldEnableCrossSubDomainCookies = (
   });
 };
 
-const createAuthWithEnv = (database: D1Database, env: AuthRuntimeEnv) => {
+export const createAuthWithEnv = (database: D1Database, env: AuthRuntimeEnv) => {
   const db = createDB(database);
   const crossSubDomainCookieDomain = resolveCrossSubDomainCookieDomain(
     env.baseURL,
@@ -168,6 +173,8 @@ const createAuthWithEnv = (database: D1Database, env: AuthRuntimeEnv) => {
       protocol: baseURLProtocol,
     },
     basePath: "/api/auth",
+    // jwt 플러그인의 /token은 OAuth 토큰 엔드포인트와 겹친다(Better Auth 문서 권장).
+    disabledPaths: ["/token"],
     secret: env.secret,
     trustedOrigins: env.trustedOrigins,
     database: drizzleAdapter(db, {
@@ -264,6 +271,20 @@ const createAuthWithEnv = (database: D1Database, env: AuthRuntimeEnv) => {
       openAPI({
         disableDefaultReference: true,
       }),
+      // issuer는 요청 호스트와 무관하게 고정한다. MCP 리소스 서버가 같은 값으로 검증한다.
+      jwt({ jwt: { issuer: env.mcpIssuer } }),
+      mcp({
+        loginPage: "/auth/sign-in",
+        consentPage: "/auth/mcp-consent",
+        resource: env.mcpResourceUrl,
+        scopes: MCP_OAUTH_SCOPES,
+        clientRegistrationDefaultScopes: MCP_OAUTH_SCOPES,
+        // Claude·ChatGPT가 쓰는 DCR. CIMD는 Workers에서 DNS 고정을 보장할 수 없어 쓰지 않는다.
+        allowDynamicClientRegistration: true,
+        allowUnauthenticatedClientRegistration: true,
+        accessTokenExpiresIn: MCP_ACCESS_TOKEN_TTL_SECONDS,
+        refreshTokenExpiresIn: MCP_REFRESH_TOKEN_TTL_SECONDS,
+      }),
     ],
     advanced: {
       trustedProxyHeaders: true,
@@ -310,6 +331,8 @@ const buildAuthCacheSignature = (env: AuthRuntimeEnv): string =>
     env.googleClientId,
     env.googleClientSecret,
     String(env.emailAndPasswordEnabled),
+    env.mcpResourceUrl,
+    env.mcpIssuer,
   ].join("|");
 
 export const createAuth = (
@@ -341,9 +364,3 @@ export const createAuth = (
 
   return auth;
 };
-
-// Better Auth CLI needs an exported auth instance for schema generation.
-export const auth = createAuthWithEnv(
-  {} as D1Database,
-  resolveAuthRuntimeEnv(undefined, true),
-);

@@ -10,6 +10,7 @@ vi.mock("better-auth/adapters/drizzle", () => ({
 }));
 vi.mock("better-auth/plugins", () => ({
   openAPI: vi.fn(() => ({ id: "open-api-mock" })),
+  jwt: vi.fn(() => ({ id: "jwt-mock" })),
 }));
 vi.mock("../lib/db", () => ({ default: vi.fn(() => ({ db: "mock" })) }));
 

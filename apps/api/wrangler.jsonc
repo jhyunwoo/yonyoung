@@ -73,6 +73,8 @@
   "vars": {
     "BETTER_AUTH_URL": "https://yonyoung.yonsei.ac.kr",
     "BETTER_AUTH_TRUSTED_ORIGINS": "https://yonyoung.yonsei.ac.kr",
+    "MCP_RESOURCE_URL": "https://api.yonyoung.moveto.kr/mcp",
+    "MCP_AUTH_ISSUER": "https://yonyoung.yonsei.ac.kr/api/auth",
     "R2_PUBLIC_BASE_URL": "https://storage.yonyoung.moveto.kr",
     "R2_BUCKET": "yonyoung-storage",
     "DOCS_ENABLED": "false",
@@ -94,6 +96,8 @@
       "vars": {
         "BETTER_AUTH_URL": "https://yonyoung.yonsei.ac.kr",
         "BETTER_AUTH_TRUSTED_ORIGINS": "https://yonyoung.yonsei.ac.kr,https://dev.yonyoung.moveto.kr",
+        "MCP_RESOURCE_URL": "http://localhost:8787/mcp",
+        "MCP_AUTH_ISSUER": "http://localhost:3000/api/auth",
         "R2_PUBLIC_BASE_URL": "https://storage.yonyoung.moveto.kr",
         "R2_BUCKET": "yonyoung-storage",
         "DOCS_ENABLED": "true",

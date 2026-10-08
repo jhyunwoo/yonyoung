@@ -20,6 +20,10 @@ type RuntimeBindingOverrides = {
   BETTER_AUTH_TRUSTED_ORIGINS?: string;
   BETTER_AUTH_SECRET?: string;
   BETTER_AUTH_EMAIL_AND_PASSWORD_ENABLED?: string;
+  /** MCP 보호 리소스 URL. 토큰 audience로 쓴다. 예: https://api.yonyoung.moveto.kr/mcp */
+  MCP_RESOURCE_URL?: string;
+  /** 액세스 토큰 issuer. 웹 도메인의 Better Auth 경로. 예: https://yonyoung.yonsei.ac.kr/api/auth */
+  MCP_AUTH_ISSUER?: string;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
   R2_S3_ENDPOINT?: string;

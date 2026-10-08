@@ -1,6 +1,14 @@
 import type { Context } from "hono";
 import { resolveTrustedClientIp } from "../http/client-ip";
-import { getActorFromSession } from "../auth/session";
+import { getActorFromSession, loadActorByUserId } from "../auth/session";
+import {
+  createBetterAuthMcpAuthenticator,
+  type McpRequestAuthenticator,
+} from "../../features/mcp/mcp-auth";
+import {
+  createD1McpConnectionStore,
+  type McpConnectionStore,
+} from "../../features/mcp/mcp-connection-store";
 import { createAuth } from "../auth";
 import { type Actor } from "../authorization/types";
 import type HonoAppType from "../../types/honoAppType";
@@ -68,6 +76,12 @@ export type AppDependencies = {
   getUploadReservationStore: (
     c: Context<HonoAppType>,
   ) => UploadReservationStore;
+  authenticateMcpRequest: McpRequestAuthenticator;
+  loadActorByUserId: (
+    c: Context<HonoAppType>,
+    userId: string,
+  ) => Promise<Actor | null>;
+  getMcpConnectionStore: (c: Context<HonoAppType>) => McpConnectionStore;
 };
 
 // 업로드 예약이 사용하는 관측 신선도 창(30초)보다 짧게 유지한다.
@@ -136,6 +150,11 @@ export const createDefaultDependencies = (): AppDependencies => ({
     createD1MultipartUploadStateStore(createRequestDatabase(c)),
   getUploadReservationStore: (c) =>
     createD1UploadReservationStore(createRequestDatabase(c)),
+  authenticateMcpRequest: createBetterAuthMcpAuthenticator(),
+  loadActorByUserId: (c, userId) =>
+    loadActorByUserId(resolveD1Database(c.env), userId),
+  getMcpConnectionStore: (c) =>
+    createD1McpConnectionStore(resolveD1Database(c.env)),
   getAuthOpenApiSchema: async (c) => {
     const database = resolveD1Database(c.env);
     const auth = createAuth(database, c.env);

@@ -218,6 +218,9 @@ importers:
       hono:
         specifier: 4.13.12
         version: 4.13.12
+      jose:
+        specifier: 6.2.12
+        version: 6.2.12
       xss:
         specifier: 1.0.15
         version: 1.0.15

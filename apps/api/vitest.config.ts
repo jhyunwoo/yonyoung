@@ -14,6 +14,7 @@ export default defineConfig({
       exclude: [
         "src/app.ts",
         "src/lib/auth.ts",
+        "src/lib/auth-cli.ts",
         "src/lib/auth/session.ts",
         "src/lib/openapi/descriptions.ts",
         "src/lib/openapi/enrich.ts",
