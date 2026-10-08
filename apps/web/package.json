@@ -24,6 +24,7 @@
     "test:ci": "pnpm fonts:check && pnpm lint && pnpm typecheck && pnpm test:unit:coverage && pnpm test:e2e:full"
   },
   "dependencies": {
+    "@better-auth/oauth-provider": "1.7.7",
     "@dnd-kit/core": "6.3.1",
     "@dnd-kit/sortable": "10.0.0",
     "@dnd-kit/utilities": "3.2.2",
@@ -52,6 +53,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
+    "@eslint/compat": "2.1.1",
     "@eslint/js": "10.0.1",
     "@next/eslint-plugin-next": "^16.3.8",
     "@next/playwright": "^16.3.8",
@@ -79,9 +81,8 @@
     "typescript": "6.0.3",
     "typescript-eslint": "^8.71.0",
     "typescript7": "npm:typescript@7.0.2",
-    "vitest": "^5.0.3",
     "vite": "8.3.2",
-    "@eslint/compat": "2.1.1"
+    "vitest": "^5.0.3"
   },
   "packageManager": "pnpm@12.8.1+sha512.f64ba907507f5ceafe06c8d38e6052d0179444580ec1279ddd5bfc11cb48aa8a2644b66598e07e761da84872a9fc57d5f902b87fa49d024198d558612aabbe45"
 }

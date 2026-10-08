@@ -8,6 +8,7 @@ import {
   normalizeProxyPath,
   resolvePublicRequestOrigin,
 } from "@/server/security/request-guards";
+import { isServerToServerOAuthPath } from "@/server/security/oauth-proxy-paths";
 import { fetchWithTimeout, FetchTimeoutError } from "@/server/http/fetch-with-timeout";
 
 type RouteContext = {
@@ -108,9 +109,11 @@ const handle = async (
     return NextResponse.json({ ok: false, message: "Not Found" }, { status: 404 });
   }
 
-  const csrfProtectionResponse = enforceSameOriginProtection(request, {
-    requireCsrfHeader: true,
-  });
+  const csrfProtectionResponse = isServerToServerOAuthPath(joinedPath)
+    ? null
+    : enforceSameOriginProtection(request, {
+        requireCsrfHeader: true,
+      });
   if (csrfProtectionResponse) {
     return csrfProtectionResponse;
   }
