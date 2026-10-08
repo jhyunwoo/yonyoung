@@ -24,6 +24,8 @@ type RuntimeBindingOverrides = {
   MCP_RESOURCE_URL?: string;
   /** 액세스 토큰 issuer. 웹 도메인의 Better Auth 경로. 예: https://yonyoung.yonsei.ac.kr/api/auth */
   MCP_AUTH_ISSUER?: string;
+  /** ChatGPT 파일 download_url 허용 호스트 접미사(쉼표 구분). 기본 .oaiusercontent.com */
+  MCP_CHATGPT_FILE_HOST_SUFFIXES?: string;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
   R2_S3_ENDPOINT?: string;

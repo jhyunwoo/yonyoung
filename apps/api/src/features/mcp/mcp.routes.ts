@@ -14,6 +14,8 @@ import {
   McpUploadError,
   createRequestMcpUploadService,
 } from "./files/mcp-upload-service";
+import { resolveChatGptFileHostSuffixes } from "./files/chatgpt-file";
+import { createMcpFileResolver } from "./files/file-ref";
 import { createInternalApiClient, type InternalDispatch } from "./internal-api";
 import { mcpUnauthorizedResponse } from "./mcp-auth";
 import { buildMcpServer } from "./mcp-server";
@@ -44,18 +46,27 @@ const readExecutionContext = (c: Context<HonoAppType>): ExecutionContext | undef
 const createMcpToolContext = (
   c: Context<HonoAppType>,
   input: { actor: Actor; dispatch: InternalDispatch; dependencies: AppDependencies },
-): McpToolContext => ({
-  actor: input.actor,
-  api: createInternalApiClient({
-    dispatch: input.dispatch,
-    env: c.env,
-    executionCtx: readExecutionContext(c),
+): McpToolContext => {
+  const uploads = createRequestMcpUploadService(c, input.dependencies);
+  return {
     actor: input.actor,
-    origin: new URL(c.req.url).origin,
-    requestId: c.get("requestId") ?? crypto.randomUUID(),
-  }),
-  uploads: createRequestMcpUploadService(c, input.dependencies),
-});
+    api: createInternalApiClient({
+      dispatch: input.dispatch,
+      env: c.env,
+      executionCtx: readExecutionContext(c),
+      actor: input.actor,
+      origin: new URL(c.req.url).origin,
+      requestId: c.get("requestId") ?? crypto.randomUUID(),
+    }),
+    uploads,
+    files: createMcpFileResolver({
+      actor: input.actor,
+      uploads,
+      fetch: input.dependencies.fetchChatGptFile,
+      hostSuffixes: resolveChatGptFileHostSuffixes(c.env),
+    }),
+  };
+};
 
 export const registerMcpRoutes = (app: App, dependencies: AppDependencies) => {
   const dispatch: InternalDispatch = (request, env, executionCtx) =>

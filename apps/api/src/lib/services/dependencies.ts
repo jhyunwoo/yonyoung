@@ -92,6 +92,7 @@ export type AppDependencies = {
   getMcpConnectionStore: (c: Context<HonoAppType>) => McpConnectionStore;
   getMcpUploadStore: (c: Context<HonoAppType>) => McpUploadStore;
   getMcpObjectStore: (c: Context<HonoAppType>) => McpObjectStore;
+  fetchChatGptFile: (request: Request) => Promise<Response>;
 };
 
 // 업로드 예약이 사용하는 관측 신선도 창(30초)보다 짧게 유지한다.
@@ -167,6 +168,7 @@ export const createDefaultDependencies = (): AppDependencies => ({
     createD1McpConnectionStore(resolveD1Database(c.env)),
   getMcpUploadStore: (c) => createD1McpUploadStore(createRequestDatabase(c)),
   getMcpObjectStore: (c) => createR2McpObjectStore(resolveR2Bucket(c.env)),
+  fetchChatGptFile: (request) => fetch(request),
   getAuthOpenApiSchema: async (c) => {
     const database = resolveD1Database(c.env);
     const auth = createAuth(database, c.env);

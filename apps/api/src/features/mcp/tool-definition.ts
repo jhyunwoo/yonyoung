@@ -2,6 +2,7 @@ import type { CallToolResult } from "@modelcontextprotocol/server";
 import type { McpToolName } from "@yonyoung/contracts/mcp";
 import { z } from "zod";
 import type { Actor } from "../../lib/authorization/types";
+import type { McpFileResolver } from "./files/file-ref";
 import type { McpUploadService } from "./files/mcp-upload-service";
 import {
   fillPath,
@@ -16,6 +17,7 @@ export type McpToolContext = {
   actor: Actor;
   api: InternalApiClient;
   uploads: McpUploadService;
+  files: McpFileResolver;
 };
 
 export type McpToolDefinition = {
