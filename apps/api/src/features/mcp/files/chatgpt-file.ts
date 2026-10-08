@@ -54,7 +54,14 @@ export const isAllowedChatGptFileUrl = (
 
 const fileNameFromUrl = (value: string): string | null => {
   const last = new URL(value).pathname.split("/").filter(Boolean).pop();
-  return last ? decodeURIComponent(last) : null;
+  if (!last) {
+    return null;
+  }
+  try {
+    return decodeURIComponent(last);
+  } catch {
+    return null;
+  }
 };
 
 /**
@@ -71,9 +78,11 @@ export const downloadChatGptFile = async (
 
   const response = await deps.fetch(new Request(file.download_url, { redirect: "manual" }));
   if (response.status >= 300 && response.status < 400) {
+    await response.body?.cancel();
     throw new McpUploadError(502, "ChatGPT 파일 주소가 다른 곳으로 이동했습니다. 파일을 다시 올려 주세요.");
   }
   if (!response.ok || !response.body) {
+    await response.body?.cancel();
     throw new McpUploadError(502, `ChatGPT 파일을 내려받지 못했습니다(HTTP ${response.status}).`);
   }
 

@@ -58,6 +58,17 @@ describe("메모리 업로드 저장소", () => {
     expect((await store.getById("up-1"))?.status).toBe("completed");
   });
 
+  it("discard는 완료된 소유자의 업로드만 failed로 바꾼다", async () => {
+    const store = createMemoryMcpUploadStore();
+    await store.create(record({ id: "a", status: "completed" }));
+    await store.create(record({ id: "b", status: "consumed" }));
+    await store.create(record({ id: "c", status: "completed", userId: "u2" }));
+    expect(await store.discard(["a", "b", "c"], "u1")).toEqual(["a"]);
+    expect((await store.getById("a"))?.status).toBe("failed");
+    expect((await store.getById("b"))?.status).toBe("consumed");
+    expect((await store.getById("c"))?.status).toBe("completed");
+  });
+
   it("토큰 해시로 찾는다", async () => {
     const store = createMemoryMcpUploadStore();
     await store.create(record());
@@ -97,6 +108,14 @@ describe("D1 업로드 저장소", () => {
     const claimed = await createD1McpUploadStore(database).claim(ids, "u1");
 
     expect(claimed).toEqual(ids);
+    expect(boundCounts.length).toBeGreaterThan(1);
+  });
+
+  it("discard는 ID를 나눠 묶고 모든 문의 RETURNING ID를 합친다", async () => {
+    const { database, boundCounts } = createLimitedDatabase();
+    const discarded = await createD1McpUploadStore(database).discard(ids, "u1");
+
+    expect(discarded).toEqual(ids);
     expect(boundCounts.length).toBeGreaterThan(1);
   });
 

@@ -23,17 +23,24 @@ export const createMcpFileResolver = (input: {
   hostSuffixes: readonly string[];
 }): McpFileResolver => ({
   async resolve({ purpose, chatGptFiles = [], uploadIds = [] }) {
-    const resolved: ResolvedUpload[] = [];
-    for (const file of chatGptFiles) {
-      const downloaded = await downloadChatGptFile(file, {
-        fetch: input.fetch,
-        hostSuffixes: input.hostSuffixes,
-      });
-      const record = await input.uploads.ingest(input.actor, { purpose, ...downloaded });
-      resolved.push(toResolvedUpload(record));
+    // 싼 검사를 먼저 끝내 둔다. 다운로드한 뒤에 실패하면 저장된 파일이 고아가 된다.
+    input.uploads.assertPurposeAllowed(input.actor, purpose);
+    const fromUploadIds = await input.uploads.resolveCompleted(input.actor, purpose, uploadIds);
+    const ingested: ResolvedUpload[] = [];
+    try {
+      for (const file of chatGptFiles) {
+        const downloaded = await downloadChatGptFile(file, {
+          fetch: input.fetch,
+          hostSuffixes: input.hostSuffixes,
+        });
+        const record = await input.uploads.ingest(input.actor, { purpose, ...downloaded });
+        ingested.push(toResolvedUpload(record));
+      }
+    } catch (error) {
+      await input.uploads.discard(input.actor, ingested);
+      throw error;
     }
-    resolved.push(...(await input.uploads.resolveCompleted(input.actor, purpose, uploadIds)));
-    return resolved;
+    return [...ingested, ...fromUploadIds];
   },
   claim: (files) => input.uploads.claim(input.actor, files),
   release: (files) => input.uploads.release(files),

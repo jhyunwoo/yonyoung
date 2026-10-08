@@ -32,6 +32,8 @@ export interface McpUploadStore {
   fail(id: string): Promise<void>;
   /** completed인 소유자의 업로드를 consumed로 바꾸고 바뀐 ID를 돌려준다. */
   claim(ids: string[], userId: string): Promise<string[]>;
+  /** completed인 소유자의 업로드를 failed로 바꾸고 바뀐 ID를 돌려준다. */
+  discard(ids: string[], userId: string): Promise<string[]>;
   /** 도구 호출이 실패했을 때 consumed를 completed로 되돌린다. */
   release(ids: string[]): Promise<void>;
 }
@@ -181,6 +183,23 @@ export const createD1McpUploadStore = (
     return claimed;
   },
 
+  async discard(ids, userId) {
+    const discarded: string[] = [];
+    for (const chunk of chunkIds(ids)) {
+      const placeholders = chunk.map(() => "?").join(", ");
+      const result = await database
+        .prepare(
+          `UPDATE mcp_uploads SET status = 'failed'
+           WHERE user_id = ? AND status = 'completed' AND id IN (${placeholders})
+           RETURNING id`,
+        )
+        .bind(userId, ...chunk)
+        .all<{ id: string }>();
+      discarded.push(...result.results.map((row) => row.id));
+    }
+    return discarded;
+  },
+
   async release(ids) {
     for (const chunk of chunkIds(ids)) {
       const placeholders = chunk.map(() => "?").join(", ");
@@ -243,6 +262,17 @@ export const createMemoryMcpUploadStore = (): McpUploadStore => {
         }
       }
       return claimed;
+    },
+    async discard(ids, userId) {
+      const discarded: string[] = [];
+      for (const id of ids) {
+        const current = records.get(id);
+        if (current && current.userId === userId && current.status === "completed") {
+          update(id, { status: "failed" });
+          discarded.push(id);
+        }
+      }
+      return discarded;
     },
     async release(ids) {
       for (const id of ids) {

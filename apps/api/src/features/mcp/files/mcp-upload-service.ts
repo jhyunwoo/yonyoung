@@ -210,6 +210,8 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
   };
 
   return {
+    assertPurposeAllowed,
+
     putUrlFor: (token: string) => `${deps.apiOrigin}/mcp/uploads/${token}`,
 
     async prepare(actor: Actor, input: FileDeclaration): Promise<PreparedUpload> {
@@ -310,6 +312,18 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
         await deps.store.release(claimed);
         throw new McpUploadError(409, "이미 사용한 업로드가 섞여 있습니다. 새로 올려 주세요.");
       }
+    },
+
+    /** 아무도 참조하지 않게 된 완료 업로드를 실패로 돌리고 저장된 객체를 지운다. */
+    async discard(actor: Actor, uploads: ResolvedUpload[]): Promise<void> {
+      const ids = uploads.map((upload) => upload.uploadId);
+      const records = await Promise.all(ids.map((id) => deps.store.getById(id)));
+      const discarded = new Set(await deps.store.discard(ids, actor.id));
+      await Promise.all(
+        records
+          .filter((record) => record && discarded.has(record.id))
+          .map((record) => deps.objects.delete(record!.objectKey).catch(() => undefined)),
+      );
     },
 
     async release(uploads: ResolvedUpload[]): Promise<void> {
