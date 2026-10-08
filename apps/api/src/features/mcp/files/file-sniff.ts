@@ -122,17 +122,34 @@ const readJpeg = (bytes: Uint8Array): Dimensions | null => {
   return null;
 };
 
-/** HEIF 계열(AVIF·HEIC)은 ispe 박스에 원본 크기가 있다. */
+const ISPE_TYPE = [0x69, 0x73, 0x70, 0x65];
+
+const isIspeAt = (bytes: Uint8Array, offset: number): boolean =>
+  ISPE_TYPE.every((byte, index) => bytes[offset + index] === byte);
+
+/**
+ * HEIF 계열(AVIF·HEIC)은 ispe 박스에 크기가 있다. 그리드나 썸네일이 있으면 ispe가 여러 개이므로
+ * 머리 안에 완전히 들어 있는 박스 중 면적이 가장 큰 것을 본 이미지 크기로 본다.
+ */
 const readIspe = (bytes: Uint8Array): Dimensions | null => {
-  for (let index = 0; index + 16 <= bytes.length; index += 1) {
-    if (ascii(bytes, index, 4) === "ispe") {
-      return {
-        width: view(bytes).getUint32(index + 8),
-        height: view(bytes).getUint32(index + 12),
-      };
+  const data = view(bytes);
+  let best: Dimensions | null = null;
+  for (let type = 4; type + 12 <= bytes.length - 4; type += 1) {
+    if (!isIspeAt(bytes, type)) {
+      continue;
+    }
+    const boxStart = type - 4;
+    const boxSize = data.getUint32(boxStart);
+    if (boxSize < 20 || boxStart + boxSize > bytes.length) {
+      continue;
+    }
+    const width = data.getUint32(type + 8);
+    const height = data.getUint32(type + 12);
+    if (!best || width * height > best.width * best.height) {
+      best = { width, height };
     }
   }
-  return null;
+  return best;
 };
 
 const READER_BY_TYPE: Record<string, (bytes: Uint8Array) => Dimensions | null> = {

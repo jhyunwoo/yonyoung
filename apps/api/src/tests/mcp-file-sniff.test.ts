@@ -8,6 +8,7 @@ import { matchesDeclaredType, readImageDimensions } from "../features/mcp/files/
 import {
   avifBytes,
   gifBytes,
+  heicBytesWithThumbnail,
   jpegBytes,
   pdfBytes,
   pngBytes,
@@ -60,6 +61,12 @@ describe("이미지 크기", () => {
     ["image/avif", avifBytes(640, 480)],
   ] as const)("%s 머리에서 가로·세로를 읽는다", (contentType, bytes) => {
     expect(readImageDimensions(contentType, bytes)).toEqual({ width: 640, height: 480 });
+  });
+
+  it("썸네일 ispe가 먼저 와도 면적이 가장 큰 본 이미지 크기를 쓴다", () => {
+    expect(readImageDimensions("image/heic", heicBytesWithThumbnail(160, 120, 4032, 3024))).toEqual(
+      { width: 4032, height: 3024 },
+    );
   });
 
   it("읽을 수 없으면 null이다", () => {

@@ -56,3 +56,16 @@ export const streamOf = (bytes: Uint8Array, chunkSize = 7): ReadableStream<Uint8
       controller.close();
     },
   });
+
+/** ftyp(heic) 박스 뒤에 썸네일 ispe 박스가 먼저, 본 이미지 ispe 박스가 나중에 오는 HEIF 머리. */
+export const heicBytesWithThumbnail = (
+  thumbWidth: number,
+  thumbHeight: number,
+  width: number,
+  height: number,
+): Uint8Array =>
+  new Uint8Array([
+    ...u32be(24), ...ascii("ftyp"), ...ascii("heic"), 0, 0, 0, 0, ...ascii("mif1"), ...ascii("heic"),
+    ...u32be(20), ...ascii("ispe"), 0, 0, 0, 0, ...u32be(thumbWidth), ...u32be(thumbHeight),
+    ...u32be(20), ...ascii("ispe"), 0, 0, 0, 0, ...u32be(width), ...u32be(height),
+  ]);
