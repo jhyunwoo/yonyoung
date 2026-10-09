@@ -1,0 +1,62 @@
+import { expect, test } from "@playwright/test";
+import { setMockSession } from "./support/session";
+
+test.describe("AI 연결", () => {
+  test("부원은 안내 페이지에서 읽기 작업과 연결을 본다", async ({ context, page }) => {
+    await setMockSession(context, { role: "member", namespace: "mcp-member" });
+    await page.goto("/dashboard/mcp");
+
+    await expect(
+      page.getByRole("heading", { name: "Claude·ChatGPT에서 대시보드 쓰기" }),
+    ).toBeVisible();
+    await expect(
+      page.locator("code", { hasText: "https://api.yonyoung.example/mcp" }),
+    ).toBeVisible();
+    await expect(page.getByText("활동 목록", { exact: true })).toBeVisible();
+    await expect(page.getByText("활동 삭제", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("Claude", { exact: true })).toBeVisible();
+  });
+
+  test("연결 해제를 확인하면 목록에서 사라진다", async ({ context, page }) => {
+    await setMockSession(context, {
+      role: "manager",
+      namespace: `mcp-revoke-${test.info().project.name}`,
+    });
+    await page.goto("/dashboard/mcp");
+
+    await page.getByRole("button", { name: "연결 해제" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "연결 해제" }).click();
+    await expect(page.getByText("연결된 앱이 없습니다")).toBeVisible();
+  });
+
+  test("동의 화면은 앱 이름과 역할을 보여준다", async ({ context, page }) => {
+    await setMockSession(context, { role: "manager", namespace: "mcp-consent" });
+    await page.goto(
+      "/auth/mcp-consent?client_id=claude-client&scope=openid+mcp&exp=1&sig=abc",
+    );
+
+    await expect(page.getByRole("heading", { name: "Claude 연결" })).toBeVisible();
+    await expect(page.getByText("부장 권한으로")).toBeVisible();
+    await expect(page.getByRole("button", { name: "허용" })).toBeEnabled();
+  });
+
+  test("승인 대기 사용자는 허용할 수 없다", async ({ context, page }) => {
+    await setMockSession(context, { role: "unverified", namespace: "mcp-pending" });
+    await page.goto(
+      "/auth/mcp-consent?client_id=claude-client&scope=openid+mcp&exp=1&sig=abc",
+    );
+
+    await expect(page.getByText("관리자 승인 대기 중")).toBeVisible();
+    await expect(page.getByRole("button", { name: "허용" })).toBeDisabled();
+  });
+
+  test("휴대폰 너비에서 가로 스크롤이 없다", async ({ context, page }) => {
+    await setMockSession(context, { role: "member", namespace: "mcp-mobile" });
+    await page.setViewportSize({ width: 375, height: 800 });
+    await page.goto("/dashboard/mcp");
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
+  });
+});

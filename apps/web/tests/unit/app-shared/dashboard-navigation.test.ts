@@ -30,6 +30,8 @@ describe("resolveActiveGenerationFromPath", () => {
       "/dashboard/settings",
       "/dashboard/settings/members",
       "/dashboard/profile",
+      "/dashboard/mcp",
+      "/dashboard/mcp/upload/abc",
       "/",
       "/auth/sign-in",
     ]) {
@@ -71,6 +73,7 @@ describe("buildNavigationItems", () => {
     expect(items.map((item) => item.key)).toEqual([
       "generation-g25",
       "generation-g24",
+      "mcp",
       "stats",
       "homepage",
     ]);
@@ -90,6 +93,7 @@ describe("buildNavigationItems", () => {
       "generation-activities",
       "generation-exhibitions",
       "generation-members",
+      "mcp",
       "stats",
       "homepage",
     ]);
@@ -156,5 +160,39 @@ describe("resolveActivePageName", () => {
         selectedGenerationScopedPath: scopedPath,
       }),
     ).toBe(expected);
+  });
+});
+
+describe("AI 연결 메뉴", () => {
+  it("기수 밖과 기수 안 모두에 AI 연결 메뉴가 있다", () => {
+    const outside = buildNavigationItems({
+      pathname: "/dashboard/mcp",
+      generationOptions: GENERATIONS,
+      selectedGeneration: null,
+      selectedGenerationScopedPath: null,
+    });
+    expect(outside.find((item) => item.key === "mcp")).toMatchObject({
+      href: "/dashboard/mcp",
+      label: "AI 연결",
+      active: true,
+    });
+
+    const inside = buildNavigationItems({
+      pathname: "/dashboard/25기",
+      generationOptions: GENERATIONS,
+      selectedGeneration: GENERATIONS[0]!,
+      selectedGenerationScopedPath: "/",
+    });
+    expect(inside.some((item) => item.key === "mcp")).toBe(true);
+  });
+
+  it("모바일 상단 이름은 AI 연결이다", () => {
+    expect(
+      resolveActivePageName({
+        pathname: "/dashboard/mcp",
+        selectedGeneration: null,
+        selectedGenerationScopedPath: null,
+      }),
+    ).toBe("AI 연결");
   });
 });

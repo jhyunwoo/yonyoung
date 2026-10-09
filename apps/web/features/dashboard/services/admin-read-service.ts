@@ -1,5 +1,5 @@
 import "server-only";
-import type { ZodType } from "zod";
+import { z, type ZodType } from "zod";
 import {
   applyForwardedRequestContextHeaders,
   clearTimeoutController,
@@ -7,6 +7,14 @@ import {
   resolveApiBaseUrl,
   unwrapDataEnvelope,
 } from "@/shared/http/http";
+import {
+  apiMcpConnectionSchema,
+  apiMcpOverviewSchema,
+  apiMcpUploadLookupSchema,
+  type ApiMcpConnection,
+  type ApiMcpOverview,
+  type ApiMcpUploadLookup,
+} from "@yonyoung/contracts/mcp";
 import { readServerForwardedRequestContext } from "@/server/http/request-context";
 import type {
   ApiActivity,
@@ -257,3 +265,23 @@ export const getAdminPageViewStats = (
   cookieHeader: string | null,
 ): Promise<AdminReadResult<ApiPageViewStats>> =>
   readAdminResource("/admin/page-views/dashboard", cookieHeader, apiPageViewStatsSchema);
+
+export const getMcpOverview = (
+  cookieHeader: string | null,
+): Promise<AdminReadResult<ApiMcpOverview>> =>
+  readAdminResource("/mcp/tools", cookieHeader, apiMcpOverviewSchema);
+
+export const getMcpConnections = (
+  cookieHeader: string | null,
+): Promise<AdminReadResult<ApiMcpConnection[]>> =>
+  readAdminResource("/mcp/connections", cookieHeader, z.array(apiMcpConnectionSchema));
+
+export const getMcpUploadLookup = (
+  cookieHeader: string | null,
+  token: string,
+): Promise<AdminReadResult<ApiMcpUploadLookup>> =>
+  readAdminResource(
+    `/mcp/uploads/lookup?token=${encodeURIComponent(token)}`,
+    cookieHeader,
+    apiMcpUploadLookupSchema,
+  );
