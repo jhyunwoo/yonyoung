@@ -73,6 +73,24 @@ describe("SignInPageClient", () => {
     ).toBeInTheDocument();
   });
 
+  it("carries the return path through the Google callback", async () => {
+    signInWithGoogleMock.mockResolvedValue({
+      ok: false,
+      errorMessage: "Google 로그인 실패",
+    });
+
+    const user = userEvent.setup();
+    render(<SignInPageClient returnPath="/dashboard/mcp/upload/abc" />);
+
+    await user.click(screen.getByTestId("auth-signin-google-submit"));
+
+    expect(await screen.findByText("Google 로그인 실패")).toBeInTheDocument();
+    expect(signInWithGoogleMock).toHaveBeenCalledWith({
+      callbackURL: `${window.location.origin}/auth/sign-in?next=%2Fdashboard%2Fmcp%2Fupload%2Fabc`,
+      disableRedirect: true,
+    });
+  });
+
   it("redirects to canonical domain before oauth when host differs", async () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://yonyoung.yonsei.ac.kr";
 

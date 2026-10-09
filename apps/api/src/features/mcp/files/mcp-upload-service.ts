@@ -224,10 +224,13 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
       }
       return { ...record, ...completed, status: "completed" };
     } catch (error) {
-      await deps.store.fail(record.id);
+      // 정리가 실패해도 나머지 정리를 이어가고 원래 오류를 알린다. 남은 객체는 고아 청소가 지운다.
+      await deps.store.fail(record.id).catch(() => undefined);
       await deps.objects.delete(record.objectKey).catch(() => undefined);
       if (record.reservationId) {
-        await deps.releaseReservation(record.reservationId);
+        await deps
+          .releaseReservation(record.reservationId)
+          .catch(() => undefined);
       }
       if (error instanceof StreamLengthMismatchError) {
         throw new McpUploadError(
@@ -335,6 +338,16 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
       purpose: McpUploadPurpose,
       uploadIds: string[],
     ): Promise<ResolvedUpload[]> {
+      // 한 업로드는 한 항목에만 쓴다. 중복을 그대로 두면 claim이 일부만 잡힌 것으로 보고 되돌린다.
+      const duplicate = uploadIds.find(
+        (id, index) => uploadIds.indexOf(id) !== index,
+      );
+      if (duplicate !== undefined) {
+        throw new McpUploadError(
+          422,
+          `같은 upload_id가 두 번 들어 있습니다: ${duplicate}. 파일마다 따로 올린 upload_id를 넣어 주세요.`,
+        );
+      }
       const resolved: ResolvedUpload[] = [];
       for (const uploadId of uploadIds) {
         const record = await findOwned(actor, uploadId);
