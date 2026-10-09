@@ -33,4 +33,46 @@ describe("/.well-known/oauth-authorization-server/api/auth", () => {
     expect(url).toBe("https://api.example.com/api/auth/.well-known/oauth-authorization-server");
     expect((init?.headers as Headers).get("x-forwarded-host")).toBe("yonyoung.yonsei.ac.kr");
   });
+
+  const url = "https://localhost:3000/.well-known/oauth-authorization-server/api/auth";
+  const load = async () =>
+    (await import("@/app/.well-known/oauth-authorization-server/api/auth/route")).GET;
+
+  it("성공 응답만 5분 캐시한다", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("{}", { status: 200 })));
+    const response = await (await load())(new NextRequest(url));
+    expect(response.headers.get("cache-control")).toBe("public, max-age=300");
+  });
+
+  it("업스트림 오류는 캐시하지 않는다", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("{}", { status: 503 })));
+    const response = await (await load())(new NextRequest(url));
+    expect(response.status).toBe(503);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+  });
+
+  it("쿠키와 인증 헤더를 업스트림에 보내지 않는다", async () => {
+    const fetchSpy = vi.fn(async () => new Response("{}", { status: 200 }));
+    vi.stubGlobal("fetch", fetchSpy);
+    await (await load())(
+      new NextRequest(url, { headers: { cookie: "a=b", authorization: "Bearer x" } }),
+    );
+    const init = (fetchSpy.mock.calls[0] as unknown[])[1] as RequestInit;
+    const headers = init.headers as Headers;
+    expect(headers.get("cookie")).toBeNull();
+    expect(headers.get("authorization")).toBeNull();
+  });
+
+  it("타임아웃은 504이고 캐시하지 않는다", async () => {
+    const { FetchTimeoutError } = await import("@/server/http/fetch-with-timeout");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new FetchTimeoutError(10_000);
+      }),
+    );
+    const response = await (await load())(new NextRequest(url));
+    expect(response.status).toBe(504);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+  });
 });

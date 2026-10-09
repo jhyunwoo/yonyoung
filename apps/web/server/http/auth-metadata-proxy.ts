@@ -24,6 +24,7 @@ export const proxyAuthMetadata = async (
       {
         method: "GET",
         headers: buildUpstreamProxyHeaders(request, {
+          allowedHeaders: ["accept"],
           extraHeaders: {
             "x-forwarded-host": publicOrigin.host,
             "x-forwarded-proto": publicOrigin.protocol.replace(":", ""),
@@ -38,13 +39,16 @@ export const proxyAuthMetadata = async (
       status: upstream.status,
       headers: {
         "content-type": upstream.headers.get("content-type") ?? "application/json",
-        "cache-control": "public, max-age=300",
+        "cache-control": upstream.ok ? "public, max-age=300" : "no-store",
       },
     });
   } catch (error) {
     return NextResponse.json(
       { error: "temporarily_unavailable" },
-      { status: error instanceof FetchTimeoutError ? 504 : 502 },
+      {
+        status: error instanceof FetchTimeoutError ? 504 : 502,
+        headers: { "cache-control": "no-store" },
+      },
     );
   }
 };
