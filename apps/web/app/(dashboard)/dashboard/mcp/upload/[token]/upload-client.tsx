@@ -37,10 +37,15 @@ const putFile = (url: string, file: File, onProgress: (percent: number) => void)
       reject(new Error(message ?? `업로드하지 못했습니다(HTTP ${request.status}).`));
     };
     request.onerror = () => reject(new Error("네트워크 오류로 업로드하지 못했습니다."));
-    request.onabort = () =>
-      reject(new Error("업로드가 중단되었습니다. 다시 시도해 주세요."));
-    request.ontimeout = () =>
-      reject(new Error("업로드가 중단되었습니다. 다시 시도해 주세요."));
+    // 중단된 PUT도 서버가 토큰을 이미 썼을 수 있어 같은 주소로 다시 시도하게 하지 않는다.
+    const interrupted = () =>
+      reject(
+        new Error(
+          "업로드가 중단되었습니다. AI에게 업로드를 다시 준비해 달라고 요청해 주세요.",
+        ),
+      );
+    request.onabort = interrupted;
+    request.ontimeout = interrupted;
     request.send(file);
   });
 

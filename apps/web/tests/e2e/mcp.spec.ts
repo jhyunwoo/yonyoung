@@ -43,6 +43,7 @@ test.describe("AI 연결", () => {
 
     await expect(page.getByRole("heading", { name: "Claude 연결" })).toBeVisible();
     await expect(page.getByText("부장 권한으로")).toBeVisible();
+    await expect(page.getByText("허용하면 claude.ai(으)로 돌아갑니다.")).toBeVisible();
     await expect(page.getByRole("button", { name: "허용" })).toBeEnabled();
   });
 

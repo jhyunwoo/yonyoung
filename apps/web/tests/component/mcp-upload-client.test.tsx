@@ -18,29 +18,34 @@ const makeFile = () =>
     type: "image/jpeg",
   });
 
+const stubXhr = () => {
+  const instances: FakeXhr[] = [];
+  class FakeXhr {
+    status = 0;
+    responseText = "";
+    upload: { onprogress: unknown } = { onprogress: null };
+    onload: (() => void) | null = null;
+    onerror: (() => void) | null = null;
+    onabort: (() => void) | null = null;
+    ontimeout: (() => void) | null = null;
+    send = vi.fn();
+    open = vi.fn();
+    setRequestHeader = vi.fn();
+    constructor() {
+      instances.push(this);
+    }
+  }
+  vi.stubGlobal("XMLHttpRequest", FakeXhr);
+  return instances;
+};
+
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
 describe("McpUploadClient", () => {
   it("올리는 동안 다시 파일을 골라도 두 번째 PUT을 시작하지 않는다", async () => {
-    const instances: FakeXhr[] = [];
-    class FakeXhr {
-      status = 0;
-      responseText = "";
-      upload: { onprogress: unknown } = { onprogress: null };
-      onload: (() => void) | null = null;
-      onerror: (() => void) | null = null;
-      onabort: (() => void) | null = null;
-      ontimeout: (() => void) | null = null;
-      send = vi.fn();
-      open = vi.fn();
-      setRequestHeader = vi.fn();
-      constructor() {
-        instances.push(this);
-      }
-    }
-    vi.stubGlobal("XMLHttpRequest", FakeXhr);
+    const instances = stubXhr();
 
     render(<McpUploadClient lookup={lookup} />);
     const input = screen.getByLabelText("올릴 파일");
@@ -58,5 +63,22 @@ describe("McpUploadClient", () => {
     instances[0].onload?.();
     await waitFor(() => expect(screen.getByText("올렸습니다")).toBeTruthy());
     expect(instances).toHaveLength(1);
+  });
+
+  it("업로드가 중단되면 AI에게 다시 준비해 달라고 안내한다", async () => {
+    const instances = stubXhr();
+    render(<McpUploadClient lookup={lookup} />);
+
+    fireEvent.change(screen.getByLabelText("올릴 파일"), {
+      target: { files: [makeFile()] },
+    });
+    await waitFor(() => expect(instances[0]?.send).toHaveBeenCalledTimes(1));
+    instances[0].ontimeout?.();
+
+    expect(
+      await screen.findByText(
+        "업로드가 중단되었습니다. AI에게 업로드를 다시 준비해 달라고 요청해 주세요.",
+      ),
+    ).toBeTruthy();
   });
 });

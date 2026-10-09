@@ -109,7 +109,8 @@ const handle = async (
     return NextResponse.json({ ok: false, message: "Not Found" }, { status: 404 });
   }
 
-  const csrfProtectionResponse = isServerToServerOAuthPath(joinedPath)
+  const isServerToServer = isServerToServerOAuthPath(joinedPath);
+  const csrfProtectionResponse = isServerToServer
     ? null
     : enforceSameOriginProtection(request, {
         requireCsrfHeader: true,
@@ -130,6 +131,16 @@ const handle = async (
   const hasRequestBody = request.method !== "GET" && request.method !== "HEAD";
   const requestBody = hasRequestBody ? request.body : undefined;
   const forwardedRequestOrigin = resolveForwardedRequestOrigin(request);
+  const upstreamHeaders = buildUpstreamProxyHeaders(request, {
+    extraHeaders: {
+      "x-forwarded-host": forwardedRequestOrigin.host,
+      "x-forwarded-proto": forwardedRequestOrigin.protocol,
+    },
+  });
+  if (isServerToServer) {
+    // 동일 출처 검사를 건너뛰는 경로라 클라이언트 등록·토큰 호출이 사용자 세션을 타지 않게 한다.
+    upstreamHeaders.delete("cookie");
+  }
 
   let upstreamResponse: Response;
   try {
@@ -137,12 +148,7 @@ const handle = async (
       upstreamUrl,
       {
         method: request.method,
-        headers: buildUpstreamProxyHeaders(request, {
-          extraHeaders: {
-            "x-forwarded-host": forwardedRequestOrigin.host,
-            "x-forwarded-proto": forwardedRequestOrigin.protocol,
-          },
-        }),
+        headers: upstreamHeaders,
         body: requestBody,
         ...(requestBody ? { duplex: "half" as const } : {}),
         redirect: "manual",

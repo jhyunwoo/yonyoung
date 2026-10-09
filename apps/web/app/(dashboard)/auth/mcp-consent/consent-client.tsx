@@ -16,6 +16,9 @@ import {
 import { authClient } from "@/features/auth/client/auth-client";
 import { groupToolsByCategory } from "@/features/mcp/mcp-tool-groups";
 
+/** 앱 이름은 등록한 쪽이 마음대로 정하므로, 돌아갈 주소가 이 목록 밖이면 경고한다. */
+const KNOWN_REDIRECT_HOSTS = new Set(["claude.ai", "chatgpt.com", "chat.openai.com"]);
+
 type LoadState =
   | { status: "loading" }
   | { status: "error"; message: string }
@@ -91,14 +94,25 @@ export default function McpConsentClient() {
     );
   }
 
-  const { client, overview } = state.context;
+  const { client, overview, redirectHost } = state.context;
   const role = normalizeLegacyRole(overview.role);
   const clientName = client.name ?? client.clientId;
   const isPending = role === "unverified";
+  const isKnownHost = redirectHost !== null && KNOWN_REDIRECT_HOSTS.has(redirectHost);
 
   return (
     <main className="mx-auto flex max-w-lg flex-col gap-4 p-6">
       <h1 className="text-h3 text-ink">{clientName} 연결</h1>
+      {redirectHost ? (
+        <p className="break-all text-body font-semibold text-ink">
+          허용하면 {redirectHost}(으)로 돌아갑니다.
+        </p>
+      ) : null}
+      {isKnownHost ? null : (
+        <Alert tone="warning">
+          Claude나 ChatGPT가 아닌 주소입니다. 직접 연결을 시작한 게 아니라면 거절하세요.
+        </Alert>
+      )}
       <p className="text-body-sm text-ink-muted">
         {clientName}이(가) {CORE_ROLE_LABELS[role]} 권한으로 연영 대시보드에 접근하려고
         합니다. 허용하면 대화 중에 아래 작업을 할 수 있습니다. 연결은 대시보드의 &lsquo;AI

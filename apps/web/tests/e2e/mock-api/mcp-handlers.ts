@@ -119,6 +119,7 @@ export const handleMcpRoutes = (ctx: McpHandlerContext): boolean => {
   if (pathname === "/api/mcp/consent-context" && method === "GET") {
     sendData(response, {
       client: { clientId: "claude-client", name: "Claude", uri: "https://claude.ai" },
+      redirectHost: "claude.ai",
       scopes: ["openid", "mcp"],
       overview,
     });
