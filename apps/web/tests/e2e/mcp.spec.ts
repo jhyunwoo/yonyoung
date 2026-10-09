@@ -139,7 +139,9 @@ test.describe("AI 연결", () => {
     await page.goto(
       "/api/auth/oauth2/authorize?response_type=code&client_id=claude-client&state=s1",
     );
-    await expect(page).toHaveURL(/\/auth\/sign-in\?.*client_id=claude-client.*sig=mock-sig/);
+    await expect(page).toHaveURL(
+      /\/auth\/sign-in\?.*client_id=claude-client.*sig=mock-sig/,
+    );
 
     await page.route("https://accounts.google.com/**", (route) =>
       route.fulfill({ status: 200, contentType: "text/html", body: "google" }),
