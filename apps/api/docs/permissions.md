@@ -56,7 +56,8 @@ C=생성, R=조회, U=수정, D=삭제. ✔=가능, ✖=불가.
 
 ### 멤버 — `/api/users`
 
-- 목록 조회: 부원은 **본인 1건만** 반환되고, manager 이상은 전체 목록을 본다.
+- 목록 조회: 부원은 **본인 1건만** 반환되고, 부장은 **같은 기수 멤버만**, 회장단은 전체 목록을 본다.
+- `GET /users/{id}/resource-history`: 회장단 전용.
 - 상세 조회: manager 이상 전체, 부원은 본인만.
 - 수정(`PATCH /users/{id}`):
   - 회장단(`user.update`)은 모든 필드(역할·기수 포함) 수정 가능. 단:
@@ -111,11 +112,11 @@ scope에 따라 다른 정책 리소스를 따른다 (`src/modules/attachments.t
 
 - resourceType별로 매핑된 리소스의 `read` 권한을 요구한다
   (예: `activity` 로그는 `activity.read`, `attachment` 로그는 `site_setting.read`).
-- 사실상 unverified를 제외한 전원이 조회 가능.
+- 부장 이상(`isManagerLikeRole`)만 조회 가능.
 
 ### 대시보드 통계 — `/api/admin/dashboard`, `/api/admin/page-views/*`
 
-- `user.read` 기준 — unverified를 제외한 전원 조회 가능.
+- 부장 이상(`isManagerLikeRole`)만 조회 가능.
 
 ### 공개(무인증) — `/api/public/*`
 
@@ -133,3 +134,11 @@ recruiting-plan/current, attachments, views(조회수), media(서명된 미디�
   회장단은 기본 설정·모집 계획·기수 관리까지 노출.
 - 서버 액션(`features/dashboard/actions/*`)은 `accessScope`(`manager` | `leadership` | `user_manager`)로
   1차 검증 후 API에 위임한다. 첨부파일은 scope에 따라 `site_donate`→leadership, `activity`→manager.
+
+## MCP — `/mcp`
+
+- 인증: OAuth 2.1 액세스 토큰(JWT, `aud`=`MCP_RESOURCE_URL`, scope `mcp`) + `(사용자, 클라이언트)` 동의가 살아 있어야 한다.
+- `unverified`는 403. 역할은 매 요청 D1에서 다시 읽는다.
+- 도구 노출은 `@yonyoung/contracts/mcp` 카탈로그의 노출 조건을 따르며, 실행은 위 라우트를 그대로 호출하므로 이 문서의 모든 규칙이 그대로 적용된다.
+- `src/tests/mcp-exposure.test.ts`가 노출 조건과 라우트 가드의 일치를 역할별로 검증한다. 라우트 가드를 바꾸면 이 테스트가 카탈로그 수정이 필요한지 알려 준다.
+- 업로드: `upload_prepare`는 위 presign 표와 같은 권한을 쓴다. 파일당 100MB, 토큰 10분·1회.

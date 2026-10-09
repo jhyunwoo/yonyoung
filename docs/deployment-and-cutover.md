@@ -152,6 +152,37 @@ authorized write only when approved, R2 access, rate limiting, public cache
 isolation and logs. Avoid production data mutation when a read-only check is
 sufficient.
 
+## MCP 배포 체크리스트
+
+1. API 원격 마이그레이션: `pnpm db:migrate:remote` (`0012_dashboard_mcp.sql`). API 배포보다 먼저 한다. `createAuth()`가 isolate마다 처음 인증 인스턴스를 만들 때 `oauth_resource`를 읽고 넣으므로, 마이그레이션 없이 배포하면 인증이 실패한다.
+2. `apps/api/wrangler.jsonc` vars 확인: `MCP_RESOURCE_URL=https://api.yonyoung.moveto.kr/mcp`, `MCP_AUTH_ISSUER=https://yonyoung.yonsei.ac.kr/api/auth`. 선택: `MCP_CHATGPT_FILE_HOST_SUFFIXES`.
+3. 웹 CSP `connect-src`에는 `API_BASE_URL`의 origin이 들어간다. 이 값은 업로드 `put_url`의 공개 API origin(`https://api.yonyoung.moveto.kr`)과 같아야 한다.
+4. Better Auth CLI 인스턴스는 `apps/api/src/lib/auth-cli.ts`로 옮겼다. CLI는 이 파일을 가리키게 한다.
+5. API 배포: `pnpm deploy:api`. 배포 전 `pnpm deploy:dry-run`으로 번들 크기를 확인한다(Workers 한도 이내).
+6. 웹 배포: `/.well-known/oauth-authorization-server/api/auth`가 200과 `issuer: https://yonyoung.yonsei.ac.kr/api/auth`를 돌려주는지 확인한다.
+7. 스모크:
+   - `curl -i https://api.yonyoung.moveto.kr/.well-known/oauth-protected-resource/mcp` → 200, `authorization_servers`가 issuer와 같다.
+   - `curl -i -X POST https://api.yonyoung.moveto.kr/mcp` → 401, `WWW-Authenticate`에 `resource_metadata` 포함.
+8. 되돌리기: API를 이전 버전으로 롤백해도 새 테이블은 남아도 무해하다. 웹 롤백 시 `/dashboard/mcp` 메뉴만 사라진다.
+
+### 배포 후 확인
+
+dev 또는 프로덕션 배포 뒤 부원 계정과 회장 계정으로 각각 확인한다. 결과는 PR 설명에 표로 남긴다.
+
+| 확인 | Claude | ChatGPT |
+|---|---|---|
+| 커넥터 추가 → Google 로그인 → 동의 → 연결 | | |
+| `whoami`가 역할과 도구 수를 맞게 알려줌 | | |
+| 부원: 삭제 도구가 보이지 않음 | | |
+| 회장: 채팅에 첨부한 사진 2장을 활동에 추가 | | |
+| 회장: 삭제 전에 클라이언트가 확인을 요청함 | | |
+| `/dashboard/mcp`에서 연결 해제 → 다음 호출이 401 | | |
+| Claude: 샌드박스 네트워크 미허용 시 browser_url로 업로드 | | 해당 없음 |
+
+- ChatGPT `download_url`의 호스트를 기록한다. 기본값 `.oaiusercontent.com`과 다르면 `MCP_CHATGPT_FILE_HOST_SUFFIXES`를 wrangler vars에 넣고 다시 배포한다.
+- ChatGPT 다운로드 응답에 `Content-Encoding`이 붙어도 정확한 길이 검사가 깨지지 않는지 확인한다.
+- 안내 페이지의 메뉴 이름이 실제 화면과 다르면 `apps/web/app/(dashboard)/dashboard/mcp/mcp-guide-sections.tsx` 문구를 고치고 `GUIDE_VERIFIED_ON`을 갱신한다.
+
 ## Rollback plan
 
 Before cutover, record:
