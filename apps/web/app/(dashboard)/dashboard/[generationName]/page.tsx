@@ -16,7 +16,10 @@ const sortByStartDateDesc = <T extends { startDate: number }>(list: T[]): T[] =>
   return [...list].sort((left, right) => right.startDate - left.startDate);
 };
 
-const GenerationDashboardSummary = async (input: { generationId: string }) => {
+const GenerationDashboardSummary = async (input: {
+  generationId: string;
+  generationPath: string;
+}) => {
   const cookieHeader = await readCookieHeader();
   const [activitiesResult, exhibitionsResult, membersResult] = await Promise.all([
     listAdminActivities(input.generationId, cookieHeader),
@@ -84,14 +87,16 @@ const GenerationDashboardSummary = async (input: { generationId: string }) => {
           ) : (
             <ul className="mt-4 space-y-3">
               {recentActivities.map((activity) => (
-                <li
-                  key={activity.id}
-                  className="rounded-lg border border-hairline px-4 py-3"
-                >
-                  <p className="text-sm font-semibold text-ink">{activity.title}</p>
-                  <p className="mt-1 text-xs text-ink-muted">
-                    {formatKoreanDateRange(activity.startDate, activity.endDate)}
-                  </p>
+                <li key={activity.id}>
+                  <Link
+                    href={`${input.generationPath}/activities/${activity.id}`}
+                    className="block rounded-lg border border-hairline px-4 py-3 transition hover:border-hairline-strong hover:bg-surface-sunken"
+                  >
+                    <p className="text-sm font-semibold text-ink">{activity.title}</p>
+                    <p className="mt-1 text-xs text-ink-muted">
+                      {formatKoreanDateRange(activity.startDate, activity.endDate)}
+                    </p>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -105,14 +110,16 @@ const GenerationDashboardSummary = async (input: { generationId: string }) => {
           ) : (
             <ul className="mt-3 space-y-3">
               {recentExhibitions.map((exhibition) => (
-                <li
-                  key={exhibition.id}
-                  className="rounded-lg border border-hairline px-4 py-3"
-                >
-                  <p className="text-sm font-semibold text-ink">{exhibition.title}</p>
-                  <p className="mt-1 text-xs text-ink-muted">
-                    {formatKoreanDateRange(exhibition.startDate, exhibition.endDate)}
-                  </p>
+                <li key={exhibition.id}>
+                  <Link
+                    href={`${input.generationPath}/exhibitions/${exhibition.id}`}
+                    className="block rounded-lg border border-hairline px-4 py-3 transition hover:border-hairline-strong hover:bg-surface-sunken"
+                  >
+                    <p className="text-sm font-semibold text-ink">{exhibition.title}</p>
+                    <p className="mt-1 text-xs text-ink-muted">
+                      {formatKoreanDateRange(exhibition.startDate, exhibition.endDate)}
+                    </p>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -194,7 +201,10 @@ export default async function GenerationDashboardPage({
             </section>
           }
         >
-          <GenerationDashboardSummary generationId={generation.id} />
+          <GenerationDashboardSummary
+            generationId={generation.id}
+            generationPath={generation.path}
+          />
         </Suspense>
 
         <section className="rounded-lg border border-hairline bg-surface p-6 md:p-8">
