@@ -670,6 +670,35 @@ const handleRequest = async (
       return;
     }
 
+    // 실제 API처럼 웹 프록시가 넘긴 x-forwarded-sec-fetch-mode가 navigate일 때만 302로 보내고,
+    // 나머지는 Better Auth처럼 {"redirect":true} JSON을 돌려준다.
+    if (pathname === "/api/auth/oauth2/authorize" && method === "GET") {
+      const signed = new URLSearchParams(requestUrl.searchParams);
+      signed.set("exp", String(Math.floor(now() / 1000) + 600));
+      for (const name of [...new Set(signed.keys())].sort()) {
+        signed.append("ba_param", name);
+      }
+      signed.append("ba_param", "ba_param");
+      signed.set("sig", "mock-sig");
+      const location = `/auth/sign-in?${signed.toString()}`;
+      if (request.headers["x-forwarded-sec-fetch-mode"] === "navigate") {
+        response.statusCode = 302;
+        response.setHeader("location", location);
+        response.end();
+        return;
+      }
+      sendJson(response, 200, { redirect: true, url: location });
+      return;
+    }
+
+    if (pathname === "/api/auth/sign-in/social" && method === "POST") {
+      sendJson(response, 200, {
+        url: "https://accounts.google.com/o/oauth2/v2/auth?mock=1",
+        redirect: false,
+      });
+      return;
+    }
+
     if (pathname === "/api/public/page-views" && method === "POST") {
       sendJson(response, 200, { ok: true });
       return;
