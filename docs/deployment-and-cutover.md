@@ -126,12 +126,12 @@ These are off by default; the service behaves as before until they are set.
 
 1. Record the exact previous web/API commits, deployment settings, repository URLs and D1 migration state.
 2. Validate a clean frozen-lockfile install and the complete local/CI matrix.
-3. Confirm contract checks, web production build, Wrangler production dry-run, and no Drizzle migration change.
+3. Confirm contract checks, web production build, Wrangler production dry-run, and no Drizzle migration change (the MCP release is the exception: it adds migration 0012, see the MCP deployment checklist).
 4. Confirm all dashboard settings above and deploy to staging when available.
 5. Smoke-test staging without unnecessary data mutation.
 6. Deploy the API only if its affected graph requires it; inspect Worker logs and smoke-test it.
 7. Deploy the web only if its affected graph requires it; inspect server/browser logs and smoke-test it.
-8. Verify authentication/OAuth, admin authorization, uploads/R2, cache behavior, and that no D1 migration ran.
+8. Verify authentication/OAuth, admin authorization, uploads/R2, cache behavior, and that no D1 migration ran (except 0012 when deploying the MCP release; see the MCP deployment checklist).
 9. Verify GitHub Actions from a clean PR/checkout.
 10. Mark old repositories as migrated only after the observation window and rollback drill.
 
@@ -156,8 +156,8 @@ sufficient.
 
 1. API 원격 마이그레이션: `pnpm db:migrate:remote` (`0012_dashboard_mcp.sql`). API 배포보다 먼저 한다. `createAuth()`가 isolate마다 처음 인증 인스턴스를 만들 때 `oauth_resource`를 읽고 넣으므로, 마이그레이션 없이 배포하면 인증이 실패한다.
 2. `apps/api/wrangler.jsonc` vars 확인: `MCP_RESOURCE_URL=https://api.yonyoung.moveto.kr/mcp`, `MCP_AUTH_ISSUER=https://yonyoung.yonsei.ac.kr/api/auth`. 선택: `MCP_CHATGPT_FILE_HOST_SUFFIXES`.
-3. 웹 CSP `connect-src`에는 `API_BASE_URL`의 origin이 들어간다. 이 값은 업로드 `put_url`의 공개 API origin(`https://api.yonyoung.moveto.kr`)과 같아야 한다.
-4. Better Auth CLI 인스턴스는 `apps/api/src/lib/auth-cli.ts`로 옮겼다. CLI는 이 파일을 가리키게 한다.
+3. 웹 `API_BASE_URL`을 업로드 `put_url`의 공개 API origin(`https://api.yonyoung.moveto.kr`)과 같게 설정한다. 웹 CSP `connect-src`가 이 origin을 사용한다.
+4. Better Auth CLI는 `apps/api/src/lib/auth-cli.ts`를 지정해 실행한다.
 5. API 배포: `pnpm deploy:api`. 배포 전 `pnpm deploy:dry-run`으로 번들 크기를 확인한다(Workers 한도 이내).
 6. 웹 배포: `/.well-known/oauth-authorization-server/api/auth`가 200과 `issuer: https://yonyoung.yonsei.ac.kr/api/auth`를 돌려주는지 확인한다.
 7. 스모크:
