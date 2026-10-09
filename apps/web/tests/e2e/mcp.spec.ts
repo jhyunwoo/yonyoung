@@ -113,6 +113,30 @@ test.describe("AI 연결", () => {
     await expect(page.getByText("크기가 다릅니다")).toBeVisible();
   });
 
+  test("로그아웃 상태로 연 업로드 주소는 로그인 뒤 다시 열린다", async ({
+    context,
+    page,
+  }) => {
+    await setMockSession(context, { role: "guest" });
+    await page.goto("/dashboard/mcp/upload/valid-token");
+    await expect(page).toHaveURL(
+      /\/auth\/sign-in\?next=%2Fdashboard%2Fmcp%2Fupload%2Fvalid-token$/,
+    );
+
+    // Google에서 돌아오면 같은 로그인 주소가 세션과 함께 다시 열린다.
+    const signInUrl = page.url();
+    await setMockSession(context, { role: "manager", namespace: "mcp-upload-return" });
+    await page.goto(signInUrl);
+    await expect(page).toHaveURL(/\/dashboard\/mcp\/upload\/valid-token$/);
+    await expect(page.getByLabel("올릴 파일")).toBeVisible();
+  });
+
+  test("로그인 뒤 외부 주소로는 보내지 않는다", async ({ context, page }) => {
+    await setMockSession(context, { role: "manager", namespace: "mcp-upload-return" });
+    await page.goto("/auth/sign-in?next=https%3A%2F%2Fevil.example%2Fdashboard");
+    await expect(page).toHaveURL(/\/dashboard$/);
+  });
+
   test("다른 계정의 업로드 주소는 쓸 수 없다고 알려준다", async ({ context, page }) => {
     await setMockSession(context, { role: "manager", namespace: "mcp-upload-stranger" });
     await page.goto("/dashboard/mcp/upload/unknown-token");

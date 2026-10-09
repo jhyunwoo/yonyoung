@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { isOAuthAuthorizationRequest } from "@/features/auth/model/oauth-flow";
+import {
+  isOAuthAuthorizationRequest,
+  resolveSignInReturnPath,
+} from "@/features/auth/model/oauth-flow";
 import { isServerToServerOAuthPath } from "@/server/security/oauth-proxy-paths";
 
 describe("isOAuthAuthorizationRequest", () => {
@@ -25,5 +28,32 @@ describe("isServerToServerOAuthPath", () => {
     ["sign-in/social", false],
   ])("%s → %s", (path, expected) => {
     expect(isServerToServerOAuthPath(path)).toBe(expected);
+  });
+});
+
+describe("resolveSignInReturnPath", () => {
+  it("대시보드 경로와 쿼리를 그대로 돌려준다", () => {
+    expect(resolveSignInReturnPath("/dashboard")).toBe("/dashboard");
+    expect(resolveSignInReturnPath("/dashboard/mcp/upload/abc")).toBe(
+      "/dashboard/mcp/upload/abc",
+    );
+    expect(resolveSignInReturnPath("/dashboard/members?page=2")).toBe(
+      "/dashboard/members?page=2",
+    );
+  });
+
+  it.each([
+    undefined,
+    ["/dashboard", "/dashboard/mcp"],
+    "",
+    "dashboard",
+    "https://evil.example/dashboard",
+    "//evil.example/dashboard",
+    "/\\evil.example/dashboard",
+    "/dashboard/../auth/profile",
+    "/dashboardx",
+    "/auth/profile",
+  ])("대시보드 밖이나 외부 주소는 버린다: %s", (value) => {
+    expect(resolveSignInReturnPath(value)).toBeNull();
   });
 });

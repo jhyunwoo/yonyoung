@@ -10,6 +10,7 @@ import { signInWithGoogle } from "@/features/auth/client/auth-actions";
 
 type SignInPageClientProps = {
   authCanonicalOrigin?: string | null;
+  returnPath?: string | null;
 };
 
 const parseOrigin = (value: string | null | undefined): string | null => {
@@ -62,7 +63,10 @@ const GoogleIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export default function SignInPageClient({ authCanonicalOrigin }: SignInPageClientProps) {
+export default function SignInPageClient({
+  authCanonicalOrigin,
+  returnPath,
+}: SignInPageClientProps) {
   const [isPending, setIsPending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -79,9 +83,13 @@ export default function SignInPageClient({ authCanonicalOrigin }: SignInPageClie
     }
 
     const callbackOrigin = canonicalOrigin ?? window.location.origin;
-    const callbackURL = `${callbackOrigin}/auth/sign-in`;
+    const callbackURL = new URL("/auth/sign-in", callbackOrigin);
+    // Google에서 돌아온 로그인 페이지가 원래 가려던 대시보드 주소로 보낸다.
+    if (returnPath) {
+      callbackURL.searchParams.set("next", returnPath);
+    }
     const signInResult = await signInWithGoogle({
-      callbackURL,
+      callbackURL: callbackURL.toString(),
       disableRedirect: true,
     });
 

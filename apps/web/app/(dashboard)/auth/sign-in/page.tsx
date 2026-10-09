@@ -1,5 +1,9 @@
 import { redirect } from "next/navigation";
-import { isOAuthAuthorizationRequest } from "@/features/auth/model/oauth-flow";
+import { DASHBOARD_PATH } from "@/features/auth/model/auth-shared";
+import {
+  isOAuthAuthorizationRequest,
+  resolveSignInReturnPath,
+} from "@/features/auth/model/oauth-flow";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { isSessionUnavailableError } from "@/features/auth/server/auth-server";
 import SignInPageClient from "@/app/(dashboard)/auth/sign-in/sign-in-page-client";
@@ -22,12 +26,14 @@ export default async function SignInPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const query = await searchParams;
+  const returnPath = resolveSignInReturnPath(query.next);
   const session = await readSessionOrNull();
   // AI 앱 연결 중이면 대시보드로 보내지 않는다. 다시 로그인하면 Better Auth가 인가를 이어간다.
   if (session && !isOAuthAuthorizationRequest(query)) {
-    const redirectPath = await serverAuthGuard.resolveAdminLandingPath(session);
-    redirect(redirectPath);
+    const landingPath = await serverAuthGuard.resolveAdminLandingPath(session);
+    // 프로필 작성·승인 대기가 먼저다. 대시보드에 들어갈 수 있을 때만 원래 주소로 돌려보낸다.
+    redirect(landingPath === DASHBOARD_PATH && returnPath ? returnPath : landingPath);
   }
 
-  return <SignInPageClient />;
+  return <SignInPageClient returnPath={returnPath} />;
 }
