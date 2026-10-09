@@ -59,6 +59,7 @@ export default function McpUploadClient({ lookup }: { lookup: ApiMcpUploadLookup
       setState({ status: "idle", error: problem });
       return;
     }
+    busyRef.current = true;
     setState({ status: "uploading", percent: 0 });
     try {
       await putFile(lookup.putUrl, file, (percent) =>
@@ -70,6 +71,8 @@ export default function McpUploadClient({ lookup }: { lookup: ApiMcpUploadLookup
         status: "idle",
         error: error instanceof Error ? error.message : "업로드하지 못했습니다.",
       });
+    } finally {
+      busyRef.current = false;
     }
   };
 
