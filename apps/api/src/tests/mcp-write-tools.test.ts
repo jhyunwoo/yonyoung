@@ -13,6 +13,12 @@ import {
 
 const WEB_ENV = { MCP_AUTH_ISSUER: "https://web.example.test/api/auth" };
 
+/** 소속 기수가 있는 부장. 대시보드에서 그 기수만 열 수 있다. */
+const managerInGeneration = () => ({
+  ...createActor("manager", IDs.manager),
+  generationId: IDs.generation,
+});
+
 describe("쓰기 도구", () => {
   it("generation_create는 data를 그대로 본문으로 보낸다", async () => {
     const createGenerationMock = vi.fn(async () => createGeneration());
@@ -126,7 +132,7 @@ describe("생성 도구와 대시보드 주소", () => {
     const createActivityMock = vi.fn(async () => createActivity());
     const client = await connectMcpClient(
       createMcpTestApp({
-        getActor: () => createActor("manager", IDs.manager),
+        getActor: managerInGeneration,
         dataService: createDataServiceMock({
           createActivity: createActivityMock,
           getGenerationById: async () => createGeneration(),
@@ -199,7 +205,12 @@ describe("생성 도구와 대시보드 주소", () => {
   it("생성이 실패하면 대시보드 주소 없이 오류를 돌려준다", async () => {
     // createActivity를 넣지 않은 목은 호출되면 던지므로 라우트가 500으로 끝난다.
     const client = await connectMcpClient(
-      createMcpTestApp({ getActor: () => createActor("manager", IDs.manager) }),
+      createMcpTestApp({
+        getActor: managerInGeneration,
+        dataService: createDataServiceMock({
+          getGenerationById: async () => createGeneration(),
+        }),
+      }),
     );
 
     const result = await client.callTool({
@@ -209,5 +220,48 @@ describe("생성 도구와 대시보드 주소", () => {
 
     expect(result.isError).toBe(true);
     expect(resultText(result)).not.toContain("/dashboard/");
+  });
+
+  it("부장이 대시보드에서 열 수 없는 다른 기수에는 만들지 않는다", async () => {
+    const createActivityMock = vi.fn(async () => createActivity());
+    const client = await connectMcpClient(
+      createMcpTestApp({
+        getActor: managerInGeneration,
+        dataService: createDataServiceMock({
+          createActivity: createActivityMock,
+          getGenerationById: async () => createGeneration({ id: IDs.generationAlt }),
+        }),
+      }),
+    );
+
+    const result = await client.callTool({
+      name: "activity_create",
+      arguments: { data: { ...activityData, generationId: IDs.generationAlt } },
+    });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toContain("소속 기수가 아니라");
+    expect(createActivityMock).not.toHaveBeenCalled();
+  });
+
+  it("기수를 찾지 못하면 만들지 않는다", async () => {
+    const createActivityMock = vi.fn(async () => createActivity());
+    const client = await connectMcpClient(
+      createMcpTestApp({
+        getActor: () => createActor("president", IDs.president),
+        dataService: createDataServiceMock({
+          createActivity: createActivityMock,
+          getGenerationById: async () => null,
+        }),
+      }),
+    );
+
+    const result = await client.callTool({
+      name: "activity_create",
+      arguments: { data: activityData },
+    });
+
+    expect(result.isError).toBe(true);
+    expect(createActivityMock).not.toHaveBeenCalled();
   });
 });

@@ -154,15 +154,16 @@ sufficient.
 
 ## MCP 배포 체크리스트
 
-1. API 원격 마이그레이션: `pnpm db:migrate:remote` (`0012_dashboard_mcp.sql`, `0013_drop_mcp_uploads.sql`). API 배포보다 먼저 한다. `createAuth()`가 isolate마다 처음 인증 인스턴스를 만들 때 `oauth_resource`를 읽고 넣으므로, 마이그레이션 없이 배포하면 인증이 실패한다.
+1. API 원격 마이그레이션: `pnpm db:migrate:remote` (`0012_dashboard_mcp.sql`). API 배포보다 먼저 한다. `createAuth()`가 isolate마다 처음 인증 인스턴스를 만들 때 `oauth_resource`를 읽고 넣으므로, 마이그레이션 없이 배포하면 인증이 실패한다.
 2. `apps/api/wrangler.jsonc` vars 확인: `MCP_RESOURCE_URL=https://api.yonyoung.moveto.kr/mcp`, `MCP_AUTH_ISSUER=https://yonyoung.yonsei.ac.kr/api/auth`.
 3. Better Auth CLI는 `apps/api/src/lib/auth-cli.ts`를 지정해 실행한다.
 4. API 배포: `pnpm deploy:api`. 배포 전 `pnpm deploy:dry-run`으로 번들 크기를 확인한다(Workers 한도 이내).
+   - `0013_drop_mcp_uploads.sql`은 업로드 기능을 뺀 API를 배포한 **뒤에** 적용한다. 이전 API는 `mcp_uploads`를 쓰므로 먼저 지우면 업로드 도구가 실패한다.
 5. 웹 배포: `/.well-known/oauth-authorization-server/api/auth`가 200과 `issuer: https://yonyoung.yonsei.ac.kr/api/auth`를 돌려주는지 확인한다.
 6. 스모크:
    - `curl -i https://api.yonyoung.moveto.kr/.well-known/oauth-protected-resource/mcp` → 200, `authorization_servers`가 issuer와 같다.
    - `curl -i -X POST https://api.yonyoung.moveto.kr/mcp` → 401, `WWW-Authenticate`에 `resource_metadata` 포함.
-7. 되돌리기: API를 이전 버전으로 롤백해도 새 테이블은 남아도 무해하다. 웹 롤백 시 `/dashboard/mcp` 메뉴만 사라진다.
+7. 되돌리기: 웹 롤백 시 `/dashboard/mcp` 메뉴만 사라진다. `0013` 적용 뒤 API를 업로드 기능이 있던 버전으로 롤백하면 업로드 도구만 실패한다(테이블이 없음). 그 버전이 필요하면 `0012`의 `mcp_uploads` 생성문을 새 마이그레이션으로 다시 적용한다.
 
 ### 배포 후 확인
 

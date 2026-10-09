@@ -1,4 +1,6 @@
 import type { CallToolResult } from "@modelcontextprotocol/server";
+import type { Actor } from "../../lib/authorization/types";
+import { LEADERSHIP_ROLES } from "./exposure";
 import type { McpToolContext } from "./tool-definition";
 import { describeApiFailure, toolFailure, toolSuccess } from "./tool-result";
 
@@ -7,27 +9,16 @@ const DEFAULT_COVER_IMAGE_PATH = "/yonyoung-logo-black.png";
 
 type DashboardResource = "activities" | "exhibitions";
 
-/** 웹의 buildDashboardGenerationPath와 같은 규칙으로 수정 화면 주소를 만든다. */
-const buildEditUrl = async (
-  context: McpToolContext,
-  resource: DashboardResource,
-  record: { id: string; generationId: string },
-): Promise<string> => {
-  const generation = await context.api.call({
-    method: "GET",
-    path: `/api/generations/${record.generationId}`,
-  });
-  if (!generation.ok) {
-    // 기록은 이미 만들어졌으므로 실패로 돌려주면 다시 만들게 된다.
-    return `${context.webOrigin}/dashboard`;
-  }
-  const name = (generation.data as { name: string }).name.trim();
-  return `${context.webOrigin}/dashboard/${encodeURIComponent(name)}/${resource}/${record.id}/edit`;
-};
+/** 웹 getAccessibleGenerations와 같은 기준. 회장단이 아니면 소속 기수만 대시보드에서 열린다. */
+const canOpenInDashboard = (actor: Actor, generationId: string): boolean =>
+  LEADERSHIP_ROLES.has(actor.role) ||
+  actor.generationId === generationId ||
+  (actor.generationIds ?? []).includes(generationId);
 
 /**
  * 사진은 MCP로 받지 않는다. 커버가 없으면 기본 이미지로 만들고,
  * 사용자가 커버와 사진을 직접 올릴 대시보드 수정 화면 주소를 돌려준다.
+ * 수정 화면을 열 수 없는 기록은 만들지 않는다.
  */
 export const createWithDashboardLink = async (
   context: McpToolContext,
@@ -37,6 +28,19 @@ export const createWithDashboardLink = async (
     summary: string;
   },
 ): Promise<CallToolResult> => {
+  const generation = await context.api.call({
+    method: "GET",
+    path: `/api/generations/${input.data.generationId}`,
+  });
+  if (!generation.ok) {
+    return toolFailure(describeApiFailure(generation, context.actor.role));
+  }
+  if (!canOpenInDashboard(context.actor, input.data.generationId)) {
+    return toolFailure(
+      "소속 기수가 아니라 대시보드에서 이 기록을 열 수 없습니다. 사진을 올릴 수 없으므로 만들지 않았습니다. 소속 기수로 만들거나 회장단에게 요청해 주세요.",
+    );
+  }
+
   const usesDefaultCover = !input.data.coverImageUrl;
   const created = await context.api.call({
     method: "POST",
@@ -52,8 +56,10 @@ export const createWithDashboardLink = async (
     return toolFailure(describeApiFailure(created, context.actor.role));
   }
 
-  const record = created.data as { id: string; generationId: string };
-  const dashboardUrl = await buildEditUrl(context, input.resource, record);
+  const record = created.data as { id: string };
+  // 웹의 buildDashboardGenerationPath와 같은 규칙으로 기수 경로를 만든다.
+  const generationName = (generation.data as { name: string }).name.trim();
+  const dashboardUrl = `${context.webOrigin}/dashboard/${encodeURIComponent(generationName)}/${input.resource}/${record.id}/edit`;
   return toolSuccess(
     [
       input.summary,
