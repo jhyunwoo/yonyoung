@@ -692,7 +692,18 @@ const handleRequest = async (
       return;
     }
 
-    if (handleMcpRoutes({ pathname, method, response, role, namespace, sendData, sendError })) {
+    if (
+      handleMcpRoutes({
+        pathname,
+        method,
+        response,
+        role,
+        namespace,
+        token: requestUrl.searchParams.get("token"),
+        sendData,
+        sendError,
+      })
+    ) {
       return;
     }
 

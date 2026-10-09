@@ -71,4 +71,50 @@ test.describe("AI 연결", () => {
     );
     expect(overflow).toBeLessThanOrEqual(0);
   });
+
+  test("업로드 페이지에서 같은 파일을 올리면 완료된다", async ({ context, page }) => {
+    await setMockSession(context, { role: "manager", namespace: "mcp-upload" });
+    await page.route("http://127.0.0.1:4010/mcp/uploads/valid-token", async (route) => {
+      const cors = {
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "PUT",
+        "access-control-allow-headers": "content-type",
+      };
+      if (route.request().method() === "OPTIONS") {
+        await route.fulfill({ status: 204, headers: cors });
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        headers: cors,
+        contentType: "application/json",
+        body: JSON.stringify({ data: { uploadId: "upload-1", status: "completed" } }),
+      });
+    });
+    await page.goto("/dashboard/mcp/upload/valid-token");
+
+    await page.getByLabel("올릴 파일").setInputFiles({
+      name: "봄출사.jpg",
+      mimeType: "image/jpeg",
+      buffer: Buffer.from([0xff, 0xd8, 0xff, 0xd9]),
+    });
+    await expect(page.getByText("올렸습니다")).toBeVisible();
+  });
+
+  test("다른 크기의 파일은 올리기 전에 막는다", async ({ context, page }) => {
+    await setMockSession(context, { role: "manager", namespace: "mcp-upload-mismatch" });
+    await page.goto("/dashboard/mcp/upload/valid-token");
+    await page.getByLabel("올릴 파일").setInputFiles({
+      name: "다른사진.jpg",
+      mimeType: "image/jpeg",
+      buffer: Buffer.from([0xff, 0xd8, 0xff, 0x00, 0xd9]),
+    });
+    await expect(page.getByText("크기가 다릅니다")).toBeVisible();
+  });
+
+  test("다른 계정의 업로드 주소는 쓸 수 없다고 알려준다", async ({ context, page }) => {
+    await setMockSession(context, { role: "manager", namespace: "mcp-upload-stranger" });
+    await page.goto("/dashboard/mcp/upload/unknown-token");
+    await expect(page.getByText("업로드 주소를 쓸 수 없습니다")).toBeVisible();
+  });
 });
