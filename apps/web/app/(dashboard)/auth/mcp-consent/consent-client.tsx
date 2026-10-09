@@ -13,10 +13,18 @@ type LoadState =
   | { status: "ready"; context: ApiMcpConsentContext };
 
 const readConsentContext = async (): Promise<LoadState> => {
-  const response = await fetch(`/api/mcp/consent-context${window.location.search}`, {
-    credentials: "include",
-    cache: "no-store",
-  });
+  let response: Response;
+  try {
+    response = await fetch(`/api/mcp/consent-context${window.location.search}`, {
+      credentials: "include",
+      cache: "no-store",
+    });
+  } catch {
+    return {
+      status: "error",
+      message: "연결 요청을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    };
+  }
   const body: unknown = await response.json().catch(() => null);
   if (!response.ok) {
     const message =
@@ -42,14 +50,19 @@ export default function McpConsentClient() {
   const submit = async (accept: boolean) => {
     setSubmitting(accept ? "accept" : "deny");
     setSubmitError(null);
-    const result = await authClient.oauth2.consent({ accept });
-    const url = (result.data as { url?: string } | null)?.url;
-    if (url) {
-      window.location.assign(url);
-      return;
+    const fallbackMessage = "처리하지 못했습니다. 다시 시도해 주세요.";
+    try {
+      const result = await authClient.oauth2.consent({ accept });
+      const url = (result.data as { url?: string } | null)?.url;
+      if (url) {
+        window.location.assign(url);
+        return;
+      }
+      setSubmitError(result.error?.message ?? fallbackMessage);
+    } catch {
+      setSubmitError(fallbackMessage);
     }
     setSubmitting(null);
-    setSubmitError(result.error?.message ?? "처리하지 못했습니다. 다시 시도해 주세요.");
   };
 
   if (state.status === "loading") {
