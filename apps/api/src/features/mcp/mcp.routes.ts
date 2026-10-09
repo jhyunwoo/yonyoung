@@ -2,24 +2,15 @@ import type { OpenAPIHono } from "@hono/zod-openapi";
 import { createMcpHandler } from "@modelcontextprotocol/server";
 import { captureException } from "@sentry/cloudflare";
 import type { Context } from "hono";
-import { cors } from "hono/cors";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { logError } from "../../app/middleware/logger";
 import type { Bindings } from "../../bindings/types";
-import { getAuthCorsOrigins } from "../../lib/auth";
 import type { Actor } from "../../lib/authorization/types";
 import { resolveMcpRuntimeEnv } from "../../lib/config/runtime-env";
 import type { AppDependencies } from "../../lib/services/dependencies";
 import { AppError } from "../../shared/errors/AppError";
 import { requireAuthenticatedActor } from "../../shared/http/route-guards";
 import type HonoAppType from "../../types/honoAppType";
-import {
-  McpUploadError,
-  createRequestMcpUploadService,
-} from "./files/mcp-upload-service";
-import { resolveChatGptFileHostSuffixes } from "./files/chatgpt-file";
 import { buildMcpOverview } from "./exposure";
-import { createMcpFileResolver } from "./files/file-ref";
 import { createInternalApiClient, type InternalDispatch } from "./internal-api";
 import { mcpUnauthorizedResponse } from "./mcp-auth";
 import { buildMcpServer } from "./mcp-server";
@@ -70,10 +61,8 @@ const createMcpToolContext = (
   input: {
     actor: Actor;
     dispatch: InternalDispatch;
-    dependencies: AppDependencies;
   },
 ): McpToolContext => {
-  const uploads = createRequestMcpUploadService(c, input.dependencies);
   const requestId = c.get("requestId") ?? crypto.randomUUID();
   return {
     actor: input.actor,
@@ -96,13 +85,7 @@ const createMcpToolContext = (
       origin: new URL(c.req.url).origin,
       requestId,
     }),
-    uploads,
-    files: createMcpFileResolver({
-      actor: input.actor,
-      uploads,
-      fetch: input.dependencies.fetchChatGptFile,
-      hostSuffixes: resolveChatGptFileHostSuffixes(c.env),
-    }),
+    webOrigin: new URL(resolveMcpRuntimeEnv(c.env).issuer).origin,
   };
 };
 
@@ -143,11 +126,7 @@ export const registerMcpRoutes = (app: App, dependencies: AppDependencies) => {
         return mcpForbiddenResponse("관리자 승인 후 사용할 수 있습니다.");
       }
 
-      const context = createMcpToolContext(c, {
-        actor,
-        dispatch,
-        dependencies,
-      });
+      const context = createMcpToolContext(c, { actor, dispatch });
       const handler = createMcpHandler(() =>
         buildMcpServer(context, MCP_TOOL_DEFINITIONS),
       );
@@ -158,84 +137,6 @@ export const registerMcpRoutes = (app: App, dependencies: AppDependencies) => {
   app.on(["GET", "DELETE"], "/mcp", (c) =>
     c.body(null, 405, { Allow: "POST" }),
   );
-
-  const uploadErrorResponse = (
-    c: Context<HonoAppType>,
-    error: McpUploadError,
-  ) =>
-    c.json(
-      {
-        error: {
-          code: "UPLOAD_ERROR",
-          message: error.message,
-          requestId: c.get("requestId"),
-        },
-      },
-      error.status as ContentfulStatusCode,
-    );
-
-  // 브라우저 업로드 페이지(웹 오리진)가 이 주소로 직접 PUT한다. 자격 증명은 URL의 일회용 토큰이다.
-  app.use(
-    "/mcp/uploads/*",
-    cors({
-      origin: (origin, c: Context<HonoAppType>) =>
-        getAuthCorsOrigins(c.env).includes(origin) ? origin : null,
-      allowMethods: ["PUT", "OPTIONS"],
-      allowHeaders: ["content-type"],
-      maxAge: 600,
-    }),
-  );
-
-  app.put("/mcp/uploads/:token", async (c) => {
-    const lengthHeader = c.req.header("content-length");
-    const contentLength =
-      lengthHeader && /^\d+$/.test(lengthHeader) ? Number(lengthHeader) : null;
-    try {
-      const record = await createRequestMcpUploadService(
-        c,
-        dependencies,
-      ).receive(c.req.param("token"), { contentLength, body: c.req.raw.body });
-      return c.json({
-        data: {
-          uploadId: record.id,
-          status: record.status,
-          fileName: record.fileName,
-          size: record.declaredSize,
-        },
-      });
-    } catch (error) {
-      if (error instanceof McpUploadError) {
-        return uploadErrorResponse(c, error);
-      }
-      throw error;
-    }
-  });
-
-  app.get("/api/mcp/uploads/lookup", async (c) => {
-    const actor = await requireAuthenticatedActor(c, dependencies);
-    const token = c.req.query("token") ?? "";
-    const service = createRequestMcpUploadService(c, dependencies);
-    try {
-      const record = await service.lookupByToken(actor, token);
-      return c.json({
-        data: {
-          uploadId: record.id,
-          fileName: record.fileName,
-          contentType: record.contentType,
-          declaredSize: record.declaredSize,
-          purpose: record.purpose,
-          status: record.status,
-          expiresAt: new Date(record.expiresAt).toISOString(),
-          putUrl: service.putUrlFor(token),
-        },
-      });
-    } catch (error) {
-      if (error instanceof McpUploadError) {
-        return uploadErrorResponse(c, error);
-      }
-      throw error;
-    }
-  });
 
   app.get("/api/mcp/tools", async (c) => {
     const actor = await requireAuthenticatedActor(c, dependencies);

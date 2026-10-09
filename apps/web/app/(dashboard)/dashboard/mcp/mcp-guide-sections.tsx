@@ -6,8 +6,6 @@ import CopyUrlButton from "@/app/(dashboard)/dashboard/mcp/copy-url-button";
 /** 외부 제품 화면 이름은 바뀔 수 있다. 바꿀 때 공식 도움말을 다시 확인하고 날짜를 고친다. */
 export const GUIDE_VERIFIED_ON = "2026-10-08";
 
-const API_HOST_FOR_SANDBOX = "api.yonyoung.moveto.kr";
-
 const Steps = ({ steps }: { steps: string[] }) => (
   <ol className="flex list-decimal flex-col gap-2 pl-5 text-body-sm text-ink">
     {steps.map((step) => (
@@ -54,24 +52,17 @@ export const ClaudeSection = ({ serverUrl }: { serverUrl: string }) => (
   </Card>
 );
 
-export const ClaudeFileSection = () => (
+export const UploadSection = () => (
   <Card>
     <CardHeader
-      title="Claude에서 파일 올리기 설정"
-      description="채팅에 첨부한 사진·문서를 그대로 연영에 올리려면 Claude가 파일을 보낼 수 있어야 합니다."
+      title="사진과 파일은 대시보드에서 올립니다"
+      description="AI 연결로는 사진과 문서를 올릴 수 없습니다."
     />
     <CardBody>
-      <Steps
-        steps={[
-          "설정 → 기능(Capabilities)에서 '코드 실행 및 파일 생성'을 켭니다.",
-          `같은 화면의 네트워크 접근 설정에서 허용 도메인에 ${API_HOST_FOR_SANDBOX}를 추가합니다.`,
-          "이제 '이 사진들을 25기 봄 출사에 올려줘'처럼 요청하면 Claude가 직접 올립니다.",
-        ]}
-      />
-      <p className="mt-3 text-caption text-ink-muted">
-        이 설정을 못 하는 경우(조직 정책 등) Claude가 10분짜리 업로드 링크를 줍니다.
-        링크를 열어 같은 파일을 끌어다 놓으면 됩니다. MCP로는 파일당 100MB까지 올릴 수
-        있습니다.
+      <p className="text-body-sm text-ink">
+        활동이나 전시를 만들어 달라고 하면 Claude·ChatGPT가 만든 기록의 대시보드 수정 화면
+        주소를 알려 줍니다. 그 주소를 열어 커버와 사진을 올려 주세요. 커버 이미지 주소를
+        따로 말하지 않으면 연영 로고가 커버로 들어갑니다.
       </p>
     </CardBody>
   </Card>
@@ -93,8 +84,7 @@ export const ChatGptSection = () => (
         ]}
       />
       <p className="mt-3 text-caption text-ink-muted">
-        ChatGPT에서는 채팅에 올린 파일이 자동으로 연영 도구에 전달되므로 따로 설정할 것이
-        없습니다. 개발자 모드를 쓸 수 있는 요금제는 OpenAI 도움말에서 확인해 주세요.
+        개발자 모드를 쓸 수 있는 요금제는 OpenAI 도움말에서 확인해 주세요.
       </p>
     </CardBody>
   </Card>
@@ -159,13 +149,6 @@ export const TroubleshootingSection = () => (
           <dd className="text-ink-muted">
             대시보드에서도 할 수 없는 작업입니다. 위 목록에서 내 역할로 가능한 작업을
             확인해 주세요.
-          </dd>
-        </div>
-        <div>
-          <dt className="font-semibold text-ink">파일 올리기가 실패해요</dt>
-          <dd className="text-ink-muted">
-            Claude는 위 &lsquo;파일 올리기 설정&rsquo;을 확인하고, 안 되면 Claude가 준
-            업로드 링크로 올려 주세요. 100MB가 넘는 파일은 대시보드에서 올려야 합니다.
           </dd>
         </div>
         <div>

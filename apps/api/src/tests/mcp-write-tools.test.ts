@@ -2,12 +2,16 @@ import { describe, expect, it, vi } from "vitest";
 import { connectMcpClient, createMcpTestApp, resultText } from "./mcp-test-harness";
 import {
   IDs,
+  createActivity,
   createActor,
   createDataServiceMock,
+  createExhibition,
   createGeneration,
   createLinktree,
   createUser,
 } from "./test-helpers";
+
+const WEB_ENV = { MCP_AUTH_ISSUER: "https://web.example.test/api/auth" };
 
 describe("쓰기 도구", () => {
   it("generation_create는 data를 그대로 본문으로 보낸다", async () => {
@@ -106,5 +110,104 @@ describe("쓰기 도구", () => {
     const text = resultText(result);
     expect(text).toContain("현재 역할(부회장)");
     expect(text).toContain("본인보다 높거나 같은 등급의 사용자는 변경할 수 없습니다.");
+  });
+});
+
+describe("생성 도구와 대시보드 주소", () => {
+  const activityData = {
+    title: "봄 출사",
+    description: "<p>출사를 다녀왔습니다.</p>",
+    startDate: Date.UTC(2030, 3, 1),
+    endDate: Date.UTC(2030, 3, 2),
+    generationId: IDs.generation,
+  };
+
+  it("activity_create는 커버가 없으면 기본 이미지로 만들고 수정 화면 주소를 준다", async () => {
+    const createActivityMock = vi.fn(async () => createActivity());
+    const client = await connectMcpClient(
+      createMcpTestApp({
+        getActor: () => createActor("manager", IDs.manager),
+        dataService: createDataServiceMock({
+          createActivity: createActivityMock,
+          getGenerationById: async () => createGeneration(),
+        }),
+      }),
+      { env: WEB_ENV },
+    );
+
+    const result = await client.callTool({
+      name: "activity_create",
+      arguments: { data: activityData },
+    });
+
+    expect(result.isError).toBeFalsy();
+    expect(createActivityMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        coverImageUrl: "https://web.example.test/yonyoung-logo-black.png",
+      }),
+    );
+    const dashboardUrl = `https://web.example.test/dashboard/${encodeURIComponent("10기")}/activities/${IDs.activity}/edit`;
+    expect(result.structuredContent).toMatchObject({
+      data: { id: IDs.activity, dashboard_url: dashboardUrl },
+    });
+    const text = resultText(result);
+    expect(text).toContain("커버는 기본 이미지로 넣었습니다.");
+    expect(text).toContain(dashboardUrl);
+  });
+
+  it("exhibition_create는 넘긴 커버 URL을 그대로 쓴다", async () => {
+    const createExhibitionMock = vi.fn(async () => createExhibition());
+    const client = await connectMcpClient(
+      createMcpTestApp({
+        getActor: () => createActor("president", IDs.president),
+        dataService: createDataServiceMock({
+          createExhibition: createExhibitionMock,
+          getGenerationById: async () => createGeneration(),
+        }),
+      }),
+      { env: WEB_ENV },
+    );
+
+    const coverImageUrl = "https://cdn.example.test/exhibitions/cover.jpg";
+    const result = await client.callTool({
+      name: "exhibition_create",
+      arguments: {
+        data: {
+          title: "가을 정기전",
+          startDate: Date.UTC(2030, 9, 1),
+          endDate: Date.UTC(2030, 9, 7),
+          generationId: IDs.generation,
+          place: "학생회관 갤러리",
+          description: "<p>정기전입니다.</p>",
+          coverImageUrl,
+        },
+      },
+    });
+
+    expect(result.isError).toBeFalsy();
+    expect(createExhibitionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ coverImageUrl }),
+    );
+    expect(result.structuredContent).toMatchObject({
+      data: {
+        dashboard_url: `https://web.example.test/dashboard/${encodeURIComponent("10기")}/exhibitions/${IDs.exhibition}/edit`,
+      },
+    });
+    expect(resultText(result)).not.toContain("기본 이미지");
+  });
+
+  it("생성이 실패하면 대시보드 주소 없이 오류를 돌려준다", async () => {
+    // createActivity를 넣지 않은 목은 호출되면 던지므로 라우트가 500으로 끝난다.
+    const client = await connectMcpClient(
+      createMcpTestApp({ getActor: () => createActor("manager", IDs.manager) }),
+    );
+
+    const result = await client.callTool({
+      name: "activity_create",
+      arguments: { data: activityData },
+    });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).not.toContain("/dashboard/");
   });
 });

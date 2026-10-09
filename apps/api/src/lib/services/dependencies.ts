@@ -10,14 +10,6 @@ import {
   createD1McpConnectionStore,
   type McpConnectionStore,
 } from "../../features/mcp/mcp-connection-store";
-import {
-  createR2McpObjectStore,
-  type McpObjectStore,
-} from "../../features/mcp/files/mcp-object-store";
-import {
-  createD1McpUploadStore,
-  type McpUploadStore,
-} from "../../features/mcp/files/mcp-upload-store";
 import { createAuth } from "../auth";
 import { type Actor } from "../authorization/types";
 import type HonoAppType from "../../types/honoAppType";
@@ -91,9 +83,6 @@ export type AppDependencies = {
     userId: string,
   ) => Promise<Actor | null>;
   getMcpConnectionStore: (c: Context<HonoAppType>) => McpConnectionStore;
-  getMcpUploadStore: (c: Context<HonoAppType>) => McpUploadStore;
-  getMcpObjectStore: (c: Context<HonoAppType>) => McpObjectStore;
-  fetchChatGptFile: (request: Request) => Promise<Response>;
   verifyOAuthConsentQuery: (c: Context<HonoAppType>, query: string) => Promise<boolean>;
 };
 
@@ -168,9 +157,6 @@ export const createDefaultDependencies = (): AppDependencies => ({
     loadActorByUserId(resolveD1Database(c.env), userId),
   getMcpConnectionStore: (c) =>
     createD1McpConnectionStore(resolveD1Database(c.env)),
-  getMcpUploadStore: (c) => createD1McpUploadStore(createRequestDatabase(c)),
-  getMcpObjectStore: (c) => createR2McpObjectStore(resolveR2Bucket(c.env)),
-  fetchChatGptFile: (request) => fetch(request),
   // 동의 화면에 띄울 정보도 Better Auth가 서명한 쿼리일 때만 준다(문서 권장).
   verifyOAuthConsentQuery: async (c, query) => {
     const auth = createAuth(resolveD1Database(c.env), c.env);

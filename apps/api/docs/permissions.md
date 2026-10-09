@@ -141,4 +141,4 @@ recruiting-plan/current, attachments, views(조회수), media(서명된 미디�
 - `unverified`는 403. 역할은 매 요청 D1에서 다시 읽는다.
 - 도구 노출은 `@yonyoung/contracts/mcp` 카탈로그의 노출 조건을 따르며, 실행은 위 라우트를 그대로 호출하므로 이 문서의 모든 규칙이 그대로 적용된다.
 - `src/tests/mcp-exposure.test.ts`가 노출 조건과 라우트 가드의 일치를 역할별로 검증한다. 라우트 가드를 바꾸면 이 테스트가 카탈로그 수정이 필요한지 알려 준다.
-- 업로드: `upload_prepare`는 위 presign 표와 같은 권한을 쓴다. 파일당 100MB, 토큰 10분·1회.
+- 업로드: MCP로는 사진과 파일을 받지 않는다. `activity_create`·`exhibition_create`는 대시보드 수정 화면 주소(`dashboard_url`)를 돌려주고, 사용자가 그 화면에서 직접 올린다.

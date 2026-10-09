@@ -16,14 +16,8 @@ const guidanceByStatus = (status: number, role: Role): string => {
   if (status === 409) {
     return "다른 변경과 충돌했습니다. 최신 상태를 다시 조회한 뒤 시도해 주세요.";
   }
-  if (status === 411) {
-    return "파일 크기를 알 수 없습니다. Content-Length를 보내야 합니다.";
-  }
   if (status === 413) {
     return "용량 한도를 넘었습니다.";
-  }
-  if (status === 415) {
-    return "허용되지 않는 파일 형식입니다.";
   }
   if (status === 400 || status === 422) {
     return "입력값이 올바르지 않습니다.";

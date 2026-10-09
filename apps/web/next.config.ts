@@ -26,15 +26,6 @@ if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
   }
 }
 
-// MCP 업로드 페이지가 API 도메인의 일회용 주소로 직접 PUT한다.
-if (process.env.API_BASE_URL) {
-  try {
-    CSP_CONNECT_SOURCES.push(new URL(process.env.API_BASE_URL).origin);
-  } catch {
-    console.warn("[next.config] API_BASE_URL is not a valid URL; skipping CSP entry.");
-  }
-}
-
 const buildPublicMediaRemotePatterns = (): RemoteImagePattern[] => {
   const candidateOrigins = new Set<string>(DEFAULT_PUBLIC_MEDIA_IMAGE_ORIGINS);
   const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
