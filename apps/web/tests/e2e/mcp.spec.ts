@@ -131,6 +131,30 @@ test.describe("AI 연결", () => {
     await expect(page.getByLabel("올릴 파일")).toBeVisible();
   });
 
+  test("Claude가 연 인가 주소는 로그인 화면으로 이동하고, 로그인 요청에 서명된 쿼리를 싣는다", async ({
+    context,
+    page,
+  }) => {
+    await setMockSession(context, { role: "guest" });
+    await page.goto(
+      "/api/auth/oauth2/authorize?response_type=code&client_id=claude-client&state=s1",
+    );
+    await expect(page).toHaveURL(/\/auth\/sign-in\?.*client_id=claude-client.*sig=mock-sig/);
+
+    await page.route("https://accounts.google.com/**", (route) =>
+      route.fulfill({ status: 200, contentType: "text/html", body: "google" }),
+    );
+    const signInRequest = page.waitForRequest((request) =>
+      request.url().endsWith("/api/auth/sign-in/social"),
+    );
+    await page.getByTestId("auth-signin-google-submit").click();
+    const body = (await signInRequest).postDataJSON() as { oauth_query?: string };
+    const oauthQuery = new URLSearchParams(body.oauth_query);
+    expect(oauthQuery.get("client_id")).toBe("claude-client");
+    expect(oauthQuery.get("state")).toBe("s1");
+    expect(oauthQuery.get("sig")).toBe("mock-sig");
+  });
+
   test("로그인 뒤 외부 주소로는 보내지 않는다", async ({ context, page }) => {
     await setMockSession(context, { role: "manager", namespace: "mcp-upload-return" });
     await page.goto("/auth/sign-in?next=https%3A%2F%2Fevil.example%2Fdashboard");

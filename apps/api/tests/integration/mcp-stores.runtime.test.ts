@@ -76,6 +76,44 @@ describe("D1 MCP 업로드 claim", () => {
     expect(claimed).toHaveLength(119);
     expect(claimed).not.toContain("bulk-100");
   });
+
+  it("뒤 청크가 실패하면 앞 청크의 소비도 되돌린다", async () => {
+    const ids = Array.from({ length: 120 }, (_, index) => `rollback-${index}`);
+    await db.batch(
+      ids.map((id) =>
+        db
+          .prepare(
+            `INSERT INTO mcp_uploads (id, token_hash, user_id, purpose, file_name, content_type,
+               declared_size, object_key, public_url, status, expires_at, completed_at)
+             VALUES (?, ?, 'u1', 'activity_image', 'a.png', 'image/png', 1, ?, ?, 'completed', 0, 1)`,
+          )
+          .bind(id, `hash-${id}`, `key-${id}`, `https://cdn.example.test/${id}`),
+      ),
+    );
+    // 두 번째 청크(90번째 이후)에 든 행의 UPDATE만 실패시킨다.
+    await db
+      .prepare(
+        `CREATE TRIGGER fail_rollback_claim BEFORE UPDATE ON mcp_uploads
+         WHEN NEW.id = 'rollback-100'
+         BEGIN SELECT RAISE(ABORT, 'forced claim failure'); END`,
+      )
+      .run();
+
+    try {
+      await expect(createD1McpUploadStore(db).claim(ids, "u1")).rejects.toThrow(
+        /forced claim failure/,
+      );
+    } finally {
+      await db.prepare("DROP TRIGGER fail_rollback_claim").run();
+    }
+
+    const consumed = await db
+      .prepare(
+        "SELECT COUNT(*) AS count FROM mcp_uploads WHERE id LIKE 'rollback-%' AND status = 'consumed'",
+      )
+      .first<{ count: number }>();
+    expect(consumed?.count).toBe(0);
+  });
 });
 
 describe("D1 MCP 연결 저장소", () => {
