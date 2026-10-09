@@ -55,6 +55,29 @@ describe("D1 MCP 업로드 저장소", () => {
   });
 });
 
+describe("D1 MCP 업로드 claim", () => {
+  it("여러 청크에 걸친 ID를 한 배치로 소비하고, 이미 쓴 업로드는 빼고 돌려준다", async () => {
+    const ids = Array.from({ length: 120 }, (_, index) => `bulk-${index}`);
+    await db.batch(
+      ids.map((id) =>
+        db
+          .prepare(
+            `INSERT INTO mcp_uploads (id, token_hash, user_id, purpose, file_name, content_type,
+               declared_size, object_key, public_url, status, expires_at, completed_at)
+             VALUES (?, ?, 'u1', 'activity_image', 'a.png', 'image/png', 1, ?, ?, ?, 0, 1)`,
+          )
+          .bind(id, `hash-${id}`, `key-${id}`, `https://cdn.example.test/${id}`,
+            id === "bulk-100" ? "consumed" : "completed"),
+      ),
+    );
+
+    const claimed = await createD1McpUploadStore(db).claim(ids, "u1");
+
+    expect(claimed).toHaveLength(119);
+    expect(claimed).not.toContain("bulk-100");
+  });
+});
+
 describe("D1 MCP 연결 저장소", () => {
   it("동의를 보여주고, 해제하면 리프레시 토큰을 폐기한다", async () => {
     const store = createD1McpConnectionStore(db);

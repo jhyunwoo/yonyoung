@@ -235,6 +235,20 @@ describe("파일 참조 해석기", () => {
     expect(ctx.objects.objects.size).toBe(0);
   });
 
+  it("같은 upload_id가 두 번 들어오면 내려받기 전에 거절하고 업로드를 그대로 둔다", async () => {
+    const ctx = setup();
+    const uploadId = await completedUpload(ctx);
+    await expect(
+      ctx.files.resolve({
+        purpose: "activity_image",
+        chatGptFiles: [chatGpt("one")],
+        uploadIds: [uploadId, uploadId],
+      }),
+    ).rejects.toMatchObject({ status: 422 });
+    expect(ctx.fetchMock).not.toHaveBeenCalled();
+    expect((await ctx.store.getById(uploadId))?.status).toBe("completed");
+  });
+
   it("버리는 중에 오류가 나도 원래 오류를 던진다", async () => {
     const ctx = setup();
     ctx.store.discard = async () => {
@@ -246,5 +260,44 @@ describe("파일 참조 해석기", () => {
         chatGptFiles: [chatGpt("one"), chatGpt("bad")],
       }),
     ).rejects.toMatchObject({ status: 502 });
+  });
+});
+
+describe("업로드 저장 실패 정리", () => {
+  it("기록을 실패로 바꾸지 못해도 객체와 예약을 정리하고 원래 오류를 던진다", async () => {
+    const store = createMemoryMcpUploadStore();
+    store.fail = async () => {
+      throw new Error("D1_ERROR: fail failed");
+    };
+    const objects = createMemoryMcpObjectStore();
+    const releaseReservation = vi.fn(async () => undefined);
+    const uploads = createMcpUploadService({
+      store,
+      objects,
+      presign: {
+        allocateManagedObject: async ({ fileName }) => ({
+          objectKey: `activities/1/${fileName}`,
+          publicUrl: `https://cdn.example.test/1/${fileName}`,
+        }),
+      },
+      reserveCapacity: async () => ({ id: "res-1" }),
+      settleReservation: async () => undefined,
+      releaseReservation,
+      apiOrigin: "https://api.example.test",
+      webOrigin: "https://web.example.test",
+    });
+    const bytes = pngBytes(2, 2);
+
+    await expect(
+      uploads.ingest(createActor("manager", IDs.manager), {
+        purpose: "activity_image",
+        fileName: "짧음.png",
+        contentType: "image/png",
+        size: bytes.length + 1,
+        body: streamOf(bytes),
+      }),
+    ).rejects.toMatchObject({ status: 400 });
+    expect(objects.objects.size).toBe(0);
+    expect(releaseReservation).toHaveBeenCalledWith("res-1");
   });
 });

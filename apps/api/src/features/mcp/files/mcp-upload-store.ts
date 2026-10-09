@@ -91,7 +91,7 @@ const chunkIds = (ids: string[]): string[][] => {
 };
 
 export const createD1McpUploadStore = (
-  database: Pick<D1Database, "prepare">,
+  database: Pick<D1Database, "prepare" | "batch">,
 ): McpUploadStore => ({
   async create(record) {
     await database
@@ -170,20 +170,24 @@ export const createD1McpUploadStore = (
   },
 
   async claim(ids, userId) {
-    const claimed: string[] = [];
-    for (const chunk of chunkIds(ids)) {
-      const placeholders = chunk.map(() => "?").join(", ");
-      const result = await database
-        .prepare(
-          `UPDATE mcp_uploads SET status = 'consumed'
-           WHERE user_id = ? AND status = 'completed' AND id IN (${placeholders})
-           RETURNING id`,
-        )
-        .bind(userId, ...chunk)
-        .all<{ id: string }>();
-      claimed.push(...result.results.map((row) => row.id));
+    const chunks = chunkIds(ids);
+    if (chunks.length === 0) {
+      return [];
     }
-    return claimed;
+    // 한 배치는 한 트랜잭션이다. 중간 청크가 실패해도 앞 청크만 소비된 채로 남지 않는다.
+    const results = await database.batch<{ id: string }>(
+      chunks.map((chunk) => {
+        const placeholders = chunk.map(() => "?").join(", ");
+        return database
+          .prepare(
+            `UPDATE mcp_uploads SET status = 'consumed'
+             WHERE user_id = ? AND status = 'completed' AND id IN (${placeholders})
+             RETURNING id`,
+          )
+          .bind(userId, ...chunk);
+      }),
+    );
+    return results.flatMap((result) => result.results.map((row) => row.id));
   },
 
   async discard(ids, userId) {

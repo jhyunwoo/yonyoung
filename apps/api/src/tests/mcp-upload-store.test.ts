@@ -83,7 +83,12 @@ describe("D1 업로드 저장소", () => {
   /** 바인딩 값이 D1 한도를 넘으면 실제 D1처럼 실패하고, claim은 묶인 ID를 그대로 RETURNING한다. */
   const createLimitedDatabase = () => {
     const boundCounts: number[] = [];
+    const batchSizes: number[] = [];
     const database = {
+      batch: async (statements: Array<{ all: () => Promise<unknown> }>) => {
+        batchSizes.push(statements.length);
+        return Promise.all(statements.map((statement) => statement.all()));
+      },
       prepare: () => ({
         bind: (...values: unknown[]) => {
           if (values.length > D1_MAX_BOUND_PARAMETERS) {
@@ -97,18 +102,19 @@ describe("D1 업로드 저장소", () => {
           };
         },
       }),
-    } as unknown as Pick<D1Database, "prepare">;
-    return { database, boundCounts };
+    } as unknown as Pick<D1Database, "prepare" | "batch">;
+    return { database, boundCounts, batchSizes };
   };
 
   const ids = Array.from({ length: 250 }, (_, index) => `up-${index}`);
 
-  it("claim은 ID를 나눠 묶고 모든 문의 RETURNING ID를 합친다", async () => {
-    const { database, boundCounts } = createLimitedDatabase();
+  it("claim은 ID를 나눠 묶되 한 배치(트랜잭션)로 보내고 RETURNING ID를 합친다", async () => {
+    const { database, boundCounts, batchSizes } = createLimitedDatabase();
     const claimed = await createD1McpUploadStore(database).claim(ids, "u1");
 
     expect(claimed).toEqual(ids);
     expect(boundCounts.length).toBeGreaterThan(1);
+    expect(batchSizes).toEqual([boundCounts.length]);
   });
 
   it("discard는 ID를 나눠 묶고 모든 문의 RETURNING ID를 합친다", async () => {
