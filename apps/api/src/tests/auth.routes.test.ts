@@ -60,4 +60,25 @@ describe("auth routes", () => {
     });
     expect(handler).toHaveBeenCalledTimes(1);
   });
+
+  it("웹 프록시가 넘긴 sec-fetch-mode를 복원해 Better Auth에 넘긴다", async () => {
+    const handler = vi.fn(async (_request: Request) => new Response(null, { status: 302 }));
+    mockCreateAuth.mockReturnValue({ handler } as never);
+
+    const app = new OpenAPIHono<HonoAppType>();
+    registerAuthRoutes(app);
+
+    await app.request("/api/auth/oauth2/authorize", {
+      method: "GET",
+      headers: {
+        // Node fetch로 보낸 프록시 요청은 sec-fetch-mode가 항상 cors다.
+        "sec-fetch-mode": "cors",
+        "x-forwarded-sec-fetch-mode": "navigate",
+      },
+    }, bindings);
+
+    const forwarded = handler.mock.calls[0]![0];
+    expect(forwarded.headers.get("sec-fetch-mode")).toBe("navigate");
+    expect(forwarded.headers.has("x-forwarded-sec-fetch-mode")).toBe(false);
+  });
 });

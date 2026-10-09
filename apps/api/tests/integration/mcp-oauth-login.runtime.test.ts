@@ -37,9 +37,10 @@ const fakeGoogleIdToken = [
   "signature",
 ].join(".");
 
-// 웹 BFF(/api/auth 프록시)는 sec-fetch-mode를 넘기지 않고 accept만 넘긴다.
+// 웹 BFF(/api/auth 프록시)를 거친 브라우저 이동. auth.routes.ts가 sec-fetch-mode를 navigate로 복원한 뒤다.
 const BROWSER_NAVIGATION_HEADERS = {
   accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  "sec-fetch-mode": "navigate",
 };
 
 const cookieJar = new Map<string, string>();
