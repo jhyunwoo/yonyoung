@@ -129,6 +129,28 @@ describe("app/api/auth/[...path]/route", () => {
     expect(headers.get("x-forwarded-proto")).toBe("https");
   });
 
+  it("브라우저 이동인지 API가 알 수 있게 sec-fetch-mode를 별도 헤더로 넘긴다", async () => {
+    const fetchSpy = vi.fn(async () => new Response(null, { status: 302 }));
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const { GET } = await import("@/app/api/auth/[...path]/route");
+    const request = new NextRequest(
+      "https://localhost:3000/api/auth/oauth2/authorize?client_id=claude",
+      {
+        method: "GET",
+        headers: { "sec-fetch-mode": "navigate" },
+      },
+    );
+
+    await GET(request, {
+      params: Promise.resolve({ path: ["oauth2", "authorize"] }),
+    });
+
+    const [, init] = fetchSpy.mock.calls[0] ?? [];
+    const headers = init?.headers as Headers;
+    expect(headers.get("x-forwarded-sec-fetch-mode")).toBe("navigate");
+  });
+
   it("Origin 없는 OAuth 토큰 요청을 API로 넘긴다", async () => {
     const fetchSpy = vi.fn(
       async () =>

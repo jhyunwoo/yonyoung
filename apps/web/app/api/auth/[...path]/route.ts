@@ -137,6 +137,12 @@ const handle = async (
       "x-forwarded-proto": forwardedRequestOrigin.protocol,
     },
   });
+  // Node fetch는 sec-fetch-mode를 항상 cors로 덮어쓴다. 그대로 두면 Better Auth가 브라우저 이동을
+  // fetch로 보고 302 대신 {"redirect":true} JSON을 돌려준다. API(auth.routes.ts)가 이 값으로 복원한다.
+  const secFetchMode = request.headers.get("sec-fetch-mode");
+  if (secFetchMode) {
+    upstreamHeaders.set("x-forwarded-sec-fetch-mode", secFetchMode);
+  }
   if (isServerToServer) {
     // 동일 출처 검사를 건너뛰는 경로라 클라이언트 등록·토큰 호출이 사용자 세션을 타지 않게 한다.
     upstreamHeaders.delete("cookie");
