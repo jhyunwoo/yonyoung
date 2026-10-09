@@ -158,7 +158,7 @@ sufficient.
 2. `apps/api/wrangler.jsonc` vars 확인: `MCP_RESOURCE_URL=https://api.yonyoung.moveto.kr/mcp`, `MCP_AUTH_ISSUER=https://yonyoung.yonsei.ac.kr/api/auth`.
 3. Better Auth CLI는 `apps/api/src/lib/auth-cli.ts`를 지정해 실행한다.
 4. API 배포: `pnpm deploy:api`. 배포 전 `pnpm deploy:dry-run`으로 번들 크기를 확인한다(Workers 한도 이내).
-   - `0013_drop_mcp_uploads.sql`은 업로드 기능을 뺀 API를 배포한 **뒤에** 적용한다. 이전 API는 `mcp_uploads`를 쓰므로 먼저 지우면 업로드 도구가 실패한다.
+   - `0013_drop_mcp_uploads.sql`은 업로드 기능을 뺀 API를 배포한 **뒤에** 적용한다. 이전 API는 `mcp_uploads`를 쓰므로 먼저 지우면 업로드 도구가 실패한다. `db:migrate:remote`는 남은 마이그레이션을 모두 적용하므로, `0012`가 이미 적용된 환경에서는 1번을 건너뛰고 API 배포 뒤에 실행한다.
 5. 웹 배포: `/.well-known/oauth-authorization-server/api/auth`가 200과 `issuer: https://yonyoung.yonsei.ac.kr/api/auth`를 돌려주는지 확인한다.
 6. 스모크:
    - `curl -i https://api.yonyoung.moveto.kr/.well-known/oauth-protected-resource/mcp` → 200, `authorization_servers`가 issuer와 같다.
