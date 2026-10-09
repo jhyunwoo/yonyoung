@@ -128,4 +128,78 @@ describe("app/api/auth/[...path]/route", () => {
     expect(headers.get("x-forwarded-host")).toBe("yonyoung.yonsei.ac.kr");
     expect(headers.get("x-forwarded-proto")).toBe("https");
   });
+
+  it("Origin 없는 OAuth 토큰 요청을 API로 넘긴다", async () => {
+    const fetchSpy = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ access_token: "t" }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    );
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const { POST } = await import("@/app/api/auth/[...path]/route");
+    const request = new NextRequest("https://localhost:3000/api/auth/oauth2/token", {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: "grant_type=authorization_code&code=abc",
+    });
+
+    const response = await POST(request, {
+      params: Promise.resolve({ path: ["oauth2", "token"] }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("OAuth 토큰 요청에 붙은 쿠키는 API로 넘기지 않는다", async () => {
+    const fetchSpy = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ access_token: "t" }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    );
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const { POST } = await import("@/app/api/auth/[...path]/route");
+    const request = new NextRequest("https://localhost:3000/api/auth/oauth2/token", {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        cookie: "__Secure-better-auth.session_token=session",
+      },
+      body: "grant_type=authorization_code&code=abc",
+    });
+
+    await POST(request, {
+      params: Promise.resolve({ path: ["oauth2", "token"] }),
+    });
+
+    const [, init] = fetchSpy.mock.calls[0] ?? [];
+    const headers = init?.headers as Headers;
+    expect(headers.get("cookie")).toBeNull();
+    expect(headers.get("content-type")).toBe("application/x-www-form-urlencoded");
+  });
+
+  it("Origin 없는 일반 인증 요청은 여전히 막는다", async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const { POST } = await import("@/app/api/auth/[...path]/route");
+    const request = new NextRequest("https://localhost:3000/api/auth/sign-in/social", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ provider: "google" }),
+    });
+
+    const response = await POST(request, {
+      params: Promise.resolve({ path: ["sign-in", "social"] }),
+    });
+
+    expect(response.status).toBe(403);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
 });

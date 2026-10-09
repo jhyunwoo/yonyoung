@@ -43,12 +43,22 @@ export const getActorFromSession = async (
     return null;
   }
 
+  return loadActorByUserId(database, sessionResult.user.id);
+};
+
+/**
+ * 사용자 ID로 Actor를 만든다. 세션 경로와 MCP 토큰 경로가 함께 쓴다.
+ * role/generation은 호출할 때마다 D1에서 다시 읽으므로 강등·삭제가 즉시 반영된다.
+ */
+export const loadActorByUserId = async (
+  database: D1Database,
+  userId: string,
+): Promise<Actor | null> => {
   const db = getDbClient(database);
-  const sessionUserId = sessionResult.user.id;
 
   const buildUserQuery = () =>
     db.query.user.findFirst({
-      where: and(eq(user.id, sessionUserId), isNull(user.deletedAt)),
+      where: and(eq(user.id, userId), isNull(user.deletedAt)),
       columns: {
         id: true,
         name: true,
@@ -69,7 +79,7 @@ export const getActorFromSession = async (
       .innerJoin(generations, eq(userGenerations.generationId, generations.id))
       .where(
         and(
-          eq(userGenerations.userId, sessionUserId),
+          eq(userGenerations.userId, userId),
           isNull(generations.deletedAt),
         ),
       )
@@ -84,7 +94,7 @@ export const getActorFromSession = async (
       .innerJoin(generations, eq(user.generationId, generations.id))
       .where(
         and(
-          eq(user.id, sessionUserId),
+          eq(user.id, userId),
           isNull(user.deletedAt),
           isNull(generations.deletedAt),
         ),

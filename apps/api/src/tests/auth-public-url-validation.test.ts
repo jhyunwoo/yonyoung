@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const betterAuthMock = vi.hoisted(() =>
-  vi.fn((options: unknown) => ({ handler: vi.fn(), options })),
+  vi.fn((options: unknown) => ({
+    handler: vi.fn(),
+    options,
+    $context: Promise.resolve({}),
+  })),
 );
 
 vi.mock("better-auth", () => ({ betterAuth: betterAuthMock }));
@@ -10,6 +14,7 @@ vi.mock("better-auth/adapters/drizzle", () => ({
 }));
 vi.mock("better-auth/plugins", () => ({
   openAPI: vi.fn(() => ({ id: "open-api-mock" })),
+  jwt: vi.fn(() => ({ id: "jwt-mock" })),
 }));
 vi.mock("../lib/db", () => ({ default: vi.fn(() => ({ db: "mock" })) }));
 

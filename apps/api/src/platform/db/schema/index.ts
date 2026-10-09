@@ -11,3 +11,5 @@ export * from "./attachments";
 export * from "./uploads";
 export * from "./audit";
 export * from "./analytics";
+export * from "./oauth";
+export * from "./mcp";

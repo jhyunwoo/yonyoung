@@ -18,6 +18,7 @@ import type {
 import type { MockRole, MockSessionUser, MockState } from "./contracts";
 import { createMockState, defaultRoleUserId } from "./seed";
 import { handleAttachmentRoutes } from "./attachments-handlers";
+import { handleMcpRoutes } from "./mcp-handlers";
 import { reserveMockUpload, settleMockUpload } from "./upload-reservation-handlers";
 
 const HOST = "127.0.0.1";
@@ -684,6 +685,21 @@ const handleRequest = async (
         response,
         state,
         role,
+        sendData,
+        sendError,
+      })
+    ) {
+      return;
+    }
+
+    if (
+      handleMcpRoutes({
+        pathname,
+        method,
+        response,
+        role,
+        namespace,
+        token: requestUrl.searchParams.get("token"),
         sendData,
         sendError,
       })

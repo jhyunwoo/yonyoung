@@ -7,6 +7,7 @@ export const API_PROXY_ALLOWED_PREFIXES = [
   "generations",
   "health",
   "linktree",
+  "mcp",
   "page-views",
   "public",
   "recruiting",

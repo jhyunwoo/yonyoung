@@ -17,6 +17,7 @@
     "./exhibitions": "./src/api/exhibitions.ts",
     "./generations": "./src/api/generations.ts",
     "./linktree": "./src/api/linktree.ts",
+    "./mcp": "./src/api/mcp.ts",
     "./recruiting": "./src/api/recruiting.ts",
     "./site-settings": "./src/api/site-settings.ts",
     "./uploads": "./src/api/uploads.ts",

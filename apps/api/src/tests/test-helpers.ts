@@ -19,6 +19,7 @@ import type {
   UserEntity,
 } from "../lib/services/types";
 import type { OpenAPIDocument } from "../lib/openapi/merge";
+import type { AppDependencies } from "../lib/services/dependencies";
 import type { R2UsageScanResult } from "../lib/storage/usage";
 import type {
   ViewCountStore,
@@ -347,6 +348,7 @@ export const createTestApp = (input: {
   allowPageViewWrite?: () => Promise<boolean> | boolean;
   multipartUploadStateStore?: MultipartUploadStateStore;
   uploadReservationStore?: UploadReservationStore;
+  overrides?: Partial<AppDependencies>;
 }) => {
   const noopViewCountStore: ViewCountStore = {
     recordView: async () => undefined,
@@ -381,6 +383,7 @@ export const createTestApp = (input: {
         : await input.allowPageViewWrite(),
     getMultipartUploadStateStore: () => multipartUploadStateStore,
     getUploadReservationStore: () => uploadReservationStore,
+    ...input.overrides,
   });
 };
 

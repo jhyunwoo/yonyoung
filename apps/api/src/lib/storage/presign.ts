@@ -437,6 +437,13 @@ export const createR2PresignService = (env: AppBindings): PresignService => {
   };
 
   return {
+    async allocateManagedObject(input) {
+      const objectKey = buildObjectKey(input);
+      return {
+        objectKey,
+        publicUrl: await resolvePublicUrlFromObjectKey(objectKey),
+      };
+    },
     async issuePresignedPutUrl(input) {
       const objectKey = buildObjectKey(input);
 

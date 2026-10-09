@@ -84,7 +84,7 @@ export const ApiExhibitionSchema = z
   })
   .openapi("ApiExhibition");
 
-const ExhibitionInputObjectSchema = z.object({
+export const ExhibitionInputObjectSchema = z.object({
   title: z.string().min(1).openapi({
     description: "전시 제목",
     example: "2026 정기 사진전",

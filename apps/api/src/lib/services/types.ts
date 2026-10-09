@@ -520,6 +520,13 @@ export type DataService = {
 };
 
 export type PresignService = {
+  /** presign 없이 관리 객체 키와 서명된 공개 URL만 만든다. MCP 업로드가 R2 바인딩으로 직접 쓸 때 쓴다. */
+  allocateManagedObject: (input: {
+    actorId: string;
+    resource: "activities" | "exhibitions" | "users" | "notices" | "site";
+    slot: "cover" | "detail" | "profile" | "image" | "file";
+    fileName: string;
+  }) => Promise<{ objectKey: string; publicUrl: string }>;
   issuePresignedPutUrl: (input: {
     actorId: string;
     resource: "activities" | "exhibitions" | "users" | "notices" | "site";

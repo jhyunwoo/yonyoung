@@ -1,6 +1,7 @@
 import {
   ArrowLeft,
   BarChart3,
+  Bot,
   Camera,
   FolderKanban,
   House,
@@ -28,6 +29,9 @@ export type NavigationItem = {
   active: boolean;
 };
 
+/** `/dashboard/<이름>` 중 기수가 아닌 고정 경로. */
+const NON_GENERATION_ROUTE_NAMES = new Set(["settings", "profile", "mcp"]);
+
 /** URL 에서 현재 보고 있는 기수를 찾는다. 라우트 파라미터가 아니라 경로 문자열 기준. */
 export const resolveActiveGenerationFromPath = (
   pathname: string,
@@ -38,7 +42,7 @@ export const resolveActiveGenerationFromPath = (
   }
 
   const routeName = pathname.slice("/dashboard/".length).split("/")[0];
-  if (!routeName || routeName === "settings" || routeName === "profile") {
+  if (!routeName || NON_GENERATION_ROUTE_NAMES.has(routeName)) {
     return null;
   }
 
@@ -57,7 +61,7 @@ export const resolveSelectedGenerationScopedPath = (pathname: string): string | 
   }
 
   const routeName = segments[1];
-  if (!routeName || routeName === "settings" || routeName === "profile") {
+  if (!routeName || NON_GENERATION_ROUTE_NAMES.has(routeName)) {
     return null;
   }
 
@@ -81,6 +85,14 @@ export const buildNavigationItems = (input: {
 }): NavigationItem[] => {
   const { pathname, generationOptions, selectedGeneration } = input;
   const scopedPath = input.selectedGenerationScopedPath;
+
+  const mcpItem: NavigationItem = {
+    key: "mcp",
+    href: "/dashboard/mcp",
+    label: "AI 연결",
+    Icon: Bot,
+    active: pathname === "/dashboard/mcp" || pathname.startsWith("/dashboard/mcp/"),
+  };
 
   const statsItem: NavigationItem = {
     key: "stats",
@@ -108,6 +120,7 @@ export const buildNavigationItems = (input: {
         active:
           pathname === generation.path || pathname.startsWith(`${generation.path}/`),
       })),
+      mcpItem,
       statsItem,
       homepageItem,
     ];
@@ -149,6 +162,7 @@ export const buildNavigationItems = (input: {
       Icon: Users,
       active: scopedPath?.startsWith("/members") === true,
     },
+    mcpItem,
     statsItem,
     homepageItem,
   ];
@@ -180,6 +194,10 @@ export const resolveActivePageName = (input: {
 
   if (pathname.startsWith("/dashboard/settings")) {
     return "설정";
+  }
+
+  if (pathname.startsWith("/dashboard/mcp")) {
+    return "AI 연결";
   }
 
   if (selectedGeneration === null) {

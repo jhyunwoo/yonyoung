@@ -8,6 +8,7 @@ import { registerDocsRoutes } from "../app/docs/docs.routes";
 import { registerExhibitionRoutes } from "../features/exhibitions/exhibition.routes";
 import { registerGenerationRoutes } from "../features/generations/generation.routes";
 import { registerLinktreeRoutes } from "../features/linktree/linktree.routes";
+import { registerMcpRoutes } from "../features/mcp/mcp.routes";
 import { registerPageViewRoutes } from "../features/page-views/page-view.routes";
 import { registerPublicRoutes } from "../features/public/public.routes";
 import { registerRecruitingPlanRoutes } from "../features/recruiting-plan/recruiting-plan.routes";
@@ -71,5 +72,6 @@ export const mountDomainRouters = (
     }, defaultHook),
   );
 
+  registerMcpRoutes(app, dependencies);
   registerDocsRoutes(app, dependencies);
 };
