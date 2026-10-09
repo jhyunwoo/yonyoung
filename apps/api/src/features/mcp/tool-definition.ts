@@ -26,7 +26,10 @@ export type McpToolDefinition = {
   handler: (args: unknown, context: McpToolContext) => Promise<CallToolResult>;
   /** 기존 라우트 하나를 그대로 호출하는 도구. 노출 일치 테스트가 이 요청을 직접 보낸다. */
   route?: {
-    buildRequest: (args: unknown, context: McpToolContext) => InternalApiRequest;
+    buildRequest: (
+      args: unknown,
+      context: McpToolContext,
+    ) => InternalApiRequest;
   };
 };
 
@@ -35,11 +38,15 @@ export const uuidArg = (description: string) => z.uuid().describe(description);
 export const defineTool = <TSchema extends z.ZodObject>(definition: {
   name: McpToolName;
   inputSchema: TSchema;
-  handler: (args: z.output<TSchema>, context: McpToolContext) => Promise<CallToolResult>;
+  handler: (
+    args: z.output<TSchema>,
+    context: McpToolContext,
+  ) => Promise<CallToolResult>;
 }): McpToolDefinition => ({
   name: definition.name,
   inputSchema: definition.inputSchema,
-  handler: (args, context) => definition.handler(args as z.output<TSchema>, context),
+  handler: (args, context) =>
+    definition.handler(args as z.output<TSchema>, context),
 });
 
 type RouteRequestParts = {
@@ -59,15 +66,20 @@ const buildDefaultRequest = (
   method: InternalApiMethod,
   args: Record<string, unknown>,
 ): RouteRequestParts => {
-  const pathKeys = [...path.matchAll(PATH_PARAM_PATTERN)].map((match) => match[1]!);
-  const pathParams = Object.fromEntries(pathKeys.map((key) => [key, String(args[key])]));
+  const pathKeys = [...path.matchAll(PATH_PARAM_PATTERN)].map(
+    (match) => match[1]!,
+  );
+  const pathParams = Object.fromEntries(
+    pathKeys.map((key) => [key, String(args[key])]),
+  );
   if (method === "GET") {
     const query = Object.fromEntries(
       Object.entries(args).filter(([key]) => !pathKeys.includes(key)),
     ) as InternalApiQuery;
     return { pathParams, query };
   }
-  const body = "data" in args ? args.data : "items" in args ? args.items : undefined;
+  const body =
+    "data" in args ? args.data : "items" in args ? args.items : undefined;
   return { pathParams, body };
 };
 
@@ -77,12 +89,22 @@ export const routeTool = <TSchema extends z.ZodObject>(definition: {
   path: string;
   inputSchema: TSchema;
   summary: string;
-  toRequest?: (args: z.output<TSchema>, context: McpToolContext) => RouteRequestParts;
+  toRequest?: (
+    args: z.output<TSchema>,
+    context: McpToolContext,
+  ) => RouteRequestParts;
 }): McpToolDefinition => {
-  const buildRequest = (args: unknown, context: McpToolContext): InternalApiRequest => {
+  const buildRequest = (
+    args: unknown,
+    context: McpToolContext,
+  ): InternalApiRequest => {
     const parts = definition.toRequest
       ? definition.toRequest(args as z.output<TSchema>, context)
-      : buildDefaultRequest(definition.path, definition.method, args as Record<string, unknown>);
+      : buildDefaultRequest(
+          definition.path,
+          definition.method,
+          args as Record<string, unknown>,
+        );
     return {
       method: definition.method,
       path: fillPath(definition.path, parts.pathParams ?? {}),

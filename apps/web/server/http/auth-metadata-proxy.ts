@@ -17,7 +17,9 @@ export const proxyAuthMetadata = async (
   request: NextRequest,
   document: "oauth-authorization-server" | "openid-configuration",
 ): Promise<NextResponse> => {
-  const publicOrigin = new URL(resolvePublicRequestOrigin(request) ?? request.nextUrl.origin);
+  const publicOrigin = new URL(
+    resolvePublicRequestOrigin(request) ?? request.nextUrl.origin,
+  );
   try {
     const upstream = await fetchWithTimeout(
       `${getApiBaseUrl()}/api/auth/.well-known/${document}`,

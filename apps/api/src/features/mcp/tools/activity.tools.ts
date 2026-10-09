@@ -8,13 +8,20 @@ import {
   ApiUpdateActivitySchema,
 } from "../../activities/activity.contract";
 import { chatGptFileSchema, uploadIdSchema } from "../files/chatgpt-file";
-import { imageBatchItem, nextSortOrder, runWithFiles, withUploadErrors } from "../files/file-tool";
+import {
+  imageBatchItem,
+  nextSortOrder,
+  runWithFiles,
+  withUploadErrors,
+} from "../files/file-tool";
 import { defineTool, routeTool, uuidArg } from "../tool-definition";
 import { describeApiFailure, toolFailure } from "../tool-result";
 
 const activityId = uuidArg("활동 ID. activity_list로 찾습니다.");
 
-const imageId = uuidArg("세부 이미지 ID. activity_get 결과의 detailImages[].id입니다.");
+const imageId = uuidArg(
+  "세부 이미지 ID. activity_get 결과의 detailImages[].id입니다.",
+);
 
 const coverArgs = {
   cover_file: chatGptFileSchema.optional(),
@@ -68,7 +75,11 @@ export const activityTools = [
         return runWithFiles(
           context,
           covers,
-          { method: "POST", path: "/api/activities", body: { ...args.data, coverImageUrl } },
+          {
+            method: "POST",
+            path: "/api/activities",
+            body: { ...args.data, coverImageUrl },
+          },
           "활동을 만들었습니다.",
         );
       }),
@@ -90,7 +101,9 @@ export const activityTools = [
           chatGptFiles: args.cover_file ? [args.cover_file] : [],
           uploadIds: args.cover_upload_id ? [args.cover_upload_id] : [],
         });
-        const body = covers[0] ? { ...args.data, coverImageUrl: covers[0].publicUrl } : args.data;
+        const body = covers[0]
+          ? { ...args.data, coverImageUrl: covers[0].publicUrl }
+          : args.data;
         return runWithFiles(
           context,
           covers,
@@ -121,15 +134,23 @@ export const activityTools = [
     }),
     handler: (args, context) =>
       withUploadErrors(context, async () => {
-        const fileCount = (args.files?.length ?? 0) + (args.upload_ids?.length ?? 0);
+        const fileCount =
+          (args.files?.length ?? 0) + (args.upload_ids?.length ?? 0);
         if (fileCount === 0) {
-          return toolFailure("추가할 사진을 files 또는 upload_ids로 넣어 주세요.");
+          return toolFailure(
+            "추가할 사진을 files 또는 upload_ids로 넣어 주세요.",
+          );
         }
         if (fileCount > IMAGE_BATCH_MAX_ITEMS) {
-          return toolFailure(`사진은 한 번에 최대 ${IMAGE_BATCH_MAX_ITEMS}장까지 추가할 수 있습니다.`);
+          return toolFailure(
+            `사진은 한 번에 최대 ${IMAGE_BATCH_MAX_ITEMS}장까지 추가할 수 있습니다.`,
+          );
         }
         // 활동이 없으면 파일을 받기 전에 끝낸다.
-        const activity = await context.api.call({ method: "GET", path: `/api/activities/${args.id}` });
+        const activity = await context.api.call({
+          method: "GET",
+          path: `/api/activities/${args.id}`,
+        });
         if (!activity.ok) {
           return toolFailure(describeApiFailure(activity, context.actor.role));
         }
@@ -139,7 +160,8 @@ export const activityTools = [
           uploadIds: args.upload_ids,
         });
         const existing =
-          (activity.data as { detailImages?: Array<{ sortOrder: number }> }).detailImages ?? [];
+          (activity.data as { detailImages?: Array<{ sortOrder: number }> })
+            .detailImages ?? [];
         const start = args.start_sort_order ?? nextSortOrder(existing);
         return runWithFiles(
           context,
@@ -147,7 +169,9 @@ export const activityTools = [
           {
             method: "POST",
             path: `/api/activities/${args.id}/images/batch`,
-            body: files.map((file, index) => imageBatchItem(file, start + index)),
+            body: files.map((file, index) =>
+              imageBatchItem(file, start + index),
+            ),
           },
           `사진 ${files.length}장을 추가했습니다.`,
         );
@@ -157,14 +181,21 @@ export const activityTools = [
     name: "activity_image_update",
     method: "PATCH",
     path: "/api/activities/{id}/images/{imageId}",
-    inputSchema: z.object({ id: activityId, imageId, data: ApiUpdateActivityImageSchema }),
+    inputSchema: z.object({
+      id: activityId,
+      imageId,
+      data: ApiUpdateActivityImageSchema,
+    }),
     summary: "세부 이미지를 수정했습니다.",
   }),
   routeTool({
     name: "activity_images_update",
     method: "PATCH",
     path: "/api/activities/{id}/images/batch",
-    inputSchema: z.object({ id: activityId, items: ApiUpdateActivityImageBatchSchema }),
+    inputSchema: z.object({
+      id: activityId,
+      items: ApiUpdateActivityImageBatchSchema,
+    }),
     summary: "세부 이미지들을 수정했습니다.",
   }),
   routeTool({

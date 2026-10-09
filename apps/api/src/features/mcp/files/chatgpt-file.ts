@@ -23,7 +23,9 @@ export const uploadIdSchema = z
 
 export const DEFAULT_CHATGPT_FILE_HOST_SUFFIXES = [".oaiusercontent.com"];
 
-export const resolveChatGptFileHostSuffixes = (env: Partial<AppBindings> | undefined): string[] => {
+export const resolveChatGptFileHostSuffixes = (
+  env: Partial<AppBindings> | undefined,
+): string[] => {
   const raw = env?.MCP_CHATGPT_FILE_HOST_SUFFIXES?.trim();
   if (!raw) {
     return DEFAULT_CHATGPT_FILE_HOST_SUFFIXES;
@@ -49,7 +51,9 @@ export const isAllowedChatGptFileUrl = (
     return false;
   }
   const hostname = url.hostname.toLowerCase();
-  return hostSuffixes.some((suffix) => hostname.endsWith(suffix) && hostname.length > suffix.length);
+  return hostSuffixes.some(
+    (suffix) => hostname.endsWith(suffix) && hostname.length > suffix.length,
+  );
 };
 
 const fileNameFromUrl = (value: string): string | null => {
@@ -70,26 +74,45 @@ const fileNameFromUrl = (value: string): string | null => {
  */
 export const downloadChatGptFile = async (
   file: ChatGptFileRef,
-  deps: { fetch: (request: Request) => Promise<Response>; hostSuffixes: readonly string[] },
-): Promise<{ fileName: string; contentType: string; size: number; body: ReadableStream<Uint8Array> }> => {
+  deps: {
+    fetch: (request: Request) => Promise<Response>;
+    hostSuffixes: readonly string[];
+  },
+): Promise<{
+  fileName: string;
+  contentType: string;
+  size: number;
+  body: ReadableStream<Uint8Array>;
+}> => {
   if (!isAllowedChatGptFileUrl(file.download_url, deps.hostSuffixes)) {
     throw new McpUploadError(400, "ChatGPT가 준 파일 주소가 아닙니다.");
   }
 
-  const response = await deps.fetch(new Request(file.download_url, { redirect: "manual" }));
+  const response = await deps.fetch(
+    new Request(file.download_url, { redirect: "manual" }),
+  );
   if (response.status >= 300 && response.status < 400) {
     await response.body?.cancel();
-    throw new McpUploadError(502, "ChatGPT 파일 주소가 다른 곳으로 이동했습니다. 파일을 다시 올려 주세요.");
+    throw new McpUploadError(
+      502,
+      "ChatGPT 파일 주소가 다른 곳으로 이동했습니다. 파일을 다시 올려 주세요.",
+    );
   }
   if (!response.ok || !response.body) {
     await response.body?.cancel();
-    throw new McpUploadError(502, `ChatGPT 파일을 내려받지 못했습니다(HTTP ${response.status}).`);
+    throw new McpUploadError(
+      502,
+      `ChatGPT 파일을 내려받지 못했습니다(HTTP ${response.status}).`,
+    );
   }
 
   const lengthHeader = response.headers.get("content-length");
   if (!lengthHeader || !/^\d+$/.test(lengthHeader)) {
     await response.body.cancel();
-    throw new McpUploadError(411, "ChatGPT 파일 크기를 알 수 없어 받을 수 없습니다.");
+    throw new McpUploadError(
+      411,
+      "ChatGPT 파일 크기를 알 수 없어 받을 수 없습니다.",
+    );
   }
   const size = Number(lengthHeader);
   if (size > MCP_UPLOAD_MAX_BYTES) {
@@ -101,9 +124,14 @@ export const downloadChatGptFile = async (
   }
 
   return {
-    fileName: file.file_name?.trim() || fileNameFromUrl(file.download_url) || file.file_id,
+    fileName:
+      file.file_name?.trim() ||
+      fileNameFromUrl(file.download_url) ||
+      file.file_id,
     contentType: normalizeUploadContentType(
-      file.mime_type ?? response.headers.get("content-type") ?? "application/octet-stream",
+      file.mime_type ??
+        response.headers.get("content-type") ??
+        "application/octet-stream",
     ),
     size,
     body: response.body as ReadableStream<Uint8Array>,

@@ -12,7 +12,10 @@ export const accountTools = [
     name: "whoami",
     inputSchema: z.object({}),
     handler: async (_args, context) => {
-      const result = await context.api.call({ method: "GET", path: "/api/users/me" });
+      const result = await context.api.call({
+        method: "GET",
+        path: "/api/users/me",
+      });
       if (!result.ok) {
         return toolFailure(describeApiFailure(result, context.actor.role));
       }
@@ -32,7 +35,9 @@ export const accountTools = [
     method: "PATCH",
     path: "/api/users/{id}",
     inputSchema: z.object({
-      data: ApiMemberProfileUpdateSchema.describe("바꿀 프로필 필드만 넣습니다."),
+      data: ApiMemberProfileUpdateSchema.describe(
+        "바꿀 프로필 필드만 넣습니다.",
+      ),
     }),
     toRequest: (args, context) => ({
       pathParams: { id: context.actor.id },
@@ -49,7 +54,9 @@ export const accountTools = [
     handler: (args, context) =>
       withUploadErrors(context, async () => {
         if (Boolean(args.file) === Boolean(args.upload_id)) {
-          return toolFailure("프로필 사진으로 쓸 이미지 하나를 file 또는 upload_id로 넣어 주세요.");
+          return toolFailure(
+            "프로필 사진으로 쓸 이미지 하나를 file 또는 upload_id로 넣어 주세요.",
+          );
         }
         const files = await context.files.resolve({
           purpose: "profile_image",

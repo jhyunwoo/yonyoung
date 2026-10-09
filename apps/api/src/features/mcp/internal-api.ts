@@ -30,8 +30,7 @@ export type InternalApiFailure = {
 };
 
 export type InternalApiResult =
-  | { ok: true; status: number; data: unknown }
-  | InternalApiFailure;
+  { ok: true; status: number; data: unknown } | InternalApiFailure;
 
 export type InternalApiClient = {
   call: (request: InternalApiRequest) => Promise<InternalApiResult>;
@@ -57,7 +56,9 @@ type ErrorEnvelope = {
 };
 
 const readFailure = async (response: Response): Promise<InternalApiFailure> => {
-  const payload = (await response.json().catch(() => null)) as ErrorEnvelope | null;
+  const payload = (await response
+    .json()
+    .catch(() => null)) as ErrorEnvelope | null;
   const error = payload?.error;
   return {
     ok: false,

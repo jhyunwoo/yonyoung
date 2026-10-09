@@ -35,7 +35,9 @@ export const generationTools = [
     method: "POST",
     path: "/api/generations",
     inputSchema: z.object({
-      data: ApiCreateGenerationSchema.describe("날짜는 밀리초 단위 Unix 시간입니다."),
+      data: ApiCreateGenerationSchema.describe(
+        "날짜는 밀리초 단위 Unix 시간입니다.",
+      ),
     }),
     summary: "기수를 만들었습니다.",
   }),

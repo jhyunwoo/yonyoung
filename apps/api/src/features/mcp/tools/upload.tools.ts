@@ -1,4 +1,7 @@
-import { MCP_UPLOAD_MAX_BYTES, MCP_UPLOAD_PURPOSES } from "@yonyoung/contracts/mcp";
+import {
+  MCP_UPLOAD_MAX_BYTES,
+  MCP_UPLOAD_PURPOSES,
+} from "@yonyoung/contracts/mcp";
 import { z } from "zod";
 import { uploadErrorResult } from "../files/mcp-upload-service";
 import { defineTool } from "../tool-definition";
@@ -10,10 +13,20 @@ export const uploadTools = [
     inputSchema: z.object({
       purpose: z
         .enum(MCP_UPLOAD_PURPOSES)
-        .describe("파일을 쓸 곳. 파일을 받는 도구 설명에 적힌 purpose를 씁니다."),
+        .describe(
+          "파일을 쓸 곳. 파일을 받는 도구 설명에 적힌 purpose를 씁니다.",
+        ),
       file_name: z.string().min(1).max(255).describe("원래 파일 이름"),
-      content_type: z.string().min(1).describe("MIME 형식. 예: image/jpeg, application/pdf"),
-      size: z.number().int().positive().max(MCP_UPLOAD_MAX_BYTES).describe("파일 크기(bytes)"),
+      content_type: z
+        .string()
+        .min(1)
+        .describe("MIME 형식. 예: image/jpeg, application/pdf"),
+      size: z
+        .number()
+        .int()
+        .positive()
+        .max(MCP_UPLOAD_MAX_BYTES)
+        .describe("파일 크기(bytes)"),
     }),
     handler: async (args, context) => {
       try {
@@ -46,10 +59,15 @@ export const uploadTools = [
   }),
   defineTool({
     name: "upload_status",
-    inputSchema: z.object({ upload_id: z.string().min(1).describe("upload_prepare가 준 upload_id") }),
+    inputSchema: z.object({
+      upload_id: z.string().min(1).describe("upload_prepare가 준 upload_id"),
+    }),
     handler: async (args, context) => {
       try {
-        const record = await context.uploads.status(context.actor, args.upload_id);
+        const record = await context.uploads.status(
+          context.actor,
+          args.upload_id,
+        );
         return toolSuccess(`업로드 상태: ${record.status}`, {
           upload_id: record.id,
           status: record.status,

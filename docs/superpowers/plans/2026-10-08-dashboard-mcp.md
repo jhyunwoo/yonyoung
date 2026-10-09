@@ -5,6 +5,7 @@
 **Goal:** 연영 대시보드의 모든 기능을 역할별로 다르게 노출하는 원격 MCP 서버를 API Worker에 추가하고, Claude·ChatGPT 연결 방법을 알려주는 `/dashboard/mcp` 안내 페이지를 만든다.
 
 **Architecture:**
+
 - MCP 서버는 API Worker의 `POST /mcp`에 둔다. stateless `createMcpHandler`로 요청마다 서버를 만든다.
 - 인증은 Better Auth에 `jwt()`와 `@better-auth/mcp`를 붙여 OAuth 2.1 서버로 쓴다. 사용자는 웹 도메인에서 Google로 로그인하고 동의한다.
 - 각 도구는 기존 Hono 라우트를 같은 Worker 안에서 `app.fetch()`로 호출한다. 이때 env의 Symbol 키에 Actor를 실어 보내므로 기존 권한 가드와 감사 로그가 그대로 적용된다.
@@ -13,6 +14,7 @@
   - Claude: `upload_prepare`가 발급한 일회용 URL로 코드 실행 샌드박스가 PUT한다. 실패하면 브라우저 업로드 페이지로 올린다.
 
 **Tech Stack:**
+
 - `@modelcontextprotocol/server` 2.3.1
 - `@better-auth/mcp` 1.7.7 (+ `@better-auth/oauth-provider` 1.7.7), better-auth 1.7.7
 - Hono + `@hono/zod-openapi`, zod 4.6.5
@@ -36,6 +38,7 @@
 ## Global Constraints
 
 **버전**
+
 - 새 의존성 버전은 정확히 고정한다(캐럿 금지). 루트 README의 정책을 따른다.
   - API: `@modelcontextprotocol/server@2.3.1`, `@better-auth/mcp@1.7.7`, `@better-auth/oauth-provider@1.7.7`
   - API dev: `@modelcontextprotocol/client@2.3.1`
@@ -43,21 +46,25 @@
 - 설치는 루트에서 `pnpm --filter <패키지> add ...`로 한다. 앱 안에서 따로 install하지 않는다.
 
 **인증·리소스 URL**
+
 - MCP 리소스 URL: 프로덕션 `https://api.yonyoung.moveto.kr/mcp`, 로컬 `http://localhost:8787/mcp`. 환경 변수 `MCP_RESOURCE_URL`로 둔다.
 - OAuth issuer: `${BETTER_AUTH_URL}/api/auth`(프로덕션 `https://yonyoung.yonsei.ac.kr/api/auth`). `jwt({ jwt: { issuer } })`로 고정한다.
 - scope: `openid profile email offline_access mcp`. `/mcp`는 `mcp` scope를 요구한다.
 - 액세스 토큰 1시간(`accessTokenExpiresIn: 3600`), 리프레시 토큰 30일(`refreshTokenExpiresIn: 2592000`).
 
 **MCP 업로드**
+
 - 파일당 최대 `100_000_000` bytes. 토큰 유효 시간은 10분(`600_000` ms)이고 한 번만 쓸 수 있다.
 - 토큰은 무작위 32바이트 base64url이다. DB에는 SHA-256 hex만 저장한다.
 
 **권한**
+
 - `unverified` 사용자는 `/mcp`에서 403과 "관리자 승인 후 사용할 수 있습니다."를 받는다.
 - Actor는 env의 `MCP_ACTOR` Symbol 키로만 전달한다. 헤더, 쿼리, 쿠키로 전달하지 않는다.
 - 도구 노출은 UX일 뿐이다. 최종 판정은 항상 기존 라우트가 한다.
 
 **문구·이름**
+
 - 사용자에게 보이는 문구는 한국어로 쓴다. 역할 이름은 웹과 같게 쓴다: 회장, 부회장, 부장, 신입회원, 준회원, 정회원, 미승인.
 - 도구 이름은 영어 snake_case다. 도구 설명은 한국어로 쓴다.
 - 도구 입력은 다음 규칙을 따른다.
@@ -66,10 +73,12 @@
   - 배열 본문은 `items` 필드에 넣는다.
 
 **OpenAPI와 코드 스타일**
+
 - 새 `/mcp`, `/.well-known/*`, `/api/mcp/*` 라우트는 OpenAPI에 등록하지 않는 일반 Hono 라우트로 만든다. 그래서 `openapi-contract.snapshot.test.ts`가 바뀌지 않아야 한다.
 - 주석 밀도와 명명은 주변 코드를 따른다. 사용자 전역 규칙에 따라 antislop 스킬 지침을 지킨다.
 
 **커밋**
+
 - 모든 커밋 메시지 끝에 다음 두 줄을 붙인다.
 
   ```
@@ -198,11 +207,13 @@ docs/
 ```
 
 ---
+
 ## 1단계: 기반
 
 ### Task 0: 스펙에 조사 결과 반영
 
 **Files:**
+
 - Modify: `docs/superpowers/specs/2026-10-08-dashboard-mcp-design.md`
 
 - [ ] **Step 1: 3.1절의 CIMD를 DCR 전용으로 바꾼다**
@@ -225,16 +236,16 @@ docs/
 
 - [ ] **Step 3: 4.2절 표의 노출 조건을 실제 라우트에 맞춘다**
 
-| 도구 | 바꿀 노출 조건 |
-|---|---|
-| `member_resource_history` | `leadership` (회장·부회장, `canReadAllUsers`) |
-| `dashboard_overview`, `page_view_stats`, `page_view_dashboard`, `audit_log_get` | `manager_like` (부장 이상, `isManagerLikeRole`) |
-| `recruiting_plan_get`, `recruiting_plan_upsert` | `leadership` (`isPrivilegedActor`) |
-| `attachment_list` | `activity.read` 또는 `site_setting.read` |
-| `attachment_create/update/delete` | `activity`나 `site_setting`의 create 또는 update (`canCreateOrUpdate`) |
-| `activity_image_delete` | `activity.delete` |
-| `exhibition_image_delete` | `exhibition.update` |
-| `linktree_item_delete` | `linktree.delete` |
+| 도구                                                                            | 바꿀 노출 조건                                                         |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `member_resource_history`                                                       | `leadership` (회장·부회장, `canReadAllUsers`)                          |
+| `dashboard_overview`, `page_view_stats`, `page_view_dashboard`, `audit_log_get` | `manager_like` (부장 이상, `isManagerLikeRole`)                        |
+| `recruiting_plan_get`, `recruiting_plan_upsert`                                 | `leadership` (`isPrivilegedActor`)                                     |
+| `attachment_list`                                                               | `activity.read` 또는 `site_setting.read`                               |
+| `attachment_create/update/delete`                                               | `activity`나 `site_setting`의 create 또는 update (`canCreateOrUpdate`) |
+| `activity_image_delete`                                                         | `activity.delete`                                                      |
+| `exhibition_image_delete`                                                       | `exhibition.update`                                                    |
+| `linktree_item_delete`                                                          | `linktree.delete`                                                      |
 
 이 네 도구(`dashboard_overview`, `page_view_*`, `audit_log_get`)는 "부원 이상" 표에서 "운영진 이상" 표로 옮긴다.
 
@@ -269,12 +280,14 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 ### Task 1: 공용 계약 — 역할 이름, 도구 카탈로그, 업로드 purpose
 
 **Files:**
+
 - Modify: `packages/contracts/src/auth-roles.ts`
 - Create: `packages/contracts/src/api/mcp.ts`
 - Modify: `packages/contracts/package.json` (`exports`에 `"./mcp": "./src/api/mcp.ts"`)
 - Test: `packages/contracts/tests/mcp.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `CORE_ROLE_LABELS: Record<CoreRole, string>`
   - `MCP_TOOL_CATALOG`, `type McpToolName`, `type McpToolCatalogEntry`, `type McpToolExposure`, `type McpToolCategory`
@@ -335,7 +348,9 @@ describe("MCP 도구 카탈로그", () => {
   });
 
   it("파일 인자를 가진 도구 목록이 고정되어 있다", () => {
-    const fileTools = MCP_TOOL_CATALOG.filter((tool) => tool.fileArgs.length > 0)
+    const fileTools = MCP_TOOL_CATALOG.filter(
+      (tool) => tool.fileArgs.length > 0,
+    )
       .map((tool) => tool.name)
       .sort();
     expect(fileTools).toEqual([
@@ -387,7 +402,6 @@ describe("MCP 응답 스키마", () => {
 });
 ```
 
-
 - [ ] **Step 2: 테스트가 실패하는지 확인한다**
 
 Run: `pnpm --filter @yonyoung/contracts exec vitest run tests/mcp.test.ts`
@@ -427,7 +441,12 @@ export const MCP_POLICY_RESOURCES = [
 ] as const;
 export type McpPolicyResource = (typeof MCP_POLICY_RESOURCES)[number];
 
-export const MCP_POLICY_ACTIONS = ["create", "read", "update", "delete"] as const;
+export const MCP_POLICY_ACTIONS = [
+  "create",
+  "read",
+  "update",
+  "delete",
+] as const;
 export type McpPolicyAction = (typeof MCP_POLICY_ACTIONS)[number];
 
 export type McpPermission = {
@@ -564,7 +583,8 @@ export const MCP_TOOL_CATALOG = [
   {
     name: "generation_list",
     title: "기수 목록",
-    description: "모든 기수를 표시 순서대로 조회합니다. 다른 도구에 넘길 기수 ID를 찾을 때 씁니다.",
+    description:
+      "모든 기수를 표시 순서대로 조회합니다. 다른 도구에 넘길 기수 ID를 찾을 때 씁니다.",
     category: "generations",
     exposure: can(["generation", "read"]),
     readOnly: true,
@@ -597,7 +617,8 @@ export const MCP_TOOL_CATALOG = [
   {
     name: "generation_create",
     title: "기수 만들기",
-    description: "새 기수를 만듭니다. data에 이름, 표시 순서, 시작일, 종료일을 넣습니다.",
+    description:
+      "새 기수를 만듭니다. data에 이름, 표시 순서, 시작일, 종료일을 넣습니다.",
     category: "generations",
     exposure: can(["generation", "create"]),
     readOnly: false,
@@ -608,7 +629,8 @@ export const MCP_TOOL_CATALOG = [
   {
     name: "generation_update",
     title: "기수 수정",
-    description: "기수 이름, 표시 순서, 기간을 수정합니다. data에 바꿀 필드만 넣습니다.",
+    description:
+      "기수 이름, 표시 순서, 기간을 수정합니다. data에 바꿀 필드만 넣습니다.",
     category: "generations",
     exposure: can(["generation", "update"]),
     readOnly: false,
@@ -630,7 +652,8 @@ export const MCP_TOOL_CATALOG = [
   {
     name: "generation_delete",
     title: "기수 삭제",
-    description: "기수를 삭제합니다. 회장만 할 수 있습니다. 실행 전에 사용자에게 꼭 확인하세요.",
+    description:
+      "기수를 삭제합니다. 회장만 할 수 있습니다. 실행 전에 사용자에게 꼭 확인하세요.",
     category: "generations",
     exposure: can(["generation", "delete"]),
     readOnly: false,
@@ -642,7 +665,8 @@ export const MCP_TOOL_CATALOG = [
   {
     name: "activity_list",
     title: "활동 목록",
-    description: "활동 목록을 조회합니다. generationId를 넣으면 그 기수의 활동만 봅니다.",
+    description:
+      "활동 목록을 조회합니다. generationId를 넣으면 그 기수의 활동만 봅니다.",
     category: "activities",
     exposure: can(["activity", "read"]),
     readOnly: true,
@@ -653,7 +677,8 @@ export const MCP_TOOL_CATALOG = [
   {
     name: "activity_get",
     title: "활동 상세",
-    description: "활동 하나의 내용과 세부 이미지 목록(이미지 ID, 순서 포함)을 조회합니다.",
+    description:
+      "활동 하나의 내용과 세부 이미지 목록(이미지 ID, 순서 포함)을 조회합니다.",
     category: "activities",
     exposure: can(["activity", "read"]),
     readOnly: true,
@@ -719,7 +744,8 @@ export const MCP_TOOL_CATALOG = [
   {
     name: "activity_images_update",
     title: "활동 사진 여러 장 수정",
-    description: "활동 세부 이미지 여러 장의 표시 순서를 한 번에 바꿉니다. items에 imageId와 sortOrder를 넣습니다.",
+    description:
+      "활동 세부 이미지 여러 장의 표시 순서를 한 번에 바꿉니다. items에 imageId와 sortOrder를 넣습니다.",
     category: "activities",
     exposure: can(["activity", "update"]),
     readOnly: false,
@@ -730,7 +756,8 @@ export const MCP_TOOL_CATALOG = [
   {
     name: "activity_image_delete",
     title: "활동 사진 삭제",
-    description: "활동 세부 이미지 하나를 삭제합니다. 실행 전에 사용자에게 꼭 확인하세요.",
+    description:
+      "활동 세부 이미지 하나를 삭제합니다. 실행 전에 사용자에게 꼭 확인하세요.",
     category: "activities",
     exposure: can(["activity", "delete"]),
     readOnly: false,
@@ -742,7 +769,8 @@ export const MCP_TOOL_CATALOG = [
   {
     name: "exhibition_list",
     title: "전시 목록",
-    description: "전시 목록을 조회합니다. generationId를 넣으면 그 기수의 전시만 봅니다.",
+    description:
+      "전시 목록을 조회합니다. generationId를 넣으면 그 기수의 전시만 봅니다.",
     category: "exhibitions",
     exposure: can(["exhibition", "read"]),
     readOnly: true,
@@ -753,7 +781,8 @@ export const MCP_TOOL_CATALOG = [
   {
     name: "exhibition_get",
     title: "전시 상세",
-    description: "전시 하나의 내용과 세부 이미지 목록(이미지 ID, 순서 포함)을 조회합니다.",
+    description:
+      "전시 하나의 내용과 세부 이미지 목록(이미지 ID, 순서 포함)을 조회합니다.",
     category: "exhibitions",
     exposure: can(["exhibition", "read"]),
     readOnly: true,
@@ -786,7 +815,8 @@ export const MCP_TOOL_CATALOG = [
   {
     name: "exhibition_delete",
     title: "전시 삭제",
-    description: "전시를 삭제합니다. 회장만 할 수 있습니다. 실행 전에 사용자에게 꼭 확인하세요.",
+    description:
+      "전시를 삭제합니다. 회장만 할 수 있습니다. 실행 전에 사용자에게 꼭 확인하세요.",
     category: "exhibitions",
     exposure: can(["exhibition", "delete"]),
     readOnly: false,
@@ -819,7 +849,8 @@ export const MCP_TOOL_CATALOG = [
   {
     name: "exhibition_images_update",
     title: "전시 사진 여러 장 수정",
-    description: "전시 세부 이미지 여러 장의 표시 순서를 한 번에 바꿉니다. items에 imageId와 sortOrder를 넣습니다.",
+    description:
+      "전시 세부 이미지 여러 장의 표시 순서를 한 번에 바꿉니다. items에 imageId와 sortOrder를 넣습니다.",
     category: "exhibitions",
     exposure: can(["exhibition", "update"]),
     readOnly: false,
@@ -830,7 +861,8 @@ export const MCP_TOOL_CATALOG = [
   {
     name: "exhibition_image_delete",
     title: "전시 사진 삭제",
-    description: "전시 세부 이미지 하나를 삭제합니다. 실행 전에 사용자에게 꼭 확인하세요.",
+    description:
+      "전시 세부 이미지 하나를 삭제합니다. 실행 전에 사용자에게 꼭 확인하세요.",
     category: "exhibitions",
     exposure: can(["exhibition", "update"]),
     readOnly: false,
@@ -886,7 +918,8 @@ export const MCP_TOOL_CATALOG = [
   {
     name: "linktree_delete",
     title: "링크 모음 삭제",
-    description: "링크 모음과 그 안의 링크를 모두 삭제합니다. 실행 전에 사용자에게 꼭 확인하세요.",
+    description:
+      "링크 모음과 그 안의 링크를 모두 삭제합니다. 실행 전에 사용자에게 꼭 확인하세요.",
     category: "linktree",
     exposure: can(["linktree", "delete"]),
     readOnly: false,
@@ -1004,7 +1037,8 @@ export const MCP_TOOL_CATALOG = [
   {
     name: "member_get",
     title: "멤버 상세",
-    description: "멤버 한 명의 프로필을 조회합니다. 볼 수 있는 범위는 member_list와 같습니다.",
+    description:
+      "멤버 한 명의 프로필을 조회합니다. 볼 수 있는 범위는 member_list와 같습니다.",
     category: "members",
     exposure: can(["user", "read"]),
     readOnly: true,
@@ -1038,7 +1072,8 @@ export const MCP_TOOL_CATALOG = [
   {
     name: "member_bulk_role",
     title: "역할 일괄 변경",
-    description: "여러 멤버의 역할을 한 번에 바꿉니다. 실행 전에 사용자에게 꼭 확인하세요.",
+    description:
+      "여러 멤버의 역할을 한 번에 바꿉니다. 실행 전에 사용자에게 꼭 확인하세요.",
     category: "members",
     exposure: can(["user", "update"]),
     readOnly: false,
@@ -1049,7 +1084,8 @@ export const MCP_TOOL_CATALOG = [
   {
     name: "member_delete",
     title: "멤버 삭제",
-    description: "멤버를 삭제합니다. 나보다 서열이 낮은 멤버만 삭제할 수 있습니다. 실행 전에 사용자에게 꼭 확인하세요.",
+    description:
+      "멤버를 삭제합니다. 나보다 서열이 낮은 멤버만 삭제할 수 있습니다. 실행 전에 사용자에게 꼭 확인하세요.",
     category: "members",
     exposure: can(["user", "delete"]),
     readOnly: false,
@@ -1061,7 +1097,8 @@ export const MCP_TOOL_CATALOG = [
   {
     name: "site_settings_get",
     title: "사이트 설정 조회",
-    description: "푸터 연락처, 인스타그램, 후원 계좌 같은 사이트 기본 설정을 조회합니다.",
+    description:
+      "푸터 연락처, 인스타그램, 후원 계좌 같은 사이트 기본 설정을 조회합니다.",
     category: "settings",
     exposure: can(["site_setting", "update"]),
     readOnly: true,
@@ -1083,7 +1120,8 @@ export const MCP_TOOL_CATALOG = [
   {
     name: "recruiting_plan_get",
     title: "모집 계획 조회",
-    description: "올해 모집 계획(제목, 내용, 홍보 이미지, 모집 기간)을 조회합니다.",
+    description:
+      "올해 모집 계획(제목, 내용, 홍보 이미지, 모집 기간)을 조회합니다.",
     category: "settings",
     exposure: leadership,
     readOnly: true,
@@ -1106,7 +1144,8 @@ export const MCP_TOOL_CATALOG = [
   {
     name: "dashboard_overview",
     title: "대시보드 요약",
-    description: "멤버 수, 승인 대기 수, 기수별 활동·전시 수, 저장공간 사용량을 조회합니다.",
+    description:
+      "멤버 수, 승인 대기 수, 기수별 활동·전시 수, 저장공간 사용량을 조회합니다.",
     category: "stats",
     exposure: managerLike,
     readOnly: true,
@@ -1254,15 +1293,18 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 ```
 
 ---
+
 ### Task 2: 내부 Actor 주입과 `loadActorByUserId` 분리
 
 **Files:**
+
 - Create: `apps/api/src/features/mcp/internal-actor.ts`
 - Modify: `apps/api/src/lib/auth/session.ts`
 - Modify: `apps/api/src/app/createApp.ts`
 - Test: `apps/api/src/tests/mcp-internal-actor.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `MCP_ACTOR: unique symbol`
   - `withInternalActor<TEnv extends object>(env: TEnv | undefined, actor: Actor): TEnv`
@@ -1337,9 +1379,9 @@ describe("내부 Actor 주입", () => {
     expect(
       readInternalActor({ "yonyoung.mcp.actor": createActor("president") }),
     ).toBeUndefined();
-    expect(readInternalActor({ [MCP_ACTOR]: createActor("president") })?.role).toBe(
-      "president",
-    );
+    expect(
+      readInternalActor({ [MCP_ACTOR]: createActor("president") })?.role,
+    ).toBe("president");
     expect(readInternalActor(undefined)).toBeUndefined();
   });
 });
@@ -1396,10 +1438,10 @@ import { withInternalActorResolution } from "../features/mcp/internal-actor";
 `createApp` 안의 의존성 조립을 바꾼다.
 
 ```ts
-  const dependencies = withInternalActorResolution({
-    ...createDefaultDependencies(),
-    ...partialDependencies,
-  });
+const dependencies = withInternalActorResolution({
+  ...createDefaultDependencies(),
+  ...partialDependencies,
+});
 ```
 
 - [ ] **Step 5: `loadActorByUserId`를 분리한다**
@@ -1453,11 +1495,13 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 ### Task 3: 내부 API 클라이언트와 도구 결과 변환
 
 **Files:**
+
 - Create: `apps/api/src/features/mcp/internal-api.ts`
 - Create: `apps/api/src/features/mcp/tool-result.ts`
 - Test: `apps/api/src/tests/mcp-internal-api.test.ts`
 
 **Interfaces:**
+
 - Consumes: `withInternalActor`, `readInternalActor` (Task 2), `CORE_ROLE_LABELS` (Task 1)
 - Produces:
   - `type InternalDispatch = (request: Request, env: unknown, executionCtx?: ExecutionContext) => Response | Promise<Response>`
@@ -1528,14 +1572,18 @@ describe("내부 API 클라이언트", () => {
 
     expect(result).toEqual({ ok: true, status: 200, data: [{ id: "a" }] });
     const [request, env] = dispatch.mock.calls[0]!;
-    expect(request.url).toBe("https://api.example.test/api/activities?generationId=g-1");
+    expect(request.url).toBe(
+      "https://api.example.test/api/activities?generationId=g-1",
+    );
     expect(request.headers.get("x-request-id")).toBe("req-1");
     expect(readInternalActor(env)?.role).toBe("manager");
     expect((env as { db: string }).db).toBe("binding");
   });
 
   it("본문을 JSON으로 보낸다", async () => {
-    const dispatch = vi.fn<InternalDispatch>(async () => jsonResponse(201, { data: { id: "n" } }));
+    const dispatch = vi.fn<InternalDispatch>(async () =>
+      jsonResponse(201, { data: { id: "n" } }),
+    );
     await createClient(dispatch).call({
       method: "POST",
       path: "/api/linktree",
@@ -1549,7 +1597,9 @@ describe("내부 API 클라이언트", () => {
   });
 
   it("204는 data null로 돌려준다", async () => {
-    const result = await createClient(async () => new Response(null, { status: 204 })).call({
+    const result = await createClient(
+      async () => new Response(null, { status: 204 }),
+    ).call({
       method: "DELETE",
       path: "/api/linktree/x",
     });
@@ -1558,7 +1608,13 @@ describe("내부 API 클라이언트", () => {
 
   it("오류 봉투를 풀어 돌려준다", async () => {
     const result = await createClient(async () =>
-      jsonResponse(403, { error: { code: "FORBIDDEN", message: "권한이 없습니다.", requestId: "r-9" } }),
+      jsonResponse(403, {
+        error: {
+          code: "FORBIDDEN",
+          message: "권한이 없습니다.",
+          requestId: "r-9",
+        },
+      }),
     ).call({ method: "DELETE", path: "/api/generations/x" });
 
     expect(result).toEqual({
@@ -1571,17 +1627,25 @@ describe("내부 API 클라이언트", () => {
   });
 
   it("JSON이 아닌 오류 응답에도 기본 문구를 준다", async () => {
-    const result = await createClient(async () => new Response("boom", { status: 502 })).call({
+    const result = await createClient(
+      async () => new Response("boom", { status: 502 }),
+    ).call({
       method: "GET",
       path: "/api/activities",
     });
-    expect(result).toMatchObject({ ok: false, status: 502, code: "UNKNOWN_ERROR" });
+    expect(result).toMatchObject({
+      ok: false,
+      status: 502,
+      code: "UNKNOWN_ERROR",
+    });
   });
 });
 
 describe("fillPath", () => {
   it("경로 파라미터를 인코딩해 채운다", () => {
-    expect(fillPath("/api/users/{id}", { id: "a/b c" })).toBe("/api/users/a%2Fb%20c");
+    expect(fillPath("/api/users/{id}", { id: "a/b c" })).toBe(
+      "/api/users/a%2Fb%20c",
+    );
   });
 
   it("빠진 파라미터는 예외를 던진다", () => {
@@ -1597,13 +1661,21 @@ describe("toToolResult", () => {
     );
     expect(result.isError).toBeUndefined();
     expect(result.content[0]).toMatchObject({ type: "text" });
-    expect((result.content[0] as { text: string }).text).toContain("활동입니다.");
+    expect((result.content[0] as { text: string }).text).toContain(
+      "활동입니다.",
+    );
     expect(result.structuredContent).toEqual({ data: { id: "a" } });
   });
 
   it("403이면 현재 역할 이름을 알려준다", () => {
     const result = toToolResult(
-      { ok: false, status: 403, code: "FORBIDDEN", message: "권한이 없습니다.", requestId: "r-1" },
+      {
+        ok: false,
+        status: 403,
+        code: "FORBIDDEN",
+        message: "권한이 없습니다.",
+        requestId: "r-1",
+      },
       { summary: "", role: "manager" },
     );
     expect(result.isError).toBe(true);
@@ -1655,8 +1727,7 @@ export type InternalApiFailure = {
 };
 
 export type InternalApiResult =
-  | { ok: true; status: number; data: unknown }
-  | InternalApiFailure;
+  { ok: true; status: number; data: unknown } | InternalApiFailure;
 
 export type InternalApiClient = {
   call: (request: InternalApiRequest) => Promise<InternalApiResult>;
@@ -1682,7 +1753,9 @@ type ErrorEnvelope = {
 };
 
 const readFailure = async (response: Response): Promise<InternalApiFailure> => {
-  const payload = (await response.json().catch(() => null)) as ErrorEnvelope | null;
+  const payload = (await response
+    .json()
+    .catch(() => null)) as ErrorEnvelope | null;
   const error = payload?.error;
   return {
     ok: false,
@@ -1796,18 +1869,27 @@ export const describeApiFailure = (
   failure: InternalApiFailure,
   role: Role,
 ): string => {
-  const lines = [guidanceByStatus(failure.status, role), `사유: ${failure.message}`];
+  const lines = [
+    guidanceByStatus(failure.status, role),
+    `사유: ${failure.message}`,
+  ];
   if (failure.requestId) {
     lines.push(`요청 ID: ${failure.requestId}`);
   }
   return lines.join("\n");
 };
 
-export const toolSuccess = (summary: string, data: unknown): CallToolResult => ({
+export const toolSuccess = (
+  summary: string,
+  data: unknown,
+): CallToolResult => ({
   content: [
     {
       type: "text",
-      text: data === null ? summary : `${summary}\n\n${JSON.stringify(data, null, 2)}`,
+      text:
+        data === null
+          ? summary
+          : `${summary}\n\n${JSON.stringify(data, null, 2)}`,
     },
   ],
   structuredContent: { data },
@@ -1852,6 +1934,7 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 ### Task 4: OAuth·업로드 DB 스키마와 마이그레이션
 
 **Files:**
+
 - Create: `apps/api/src/platform/db/schema/oauth.ts`
 - Create: `apps/api/src/platform/db/schema/mcp.ts`
 - Modify: `apps/api/src/platform/db/schema/index.ts`
@@ -1859,6 +1942,7 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 - Create (생성됨): `apps/api/drizzle/0012_dashboard_mcp.sql`, `apps/api/drizzle/meta/*`
 
 **Interfaces:**
+
 - Produces: Drizzle 테이블 `jwks`, `oauthClient`, `oauthResource`, `oauthClientResource`, `oauthRefreshToken`, `oauthAccessToken`, `oauthConsent`, `oauthClientAssertion`, `mcpUploads`
 
 Better Auth Drizzle 어댑터는 스키마 객체의 **export 이름**으로 모델을 찾는다. 그래서 export 이름은 모델명(`oauthClient` 등)과 같아야 한다. 물리 테이블·컬럼 이름은 기존 규칙대로 snake_case를 쓴다. SQLite에서 어댑터는 `string[]`과 `json`을 JSON 문자열로 저장하므로 둘 다 `text` 컬럼으로 만든다.
@@ -1918,33 +2002,51 @@ const describeSchemaParity = (
   describe(title, () => {
     const models = Object.keys(drizzleTables);
 
-    it.each(models)("%s 모델이 요구하는 모든 필드를 Drizzle 테이블이 선언한다", (model) => {
-      const expectedFields = Object.keys(authTables[model]?.fields ?? {});
-      const declaredFields = Object.keys(getTableColumns(drizzleTables[model]!));
+    it.each(models)(
+      "%s 모델이 요구하는 모든 필드를 Drizzle 테이블이 선언한다",
+      (model) => {
+        const expectedFields = Object.keys(authTables[model]?.fields ?? {});
+        const declaredFields = Object.keys(
+          getTableColumns(drizzleTables[model]!),
+        );
 
-      expect(expectedFields.length).toBeGreaterThan(0);
-      expect(declaredFields).toEqual(expect.arrayContaining(expectedFields));
-    });
+        expect(expectedFields.length).toBeGreaterThan(0);
+        expect(declaredFields).toEqual(expect.arrayContaining(expectedFields));
+      },
+    );
 
-    it.each(models)("%s 모델에 Better Auth가 쓰지 않는 필수 컬럼이 없다", (model) => {
-      const expectedFields = Object.keys(authTables[model]?.fields ?? {});
-      const unwrittenRequiredFields = Object.entries(getTableColumns(drizzleTables[model]!))
-        .filter(
-          ([key, column]) =>
-            !expectedFields.includes(key) && column.notNull && !column.hasDefault && !column.primary,
+    it.each(models)(
+      "%s 모델에 Better Auth가 쓰지 않는 필수 컬럼이 없다",
+      (model) => {
+        const expectedFields = Object.keys(authTables[model]?.fields ?? {});
+        const unwrittenRequiredFields = Object.entries(
+          getTableColumns(drizzleTables[model]!),
         )
-        .map(([key]) => key);
-      expect(unwrittenRequiredFields).toEqual([]);
-    });
+          .filter(
+            ([key, column]) =>
+              !expectedFields.includes(key) &&
+              column.notNull &&
+              !column.hasDefault &&
+              !column.primary,
+          )
+          .map(([key]) => key);
+        expect(unwrittenRequiredFields).toEqual([]);
+      },
+    );
 
-    it.each(models)("%s 모델의 unique 필드를 Drizzle 컬럼도 unique로 선언한다", (model) => {
-      const columns = getTableColumns(drizzleTables[model]!);
-      for (const [field, definition] of Object.entries(authTables[model]?.fields ?? {})) {
-        if (definition.unique) {
-          expect(columns[field]?.isUnique, `${model}.${field}`).toBe(true);
+    it.each(models)(
+      "%s 모델의 unique 필드를 Drizzle 컬럼도 unique로 선언한다",
+      (model) => {
+        const columns = getTableColumns(drizzleTables[model]!);
+        for (const [field, definition] of Object.entries(
+          authTables[model]?.fields ?? {},
+        )) {
+          if (definition.unique) {
+            expect(columns[field]?.isUnique, `${model}.${field}`).toBe(true);
+          }
         }
-      }
-    });
+      },
+    );
 
     it("Better Auth가 요구하는 고유 인덱스를 Drizzle 테이블이 선언한다", () => {
       for (const [model, table] of Object.entries(drizzleTables)) {
@@ -1958,7 +2060,10 @@ const describeSchemaParity = (
         // Drizzle 어댑터는 물리 컬럼명이 아니라 스키마 객체의 키로 필드를 찾으므로
         // (snake_case 컬럼이어도 동작한다) 인덱스 비교도 키 기준으로 수행한다.
         const keyByColumnName = new Map(
-          Object.entries(getTableColumns(table)).map(([key, column]) => [column.name, key]),
+          Object.entries(getTableColumns(table)).map(([key, column]) => [
+            column.name,
+            key,
+          ]),
         );
         const declaredUniqueIndexes = getTableConfig(table)
           .indexes.filter((index) => index.config.unique)
@@ -2085,9 +2190,12 @@ export const oauthClient = sqliteTable(
     redirectUris: text("redirect_uris").notNull(),
     postLogoutRedirectUris: text("post_logout_redirect_uris"),
     backchannelLogoutUri: text("backchannel_logout_uri"),
-    backchannelLogoutSessionRequired: integer("backchannel_logout_session_required", {
-      mode: "boolean",
-    }),
+    backchannelLogoutSessionRequired: integer(
+      "backchannel_logout_session_required",
+      {
+        mode: "boolean",
+      },
+    ),
     tokenEndpointAuthMethod: text("token_endpoint_auth_method"),
     applicationType: text("application_type"),
     jwks: text("jwks"),
@@ -2095,7 +2203,9 @@ export const oauthClient = sqliteTable(
     grantTypes: text("grant_types"),
     responseTypes: text("response_types"),
     requirePKCE: integer("require_pkce", { mode: "boolean" }),
-    dpopBoundAccessTokens: integer("dpop_bound_access_tokens", { mode: "boolean" }),
+    dpopBoundAccessTokens: integer("dpop_bound_access_tokens", {
+      mode: "boolean",
+    }),
     referenceId: text("reference_id"),
     metadata: text("metadata"),
   },
@@ -2340,6 +2450,7 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 ### Task 5: Better Auth OAuth 서버, MCP 토큰 인증기, 연결 저장소
 
 **Files:**
+
 - Modify: `apps/api/src/bindings/types.ts` (`MCP_RESOURCE_URL?`, `MCP_AUTH_ISSUER?`)
 - Modify: `apps/api/src/lib/config/runtime-env.ts`
 - Modify: `apps/api/src/lib/auth.ts`
@@ -2353,6 +2464,7 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 - Test: `apps/api/src/tests/mcp-auth.test.ts`
 
 **Interfaces:**
+
 - Consumes: `loadActorByUserId` (Task 2), OAuth 테이블 (Task 4)
 - Produces:
   - `type McpRuntimeEnv = { resourceUrl: string; issuer: string; jwksUrl: string; resourceMetadataUrl: string }`
@@ -2404,7 +2516,9 @@ describe("MCP 런타임 환경", () => {
   });
 
   it("값이 없으면 BETTER_AUTH_URL에서 기본값을 만든다", () => {
-    const env = resolveMcpRuntimeEnv({ BETTER_AUTH_URL: "http://localhost:8787" });
+    const env = resolveMcpRuntimeEnv({
+      BETTER_AUTH_URL: "http://localhost:8787",
+    });
     expect(env.resourceUrl).toBe("http://localhost:8787/mcp");
     expect(env.issuer).toBe("http://localhost:8787/api/auth");
   });
@@ -2413,12 +2527,22 @@ describe("MCP 런타임 환경", () => {
 describe("토큰 클레임 해석", () => {
   it("사용자 토큰에서 sub, azp, scope를 꺼낸다", () => {
     expect(
-      toMcpTokenIdentity({ sub: "user-1", azp: "client-1", scope: "openid mcp" }),
-    ).toEqual({ userId: "user-1", clientId: "client-1", scopes: ["openid", "mcp"] });
+      toMcpTokenIdentity({
+        sub: "user-1",
+        azp: "client-1",
+        scope: "openid mcp",
+      }),
+    ).toEqual({
+      userId: "user-1",
+      clientId: "client-1",
+      scopes: ["openid", "mcp"],
+    });
   });
 
   it("client_credentials 토큰(sub=client)은 거부한다", () => {
-    expect(toMcpTokenIdentity({ sub: "client-1", azp: "client-1", scope: "mcp" })).toBeNull();
+    expect(
+      toMcpTokenIdentity({ sub: "client-1", azp: "client-1", scope: "mcp" }),
+    ).toBeNull();
   });
 
   it("sub나 클라이언트가 없으면 거부한다", () => {
@@ -2433,14 +2557,18 @@ describe("메모리 연결 저장소", () => {
       { userId: "u1", clientId: "c1", clientName: "Claude" },
     ]);
     expect(await store.hasConsent("u1", "c1")).toBe(true);
-    expect(await store.list("u1")).toMatchObject([{ clientId: "c1", clientName: "Claude" }]);
+    expect(await store.list("u1")).toMatchObject([
+      { clientId: "c1", clientName: "Claude" },
+    ]);
     expect(await store.revoke("u1", "c1", Date.now())).toBe(true);
     expect(await store.hasConsent("u1", "c1")).toBe(false);
     expect(await store.revoke("u1", "c1", Date.now())).toBe(false);
   });
 
   it("다른 사용자의 연결은 해제하지 못한다", async () => {
-    const store = createMemoryMcpConnectionStore([{ userId: "u1", clientId: "c1" }]);
+    const store = createMemoryMcpConnectionStore([
+      { userId: "u1", clientId: "c1" },
+    ]);
     expect(await store.revoke("u2", "c1", Date.now())).toBe(false);
     expect(await store.hasConsent("u1", "c1")).toBe(true);
   });
@@ -2462,7 +2590,9 @@ describe("보호 리소스 메타데이터", () => {
       scopes_supported?: string[];
     };
     expect(body.resource).toBe("https://api.example.test/mcp");
-    expect(body.authorization_servers).toEqual(["https://web.example.test/api/auth"]);
+    expect(body.authorization_servers).toEqual([
+      "https://web.example.test/api/auth",
+    ]);
     expect(body.scopes_supported).toContain("mcp");
   });
 });
@@ -2546,15 +2676,15 @@ export const resolveMcpRuntimeEnv = (
 `resolveAuthRuntimeEnv`의 반환 객체에 두 필드를 넣는다.
 
 ```ts
-  const mcpEnv = resolveMcpRuntimeEnv(env);
+const mcpEnv = resolveMcpRuntimeEnv(env);
 
-  return {
-    baseURL,
-    // ...기존 필드
-    emailAndPasswordEnabled,
-    mcpResourceUrl: mcpEnv.resourceUrl,
-    mcpIssuer: mcpEnv.issuer,
-  };
+return {
+  baseURL,
+  // ...기존 필드
+  emailAndPasswordEnabled,
+  mcpResourceUrl: mcpEnv.resourceUrl,
+  mcpIssuer: mcpEnv.issuer,
+};
 ```
 
 - [ ] **Step 4: Better Auth에 jwt와 mcp 플러그인을 붙인다**
@@ -2571,7 +2701,13 @@ import { mcp } from "@better-auth/mcp";
 파일 상단 상수 영역에 추가한다.
 
 ```ts
-export const MCP_OAUTH_SCOPES = ["openid", "profile", "email", "offline_access", "mcp"];
+export const MCP_OAUTH_SCOPES = [
+  "openid",
+  "profile",
+  "email",
+  "offline_access",
+  "mcp",
+];
 const MCP_ACCESS_TOKEN_TTL_SECONDS = 60 * 60;
 const MCP_REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
 ```
@@ -2644,7 +2780,10 @@ Expected: `worker-configuration.d.ts`에 두 변수가 추가된다.
 import { createMcpProtectedRequestHandler } from "@better-auth/mcp";
 import type { Context } from "hono";
 import type { JWTPayload } from "jose";
-import { resolveMcpRuntimeEnv, type McpRuntimeEnv } from "../../lib/config/runtime-env";
+import {
+  resolveMcpRuntimeEnv,
+  type McpRuntimeEnv,
+} from "../../lib/config/runtime-env";
 import type HonoAppType from "../../types/honoAppType";
 
 export type McpTokenIdentity = {
@@ -2660,7 +2799,9 @@ export type McpRequestAuthenticator = (
 
 const MCP_REQUIRED_SCOPES = ["mcp"] as const;
 
-export const toMcpTokenIdentity = (claims: JWTPayload): McpTokenIdentity | null => {
+export const toMcpTokenIdentity = (
+  claims: JWTPayload,
+): McpTokenIdentity | null => {
   const userId = typeof claims.sub === "string" ? claims.sub : null;
   const clientClaim = claims.azp ?? claims.client_id;
   const clientId = typeof clientClaim === "string" ? clientClaim : null;
@@ -2669,14 +2810,23 @@ export const toMcpTokenIdentity = (claims: JWTPayload): McpTokenIdentity | null 
     return null;
   }
   const scopes =
-    typeof claims.scope === "string" ? claims.scope.split(" ").filter(Boolean) : [];
+    typeof claims.scope === "string"
+      ? claims.scope.split(" ").filter(Boolean)
+      : [];
   return { userId, clientId, scopes };
 };
 
 /** 헤더 값은 ASCII여야 하므로 사람이 읽을 한국어 설명은 JSON-RPC 본문에만 넣는다. */
-export const mcpUnauthorizedResponse = (env: McpRuntimeEnv, message: string): Response =>
+export const mcpUnauthorizedResponse = (
+  env: McpRuntimeEnv,
+  message: string,
+): Response =>
   new Response(
-    JSON.stringify({ jsonrpc: "2.0", error: { code: -32001, message }, id: null }),
+    JSON.stringify({
+      jsonrpc: "2.0",
+      error: { code: -32001, message },
+      id: null,
+    }),
     {
       status: 401,
       headers: {
@@ -2691,7 +2841,10 @@ type ProtectedHandler = (request: Request) => Promise<Response>;
 // 원격 JWKS 캐시를 요청 사이에 재사용하려면 보호 핸들러를 설정별로 한 번만 만든다.
 // 요청마다 다른 후속 처리는 Request 객체를 키로 넘긴다.
 const protectedHandlers = new Map<string, ProtectedHandler>();
-const continuations = new WeakMap<Request, (identity: McpTokenIdentity) => Promise<Response>>();
+const continuations = new WeakMap<
+  Request,
+  (identity: McpTokenIdentity) => Promise<Response>
+>();
 
 const getProtectedHandler = (env: McpRuntimeEnv): ProtectedHandler => {
   const key = `${env.issuer}|${env.resourceUrl}|${env.jwksUrl}`;
@@ -2710,7 +2863,10 @@ const getProtectedHandler = (env: McpRuntimeEnv): ProtectedHandler => {
     async (request, claims) => {
       const identity = toMcpTokenIdentity(claims);
       if (!identity) {
-        return mcpUnauthorizedResponse(env, "사용자 계정으로 발급된 토큰이 아닙니다.");
+        return mcpUnauthorizedResponse(
+          env,
+          "사용자 계정으로 발급된 토큰이 아닙니다.",
+        );
       }
       const next = continuations.get(request);
       if (!next) {
@@ -2771,7 +2927,9 @@ const parseScopes = (value: string | null): string[] => {
   }
   try {
     const parsed: unknown = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === "string")
+      : [];
   } catch {
     return [];
   }
@@ -2786,7 +2944,9 @@ export const createD1McpConnectionStore = (
 ): McpConnectionStore => ({
   async hasConsent(userId, clientId) {
     const row = await database
-      .prepare("SELECT 1 AS found FROM oauth_consent WHERE user_id = ? AND client_id = ? LIMIT 1")
+      .prepare(
+        "SELECT 1 AS found FROM oauth_consent WHERE user_id = ? AND client_id = ? LIMIT 1",
+      )
       .bind(userId, clientId)
       .first<{ found: number }>();
     return row !== null;
@@ -2818,7 +2978,9 @@ export const createD1McpConnectionStore = (
   async revoke(userId, clientId, now) {
     const [deleted] = await database.batch([
       database
-        .prepare("DELETE FROM oauth_consent WHERE user_id = ? AND client_id = ?")
+        .prepare(
+          "DELETE FROM oauth_consent WHERE user_id = ? AND client_id = ?",
+        )
         .bind(userId, clientId),
       database
         .prepare(
@@ -2839,7 +3001,8 @@ export const createMemoryMcpConnectionStore = (
   seed: Array<{ userId: string; clientId: string; clientName?: string }> = [],
 ): McpConnectionStore => {
   const consents = new Map<string, McpConnection & { userId: string }>();
-  const key = (userId: string, clientId: string) => `${userId}\u0000${clientId}`;
+  const key = (userId: string, clientId: string) =>
+    `${userId}\u0000${clientId}`;
   for (const entry of seed) {
     consents.set(key(entry.userId, entry.clientId), {
       userId: entry.userId,
@@ -2889,12 +3052,10 @@ import {
 `AppDependencies`에 추가한다.
 
 ```ts
-  authenticateMcpRequest: McpRequestAuthenticator;
-  loadActorByUserId: (
-    c: Context<HonoAppType>,
-    userId: string,
-  ) => Promise<Actor | null>;
-  getMcpConnectionStore: (c: Context<HonoAppType>) => McpConnectionStore;
+authenticateMcpRequest: McpRequestAuthenticator;
+loadActorByUserId: (c: Context<HonoAppType>, userId: string) =>
+  Promise<Actor | null>;
+getMcpConnectionStore: (c: Context<HonoAppType>) => McpConnectionStore;
 ```
 
 `createDefaultDependencies`에 추가한다.
@@ -2940,7 +3101,7 @@ export const registerMcpRoutes = (app: App, _dependencies: AppDependencies) => {
 `apps/api/src/routes/index.ts`의 `mountDomainRouters` 마지막 `registerDocsRoutes(app, dependencies);` 앞에 추가한다.
 
 ```ts
-  registerMcpRoutes(app, dependencies);
+registerMcpRoutes(app, dependencies);
 ```
 
 import: `import { registerMcpRoutes } from "../features/mcp/mcp.routes";`
@@ -2955,15 +3116,15 @@ Expected: PASS
 메타데이터 테스트가 404면 Better Auth 핸들러가 `basePath` 밖 경로에서 플러그인 `onRequest`를 부르지 않는 경우다. 이때는 라우트 핸들러를 다음으로 바꾼다. 플러그인과 같은 문서를 직접 만든다.
 
 ```ts
-  app.on(["GET", "HEAD"], PROTECTED_RESOURCE_METADATA_PATHS, (c) => {
-    const env = resolveMcpRuntimeEnv(c.env);
-    return c.json({
-      resource: env.resourceUrl,
-      authorization_servers: [env.issuer],
-      bearer_methods_supported: ["header"],
-      scopes_supported: ["mcp"],
-    });
+app.on(["GET", "HEAD"], PROTECTED_RESOURCE_METADATA_PATHS, (c) => {
+  const env = resolveMcpRuntimeEnv(c.env);
+  return c.json({
+    resource: env.resourceUrl,
+    authorization_servers: [env.issuer],
+    bearer_methods_supported: ["header"],
+    scopes_supported: ["mcp"],
   });
+});
 ```
 
 Run: `pnpm --filter @yonyoung/api test:node`
@@ -2980,11 +3141,13 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 ```
 
 ---
+
 ## 3단계: MCP 서버
 
 ### Task 6: 도구 프레임워크, MCP 엔드포인트, 조회 도구
 
 **Files:**
+
 - Create: `apps/api/src/features/mcp/exposure.ts`
 - Create: `apps/api/src/features/mcp/tool-definition.ts`
 - Create: `apps/api/src/features/mcp/mcp-server.ts`
@@ -2995,6 +3158,7 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 - Test: `apps/api/src/tests/mcp-server.test.ts`
 
 **Interfaces:**
+
 - Consumes: `createInternalApiClient`, `fillPath`, `InternalApiRequest` (Task 3), `toToolResult`, `toolSuccess`, `toolFailure`, `describeApiFailure` (Task 3), `MCP_TOOL_CATALOG` (Task 1), `McpRequestAuthenticator`, `mcpUnauthorizedResponse`, `McpConnectionStore` (Task 5)
 - Produces:
   - `isToolExposed(exposure: McpToolExposure, role: Role): boolean`
@@ -3047,7 +3211,13 @@ export const createMcpTestApp = (input: {
     input.connectionStore ??
     createMemoryMcpConnectionStore(
       initialActor && input.consent !== false
-        ? [{ userId: initialActor.id, clientId: TEST_MCP_CLIENT_ID, clientName: "Claude" }]
+        ? [
+            {
+              userId: initialActor.id,
+              clientId: TEST_MCP_CLIENT_ID,
+              clientName: "Claude",
+            },
+          ]
         : [],
     );
 
@@ -3082,19 +3252,24 @@ export const connectMcpClient = async (
   options: { token?: string; env?: Record<string, unknown> } = {},
 ): Promise<Client> => {
   const client = new Client({ name: "yonyoung-test", version: "1.0.0" });
-  const transport = new StreamableHTTPClientTransport(new URL("http://localhost/mcp"), {
-    fetch: (url, init) => app.request(url, init, options.env as never),
-    requestInit: {
-      headers: { authorization: `Bearer ${options.token ?? TEST_MCP_TOKEN}` },
+  const transport = new StreamableHTTPClientTransport(
+    new URL("http://localhost/mcp"),
+    {
+      fetch: (url, init) => app.request(url, init, options.env as never),
+      requestInit: {
+        headers: { authorization: `Bearer ${options.token ?? TEST_MCP_TOKEN}` },
+      },
     },
-  });
+  );
   await client.connect(transport);
   return client;
 };
 
 export const resultText = (result: CallToolResult): string =>
   result.content
-    .filter((block): block is { type: "text"; text: string } => block.type === "text")
+    .filter(
+      (block): block is { type: "text"; text: string } => block.type === "text",
+    )
     .map((block) => block.text)
     .join("\n");
 ```
@@ -3120,7 +3295,9 @@ import {
   createUser,
 } from "./test-helpers";
 
-const listToolNames = async (getActor: () => ReturnType<typeof createActor>) => {
+const listToolNames = async (
+  getActor: () => ReturnType<typeof createActor>,
+) => {
   const client = await connectMcpClient(createMcpTestApp({ getActor }));
   const { tools } = await client.listTools();
   return tools.map((tool) => tool.name);
@@ -3128,8 +3305,12 @@ const listToolNames = async (getActor: () => ReturnType<typeof createActor>) => 
 
 describe("MCP 엔드포인트 인증", () => {
   it("토큰이 틀리면 연결되지 않는다", async () => {
-    const app = createMcpTestApp({ getActor: () => createActor("regular_member") });
-    await expect(connectMcpClient(app, { token: "wrong-token" })).rejects.toThrow();
+    const app = createMcpTestApp({
+      getActor: () => createActor("regular_member"),
+    });
+    await expect(
+      connectMcpClient(app, { token: "wrong-token" }),
+    ).rejects.toThrow();
   });
 
   it("동의가 해제된 연결은 거부한다", async () => {
@@ -3154,7 +3335,9 @@ describe("MCP 엔드포인트 인증", () => {
   });
 
   it("GET /mcp는 405다", async () => {
-    const app = createMcpTestApp({ getActor: () => createActor("regular_member") });
+    const app = createMcpTestApp({
+      getActor: () => createActor("regular_member"),
+    });
     const response = await app.request("/mcp");
     expect(response.status).toBe(405);
   });
@@ -3170,14 +3353,18 @@ describe("역할별 도구 목록", () => {
   });
 
   it("부장은 통계를 보지만 기수를 만들지 못한다", async () => {
-    const names = await listToolNames(() => createActor("manager", IDs.manager));
+    const names = await listToolNames(() =>
+      createActor("manager", IDs.manager),
+    );
     expect(names).toContain("dashboard_overview");
     expect(names).not.toContain("generation_create");
     expect(names).not.toContain("member_resource_history");
   });
 
   it("도구 정의는 카탈로그에 있는 이름만 쓴다", () => {
-    const catalogNames = new Set<string>(MCP_TOOL_CATALOG.map((tool) => tool.name));
+    const catalogNames = new Set<string>(
+      MCP_TOOL_CATALOG.map((tool) => tool.name),
+    );
     for (const name of MCP_TOOL_DEFINITIONS.keys()) {
       expect(catalogNames.has(name), name).toBe(true);
     }
@@ -3220,14 +3407,17 @@ describe("조회 도구 호출", () => {
       createMcpTestApp({
         getActor: () => actor,
         dataService: createDataServiceMock({
-          getUserById: async () => createUser({ id: IDs.manager, role: "manager" }),
+          getUserById: async () =>
+            createUser({ id: IDs.manager, role: "manager" }),
         }),
       }),
     );
 
     const result = await client.callTool({ name: "whoami", arguments: {} });
     expect(resultText(result)).toContain("부장");
-    const data = (result.structuredContent as { data: { tools: Array<{ name: string }> } }).data;
+    const data = (
+      result.structuredContent as { data: { tools: Array<{ name: string }> } }
+    ).data;
     expect(data.tools.map((tool) => tool.name)).toContain("dashboard_overview");
   });
 
@@ -3278,9 +3468,15 @@ import {
 import { can, isManagerLikeRole } from "../../lib/authorization/policy";
 import type { Role } from "../../lib/authorization/types";
 
-const LEADERSHIP_ROLES: ReadonlySet<Role> = new Set(["president", "vice_president"]);
+const LEADERSHIP_ROLES: ReadonlySet<Role> = new Set([
+  "president",
+  "vice_president",
+]);
 
-export const isToolExposed = (exposure: McpToolExposure, role: Role): boolean => {
+export const isToolExposed = (
+  exposure: McpToolExposure,
+  role: Role,
+): boolean => {
   if (role === "unverified") {
     return false;
   }
@@ -3292,7 +3488,9 @@ export const isToolExposed = (exposure: McpToolExposure, role: Role): boolean =>
     case "leadership":
       return LEADERSHIP_ROLES.has(role);
     case "permission":
-      return exposure.anyOf.some(({ resource, action }) => can(role, resource, action));
+      return exposure.anyOf.some(({ resource, action }) =>
+        can(role, resource, action),
+      );
   }
 };
 
@@ -3327,7 +3525,10 @@ export type McpToolDefinition = {
   handler: (args: unknown, context: McpToolContext) => Promise<CallToolResult>;
   /** 기존 라우트 하나를 그대로 호출하는 도구. 노출 일치 테스트가 이 요청을 직접 보낸다. */
   route?: {
-    buildRequest: (args: unknown, context: McpToolContext) => InternalApiRequest;
+    buildRequest: (
+      args: unknown,
+      context: McpToolContext,
+    ) => InternalApiRequest;
   };
 };
 
@@ -3336,11 +3537,15 @@ export const uuidArg = (description: string) => z.uuid().describe(description);
 export const defineTool = <TSchema extends z.ZodObject>(definition: {
   name: McpToolName;
   inputSchema: TSchema;
-  handler: (args: z.output<TSchema>, context: McpToolContext) => Promise<CallToolResult>;
+  handler: (
+    args: z.output<TSchema>,
+    context: McpToolContext,
+  ) => Promise<CallToolResult>;
 }): McpToolDefinition => ({
   name: definition.name,
   inputSchema: definition.inputSchema,
-  handler: (args, context) => definition.handler(args as z.output<TSchema>, context),
+  handler: (args, context) =>
+    definition.handler(args as z.output<TSchema>, context),
 });
 
 type RouteRequestParts = {
@@ -3360,15 +3565,20 @@ const buildDefaultRequest = (
   method: InternalApiMethod,
   args: Record<string, unknown>,
 ): RouteRequestParts => {
-  const pathKeys = [...path.matchAll(PATH_PARAM_PATTERN)].map((match) => match[1]!);
-  const pathParams = Object.fromEntries(pathKeys.map((key) => [key, String(args[key])]));
+  const pathKeys = [...path.matchAll(PATH_PARAM_PATTERN)].map(
+    (match) => match[1]!,
+  );
+  const pathParams = Object.fromEntries(
+    pathKeys.map((key) => [key, String(args[key])]),
+  );
   if (method === "GET") {
     const query = Object.fromEntries(
       Object.entries(args).filter(([key]) => !pathKeys.includes(key)),
     ) as InternalApiQuery;
     return { pathParams, query };
   }
-  const body = "data" in args ? args.data : "items" in args ? args.items : undefined;
+  const body =
+    "data" in args ? args.data : "items" in args ? args.items : undefined;
   return { pathParams, body };
 };
 
@@ -3378,12 +3588,22 @@ export const routeTool = <TSchema extends z.ZodObject>(definition: {
   path: string;
   inputSchema: TSchema;
   summary: string;
-  toRequest?: (args: z.output<TSchema>, context: McpToolContext) => RouteRequestParts;
+  toRequest?: (
+    args: z.output<TSchema>,
+    context: McpToolContext,
+  ) => RouteRequestParts;
 }): McpToolDefinition => {
-  const buildRequest = (args: unknown, context: McpToolContext): InternalApiRequest => {
+  const buildRequest = (
+    args: unknown,
+    context: McpToolContext,
+  ): InternalApiRequest => {
     const parts = definition.toRequest
       ? definition.toRequest(args as z.output<TSchema>, context)
-      : buildDefaultRequest(definition.path, definition.method, args as Record<string, unknown>);
+      : buildDefaultRequest(
+          definition.path,
+          definition.method,
+          args as Record<string, unknown>,
+        );
     return {
       method: definition.method,
       path: fillPath(definition.path, parts.pathParams ?? {}),
@@ -3421,7 +3641,10 @@ export const accountTools = [
     name: "whoami",
     inputSchema: z.object({}),
     handler: async (_args, context) => {
-      const result = await context.api.call({ method: "GET", path: "/api/users/me" });
+      const result = await context.api.call({
+        method: "GET",
+        path: "/api/users/me",
+      });
       if (!result.ok) {
         return toolFailure(describeApiFailure(result, context.actor.role));
       }
@@ -3597,7 +3820,10 @@ export const memberTools = [
     name: "member_resource_history",
     method: "GET",
     path: "/api/users/{id}/resource-history",
-    inputSchema: z.object({ id: userId, ...ApiUserResourceHistoryQuerySchema.shape }),
+    inputSchema: z.object({
+      id: userId,
+      ...ApiUserResourceHistoryQuerySchema.shape,
+    }),
     summary: "멤버 작업 이력입니다.",
   }),
 ];
@@ -3631,7 +3857,10 @@ export const settingsTools = [
 
 ```ts
 import { z } from "zod";
-import { ApiAuditParamSchema, ApiAuditQuerySchema } from "../../audit/audit.contract";
+import {
+  ApiAuditParamSchema,
+  ApiAuditQuerySchema,
+} from "../../audit/audit.contract";
 import { ApiAdminDashboardStatsQuerySchema } from "../../dashboard/dashboard.contract";
 import { routeTool } from "../tool-definition";
 
@@ -3661,7 +3890,10 @@ export const statsTools = [
     name: "audit_log_get",
     method: "GET",
     path: "/api/audit/{resourceType}/{resourceId}",
-    inputSchema: z.object({ ...ApiAuditParamSchema.shape, ...ApiAuditQuerySchema.shape }),
+    inputSchema: z.object({
+      ...ApiAuditParamSchema.shape,
+      ...ApiAuditQuerySchema.shape,
+    }),
     summary: "변경 기록입니다.",
   }),
 ];
@@ -3694,9 +3926,8 @@ const ALL_TOOLS: McpToolDefinition[] = [
   ...statsTools,
 ];
 
-export const MCP_TOOL_DEFINITIONS: ReadonlyMap<McpToolName, McpToolDefinition> = new Map(
-  ALL_TOOLS.map((tool) => [tool.name, tool]),
-);
+export const MCP_TOOL_DEFINITIONS: ReadonlyMap<McpToolName, McpToolDefinition> =
+  new Map(ALL_TOOLS.map((tool) => [tool.name, tool]));
 ```
 
 - [ ] **Step 6: 서버 생성기와 `/mcp` 라우트를 만든다**
@@ -3791,11 +4022,17 @@ const PROTECTED_RESOURCE_METADATA_PATHS = [
 
 const mcpForbiddenResponse = (message: string): Response =>
   new Response(
-    JSON.stringify({ jsonrpc: "2.0", error: { code: -32003, message }, id: null }),
+    JSON.stringify({
+      jsonrpc: "2.0",
+      error: { code: -32003, message },
+      id: null,
+    }),
     { status: 403, headers: { "content-type": "application/json" } },
   );
 
-const readExecutionContext = (c: Context<HonoAppType>): ExecutionContext | undefined => {
+const readExecutionContext = (
+  c: Context<HonoAppType>,
+): ExecutionContext | undefined => {
   try {
     return c.executionCtx;
   } catch {
@@ -3832,24 +4069,34 @@ export const registerMcpRoutes = (app: App, dependencies: AppDependencies) => {
       const mcpEnv = resolveMcpRuntimeEnv(c.env);
       const connections = dependencies.getMcpConnectionStore(c);
       if (!(await connections.hasConsent(identity.userId, identity.clientId))) {
-        return mcpUnauthorizedResponse(mcpEnv, "연결이 해제되었습니다. 커넥터를 다시 연결해 주세요.");
+        return mcpUnauthorizedResponse(
+          mcpEnv,
+          "연결이 해제되었습니다. 커넥터를 다시 연결해 주세요.",
+        );
       }
 
       const actor = await dependencies.loadActorByUserId(c, identity.userId);
       if (!actor) {
-        return mcpUnauthorizedResponse(mcpEnv, "계정을 찾을 수 없습니다. 다시 연결해 주세요.");
+        return mcpUnauthorizedResponse(
+          mcpEnv,
+          "계정을 찾을 수 없습니다. 다시 연결해 주세요.",
+        );
       }
       if (actor.role === "unverified") {
         return mcpForbiddenResponse("관리자 승인 후 사용할 수 있습니다.");
       }
 
       const context = createMcpToolContext(c, { actor, dispatch });
-      const handler = createMcpHandler(() => buildMcpServer(context, MCP_TOOL_DEFINITIONS));
+      const handler = createMcpHandler(() =>
+        buildMcpServer(context, MCP_TOOL_DEFINITIONS),
+      );
       return handler.fetch(c.req.raw);
     }),
   );
 
-  app.on(["GET", "DELETE"], "/mcp", (c) => c.body(null, 405, { Allow: "POST" }));
+  app.on(["GET", "DELETE"], "/mcp", (c) =>
+    c.body(null, 405, { Allow: "POST" }),
+  );
 };
 ```
 
@@ -3880,10 +4127,12 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 ### Task 7: 파일이 없는 쓰기 도구
 
 **Files:**
+
 - Modify: `apps/api/src/features/mcp/tools/{account,generation,activity,exhibition,linktree,attachment,member,settings}.tools.ts`
 - Test: `apps/api/src/tests/mcp-write-tools.test.ts`
 
 **Interfaces:**
+
 - Consumes: `routeTool`, `uuidArg` (Task 6), 각 feature contract의 요청 스키마
 - Produces: 도구 25개 — `my_profile_update`, `generation_create/update/reorder/delete`, `activity_delete`, `activity_image_update`, `activity_images_update`, `activity_image_delete`, `exhibition_delete`, `exhibition_image_update`, `exhibition_images_update`, `exhibition_image_delete`, `linktree_create/update/delete`, `linktree_item_add/update/delete`, `attachment_update/delete`, `member_update`, `member_bulk_role`, `member_delete`, `site_settings_update`
 
@@ -3893,7 +4142,11 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 
 ```ts
 import { describe, expect, it, vi } from "vitest";
-import { connectMcpClient, createMcpTestApp, resultText } from "./mcp-test-harness";
+import {
+  connectMcpClient,
+  createMcpTestApp,
+  resultText,
+} from "./mcp-test-harness";
 import {
   IDs,
   createActor,
@@ -3909,7 +4162,9 @@ describe("쓰기 도구", () => {
     const client = await connectMcpClient(
       createMcpTestApp({
         getActor: () => createActor("president", IDs.president),
-        dataService: createDataServiceMock({ createGeneration: createGenerationMock }),
+        dataService: createDataServiceMock({
+          createGeneration: createGenerationMock,
+        }),
       }),
     );
 
@@ -3919,15 +4174,22 @@ describe("쓰기 도구", () => {
       startDate: Date.UTC(2030, 2, 1),
       endDate: Date.UTC(2031, 1, 28),
     };
-    const result = await client.callTool({ name: "generation_create", arguments: { data } });
+    const result = await client.callTool({
+      name: "generation_create",
+      arguments: { data },
+    });
 
     expect(result.isError).toBeFalsy();
-    expect(createGenerationMock).toHaveBeenCalledWith(expect.objectContaining({ name: "99기" }));
+    expect(createGenerationMock).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "99기" }),
+    );
   });
 
   it("my_profile_update는 항상 본인 ID로 보낸다", async () => {
     const actor = createActor("regular_member", IDs.member);
-    const updateUser = vi.fn(async () => createUser({ id: IDs.member, department: "시각디자인학과" }));
+    const updateUser = vi.fn(async () =>
+      createUser({ id: IDs.member, department: "시각디자인학과" }),
+    );
     const client = await connectMcpClient(
       createMcpTestApp({
         getActor: () => actor,
@@ -3944,7 +4206,11 @@ describe("쓰기 도구", () => {
     });
 
     expect(result.isError).toBeFalsy();
-    expect(updateUser).toHaveBeenCalledWith(IDs.member, expect.anything(), expect.anything());
+    expect(updateUser).toHaveBeenCalledWith(
+      IDs.member,
+      expect.anything(),
+      expect.anything(),
+    );
   });
 
   it("linktree_item_delete는 경로 파라미터를 채워 DELETE를 보낸다", async () => {
@@ -3970,14 +4236,20 @@ describe("쓰기 도구", () => {
 
   it("파괴적 도구에는 destructiveHint가 붙는다", async () => {
     const client = await connectMcpClient(
-      createMcpTestApp({ getActor: () => createActor("president", IDs.president) }),
+      createMcpTestApp({
+        getActor: () => createActor("president", IDs.president),
+      }),
     );
     const { tools } = await client.listTools();
     const destructive = tools
       .filter((tool) => tool.annotations?.destructiveHint === true)
       .map((tool) => tool.name);
     expect(destructive).toEqual(
-      expect.arrayContaining(["generation_delete", "member_update", "member_delete"]),
+      expect.arrayContaining([
+        "generation_delete",
+        "member_update",
+        "member_delete",
+      ]),
     );
   });
 
@@ -3986,7 +4258,8 @@ describe("쓰기 도구", () => {
       createMcpTestApp({
         getActor: () => createActor("vice_president", IDs.vicePresident),
         dataService: createDataServiceMock({
-          getUserById: async () => createUser({ id: IDs.president, role: "president" }),
+          getUserById: async () =>
+            createUser({ id: IDs.president, role: "president" }),
         }),
       }),
     );
@@ -3999,7 +4272,9 @@ describe("쓰기 도구", () => {
     expect(result.isError).toBe(true);
     const text = resultText(result);
     expect(text).toContain("현재 역할(부회장)");
-    expect(text).toContain("본인보다 높거나 같은 등급의 사용자는 변경할 수 없습니다.");
+    expect(text).toContain(
+      "본인보다 높거나 같은 등급의 사용자는 변경할 수 없습니다.",
+    );
   });
 });
 ```
@@ -4322,9 +4597,11 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 이 Task는 테스트만 추가한다. 테스트가 실패하면 고칠 곳은 **카탈로그의 노출 조건**이다. 라우트 가드는 고치지 않는다.
 
 **Files:**
+
 - Test: `apps/api/src/tests/mcp-exposure.test.ts`
 
 **Interfaces:**
+
 - Consumes: `MCP_TOOL_DEFINITIONS`, `isToolExposed` (Task 6), `createInternalApiClient` (Task 3)
 
 - [ ] **Step 1: 테스트를 쓴다**
@@ -4341,7 +4618,11 @@ import { MCP_TOOL_DEFINITIONS } from "../features/mcp/tools";
 import type { McpToolContext } from "../features/mcp/tool-definition";
 import type { Actor, Role } from "../lib/authorization/types";
 import type { DataService } from "../lib/services/types";
-import { connectMcpClient, createMcpTestApp, resultText } from "./mcp-test-harness";
+import {
+  connectMcpClient,
+  createMcpTestApp,
+  resultText,
+} from "./mcp-test-harness";
 import {
   IDs,
   buildManagedFileUrl,
@@ -4395,18 +4676,32 @@ const sampleArgs = (name: string, actor: Actor): Record<string, unknown> => {
     activity_list: {},
     activity_get: { id: IDs.activity },
     activity_delete: { id: IDs.activity },
-    activity_image_update: { id: IDs.activity, imageId: IDs.activityImage, data: { sortOrder: 1 } },
-    activity_images_update: { id: IDs.activity, items: [{ imageId: IDs.activityImage, sortOrder: 1 }] },
+    activity_image_update: {
+      id: IDs.activity,
+      imageId: IDs.activityImage,
+      data: { sortOrder: 1 },
+    },
+    activity_images_update: {
+      id: IDs.activity,
+      items: [{ imageId: IDs.activityImage, sortOrder: 1 }],
+    },
     activity_image_delete: { id: IDs.activity, imageId: IDs.activityImage },
     exhibition_list: {},
     exhibition_get: { id: IDs.exhibition },
     exhibition_delete: { id: IDs.exhibition },
-    exhibition_image_update: { id: IDs.exhibition, imageId: IDs.exhibitionImage, data: { sortOrder: 1 } },
+    exhibition_image_update: {
+      id: IDs.exhibition,
+      imageId: IDs.exhibitionImage,
+      data: { sortOrder: 1 },
+    },
     exhibition_images_update: {
       id: IDs.exhibition,
       items: [{ imageId: IDs.exhibitionImage, sortOrder: 1 }],
     },
-    exhibition_image_delete: { id: IDs.exhibition, imageId: IDs.exhibitionImage },
+    exhibition_image_delete: {
+      id: IDs.exhibition,
+      imageId: IDs.exhibitionImage,
+    },
     linktree_list: {},
     linktree_get: { id: IDs.linktree },
     linktree_create: { data: { name: "공식 링크" } },
@@ -4416,7 +4711,11 @@ const sampleArgs = (name: string, actor: Actor): Record<string, unknown> => {
       id: IDs.linktree,
       data: { name: "인스타그램", link: "https://instagram.com/yonyoung" },
     },
-    linktree_item_update: { id: IDs.linktree, itemId: IDs.linktreeItem, data: { name: "인스타" } },
+    linktree_item_update: {
+      id: IDs.linktree,
+      itemId: IDs.linktreeItem,
+      data: { name: "인스타" },
+    },
     linktree_item_delete: { id: IDs.linktree, itemId: IDs.linktreeItem },
     attachment_list: { scope: "activity", resourceId: IDs.activity },
     attachment_update: { id: IDs.attachment, data: { title: "새 제목" } },
@@ -4425,7 +4724,9 @@ const sampleArgs = (name: string, actor: Actor): Record<string, unknown> => {
     member_get: { id: actor.id },
     member_resource_history: { id: IDs.otherUser },
     member_update: { id: IDs.otherUser, data: { role: "regular_member" } },
-    member_bulk_role: { data: { userIds: [IDs.otherUser], role: "regular_member" } },
+    member_bulk_role: {
+      data: { userIds: [IDs.otherUser], role: "regular_member" },
+    },
     member_delete: { id: IDs.otherUser },
     my_profile_update: { data: { department: "시각디자인학과" } },
     site_settings_get: {},
@@ -4460,43 +4761,59 @@ const createExposureDataService = (): DataService =>
         resourceId: IDs.activity,
         fileUrl: buildManagedFileUrl("activities"),
       }),
-    getUserById: async (id: string) => createUser({ id, role: "regular_member" }),
+    getUserById: async (id: string) =>
+      createUser({ id, role: "regular_member" }),
   });
 
 describe("노출 조건 ↔ 라우트 가드 일치", () => {
-  const routeTools = [...MCP_TOOL_DEFINITIONS.values()].filter((tool) => tool.route);
+  const routeTools = [...MCP_TOOL_DEFINITIONS.values()].filter(
+    (tool) => tool.route,
+  );
 
-  it.each(VERIFIED_ROLES)("%s: 노출된 도구는 403이 아니고 숨긴 도구는 403이다", async (role) => {
-    const actor = createActor(role, ACTOR_ID_BY_ROLE[role]);
-    const app = createTestApp({ actor: null, dataService: createExposureDataService() });
-    const api = createInternalApiClient({
-      dispatch: (request, env) => app.fetch(request, env as never),
-      env: undefined,
-      actor,
-      origin: "http://localhost",
-      requestId: "exposure-test",
-    });
-    const context: McpToolContext = { actor, api } as McpToolContext;
+  it.each(VERIFIED_ROLES)(
+    "%s: 노출된 도구는 403이 아니고 숨긴 도구는 403이다",
+    async (role) => {
+      const actor = createActor(role, ACTOR_ID_BY_ROLE[role]);
+      const app = createTestApp({
+        actor: null,
+        dataService: createExposureDataService(),
+      });
+      const api = createInternalApiClient({
+        dispatch: (request, env) => app.fetch(request, env as never),
+        env: undefined,
+        actor,
+        origin: "http://localhost",
+        requestId: "exposure-test",
+      });
+      const context: McpToolContext = { actor, api } as McpToolContext;
 
-    const mismatches: string[] = [];
-    for (const tool of routeTools) {
-      const entry = MCP_TOOL_CATALOG.find((item) => item.name === tool.name)!;
-      const exposed = isToolExposed(entry.exposure, role);
-      const result = await api.call(tool.route!.buildRequest(sampleArgs(tool.name, actor), context));
-      if (result.ok === false && (result.status === 400 || result.status === 422)) {
-        mismatches.push(`${tool.name}: 샘플 입력이 검증에서 거부됨 (${result.message})`);
-        continue;
-      }
-      const forbidden = !result.ok && result.status === 403;
-      if (exposed === forbidden) {
-        mismatches.push(
-          `${tool.name}: 노출=${exposed}, 라우트 응답=${result.ok ? result.status : result.status}`,
+      const mismatches: string[] = [];
+      for (const tool of routeTools) {
+        const entry = MCP_TOOL_CATALOG.find((item) => item.name === tool.name)!;
+        const exposed = isToolExposed(entry.exposure, role);
+        const result = await api.call(
+          tool.route!.buildRequest(sampleArgs(tool.name, actor), context),
         );
+        if (
+          result.ok === false &&
+          (result.status === 400 || result.status === 422)
+        ) {
+          mismatches.push(
+            `${tool.name}: 샘플 입력이 검증에서 거부됨 (${result.message})`,
+          );
+          continue;
+        }
+        const forbidden = !result.ok && result.status === 403;
+        if (exposed === forbidden) {
+          mismatches.push(
+            `${tool.name}: 노출=${exposed}, 라우트 응답=${result.ok ? result.status : result.status}`,
+          );
+        }
       }
-    }
 
-    expect(mismatches).toEqual([]);
-  });
+      expect(mismatches).toEqual([]);
+    },
+  );
 });
 
 describe("MCP 경유 권한 위임", () => {
@@ -4505,7 +4822,8 @@ describe("MCP 경유 권한 위임", () => {
       createMcpTestApp({
         getActor: () => createActor("president", IDs.president),
         dataService: createDataServiceMock({
-          getUserById: async () => createUser({ id: IDs.president, role: "president" }),
+          getUserById: async () =>
+            createUser({ id: IDs.president, role: "president" }),
           countUsersByRole: async () => 1,
         }),
       }),
@@ -4517,12 +4835,16 @@ describe("MCP 경유 권한 위임", () => {
     });
 
     expect(result.isError).toBe(true);
-    expect(resultText(result)).toContain("회장 권한은 최소 1명 이상 유지되어야 합니다.");
+    expect(resultText(result)).toContain(
+      "회장 권한은 최소 1명 이상 유지되어야 합니다.",
+    );
   });
 
   it("부회장은 MCP로 기수를 삭제할 수 없다(도구가 보이지 않는다)", async () => {
     const client = await connectMcpClient(
-      createMcpTestApp({ getActor: () => createActor("vice_president", IDs.vicePresident) }),
+      createMcpTestApp({
+        getActor: () => createActor("vice_president", IDs.vicePresident),
+      }),
     );
     const { tools } = await client.listTools();
     expect(tools.map((tool) => tool.name)).not.toContain("generation_delete");
@@ -4530,7 +4852,9 @@ describe("MCP 경유 권한 위임", () => {
 
   it("부원은 다른 멤버 프로필을 수정할 수 없다(도구가 보이지 않는다)", async () => {
     const client = await connectMcpClient(
-      createMcpTestApp({ getActor: () => createActor("regular_member", IDs.member) }),
+      createMcpTestApp({
+        getActor: () => createActor("regular_member", IDs.member),
+      }),
     );
     const { tools } = await client.listTools();
     expect(tools.map((tool) => tool.name)).not.toContain("member_update");
@@ -4546,6 +4870,7 @@ Run: `pnpm --filter @yonyoung/api exec vitest run src/tests/mcp-exposure.test.ts
 Expected: PASS
 
 실패 메시지의 `mismatches` 줄을 보고 다음처럼 고친다.
+
 - `노출=true, 라우트 응답=403`: 카탈로그 노출 조건이 너무 넓다. 라우트 가드에 맞게 좁힌다.
 - `노출=false, 라우트 응답=500`(또는 200, 204): 카탈로그가 너무 좁다. 넓힌다.
 - `샘플 입력이 검증에서 거부됨`: 메시지에 나온 필드로 `sampleArgs`를 고친다.
@@ -4564,17 +4889,20 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 ```
 
 ---
+
 ## 4단계: 파일 업로드
 
 ### Task 9: 파일 형식 판별과 스트림 도우미
 
 **Files:**
+
 - Create: `apps/api/src/features/mcp/files/file-sniff.ts`
 - Create: `apps/api/src/features/mcp/files/byte-stream.ts`
 - Create: `apps/api/src/tests/mcp-file-fixtures.ts`
 - Test: `apps/api/src/tests/mcp-file-sniff.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `SNIFF_BYTES = 64 * 1024`
   - `matchesDeclaredType(contentType: string, head: Uint8Array): boolean`
@@ -4589,10 +4917,15 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 `apps/api/src/tests/mcp-file-fixtures.ts`:
 
 ```ts
-const ascii = (text: string): number[] => [...text].map((char) => char.charCodeAt(0));
+const ascii = (text: string): number[] =>
+  [...text].map((char) => char.charCodeAt(0));
 const u16be = (value: number) => [(value >> 8) & 0xff, value & 0xff];
 const u16le = (value: number) => [value & 0xff, (value >> 8) & 0xff];
-const u24le = (value: number) => [value & 0xff, (value >> 8) & 0xff, (value >> 16) & 0xff];
+const u24le = (value: number) => [
+  value & 0xff,
+  (value >> 8) & 0xff,
+  (value >> 16) & 0xff,
+];
 const u32be = (value: number) => [
   (value >>> 24) & 0xff,
   (value >>> 16) & 0xff,
@@ -4603,42 +4936,129 @@ const u32be = (value: number) => [
 /** 서명 + IHDR 청크(가로·세로)만 있는 최소 PNG 머리. */
 export const pngBytes = (width: number, height: number): Uint8Array =>
   new Uint8Array([
-    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
-    ...u32be(13), ...ascii("IHDR"), ...u32be(width), ...u32be(height),
-    8, 6, 0, 0, 0, 0, 0, 0, 0,
+    0x89,
+    0x50,
+    0x4e,
+    0x47,
+    0x0d,
+    0x0a,
+    0x1a,
+    0x0a,
+    ...u32be(13),
+    ...ascii("IHDR"),
+    ...u32be(width),
+    ...u32be(height),
+    8,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
   ]);
 
 /** SOI + APP0(JFIF) + SOF0 + EOI. */
 export const jpegBytes = (width: number, height: number): Uint8Array =>
   new Uint8Array([
-    0xff, 0xd8,
-    0xff, 0xe0, ...u16be(16), ...ascii("JFIF"), 0x00, 0x01, 0x01, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00,
-    0xff, 0xc0, ...u16be(17), 0x08, ...u16be(height), ...u16be(width), 0x03,
-    0x01, 0x22, 0x00, 0x02, 0x11, 0x01, 0x03, 0x11, 0x01,
-    0xff, 0xd9,
+    0xff,
+    0xd8,
+    0xff,
+    0xe0,
+    ...u16be(16),
+    ...ascii("JFIF"),
+    0x00,
+    0x01,
+    0x01,
+    0x00,
+    0x00,
+    0x01,
+    0x00,
+    0x01,
+    0x00,
+    0x00,
+    0xff,
+    0xc0,
+    ...u16be(17),
+    0x08,
+    ...u16be(height),
+    ...u16be(width),
+    0x03,
+    0x01,
+    0x22,
+    0x00,
+    0x02,
+    0x11,
+    0x01,
+    0x03,
+    0x11,
+    0x01,
+    0xff,
+    0xd9,
   ]);
 
 export const gifBytes = (width: number, height: number): Uint8Array =>
-  new Uint8Array([...ascii("GIF89a"), ...u16le(width), ...u16le(height), 0, 0, 0]);
+  new Uint8Array([
+    ...ascii("GIF89a"),
+    ...u16le(width),
+    ...u16le(height),
+    0,
+    0,
+    0,
+  ]);
 
 /** RIFF/WEBP + VP8X 청크. 가로·세로는 1을 뺀 24비트 값으로 저장된다. */
 export const webpBytes = (width: number, height: number): Uint8Array =>
   new Uint8Array([
-    ...ascii("RIFF"), 0, 0, 0, 0, ...ascii("WEBP"),
-    ...ascii("VP8X"), 10, 0, 0, 0, 0, 0, 0, 0,
-    ...u24le(width - 1), ...u24le(height - 1),
+    ...ascii("RIFF"),
+    0,
+    0,
+    0,
+    0,
+    ...ascii("WEBP"),
+    ...ascii("VP8X"),
+    10,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    ...u24le(width - 1),
+    ...u24le(height - 1),
   ]);
 
 /** ftyp(avif) 박스 + ispe 박스. */
 export const avifBytes = (width: number, height: number): Uint8Array =>
   new Uint8Array([
-    ...u32be(24), ...ascii("ftyp"), ...ascii("avif"), 0, 0, 0, 0, ...ascii("mif1"), ...ascii("avif"),
-    ...u32be(20), ...ascii("ispe"), 0, 0, 0, 0, ...u32be(width), ...u32be(height),
+    ...u32be(24),
+    ...ascii("ftyp"),
+    ...ascii("avif"),
+    0,
+    0,
+    0,
+    0,
+    ...ascii("mif1"),
+    ...ascii("avif"),
+    ...u32be(20),
+    ...ascii("ispe"),
+    0,
+    0,
+    0,
+    0,
+    ...u32be(width),
+    ...u32be(height),
   ]);
 
-export const pdfBytes = (): Uint8Array => new Uint8Array(ascii("%PDF-1.7\n%âã\n1 0 obj\n"));
+export const pdfBytes = (): Uint8Array =>
+  new Uint8Array(ascii("%PDF-1.7\n%âã\n1 0 obj\n"));
 
-export const streamOf = (bytes: Uint8Array, chunkSize = 7): ReadableStream<Uint8Array> =>
+export const streamOf = (
+  bytes: Uint8Array,
+  chunkSize = 7,
+): ReadableStream<Uint8Array> =>
   new ReadableStream({
     start(controller) {
       for (let offset = 0; offset < bytes.length; offset += chunkSize) {
@@ -4660,7 +5080,10 @@ import {
   enforceExactLength,
   peekStream,
 } from "../features/mcp/files/byte-stream";
-import { matchesDeclaredType, readImageDimensions } from "../features/mcp/files/file-sniff";
+import {
+  matchesDeclaredType,
+  readImageDimensions,
+} from "../features/mcp/files/file-sniff";
 import {
   avifBytes,
   gifBytes,
@@ -4691,19 +5114,26 @@ describe("형식 판별", () => {
   it("zip 기반 문서(xlsx, docx, hwpx)는 PK 서명으로 인식한다", () => {
     const zip = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0, 0]);
     expect(
-      matchesDeclaredType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", zip),
+      matchesDeclaredType(
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        zip,
+      ),
     ).toBe(true);
     expect(matchesDeclaredType("application/vnd.hancom.hwpx", zip)).toBe(true);
   });
 
   it("OLE 기반 문서(xls, hwp)는 CFB 서명으로 인식한다", () => {
-    const cfb = new Uint8Array([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
+    const cfb = new Uint8Array([
+      0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1,
+    ]);
     expect(matchesDeclaredType("application/vnd.ms-excel", cfb)).toBe(true);
     expect(matchesDeclaredType("application/x-hwp", cfb)).toBe(true);
   });
 
   it("허용 목록에 없는 형식은 거부한다", () => {
-    expect(matchesDeclaredType("text/html", new Uint8Array([0x3c]))).toBe(false);
+    expect(matchesDeclaredType("text/html", new Uint8Array([0x3c]))).toBe(
+      false,
+    );
   });
 });
 
@@ -4715,11 +5145,16 @@ describe("이미지 크기", () => {
     ["image/webp", webpBytes(640, 480)],
     ["image/avif", avifBytes(640, 480)],
   ] as const)("%s 머리에서 가로·세로를 읽는다", (contentType, bytes) => {
-    expect(readImageDimensions(contentType, bytes)).toEqual({ width: 640, height: 480 });
+    expect(readImageDimensions(contentType, bytes)).toEqual({
+      width: 640,
+      height: 480,
+    });
   });
 
   it("읽을 수 없으면 null이다", () => {
-    expect(readImageDimensions("image/jpeg", new Uint8Array([0xff, 0xd8, 0x00]))).toBeNull();
+    expect(
+      readImageDimensions("image/jpeg", new Uint8Array([0xff, 0xd8, 0x00])),
+    ).toBeNull();
     expect(readImageDimensions("application/pdf", pdfBytes())).toBeNull();
   });
 });
@@ -4735,17 +5170,23 @@ describe("스트림 도우미", () => {
 
   it("선언 길이와 같으면 통과한다", async () => {
     const bytes = pdfBytes();
-    const out = await new Response(enforceExactLength(streamOf(bytes), bytes.length)).arrayBuffer();
+    const out = await new Response(
+      enforceExactLength(streamOf(bytes), bytes.length),
+    ).arrayBuffer();
     expect(out.byteLength).toBe(bytes.length);
   });
 
   it("짧거나 길면 StreamLengthMismatchError로 끝난다", async () => {
     const bytes = pdfBytes();
     await expect(
-      new Response(enforceExactLength(streamOf(bytes), bytes.length + 1)).arrayBuffer(),
+      new Response(
+        enforceExactLength(streamOf(bytes), bytes.length + 1),
+      ).arrayBuffer(),
     ).rejects.toBeInstanceOf(StreamLengthMismatchError);
     await expect(
-      new Response(enforceExactLength(streamOf(bytes), bytes.length - 1)).arrayBuffer(),
+      new Response(
+        enforceExactLength(streamOf(bytes), bytes.length - 1),
+      ).arrayBuffer(),
     ).rejects.toBeInstanceOf(StreamLengthMismatchError);
   });
 });
@@ -4771,30 +5212,44 @@ const ascii = (bytes: Uint8Array, offset: number, length: number): string =>
   String.fromCharCode(...bytes.subarray(offset, offset + length));
 
 const startsWith = (bytes: Uint8Array, signature: readonly number[]): boolean =>
-  bytes.length >= signature.length && signature.every((byte, index) => bytes[index] === byte);
+  bytes.length >= signature.length &&
+  signature.every((byte, index) => bytes[index] === byte);
 
-const HEIF_BRANDS = ["heic", "heix", "hevc", "hevx", "heim", "heis", "mif1", "msf1"];
+const HEIF_BRANDS = [
+  "heic",
+  "heix",
+  "hevc",
+  "hevx",
+  "heim",
+  "heis",
+  "mif1",
+  "msf1",
+];
 const AVIF_BRANDS = ["avif", "avis"];
 
 const hasFtypBrand = (bytes: Uint8Array, brands: readonly string[]): boolean =>
   ascii(bytes, 4, 4) === "ftyp" && brands.includes(ascii(bytes, 8, 4));
 
-const isZip = (bytes: Uint8Array) => startsWith(bytes, [0x50, 0x4b, 0x03, 0x04]);
+const isZip = (bytes: Uint8Array) =>
+  startsWith(bytes, [0x50, 0x4b, 0x03, 0x04]);
 const isCfb = (bytes: Uint8Array) =>
   startsWith(bytes, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
 
 const SIGNATURE_BY_TYPE: Record<string, (bytes: Uint8Array) => boolean> = {
   "image/jpeg": (bytes) => startsWith(bytes, [0xff, 0xd8, 0xff]),
-  "image/png": (bytes) => startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+  "image/png": (bytes) =>
+    startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
   "image/gif": (bytes) => ["GIF87a", "GIF89a"].includes(ascii(bytes, 0, 6)),
-  "image/webp": (bytes) => ascii(bytes, 0, 4) === "RIFF" && ascii(bytes, 8, 4) === "WEBP",
+  "image/webp": (bytes) =>
+    ascii(bytes, 0, 4) === "RIFF" && ascii(bytes, 8, 4) === "WEBP",
   "image/avif": (bytes) => hasFtypBrand(bytes, AVIF_BRANDS),
   "image/heic": (bytes) => hasFtypBrand(bytes, HEIF_BRANDS),
   "image/heif": (bytes) => hasFtypBrand(bytes, HEIF_BRANDS),
   "application/pdf": (bytes) => ascii(bytes, 0, 5) === "%PDF-",
   "application/zip": isZip,
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": isZip,
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": isZip,
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+    isZip,
   "application/vnd.hancom.hwpx": isZip,
   "application/vnd.ms-excel": isCfb,
   "application/x-hwp": isCfb,
@@ -4808,7 +5263,10 @@ const ALLOWED_TYPES = new Set<string>([
 ]);
 
 /** 파일 앞부분이 선언한 형식의 서명과 맞는지 본다. 허용 목록 밖의 형식은 항상 false. */
-export const matchesDeclaredType = (contentType: string, head: Uint8Array): boolean => {
+export const matchesDeclaredType = (
+  contentType: string,
+  head: Uint8Array,
+): boolean => {
   if (!ALLOWED_TYPES.has(contentType)) {
     return false;
   }
@@ -4817,7 +5275,8 @@ export const matchesDeclaredType = (contentType: string, head: Uint8Array): bool
 
 type Dimensions = { width: number; height: number };
 
-const view = (bytes: Uint8Array) => new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+const view = (bytes: Uint8Array) =>
+  new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
 
 const readPng = (bytes: Uint8Array): Dimensions | null =>
   bytes.length >= 24 && ascii(bytes, 12, 4) === "IHDR"
@@ -4826,7 +5285,10 @@ const readPng = (bytes: Uint8Array): Dimensions | null =>
 
 const readGif = (bytes: Uint8Array): Dimensions | null =>
   bytes.length >= 10
-    ? { width: view(bytes).getUint16(6, true), height: view(bytes).getUint16(8, true) }
+    ? {
+        width: view(bytes).getUint16(6, true),
+        height: view(bytes).getUint16(8, true),
+      }
     : null;
 
 const readUint24le = (bytes: Uint8Array, offset: number) =>
@@ -4838,7 +5300,10 @@ const readWebp = (bytes: Uint8Array): Dimensions | null => {
   }
   const chunk = ascii(bytes, 12, 4);
   if (chunk === "VP8X") {
-    return { width: readUint24le(bytes, 24) + 1, height: readUint24le(bytes, 27) + 1 };
+    return {
+      width: readUint24le(bytes, 24) + 1,
+      height: readUint24le(bytes, 27) + 1,
+    };
   }
   if (chunk === "VP8 ") {
     return {
@@ -4876,7 +5341,10 @@ const readJpeg = (bytes: Uint8Array): Dimensions | null => {
       continue;
     }
     if (SOF_MARKERS.has(marker)) {
-      return { height: data.getUint16(offset + 5), width: data.getUint16(offset + 7) };
+      return {
+        height: data.getUint16(offset + 5),
+        width: data.getUint16(offset + 7),
+      };
     }
     offset += 2 + data.getUint16(offset + 2);
   }
@@ -4896,15 +5364,16 @@ const readIspe = (bytes: Uint8Array): Dimensions | null => {
   return null;
 };
 
-const READER_BY_TYPE: Record<string, (bytes: Uint8Array) => Dimensions | null> = {
-  "image/png": readPng,
-  "image/gif": readGif,
-  "image/webp": readWebp,
-  "image/jpeg": readJpeg,
-  "image/avif": readIspe,
-  "image/heic": readIspe,
-  "image/heif": readIspe,
-};
+const READER_BY_TYPE: Record<string, (bytes: Uint8Array) => Dimensions | null> =
+  {
+    "image/png": readPng,
+    "image/gif": readGif,
+    "image/webp": readWebp,
+    "image/jpeg": readJpeg,
+    "image/avif": readIspe,
+    "image/heic": readIspe,
+    "image/heif": readIspe,
+  };
 
 /** EXIF 회전은 반영하지 않는다. 대시보드 업로드도 원본 픽셀 크기를 저장한다. */
 export const readImageDimensions = (
@@ -5034,6 +5503,7 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 ### Task 10: 업로드 저장소, 객체 저장소, 객체 키 발급
 
 **Files:**
+
 - Create: `apps/api/src/features/mcp/files/mcp-upload-store.ts`
 - Create: `apps/api/src/features/mcp/files/mcp-object-store.ts`
 - Modify: `apps/api/src/lib/services/types.ts` (`PresignService.allocateManagedObject`)
@@ -5043,6 +5513,7 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 - Test: `apps/api/tests/integration/mcp-stores.runtime.test.ts`
 
 **Interfaces:**
+
 - Consumes: `mcp_uploads`, `oauth_*` 테이블 (Task 4), `McpConnectionStore` (Task 5)
 - Produces:
   - `type McpUploadRecord = { id; tokenHash; userId; purpose: McpUploadPurpose; fileName; contentType; declaredSize: number; objectKey; publicUrl; width: number | null; height: number | null; reservationId: string | null; status: McpUploadStatus; expiresAt: number; createdAt: number; completedAt: number | null }`
@@ -5106,7 +5577,11 @@ describe("메모리 업로드 저장소", () => {
     const store = createMemoryMcpUploadStore();
     await store.create(record());
     await store.beginReceiving("up-1", Date.now());
-    await store.complete("up-1", { width: 3, height: 2, completedAt: Date.now() });
+    await store.complete("up-1", {
+      width: 3,
+      height: 2,
+      completedAt: Date.now(),
+    });
 
     expect(await store.claim(["up-1"], "other")).toEqual([]);
     expect(await store.claim(["up-1"], "u1")).toEqual(["up-1"]);
@@ -5146,7 +5621,10 @@ Expected: FAIL — 모듈 없음
 `apps/api/src/features/mcp/files/mcp-upload-store.ts`:
 
 ```ts
-import type { McpUploadPurpose, McpUploadStatus } from "@yonyoung/contracts/mcp";
+import type {
+  McpUploadPurpose,
+  McpUploadStatus,
+} from "@yonyoung/contracts/mcp";
 
 export type McpUploadRecord = {
   id: string;
@@ -5222,7 +5700,8 @@ const toRecord = (row: UploadRow): McpUploadRecord => ({
   completedAt: row.completed_at === null ? null : Number(row.completed_at),
 });
 
-const placeholders = (count: number) => Array.from({ length: count }, () => "?").join(", ");
+const placeholders = (count: number) =>
+  Array.from({ length: count }, () => "?").join(", ");
 
 export const createD1McpUploadStore = (
   database: Pick<D1Database, "prepare">,
@@ -5349,11 +5828,19 @@ export const createMemoryMcpUploadStore = (): McpUploadStore => {
       return records.get(id) ?? null;
     },
     async getByTokenHash(tokenHash) {
-      return [...records.values()].find((record) => record.tokenHash === tokenHash) ?? null;
+      return (
+        [...records.values()].find(
+          (record) => record.tokenHash === tokenHash,
+        ) ?? null
+      );
     },
     async beginReceiving(id, now) {
       const current = records.get(id);
-      if (!current || current.status !== "pending" || current.expiresAt <= now) {
+      if (
+        !current ||
+        current.status !== "pending" ||
+        current.expiresAt <= now
+      ) {
         return false;
       }
       update(id, { status: "receiving" });
@@ -5374,7 +5861,11 @@ export const createMemoryMcpUploadStore = (): McpUploadStore => {
       const claimed: string[] = [];
       for (const id of ids) {
         const current = records.get(id);
-        if (current && current.userId === userId && current.status === "completed") {
+        if (
+          current &&
+          current.userId === userId &&
+          current.status === "completed"
+        ) {
           update(id, { status: "consumed" });
           claimed.push(id);
         }
@@ -5444,13 +5935,13 @@ export const createMemoryMcpObjectStore = () => {
 `apps/api/src/lib/services/types.ts`의 `PresignService` 타입 맨 앞에 추가한다.
 
 ```ts
-  /** presign 없이 관리 객체 키와 서명된 공개 URL만 만든다. MCP 업로드가 R2 바인딩으로 직접 쓸 때 쓴다. */
-  allocateManagedObject: (input: {
-    actorId: string;
-    resource: "activities" | "exhibitions" | "users" | "notices" | "site";
-    slot: "cover" | "detail" | "profile" | "image" | "file";
-    fileName: string;
-  }) => Promise<{ objectKey: string; publicUrl: string }>;
+/** presign 없이 관리 객체 키와 서명된 공개 URL만 만든다. MCP 업로드가 R2 바인딩으로 직접 쓸 때 쓴다. */
+allocateManagedObject: (input: {
+  actorId: string;
+  resource: "activities" | "exhibitions" | "users" | "notices" | "site";
+  slot: "cover" | "detail" | "profile" | "image" | "file";
+  fileName: string;
+}) => Promise<{ objectKey: string; publicUrl: string }>;
 ```
 
 `apps/api/src/lib/storage/presign.ts`의 `createR2PresignService` 반환 객체 맨 앞에 추가한다.
@@ -5476,7 +5967,10 @@ Expected: PASS
 
 ```ts
 import { fileURLToPath } from "node:url";
-import { cloudflareTest, readD1Migrations } from "@cloudflare/vitest-pool-workers";
+import {
+  cloudflareTest,
+  readD1Migrations,
+} from "@cloudflare/vitest-pool-workers";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig(async () => {
@@ -5505,15 +5999,15 @@ export default defineConfig(async () => {
 `apps/api/tests/setup/cloudflare-test.d.ts`의 `declare module "cloudflare:test"` 안에 추가한다.
 
 ```ts
-  export interface D1Migration {
-    name: string;
-    queries: string[];
-  }
-  export function applyD1Migrations(
-    db: D1Database,
-    migrations: D1Migration[],
-    migrationsTableName?: string,
-  ): Promise<void>;
+export interface D1Migration {
+  name: string;
+  queries: string[];
+}
+export function applyD1Migrations(
+  db: D1Database,
+  migrations: D1Migration[],
+  migrationsTableName?: string,
+): Promise<void>;
 ```
 
 - [ ] **Step 7: D1 저장소 런타임 테스트를 쓴다**
@@ -5531,7 +6025,9 @@ const db = env.db as D1Database;
 beforeAll(async () => {
   await applyD1Migrations(db, env.TEST_MIGRATIONS as D1Migration[]);
   await db.batch([
-    db.prepare("INSERT INTO user (id, name, email) VALUES ('u1', 'u1', 'u1@example.test')"),
+    db.prepare(
+      "INSERT INTO user (id, name, email) VALUES ('u1', 'u1', 'u1@example.test')",
+    ),
     db.prepare(
       "INSERT INTO oauth_client (id, client_id, redirect_uris, name) VALUES ('oc1', 'c1', '[\"https://claude.ai/api/mcp/auth_callback\"]', 'Claude')",
     ),
@@ -5568,8 +6064,14 @@ describe("D1 MCP 업로드 저장소", () => {
 
     expect(await store.beginReceiving("up-1", Date.now())).toBe(true);
     expect(await store.beginReceiving("up-1", Date.now())).toBe(false);
-    await store.complete("up-1", { width: 3, height: 2, completedAt: Date.now() });
-    expect((await store.getByTokenHash("hash-1"))?.fileName).toBe("봄 출사 🌸.png");
+    await store.complete("up-1", {
+      width: 3,
+      height: 2,
+      completedAt: Date.now(),
+    });
+    expect((await store.getByTokenHash("hash-1"))?.fileName).toBe(
+      "봄 출사 🌸.png",
+    );
 
     expect(await store.claim(["up-1"], "u1")).toEqual(["up-1"]);
     expect(await store.claim(["up-1"], "u1")).toEqual([]);
@@ -5610,9 +6112,11 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 ```
 
 ---
+
 ### Task 11: 업로드 서비스, `upload_prepare`·`upload_status`, PUT 라우트
 
 **Files:**
+
 - Create: `apps/api/src/features/mcp/files/upload-purpose.ts`
 - Create: `apps/api/src/features/mcp/files/mcp-upload-service.ts`
 - Create: `apps/api/src/features/mcp/tools/upload.tools.ts`
@@ -5625,6 +6129,7 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 - Test: `apps/api/src/tests/mcp-upload.routes.test.ts`
 
 **Interfaces:**
+
 - Consumes: `McpUploadStore`, `McpObjectStore`, `allocateManagedObject` (Task 10), `peekStream`, `enforceExactLength`, `matchesDeclaredType`, `readImageDimensions` (Task 9), `reserveStorageCapacityForUpload`, `settleUploadReservation` (기존 `features/uploads/upload-capacity.ts`)
 - Produces:
   - `UPLOAD_PURPOSE_RULES: Record<McpUploadPurpose, { resourcePath; slot; allowedContentTypes: readonly string[]; kind: "image" | "file"; isAllowed(role: Role): boolean }>`
@@ -5645,8 +6150,14 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 `apps/api/src/tests/mcp-test-harness.ts`에 import를 추가한다.
 
 ```ts
-import { createMemoryMcpObjectStore, type McpObjectStore } from "../features/mcp/files/mcp-object-store";
-import { createMemoryMcpUploadStore, type McpUploadStore } from "../features/mcp/files/mcp-upload-store";
+import {
+  createMemoryMcpObjectStore,
+  type McpObjectStore,
+} from "../features/mcp/files/mcp-object-store";
+import {
+  createMemoryMcpUploadStore,
+  type McpUploadStore,
+} from "../features/mcp/files/mcp-upload-store";
 import { createPresignServiceMock } from "./test-helpers";
 ```
 
@@ -5660,29 +6171,34 @@ import { createPresignServiceMock } from "./test-helpers";
 `createTestApp({...})` 호출을 바꾼다.
 
 ```ts
-  return createTestApp({
-    actor: null,
-    dataService: input.dataService,
-    presignService: input.presignService ?? createPresignServiceMock({
+return createTestApp({
+  actor: null,
+  dataService: input.dataService,
+  presignService:
+    input.presignService ??
+    createPresignServiceMock({
       allocateManagedObject: async ({ actorId, resource, slot, fileName }) => {
         const objectKey = `${resource}/${actorId}/${slot}/${crypto.randomUUID()}-${fileName}`;
-        return { objectKey, publicUrl: `https://cdn.example.test/${encodeURI(objectKey)}` };
+        return {
+          objectKey,
+          publicUrl: `https://cdn.example.test/${encodeURI(objectKey)}`,
+        };
       },
     }),
-    overrides: {
-      // ...기존 세 항목
-      getMcpUploadStore: () => uploadStore,
-      getMcpObjectStore: () => objectStore,
-      ...input.overrides,
-    },
-  });
+  overrides: {
+    // ...기존 세 항목
+    getMcpUploadStore: () => uploadStore,
+    getMcpObjectStore: () => objectStore,
+    ...input.overrides,
+  },
+});
 ```
 
 함수 첫머리에 다음을 둔다.
 
 ```ts
-  const uploadStore = input.uploadStore ?? createMemoryMcpUploadStore();
-  const objectStore = input.objectStore ?? createMemoryMcpObjectStore();
+const uploadStore = input.uploadStore ?? createMemoryMcpUploadStore();
+const objectStore = input.objectStore ?? createMemoryMcpObjectStore();
 ```
 
 파일 끝에 Claude 경로 업로드를 한 번에 하는 도우미를 추가한다.
@@ -5692,7 +6208,12 @@ import { createPresignServiceMock } from "./test-helpers";
 export const uploadViaClaudePath = async (
   app: TestApp,
   client: Client,
-  input: { purpose: string; fileName: string; contentType: string; bytes: Uint8Array },
+  input: {
+    purpose: string;
+    fileName: string;
+    contentType: string;
+    bytes: Uint8Array;
+  },
 ): Promise<string> => {
   const prepared = await client.callTool({
     name: "upload_prepare",
@@ -5706,8 +6227,11 @@ export const uploadViaClaudePath = async (
   if (prepared.isError) {
     throw new Error(resultText(prepared));
   }
-  const data = (prepared.structuredContent as { data: { upload_id: string; put_url: string } })
-    .data;
+  const data = (
+    prepared.structuredContent as {
+      data: { upload_id: string; put_url: string };
+    }
+  ).data;
   const response = await app.request(new URL(data.put_url).pathname, {
     method: "PUT",
     headers: { "content-length": String(input.bytes.length) },
@@ -5737,13 +6261,25 @@ import {
 } from "./mcp-test-harness";
 import { IDs, createActor } from "./test-helpers";
 
-type Prepared = { upload_id: string; put_url: string; browser_url: string; expires_at: string };
+type Prepared = {
+  upload_id: string;
+  put_url: string;
+  browser_url: string;
+  expires_at: string;
+};
 
 const setup = async (role: Parameters<typeof createActor>[0] = "manager") => {
   const uploadStore = createMemoryMcpUploadStore();
   const objectStore = createMemoryMcpObjectStore();
-  const actor = createActor(role, role === "manager" ? IDs.manager : IDs.member);
-  const app = createMcpTestApp({ getActor: () => actor, uploadStore, objectStore });
+  const actor = createActor(
+    role,
+    role === "manager" ? IDs.manager : IDs.member,
+  );
+  const app = createMcpTestApp({
+    getActor: () => actor,
+    uploadStore,
+    objectStore,
+  });
   const client = await connectMcpClient(app);
   return { app, client, uploadStore, objectStore, actor };
 };
@@ -5753,7 +6289,12 @@ const prepare = async (
   args: Record<string, unknown>,
 ) => client.callTool({ name: "upload_prepare", arguments: args });
 
-const putBytes = (app: Awaited<ReturnType<typeof setup>>["app"], putUrl: string, bytes: Uint8Array, headers: Record<string, string> = {}) =>
+const putBytes = (
+  app: Awaited<ReturnType<typeof setup>>["app"],
+  putUrl: string,
+  bytes: Uint8Array,
+  headers: Record<string, string> = {},
+) =>
   app.request(new URL(putUrl).pathname, {
     method: "PUT",
     headers: { "content-length": String(bytes.length), ...headers },
@@ -5777,7 +6318,9 @@ describe("upload_prepare", () => {
     expect(result.isError).toBeFalsy();
     const data = (result.structuredContent as { data: Prepared }).data;
     expect(data.put_url).toMatch(/\/mcp\/uploads\/[A-Za-z0-9_-]{43}$/);
-    expect(data.browser_url).toMatch(/\/dashboard\/mcp\/upload\/[A-Za-z0-9_-]{43}$/);
+    expect(data.browser_url).toMatch(
+      /\/dashboard\/mcp\/upload\/[A-Za-z0-9_-]{43}$/,
+    );
     expect(resultText(result)).toContain("curl");
   });
 
@@ -5825,10 +6368,19 @@ describe("PUT /mcp/uploads/:token", () => {
     });
 
     const record = await uploadStore.getById(uploadId);
-    expect(record).toMatchObject({ status: "completed", width: 640, height: 480 });
-    expect(objectStore.objects.get(record!.objectKey)?.bytes.length).toBe(bytes.length);
+    expect(record).toMatchObject({
+      status: "completed",
+      width: 640,
+      height: 480,
+    });
+    expect(objectStore.objects.get(record!.objectKey)?.bytes.length).toBe(
+      bytes.length,
+    );
 
-    const status = await client.callTool({ name: "upload_status", arguments: { upload_id: uploadId } });
+    const status = await client.callTool({
+      name: "upload_status",
+      arguments: { upload_id: uploadId },
+    });
     expect(resultText(status)).toContain("completed");
   });
 
@@ -5858,7 +6410,12 @@ describe("PUT /mcp/uploads/:token", () => {
     });
     const { put_url } = (prepared.structuredContent as { data: Prepared }).data;
 
-    const statuses = (await Promise.all([putBytes(app, put_url, bytes), putBytes(app, put_url, bytes)]))
+    const statuses = (
+      await Promise.all([
+        putBytes(app, put_url, bytes),
+        putBytes(app, put_url, bytes),
+      ])
+    )
       .map((response) => response.status)
       .sort();
     expect(statuses).toEqual([200, 409]);
@@ -5940,7 +6497,9 @@ describe("PUT /mcp/uploads/:token", () => {
         "access-control-request-headers": "content-type",
       },
     });
-    expect(response.headers.get("access-control-allow-origin")).toBe("http://localhost:3000");
+    expect(response.headers.get("access-control-allow-origin")).toBe(
+      "http://localhost:3000",
+    );
   });
 });
 
@@ -5961,16 +6520,22 @@ describe("GET /api/mcp/uploads/lookup", () => {
       content_type: "image/png",
       size: 33,
     });
-    const token = new URL((prepared.structuredContent as { data: Prepared }).data.put_url)
-      .pathname.split("/")
+    const token = new URL(
+      (prepared.structuredContent as { data: Prepared }).data.put_url,
+    ).pathname
+      .split("/")
       .pop()!;
 
     const owner = await app.request(`/api/mcp/uploads/lookup?token=${token}`);
     expect(owner.status).toBe(200);
-    expect(((await owner.json()) as { data: { fileName: string } }).data.fileName).toBe("a.png");
+    expect(
+      ((await owner.json()) as { data: { fileName: string } }).data.fileName,
+    ).toBe("a.png");
 
     sessionActor = createActor("regular_member", IDs.member);
-    const stranger = await app.request(`/api/mcp/uploads/lookup?token=${token}`);
+    const stranger = await app.request(
+      `/api/mcp/uploads/lookup?token=${token}`,
+    );
     expect(stranger.status).toBe(404);
   });
 });
@@ -5994,7 +6559,10 @@ import {
   type ManagedUploadResourcePath,
   type ManagedUploadSlot,
 } from "../../../lib/storage/presign";
-import { canCreateOrUpdate, isUserProfileUploadAllowed } from "../../uploads/upload.policy";
+import {
+  canCreateOrUpdate,
+  isUserProfileUploadAllowed,
+} from "../../uploads/upload.policy";
 
 export type UploadPurposeRule = {
   resourcePath: ManagedUploadResourcePath;
@@ -6005,64 +6573,65 @@ export type UploadPurposeRule = {
 };
 
 /** 기존 presign 라우트(upload.routes.ts)와 같은 경로·슬롯·형식·권한을 쓴다. */
-export const UPLOAD_PURPOSE_RULES: Record<McpUploadPurpose, UploadPurposeRule> = {
-  activity_cover: {
-    resourcePath: "activities",
-    slot: "cover",
-    allowedContentTypes: ALLOWED_IMAGE_CONTENT_TYPES,
-    kind: "image",
-    isAllowed: (role) => canCreateOrUpdate(role, "activity"),
-  },
-  activity_image: {
-    resourcePath: "activities",
-    slot: "detail",
-    allowedContentTypes: ALLOWED_IMAGE_CONTENT_TYPES,
-    kind: "image",
-    isAllowed: (role) => canCreateOrUpdate(role, "activity"),
-  },
-  activity_file: {
-    resourcePath: "activities",
-    slot: "file",
-    allowedContentTypes: ALLOWED_ATTACHMENT_CONTENT_TYPES,
-    kind: "file",
-    isAllowed: (role) => canCreateOrUpdate(role, "activity"),
-  },
-  exhibition_cover: {
-    resourcePath: "exhibitions",
-    slot: "cover",
-    allowedContentTypes: ALLOWED_IMAGE_CONTENT_TYPES,
-    kind: "image",
-    isAllowed: (role) => canCreateOrUpdate(role, "exhibition"),
-  },
-  exhibition_image: {
-    resourcePath: "exhibitions",
-    slot: "detail",
-    allowedContentTypes: ALLOWED_IMAGE_CONTENT_TYPES,
-    kind: "image",
-    isAllowed: (role) => canCreateOrUpdate(role, "exhibition"),
-  },
-  profile_image: {
-    resourcePath: "users",
-    slot: "profile",
-    allowedContentTypes: ALLOWED_IMAGE_CONTENT_TYPES,
-    kind: "image",
-    isAllowed: isUserProfileUploadAllowed,
-  },
-  recruiting_image: {
-    resourcePath: "notices",
-    slot: "image",
-    allowedContentTypes: ALLOWED_IMAGE_CONTENT_TYPES,
-    kind: "image",
-    isAllowed: (role) => canCreateOrUpdate(role, "site_setting"),
-  },
-  site_file: {
-    resourcePath: "site",
-    slot: "file",
-    allowedContentTypes: ALLOWED_ATTACHMENT_CONTENT_TYPES,
-    kind: "file",
-    isAllowed: (role) => canCreateOrUpdate(role, "site_setting"),
-  },
-};
+export const UPLOAD_PURPOSE_RULES: Record<McpUploadPurpose, UploadPurposeRule> =
+  {
+    activity_cover: {
+      resourcePath: "activities",
+      slot: "cover",
+      allowedContentTypes: ALLOWED_IMAGE_CONTENT_TYPES,
+      kind: "image",
+      isAllowed: (role) => canCreateOrUpdate(role, "activity"),
+    },
+    activity_image: {
+      resourcePath: "activities",
+      slot: "detail",
+      allowedContentTypes: ALLOWED_IMAGE_CONTENT_TYPES,
+      kind: "image",
+      isAllowed: (role) => canCreateOrUpdate(role, "activity"),
+    },
+    activity_file: {
+      resourcePath: "activities",
+      slot: "file",
+      allowedContentTypes: ALLOWED_ATTACHMENT_CONTENT_TYPES,
+      kind: "file",
+      isAllowed: (role) => canCreateOrUpdate(role, "activity"),
+    },
+    exhibition_cover: {
+      resourcePath: "exhibitions",
+      slot: "cover",
+      allowedContentTypes: ALLOWED_IMAGE_CONTENT_TYPES,
+      kind: "image",
+      isAllowed: (role) => canCreateOrUpdate(role, "exhibition"),
+    },
+    exhibition_image: {
+      resourcePath: "exhibitions",
+      slot: "detail",
+      allowedContentTypes: ALLOWED_IMAGE_CONTENT_TYPES,
+      kind: "image",
+      isAllowed: (role) => canCreateOrUpdate(role, "exhibition"),
+    },
+    profile_image: {
+      resourcePath: "users",
+      slot: "profile",
+      allowedContentTypes: ALLOWED_IMAGE_CONTENT_TYPES,
+      kind: "image",
+      isAllowed: isUserProfileUploadAllowed,
+    },
+    recruiting_image: {
+      resourcePath: "notices",
+      slot: "image",
+      allowedContentTypes: ALLOWED_IMAGE_CONTENT_TYPES,
+      kind: "image",
+      isAllowed: (role) => canCreateOrUpdate(role, "site_setting"),
+    },
+    site_file: {
+      resourcePath: "site",
+      slot: "file",
+      allowedContentTypes: ALLOWED_ATTACHMENT_CONTENT_TYPES,
+      kind: "file",
+      isAllowed: (role) => canCreateOrUpdate(role, "site_setting"),
+    },
+  };
 ```
 
 - [ ] **Step 5: 업로드 서비스를 만든다**
@@ -6090,8 +6659,16 @@ import {
   settleUploadReservation,
 } from "../../uploads/upload-capacity";
 import { describeApiFailure, toolFailure } from "../tool-result";
-import { StreamLengthMismatchError, enforceExactLength, peekStream } from "./byte-stream";
-import { SNIFF_BYTES, matchesDeclaredType, readImageDimensions } from "./file-sniff";
+import {
+  StreamLengthMismatchError,
+  enforceExactLength,
+  peekStream,
+} from "./byte-stream";
+import {
+  SNIFF_BYTES,
+  matchesDeclaredType,
+  readImageDimensions,
+} from "./file-sniff";
 import type { McpObjectStore } from "./mcp-object-store";
 import type { McpUploadRecord, McpUploadStore } from "./mcp-upload-store";
 import { UPLOAD_PURPOSE_RULES } from "./upload-purpose";
@@ -6134,7 +6711,10 @@ export type McpUploadServiceDeps = {
   store: McpUploadStore;
   objects: McpObjectStore;
   presign: Pick<PresignService, "allocateManagedObject">;
-  reserveCapacity: (actorId: string, fileSize: number) => Promise<{ id: string }>;
+  reserveCapacity: (
+    actorId: string,
+    fileSize: number,
+  ) => Promise<{ id: string }>;
   settleReservation: (reservationId: string) => Promise<void>;
   releaseReservation: (reservationId: string) => Promise<void>;
   apiOrigin: string;
@@ -6142,13 +6722,22 @@ export type McpUploadServiceDeps = {
 };
 
 const toBase64Url = (bytes: Uint8Array): string =>
-  btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 
-const createUploadToken = (): string => toBase64Url(crypto.getRandomValues(new Uint8Array(32)));
+const createUploadToken = (): string =>
+  toBase64Url(crypto.getRandomValues(new Uint8Array(32)));
 
 const sha256Hex = async (value: string): Promise<string> => {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(value),
+  );
+  return [...new Uint8Array(digest)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
 };
 
 export const toResolvedUpload = (record: McpUploadRecord): ResolvedUpload => ({
@@ -6197,12 +6786,14 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
     const rule = UPLOAD_PURPOSE_RULES[input.purpose];
     const reservation = await deps.reserveCapacity(actor.id, input.size);
     try {
-      const { objectKey, publicUrl } = await deps.presign.allocateManagedObject({
-        actorId: actor.id,
-        resource: rule.resourcePath,
-        slot: rule.slot,
-        fileName: input.fileName,
-      });
+      const { objectKey, publicUrl } = await deps.presign.allocateManagedObject(
+        {
+          actorId: actor.id,
+          resource: rule.resourcePath,
+          slot: rule.slot,
+          fileName: input.fileName,
+        },
+      );
       const token = createUploadToken();
       const now = Date.now();
       const record: McpUploadRecord = {
@@ -6246,10 +6837,14 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
         UPLOAD_PURPOSE_RULES[record.purpose].kind === "image"
           ? readImageDimensions(record.contentType, head)
           : null;
-      await deps.objects.put(record.objectKey, enforceExactLength(stream, record.declaredSize), {
-        contentType: record.contentType,
-        size: record.declaredSize,
-      });
+      await deps.objects.put(
+        record.objectKey,
+        enforceExactLength(stream, record.declaredSize),
+        {
+          contentType: record.contentType,
+          size: record.declaredSize,
+        },
+      );
 
       const completed = {
         width: dimensions?.width ?? null,
@@ -6268,13 +6863,19 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
         await deps.releaseReservation(record.reservationId);
       }
       if (error instanceof StreamLengthMismatchError) {
-        throw new McpUploadError(400, "받은 파일 크기가 선언한 크기와 다릅니다.");
+        throw new McpUploadError(
+          400,
+          "받은 파일 크기가 선언한 크기와 다릅니다.",
+        );
       }
       throw error;
     }
   };
 
-  const findOwned = async (actor: Actor, uploadId: string): Promise<McpUploadRecord> => {
+  const findOwned = async (
+    actor: Actor,
+    uploadId: string,
+  ): Promise<McpUploadRecord> => {
     const record = await deps.store.getById(uploadId);
     if (!record || record.userId !== actor.id) {
       throw new McpUploadError(404, `업로드를 찾을 수 없습니다: ${uploadId}`);
@@ -6285,7 +6886,10 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
   return {
     putUrlFor: (token: string) => `${deps.apiOrigin}/mcp/uploads/${token}`,
 
-    async prepare(actor: Actor, input: FileDeclaration): Promise<PreparedUpload> {
+    async prepare(
+      actor: Actor,
+      input: FileDeclaration,
+    ): Promise<PreparedUpload> {
       assertPurposeAllowed(actor, input.purpose);
       const { record, token } = await createRecord(actor, input);
       return {
@@ -6298,7 +6902,10 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
 
     async receive(
       token: string,
-      input: { contentLength: number | null; body: ReadableStream<Uint8Array> | null },
+      input: {
+        contentLength: number | null;
+        body: ReadableStream<Uint8Array> | null;
+      },
     ): Promise<McpUploadRecord> {
       const record = await deps.store.getByTokenHash(await sha256Hex(token));
       if (!record) {
@@ -6308,10 +6915,16 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
         throw new McpUploadError(409, "이미 사용한 업로드 주소입니다.");
       }
       if (record.expiresAt <= Date.now()) {
-        throw new McpUploadError(410, "업로드 주소가 만료되었습니다. upload_prepare를 다시 호출해 주세요.");
+        throw new McpUploadError(
+          410,
+          "업로드 주소가 만료되었습니다. upload_prepare를 다시 호출해 주세요.",
+        );
       }
       if (input.contentLength === null) {
-        throw new McpUploadError(411, "Content-Length 헤더가 필요합니다. curl -T로 파일을 보내 주세요.");
+        throw new McpUploadError(
+          411,
+          "Content-Length 헤더가 필요합니다. curl -T로 파일을 보내 주세요.",
+        );
       }
       if (input.contentLength !== record.declaredSize) {
         throw new McpUploadError(
@@ -6363,7 +6976,10 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
           );
         }
         if (record.status === "consumed") {
-          throw new McpUploadError(409, `이미 사용한 업로드입니다: ${uploadId}`);
+          throw new McpUploadError(
+            409,
+            `이미 사용한 업로드입니다: ${uploadId}`,
+          );
         }
         if (record.status !== "completed") {
           throw new McpUploadError(
@@ -6381,7 +6997,10 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
       const claimed = await deps.store.claim(ids, actor.id);
       if (claimed.length !== ids.length) {
         await deps.store.release(claimed);
-        throw new McpUploadError(409, "이미 사용한 업로드가 섞여 있습니다. 새로 올려 주세요.");
+        throw new McpUploadError(
+          409,
+          "이미 사용한 업로드가 섞여 있습니다. 새로 올려 주세요.",
+        );
       }
     },
 
@@ -6421,7 +7040,8 @@ export const createRequestMcpUploadService = (
         throw error;
       }
     },
-    settleReservation: (reservationId) => settleUploadReservation(reservationStore, reservationId, c),
+    settleReservation: (reservationId) =>
+      settleUploadReservation(reservationStore, reservationId, c),
     releaseReservation: (reservationId) =>
       reservationStore.remove(reservationId).catch(() => undefined),
     apiOrigin: new URL(mcpEnv.resourceUrl).origin,
@@ -6430,13 +7050,22 @@ export const createRequestMcpUploadService = (
 };
 
 /** 업로드 오류를 도구 결과로 바꾼다. 업로드 오류가 아니면 다시 던져 SDK가 처리하게 한다. */
-export const uploadErrorResult = (error: unknown, role: Role): CallToolResult => {
+export const uploadErrorResult = (
+  error: unknown,
+  role: Role,
+): CallToolResult => {
   if (!(error instanceof McpUploadError)) {
     throw error;
   }
   return toolFailure(
     describeApiFailure(
-      { ok: false, status: error.status, code: "UPLOAD_ERROR", message: error.message, requestId: null },
+      {
+        ok: false,
+        status: error.status,
+        code: "UPLOAD_ERROR",
+        message: error.message,
+        requestId: null,
+      },
       role,
     ),
   );
@@ -6462,7 +7091,10 @@ export type McpToolContext = {
 `apps/api/src/features/mcp/tools/upload.tools.ts`:
 
 ```ts
-import { MCP_UPLOAD_MAX_BYTES, MCP_UPLOAD_PURPOSES } from "@yonyoung/contracts/mcp";
+import {
+  MCP_UPLOAD_MAX_BYTES,
+  MCP_UPLOAD_PURPOSES,
+} from "@yonyoung/contracts/mcp";
 import { z } from "zod";
 import { uploadErrorResult } from "../files/mcp-upload-service";
 import { defineTool } from "../tool-definition";
@@ -6474,10 +7106,20 @@ export const uploadTools = [
     inputSchema: z.object({
       purpose: z
         .enum(MCP_UPLOAD_PURPOSES)
-        .describe("파일을 쓸 곳. 파일을 받는 도구 설명에 적힌 purpose를 씁니다."),
+        .describe(
+          "파일을 쓸 곳. 파일을 받는 도구 설명에 적힌 purpose를 씁니다.",
+        ),
       file_name: z.string().min(1).max(255).describe("원래 파일 이름"),
-      content_type: z.string().min(1).describe("MIME 형식. 예: image/jpeg, application/pdf"),
-      size: z.number().int().positive().max(MCP_UPLOAD_MAX_BYTES).describe("파일 크기(bytes)"),
+      content_type: z
+        .string()
+        .min(1)
+        .describe("MIME 형식. 예: image/jpeg, application/pdf"),
+      size: z
+        .number()
+        .int()
+        .positive()
+        .max(MCP_UPLOAD_MAX_BYTES)
+        .describe("파일 크기(bytes)"),
     }),
     handler: async (args, context) => {
       try {
@@ -6510,10 +7152,15 @@ export const uploadTools = [
   }),
   defineTool({
     name: "upload_status",
-    inputSchema: z.object({ upload_id: z.string().min(1).describe("upload_prepare가 준 upload_id") }),
+    inputSchema: z.object({
+      upload_id: z.string().min(1).describe("upload_prepare가 준 upload_id"),
+    }),
     handler: async (args, context) => {
       try {
-        const record = await context.uploads.status(context.actor, args.upload_id);
+        const record = await context.uploads.status(
+          context.actor,
+          args.upload_id,
+        );
         return toolSuccess(`업로드 상태: ${record.status}`, {
           upload_id: record.id,
           status: record.status,
@@ -6536,8 +7183,8 @@ export const uploadTools = [
 `dependencies.ts`의 `AppDependencies`에 추가한다.
 
 ```ts
-  getMcpUploadStore: (c: Context<HonoAppType>) => McpUploadStore;
-  getMcpObjectStore: (c: Context<HonoAppType>) => McpObjectStore;
+getMcpUploadStore: (c: Context<HonoAppType>) => McpUploadStore;
+getMcpObjectStore: (c: Context<HonoAppType>) => McpObjectStore;
 ```
 
 `createDefaultDependencies`에 추가한다.
@@ -6569,7 +7216,11 @@ import {
 ```ts
 const createMcpToolContext = (
   c: Context<HonoAppType>,
-  input: { actor: Actor; dispatch: InternalDispatch; dependencies: AppDependencies },
+  input: {
+    actor: Actor;
+    dispatch: InternalDispatch;
+    dependencies: AppDependencies;
+  },
 ): McpToolContext => ({
   actor: input.actor,
   api: createInternalApiClient({
@@ -6589,73 +7240,80 @@ const createMcpToolContext = (
 3. `registerMcpRoutes` 끝에 추가한다.
 
 ```ts
-  const uploadErrorResponse = (c: Context<HonoAppType>, error: McpUploadError) =>
-    c.json(
-      { error: { code: "UPLOAD_ERROR", message: error.message, requestId: c.get("requestId") } },
-      error.status as ContentfulStatusCode,
-    );
-
-  // 브라우저 업로드 페이지(웹 오리진)가 이 주소로 직접 PUT한다. 자격 증명은 URL의 일회용 토큰이다.
-  app.use(
-    "/mcp/uploads/*",
-    cors({
-      origin: (origin, c) => (getAuthCorsOrigins(c.env).includes(origin) ? origin : null),
-      allowMethods: ["PUT", "OPTIONS"],
-      allowHeaders: ["content-type"],
-      maxAge: 600,
-    }),
+const uploadErrorResponse = (c: Context<HonoAppType>, error: McpUploadError) =>
+  c.json(
+    {
+      error: {
+        code: "UPLOAD_ERROR",
+        message: error.message,
+        requestId: c.get("requestId"),
+      },
+    },
+    error.status as ContentfulStatusCode,
   );
 
-  app.put("/mcp/uploads/:token", async (c) => {
-    const lengthHeader = c.req.header("content-length");
-    const contentLength =
-      lengthHeader && /^\d+$/.test(lengthHeader) ? Number(lengthHeader) : null;
-    try {
-      const record = await createRequestMcpUploadService(c, dependencies).receive(
-        c.req.param("token"),
-        { contentLength, body: c.req.raw.body },
-      );
-      return c.json({
-        data: {
-          uploadId: record.id,
-          status: record.status,
-          fileName: record.fileName,
-          size: record.declaredSize,
-        },
-      });
-    } catch (error) {
-      if (error instanceof McpUploadError) {
-        return uploadErrorResponse(c, error);
-      }
-      throw error;
-    }
-  });
+// 브라우저 업로드 페이지(웹 오리진)가 이 주소로 직접 PUT한다. 자격 증명은 URL의 일회용 토큰이다.
+app.use(
+  "/mcp/uploads/*",
+  cors({
+    origin: (origin, c) =>
+      getAuthCorsOrigins(c.env).includes(origin) ? origin : null,
+    allowMethods: ["PUT", "OPTIONS"],
+    allowHeaders: ["content-type"],
+    maxAge: 600,
+  }),
+);
 
-  app.get("/api/mcp/uploads/lookup", async (c) => {
-    const actor = await requireAuthenticatedActor(c, dependencies);
-    const token = c.req.query("token") ?? "";
-    const service = createRequestMcpUploadService(c, dependencies);
-    try {
-      const record = await service.lookupByToken(actor, token);
-      return c.json({
-        data: {
-          uploadId: record.id,
-          fileName: record.fileName,
-          contentType: record.contentType,
-          declaredSize: record.declaredSize,
-          purpose: record.purpose,
-          status: record.status,
-          expiresAt: new Date(record.expiresAt).toISOString(),
-          putUrl: service.putUrlFor(token),
-        },
-      });
-    } catch (error) {
-      if (error instanceof McpUploadError) {
-        return uploadErrorResponse(c, error);
-      }
-      throw error;
+app.put("/mcp/uploads/:token", async (c) => {
+  const lengthHeader = c.req.header("content-length");
+  const contentLength =
+    lengthHeader && /^\d+$/.test(lengthHeader) ? Number(lengthHeader) : null;
+  try {
+    const record = await createRequestMcpUploadService(c, dependencies).receive(
+      c.req.param("token"),
+      { contentLength, body: c.req.raw.body },
+    );
+    return c.json({
+      data: {
+        uploadId: record.id,
+        status: record.status,
+        fileName: record.fileName,
+        size: record.declaredSize,
+      },
+    });
+  } catch (error) {
+    if (error instanceof McpUploadError) {
+      return uploadErrorResponse(c, error);
     }
-  });
+    throw error;
+  }
+});
+
+app.get("/api/mcp/uploads/lookup", async (c) => {
+  const actor = await requireAuthenticatedActor(c, dependencies);
+  const token = c.req.query("token") ?? "";
+  const service = createRequestMcpUploadService(c, dependencies);
+  try {
+    const record = await service.lookupByToken(actor, token);
+    return c.json({
+      data: {
+        uploadId: record.id,
+        fileName: record.fileName,
+        contentType: record.contentType,
+        declaredSize: record.declaredSize,
+        purpose: record.purpose,
+        status: record.status,
+        expiresAt: new Date(record.expiresAt).toISOString(),
+        putUrl: service.putUrlFor(token),
+      },
+    });
+  } catch (error) {
+    if (error instanceof McpUploadError) {
+      return uploadErrorResponse(c, error);
+    }
+    throw error;
+  }
+});
 ```
 
 `getAuthCorsOrigins(undefined)`는 개발 기본값 `http://localhost:3000`을 쓰므로 CORS 테스트가 통과한다.
@@ -6687,6 +7345,7 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 ### Task 12: ChatGPT 파일 다운로드와 파일 참조 해석
 
 **Files:**
+
 - Create: `apps/api/src/features/mcp/files/chatgpt-file.ts`
 - Create: `apps/api/src/features/mcp/files/file-ref.ts`
 - Modify: `apps/api/src/bindings/types.ts` (`MCP_CHATGPT_FILE_HOST_SUFFIXES?`)
@@ -6696,6 +7355,7 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 - Test: `apps/api/src/tests/mcp-chatgpt-file.test.ts`
 
 **Interfaces:**
+
 - Consumes: `McpUploadService.ingest/resolveCompleted/claim/release`, `ResolvedUpload`, `McpUploadError` (Task 11)
 - Produces:
   - `chatGptFileSchema` (zod), `type ChatGptFileRef = { download_url: string; file_id: string; mime_type?: string; file_name?: string }`
@@ -6751,10 +7411,13 @@ describe("ChatGPT 파일 다운로드", () => {
   it("허용 호스트가 아니면 요청하지 않는다", async () => {
     const fetchMock = vi.fn();
     await expect(
-      downloadChatGptFile({ ...file, download_url: "https://example.test/a.png" }, {
-        fetch: fetchMock,
-        hostSuffixes: hosts,
-      }),
+      downloadChatGptFile(
+        { ...file, download_url: "https://example.test/a.png" },
+        {
+          fetch: fetchMock,
+          hostSuffixes: hosts,
+        },
+      ),
     ).rejects.toBeInstanceOf(McpUploadError);
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -6762,24 +7425,33 @@ describe("ChatGPT 파일 다운로드", () => {
   it("리다이렉트를 따라가지 않는다", async () => {
     const fetchMock = vi.fn(async (request: Request) => {
       expect(request.redirect).toBe("manual");
-      return new Response(null, { status: 302, headers: { location: "http://169.254.169.254/" } });
+      return new Response(null, {
+        status: 302,
+        headers: { location: "http://169.254.169.254/" },
+      });
     });
-    await expect(downloadChatGptFile(file, { fetch: fetchMock, hostSuffixes: hosts })).rejects.toThrow(
-      "다른 곳으로 이동",
-    );
+    await expect(
+      downloadChatGptFile(file, { fetch: fetchMock, hostSuffixes: hosts }),
+    ).rejects.toThrow("다른 곳으로 이동");
   });
 
   it("크기를 알 수 없으면 411, 100MB를 넘으면 413이다", async () => {
     const noLength = vi.fn(async () => new Response(pngBytes(1, 1)));
-    await expect(downloadChatGptFile(file, { fetch: noLength, hostSuffixes: hosts })).rejects.toMatchObject({
+    await expect(
+      downloadChatGptFile(file, { fetch: noLength, hostSuffixes: hosts }),
+    ).rejects.toMatchObject({
       status: 411,
     });
 
     const tooLarge = vi.fn(
       async () =>
-        new Response(pngBytes(1, 1), { headers: { "content-length": "100000001" } }),
+        new Response(pngBytes(1, 1), {
+          headers: { "content-length": "100000001" },
+        }),
     );
-    await expect(downloadChatGptFile(file, { fetch: tooLarge, hostSuffixes: hosts })).rejects.toMatchObject({
+    await expect(
+      downloadChatGptFile(file, { fetch: tooLarge, hostSuffixes: hosts }),
+    ).rejects.toMatchObject({
       status: 413,
     });
   });
@@ -6789,11 +7461,21 @@ describe("ChatGPT 파일 다운로드", () => {
     const fetchMock = vi.fn(
       async () =>
         new Response(bytes, {
-          headers: { "content-length": String(bytes.length), "content-type": "application/octet-stream" },
+          headers: {
+            "content-length": String(bytes.length),
+            "content-type": "application/octet-stream",
+          },
         }),
     );
-    const downloaded = await downloadChatGptFile(file, { fetch: fetchMock, hostSuffixes: hosts });
-    expect(downloaded).toMatchObject({ fileName: "사진.png", contentType: "image/png", size: bytes.length });
+    const downloaded = await downloadChatGptFile(file, {
+      fetch: fetchMock,
+      hostSuffixes: hosts,
+    });
+    expect(downloaded).toMatchObject({
+      fileName: "사진.png",
+      contentType: "image/png",
+      size: bytes.length,
+    });
   });
 });
 ```
@@ -6829,7 +7511,9 @@ export const uploadIdSchema = z
 
 export const DEFAULT_CHATGPT_FILE_HOST_SUFFIXES = [".oaiusercontent.com"];
 
-export const resolveChatGptFileHostSuffixes = (env: Partial<AppBindings> | undefined): string[] => {
+export const resolveChatGptFileHostSuffixes = (
+  env: Partial<AppBindings> | undefined,
+): string[] => {
   const raw = env?.MCP_CHATGPT_FILE_HOST_SUFFIXES?.trim();
   if (!raw) {
     return DEFAULT_CHATGPT_FILE_HOST_SUFFIXES;
@@ -6855,7 +7539,9 @@ export const isAllowedChatGptFileUrl = (
     return false;
   }
   const hostname = url.hostname.toLowerCase();
-  return hostSuffixes.some((suffix) => hostname.endsWith(suffix) && hostname.length > suffix.length);
+  return hostSuffixes.some(
+    (suffix) => hostname.endsWith(suffix) && hostname.length > suffix.length,
+  );
 };
 
 const fileNameFromUrl = (value: string): string | null => {
@@ -6869,24 +7555,43 @@ const fileNameFromUrl = (value: string): string | null => {
  */
 export const downloadChatGptFile = async (
   file: ChatGptFileRef,
-  deps: { fetch: (request: Request) => Promise<Response>; hostSuffixes: readonly string[] },
-): Promise<{ fileName: string; contentType: string; size: number; body: ReadableStream<Uint8Array> }> => {
+  deps: {
+    fetch: (request: Request) => Promise<Response>;
+    hostSuffixes: readonly string[];
+  },
+): Promise<{
+  fileName: string;
+  contentType: string;
+  size: number;
+  body: ReadableStream<Uint8Array>;
+}> => {
   if (!isAllowedChatGptFileUrl(file.download_url, deps.hostSuffixes)) {
     throw new McpUploadError(400, "ChatGPT가 준 파일 주소가 아닙니다.");
   }
 
-  const response = await deps.fetch(new Request(file.download_url, { redirect: "manual" }));
+  const response = await deps.fetch(
+    new Request(file.download_url, { redirect: "manual" }),
+  );
   if (response.status >= 300 && response.status < 400) {
-    throw new McpUploadError(502, "ChatGPT 파일 주소가 다른 곳으로 이동했습니다. 파일을 다시 올려 주세요.");
+    throw new McpUploadError(
+      502,
+      "ChatGPT 파일 주소가 다른 곳으로 이동했습니다. 파일을 다시 올려 주세요.",
+    );
   }
   if (!response.ok || !response.body) {
-    throw new McpUploadError(502, `ChatGPT 파일을 내려받지 못했습니다(HTTP ${response.status}).`);
+    throw new McpUploadError(
+      502,
+      `ChatGPT 파일을 내려받지 못했습니다(HTTP ${response.status}).`,
+    );
   }
 
   const lengthHeader = response.headers.get("content-length");
   if (!lengthHeader || !/^\d+$/.test(lengthHeader)) {
     await response.body.cancel();
-    throw new McpUploadError(411, "ChatGPT 파일 크기를 알 수 없어 받을 수 없습니다.");
+    throw new McpUploadError(
+      411,
+      "ChatGPT 파일 크기를 알 수 없어 받을 수 없습니다.",
+    );
   }
   const size = Number(lengthHeader);
   if (size > MCP_UPLOAD_MAX_BYTES) {
@@ -6898,9 +7603,14 @@ export const downloadChatGptFile = async (
   }
 
   return {
-    fileName: file.file_name?.trim() || fileNameFromUrl(file.download_url) || file.file_id,
+    fileName:
+      file.file_name?.trim() ||
+      fileNameFromUrl(file.download_url) ||
+      file.file_id,
     contentType: normalizeUploadContentType(
-      file.mime_type ?? response.headers.get("content-type") ?? "application/octet-stream",
+      file.mime_type ??
+        response.headers.get("content-type") ??
+        "application/octet-stream",
     ),
     size,
     body: response.body,
@@ -6923,7 +7633,11 @@ export const downloadChatGptFile = async (
 import type { McpUploadPurpose } from "@yonyoung/contracts/mcp";
 import type { Actor } from "../../../lib/authorization/types";
 import { downloadChatGptFile, type ChatGptFileRef } from "./chatgpt-file";
-import { toResolvedUpload, type McpUploadService, type ResolvedUpload } from "./mcp-upload-service";
+import {
+  toResolvedUpload,
+  type McpUploadService,
+  type ResolvedUpload,
+} from "./mcp-upload-service";
 
 export type McpFileResolver = {
   /** ChatGPT 파일은 내려받아 저장하고, upload_id는 완료 여부를 확인한다. ChatGPT 파일이 먼저 온다. */
@@ -6951,10 +7665,19 @@ export const createMcpFileResolver = (input: {
         fetch: input.fetch,
         hostSuffixes: input.hostSuffixes,
       });
-      const record = await input.uploads.ingest(input.actor, { purpose, ...downloaded });
+      const record = await input.uploads.ingest(input.actor, {
+        purpose,
+        ...downloaded,
+      });
       resolved.push(toResolvedUpload(record));
     }
-    resolved.push(...(await input.uploads.resolveCompleted(input.actor, purpose, uploadIds)));
+    resolved.push(
+      ...(await input.uploads.resolveCompleted(
+        input.actor,
+        purpose,
+        uploadIds,
+      )),
+    );
     return resolved;
   },
   claim: (files) => input.uploads.claim(input.actor, files),
@@ -6984,7 +7707,11 @@ export type McpToolContext = {
 ```ts
 const createMcpToolContext = (
   c: Context<HonoAppType>,
-  input: { actor: Actor; dispatch: InternalDispatch; dependencies: AppDependencies },
+  input: {
+    actor: Actor;
+    dispatch: InternalDispatch;
+    dependencies: AppDependencies;
+  },
 ): McpToolContext => {
   const uploads = createRequestMcpUploadService(c, input.dependencies);
   return {
@@ -7033,12 +7760,14 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 ### Task 13: 파일을 받는 도구 9개
 
 **Files:**
+
 - Modify: `apps/api/src/features/exhibitions/exhibition.contract.ts` (`ExhibitionInputObjectSchema` export)
 - Create: `apps/api/src/features/mcp/files/file-tool.ts`
 - Modify: `apps/api/src/features/mcp/tools/{account,activity,exhibition,attachment,settings}.tools.ts`
 - Test: `apps/api/src/tests/mcp-file-tools.test.ts`
 
 **Interfaces:**
+
 - Consumes: `McpFileResolver`, `chatGptFileSchema`, `uploadIdSchema` (Task 12), `uploadErrorResult` (Task 11)
 - Produces:
   - `runWithFiles(context, files: ResolvedUpload[], request: InternalApiRequest, summary: string): Promise<CallToolResult>`
@@ -7083,7 +7812,9 @@ describe("카탈로그 ↔ 정의", () => {
 
   it("파일 도구에는 openai/fileParams가 붙는다", async () => {
     const client = await connectMcpClient(
-      createMcpTestApp({ getActor: () => createActor("president", IDs.president) }),
+      createMcpTestApp({
+        getActor: () => createActor("president", IDs.president),
+      }),
     );
     const { tools } = await client.listTools();
     const imagesAdd = tools.find((tool) => tool.name === "activity_images_add");
@@ -7194,7 +7925,9 @@ describe("activity_images_add", () => {
       }),
       overrides: {
         fetchChatGptFile: async () =>
-          new Response(bytes, { headers: { "content-length": String(bytes.length) } }),
+          new Response(bytes, {
+            headers: { "content-length": String(bytes.length) },
+          }),
       },
     });
     const client = await connectMcpClient(app);
@@ -7256,13 +7989,20 @@ describe("my_profile_photo_set", () => {
 
 describe("attachment_create", () => {
   it("문서를 활동 자료로 등록한다", async () => {
-    const addAttachment = vi.fn(async () => createAttachment({ scope: "activity", resourceId: IDs.activity }));
+    const addAttachment = vi.fn(async () =>
+      createAttachment({ scope: "activity", resourceId: IDs.activity }),
+    );
     const app = createMcpTestApp({
       getActor: () => createActor("manager", IDs.manager),
       presignService: createPresignServiceMock({
         allocateManagedObject: async () => {
           const publicUrl = buildManagedFileUrl("activities", IDs.manager);
-          return { objectKey: decodeURIComponent(new URL(publicUrl).pathname.replace("/api/public/media/", "")), publicUrl };
+          return {
+            objectKey: decodeURIComponent(
+              new URL(publicUrl).pathname.replace("/api/public/media/", ""),
+            ),
+            publicUrl,
+          };
         },
       }),
       dataService: createDataServiceMock({
@@ -7281,14 +8021,21 @@ describe("attachment_create", () => {
     const result = await client.callTool({
       name: "attachment_create",
       arguments: {
-        data: { scope: "activity", resourceId: IDs.activity, title: "봄 출사 정산" },
+        data: {
+          scope: "activity",
+          resourceId: IDs.activity,
+          title: "봄 출사 정산",
+        },
         upload_id: uploadId,
       },
     });
 
     expect(result.isError, resultText(result)).toBeFalsy();
     expect(addAttachment).toHaveBeenCalledWith(
-      expect.objectContaining({ fileName: "정산.pdf", mimeType: "application/pdf" }),
+      expect.objectContaining({
+        fileName: "정산.pdf",
+        mimeType: "application/pdf",
+      }),
       expect.anything(),
     );
   });
@@ -7340,12 +8087,16 @@ export const withUploadErrors = async (
 export const imageBatchItem = (file: ResolvedUpload, sortOrder: number) => ({
   imageUrl: file.publicUrl,
   sortOrder,
-  ...(file.width && file.height ? { width: file.width, height: file.height } : {}),
+  ...(file.width && file.height
+    ? { width: file.width, height: file.height }
+    : {}),
 });
 
 /** 기존 세부 이미지 뒤에 붙일 첫 순서. */
 export const nextSortOrder = (images: Array<{ sortOrder: number }>): number =>
-  images.length === 0 ? 0 : Math.max(...images.map((image) => image.sortOrder)) + 1;
+  images.length === 0
+    ? 0
+    : Math.max(...images.map((image) => image.sortOrder)) + 1;
 ```
 
 - [ ] **Step 3: 전시 입력 스키마를 export한다**
@@ -7512,6 +8263,7 @@ const coverArgs = {
 ```
 
 `exhibition.tools.ts`: 같은 구조로 세 도구를 추가한다. 차이점은 다음과 같다.
+
 - `exhibition_create`의 data: `ExhibitionInputObjectSchema.extend({ coverImageUrl: ExhibitionInputObjectSchema.shape.coverImageUrl.optional().describe("이미 있는 이미지 URL. 채팅 파일을 쓰면 비웁니다.") })`. `ExhibitionInputObjectSchema`는 `../../exhibitions/exhibition.contract`에서 import한다.
 - `exhibition_update`의 data: `ApiUpdateExhibitionSchema`
 - purpose: 커버는 `exhibition_cover`, 사진은 `exhibition_image`
@@ -7772,11 +8524,13 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 ```
 
 ---
+
 ## 5단계: 웹
 
 ### Task 14: 웹이 쓰는 MCP API — 도구 목록, 연결 관리, 동의 화면 정보
 
 **Files:**
+
 - Modify: `apps/api/src/features/mcp/exposure.ts` (`buildMcpOverview`)
 - Modify: `apps/api/src/features/mcp/mcp-connection-store.ts` (`getClient`)
 - Modify: `apps/api/src/lib/services/dependencies.ts` (`verifyOAuthConsentQuery`)
@@ -7784,6 +8538,7 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 - Test: `apps/api/src/tests/mcp-web.routes.test.ts`
 
 **Interfaces:**
+
 - Consumes: `listExposedTools` (Task 6), `McpConnectionStore` (Task 5), `ApiMcpOverview`·`ApiMcpConnection`·`ApiMcpConsentContext` (Task 1)
 - Produces:
   - `buildMcpOverview(role: Role, serverUrl: string): ApiMcpOverview`
@@ -7852,20 +8607,32 @@ describe("GET /api/mcp/tools", () => {
 
 describe("/api/mcp/connections", () => {
   it("내 연결만 보여주고 해제한다", async () => {
-    const { app, connections } = createWebApp({ actor: createActor("manager", IDs.manager) });
+    const { app, connections } = createWebApp({
+      actor: createActor("manager", IDs.manager),
+    });
     const list = (await (await app.request("/api/mcp/connections")).json()) as {
       data: Array<{ clientId: string; clientName: string }>;
     };
-    expect(list.data).toMatchObject([{ clientId: "claude-client", clientName: "Claude" }]);
+    expect(list.data).toMatchObject([
+      { clientId: "claude-client", clientName: "Claude" },
+    ]);
 
-    const removed = await app.request("/api/mcp/connections/claude-client", { method: "DELETE" });
+    const removed = await app.request("/api/mcp/connections/claude-client", {
+      method: "DELETE",
+    });
     expect(removed.status).toBe(204);
-    expect(await connections.hasConsent(IDs.manager, "claude-client")).toBe(false);
+    expect(await connections.hasConsent(IDs.manager, "claude-client")).toBe(
+      false,
+    );
   });
 
   it("다른 사람의 연결은 404다", async () => {
-    const { app } = createWebApp({ actor: createActor("regular_member", IDs.member) });
-    const removed = await app.request("/api/mcp/connections/claude-client", { method: "DELETE" });
+    const { app } = createWebApp({
+      actor: createActor("regular_member", IDs.member),
+    });
+    const removed = await app.request("/api/mcp/connections/claude-client", {
+      method: "DELETE",
+    });
     expect(removed.status).toBe(404);
   });
 });
@@ -7874,11 +8641,17 @@ describe("GET /api/mcp/consent-context", () => {
   const query = "client_id=claude-client&scope=openid+mcp&exp=1&sig=abc";
 
   it("서명이 맞으면 앱 이름과 내 도구를 준다", async () => {
-    const { app } = createWebApp({ actor: createActor("manager", IDs.manager) });
+    const { app } = createWebApp({
+      actor: createActor("manager", IDs.manager),
+    });
     const response = await app.request(`/api/mcp/consent-context?${query}`);
     expect(response.status).toBe(200);
     const body = (await response.json()) as {
-      data: { client: { name: string }; scopes: string[]; overview: { tools: unknown[] } };
+      data: {
+        client: { name: string };
+        scopes: string[];
+        overview: { tools: unknown[] };
+      };
     };
     expect(body.data.client.name).toBe("Claude");
     expect(body.data.scopes).toEqual(["openid", "mcp"]);
@@ -7886,8 +8659,13 @@ describe("GET /api/mcp/consent-context", () => {
   });
 
   it("서명이 틀리면 400이다", async () => {
-    const { app } = createWebApp({ actor: createActor("manager", IDs.manager), verified: false });
-    expect((await app.request(`/api/mcp/consent-context?${query}`)).status).toBe(400);
+    const { app } = createWebApp({
+      actor: createActor("manager", IDs.manager),
+      verified: false,
+    });
+    expect(
+      (await app.request(`/api/mcp/consent-context?${query}`)).status,
+    ).toBe(400);
   });
 });
 ```
@@ -7902,7 +8680,10 @@ Expected: FAIL — 라우트 없음(404)
 ```ts
 import type { ApiMcpOverview } from "@yonyoung/contracts/mcp";
 
-export const buildMcpOverview = (role: Role, serverUrl: string): ApiMcpOverview => ({
+export const buildMcpOverview = (
+  role: Role,
+  serverUrl: string,
+): ApiMcpOverview => ({
   serverUrl,
   role,
   tools: listExposedTools(role).map((tool) => ({
@@ -7970,55 +8751,64 @@ import { verifyOAuthQueryParams } from "@better-auth/oauth-provider";
 `mcp.routes.ts`의 `registerMcpRoutes` 끝에 추가한다. import: `AppError`(`../../shared/errors/AppError`), `buildMcpOverview`(`./exposure`).
 
 ```ts
-  app.get("/api/mcp/tools", async (c) => {
-    const actor = await requireAuthenticatedActor(c, dependencies);
-    return c.json({ data: buildMcpOverview(actor.role, resolveMcpRuntimeEnv(c.env).resourceUrl) });
+app.get("/api/mcp/tools", async (c) => {
+  const actor = await requireAuthenticatedActor(c, dependencies);
+  return c.json({
+    data: buildMcpOverview(actor.role, resolveMcpRuntimeEnv(c.env).resourceUrl),
   });
+});
 
-  app.get("/api/mcp/connections", async (c) => {
-    const actor = await requireAuthenticatedActor(c, dependencies);
-    const connections = await dependencies.getMcpConnectionStore(c).list(actor.id);
-    return c.json({
-      data: connections.map((connection) => ({
-        ...connection,
-        connectedAt: new Date(connection.connectedAt).toISOString(),
-        updatedAt: new Date(connection.updatedAt).toISOString(),
-      })),
-    });
+app.get("/api/mcp/connections", async (c) => {
+  const actor = await requireAuthenticatedActor(c, dependencies);
+  const connections = await dependencies
+    .getMcpConnectionStore(c)
+    .list(actor.id);
+  return c.json({
+    data: connections.map((connection) => ({
+      ...connection,
+      connectedAt: new Date(connection.connectedAt).toISOString(),
+      updatedAt: new Date(connection.updatedAt).toISOString(),
+    })),
   });
+});
 
-  app.delete("/api/mcp/connections/:clientId", async (c) => {
-    const actor = await requireAuthenticatedActor(c, dependencies);
-    const revoked = await dependencies
-      .getMcpConnectionStore(c)
-      .revoke(actor.id, c.req.param("clientId"), Date.now());
-    if (!revoked) {
-      throw AppError.notFound("연결을 찾을 수 없습니다.");
-    }
-    return c.body(null, 204);
-  });
+app.delete("/api/mcp/connections/:clientId", async (c) => {
+  const actor = await requireAuthenticatedActor(c, dependencies);
+  const revoked = await dependencies
+    .getMcpConnectionStore(c)
+    .revoke(actor.id, c.req.param("clientId"), Date.now());
+  if (!revoked) {
+    throw AppError.notFound("연결을 찾을 수 없습니다.");
+  }
+  return c.body(null, 204);
+});
 
-  app.get("/api/mcp/consent-context", async (c) => {
-    const actor = await requireAuthenticatedActor(c, dependencies);
-    const query = new URL(c.req.url).search.slice(1);
-    if (!(await dependencies.verifyOAuthConsentQuery(c, query))) {
-      throw AppError.badRequest("연결 요청이 만료되었거나 올바르지 않습니다. 처음부터 다시 연결해 주세요.");
-    }
-    const params = new URLSearchParams(query);
-    const client = await dependencies
-      .getMcpConnectionStore(c)
-      .getClient(params.get("client_id") ?? "");
-    if (!client) {
-      throw AppError.notFound("연결하려는 앱을 찾을 수 없습니다.");
-    }
-    return c.json({
-      data: {
-        client,
-        scopes: (params.get("scope") ?? "").split(" ").filter(Boolean),
-        overview: buildMcpOverview(actor.role, resolveMcpRuntimeEnv(c.env).resourceUrl),
-      },
-    });
+app.get("/api/mcp/consent-context", async (c) => {
+  const actor = await requireAuthenticatedActor(c, dependencies);
+  const query = new URL(c.req.url).search.slice(1);
+  if (!(await dependencies.verifyOAuthConsentQuery(c, query))) {
+    throw AppError.badRequest(
+      "연결 요청이 만료되었거나 올바르지 않습니다. 처음부터 다시 연결해 주세요.",
+    );
+  }
+  const params = new URLSearchParams(query);
+  const client = await dependencies
+    .getMcpConnectionStore(c)
+    .getClient(params.get("client_id") ?? "");
+  if (!client) {
+    throw AppError.notFound("연결하려는 앱을 찾을 수 없습니다.");
+  }
+  return c.json({
+    data: {
+      client,
+      scopes: (params.get("scope") ?? "").split(" ").filter(Boolean),
+      overview: buildMcpOverview(
+        actor.role,
+        resolveMcpRuntimeEnv(c.env).resourceUrl,
+      ),
+    },
   });
+});
 ```
 
 메모리 저장소의 `getClient`는 동의 행을 기준으로 찾는다. 처음 연결하는 앱은 아직 동의가 없으므로 테스트에서는 `claude-client` 시드를 쓴다. D1 구현은 `oauth_client`를 직접 조회하므로 처음 연결도 된다.
@@ -8043,6 +8833,7 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 ### Task 15: 웹 OAuth 연결 — auth 클라이언트, 로그인 페이지, 프록시, 메타데이터
 
 **Files:**
+
 - Modify: `apps/web/package.json` (`@better-auth/oauth-provider@1.7.7`)
 - Modify: `apps/web/features/auth/client/auth-client.ts`
 - Create: `apps/web/features/auth/model/oauth-flow.ts`
@@ -8058,6 +8849,7 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 - Test: `apps/web/tests/unit/app/well-known-auth-metadata.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `isOAuthAuthorizationRequest(searchParams: Record<string, string | string[] | undefined>): boolean`
   - `isServerToServerOAuthPath(path: string): boolean`
@@ -8082,13 +8874,17 @@ import { isServerToServerOAuthPath } from "@/server/security/oauth-proxy-paths";
 
 describe("isOAuthAuthorizationRequest", () => {
   it("Better Auth가 서명한 인가 요청 쿼리를 알아본다", () => {
-    expect(isOAuthAuthorizationRequest({ client_id: "c1", sig: "s", exp: "1" })).toBe(true);
+    expect(
+      isOAuthAuthorizationRequest({ client_id: "c1", sig: "s", exp: "1" }),
+    ).toBe(true);
   });
 
   it("일반 로그인 쿼리는 아니다", () => {
     expect(isOAuthAuthorizationRequest({})).toBe(false);
     expect(isOAuthAuthorizationRequest({ client_id: "c1" })).toBe(false);
-    expect(isOAuthAuthorizationRequest({ sig: ["a", "b"], client_id: "c1" })).toBe(false);
+    expect(
+      isOAuthAuthorizationRequest({ sig: ["a", "b"], client_id: "c1" }),
+    ).toBe(false);
   });
 });
 
@@ -8108,49 +8904,55 @@ describe("isServerToServerOAuthPath", () => {
 `apps/web/tests/unit/app/api/auth-proxy-route.test.ts`의 `describe` 안에 추가한다.
 
 ```ts
-  it("Origin 없는 OAuth 토큰 요청을 API로 넘긴다", async () => {
-    const fetchSpy = vi.fn(
-      async () =>
-        new Response(JSON.stringify({ access_token: "t" }), {
-          status: 200,
-          headers: { "content-type": "application/json" },
-        }),
-    );
-    vi.stubGlobal("fetch", fetchSpy);
+it("Origin 없는 OAuth 토큰 요청을 API로 넘긴다", async () => {
+  const fetchSpy = vi.fn(
+    async () =>
+      new Response(JSON.stringify({ access_token: "t" }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+  );
+  vi.stubGlobal("fetch", fetchSpy);
 
-    const { POST } = await import("@/app/api/auth/[...path]/route");
-    const request = new NextRequest("https://localhost:3000/api/auth/oauth2/token", {
+  const { POST } = await import("@/app/api/auth/[...path]/route");
+  const request = new NextRequest(
+    "https://localhost:3000/api/auth/oauth2/token",
+    {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body: "grant_type=authorization_code&code=abc",
-    });
+    },
+  );
 
-    const response = await POST(request, {
-      params: Promise.resolve({ path: ["oauth2", "token"] }),
-    });
-
-    expect(response.status).toBe(200);
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  const response = await POST(request, {
+    params: Promise.resolve({ path: ["oauth2", "token"] }),
   });
 
-  it("Origin 없는 일반 인증 요청은 여전히 막는다", async () => {
-    const fetchSpy = vi.fn();
-    vi.stubGlobal("fetch", fetchSpy);
+  expect(response.status).toBe(200);
+  expect(fetchSpy).toHaveBeenCalledTimes(1);
+});
 
-    const { POST } = await import("@/app/api/auth/[...path]/route");
-    const request = new NextRequest("https://localhost:3000/api/auth/sign-in/social", {
+it("Origin 없는 일반 인증 요청은 여전히 막는다", async () => {
+  const fetchSpy = vi.fn();
+  vi.stubGlobal("fetch", fetchSpy);
+
+  const { POST } = await import("@/app/api/auth/[...path]/route");
+  const request = new NextRequest(
+    "https://localhost:3000/api/auth/sign-in/social",
+    {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ provider: "google" }),
-    });
+    },
+  );
 
-    const response = await POST(request, {
-      params: Promise.resolve({ path: ["sign-in", "social"] }),
-    });
-
-    expect(response.status).toBe(403);
-    expect(fetchSpy).not.toHaveBeenCalled();
+  const response = await POST(request, {
+    params: Promise.resolve({ path: ["sign-in", "social"] }),
   });
+
+  expect(response.status).toBe(403);
+  expect(fetchSpy).not.toHaveBeenCalled();
+});
 ```
 
 `apps/web/tests/unit/app/well-known-auth-metadata.test.ts`:
@@ -8173,23 +8975,35 @@ describe("/.well-known/oauth-authorization-server/api/auth", () => {
   it("API의 인증 서버 메타데이터를 웹 오리진 기준으로 가져온다", async () => {
     const fetchSpy = vi.fn(
       async () =>
-        new Response(JSON.stringify({ issuer: "https://yonyoung.yonsei.ac.kr/api/auth" }), {
-          status: 200,
-          headers: { "content-type": "application/json" },
-        }),
+        new Response(
+          JSON.stringify({ issuer: "https://yonyoung.yonsei.ac.kr/api/auth" }),
+          {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          },
+        ),
     );
     vi.stubGlobal("fetch", fetchSpy);
 
-    const { GET } = await import("@/app/.well-known/oauth-authorization-server/api/auth/route");
+    const { GET } =
+      await import("@/app/.well-known/oauth-authorization-server/api/auth/route");
     const response = await GET(
-      new NextRequest("https://localhost:3000/.well-known/oauth-authorization-server/api/auth"),
+      new NextRequest(
+        "https://localhost:3000/.well-known/oauth-authorization-server/api/auth",
+      ),
     );
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ issuer: "https://yonyoung.yonsei.ac.kr/api/auth" });
+    expect(await response.json()).toEqual({
+      issuer: "https://yonyoung.yonsei.ac.kr/api/auth",
+    });
     const [url, init] = fetchSpy.mock.calls[0] ?? [];
-    expect(url).toBe("https://api.example.com/api/auth/.well-known/oauth-authorization-server");
-    expect((init?.headers as Headers).get("x-forwarded-host")).toBe("yonyoung.yonsei.ac.kr");
+    expect(url).toBe(
+      "https://api.example.com/api/auth/.well-known/oauth-authorization-server",
+    );
+    expect((init?.headers as Headers).get("x-forwarded-host")).toBe(
+      "yonyoung.yonsei.ac.kr",
+    );
   });
 });
 ```
@@ -8208,8 +9022,11 @@ type SearchParams = Record<string, string | string[] | undefined>;
  * Better Auth OAuth 제공자가 로그인 페이지로 보낼 때 붙이는 서명된 쿼리인지 본다.
  * 이 쿼리가 있으면 로그인 뒤 인가 흐름을 이어가야 하므로 대시보드로 보내지 않는다.
  */
-export const isOAuthAuthorizationRequest = (searchParams: SearchParams): boolean =>
-  typeof searchParams.client_id === "string" && typeof searchParams.sig === "string";
+export const isOAuthAuthorizationRequest = (
+  searchParams: SearchParams,
+): boolean =>
+  typeof searchParams.client_id === "string" &&
+  typeof searchParams.sig === "string";
 ```
 
 `apps/web/server/security/oauth-proxy-paths.ts`:
@@ -8235,7 +9052,10 @@ export const isServerToServerOAuthPath = (path: string): boolean =>
 ```ts
 import { NextResponse, type NextRequest } from "next/server";
 import { getApiBaseUrl } from "@/server/env";
-import { fetchWithTimeout, FetchTimeoutError } from "@/server/http/fetch-with-timeout";
+import {
+  fetchWithTimeout,
+  FetchTimeoutError,
+} from "@/server/http/fetch-with-timeout";
 import {
   buildUpstreamProxyHeaders,
   resolvePublicRequestOrigin,
@@ -8252,7 +9072,9 @@ export const proxyAuthMetadata = async (
   request: NextRequest,
   document: "oauth-authorization-server" | "openid-configuration",
 ): Promise<NextResponse> => {
-  const publicOrigin = new URL(resolvePublicRequestOrigin(request) ?? request.nextUrl.origin);
+  const publicOrigin = new URL(
+    resolvePublicRequestOrigin(request) ?? request.nextUrl.origin,
+  );
   try {
     const upstream = await fetchWithTimeout(
       `${getApiBaseUrl()}/api/auth/.well-known/${document}`,
@@ -8272,7 +9094,8 @@ export const proxyAuthMetadata = async (
     return new NextResponse(upstream.body, {
       status: upstream.status,
       headers: {
-        "content-type": upstream.headers.get("content-type") ?? "application/json",
+        "content-type":
+          upstream.headers.get("content-type") ?? "application/json",
         "cache-control": "public, max-age=300",
       },
     });
@@ -8293,7 +9116,8 @@ export const proxyAuthMetadata = async (
 import type { NextRequest } from "next/server";
 import { proxyAuthMetadata } from "@/server/http/auth-metadata-proxy";
 
-export const GET = (request: NextRequest) => proxyAuthMetadata(request, "oauth-authorization-server");
+export const GET = (request: NextRequest) =>
+  proxyAuthMetadata(request, "oauth-authorization-server");
 ```
 
 `apps/web/app/.well-known/openid-configuration/api/auth/route.ts`:
@@ -8302,7 +9126,8 @@ export const GET = (request: NextRequest) => proxyAuthMetadata(request, "oauth-a
 import type { NextRequest } from "next/server";
 import { proxyAuthMetadata } from "@/server/http/auth-metadata-proxy";
 
-export const GET = (request: NextRequest) => proxyAuthMetadata(request, "openid-configuration");
+export const GET = (request: NextRequest) =>
+  proxyAuthMetadata(request, "openid-configuration");
 ```
 
 - [ ] **Step 4: auth 프록시, BFF 접두사, auth 클라이언트, 로그인 페이지를 고친다**
@@ -8312,11 +9137,11 @@ export const GET = (request: NextRequest) => proxyAuthMetadata(request, "openid-
 ```ts
 import { isServerToServerOAuthPath } from "@/server/security/oauth-proxy-paths";
 
-  const csrfProtectionResponse = isServerToServerOAuthPath(joinedPath)
-    ? null
-    : enforceSameOriginProtection(request, {
-        requireCsrfHeader: true,
-      });
+const csrfProtectionResponse = isServerToServerOAuthPath(joinedPath)
+  ? null
+  : enforceSameOriginProtection(request, {
+      requireCsrfHeader: true,
+    });
 ```
 
 `server/security/api-proxy-prefixes.ts`의 `API_PROXY_ALLOWED_PREFIXES`에 `"mcp",`를 `"linktree",` 다음에 추가한다.
@@ -8382,12 +9207,14 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 ### Task 16: 동의 화면 `/auth/mcp-consent`
 
 **Files:**
+
 - Create: `apps/web/features/mcp/mcp-tool-groups.ts`
 - Create: `apps/web/app/(dashboard)/auth/mcp-consent/page.tsx`
 - Create: `apps/web/app/(dashboard)/auth/mcp-consent/consent-client.tsx`
 - Test: `apps/web/tests/unit/features/mcp/mcp-tool-groups.test.ts`
 
 **Interfaces:**
+
 - Consumes: `GET /api/mcp/consent-context` (Task 14, BFF 경유), `authClient.oauth2.consent` (Task 15)
 - Produces:
   - `groupToolsByCategory(tools: ApiMcpToolSummary[]): Array<{ category: McpToolCategory; label: string; tools: ApiMcpToolSummary[] }>`
@@ -8417,7 +9244,11 @@ describe("groupToolsByCategory", () => {
       tool("whoami", "account"),
       tool("activity_list", "activities"),
     ]);
-    expect(groups.map((group) => group.label)).toEqual(["내 계정", "활동", "통계·기록"]);
+    expect(groups.map((group) => group.label)).toEqual([
+      "내 계정",
+      "활동",
+      "통계·기록",
+    ]);
     expect(groups[0]?.tools.map((item) => item.name)).toEqual(["whoami"]);
   });
 });
@@ -8444,7 +9275,9 @@ export type McpToolGroup = {
   tools: ApiMcpToolSummary[];
 };
 
-export const groupToolsByCategory = (tools: ApiMcpToolSummary[]): McpToolGroup[] =>
+export const groupToolsByCategory = (
+  tools: ApiMcpToolSummary[],
+): McpToolGroup[] =>
   MCP_TOOL_CATEGORIES.map((category) => ({
     category,
     label: MCP_TOOL_CATEGORY_LABELS[category],
@@ -8480,9 +9313,21 @@ export default async function McpConsentPage() {
 "use client";
 
 import { useEffect, useState } from "react";
-import { CORE_ROLE_LABELS, normalizeLegacyRole } from "@yonyoung/contracts/auth-roles";
-import { apiMcpConsentContextSchema, type ApiMcpConsentContext } from "@yonyoung/contracts/mcp";
-import { Alert, Button, Card, CardBody, CardHeader } from "@/app/(dashboard)/_components/ui";
+import {
+  CORE_ROLE_LABELS,
+  normalizeLegacyRole,
+} from "@yonyoung/contracts/auth-roles";
+import {
+  apiMcpConsentContextSchema,
+  type ApiMcpConsentContext,
+} from "@yonyoung/contracts/mcp";
+import {
+  Alert,
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+} from "@/app/(dashboard)/_components/ui";
 import { authClient } from "@/features/auth/client/auth-client";
 import { groupToolsByCategory } from "@/features/mcp/mcp-tool-groups";
 
@@ -8492,10 +9337,13 @@ type LoadState =
   | { status: "ready"; context: ApiMcpConsentContext };
 
 const readConsentContext = async (): Promise<LoadState> => {
-  const response = await fetch(`/api/mcp/consent-context${window.location.search}`, {
-    credentials: "include",
-    cache: "no-store",
-  });
+  const response = await fetch(
+    `/api/mcp/consent-context${window.location.search}`,
+    {
+      credentials: "include",
+      cache: "no-store",
+    },
+  );
   const body: unknown = await response.json().catch(() => null);
   if (!response.ok) {
     const message =
@@ -8503,7 +9351,9 @@ const readConsentContext = async (): Promise<LoadState> => {
       "연결 요청을 확인하지 못했습니다.";
     return { status: "error", message };
   }
-  const parsed = apiMcpConsentContextSchema.safeParse((body as { data?: unknown } | null)?.data);
+  const parsed = apiMcpConsentContextSchema.safeParse(
+    (body as { data?: unknown } | null)?.data,
+  );
   return parsed.success
     ? { status: "ready", context: parsed.data }
     : { status: "error", message: "연결 요청 정보를 읽지 못했습니다." };
@@ -8528,11 +9378,17 @@ export default function McpConsentClient() {
       return;
     }
     setSubmitting(null);
-    setSubmitError(result.error?.message ?? "처리하지 못했습니다. 다시 시도해 주세요.");
+    setSubmitError(
+      result.error?.message ?? "처리하지 못했습니다. 다시 시도해 주세요.",
+    );
   };
 
   if (state.status === "loading") {
-    return <p className="p-6 text-body-sm text-ink-muted">연결 요청을 확인하고 있습니다…</p>;
+    return (
+      <p className="p-6 text-body-sm text-ink-muted">
+        연결 요청을 확인하고 있습니다…
+      </p>
+    );
   }
   if (state.status === "error") {
     return (
@@ -8553,23 +9409,29 @@ export default function McpConsentClient() {
     <main className="mx-auto flex max-w-lg flex-col gap-4 p-6">
       <h1 className="text-title font-semibold text-ink">{clientName} 연결</h1>
       <p className="text-body-sm text-ink-muted">
-        {clientName}이(가) {CORE_ROLE_LABELS[role]} 권한으로 연영 대시보드에 접근하려고 합니다.
-        허용하면 대화 중에 아래 작업을 할 수 있습니다. 연결은 대시보드의 &lsquo;AI 연결&rsquo;에서 언제든 해제할 수
-        있습니다.
+        {clientName}이(가) {CORE_ROLE_LABELS[role]} 권한으로 연영 대시보드에
+        접근하려고 합니다. 허용하면 대화 중에 아래 작업을 할 수 있습니다. 연결은
+        대시보드의 &lsquo;AI 연결&rsquo;에서 언제든 해제할 수 있습니다.
       </p>
 
       {isPending ? (
         <Alert tone="warning" title="관리자 승인 대기 중">
-          가입 승인이 끝나면 연결할 수 있습니다. 운영진에게 승인을 요청해 주세요.
+          가입 승인이 끝나면 연결할 수 있습니다. 운영진에게 승인을 요청해
+          주세요.
         </Alert>
       ) : (
         <Card>
-          <CardHeader title={`쓸 수 있는 작업 ${overview.tools.length}개`} headingLevel={2} />
+          <CardHeader
+            title={`쓸 수 있는 작업 ${overview.tools.length}개`}
+            headingLevel={2}
+          />
           <CardBody>
             <ul className="flex flex-col gap-3">
               {groupToolsByCategory(overview.tools).map((group) => (
                 <li key={group.category}>
-                  <p className="text-caption font-semibold text-ink">{group.label}</p>
+                  <p className="text-caption font-semibold text-ink">
+                    {group.label}
+                  </p>
                   <p className="text-caption text-ink-muted">
                     {group.tools.map((tool) => tool.title).join(", ")}
                   </p>
@@ -8590,7 +9452,11 @@ export default function McpConsentClient() {
         >
           {submitting === "accept" ? "연결하는 중…" : "허용"}
         </Button>
-        <Button variant="secondary" disabled={submitting !== null} onClick={() => void submit(false)}>
+        <Button
+          variant="secondary"
+          disabled={submitting !== null}
+          onClick={() => void submit(false)}
+        >
           거절
         </Button>
       </div>
@@ -8623,6 +9489,7 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 ### Task 17: 설치 안내 페이지 `/dashboard/mcp`와 연결 해제
 
 **Files:**
+
 - Modify: `apps/web/features/dashboard/services/admin-read-service.ts` (`getMcpOverview`, `getMcpConnections`, `getMcpUploadLookup`)
 - Create: `apps/web/features/dashboard/actions/mcp.ts` (`revokeMcpConnectionAction`)
 - Create: `apps/web/app/(dashboard)/dashboard/mcp/page.tsx`
@@ -8636,6 +9503,7 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 - Create: `apps/web/tests/e2e/mcp.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `GET /api/mcp/tools`, `GET /api/mcp/connections`, `DELETE /api/mcp/connections/:clientId`, `GET /api/mcp/uploads/lookup` (Task 11, 14), `groupToolsByCategory` (Task 16)
 - Produces:
   - `getMcpOverview(cookieHeader): Promise<AdminReadResult<ApiMcpOverview>>`
@@ -8706,13 +9574,14 @@ const NON_GENERATION_ROUTE_NAMES = new Set(["settings", "profile", "mcp"]);
 3. `buildNavigationItems`에 항목을 추가한다. `statsItem` 선언 바로 위에 둔다.
 
 ```ts
-  const mcpItem: NavigationItem = {
-    key: "mcp",
-    href: "/dashboard/mcp",
-    label: "AI 연결",
-    Icon: Bot,
-    active: pathname === "/dashboard/mcp" || pathname.startsWith("/dashboard/mcp/"),
-  };
+const mcpItem: NavigationItem = {
+  key: "mcp",
+  href: "/dashboard/mcp",
+  label: "AI 연결",
+  Icon: Bot,
+  active:
+    pathname === "/dashboard/mcp" || pathname.startsWith("/dashboard/mcp/"),
+};
 ```
 
 두 반환 배열 모두에서 `statsItem,` 앞에 `mcpItem,`을 넣는다.
@@ -8720,9 +9589,9 @@ const NON_GENERATION_ROUTE_NAMES = new Set(["settings", "profile", "mcp"]);
 4. `resolveActivePageName`에서 `/dashboard/settings` 분기 다음에 추가한다.
 
 ```ts
-  if (pathname.startsWith("/dashboard/mcp")) {
-    return "AI 연결";
-  }
+if (pathname.startsWith("/dashboard/mcp")) {
+  return "AI 연결";
+}
 ```
 
 Run: 같은 테스트
@@ -8750,7 +9619,11 @@ export const getMcpOverview = (
 export const getMcpConnections = (
   cookieHeader: string | null,
 ): Promise<AdminReadResult<ApiMcpConnection[]>> =>
-  readAdminResource("/mcp/connections", cookieHeader, z.array(apiMcpConnectionSchema));
+  readAdminResource(
+    "/mcp/connections",
+    cookieHeader,
+    z.array(apiMcpConnectionSchema),
+  );
 
 export const getMcpUploadLookup = (
   cookieHeader: string | null,
@@ -8771,7 +9644,10 @@ export const getMcpUploadLookup = (
 "use server";
 
 import type { AdminWriteActionResult } from "@/features/dashboard/api/admin-api/action-results";
-import { readNoContentSchema, writeRequest } from "@/features/dashboard/actions/admin-write-core";
+import {
+  readNoContentSchema,
+  writeRequest,
+} from "@/features/dashboard/actions/admin-write-core";
 
 export const revokeMcpConnectionAction = async (
   clientId: string,
@@ -8827,11 +9703,18 @@ export default function CopyUrlButton({ url }: { url: string }) {
 
 import { useState } from "react";
 import type { ApiMcpConnection } from "@yonyoung/contracts/mcp";
-import { Button, EmptyState, useConfirm, useToast } from "@/app/(dashboard)/_components/ui";
+import {
+  Button,
+  EmptyState,
+  useConfirm,
+  useToast,
+} from "@/app/(dashboard)/_components/ui";
 import { revokeMcpConnectionAction } from "@/features/dashboard/actions/mcp";
 
 const formatDate = (value: string) =>
-  new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(new Date(value));
+  new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(
+    new Date(value),
+  );
 
 export default function McpConnectionsClient({
   initialConnections,
@@ -8843,14 +9726,20 @@ export default function McpConnectionsClient({
   const toast = useToast();
 
   if (connections.length === 0) {
-    return <EmptyState title="연결된 앱이 없습니다" description="Claude나 ChatGPT에서 연결하면 여기에 표시됩니다." />;
+    return (
+      <EmptyState
+        title="연결된 앱이 없습니다"
+        description="Claude나 ChatGPT에서 연결하면 여기에 표시됩니다."
+      />
+    );
   }
 
   const revoke = async (connection: ApiMcpConnection) => {
     const name = connection.clientName ?? connection.clientId;
     const confirmed = await confirm({
       title: `${name} 연결을 해제할까요?`,
-      description: "해제하면 그 앱에서 연영 도구를 바로 쓸 수 없습니다. 다시 쓰려면 다시 연결해야 합니다.",
+      description:
+        "해제하면 그 앱에서 연영 도구를 바로 쓸 수 없습니다. 다시 쓰려면 다시 연결해야 합니다.",
       confirmLabel: "연결 해제",
       tone: "danger",
     });
@@ -8859,26 +9748,39 @@ export default function McpConnectionsClient({
     }
     const result = await revokeMcpConnectionAction(connection.clientId);
     if (!result.ok) {
-      toast({ tone: "danger", title: "연결을 해제하지 못했습니다", description: result.errorMessage });
+      toast({
+        tone: "danger",
+        title: "연결을 해제하지 못했습니다",
+        description: result.errorMessage,
+      });
       return;
     }
-    setConnections((current) => current.filter((item) => item.clientId !== connection.clientId));
+    setConnections((current) =>
+      current.filter((item) => item.clientId !== connection.clientId),
+    );
     toast({ tone: "success", title: `${name} 연결을 해제했습니다` });
   };
 
   return (
     <ul className="flex flex-col divide-y divide-hairline">
       {connections.map((connection) => (
-        <li key={connection.clientId} className="flex items-center justify-between gap-3 py-3">
+        <li
+          key={connection.clientId}
+          className="flex items-center justify-between gap-3 py-3"
+        >
           <span className="min-w-0">
             <span className="block text-body-sm font-semibold text-ink">
               {connection.clientName ?? connection.clientId}
             </span>
             <span className="block text-caption text-ink-muted">
-              연결 {formatDate(connection.connectedAt)} · 최근 갱신 {formatDate(connection.updatedAt)}
+              연결 {formatDate(connection.connectedAt)} · 최근 갱신{" "}
+              {formatDate(connection.updatedAt)}
             </span>
           </span>
-          <Button variant="danger-ghost" onClick={() => void revoke(connection)}>
+          <Button
+            variant="danger-ghost"
+            onClick={() => void revoke(connection)}
+          >
             연결 해제
           </Button>
         </li>
@@ -8894,7 +9796,12 @@ export default function McpConnectionsClient({
 
 ```tsx
 import type { ApiMcpOverview } from "@yonyoung/contracts/mcp";
-import { Badge, Card, CardBody, CardHeader } from "@/app/(dashboard)/_components/ui";
+import {
+  Badge,
+  Card,
+  CardBody,
+  CardHeader,
+} from "@/app/(dashboard)/_components/ui";
 import { groupToolsByCategory } from "@/features/mcp/mcp-tool-groups";
 import CopyUrlButton from "@/app/(dashboard)/dashboard/mcp/copy-url-button";
 
@@ -8925,7 +9832,10 @@ export const ConnectorUrlSection = ({ serverUrl }: { serverUrl: string }) => (
 
 export const ClaudeSection = ({ serverUrl }: { serverUrl: string }) => (
   <Card>
-    <CardHeader title="Claude에 연결하기" description="claude.ai, Claude 데스크톱 앱, 모바일 앱에서 같은 연결을 씁니다." />
+    <CardHeader
+      title="Claude에 연결하기"
+      description="claude.ai, Claude 데스크톱 앱, 모바일 앱에서 같은 연결을 씁니다."
+    />
     <CardBody>
       <Steps
         steps={[
@@ -8937,8 +9847,9 @@ export const ClaudeSection = ({ serverUrl }: { serverUrl: string }) => (
         ]}
       />
       <p className="mt-3 text-caption text-ink-muted">
-        Team·Enterprise 요금제는 조직 관리자가 먼저 커넥터를 추가해야 할 수 있습니다. 요금제에 따라 사용자 지정
-        커넥터를 추가할 수 없으면 Claude 도움말의 &lsquo;커넥터&rsquo; 항목을 확인해 주세요. 주소: {serverUrl}
+        Team·Enterprise 요금제는 조직 관리자가 먼저 커넥터를 추가해야 할 수
+        있습니다. 요금제에 따라 사용자 지정 커넥터를 추가할 수 없으면 Claude
+        도움말의 &lsquo;커넥터&rsquo; 항목을 확인해 주세요. 주소: {serverUrl}
       </p>
     </CardBody>
   </Card>
@@ -8959,8 +9870,9 @@ export const ClaudeFileSection = () => (
         ]}
       />
       <p className="mt-3 text-caption text-ink-muted">
-        이 설정을 못 하는 경우(조직 정책 등) Claude가 10분짜리 업로드 링크를 줍니다. 링크를 열어 같은 파일을 끌어다
-        놓으면 됩니다. MCP로는 파일당 100MB까지 올릴 수 있습니다.
+        이 설정을 못 하는 경우(조직 정책 등) Claude가 10분짜리 업로드 링크를
+        줍니다. 링크를 열어 같은 파일을 끌어다 놓으면 됩니다. MCP로는 파일당
+        100MB까지 올릴 수 있습니다.
       </p>
     </CardBody>
   </Card>
@@ -8968,7 +9880,10 @@ export const ClaudeFileSection = () => (
 
 export const ChatGptSection = () => (
   <Card>
-    <CardHeader title="ChatGPT에 연결하기" description="ChatGPT 웹에서 앱(커넥터)으로 추가합니다." />
+    <CardHeader
+      title="ChatGPT에 연결하기"
+      description="ChatGPT 웹에서 앱(커넥터)으로 추가합니다."
+    />
     <CardBody>
       <Steps
         steps={[
@@ -8979,8 +9894,9 @@ export const ChatGptSection = () => (
         ]}
       />
       <p className="mt-3 text-caption text-ink-muted">
-        ChatGPT에서는 채팅에 올린 파일이 자동으로 연영 도구에 전달되므로 따로 설정할 것이 없습니다. 개발자 모드를 쓸 수
-        있는 요금제는 OpenAI 도움말에서 확인해 주세요.
+        ChatGPT에서는 채팅에 올린 파일이 자동으로 연영 도구에 전달되므로 따로
+        설정할 것이 없습니다. 개발자 모드를 쓸 수 있는 요금제는 OpenAI
+        도움말에서 확인해 주세요.
       </p>
     </CardBody>
   </Card>
@@ -8995,18 +9911,31 @@ export const ToolListSection = ({ overview }: { overview: ApiMcpOverview }) => (
     <CardBody>
       <div className="flex flex-col gap-5">
         {groupToolsByCategory(overview.tools).map((group) => (
-          <section key={group.category} aria-labelledby={`mcp-group-${group.category}`}>
-            <h3 id={`mcp-group-${group.category}`} className="text-body-sm font-semibold text-ink">
+          <section
+            key={group.category}
+            aria-labelledby={`mcp-group-${group.category}`}
+          >
+            <h3
+              id={`mcp-group-${group.category}`}
+              className="text-body-sm font-semibold text-ink"
+            >
               {group.label}
             </h3>
             <ul className="mt-2 flex flex-col gap-2">
               {group.tools.map((tool) => (
-                <li key={tool.name} className="flex flex-col gap-0.5 md:flex-row md:items-baseline md:gap-3">
+                <li
+                  key={tool.name}
+                  className="flex flex-col gap-0.5 md:flex-row md:items-baseline md:gap-3"
+                >
                   <span className="flex items-center gap-2 text-body-sm text-ink md:w-56">
                     {tool.title}
-                    {tool.destructive ? <Badge tone="danger">확인 후 실행</Badge> : null}
+                    {tool.destructive ? (
+                      <Badge tone="danger">확인 후 실행</Badge>
+                    ) : null}
                   </span>
-                  <span className="text-caption text-ink-muted">&ldquo;{tool.examplePrompt}&rdquo;</span>
+                  <span className="text-caption text-ink-muted">
+                    &ldquo;{tool.examplePrompt}&rdquo;
+                  </span>
                 </li>
               ))}
             </ul>
@@ -9023,24 +9952,38 @@ export const TroubleshootingSection = () => (
     <CardBody>
       <dl className="flex flex-col gap-3 text-body-sm">
         <div>
-          <dt className="font-semibold text-ink">&lsquo;관리자 승인 후 사용할 수 있습니다&rsquo;가 나와요</dt>
-          <dd className="text-ink-muted">가입 승인이 끝나야 연결할 수 있습니다. 운영진에게 승인을 요청해 주세요.</dd>
+          <dt className="font-semibold text-ink">
+            &lsquo;관리자 승인 후 사용할 수 있습니다&rsquo;가 나와요
+          </dt>
+          <dd className="text-ink-muted">
+            가입 승인이 끝나야 연결할 수 있습니다. 운영진에게 승인을 요청해
+            주세요.
+          </dd>
         </div>
         <div>
-          <dt className="font-semibold text-ink">&lsquo;현재 역할로는 할 수 없는 작업&rsquo;이라고 해요</dt>
-          <dd className="text-ink-muted">대시보드에서도 할 수 없는 작업입니다. 위 목록에서 내 역할로 가능한 작업을 확인해 주세요.</dd>
+          <dt className="font-semibold text-ink">
+            &lsquo;현재 역할로는 할 수 없는 작업&rsquo;이라고 해요
+          </dt>
+          <dd className="text-ink-muted">
+            대시보드에서도 할 수 없는 작업입니다. 위 목록에서 내 역할로 가능한
+            작업을 확인해 주세요.
+          </dd>
         </div>
         <div>
           <dt className="font-semibold text-ink">파일 올리기가 실패해요</dt>
           <dd className="text-ink-muted">
-            Claude는 위 &lsquo;파일 올리기 설정&rsquo;을 확인하고, 안 되면 Claude가 준 업로드 링크로 올려 주세요. 100MB가
-            넘는 파일은 대시보드에서 올려야 합니다.
+            Claude는 위 &lsquo;파일 올리기 설정&rsquo;을 확인하고, 안 되면
+            Claude가 준 업로드 링크로 올려 주세요. 100MB가 넘는 파일은
+            대시보드에서 올려야 합니다.
           </dd>
         </div>
         <div>
-          <dt className="font-semibold text-ink">&lsquo;연결이 만료되었습니다&rsquo;가 나와요</dt>
+          <dt className="font-semibold text-ink">
+            &lsquo;연결이 만료되었습니다&rsquo;가 나와요
+          </dt>
           <dd className="text-ink-muted">
-            30일 동안 쓰지 않았거나 연결을 해제한 경우입니다. Claude·ChatGPT의 커넥터 설정에서 다시 연결해 주세요.
+            30일 동안 쓰지 않았거나 연결을 해제한 경우입니다. Claude·ChatGPT의
+            커넥터 설정에서 다시 연결해 주세요.
           </dd>
         </div>
       </dl>
@@ -9052,9 +9995,19 @@ export const TroubleshootingSection = () => (
 `apps/web/app/(dashboard)/dashboard/mcp/page.tsx`:
 
 ```tsx
-import { Alert, Card, CardBody, CardHeader, PageContainer, PageHeader } from "@/app/(dashboard)/_components/ui";
+import {
+  Alert,
+  Card,
+  CardBody,
+  CardHeader,
+  PageContainer,
+  PageHeader,
+} from "@/app/(dashboard)/_components/ui";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
-import { getMcpConnections, getMcpOverview } from "@/features/dashboard/services/admin-read-service";
+import {
+  getMcpConnections,
+  getMcpOverview,
+} from "@/features/dashboard/services/admin-read-service";
 import { readCookieHeader } from "@/shared/http/http";
 import McpConnectionsClient from "@/app/(dashboard)/dashboard/mcp/connections-client";
 import {
@@ -9116,7 +10069,9 @@ export default async function McpGuidePage() {
       </Card>
 
       <TroubleshootingSection />
-      <p className="text-caption text-ink-muted">안내 내용 확인일: {GUIDE_VERIFIED_ON}</p>
+      <p className="text-caption text-ink-muted">
+        안내 내용 확인일: {GUIDE_VERIFIED_ON}
+      </p>
     </PageContainer>
   );
 }
@@ -9140,7 +10095,12 @@ type McpHandlerContext = {
   role: MockRole;
   namespace: string;
   sendData: <T>(response: ServerResponse, data: T, status?: number) => void;
-  sendError: (response: ServerResponse, status: number, code: "NOT_FOUND", message: string) => void;
+  sendError: (
+    response: ServerResponse,
+    status: number,
+    code: "NOT_FOUND",
+    message: string,
+  ) => void;
 };
 
 const MOCK_ROLE_TO_CORE: Record<Exclude<MockRole, "guest">, string> = {
@@ -9155,15 +10115,25 @@ const MOCK_ROLE_TO_CORE: Record<Exclude<MockRole, "guest">, string> = {
 const toolsFor = (role: MockRole) =>
   MCP_TOOL_CATALOG.filter((tool) =>
     role === "unverified" ? false : role === "member" ? tool.readOnly : true,
-  ).map(({ name, title, description, category, readOnly, destructive, examplePrompt }) => ({
-    name,
-    title,
-    description,
-    category,
-    readOnly,
-    destructive,
-    examplePrompt,
-  }));
+  ).map(
+    ({
+      name,
+      title,
+      description,
+      category,
+      readOnly,
+      destructive,
+      examplePrompt,
+    }) => ({
+      name,
+      title,
+      description,
+      category,
+      readOnly,
+      destructive,
+      examplePrompt,
+    }),
+  );
 
 const connectionsByNamespace = new Map<string, Set<string>>();
 
@@ -9177,7 +10147,8 @@ const connectionsOf = (namespace: string) => {
 };
 
 export const handleMcpRoutes = (ctx: McpHandlerContext): boolean => {
-  const { pathname, method, response, role, namespace, sendData, sendError } = ctx;
+  const { pathname, method, response, role, namespace, sendData, sendError } =
+    ctx;
   if (!pathname.startsWith("/api/mcp/") || role === "guest") {
     return false;
   }
@@ -9217,7 +10188,11 @@ export const handleMcpRoutes = (ctx: McpHandlerContext): boolean => {
   }
   if (pathname === "/api/mcp/consent-context" && method === "GET") {
     sendData(response, {
-      client: { clientId: "claude-client", name: "Claude", uri: "https://claude.ai" },
+      client: {
+        clientId: "claude-client",
+        name: "Claude",
+        uri: "https://claude.ai",
+      },
       scopes: ["openid", "mcp"],
       overview,
     });
@@ -9230,11 +10205,19 @@ export const handleMcpRoutes = (ctx: McpHandlerContext): boolean => {
 `server.ts`의 `requireAuthenticatedUser` 호출 다음(사용자 라우트 앞)에 연결한다. `namespace`는 기존 코드가 `mock_worker` 쿠키에서 읽는 값을 쓴다(`readRole` 근처 함수와 같은 방식).
 
 ```ts
-    if (
-      handleMcpRoutes({ pathname, method, response, role, namespace, sendData, sendError })
-    ) {
-      return;
-    }
+if (
+  handleMcpRoutes({
+    pathname,
+    method,
+    response,
+    role,
+    namespace,
+    sendData,
+    sendError,
+  })
+) {
+  return;
+}
 ```
 
 `apps/web/tests/e2e/mcp.spec.ts`:
@@ -9244,12 +10227,19 @@ import { expect, test } from "@playwright/test";
 import { setMockSession } from "./support/session";
 
 test.describe("AI 연결", () => {
-  test("부원은 안내 페이지에서 읽기 작업과 연결을 본다", async ({ context, page }) => {
+  test("부원은 안내 페이지에서 읽기 작업과 연결을 본다", async ({
+    context,
+    page,
+  }) => {
     await setMockSession(context, { role: "member", namespace: "mcp-member" });
     await page.goto("/dashboard/mcp");
 
-    await expect(page.getByRole("heading", { name: "Claude·ChatGPT에서 대시보드 쓰기" })).toBeVisible();
-    await expect(page.getByText("https://api.yonyoung.example/mcp")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Claude·ChatGPT에서 대시보드 쓰기" }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("https://api.yonyoung.example/mcp"),
+    ).toBeVisible();
     await expect(page.getByText("활동 목록")).toBeVisible();
     await expect(page.getByText("활동 삭제")).toHaveCount(0);
     await expect(page.getByText("Claude", { exact: true })).toBeVisible();
@@ -9260,22 +10250,37 @@ test.describe("AI 연결", () => {
     await page.goto("/dashboard/mcp");
 
     await page.getByRole("button", { name: "연결 해제" }).click();
-    await page.getByRole("dialog").getByRole("button", { name: "연결 해제" }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "연결 해제" })
+      .click();
     await expect(page.getByText("연결된 앱이 없습니다")).toBeVisible();
   });
 
   test("동의 화면은 앱 이름과 역할을 보여준다", async ({ context, page }) => {
-    await setMockSession(context, { role: "manager", namespace: "mcp-consent" });
-    await page.goto("/auth/mcp-consent?client_id=claude-client&scope=openid+mcp&exp=1&sig=abc");
+    await setMockSession(context, {
+      role: "manager",
+      namespace: "mcp-consent",
+    });
+    await page.goto(
+      "/auth/mcp-consent?client_id=claude-client&scope=openid+mcp&exp=1&sig=abc",
+    );
 
-    await expect(page.getByRole("heading", { name: "Claude 연결" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Claude 연결" }),
+    ).toBeVisible();
     await expect(page.getByText("부장 권한으로")).toBeVisible();
     await expect(page.getByRole("button", { name: "허용" })).toBeEnabled();
   });
 
   test("승인 대기 사용자는 허용할 수 없다", async ({ context, page }) => {
-    await setMockSession(context, { role: "unverified", namespace: "mcp-pending" });
-    await page.goto("/auth/mcp-consent?client_id=claude-client&scope=openid+mcp&exp=1&sig=abc");
+    await setMockSession(context, {
+      role: "unverified",
+      namespace: "mcp-pending",
+    });
+    await page.goto(
+      "/auth/mcp-consent?client_id=claude-client&scope=openid+mcp&exp=1&sig=abc",
+    );
 
     await expect(page.getByText("관리자 승인 대기 중")).toBeVisible();
     await expect(page.getByRole("button", { name: "허용" })).toBeDisabled();
@@ -9286,7 +10291,9 @@ test.describe("AI 연결", () => {
     await page.setViewportSize({ width: 375, height: 800 });
     await page.goto("/dashboard/mcp");
     const overflow = await page.evaluate(
-      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      () =>
+        document.documentElement.scrollWidth -
+        document.documentElement.clientWidth,
     );
     expect(overflow).toBeLessThanOrEqual(0);
   });
@@ -9316,6 +10323,7 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 ### Task 18: 브라우저 업로드 페이지 `/dashboard/mcp/upload/[token]`
 
 **Files:**
+
 - Create: `apps/web/app/(dashboard)/dashboard/mcp/upload/[token]/page.tsx`
 - Create: `apps/web/app/(dashboard)/dashboard/mcp/upload/[token]/upload-client.tsx`
 - Create: `apps/web/features/mcp/upload-check.ts`
@@ -9323,6 +10331,7 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 - Modify: `apps/web/tests/e2e/mock-api/mcp-handlers.ts`, `apps/web/tests/e2e/mcp.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `getMcpUploadLookup` (Task 17), `PUT /mcp/uploads/:token` (Task 11, API 도메인 직접 호출, CORS)
 - Produces: `checkSelectedFile(file: { size: number; type: string }, expected: { declaredSize: number; contentType: string }): string | null` (문제가 있으면 안내 문구)
 
@@ -9338,16 +10347,24 @@ const expected = { declaredSize: 1000, contentType: "image/jpeg" };
 
 describe("checkSelectedFile", () => {
   it("크기와 형식이 맞으면 null이다", () => {
-    expect(checkSelectedFile({ size: 1000, type: "image/jpeg" }, expected)).toBeNull();
-    expect(checkSelectedFile({ size: 1000, type: "image/jpg" }, expected)).toBeNull();
+    expect(
+      checkSelectedFile({ size: 1000, type: "image/jpeg" }, expected),
+    ).toBeNull();
+    expect(
+      checkSelectedFile({ size: 1000, type: "image/jpg" }, expected),
+    ).toBeNull();
   });
 
   it("크기가 다르면 같은 파일을 고르라고 안내한다", () => {
-    expect(checkSelectedFile({ size: 999, type: "image/jpeg" }, expected)).toContain("같은 파일");
+    expect(
+      checkSelectedFile({ size: 999, type: "image/jpeg" }, expected),
+    ).toContain("같은 파일");
   });
 
   it("형식이 다르면 안내한다", () => {
-    expect(checkSelectedFile({ size: 1000, type: "image/png" }, expected)).toContain("형식");
+    expect(
+      checkSelectedFile({ size: 1000, type: "image/png" }, expected),
+    ).toContain("형식");
   });
 });
 ```
@@ -9388,7 +10405,11 @@ Expected: PASS
 `apps/web/app/(dashboard)/dashboard/mcp/upload/[token]/page.tsx`:
 
 ```tsx
-import { Alert, PageContainer, PageHeader } from "@/app/(dashboard)/_components/ui";
+import {
+  Alert,
+  PageContainer,
+  PageHeader,
+} from "@/app/(dashboard)/_components/ui";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { getMcpUploadLookup } from "@/features/dashboard/services/admin-read-service";
 import { readCookieHeader } from "@/shared/http/http";
@@ -9405,7 +10426,11 @@ const STATUS_MESSAGE: Record<string, string> = {
   failed: "이 업로드는 실패했습니다. AI에게 다시 준비해 달라고 요청해 주세요.",
 };
 
-export default async function McpUploadPage({ params }: { params: Promise<{ token: string }> }) {
+export default async function McpUploadPage({
+  params,
+}: {
+  params: Promise<{ token: string }>;
+}) {
   await serverAuthGuard.requireSession();
   const { token } = await params;
   const lookup = await getMcpUploadLookup(await readCookieHeader(), token);
@@ -9419,7 +10444,8 @@ export default async function McpUploadPage({ params }: { params: Promise<{ toke
       />
       {!lookup.ok ? (
         <Alert tone="danger" title="업로드 주소를 쓸 수 없습니다">
-          주소가 잘못되었거나, 다른 계정이 만든 주소입니다. 이 주소를 만든 계정으로 로그인했는지 확인해 주세요.
+          주소가 잘못되었거나, 다른 계정이 만든 주소입니다. 이 주소를 만든
+          계정으로 로그인했는지 확인해 주세요.
         </Alert>
       ) : lookup.data.status !== "pending" ? (
         <Alert tone="info">{STATUS_MESSAGE[lookup.data.status]}</Alert>
@@ -9442,7 +10468,12 @@ export default async function McpUploadPage({ params }: { params: Promise<{ toke
 
 import { useRef, useState, type DragEvent } from "react";
 import type { ApiMcpUploadLookup } from "@yonyoung/contracts/mcp";
-import { Alert, Button, Card, CardBody } from "@/app/(dashboard)/_components/ui";
+import {
+  Alert,
+  Button,
+  Card,
+  CardBody,
+} from "@/app/(dashboard)/_components/ui";
 import { checkSelectedFile } from "@/features/mcp/upload-check";
 
 type UploadState =
@@ -9451,11 +10482,18 @@ type UploadState =
   | { status: "done" };
 
 /** API 도메인으로 직접 PUT한다. 진행률을 보이려고 XMLHttpRequest를 쓴다. */
-const putFile = (url: string, file: File, onProgress: (percent: number) => void) =>
+const putFile = (
+  url: string,
+  file: File,
+  onProgress: (percent: number) => void,
+) =>
   new Promise<void>((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open("PUT", url);
-    request.setRequestHeader("content-type", file.type || "application/octet-stream");
+    request.setRequestHeader(
+      "content-type",
+      file.type || "application/octet-stream",
+    );
     request.upload.onprogress = (event) => {
       if (event.lengthComputable) {
         onProgress(Math.round((event.loaded / event.total) * 100));
@@ -9468,20 +10506,32 @@ const putFile = (url: string, file: File, onProgress: (percent: number) => void)
       }
       const message = (() => {
         try {
-          return (JSON.parse(request.responseText) as { error?: { message?: string } }).error?.message;
+          return (
+            JSON.parse(request.responseText) as { error?: { message?: string } }
+          ).error?.message;
         } catch {
           return undefined;
         }
       })();
-      reject(new Error(message ?? `업로드하지 못했습니다(HTTP ${request.status}).`));
+      reject(
+        new Error(message ?? `업로드하지 못했습니다(HTTP ${request.status}).`),
+      );
     };
-    request.onerror = () => reject(new Error("네트워크 오류로 업로드하지 못했습니다."));
+    request.onerror = () =>
+      reject(new Error("네트워크 오류로 업로드하지 못했습니다."));
     request.send(file);
   });
 
-export default function McpUploadClient({ lookup }: { lookup: ApiMcpUploadLookup }) {
+export default function McpUploadClient({
+  lookup,
+}: {
+  lookup: ApiMcpUploadLookup;
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [state, setState] = useState<UploadState>({ status: "idle", error: null });
+  const [state, setState] = useState<UploadState>({
+    status: "idle",
+    error: null,
+  });
   const [dragging, setDragging] = useState(false);
 
   const upload = async (file: File) => {
@@ -9492,10 +10542,16 @@ export default function McpUploadClient({ lookup }: { lookup: ApiMcpUploadLookup
     }
     setState({ status: "uploading", percent: 0 });
     try {
-      await putFile(lookup.putUrl, file, (percent) => setState({ status: "uploading", percent }));
+      await putFile(lookup.putUrl, file, (percent) =>
+        setState({ status: "uploading", percent }),
+      );
       setState({ status: "done" });
     } catch (error) {
-      setState({ status: "idle", error: error instanceof Error ? error.message : "업로드하지 못했습니다." });
+      setState({
+        status: "idle",
+        error:
+          error instanceof Error ? error.message : "업로드하지 못했습니다.",
+      });
     }
   };
 
@@ -9511,7 +10567,8 @@ export default function McpUploadClient({ lookup }: { lookup: ApiMcpUploadLookup
   if (state.status === "done") {
     return (
       <Alert tone="success" title="올렸습니다">
-        대화로 돌아가 &lsquo;올렸어&rsquo;라고 알려 주세요. AI가 확인한 뒤 이어서 작업합니다.
+        대화로 돌아가 &lsquo;올렸어&rsquo;라고 알려 주세요. AI가 확인한 뒤
+        이어서 작업합니다.
       </Alert>
     );
   }
@@ -9520,7 +10577,8 @@ export default function McpUploadClient({ lookup }: { lookup: ApiMcpUploadLookup
     <Card>
       <CardBody>
         <p className="text-body-sm text-ink">
-          올릴 파일: <strong>{lookup.fileName}</strong> ({lookup.declaredSize.toLocaleString("ko-KR")} bytes)
+          올릴 파일: <strong>{lookup.fileName}</strong> (
+          {lookup.declaredSize.toLocaleString("ko-KR")} bytes)
         </p>
         <div
           onDragOver={(event) => {
@@ -9530,16 +10588,22 @@ export default function McpUploadClient({ lookup }: { lookup: ApiMcpUploadLookup
           onDragLeave={() => setDragging(false)}
           onDrop={onDrop}
           className={`mt-4 flex flex-col items-center gap-3 rounded-lg border-2 border-dashed p-8 text-center ${
-            dragging ? "border-(--focus-ring) bg-surface-sunken" : "border-hairline"
+            dragging
+              ? "border-(--focus-ring) bg-surface-sunken"
+              : "border-hairline"
           }`}
         >
-          <p className="text-body-sm text-ink-muted">파일을 여기로 끌어다 놓거나</p>
+          <p className="text-body-sm text-ink-muted">
+            파일을 여기로 끌어다 놓거나
+          </p>
           <Button
             variant="primary"
             disabled={state.status === "uploading"}
             onClick={() => inputRef.current?.click()}
           >
-            {state.status === "uploading" ? `올리는 중… ${state.percent}%` : "파일 고르기"}
+            {state.status === "uploading"
+              ? `올리는 중… ${state.percent}%`
+              : "파일 고르기"}
           </Button>
           <input
             ref={inputRef}
@@ -9571,23 +10635,23 @@ export default function McpUploadClient({ lookup }: { lookup: ApiMcpUploadLookup
 `mcp-handlers.ts`의 `handleMcpRoutes`에 lookup을 추가한다.
 
 ```ts
-  if (pathname === "/api/mcp/uploads/lookup" && method === "GET") {
-    if (ctx.token !== "valid-token") {
-      sendError(response, 404, "NOT_FOUND", "업로드 주소를 찾을 수 없습니다.");
-      return true;
-    }
-    sendData(response, {
-      uploadId: "upload-1",
-      fileName: "봄출사.jpg",
-      contentType: "image/jpeg",
-      declaredSize: 4,
-      purpose: "activity_image",
-      status: "pending",
-      expiresAt: "2099-01-01T00:00:00.000Z",
-      putUrl: "https://api.yonyoung.example/mcp/uploads/valid-token",
-    });
+if (pathname === "/api/mcp/uploads/lookup" && method === "GET") {
+  if (ctx.token !== "valid-token") {
+    sendError(response, 404, "NOT_FOUND", "업로드 주소를 찾을 수 없습니다.");
     return true;
   }
+  sendData(response, {
+    uploadId: "upload-1",
+    fileName: "봄출사.jpg",
+    contentType: "image/jpeg",
+    declaredSize: 4,
+    purpose: "activity_image",
+    status: "pending",
+    expiresAt: "2099-01-01T00:00:00.000Z",
+    putUrl: "https://api.yonyoung.example/mcp/uploads/valid-token",
+  });
+  return true;
+}
 ```
 
 `McpHandlerContext`에 `token: string | null`을 추가하고, `server.ts`에서 `token: requestUrl.searchParams.get("token")`을 넘긴다.
@@ -9595,42 +10659,59 @@ export default function McpUploadClient({ lookup }: { lookup: ApiMcpUploadLookup
 `mcp.spec.ts`에 추가한다.
 
 ```ts
-  test("업로드 페이지에서 같은 파일을 올리면 완료된다", async ({ context, page }) => {
-    await setMockSession(context, { role: "manager", namespace: "mcp-upload" });
-    await page.route("https://api.yonyoung.example/mcp/uploads/valid-token", async (route) => {
+test("업로드 페이지에서 같은 파일을 올리면 완료된다", async ({
+  context,
+  page,
+}) => {
+  await setMockSession(context, { role: "manager", namespace: "mcp-upload" });
+  await page.route(
+    "https://api.yonyoung.example/mcp/uploads/valid-token",
+    async (route) => {
       await route.fulfill({
         status: 200,
         headers: { "access-control-allow-origin": "*" },
         contentType: "application/json",
-        body: JSON.stringify({ data: { uploadId: "upload-1", status: "completed" } }),
+        body: JSON.stringify({
+          data: { uploadId: "upload-1", status: "completed" },
+        }),
       });
-    });
-    await page.goto("/dashboard/mcp/upload/valid-token");
+    },
+  );
+  await page.goto("/dashboard/mcp/upload/valid-token");
 
-    await page.getByLabel("올릴 파일").setInputFiles({
-      name: "봄출사.jpg",
-      mimeType: "image/jpeg",
-      buffer: Buffer.from([0xff, 0xd8, 0xff, 0xd9]),
-    });
-    await expect(page.getByText("올렸습니다")).toBeVisible();
+  await page.getByLabel("올릴 파일").setInputFiles({
+    name: "봄출사.jpg",
+    mimeType: "image/jpeg",
+    buffer: Buffer.from([0xff, 0xd8, 0xff, 0xd9]),
   });
+  await expect(page.getByText("올렸습니다")).toBeVisible();
+});
 
-  test("다른 크기의 파일은 올리기 전에 막는다", async ({ context, page }) => {
-    await setMockSession(context, { role: "manager", namespace: "mcp-upload-mismatch" });
-    await page.goto("/dashboard/mcp/upload/valid-token");
-    await page.getByLabel("올릴 파일").setInputFiles({
-      name: "다른사진.jpg",
-      mimeType: "image/jpeg",
-      buffer: Buffer.from([0xff, 0xd8, 0xff, 0x00, 0xd9]),
-    });
-    await expect(page.getByText("같은 파일을 골라 주세요")).toBeVisible();
+test("다른 크기의 파일은 올리기 전에 막는다", async ({ context, page }) => {
+  await setMockSession(context, {
+    role: "manager",
+    namespace: "mcp-upload-mismatch",
   });
+  await page.goto("/dashboard/mcp/upload/valid-token");
+  await page.getByLabel("올릴 파일").setInputFiles({
+    name: "다른사진.jpg",
+    mimeType: "image/jpeg",
+    buffer: Buffer.from([0xff, 0xd8, 0xff, 0x00, 0xd9]),
+  });
+  await expect(page.getByText("같은 파일을 골라 주세요")).toBeVisible();
+});
 
-  test("다른 계정의 업로드 주소는 쓸 수 없다고 알려준다", async ({ context, page }) => {
-    await setMockSession(context, { role: "manager", namespace: "mcp-upload-stranger" });
-    await page.goto("/dashboard/mcp/upload/unknown-token");
-    await expect(page.getByText("업로드 주소를 쓸 수 없습니다")).toBeVisible();
+test("다른 계정의 업로드 주소는 쓸 수 없다고 알려준다", async ({
+  context,
+  page,
+}) => {
+  await setMockSession(context, {
+    role: "manager",
+    namespace: "mcp-upload-stranger",
   });
+  await page.goto("/dashboard/mcp/upload/unknown-token");
+  await expect(page.getByText("업로드 주소를 쓸 수 없습니다")).toBeVisible();
+});
 ```
 
 Run: `pnpm --filter @yonyoung/web exec ./scripts/run-playwright.sh test tests/e2e/mcp.spec.ts`
@@ -9656,12 +10737,14 @@ Claude-Session: https://claude.ai/code/session_01Gib4gkkdNF976x7dxghyKE"
 ### Task 19: 문서, 전체 품질 검사, 실제 연결 확인
 
 **Files:**
+
 - Modify: `apps/api/docs/permissions.md`
 - Modify: `docs/deployment-and-cutover.md`
 
 - [ ] **Step 1: 권한 문서를 실제 라우트에 맞춘다**
 
 `apps/api/docs/permissions.md`에서 다음을 고친다.
+
 - "감사 로그" 절: "사실상 unverified를 제외한 전원이 조회 가능"을 "부장 이상(`isManagerLikeRole`)만 조회 가능"으로 바꾼다.
 - "대시보드 통계" 절: "`user.read` 기준 — unverified를 제외한 전원 조회 가능"을 "부장 이상(`isManagerLikeRole`)만 조회 가능"으로 바꾼다.
 - "멤버" 절: 목록 조회에 "부장은 같은 기수 멤버만"을 추가하고, `GET /users/{id}/resource-history`는 회장단 전용이라고 적는다.
@@ -9712,15 +10795,15 @@ Expected: API 번들 생성 성공. 출력의 번들 크기를 기록한다.
 
 dev 또는 프로덕션 배포 뒤 부원 계정과 회장 계정으로 각각 확인한다. 결과를 PR 설명에 표로 남긴다.
 
-| 확인 | Claude | ChatGPT |
-|---|---|---|
-| 커넥터 추가 → Google 로그인 → 동의 → 연결 | | |
-| `whoami`가 역할과 도구 수를 맞게 알려줌 | | |
-| 부원: 삭제 도구가 보이지 않음 | | |
-| 회장: 채팅에 첨부한 사진 2장을 활동에 추가 | | |
-| 회장: 삭제 전에 클라이언트가 확인을 요청함 | | |
-| `/dashboard/mcp`에서 연결 해제 → 다음 호출이 401 | | |
-| Claude: 샌드박스 네트워크 미허용 시 browser_url로 업로드 | | 해당 없음 |
+| 확인                                                     | Claude | ChatGPT   |
+| -------------------------------------------------------- | ------ | --------- |
+| 커넥터 추가 → Google 로그인 → 동의 → 연결                |        |           |
+| `whoami`가 역할과 도구 수를 맞게 알려줌                  |        |           |
+| 부원: 삭제 도구가 보이지 않음                            |        |           |
+| 회장: 채팅에 첨부한 사진 2장을 활동에 추가               |        |           |
+| 회장: 삭제 전에 클라이언트가 확인을 요청함               |        |           |
+| `/dashboard/mcp`에서 연결 해제 → 다음 호출이 401         |        |           |
+| Claude: 샌드박스 네트워크 미허용 시 browser_url로 업로드 |        | 해당 없음 |
 
 ChatGPT 확인 중 `download_url`의 호스트를 기록한다. 기본값 `.oaiusercontent.com`과 다르면 `MCP_CHATGPT_FILE_HOST_SUFFIXES`를 wrangler vars에 넣고 다시 배포한다. 안내 페이지의 메뉴 이름이 실제 화면과 다르면 `mcp-guide-sections.tsx` 문구와 `GUIDE_VERIFIED_ON`을 고친다.
 

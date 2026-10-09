@@ -29,8 +29,14 @@ export const settingsTools = [
       data: ApiUpsertCurrentRecruitingPlanSchema.describe(
         "promotionImageUrls에는 유지할 기존 이미지 URL을 넣습니다. 날짜는 밀리초 단위 Unix 시간입니다.",
       ),
-      promotion_files: z.array(chatGptFileSchema).max(MAX_PROMOTION_IMAGES).optional(),
-      promotion_upload_ids: z.array(uploadIdSchema).max(MAX_PROMOTION_IMAGES).optional(),
+      promotion_files: z
+        .array(chatGptFileSchema)
+        .max(MAX_PROMOTION_IMAGES)
+        .optional(),
+      promotion_upload_ids: z
+        .array(uploadIdSchema)
+        .max(MAX_PROMOTION_IMAGES)
+        .optional(),
     }),
     handler: (args, context) =>
       withUploadErrors(context, async () => {
@@ -39,7 +45,9 @@ export const settingsTools = [
           (args.promotion_files?.length ?? 0) +
           (args.promotion_upload_ids?.length ?? 0);
         if (imageCount > MAX_PROMOTION_IMAGES) {
-          return toolFailure(`홍보 이미지는 최대 ${MAX_PROMOTION_IMAGES}장입니다.`);
+          return toolFailure(
+            `홍보 이미지는 최대 ${MAX_PROMOTION_IMAGES}장입니다.`,
+          );
         }
         const files = await context.files.resolve({
           purpose: "recruiting_image",

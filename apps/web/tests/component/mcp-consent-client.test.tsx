@@ -40,7 +40,9 @@ describe("McpConsentClient", () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("network")));
     render(<McpConsentClient />);
     expect(
-      await screen.findByText("연결 요청을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요."),
+      await screen.findByText(
+        "연결 요청을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      ),
     ).toBeTruthy();
   });
 
@@ -51,9 +53,13 @@ describe("McpConsentClient", () => {
     );
     consentMock.mockRejectedValue(new Error("boom"));
     render(<McpConsentClient />);
-    const allow = (await screen.findByRole("button", { name: "허용" })) as HTMLButtonElement;
+    const allow = (await screen.findByRole("button", {
+      name: "허용",
+    })) as HTMLButtonElement;
     await userEvent.click(allow);
-    expect(await screen.findByText("처리하지 못했습니다. 다시 시도해 주세요.")).toBeTruthy();
+    expect(
+      await screen.findByText("처리하지 못했습니다. 다시 시도해 주세요."),
+    ).toBeTruthy();
     await waitFor(() => expect(allow.disabled).toBe(false));
   });
 });

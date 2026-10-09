@@ -8,13 +8,20 @@ import {
   ExhibitionInputObjectSchema,
 } from "../../exhibitions/exhibition.contract";
 import { chatGptFileSchema, uploadIdSchema } from "../files/chatgpt-file";
-import { imageBatchItem, nextSortOrder, runWithFiles, withUploadErrors } from "../files/file-tool";
+import {
+  imageBatchItem,
+  nextSortOrder,
+  runWithFiles,
+  withUploadErrors,
+} from "../files/file-tool";
 import { defineTool, routeTool, uuidArg } from "../tool-definition";
 import { describeApiFailure, toolFailure } from "../tool-result";
 
 const exhibitionId = uuidArg("전시 ID. exhibition_list로 찾습니다.");
 
-const imageId = uuidArg("세부 이미지 ID. exhibition_get 결과의 detailImages[].id입니다.");
+const imageId = uuidArg(
+  "세부 이미지 ID. exhibition_get 결과의 detailImages[].id입니다.",
+);
 
 const coverArgs = {
   cover_file: chatGptFileSchema.optional(),
@@ -64,7 +71,11 @@ export const exhibitionTools = [
         return runWithFiles(
           context,
           covers,
-          { method: "POST", path: "/api/exhibitions", body: { ...args.data, coverImageUrl } },
+          {
+            method: "POST",
+            path: "/api/exhibitions",
+            body: { ...args.data, coverImageUrl },
+          },
           "전시를 만들었습니다.",
         );
       }),
@@ -86,7 +97,9 @@ export const exhibitionTools = [
           chatGptFiles: args.cover_file ? [args.cover_file] : [],
           uploadIds: args.cover_upload_id ? [args.cover_upload_id] : [],
         });
-        const body = covers[0] ? { ...args.data, coverImageUrl: covers[0].publicUrl } : args.data;
+        const body = covers[0]
+          ? { ...args.data, coverImageUrl: covers[0].publicUrl }
+          : args.data;
         return runWithFiles(
           context,
           covers,
@@ -117,17 +130,27 @@ export const exhibitionTools = [
     }),
     handler: (args, context) =>
       withUploadErrors(context, async () => {
-        const fileCount = (args.files?.length ?? 0) + (args.upload_ids?.length ?? 0);
+        const fileCount =
+          (args.files?.length ?? 0) + (args.upload_ids?.length ?? 0);
         if (fileCount === 0) {
-          return toolFailure("추가할 사진을 files 또는 upload_ids로 넣어 주세요.");
+          return toolFailure(
+            "추가할 사진을 files 또는 upload_ids로 넣어 주세요.",
+          );
         }
         if (fileCount > IMAGE_BATCH_MAX_ITEMS) {
-          return toolFailure(`사진은 한 번에 최대 ${IMAGE_BATCH_MAX_ITEMS}장까지 추가할 수 있습니다.`);
+          return toolFailure(
+            `사진은 한 번에 최대 ${IMAGE_BATCH_MAX_ITEMS}장까지 추가할 수 있습니다.`,
+          );
         }
         // 전시가 없으면 파일을 받기 전에 끝낸다.
-        const exhibition = await context.api.call({ method: "GET", path: `/api/exhibitions/${args.id}` });
+        const exhibition = await context.api.call({
+          method: "GET",
+          path: `/api/exhibitions/${args.id}`,
+        });
         if (!exhibition.ok) {
-          return toolFailure(describeApiFailure(exhibition, context.actor.role));
+          return toolFailure(
+            describeApiFailure(exhibition, context.actor.role),
+          );
         }
         const files = await context.files.resolve({
           purpose: "exhibition_image",
@@ -135,7 +158,8 @@ export const exhibitionTools = [
           uploadIds: args.upload_ids,
         });
         const existing =
-          (exhibition.data as { detailImages?: Array<{ sortOrder: number }> }).detailImages ?? [];
+          (exhibition.data as { detailImages?: Array<{ sortOrder: number }> })
+            .detailImages ?? [];
         const start = args.start_sort_order ?? nextSortOrder(existing);
         return runWithFiles(
           context,
@@ -143,7 +167,9 @@ export const exhibitionTools = [
           {
             method: "POST",
             path: `/api/exhibitions/${args.id}/images/batch`,
-            body: files.map((file, index) => imageBatchItem(file, start + index)),
+            body: files.map((file, index) =>
+              imageBatchItem(file, start + index),
+            ),
           },
           `사진 ${files.length}장을 추가했습니다.`,
         );
@@ -153,14 +179,21 @@ export const exhibitionTools = [
     name: "exhibition_image_update",
     method: "PATCH",
     path: "/api/exhibitions/{id}/images/{imageId}",
-    inputSchema: z.object({ id: exhibitionId, imageId, data: ApiUpdateExhibitionImageSchema }),
+    inputSchema: z.object({
+      id: exhibitionId,
+      imageId,
+      data: ApiUpdateExhibitionImageSchema,
+    }),
     summary: "세부 이미지를 수정했습니다.",
   }),
   routeTool({
     name: "exhibition_images_update",
     method: "PATCH",
     path: "/api/exhibitions/{id}/images/batch",
-    inputSchema: z.object({ id: exhibitionId, items: ApiUpdateExhibitionImageBatchSchema }),
+    inputSchema: z.object({
+      id: exhibitionId,
+      items: ApiUpdateExhibitionImageBatchSchema,
+    }),
     summary: "세부 이미지들을 수정했습니다.",
   }),
   routeTool({

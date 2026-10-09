@@ -42,7 +42,8 @@ export const attachmentTools = [
           return toolFailure("파일과 linkUrl 중 하나만 넣어 주세요.");
         }
         const files = await context.files.resolve({
-          purpose: args.data.scope === "site_donate" ? "site_file" : "activity_file",
+          purpose:
+            args.data.scope === "site_donate" ? "site_file" : "activity_file",
           chatGptFiles: args.file ? [args.file] : [],
           uploadIds: args.upload_id ? [args.upload_id] : [],
         });
@@ -68,7 +69,10 @@ export const attachmentTools = [
     name: "attachment_update",
     method: "PATCH",
     path: "/api/attachments/{id}",
-    inputSchema: z.object({ id: attachmentId, data: ApiUpdateAttachmentSchema }),
+    inputSchema: z.object({
+      id: attachmentId,
+      data: ApiUpdateAttachmentSchema,
+    }),
     summary: "첨부 자료를 수정했습니다.",
   }),
   routeTool({

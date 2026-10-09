@@ -38,18 +38,27 @@ export const describeApiFailure = (
   failure: InternalApiFailure,
   role: Role,
 ): string => {
-  const lines = [guidanceByStatus(failure.status, role), `사유: ${failure.message}`];
+  const lines = [
+    guidanceByStatus(failure.status, role),
+    `사유: ${failure.message}`,
+  ];
   if (failure.requestId) {
     lines.push(`요청 ID: ${failure.requestId}`);
   }
   return lines.join("\n");
 };
 
-export const toolSuccess = (summary: string, data: unknown): CallToolResult => ({
+export const toolSuccess = (
+  summary: string,
+  data: unknown,
+): CallToolResult => ({
   content: [
     {
       type: "text",
-      text: data === null ? summary : `${summary}\n\n${JSON.stringify(data, null, 2)}`,
+      text:
+        data === null
+          ? summary
+          : `${summary}\n\n${JSON.stringify(data, null, 2)}`,
     },
   ],
   structuredContent: { data },

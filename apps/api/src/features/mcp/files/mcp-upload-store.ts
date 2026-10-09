@@ -1,4 +1,7 @@
-import type { McpUploadPurpose, McpUploadStatus } from "@yonyoung/contracts/mcp";
+import type {
+  McpUploadPurpose,
+  McpUploadStatus,
+} from "@yonyoung/contracts/mcp";
 
 export type McpUploadRecord = {
   id: string;
@@ -231,11 +234,19 @@ export const createMemoryMcpUploadStore = (): McpUploadStore => {
       return records.get(id) ?? null;
     },
     async getByTokenHash(tokenHash) {
-      return [...records.values()].find((record) => record.tokenHash === tokenHash) ?? null;
+      return (
+        [...records.values()].find(
+          (record) => record.tokenHash === tokenHash,
+        ) ?? null
+      );
     },
     async beginReceiving(id, now) {
       const current = records.get(id);
-      if (!current || current.status !== "pending" || current.expiresAt <= now) {
+      if (
+        !current ||
+        current.status !== "pending" ||
+        current.expiresAt <= now
+      ) {
         return false;
       }
       update(id, { status: "receiving" });
@@ -256,7 +267,11 @@ export const createMemoryMcpUploadStore = (): McpUploadStore => {
       const claimed: string[] = [];
       for (const id of ids) {
         const current = records.get(id);
-        if (current && current.userId === userId && current.status === "completed") {
+        if (
+          current &&
+          current.userId === userId &&
+          current.status === "completed"
+        ) {
           update(id, { status: "consumed" });
           claimed.push(id);
         }
@@ -267,7 +282,11 @@ export const createMemoryMcpUploadStore = (): McpUploadStore => {
       const discarded: string[] = [];
       for (const id of ids) {
         const current = records.get(id);
-        if (current && current.userId === userId && current.status === "completed") {
+        if (
+          current &&
+          current.userId === userId &&
+          current.status === "completed"
+        ) {
           update(id, { status: "failed" });
           discarded.push(id);
         }

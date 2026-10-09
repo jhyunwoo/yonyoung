@@ -24,6 +24,5 @@ const ALL_TOOLS: McpToolDefinition[] = [
   ...uploadTools,
 ];
 
-export const MCP_TOOL_DEFINITIONS: ReadonlyMap<McpToolName, McpToolDefinition> = new Map(
-  ALL_TOOLS.map((tool) => [tool.name, tool]),
-);
+export const MCP_TOOL_DEFINITIONS: ReadonlyMap<McpToolName, McpToolDefinition> =
+  new Map(ALL_TOOLS.map((tool) => [tool.name, tool]));

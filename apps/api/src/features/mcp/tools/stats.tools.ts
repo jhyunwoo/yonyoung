@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { ApiAuditParamSchema, ApiAuditQuerySchema } from "../../audit/audit.contract";
+import {
+  ApiAuditParamSchema,
+  ApiAuditQuerySchema,
+} from "../../audit/audit.contract";
 import { ApiAdminDashboardStatsQuerySchema } from "../../dashboard/dashboard.contract";
 import { routeTool } from "../tool-definition";
 
@@ -29,7 +32,10 @@ export const statsTools = [
     name: "audit_log_get",
     method: "GET",
     path: "/api/audit/{resourceType}/{resourceId}",
-    inputSchema: z.object({ ...ApiAuditParamSchema.shape, ...ApiAuditQuerySchema.shape }),
+    inputSchema: z.object({
+      ...ApiAuditParamSchema.shape,
+      ...ApiAuditQuerySchema.shape,
+    }),
     summary: "변경 기록입니다.",
   }),
 ];

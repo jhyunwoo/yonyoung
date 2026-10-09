@@ -27,7 +27,10 @@ export const memberTools = [
     name: "member_resource_history",
     method: "GET",
     path: "/api/users/{id}/resource-history",
-    inputSchema: z.object({ id: userId, ...ApiUserResourceHistoryQuerySchema.shape }),
+    inputSchema: z.object({
+      id: userId,
+      ...ApiUserResourceHistoryQuerySchema.shape,
+    }),
     summary: "멤버 작업 이력입니다.",
   }),
   routeTool({
@@ -36,7 +39,9 @@ export const memberTools = [
     path: "/api/users/{id}",
     inputSchema: z.object({
       id: userId,
-      data: ApiAdminUpdateUserSchema.describe("바꿀 필드만 넣습니다. 역할은 role, 기수는 generationIds입니다."),
+      data: ApiAdminUpdateUserSchema.describe(
+        "바꿀 필드만 넣습니다. 역할은 role, 기수는 generationIds입니다.",
+      ),
     }),
     summary: "멤버 정보를 수정했습니다.",
   }),

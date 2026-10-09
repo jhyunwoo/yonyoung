@@ -73,7 +73,7 @@ api.yonyoung.moveto.kr/mcp  ──▶  API Worker: MCP 핸들러
 ### 3.3 토큰에서 Actor 만들기
 
 1. `/mcp` 요청이 오면 `@better-auth/mcp`의 `requireMcpAuth`가 JWT의 서명, `iss`, `aud`(=`MCP_RESOURCE_URL`), 만료를 검증한다. 실패하면 401과 `WWW-Authenticate`(resource metadata URL 포함)를 돌려준다.
-1-1. 검증된 토큰의 `(sub, azp)`에 대한 `oauthConsent` 행이 있는지 확인한다. 없으면 401이다. Better Auth의 `delete-consent`는 리프레시 토큰을 남기므로, 연결 해제는 우리 코드가 동의 삭제와 토큰 `revoked` 기록을 함께 한다(6장).
+   1-1. 검증된 토큰의 `(sub, azp)`에 대한 `oauthConsent` 행이 있는지 확인한다. 없으면 401이다. Better Auth의 `delete-consent`는 리프레시 토큰을 남기므로, 연결 해제는 우리 코드가 동의 삭제와 토큰 `revoked` 기록을 함께 한다(6장).
 2. `sub`로 사용자를 조회해 `Actor`를 만든다.
    - `getActorFromSession`(`apps/api/src/lib/auth/session.ts`)의 "사용자 ID → Actor" 부분을 `loadActorByUserId`로 떼어내 두 경로가 함께 쓴다.
    - 삭제된 사용자는 401을, `unverified` 사용자는 403과 "승인 대기 중" 메시지를 받는다.
@@ -106,56 +106,56 @@ api.yonyoung.moveto.kr/mcp  ──▶  API Worker: MCP 핸들러
 
 **부원 이상** (new_member, associate_member, regular_member)
 
-| 도구 | 호출 라우트 | 노출 조건 |
-|---|---|---|
-| `whoami` | `GET /api/users/me` + 노출 도구 요약 | verified |
-| `generation_list` / `generation_get` / `generation_members` | `GET /api/generations`, `/{id}`, `/{id}/members` | generation.read |
-| `activity_list` / `activity_get` | `GET /api/activities`, `/{id}` | activity.read |
-| `exhibition_list` / `exhibition_get` | `GET /api/exhibitions`, `/{id}` | exhibition.read |
-| `linktree_list` / `linktree_get` | `GET /api/linktree`, `/{id}` | linktree.read |
-| `attachment_list` | `GET /api/attachments` | activity.read 또는 site_setting.read (scope별 read는 라우트가 판정) |
-| `member_list` / `member_get` | `GET /api/users`, `/{id}` | user.read (부원은 라우트가 본인만 반환) |
-| `my_profile_update` | `PATCH /api/users/{본인 id}` (프로필 필드만) | verified |
-| `my_profile_photo_set` | 파일 → `profile_image` 업로드 → `PATCH /api/users/{본인 id}` | verified |
-| `upload_prepare` / `upload_status` | 5장 참고 | verified (purpose별 권한은 5장) |
+| 도구                                                        | 호출 라우트                                                  | 노출 조건                                                           |
+| ----------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------- |
+| `whoami`                                                    | `GET /api/users/me` + 노출 도구 요약                         | verified                                                            |
+| `generation_list` / `generation_get` / `generation_members` | `GET /api/generations`, `/{id}`, `/{id}/members`             | generation.read                                                     |
+| `activity_list` / `activity_get`                            | `GET /api/activities`, `/{id}`                               | activity.read                                                       |
+| `exhibition_list` / `exhibition_get`                        | `GET /api/exhibitions`, `/{id}`                              | exhibition.read                                                     |
+| `linktree_list` / `linktree_get`                            | `GET /api/linktree`, `/{id}`                                 | linktree.read                                                       |
+| `attachment_list`                                           | `GET /api/attachments`                                       | activity.read 또는 site_setting.read (scope별 read는 라우트가 판정) |
+| `member_list` / `member_get`                                | `GET /api/users`, `/{id}`                                    | user.read (부원은 라우트가 본인만 반환)                             |
+| `my_profile_update`                                         | `PATCH /api/users/{본인 id}` (프로필 필드만)                 | verified                                                            |
+| `my_profile_photo_set`                                      | 파일 → `profile_image` 업로드 → `PATCH /api/users/{본인 id}` | verified                                                            |
+| `upload_prepare` / `upload_status`                          | 5장 참고                                                     | verified (purpose별 권한은 5장)                                     |
 
 **운영진 이상** (manager)
 
-| 도구 | 호출 라우트 | 노출 조건 |
-|---|---|---|
-| `activity_create` / `activity_update` | `POST /api/activities`, `PATCH /{id}` (커버 이미지 파일 인자 선택) | activity.create / update |
-| `activity_delete` | `DELETE /api/activities/{id}` | activity.delete |
-| `activity_images_add` | 파일들 → `POST /api/activities/{id}/images/batch` | activity.update |
-| `activity_image_update` / `activity_images_update` | `PATCH /{id}/images/{imageId}`, `PATCH /{id}/images/batch` (캡션, 순서) | activity.update |
-| `activity_image_delete` | `DELETE /{id}/images/{imageId}` | activity.delete |
-| `exhibition_create` / `exhibition_update` | `POST /api/exhibitions`, `PATCH /{id}` (커버 이미지 파일 인자 선택) | exhibition.create / update |
-| `exhibition_images_add` / `exhibition_image_update` / `exhibition_images_update` / `exhibition_image_delete` | 활동 이미지와 같은 구조 | exhibition.update (이미지 삭제 포함) |
-| `linktree_create` / `linktree_update` / `linktree_delete` | `/api/linktree` CRUD | linktree.create / update / delete |
-| `linktree_item_add` / `linktree_item_update` | `POST /api/linktree/{id}/items`, `PATCH /{itemId}` | linktree.update |
-| `linktree_item_delete` | `DELETE /api/linktree/{id}/items/{itemId}` | linktree.delete |
-| `attachment_create` / `attachment_update` / `attachment_delete` | `/api/attachments` (파일 인자 또는 `linkUrl`) | activity나 site_setting의 create 또는 update (`canCreateOrUpdate`, scope별 판정은 라우트) |
-| `dashboard_overview` | `GET /api/admin/dashboard` | manager_like |
-| `page_view_stats` / `page_view_dashboard` | `GET /api/admin/page-views/stats`, `/dashboard` | manager_like |
-| `audit_log_get` | `GET /api/audit/{resourceType}/{resourceId}` | manager_like (resourceType별 read는 라우트가 판정) |
+| 도구                                                                                                         | 호출 라우트                                                             | 노출 조건                                                                                 |
+| ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `activity_create` / `activity_update`                                                                        | `POST /api/activities`, `PATCH /{id}` (커버 이미지 파일 인자 선택)      | activity.create / update                                                                  |
+| `activity_delete`                                                                                            | `DELETE /api/activities/{id}`                                           | activity.delete                                                                           |
+| `activity_images_add`                                                                                        | 파일들 → `POST /api/activities/{id}/images/batch`                       | activity.update                                                                           |
+| `activity_image_update` / `activity_images_update`                                                           | `PATCH /{id}/images/{imageId}`, `PATCH /{id}/images/batch` (캡션, 순서) | activity.update                                                                           |
+| `activity_image_delete`                                                                                      | `DELETE /{id}/images/{imageId}`                                         | activity.delete                                                                           |
+| `exhibition_create` / `exhibition_update`                                                                    | `POST /api/exhibitions`, `PATCH /{id}` (커버 이미지 파일 인자 선택)     | exhibition.create / update                                                                |
+| `exhibition_images_add` / `exhibition_image_update` / `exhibition_images_update` / `exhibition_image_delete` | 활동 이미지와 같은 구조                                                 | exhibition.update (이미지 삭제 포함)                                                      |
+| `linktree_create` / `linktree_update` / `linktree_delete`                                                    | `/api/linktree` CRUD                                                    | linktree.create / update / delete                                                         |
+| `linktree_item_add` / `linktree_item_update`                                                                 | `POST /api/linktree/{id}/items`, `PATCH /{itemId}`                      | linktree.update                                                                           |
+| `linktree_item_delete`                                                                                       | `DELETE /api/linktree/{id}/items/{itemId}`                              | linktree.delete                                                                           |
+| `attachment_create` / `attachment_update` / `attachment_delete`                                              | `/api/attachments` (파일 인자 또는 `linkUrl`)                           | activity나 site_setting의 create 또는 update (`canCreateOrUpdate`, scope별 판정은 라우트) |
+| `dashboard_overview`                                                                                         | `GET /api/admin/dashboard`                                              | manager_like                                                                              |
+| `page_view_stats` / `page_view_dashboard`                                                                    | `GET /api/admin/page-views/stats`, `/dashboard`                         | manager_like                                                                              |
+| `audit_log_get`                                                                                              | `GET /api/audit/{resourceType}/{resourceId}`                            | manager_like (resourceType별 read는 라우트가 판정)                                        |
 
 위 노출 조건은 2026-10-08 기준 라우트의 `assertPermission` 호출에서 옮겨 적었다. 활동 이미지 삭제는 `activity.delete`, 전시 이미지 삭제는 `exhibition.update`처럼 리소스마다 다르다. 이후 라우트가 바뀌면 4.4의 노출 일치 테스트가 실패해 알려준다.
 
 **회장단** (vice_president, president)
 
-| 도구 | 호출 라우트 | 노출 조건 |
-|---|---|---|
-| `generation_create` / `generation_update` / `generation_reorder` | `POST /api/generations`, `PATCH /{id}`, `POST /reorder` | generation.create / update |
-| `member_update` | `PATCH /api/users/{id}` (역할, 기수 포함) | user.update |
-| `member_bulk_role` | `PATCH /api/users/bulk-role` | user.update |
-| `member_delete` | `DELETE /api/users/{id}` | user.delete |
-| `member_resource_history` | `GET /api/users/{id}/resource-history` | leadership (회장·부회장) |
-| `site_settings_get` / `site_settings_update` | `GET`/`PATCH /api/site-settings` | site_setting.update |
-| `recruiting_plan_get` / `recruiting_plan_upsert` | `GET`/`PATCH /api/recruiting-plan/current` (이미지 파일 인자) | leadership (`isPrivilegedActor`) |
+| 도구                                                             | 호출 라우트                                                   | 노출 조건                        |
+| ---------------------------------------------------------------- | ------------------------------------------------------------- | -------------------------------- |
+| `generation_create` / `generation_update` / `generation_reorder` | `POST /api/generations`, `PATCH /{id}`, `POST /reorder`       | generation.create / update       |
+| `member_update`                                                  | `PATCH /api/users/{id}` (역할, 기수 포함)                     | user.update                      |
+| `member_bulk_role`                                               | `PATCH /api/users/bulk-role`                                  | user.update                      |
+| `member_delete`                                                  | `DELETE /api/users/{id}`                                      | user.delete                      |
+| `member_resource_history`                                        | `GET /api/users/{id}/resource-history`                        | leadership (회장·부회장)         |
+| `site_settings_get` / `site_settings_update`                     | `GET`/`PATCH /api/site-settings`                              | site_setting.update              |
+| `recruiting_plan_get` / `recruiting_plan_upsert`                 | `GET`/`PATCH /api/recruiting-plan/current` (이미지 파일 인자) | leadership (`isPrivilegedActor`) |
 
 **회장 전용** (president)
 
-| 도구 | 호출 라우트 | 노출 조건 |
-|---|---|---|
+| 도구                | 호출 라우트                    | 노출 조건         |
+| ------------------- | ------------------------------ | ----------------- |
 | `generation_delete` | `DELETE /api/generations/{id}` | generation.delete |
 | `exhibition_delete` | `DELETE /api/exhibitions/{id}` | exhibition.delete |
 
@@ -204,14 +204,14 @@ api.yonyoung.moveto.kr/mcp  ──▶  API Worker: MCP 핸들러
 1. `upload_prepare({ purpose, file_name, content_type, size })`를 호출한다.
    - `purpose`는 기존 presign 라우트에 대응한다.
 
-     | purpose | 대응 presign | 권한 | 형식 |
-     |---|---|---|---|
-     | `activity_cover`, `activity_image` | `/api/activities/presign/cover·detail` | activity create/update | 이미지 |
-     | `activity_file` | `/api/activities/presign/file` | activity create/update | 문서 |
+     | purpose                                | 대응 presign                            | 권한                     | 형식   |
+     | -------------------------------------- | --------------------------------------- | ------------------------ | ------ |
+     | `activity_cover`, `activity_image`     | `/api/activities/presign/cover·detail`  | activity create/update   | 이미지 |
+     | `activity_file`                        | `/api/activities/presign/file`          | activity create/update   | 문서   |
      | `exhibition_cover`, `exhibition_image` | `/api/exhibitions/presign/cover·detail` | exhibition create/update | 이미지 |
-     | `profile_image` | `/api/users/presign/profile` | 본인 | 이미지 |
-     | `recruiting_image` | `/api/recruiting/presign/image` | site_setting | 이미지 |
-     | `site_file` | `/api/site/presign/file` | site_setting | 문서 |
+     | `profile_image`                        | `/api/users/presign/profile`            | 본인                     | 이미지 |
+     | `recruiting_image`                     | `/api/recruiting/presign/image`         | site_setting             | 이미지 |
+     | `site_file`                            | `/api/site/presign/file`                | site_setting             | 문서   |
 
    - 권한 검사와 MIME 검사는 `upload.policy.ts`(`assertCanCreateOrUpdate`, `isUserProfileUploadAllowed`, `assertUploadPayloadAllowed`)를 그대로 쓴다.
    - R2 용량 예약은 `reserveStorageCapacityForUpload`로 한다.
@@ -252,17 +252,17 @@ api.yonyoung.moveto.kr/mcp  ──▶  API Worker: MCP 핸들러
 
 ### 5.5 `mcp_uploads` 테이블 (D1)
 
-| 컬럼 | 설명 |
-|---|---|
-| `id` | upload_id (UUID) |
-| `token_hash` | 업로드 토큰의 SHA-256 (unique) |
-| `user_id` | 발급한 사용자 |
-| `purpose` | 5.3 표의 값 |
-| `file_name`, `content_type`, `declared_size` | 선언값 |
-| `object_key`, `public_url`, `width`, `height` | 완료 후 채움 |
-| `reservation_id` | 용량 예약 ID |
-| `status` | `pending` → `receiving` → `completed` → `consumed`, 실패 시 `failed`. 만료는 `expires_at`로 판단한다. |
-| `expires_at`, `created_at`, `completed_at` | 시각 |
+| 컬럼                                          | 설명                                                                                                  |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `id`                                          | upload_id (UUID)                                                                                      |
+| `token_hash`                                  | 업로드 토큰의 SHA-256 (unique)                                                                        |
+| `user_id`                                     | 발급한 사용자                                                                                         |
+| `purpose`                                     | 5.3 표의 값                                                                                           |
+| `file_name`, `content_type`, `declared_size`  | 선언값                                                                                                |
+| `object_key`, `public_url`, `width`, `height` | 완료 후 채움                                                                                          |
+| `reservation_id`                              | 용량 예약 ID                                                                                          |
+| `status`                                      | `pending` → `receiving` → `completed` → `consumed`, 실패 시 `failed`. 만료는 `expires_at`로 판단한다. |
+| `expires_at`, `created_at`, `completed_at`    | 시각                                                                                                  |
 
 `receiving`은 동시 PUT 중 하나만 통과시키는 상태다.
 
@@ -327,15 +327,15 @@ apps/web/features/mcp/              안내 페이지 컴포넌트, 연결된 앱
 
 ## 8. 테스트
 
-| 대상 | 내용 |
-|---|---|
-| 노출 | 7개 역할 × `tools/list` 결과가 카탈로그와 `policy.ts`로 계산한 기대 집합과 같다. 4.4의 라우트 일치 검증도 포함한다. |
-| 권한 위임 | MCP 경유 호출로 다음 경우에 기존 라우트와 같은 상태 코드와 메시지가 나온다: 부회장의 상위·동일 서열 수정, 마지막 회장 강등, 부원의 타인 프로필 수정, 부회장의 기수·전시 삭제 |
-| 인증 | 토큰 없음/만료/서명 불일치/잘못된 `aud`이면 401과 `WWW-Authenticate`가 나온다. 삭제된 사용자는 401, `unverified`는 403이다. 외부 요청이 헤더나 쿼리로 Actor를 주입할 수 없다. 역할이 바뀌면 다음 요청에 바로 반영된다. |
-| 업로드 | 토큰 재사용, 동시 PUT 2회, 다른 사용자의 upload_id, 만료, 선언 크기 불일치, MIME 위조, 100MB 초과, purpose 권한 부족, purpose와 도구 불일치, consumed 재사용을 검사한다. ChatGPT 경로는 비허용 호스트, 리다이렉트, 사설 IP를 검사한다. 이미지 크기 추출을 형식별로 확인한다. |
-| 회귀 | 기존 API 테스트, Workers 테스트, OpenAPI 스냅샷, `auth-schema-parity` 테스트가 통과한다. |
-| 웹 | 유닛: 역할별 도구 표, 내비게이션 `mcp` 경로 제외, sign-in return-to 허용 범위. Playwright: 동의 화면(허용/거절/unverified), 업로드 페이지(소유자/비소유자/만료). |
-| 수동 | 배포 전에 Claude와 ChatGPT에 실제로 연결해 부원 계정과 회장 계정으로 다음을 1회씩 확인한다: 목록 조회, 채팅 첨부 이미지를 활동에 추가, 삭제 확인 흐름, 연결 해제 후 401 |
+| 대상      | 내용                                                                                                                                                                                                                                                                         |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 노출      | 7개 역할 × `tools/list` 결과가 카탈로그와 `policy.ts`로 계산한 기대 집합과 같다. 4.4의 라우트 일치 검증도 포함한다.                                                                                                                                                          |
+| 권한 위임 | MCP 경유 호출로 다음 경우에 기존 라우트와 같은 상태 코드와 메시지가 나온다: 부회장의 상위·동일 서열 수정, 마지막 회장 강등, 부원의 타인 프로필 수정, 부회장의 기수·전시 삭제                                                                                                 |
+| 인증      | 토큰 없음/만료/서명 불일치/잘못된 `aud`이면 401과 `WWW-Authenticate`가 나온다. 삭제된 사용자는 401, `unverified`는 403이다. 외부 요청이 헤더나 쿼리로 Actor를 주입할 수 없다. 역할이 바뀌면 다음 요청에 바로 반영된다.                                                       |
+| 업로드    | 토큰 재사용, 동시 PUT 2회, 다른 사용자의 upload_id, 만료, 선언 크기 불일치, MIME 위조, 100MB 초과, purpose 권한 부족, purpose와 도구 불일치, consumed 재사용을 검사한다. ChatGPT 경로는 비허용 호스트, 리다이렉트, 사설 IP를 검사한다. 이미지 크기 추출을 형식별로 확인한다. |
+| 회귀      | 기존 API 테스트, Workers 테스트, OpenAPI 스냅샷, `auth-schema-parity` 테스트가 통과한다.                                                                                                                                                                                     |
+| 웹        | 유닛: 역할별 도구 표, 내비게이션 `mcp` 경로 제외, sign-in return-to 허용 범위. Playwright: 동의 화면(허용/거절/unverified), 업로드 페이지(소유자/비소유자/만료).                                                                                                             |
+| 수동      | 배포 전에 Claude와 ChatGPT에 실제로 연결해 부원 계정과 회장 계정으로 다음을 1회씩 확인한다: 목록 조회, 채팅 첨부 이미지를 활동에 추가, 삭제 확인 흐름, 연결 해제 후 401                                                                                                      |
 
 API는 `src/tests/app-rbac.test.ts`처럼 `createApp`에 메모리 의존성을 주입하는 방식으로 테스트한다. JWT 검증은 테스트 키로 서명한 토큰을 쓴다.
 

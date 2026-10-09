@@ -50,14 +50,21 @@ export const linktreeTools = [
     name: "linktree_item_add",
     method: "POST",
     path: "/api/linktree/{id}/items",
-    inputSchema: z.object({ id: linktreeId, data: ApiCreateLinktreeItemSchema }),
+    inputSchema: z.object({
+      id: linktreeId,
+      data: ApiCreateLinktreeItemSchema,
+    }),
     summary: "링크를 추가했습니다.",
   }),
   routeTool({
     name: "linktree_item_update",
     method: "PATCH",
     path: "/api/linktree/{id}/items/{itemId}",
-    inputSchema: z.object({ id: linktreeId, itemId, data: ApiUpdateLinktreeItemSchema }),
+    inputSchema: z.object({
+      id: linktreeId,
+      itemId,
+      data: ApiUpdateLinktreeItemSchema,
+    }),
     summary: "링크를 수정했습니다.",
   }),
   routeTool({

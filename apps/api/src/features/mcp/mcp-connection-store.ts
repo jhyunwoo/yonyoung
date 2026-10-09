@@ -12,9 +12,11 @@ export interface McpConnectionStore {
   list(userId: string): Promise<McpConnection[]>;
   /** 동의를 지우고 그 클라이언트의 토큰을 폐기한다. 지운 동의가 있었으면 true. */
   revoke(userId: string, clientId: string, now: number): Promise<boolean>;
-  getClient(
-    clientId: string,
-  ): Promise<{ clientId: string; name: string | null; uri: string | null } | null>;
+  getClient(clientId: string): Promise<{
+    clientId: string;
+    name: string | null;
+    uri: string | null;
+  } | null>;
 }
 
 type ConnectionDatabase = Pick<D1Database, "prepare" | "batch">;
@@ -34,7 +36,9 @@ const parseScopes = (value: string | null): string[] => {
   }
   try {
     const parsed: unknown = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === "string")
+      : [];
   } catch {
     return [];
   }
@@ -49,7 +53,9 @@ export const createD1McpConnectionStore = (
 ): McpConnectionStore => ({
   async hasConsent(userId, clientId) {
     const row = await database
-      .prepare("SELECT 1 AS found FROM oauth_consent WHERE user_id = ? AND client_id = ? LIMIT 1")
+      .prepare(
+        "SELECT 1 AS found FROM oauth_consent WHERE user_id = ? AND client_id = ? LIMIT 1",
+      )
       .bind(userId, clientId)
       .first<{ found: number }>();
     return row !== null;
@@ -81,7 +87,9 @@ export const createD1McpConnectionStore = (
   async revoke(userId, clientId, now) {
     const [deleted] = await database.batch([
       database
-        .prepare("DELETE FROM oauth_consent WHERE user_id = ? AND client_id = ?")
+        .prepare(
+          "DELETE FROM oauth_consent WHERE user_id = ? AND client_id = ?",
+        )
         .bind(userId, clientId),
       database
         .prepare(
@@ -104,7 +112,9 @@ export const createD1McpConnectionStore = (
       )
       .bind(clientId)
       .first<{ client_id: string; name: string | null; uri: string | null }>();
-    return row ? { clientId: row.client_id, name: row.name, uri: row.uri } : null;
+    return row
+      ? { clientId: row.client_id, name: row.name, uri: row.uri }
+      : null;
   },
 });
 
@@ -112,7 +122,8 @@ export const createMemoryMcpConnectionStore = (
   seed: Array<{ userId: string; clientId: string; clientName?: string }> = [],
 ): McpConnectionStore => {
   const consents = new Map<string, McpConnection & { userId: string }>();
-  const key = (userId: string, clientId: string) => `${userId}\u0000${clientId}`;
+  const key = (userId: string, clientId: string) =>
+    `${userId}\u0000${clientId}`;
   for (const entry of seed) {
     consents.set(key(entry.userId, entry.clientId), {
       userId: entry.userId,
@@ -138,8 +149,12 @@ export const createMemoryMcpConnectionStore = (
       return consents.delete(key(userId, clientId));
     },
     async getClient(clientId) {
-      const consent = [...consents.values()].find((entry) => entry.clientId === clientId);
-      return consent ? { clientId, name: consent.clientName, uri: consent.clientUri } : null;
+      const consent = [...consents.values()].find(
+        (entry) => entry.clientId === clientId,
+      );
+      return consent
+        ? { clientId, name: consent.clientName, uri: consent.clientUri }
+        : null;
     },
   };
 };

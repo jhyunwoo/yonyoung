@@ -1,9 +1,14 @@
 import { resolve } from "node:path";
-import { cloudflareTest, readD1Migrations } from "@cloudflare/vitest-pool-workers";
+import {
+  cloudflareTest,
+  readD1Migrations,
+} from "@cloudflare/vitest-pool-workers";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig(async () => {
-  const migrations = await readD1Migrations(resolve(import.meta.dirname, "drizzle"));
+  const migrations = await readD1Migrations(
+    resolve(import.meta.dirname, "drizzle"),
+  );
 
   return {
     plugins: [

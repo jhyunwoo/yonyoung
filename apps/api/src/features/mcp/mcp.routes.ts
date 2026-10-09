@@ -33,11 +33,17 @@ const PROTECTED_RESOURCE_METADATA_PATHS = [
 
 const mcpForbiddenResponse = (message: string): Response =>
   new Response(
-    JSON.stringify({ jsonrpc: "2.0", error: { code: -32003, message }, id: null }),
+    JSON.stringify({
+      jsonrpc: "2.0",
+      error: { code: -32003, message },
+      id: null,
+    }),
     { status: 403, headers: { "content-type": "application/json" } },
   );
 
-const readExecutionContext = (c: Context<HonoAppType>): ExecutionContext | undefined => {
+const readExecutionContext = (
+  c: Context<HonoAppType>,
+): ExecutionContext | undefined => {
   try {
     return c.executionCtx as ExecutionContext;
   } catch {
@@ -47,7 +53,11 @@ const readExecutionContext = (c: Context<HonoAppType>): ExecutionContext | undef
 
 const createMcpToolContext = (
   c: Context<HonoAppType>,
-  input: { actor: Actor; dispatch: InternalDispatch; dependencies: AppDependencies },
+  input: {
+    actor: Actor;
+    dispatch: InternalDispatch;
+    dependencies: AppDependencies;
+  },
 ): McpToolContext => {
   const uploads = createRequestMcpUploadService(c, input.dependencies);
   return {
@@ -90,28 +100,51 @@ export const registerMcpRoutes = (app: App, dependencies: AppDependencies) => {
       const mcpEnv = resolveMcpRuntimeEnv(c.env);
       const connections = dependencies.getMcpConnectionStore(c);
       if (!(await connections.hasConsent(identity.userId, identity.clientId))) {
-        return mcpUnauthorizedResponse(mcpEnv, "연결이 해제되었습니다. 커넥터를 다시 연결해 주세요.");
+        return mcpUnauthorizedResponse(
+          mcpEnv,
+          "연결이 해제되었습니다. 커넥터를 다시 연결해 주세요.",
+        );
       }
 
       const actor = await dependencies.loadActorByUserId(c, identity.userId);
       if (!actor) {
-        return mcpUnauthorizedResponse(mcpEnv, "계정을 찾을 수 없습니다. 다시 연결해 주세요.");
+        return mcpUnauthorizedResponse(
+          mcpEnv,
+          "계정을 찾을 수 없습니다. 다시 연결해 주세요.",
+        );
       }
       if (actor.role === "unverified") {
         return mcpForbiddenResponse("관리자 승인 후 사용할 수 있습니다.");
       }
 
-      const context = createMcpToolContext(c, { actor, dispatch, dependencies });
-      const handler = createMcpHandler(() => buildMcpServer(context, MCP_TOOL_DEFINITIONS));
+      const context = createMcpToolContext(c, {
+        actor,
+        dispatch,
+        dependencies,
+      });
+      const handler = createMcpHandler(() =>
+        buildMcpServer(context, MCP_TOOL_DEFINITIONS),
+      );
       return handler.fetch(c.req.raw);
     }),
   );
 
-  app.on(["GET", "DELETE"], "/mcp", (c) => c.body(null, 405, { Allow: "POST" }));
+  app.on(["GET", "DELETE"], "/mcp", (c) =>
+    c.body(null, 405, { Allow: "POST" }),
+  );
 
-  const uploadErrorResponse = (c: Context<HonoAppType>, error: McpUploadError) =>
+  const uploadErrorResponse = (
+    c: Context<HonoAppType>,
+    error: McpUploadError,
+  ) =>
     c.json(
-      { error: { code: "UPLOAD_ERROR", message: error.message, requestId: c.get("requestId") } },
+      {
+        error: {
+          code: "UPLOAD_ERROR",
+          message: error.message,
+          requestId: c.get("requestId"),
+        },
+      },
       error.status as ContentfulStatusCode,
     );
 
@@ -132,10 +165,10 @@ export const registerMcpRoutes = (app: App, dependencies: AppDependencies) => {
     const contentLength =
       lengthHeader && /^\d+$/.test(lengthHeader) ? Number(lengthHeader) : null;
     try {
-      const record = await createRequestMcpUploadService(c, dependencies).receive(
-        c.req.param("token"),
-        { contentLength, body: c.req.raw.body },
-      );
+      const record = await createRequestMcpUploadService(
+        c,
+        dependencies,
+      ).receive(c.req.param("token"), { contentLength, body: c.req.raw.body });
       return c.json({
         data: {
           uploadId: record.id,
@@ -180,12 +213,19 @@ export const registerMcpRoutes = (app: App, dependencies: AppDependencies) => {
 
   app.get("/api/mcp/tools", async (c) => {
     const actor = await requireAuthenticatedActor(c, dependencies);
-    return c.json({ data: buildMcpOverview(actor.role, resolveMcpRuntimeEnv(c.env).resourceUrl) });
+    return c.json({
+      data: buildMcpOverview(
+        actor.role,
+        resolveMcpRuntimeEnv(c.env).resourceUrl,
+      ),
+    });
   });
 
   app.get("/api/mcp/connections", async (c) => {
     const actor = await requireAuthenticatedActor(c, dependencies);
-    const connections = await dependencies.getMcpConnectionStore(c).list(actor.id);
+    const connections = await dependencies
+      .getMcpConnectionStore(c)
+      .list(actor.id);
     return c.json({
       data: connections.map((connection) => ({
         ...connection,
@@ -210,7 +250,9 @@ export const registerMcpRoutes = (app: App, dependencies: AppDependencies) => {
     const actor = await requireAuthenticatedActor(c, dependencies);
     const query = new URL(c.req.url).search.slice(1);
     if (!(await dependencies.verifyOAuthConsentQuery(c, query))) {
-      throw AppError.badRequest("연결 요청이 만료되었거나 올바르지 않습니다. 처음부터 다시 연결해 주세요.");
+      throw AppError.badRequest(
+        "연결 요청이 만료되었거나 올바르지 않습니다. 처음부터 다시 연결해 주세요.",
+      );
     }
     const params = new URLSearchParams(query);
     const client = await dependencies
@@ -223,7 +265,10 @@ export const registerMcpRoutes = (app: App, dependencies: AppDependencies) => {
       data: {
         client,
         scopes: (params.get("scope") ?? "").split(" ").filter(Boolean),
-        overview: buildMcpOverview(actor.role, resolveMcpRuntimeEnv(c.env).resourceUrl),
+        overview: buildMcpOverview(
+          actor.role,
+          resolveMcpRuntimeEnv(c.env).resourceUrl,
+        ),
       },
     });
   });

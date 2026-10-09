@@ -17,8 +17,16 @@ import {
   settleUploadReservation,
 } from "../../uploads/upload-capacity";
 import { describeApiFailure, toolFailure } from "../tool-result";
-import { StreamLengthMismatchError, enforceExactLength, peekStream } from "./byte-stream";
-import { SNIFF_BYTES, matchesDeclaredType, readImageDimensions } from "./file-sniff";
+import {
+  StreamLengthMismatchError,
+  enforceExactLength,
+  peekStream,
+} from "./byte-stream";
+import {
+  SNIFF_BYTES,
+  matchesDeclaredType,
+  readImageDimensions,
+} from "./file-sniff";
 import type { McpObjectStore } from "./mcp-object-store";
 import type { McpUploadRecord, McpUploadStore } from "./mcp-upload-store";
 import { UPLOAD_PURPOSE_RULES } from "./upload-purpose";
@@ -63,7 +71,10 @@ export type McpUploadServiceDeps = {
   store: McpUploadStore;
   objects: McpObjectStore;
   presign: Pick<PresignService, "allocateManagedObject">;
-  reserveCapacity: (actorId: string, fileSize: number) => Promise<{ id: string }>;
+  reserveCapacity: (
+    actorId: string,
+    fileSize: number,
+  ) => Promise<{ id: string }>;
   settleReservation: (reservationId: string) => Promise<void>;
   releaseReservation: (reservationId: string) => Promise<void>;
   apiOrigin: string;
@@ -71,13 +82,22 @@ export type McpUploadServiceDeps = {
 };
 
 const toBase64Url = (bytes: Uint8Array): string =>
-  btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 
-const createUploadToken = (): string => toBase64Url(crypto.getRandomValues(new Uint8Array(32)));
+const createUploadToken = (): string =>
+  toBase64Url(crypto.getRandomValues(new Uint8Array(32)));
 
 const sha256Hex = async (value: string): Promise<string> => {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(value),
+  );
+  return [...new Uint8Array(digest)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
 };
 
 export const toResolvedUpload = (
@@ -130,12 +150,14 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
     const rule = UPLOAD_PURPOSE_RULES[input.purpose];
     const reservation = await deps.reserveCapacity(actor.id, input.size);
     try {
-      const { objectKey, publicUrl } = await deps.presign.allocateManagedObject({
-        actorId: actor.id,
-        resource: rule.resourcePath,
-        slot: rule.slot,
-        fileName: input.fileName,
-      });
+      const { objectKey, publicUrl } = await deps.presign.allocateManagedObject(
+        {
+          actorId: actor.id,
+          resource: rule.resourcePath,
+          slot: rule.slot,
+          fileName: input.fileName,
+        },
+      );
       const token = createUploadToken();
       const now = Date.now();
       const record: McpUploadRecord = {
@@ -179,10 +201,14 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
         UPLOAD_PURPOSE_RULES[record.purpose].kind === "image"
           ? readImageDimensions(record.contentType, head)
           : null;
-      await deps.objects.put(record.objectKey, enforceExactLength(stream, record.declaredSize), {
-        contentType: record.contentType,
-        size: record.declaredSize,
-      });
+      await deps.objects.put(
+        record.objectKey,
+        enforceExactLength(stream, record.declaredSize),
+        {
+          contentType: record.contentType,
+          size: record.declaredSize,
+        },
+      );
 
       const completed = {
         width: dimensions?.width ?? null,
@@ -201,13 +227,19 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
         await deps.releaseReservation(record.reservationId);
       }
       if (error instanceof StreamLengthMismatchError) {
-        throw new McpUploadError(400, "받은 파일 크기가 선언한 크기와 다릅니다.");
+        throw new McpUploadError(
+          400,
+          "받은 파일 크기가 선언한 크기와 다릅니다.",
+        );
       }
       throw error;
     }
   };
 
-  const findOwned = async (actor: Actor, uploadId: string): Promise<McpUploadRecord> => {
+  const findOwned = async (
+    actor: Actor,
+    uploadId: string,
+  ): Promise<McpUploadRecord> => {
     const record = await deps.store.getById(uploadId);
     if (!record || record.userId !== actor.id) {
       throw new McpUploadError(404, `업로드를 찾을 수 없습니다: ${uploadId}`);
@@ -220,7 +252,10 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
 
     putUrlFor: (token: string) => `${deps.apiOrigin}/mcp/uploads/${token}`,
 
-    async prepare(actor: Actor, input: FileDeclaration): Promise<PreparedUpload> {
+    async prepare(
+      actor: Actor,
+      input: FileDeclaration,
+    ): Promise<PreparedUpload> {
       assertPurposeAllowed(actor, input.purpose);
       const { record, token } = await createRecord(actor, input);
       return {
@@ -233,7 +268,10 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
 
     async receive(
       token: string,
-      input: { contentLength: number | null; body: ReadableStream<Uint8Array> | null },
+      input: {
+        contentLength: number | null;
+        body: ReadableStream<Uint8Array> | null;
+      },
     ): Promise<McpUploadRecord> {
       const record = await deps.store.getByTokenHash(await sha256Hex(token));
       if (!record) {
@@ -243,10 +281,16 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
         throw new McpUploadError(409, "이미 사용한 업로드 주소입니다.");
       }
       if (record.expiresAt <= Date.now()) {
-        throw new McpUploadError(410, "업로드 주소가 만료되었습니다. upload_prepare를 다시 호출해 주세요.");
+        throw new McpUploadError(
+          410,
+          "업로드 주소가 만료되었습니다. upload_prepare를 다시 호출해 주세요.",
+        );
       }
       if (input.contentLength === null) {
-        throw new McpUploadError(411, "Content-Length 헤더가 필요합니다. curl -T로 파일을 보내 주세요.");
+        throw new McpUploadError(
+          411,
+          "Content-Length 헤더가 필요합니다. curl -T로 파일을 보내 주세요.",
+        );
       }
       if (input.contentLength !== record.declaredSize) {
         throw new McpUploadError(
@@ -298,7 +342,10 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
           );
         }
         if (record.status === "consumed") {
-          throw new McpUploadError(409, `이미 사용한 업로드입니다: ${uploadId}`);
+          throw new McpUploadError(
+            409,
+            `이미 사용한 업로드입니다: ${uploadId}`,
+          );
         }
         if (record.status !== "completed") {
           throw new McpUploadError(
@@ -316,19 +363,26 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
       const claimed = await deps.store.claim(ids, actor.id);
       if (claimed.length !== ids.length) {
         await deps.store.release(claimed);
-        throw new McpUploadError(409, "이미 사용한 업로드가 섞여 있습니다. 새로 올려 주세요.");
+        throw new McpUploadError(
+          409,
+          "이미 사용한 업로드가 섞여 있습니다. 새로 올려 주세요.",
+        );
       }
     },
 
     /** 아무도 참조하지 않게 된 완료 업로드를 실패로 돌리고 저장된 객체를 지운다. */
     async discard(actor: Actor, uploads: ResolvedUpload[]): Promise<void> {
       const ids = uploads.map((upload) => upload.uploadId);
-      const records = await Promise.all(ids.map((id) => deps.store.getById(id)));
+      const records = await Promise.all(
+        ids.map((id) => deps.store.getById(id)),
+      );
       const discarded = new Set(await deps.store.discard(ids, actor.id));
       await Promise.all(
         records
           .filter((record) => record && discarded.has(record.id))
-          .map((record) => deps.objects.delete(record!.objectKey).catch(() => undefined)),
+          .map((record) =>
+            deps.objects.delete(record!.objectKey).catch(() => undefined),
+          ),
       );
     },
 
@@ -370,7 +424,8 @@ export const createRequestMcpUploadService = (
         throw error;
       }
     },
-    settleReservation: (reservationId) => settleUploadReservation(reservationStore, reservationId, c),
+    settleReservation: (reservationId) =>
+      settleUploadReservation(reservationStore, reservationId, c),
     releaseReservation: (reservationId) =>
       reservationStore.remove(reservationId).catch(() => undefined),
     apiOrigin: new URL(mcpEnv.resourceUrl).origin,
@@ -379,13 +434,22 @@ export const createRequestMcpUploadService = (
 };
 
 /** 업로드 오류를 도구 결과로 바꾼다. 업로드 오류가 아니면 다시 던져 SDK가 처리하게 한다. */
-export const uploadErrorResult = (error: unknown, role: Role): CallToolResult => {
+export const uploadErrorResult = (
+  error: unknown,
+  role: Role,
+): CallToolResult => {
   if (!(error instanceof McpUploadError)) {
     throw error;
   }
   return toolFailure(
     describeApiFailure(
-      { ok: false, status: error.status, code: "UPLOAD_ERROR", message: error.message, requestId: null },
+      {
+        ok: false,
+        status: error.status,
+        code: "UPLOAD_ERROR",
+        message: error.message,
+        requestId: null,
+      },
       role,
     ),
   );

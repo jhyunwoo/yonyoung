@@ -2,8 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { CORE_ROLE_LABELS, normalizeLegacyRole } from "@yonyoung/contracts/auth-roles";
-import { apiMcpConsentContextSchema, type ApiMcpConsentContext } from "@yonyoung/contracts/mcp";
-import { Alert, Button, Card, CardBody, CardHeader } from "@/app/(dashboard)/_components/ui";
+import {
+  apiMcpConsentContextSchema,
+  type ApiMcpConsentContext,
+} from "@yonyoung/contracts/mcp";
+import {
+  Alert,
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+} from "@/app/(dashboard)/_components/ui";
 import { authClient } from "@/features/auth/client/auth-client";
 import { groupToolsByCategory } from "@/features/mcp/mcp-tool-groups";
 
@@ -32,7 +41,9 @@ const readConsentContext = async (): Promise<LoadState> => {
       "연결 요청을 확인하지 못했습니다.";
     return { status: "error", message };
   }
-  const parsed = apiMcpConsentContextSchema.safeParse((body as { data?: unknown } | null)?.data);
+  const parsed = apiMcpConsentContextSchema.safeParse(
+    (body as { data?: unknown } | null)?.data,
+  );
   return parsed.success
     ? { status: "ready", context: parsed.data }
     : { status: "error", message: "연결 요청 정보를 읽지 못했습니다." };
@@ -66,7 +77,9 @@ export default function McpConsentClient() {
   };
 
   if (state.status === "loading") {
-    return <p className="p-6 text-body-sm text-ink-muted">연결 요청을 확인하고 있습니다…</p>;
+    return (
+      <p className="p-6 text-body-sm text-ink-muted">연결 요청을 확인하고 있습니다…</p>
+    );
   }
   if (state.status === "error") {
     return (
@@ -87,9 +100,9 @@ export default function McpConsentClient() {
     <main className="mx-auto flex max-w-lg flex-col gap-4 p-6">
       <h1 className="text-h3 text-ink">{clientName} 연결</h1>
       <p className="text-body-sm text-ink-muted">
-        {clientName}이(가) {CORE_ROLE_LABELS[role]} 권한으로 연영 대시보드에 접근하려고 합니다.
-        허용하면 대화 중에 아래 작업을 할 수 있습니다. 연결은 대시보드의 &lsquo;AI 연결&rsquo;에서 언제든 해제할 수
-        있습니다.
+        {clientName}이(가) {CORE_ROLE_LABELS[role]} 권한으로 연영 대시보드에 접근하려고
+        합니다. 허용하면 대화 중에 아래 작업을 할 수 있습니다. 연결은 대시보드의 &lsquo;AI
+        연결&rsquo;에서 언제든 해제할 수 있습니다.
       </p>
 
       {isPending ? (
@@ -98,7 +111,10 @@ export default function McpConsentClient() {
         </Alert>
       ) : (
         <Card>
-          <CardHeader title={`쓸 수 있는 작업 ${overview.tools.length}개`} headingLevel={2} />
+          <CardHeader
+            title={`쓸 수 있는 작업 ${overview.tools.length}개`}
+            headingLevel={2}
+          />
           <CardBody>
             <ul className="flex flex-col gap-3">
               {groupToolsByCategory(overview.tools).map((group) => (
@@ -124,7 +140,11 @@ export default function McpConsentClient() {
         >
           {submitting === "accept" ? "연결하는 중…" : "허용"}
         </Button>
-        <Button variant="secondary" disabled={submitting !== null} onClick={() => void submit(false)}>
+        <Button
+          variant="secondary"
+          disabled={submitting !== null}
+          onClick={() => void submit(false)}
+        >
           거절
         </Button>
       </div>

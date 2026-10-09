@@ -39,9 +39,13 @@ export const withUploadErrors = async (
 export const imageBatchItem = (file: ResolvedUpload, sortOrder: number) => ({
   imageUrl: file.publicUrl,
   sortOrder,
-  ...(file.width && file.height ? { width: file.width, height: file.height } : {}),
+  ...(file.width && file.height
+    ? { width: file.width, height: file.height }
+    : {}),
 });
 
 /** 기존 세부 이미지 뒤에 붙일 첫 순서. */
 export const nextSortOrder = (images: Array<{ sortOrder: number }>): number =>
-  images.length === 0 ? 0 : Math.max(...images.map((image) => image.sortOrder)) + 1;
+  images.length === 0
+    ? 0
+    : Math.max(...images.map((image) => image.sortOrder)) + 1;
