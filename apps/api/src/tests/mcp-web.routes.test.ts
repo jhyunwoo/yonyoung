@@ -83,6 +83,19 @@ describe("GET /api/mcp/consent-context", () => {
     expect(body.data.overview.tools.length).toBeGreaterThan(0);
   });
 
+  it("돌아갈 redirect_uri의 호스트를 준다", async () => {
+    const { app } = createWebApp({ actor: createActor("manager", IDs.manager) });
+    const redirectHostOf = async (extra: string) => {
+      const response = await app.request(`/api/mcp/consent-context?${query}${extra}`);
+      return ((await response.json()) as { data: { redirectHost: string | null } }).data
+        .redirectHost;
+    };
+    const redirect = encodeURIComponent("https://evil.example:8443/callback?x=1");
+    expect(await redirectHostOf(`&redirect_uri=${redirect}`)).toBe("evil.example:8443");
+    expect(await redirectHostOf("&redirect_uri=not-a-url")).toBeNull();
+    expect(await redirectHostOf("")).toBeNull();
+  });
+
   it("서명이 틀리면 400이다", async () => {
     const { app } = createWebApp({ actor: createActor("manager", IDs.manager), verified: false });
     expect((await app.request(`/api/mcp/consent-context?${query}`)).status).toBe(400);

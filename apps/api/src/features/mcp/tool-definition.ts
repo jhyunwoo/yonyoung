@@ -15,6 +15,9 @@ import { toToolResult } from "./tool-result";
 
 export type McpToolContext = {
   actor: Actor;
+  requestId: string;
+  /** 도구가 예상하지 못한 오류로 끝났을 때 Sentry와 로그에 남긴다. */
+  reportError: (error: unknown, toolName: McpToolName) => void;
   api: InternalApiClient;
   uploads: McpUploadService;
   files: McpFileResolver;

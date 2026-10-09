@@ -81,6 +81,9 @@ export type McpUploadServiceDeps = {
   webOrigin: string;
 };
 
+/** 고아 청소는 참조되지 않은 객체를 7일 뒤 지우므로, 오래된 완료 업로드는 넉넉히 하루까지만 받는다. */
+const COMPLETED_UPLOAD_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
 const toBase64Url = (bytes: Uint8Array): string =>
   btoa(String.fromCharCode(...bytes))
     .replace(/\+/g, "-")
@@ -353,6 +356,15 @@ export const createMcpUploadService = (deps: McpUploadServiceDeps) => {
             `아직 업로드가 끝나지 않았습니다: ${uploadId} (${record.status}). upload_status로 확인해 주세요.`,
           );
         }
+        if (
+          record.completedAt !== null &&
+          Date.now() - record.completedAt > COMPLETED_UPLOAD_MAX_AGE_MS
+        ) {
+          throw new McpUploadError(
+            410,
+            "업로드한 지 오래되어 사용할 수 없습니다. 다시 올려 주세요.",
+          );
+        }
         resolved.push(toResolvedUpload(record, "upload"));
       }
       return resolved;
@@ -433,7 +445,7 @@ export const createRequestMcpUploadService = (
   });
 };
 
-/** 업로드 오류를 도구 결과로 바꾼다. 업로드 오류가 아니면 다시 던져 SDK가 처리하게 한다. */
+/** 업로드 오류를 도구 결과로 바꾼다. 업로드 오류가 아니면 다시 던져 buildMcpServer가 기록하게 한다. */
 export const uploadErrorResult = (
   error: unknown,
   role: Role,

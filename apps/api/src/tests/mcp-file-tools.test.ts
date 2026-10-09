@@ -112,6 +112,37 @@ describe("activity_images_add", () => {
     expect((await uploadStore.getById(uploadId))?.status).toBe("completed");
   });
 
+  it("올린 지 하루가 지난 업로드는 받지 않는다", async () => {
+    const app = createMcpTestApp({
+      getActor: () => createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({
+        getActivityById: async () => createActivity({ detailImages: [] }),
+      }),
+    });
+    const client = await connectMcpClient(app);
+    const uploadId = await uploadViaClaudePath(app, client, {
+      purpose: "activity_image",
+      fileName: "a.png",
+      contentType: "image/png",
+      bytes: pngBytes(1, 1),
+    });
+
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      vi.setSystemTime(Date.now() + 24 * 60 * 60 * 1000 + 1);
+      const result = await client.callTool({
+        name: "activity_images_add",
+        arguments: { id: IDs.activity, upload_ids: [uploadId] },
+      });
+      expect(result.isError).toBe(true);
+      expect(resultText(result)).toContain(
+        "업로드한 지 오래되어 사용할 수 없습니다. 다시 올려 주세요.",
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("다른 용도로 준비한 업로드는 받지 않는다", async () => {
     const app = createMcpTestApp({
       getActor: () => createActor("manager", IDs.manager),

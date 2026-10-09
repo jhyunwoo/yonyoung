@@ -65,6 +65,12 @@ const enqueueLog = (
   void task;
 };
 
+const MCP_UPLOAD_TOKEN_PATH = /^\/mcp\/uploads\/[^/]+/;
+
+/** 업로드 주소의 일회용 토큰은 자격 증명이라 로그와 분석 데이터에 남기지 않는다. */
+export const redactRoute = (path: string): string =>
+  path.replace(MCP_UPLOAD_TOKEN_PATH, "/mcp/uploads/:token");
+
 const readRequestId = (c: { get: (key: "requestId") => string }): string =>
   c.get("requestId");
 
@@ -129,7 +135,7 @@ export const loggerMiddleware: MiddlewareHandler<HonoAppType> = async (
       event: "request.received",
       requestId,
       method: c.req.method,
-      route: c.req.path,
+      route: redactRoute(c.req.path),
       headers: redactHeaders(c.req.raw.headers),
     });
   });
@@ -144,7 +150,7 @@ export const loggerMiddleware: MiddlewareHandler<HonoAppType> = async (
         event: "request.completed",
         requestId,
         method: c.req.method,
-        route: c.req.path,
+        route: redactRoute(c.req.path),
         status: c.res.status,
         latencyMs: Number(latencyMs.toFixed(2)),
         cacheStatus: c.get("cacheStatus") ?? null,
@@ -179,7 +185,7 @@ export const loggerMiddleware: MiddlewareHandler<HonoAppType> = async (
           perfAnalytics.writeDataPoint({
             blobs: [
               c.req.method,
-              c.req.path,
+              redactRoute(c.req.path),
               String(c.res.status),
               cacheStatus,
               colo,
@@ -212,7 +218,7 @@ export const logError = (
       event: event ?? "request.failed",
       requestId: readRequestId(c),
       method: c.req.method,
-      route: c.req.path,
+      route: redactRoute(c.req.path),
       message,
       ...extra,
     });

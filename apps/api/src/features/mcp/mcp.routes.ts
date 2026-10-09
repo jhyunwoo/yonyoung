@@ -1,8 +1,10 @@
 import type { OpenAPIHono } from "@hono/zod-openapi";
 import { createMcpHandler } from "@modelcontextprotocol/server";
+import { captureException } from "@sentry/cloudflare";
 import type { Context } from "hono";
 import { cors } from "hono/cors";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { logError } from "../../app/middleware/logger";
 import type { Bindings } from "../../bindings/types";
 import { getAuthCorsOrigins } from "../../lib/auth";
 import type { Actor } from "../../lib/authorization/types";
@@ -51,6 +53,18 @@ const readExecutionContext = (
   }
 };
 
+/** 동의 화면이 실제로 돌아갈 주소를 보여주도록 redirect_uri의 호스트만 꺼낸다. */
+const readRedirectHost = (redirectUri: string | null): string | null => {
+  if (!redirectUri) {
+    return null;
+  }
+  try {
+    return new URL(redirectUri).host || null;
+  } catch {
+    return null;
+  }
+};
+
 const createMcpToolContext = (
   c: Context<HonoAppType>,
   input: {
@@ -60,15 +74,27 @@ const createMcpToolContext = (
   },
 ): McpToolContext => {
   const uploads = createRequestMcpUploadService(c, input.dependencies);
+  const requestId = c.get("requestId") ?? crypto.randomUUID();
   return {
     actor: input.actor,
+    requestId,
+    reportError: (error, toolName) => {
+      captureException(error, {
+        tags: { requestId, event: "mcp.tool_failed", tool: toolName },
+      });
+      logError(c, error, {
+        event: "mcp.tool_failed",
+        requestId,
+        tool: toolName,
+      });
+    },
     api: createInternalApiClient({
       dispatch: input.dispatch,
       env: c.env,
       executionCtx: readExecutionContext(c),
       actor: input.actor,
       origin: new URL(c.req.url).origin,
-      requestId: c.get("requestId") ?? crypto.randomUUID(),
+      requestId,
     }),
     uploads,
     files: createMcpFileResolver({
@@ -264,6 +290,7 @@ export const registerMcpRoutes = (app: App, dependencies: AppDependencies) => {
     return c.json({
       data: {
         client,
+        redirectHost: readRedirectHost(params.get("redirect_uri")),
         scopes: (params.get("scope") ?? "").split(" ").filter(Boolean),
         overview: buildMcpOverview(
           actor.role,

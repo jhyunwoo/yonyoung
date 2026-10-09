@@ -1,5 +1,7 @@
+import { captureException } from "@sentry/cloudflare";
 import { describe, expect, it, vi } from "vitest";
 import { MCP_TOOL_CATALOG } from "@yonyoung/contracts/mcp";
+import { createMemoryMcpUploadStore } from "../features/mcp/files/mcp-upload-store";
 import { MCP_TOOL_DEFINITIONS } from "../features/mcp/tools";
 import {
   connectMcpClient,
@@ -13,6 +15,11 @@ import {
   createDataServiceMock,
   createUser,
 } from "./test-helpers";
+
+vi.mock("@sentry/cloudflare", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  captureException: vi.fn(),
+}));
 
 const listToolNames = async (getActor: () => ReturnType<typeof createActor>) => {
   const client = await connectMcpClient(createMcpTestApp({ getActor }));
@@ -197,5 +204,44 @@ describe("조회 도구 호출", () => {
 
     expect(outcome).toBe(true);
     expect(deleteActivity).not.toHaveBeenCalled();
+  });
+});
+
+describe("도구 안의 예상하지 못한 오류", () => {
+  it("원문을 감추고 Sentry에 기록한 뒤 요청 ID를 알려준다", async () => {
+    vi.mocked(captureException).mockClear();
+    const uploadStore = createMemoryMcpUploadStore();
+    uploadStore.create = async () => {
+      throw new Error("D1_ERROR: database is locked");
+    };
+    const client = await connectMcpClient(
+      createMcpTestApp({
+        getActor: () => createActor("manager", IDs.manager),
+        uploadStore,
+      }),
+    );
+
+    const result = await client.callTool({
+      name: "upload_prepare",
+      arguments: {
+        purpose: "activity_image",
+        file_name: "a.png",
+        content_type: "image/png",
+        size: 10,
+      },
+    });
+
+    expect(captureException).toHaveBeenCalledTimes(1);
+    const [error, hint] = vi.mocked(captureException).mock.calls[0]!;
+    expect((error as Error).message).toBe("D1_ERROR: database is locked");
+    const requestId = (hint as { tags: { requestId: string; tool: string } }).tags
+      .requestId;
+    expect(requestId).toBeTruthy();
+    expect(hint).toMatchObject({ tags: { tool: "upload_prepare" } });
+    expect(result.isError).toBe(true);
+    const text = resultText(result);
+    expect(text).toContain("서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+    expect(text).toContain(`요청 ID: ${requestId}`);
+    expect(text).not.toContain("D1_ERROR");
   });
 });

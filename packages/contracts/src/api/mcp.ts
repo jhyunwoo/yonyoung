@@ -831,6 +831,8 @@ export const apiMcpConsentContextSchema = z.object({
     name: z.string().nullable(),
     uri: z.string().nullable(),
   }),
+  /** 허용하면 돌아갈 redirect_uri의 호스트. 앱 이름은 등록한 쪽이 정하므로 이 값으로 확인한다. */
+  redirectHost: z.string().nullable(),
   scopes: z.array(z.string()),
   overview: apiMcpOverviewSchema,
 });

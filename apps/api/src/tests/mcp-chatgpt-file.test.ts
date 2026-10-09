@@ -234,4 +234,17 @@ describe("파일 참조 해석기", () => {
     expect((await ctx.store.getById(ctx.createdIds[0]!))?.status).toBe("failed");
     expect(ctx.objects.objects.size).toBe(0);
   });
+
+  it("버리는 중에 오류가 나도 원래 오류를 던진다", async () => {
+    const ctx = setup();
+    ctx.store.discard = async () => {
+      throw new Error("D1_ERROR: discard failed");
+    };
+    await expect(
+      ctx.files.resolve({
+        purpose: "activity_image",
+        chatGptFiles: [chatGpt("one"), chatGpt("bad")],
+      }),
+    ).rejects.toMatchObject({ status: 502 });
+  });
 });

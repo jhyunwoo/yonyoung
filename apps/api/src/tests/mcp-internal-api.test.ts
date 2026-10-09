@@ -95,6 +95,12 @@ describe("fillPath", () => {
   it("빠진 파라미터는 예외를 던진다", () => {
     expect(() => fillPath("/api/users/{id}", {})).toThrow("id");
   });
+
+  it("점 경로 조각은 예외를 던진다", () => {
+    expect(() => fillPath("/api/users/{id}", { id: ".." })).toThrow("id");
+    expect(() => fillPath("/api/users/{id}/role", { id: "." })).toThrow("id");
+    expect(fillPath("/api/users/{id}", { id: "..." })).toBe("/api/users/...");
+  });
 });
 
 describe("toToolResult", () => {

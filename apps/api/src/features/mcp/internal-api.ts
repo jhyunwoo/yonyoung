@@ -48,6 +48,10 @@ export const fillPath = (
     if (value === undefined) {
       throw new Error(`경로 파라미터 ${key}가 없습니다.`);
     }
+    // "."과 ".."은 인코딩해도 그대로라 URL 정규화가 다른 라우트로 바꿔 버린다.
+    if (value === "." || value === "..") {
+      throw new Error(`경로 파라미터 ${key}에 ${value}는 쓸 수 없습니다.`);
+    }
     return encodeURIComponent(value);
   });
 

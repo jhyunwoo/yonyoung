@@ -48,7 +48,10 @@ export const createMcpFileResolver = (input: {
         ingested.push(toResolvedUpload(record, "chatgpt"));
       }
     } catch (error) {
-      await input.uploads.discard(input.actor, ingested);
+      // 정리가 실패해도 원래 오류를 알려야 한다. 남은 객체는 고아 청소가 지운다.
+      await input.uploads
+        .discard(input.actor, ingested)
+        .catch(() => undefined);
       throw error;
     }
     return [...ingested, ...fromUploadIds];
