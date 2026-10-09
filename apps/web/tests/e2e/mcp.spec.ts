@@ -117,4 +117,54 @@ test.describe("AI 연결", () => {
     await page.goto("/dashboard/mcp/upload/unknown-token");
     await expect(page.getByText("업로드 주소를 쓸 수 없습니다")).toBeVisible();
   });
+
+  test("업로드가 실패해도 같은 파일을 다시 골라 올릴 수 있다", async ({
+    context,
+    page,
+  }) => {
+    await setMockSession(context, {
+      role: "manager",
+      namespace: uniqueNamespace("mcp-upload-retry"),
+    });
+    let puts = 0;
+    await page.route("http://127.0.0.1:4010/mcp/uploads/valid-token", async (route) => {
+      const cors = {
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "PUT",
+        "access-control-allow-headers": "content-type",
+      };
+      if (route.request().method() === "OPTIONS") {
+        await route.fulfill({ status: 204, headers: cors });
+        return;
+      }
+      puts += 1;
+      if (puts === 1) {
+        await route.fulfill({
+          status: 500,
+          headers: cors,
+          contentType: "application/json",
+          body: JSON.stringify({ error: { message: "저장소에 쓰지 못했습니다." } }),
+        });
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        headers: cors,
+        contentType: "application/json",
+        body: JSON.stringify({ data: { uploadId: "upload-1", status: "completed" } }),
+      });
+    });
+    await page.goto("/dashboard/mcp/upload/valid-token");
+
+    const file = {
+      name: "봄출사.jpg",
+      mimeType: "image/jpeg",
+      buffer: Buffer.from([0xff, 0xd8, 0xff, 0xd9]),
+    };
+    await page.getByLabel("올릴 파일").setInputFiles(file);
+    await expect(page.getByText("저장소에 쓰지 못했습니다.")).toBeVisible();
+
+    await page.getByLabel("올릴 파일").setInputFiles(file);
+    await expect(page.getByText("올렸습니다")).toBeVisible();
+  });
 });

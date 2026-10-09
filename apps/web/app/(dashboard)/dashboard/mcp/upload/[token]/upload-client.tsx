@@ -37,6 +37,10 @@ const putFile = (url: string, file: File, onProgress: (percent: number) => void)
       reject(new Error(message ?? `업로드하지 못했습니다(HTTP ${request.status}).`));
     };
     request.onerror = () => reject(new Error("네트워크 오류로 업로드하지 못했습니다."));
+    request.onabort = () =>
+      reject(new Error("업로드가 중단되었습니다. 다시 시도해 주세요."));
+    request.ontimeout = () =>
+      reject(new Error("업로드가 중단되었습니다. 다시 시도해 주세요."));
     request.send(file);
   });
 
@@ -44,8 +48,12 @@ export default function McpUploadClient({ lookup }: { lookup: ApiMcpUploadLookup
   const inputRef = useRef<HTMLInputElement>(null);
   const [state, setState] = useState<UploadState>({ status: "idle", error: null });
   const [dragging, setDragging] = useState(false);
+  const busyRef = useRef(false);
 
   const upload = async (file: File) => {
+    if (busyRef.current) {
+      return;
+    }
     const problem = checkSelectedFile(file, lookup);
     if (problem) {
       setState({ status: "idle", error: problem });
@@ -119,6 +127,7 @@ export default function McpUploadClient({ lookup }: { lookup: ApiMcpUploadLookup
             aria-label="올릴 파일"
             onChange={(event) => {
               const file = event.target.files?.[0];
+              event.target.value = "";
               if (file) {
                 void upload(file);
               }
