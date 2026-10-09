@@ -41,6 +41,10 @@ const toolsFor = (role: MockRole) =>
     }),
   );
 
+// 휴대폰 너비에서 줄바꿈을 확인하기 위한 긴 주소. mcp-mobile 네임스페이스에만 쓴다.
+const LONG_SERVER_URL =
+  "https://api.yonyoung.example/mcp/with/a/deliberately/long/path/segment/for/wrapping/tests";
+
 const connectionsByNamespace = new Map<string, Set<string>>();
 
 const connectionsOf = (namespace: string) => {
@@ -58,7 +62,9 @@ export const handleMcpRoutes = (ctx: McpHandlerContext): boolean => {
     return false;
   }
   const overview = {
-    serverUrl: "https://api.yonyoung.example/mcp",
+    serverUrl: namespace.startsWith("mcp-mobile")
+      ? LONG_SERVER_URL
+      : "https://api.yonyoung.example/mcp",
     role: MOCK_ROLE_TO_CORE[role],
     tools: toolsFor(role),
   };

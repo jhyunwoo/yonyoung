@@ -7,7 +7,7 @@ export default function CopyUrlButton({ url }: { url: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <code className="rounded-md border border-hairline bg-surface-sunken px-3 py-2 text-body-sm text-ink">
+      <code className="break-all rounded-md border border-hairline bg-surface-sunken px-3 py-2 text-body-sm text-ink">
         {url}
       </code>
       <Button

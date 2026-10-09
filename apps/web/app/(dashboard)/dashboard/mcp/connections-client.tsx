@@ -1,7 +1,7 @@
 "use client";
 
 import { Bot } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { ApiMcpConnection } from "@yonyoung/contracts/mcp";
 import {
   Button,
@@ -20,6 +20,8 @@ export default function McpConnectionsClient({
   initialConnections: ApiMcpConnection[];
 }) {
   const [connections, setConnections] = useState(initialConnections);
+  const [pendingClientId, setPendingClientId] = useState<string | null>(null);
+  const pendingRef = useRef(false);
   const confirm = useConfirm();
   const toast = useToast();
 
@@ -34,30 +36,40 @@ export default function McpConnectionsClient({
   }
 
   const revoke = async (connection: ApiMcpConnection) => {
-    const name = connection.clientName ?? connection.clientId;
-    const confirmed = await confirm({
-      title: `${name} 연결을 해제할까요?`,
-      description:
-        "해제하면 그 앱에서 연영 도구를 바로 쓸 수 없습니다. 다시 쓰려면 다시 연결해야 합니다.",
-      confirmLabel: "연결 해제",
-      tone: "danger",
-    });
-    if (!confirmed) {
+    if (pendingRef.current) {
       return;
     }
-    const result = await revokeMcpConnectionAction(connection.clientId);
-    if (!result.ok) {
-      toast({
+    pendingRef.current = true;
+    setPendingClientId(connection.clientId);
+    try {
+      const name = connection.clientName ?? connection.clientId;
+      const confirmed = await confirm({
+        title: `${name} 연결을 해제할까요?`,
+        description:
+          "해제하면 그 앱에서 연영 도구를 바로 쓸 수 없습니다. 다시 쓰려면 다시 연결해야 합니다.",
+        confirmLabel: "연결 해제",
         tone: "danger",
-        title: "연결을 해제하지 못했습니다",
-        description: result.errorMessage,
       });
-      return;
+      if (!confirmed) {
+        return;
+      }
+      const result = await revokeMcpConnectionAction(connection.clientId);
+      if (!result.ok) {
+        toast({
+          tone: "danger",
+          title: "연결을 해제하지 못했습니다",
+          description: result.errorMessage,
+        });
+        return;
+      }
+      setConnections((current) =>
+        current.filter((item) => item.clientId !== connection.clientId),
+      );
+      toast({ tone: "success", title: `${name} 연결을 해제했습니다` });
+    } finally {
+      pendingRef.current = false;
+      setPendingClientId(null);
     }
-    setConnections((current) =>
-      current.filter((item) => item.clientId !== connection.clientId),
-    );
-    toast({ tone: "success", title: `${name} 연결을 해제했습니다` });
   };
 
   return (
@@ -76,7 +88,11 @@ export default function McpConnectionsClient({
               {formatDate(connection.updatedAt)}
             </span>
           </span>
-          <Button variant="danger-ghost" onClick={() => void revoke(connection)}>
+          <Button
+            variant="danger-ghost"
+            disabled={pendingClientId === connection.clientId}
+            onClick={() => void revoke(connection)}
+          >
             연결 해제
           </Button>
         </li>

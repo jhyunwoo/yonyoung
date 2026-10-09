@@ -1,5 +1,11 @@
+import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import { setMockSession } from "./support/session";
+
+// 모의 서버는 네임스페이스별 상태를 프로세스 안에 유지한다. 재시도와 반복 실행이
+// 앞선 시도의 해제 결과를 보지 않도록 시도마다 새 네임스페이스를 쓴다.
+const uniqueNamespace = (prefix: string) =>
+  `${prefix}-${test.info().project.name}-${test.info().retry}-${randomUUID().slice(0, 8)}`;
 
 test.describe("AI 연결", () => {
   test("부원은 안내 페이지에서 읽기 작업과 연결을 본다", async ({ context, page }) => {
@@ -20,7 +26,7 @@ test.describe("AI 연결", () => {
   test("연결 해제를 확인하면 목록에서 사라진다", async ({ context, page }) => {
     await setMockSession(context, {
       role: "manager",
-      namespace: `mcp-revoke-${test.info().project.name}`,
+      namespace: uniqueNamespace("mcp-revoke"),
     });
     await page.goto("/dashboard/mcp");
 
@@ -51,9 +57,15 @@ test.describe("AI 연결", () => {
   });
 
   test("휴대폰 너비에서 가로 스크롤이 없다", async ({ context, page }) => {
-    await setMockSession(context, { role: "member", namespace: "mcp-mobile" });
+    await setMockSession(context, {
+      role: "member",
+      namespace: uniqueNamespace("mcp-mobile"),
+    });
     await page.setViewportSize({ width: 375, height: 800 });
     await page.goto("/dashboard/mcp");
+    await expect(
+      page.locator("code", { hasText: "deliberately/long/path" }),
+    ).toBeVisible();
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
     );

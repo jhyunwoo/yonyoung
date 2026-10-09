@@ -47,7 +47,8 @@ export const ClaudeSection = ({ serverUrl }: { serverUrl: string }) => (
       <p className="mt-3 text-caption text-ink-muted">
         Team·Enterprise 요금제는 조직 관리자가 먼저 커넥터를 추가해야 할 수 있습니다.
         요금제에 따라 사용자 지정 커넥터를 추가할 수 없으면 Claude 도움말의
-        &lsquo;커넥터&rsquo; 항목을 확인해 주세요. 주소: {serverUrl}
+        &lsquo;커넥터&rsquo; 항목을 확인해 주세요. 주소:{" "}
+        <span className="break-all">{serverUrl}</span>
       </p>
     </CardBody>
   </Card>
