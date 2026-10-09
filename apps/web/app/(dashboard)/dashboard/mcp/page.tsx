@@ -15,12 +15,12 @@ import { readCookieHeader } from "@/shared/http/http";
 import McpConnectionsClient from "@/app/(dashboard)/dashboard/mcp/connections-client";
 import {
   ChatGptSection,
-  ClaudeFileSection,
   ClaudeSection,
   ConnectorUrlSection,
   GUIDE_VERIFIED_ON,
   ToolListSection,
   TroubleshootingSection,
+  UploadSection,
 } from "@/app/(dashboard)/dashboard/mcp/mcp-guide-sections";
 
 export const metadata = {
@@ -40,15 +40,15 @@ export default async function McpGuidePage() {
       <PageHeader
         eyebrow="AI 연결"
         title="Claude·ChatGPT에서 대시보드 쓰기"
-        description="연영 MCP를 연결하면 대화로 활동을 만들고, 채팅에 올린 사진을 올리고, 멤버를 관리할 수 있습니다. 할 수 있는 일은 내 역할을 따릅니다."
+        description="연영 MCP를 연결하면 대화로 활동을 만들고 멤버를 관리할 수 있습니다. 할 수 있는 일은 내 역할을 따릅니다."
       />
 
       {overview.ok ? (
         <>
           <ConnectorUrlSection serverUrl={overview.data.serverUrl} />
           <ClaudeSection serverUrl={overview.data.serverUrl} />
-          <ClaudeFileSection />
           <ChatGptSection />
+          <UploadSection />
           <ToolListSection overview={overview.data} />
         </>
       ) : (

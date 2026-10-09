@@ -98,24 +98,6 @@ describe("logger middleware", () => {
     expect(secondLog.cacheStatus).toBe("hit");
   });
 
-  it("업로드 주소의 토큰은 로그에 남기지 않는다", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
-    const token = "Yq3vLx8N2kTz0aBcDeFgHiJkLmNoPqRsTuVwXyZ01234";
-    const { context, flushWaitUntil } = createContext({
-      path: `/mcp/uploads/${token}`,
-    });
-
-    await loggerMiddleware(context, async () => undefined);
-    logError(context, new Error("boom"));
-    await flushWaitUntil();
-
-    expect(consoleSpy).toHaveBeenCalledTimes(3);
-    for (const [line] of consoleSpy.mock.calls) {
-      expect(String(line)).not.toContain(token);
-      expect(JSON.parse(String(line)).route).toBe("/mcp/uploads/:token");
-    }
-  });
-
   it("에러 로그는 민감정보를 마스킹한다", async () => {
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
     const { context, flushWaitUntil } = createContext({

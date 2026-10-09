@@ -1,7 +1,6 @@
 import { captureException } from "@sentry/cloudflare";
 import { describe, expect, it, vi } from "vitest";
 import { MCP_TOOL_CATALOG } from "@yonyoung/contracts/mcp";
-import { createMemoryMcpUploadStore } from "../features/mcp/files/mcp-upload-store";
 import { MCP_TOOL_DEFINITIONS } from "../features/mcp/tools";
 import {
   connectMcpClient,
@@ -126,6 +125,12 @@ describe("역할별 도구 목록", () => {
     expect(names).not.toContain("member_resource_history");
   });
 
+  it("모든 카탈로그 도구가 정의되어 있고 그 반대도 같다", () => {
+    expect([...MCP_TOOL_DEFINITIONS.keys()].sort()).toEqual(
+      MCP_TOOL_CATALOG.map((tool) => tool.name).sort(),
+    );
+  });
+
   it("도구 정의는 카탈로그에 있는 이름만 쓴다", () => {
     const catalogNames = new Set<string>(MCP_TOOL_CATALOG.map((tool) => tool.name));
     for (const name of MCP_TOOL_DEFINITIONS.keys()) {
@@ -210,26 +215,16 @@ describe("조회 도구 호출", () => {
 describe("도구 안의 예상하지 못한 오류", () => {
   it("원문을 감추고 Sentry에 기록한 뒤 요청 ID를 알려준다", async () => {
     vi.mocked(captureException).mockClear();
-    const uploadStore = createMemoryMcpUploadStore();
-    uploadStore.create = async () => {
-      throw new Error("D1_ERROR: database is locked");
-    };
+    const whoami = MCP_TOOL_DEFINITIONS.get("whoami")!;
+    const handlerSpy = vi
+      .spyOn(whoami, "handler")
+      .mockRejectedValue(new Error("D1_ERROR: database is locked"));
     const client = await connectMcpClient(
-      createMcpTestApp({
-        getActor: () => createActor("manager", IDs.manager),
-        uploadStore,
-      }),
+      createMcpTestApp({ getActor: () => createActor("manager", IDs.manager) }),
     );
 
-    const result = await client.callTool({
-      name: "upload_prepare",
-      arguments: {
-        purpose: "activity_image",
-        file_name: "a.png",
-        content_type: "image/png",
-        size: 10,
-      },
-    });
+    const result = await client.callTool({ name: "whoami", arguments: {} });
+    handlerSpy.mockRestore();
 
     expect(captureException).toHaveBeenCalledTimes(1);
     const [error, hint] = vi.mocked(captureException).mock.calls[0]!;
@@ -237,7 +232,7 @@ describe("도구 안의 예상하지 못한 오류", () => {
     const requestId = (hint as { tags: { requestId: string; tool: string } }).tags
       .requestId;
     expect(requestId).toBeTruthy();
-    expect(hint).toMatchObject({ tags: { tool: "upload_prepare" } });
+    expect(hint).toMatchObject({ tags: { tool: "whoami" } });
     expect(result.isError).toBe(true);
     const text = resultText(result);
     expect(text).toContain("서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");

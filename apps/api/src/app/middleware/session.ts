@@ -3,7 +3,6 @@ import type { MiddlewareHandler } from "hono";
 import type HonoAppType from "../../types/honoAppType";
 import type { AppDependencies } from "../../lib/services/dependencies";
 import { logger } from "../../shared/logging/logger";
-import { redactRoute } from "./logger";
 
 const SKIP_SESSION_PREFIXES = [
   "/api/auth",
@@ -36,7 +35,7 @@ export const sessionMiddleware = (
         logger.error({
           event: "session.resolve_failed",
           requestId: c.get("requestId"),
-          path: redactRoute(c.req.path),
+          path: c.req.path,
           error: error instanceof Error ? error.message : String(error),
         });
         captureException(error, { tags: { event: "session.resolve_failed" } });

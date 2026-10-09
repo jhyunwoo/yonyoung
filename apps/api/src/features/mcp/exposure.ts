@@ -7,7 +7,7 @@ import {
 import { can, isManagerLikeRole } from "../../lib/authorization/policy";
 import type { Role } from "../../lib/authorization/types";
 
-const LEADERSHIP_ROLES: ReadonlySet<Role> = new Set([
+export const LEADERSHIP_ROLES: ReadonlySet<Role> = new Set([
   "president",
   "vice_president",
 ]);

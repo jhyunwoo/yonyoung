@@ -92,6 +92,13 @@
       "when": 1791472514977,
       "tag": "0012_dashboard_mcp",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1791543529359,
+      "tag": "0013_drop_mcp_uploads",
+      "breakpoints": true
     }
   ]
 }

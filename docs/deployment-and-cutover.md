@@ -155,32 +155,29 @@ sufficient.
 ## MCP 배포 체크리스트
 
 1. API 원격 마이그레이션: `pnpm db:migrate:remote` (`0012_dashboard_mcp.sql`). API 배포보다 먼저 한다. `createAuth()`가 isolate마다 처음 인증 인스턴스를 만들 때 `oauth_resource`를 읽고 넣으므로, 마이그레이션 없이 배포하면 인증이 실패한다.
-2. `apps/api/wrangler.jsonc` vars 확인: `MCP_RESOURCE_URL=https://api.yonyoung.moveto.kr/mcp`, `MCP_AUTH_ISSUER=https://yonyoung.yonsei.ac.kr/api/auth`. 선택: `MCP_CHATGPT_FILE_HOST_SUFFIXES`.
-3. 웹 `API_BASE_URL`을 업로드 `put_url`의 공개 API origin(`https://api.yonyoung.moveto.kr`)과 같게 설정한다. 웹 CSP `connect-src`가 이 origin을 사용한다.
-4. Better Auth CLI는 `apps/api/src/lib/auth-cli.ts`를 지정해 실행한다.
-5. API 배포: `pnpm deploy:api`. 배포 전 `pnpm deploy:dry-run`으로 번들 크기를 확인한다(Workers 한도 이내).
-6. 웹 배포: `/.well-known/oauth-authorization-server/api/auth`가 200과 `issuer: https://yonyoung.yonsei.ac.kr/api/auth`를 돌려주는지 확인한다.
-7. 스모크:
+2. `apps/api/wrangler.jsonc` vars 확인: `MCP_RESOURCE_URL=https://api.yonyoung.moveto.kr/mcp`, `MCP_AUTH_ISSUER=https://yonyoung.yonsei.ac.kr/api/auth`.
+3. Better Auth CLI는 `apps/api/src/lib/auth-cli.ts`를 지정해 실행한다.
+4. API 배포: `pnpm deploy:api`. 배포 전 `pnpm deploy:dry-run`으로 번들 크기를 확인한다(Workers 한도 이내).
+   - `0013_drop_mcp_uploads.sql`은 업로드 기능을 뺀 API를 배포한 **뒤에** 적용한다. 이전 API는 `mcp_uploads`를 쓰므로 먼저 지우면 업로드 도구가 실패한다. `db:migrate:remote`는 남은 마이그레이션을 모두 적용하므로, `0012`가 이미 적용된 환경에서는 1번을 건너뛰고 API 배포 뒤에 실행한다.
+5. 웹 배포: `/.well-known/oauth-authorization-server/api/auth`가 200과 `issuer: https://yonyoung.yonsei.ac.kr/api/auth`를 돌려주는지 확인한다.
+6. 스모크:
    - `curl -i https://api.yonyoung.moveto.kr/.well-known/oauth-protected-resource/mcp` → 200, `authorization_servers`가 issuer와 같다.
    - `curl -i -X POST https://api.yonyoung.moveto.kr/mcp` → 401, `WWW-Authenticate`에 `resource_metadata` 포함.
-8. 되돌리기: API를 이전 버전으로 롤백해도 새 테이블은 남아도 무해하다. 웹 롤백 시 `/dashboard/mcp` 메뉴만 사라진다.
+7. 되돌리기: 웹 롤백 시 `/dashboard/mcp` 메뉴만 사라진다. `0013` 적용 뒤 API를 업로드 기능이 있던 버전으로 롤백하면 업로드 도구만 실패한다(테이블이 없음). 그 버전이 필요하면 `0012`의 `mcp_uploads` 생성문을 새 마이그레이션으로 다시 적용한다.
 
 ### 배포 후 확인
 
 dev 또는 프로덕션 배포 뒤 부원 계정과 회장 계정으로 각각 확인한다. 결과는 PR 설명에 표로 남긴다.
 
-| 확인                                                     | Claude | ChatGPT   |
-| -------------------------------------------------------- | ------ | --------- |
-| 커넥터 추가 → Google 로그인 → 동의 → 연결                |        |           |
-| `whoami`가 역할과 도구 수를 맞게 알려줌                  |        |           |
-| 부원: 삭제 도구가 보이지 않음                            |        |           |
-| 회장: 채팅에 첨부한 사진 2장을 활동에 추가               |        |           |
-| 회장: 삭제 전에 클라이언트가 확인을 요청함               |        |           |
-| `/dashboard/mcp`에서 연결 해제 → 다음 호출이 401         |        |           |
-| Claude: 샌드박스 네트워크 미허용 시 browser_url로 업로드 |        | 해당 없음 |
+| 확인                                                   | Claude | ChatGPT |
+| ------------------------------------------------------ | ------ | ------- |
+| 커넥터 추가 → Google 로그인 → 동의 → 연결              |        |         |
+| `whoami`가 역할과 도구 수를 맞게 알려줌                |        |         |
+| 부원: 삭제 도구가 보이지 않음                          |        |         |
+| 회장: 활동을 만들고 받은 dashboard_url에서 사진 업로드 |        |         |
+| 회장: 삭제 전에 클라이언트가 확인을 요청함             |        |         |
+| `/dashboard/mcp`에서 연결 해제 → 다음 호출이 401       |        |         |
 
-- ChatGPT `download_url`의 호스트를 기록한다. 기본값 `.oaiusercontent.com`과 다르면 `MCP_CHATGPT_FILE_HOST_SUFFIXES`를 wrangler vars에 넣고 다시 배포한다.
-- ChatGPT 다운로드 응답에 `Content-Encoding`이 붙어도 정확한 길이 검사가 깨지지 않는지 확인한다.
 - 안내 페이지의 메뉴 이름이 실제 화면과 다르면 `apps/web/app/(dashboard)/dashboard/mcp/mcp-guide-sections.tsx` 문구를 고치고 `GUIDE_VERIFIED_ON`을 갱신한다.
 
 ## Rollback plan

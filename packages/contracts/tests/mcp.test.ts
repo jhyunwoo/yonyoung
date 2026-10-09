@@ -3,7 +3,6 @@ import { CORE_ROLE_LABELS, CORE_ROLE_VALUES } from "../src/auth-roles";
 import {
   MCP_TOOL_CATALOG,
   MCP_TOOL_CATEGORY_LABELS,
-  MCP_UPLOAD_MAX_BYTES,
   apiMcpOverviewSchema,
 } from "../src/api/mcp";
 
@@ -16,8 +15,8 @@ describe("MCP 도구 카탈로그", () => {
     }
   });
 
-  it("스펙의 도구 56개를 모두 담는다", () => {
-    expect(MCP_TOOL_CATALOG).toHaveLength(56);
+  it("스펙의 도구 51개를 모두 담는다", () => {
+    expect(MCP_TOOL_CATALOG).toHaveLength(51);
   });
 
   it("파괴적 도구는 읽기 전용일 수 없다", () => {
@@ -42,25 +41,6 @@ describe("MCP 도구 카탈로그", () => {
         expect(tool.exposure.anyOf.length, tool.name).toBeGreaterThan(0);
       }
     }
-  });
-
-  it("파일 인자를 가진 도구 목록이 고정되어 있다", () => {
-    const fileTools = MCP_TOOL_CATALOG.filter(
-      (tool) => tool.fileArgs.length > 0,
-    )
-      .map((tool) => tool.name)
-      .sort();
-    expect(fileTools).toEqual([
-      "activity_create",
-      "activity_images_add",
-      "activity_update",
-      "attachment_create",
-      "exhibition_create",
-      "exhibition_images_add",
-      "exhibition_update",
-      "my_profile_photo_set",
-      "recruiting_plan_upsert",
-    ]);
   });
 });
 
@@ -91,9 +71,5 @@ describe("MCP 응답 스키마", () => {
       ],
     });
     expect(parsed.tools[0]?.name).toBe("activity_list");
-  });
-
-  it("업로드 한도는 100MB(10진)다", () => {
-    expect(MCP_UPLOAD_MAX_BYTES).toBe(100_000_000);
   });
 });

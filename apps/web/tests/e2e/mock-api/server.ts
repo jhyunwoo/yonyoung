@@ -728,7 +728,6 @@ const handleRequest = async (
         response,
         role,
         namespace,
-        token: requestUrl.searchParams.get("token"),
         sendData,
         sendError,
       })

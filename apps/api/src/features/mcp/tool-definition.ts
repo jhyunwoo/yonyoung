@@ -2,8 +2,6 @@ import type { CallToolResult } from "@modelcontextprotocol/server";
 import type { McpToolName } from "@yonyoung/contracts/mcp";
 import { z } from "zod";
 import type { Actor } from "../../lib/authorization/types";
-import type { McpFileResolver } from "./files/file-ref";
-import type { McpUploadService } from "./files/mcp-upload-service";
 import {
   fillPath,
   type InternalApiClient,
@@ -19,8 +17,8 @@ export type McpToolContext = {
   /** 도구가 예상하지 못한 오류로 끝났을 때 Sentry와 로그에 남긴다. */
   reportError: (error: unknown, toolName: McpToolName) => void;
   api: InternalApiClient;
-  uploads: McpUploadService;
-  files: McpFileResolver;
+  /** 사용자에게 안내할 대시보드 주소의 오리진. */
+  webOrigin: string;
 };
 
 export type McpToolDefinition = {

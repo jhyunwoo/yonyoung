@@ -8,7 +8,6 @@ type McpHandlerContext = {
   response: ServerResponse;
   role: MockRole;
   namespace: string;
-  token: string | null;
   sendData: <T>(response: ServerResponse, data: T, status?: number) => void;
   sendError: (
     response: ServerResponse,
@@ -58,7 +57,7 @@ const connectionsOf = (namespace: string) => {
 };
 
 export const handleMcpRoutes = (ctx: McpHandlerContext): boolean => {
-  const { pathname, method, response, role, namespace, token, sendData, sendError } = ctx;
+  const { pathname, method, response, role, namespace, sendData, sendError } = ctx;
   if (!pathname.startsWith("/api/mcp/") || role === "guest") {
     return false;
   }
@@ -69,24 +68,6 @@ export const handleMcpRoutes = (ctx: McpHandlerContext): boolean => {
     role: MOCK_ROLE_TO_CORE[role],
     tools: toolsFor(role),
   };
-
-  if (pathname === "/api/mcp/uploads/lookup" && method === "GET") {
-    if (token !== "valid-token") {
-      sendError(response, 404, "NOT_FOUND", "업로드 주소를 찾을 수 없습니다.");
-      return true;
-    }
-    sendData(response, {
-      uploadId: "upload-1",
-      fileName: "봄출사.jpg",
-      contentType: "image/jpeg",
-      declaredSize: 4,
-      purpose: "activity_image",
-      status: "pending",
-      expiresAt: "2099-01-01T00:00:00.000Z",
-      putUrl: "http://127.0.0.1:4010/mcp/uploads/valid-token",
-    });
-    return true;
-  }
 
   if (pathname === "/api/mcp/tools" && method === "GET") {
     sendData(response, overview);
