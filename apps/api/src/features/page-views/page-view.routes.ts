@@ -13,7 +13,6 @@ import { z } from "../../shared/openapi/zod";
 import { ok } from "../../lib/http/response";
 import { type AppDependencies } from "../../lib/services/dependencies";
 import { requireAuthenticatedActor } from "../../shared/http/route-guards";
-import { isManagerLikeRole } from "../../lib/authorization/policy";
 import type HonoAppType from "../../types/honoAppType";
 import { normalizePageViewResourceId } from "../../lib/views/page-view-target";
 import { AppError } from "../../shared/errors/AppError";
@@ -148,7 +147,7 @@ export const registerPageViewRoutes = (
   app.openapi(getPageViewStatsRoute, async (c) => {
     const actor = await requireAuthenticatedActor(c, dependencies);
 
-    if (!isManagerLikeRole(actor.role)) {
+    if (actor.role === "unverified") {
       throw AppError.forbidden();
     }
 
@@ -159,7 +158,7 @@ export const registerPageViewRoutes = (
   app.openapi(getDashboardPageViewStatsRoute, async (c) => {
     const actor = await requireAuthenticatedActor(c, dependencies);
 
-    if (!isManagerLikeRole(actor.role)) {
+    if (actor.role === "unverified") {
       throw AppError.forbidden();
     }
 

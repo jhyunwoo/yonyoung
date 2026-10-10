@@ -272,7 +272,7 @@ describe("page-views routes", () => {
     });
 
     it.each(["new_member", "associate_member", "regular_member"] as const)(
-      "일반 회원 역할 %s는 통계 집계 서비스를 호출할 수 없다",
+      "일반 회원 역할 %s도 방문 통계를 조회할 수 있다",
       async (role) => {
         const getPageViewStats = fn(async () => ({
           totalViews: 0,
@@ -291,9 +291,8 @@ describe("page-views routes", () => {
 
         const response = await app.request("/api/admin/page-views/stats");
 
-        expect(response.status).toBe(403);
-        await expectErrorCode(response, "FORBIDDEN");
-        expect(getPageViewStats).not.toHaveBeenCalled();
+        expect(response.status).toBe(200);
+        expect(getPageViewStats).toHaveBeenCalled();
       },
     );
   });

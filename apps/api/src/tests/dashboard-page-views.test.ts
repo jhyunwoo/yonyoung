@@ -5,7 +5,6 @@ import {
   createActor,
   createDataServiceMock,
   createTestApp,
-  expectErrorCode,
   readJson,
 } from "./test-helpers";
 
@@ -33,7 +32,7 @@ describe("Dashboard Page View Stats API", () => {
     expect(getDashboardPageViewStats).toHaveBeenCalled();
   });
 
-  it("인증되지 않은 사용자는 대시보드 통계를 조회할 수 없다", async () => {
+  it("미승인 사용자는 대시보드 통계를 조회할 수 없다", async () => {
     const app = createTestApp({
       actor: createActor("unverified", "user-id"),
       dataService: createDataServiceMock(),
@@ -54,7 +53,7 @@ describe("Dashboard Page View Stats API", () => {
   });
 
   it.each(["new_member", "associate_member", "regular_member"] as const)(
-    "일반 회원 역할 %s는 대시보드 방문 통계 서비스를 호출할 수 없다",
+    "일반 회원 역할 %s도 대시보드 방문 통계를 조회할 수 있다",
     async (role) => {
       const getDashboardPageViewStats = vi.fn(async () => ({
         today: { count: 0, prevCount: 0 },
@@ -68,9 +67,8 @@ describe("Dashboard Page View Stats API", () => {
 
       const response = await app.request("/api/admin/page-views/dashboard");
 
-      expect(response.status).toBe(403);
-      await expectErrorCode(response, "FORBIDDEN");
-      expect(getDashboardPageViewStats).not.toHaveBeenCalled();
+      expect(response.status).toBe(200);
+      expect(getDashboardPageViewStats).toHaveBeenCalled();
     },
   );
 });
