@@ -33,6 +33,8 @@ export function initializeBrowserSentry(): Promise<BrowserSentry | null> {
         tracesSampleRate: 0,
         replaysSessionSampleRate: 0,
         replaysOnErrorSampleRate: 0,
+        // 브라우저 확장 프로그램이 페이지 컨텍스트에서 남기는 rejection. 앱 코드는 extension API를 쓰지 않는다.
+        ignoreErrors: [/runtime\.sendMessage\(\)/],
         beforeSendLog: () => null,
         beforeSend: scrubSentryEvent,
       });

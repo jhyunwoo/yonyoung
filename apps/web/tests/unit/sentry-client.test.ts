@@ -72,6 +72,16 @@ describe("browser Sentry loading", () => {
     );
   });
 
+  it("ignores errors thrown by browser extension messaging", async () => {
+    const client = await import("@/lib/observability/sentry-client");
+    await client.initializeBrowserSentry();
+    const { ignoreErrors } = init.mock.calls[0][0];
+    const isIgnored = (message: string) =>
+      ignoreErrors.some((pattern: RegExp) => pattern.test(message));
+    expect(isIgnored("Invalid call to runtime.sendMessage(). Tab not found.")).toBe(true);
+    expect(isIgnored("Cannot read properties of undefined")).toBe(false);
+  });
+
   it("contains SDK load failures", async () => {
     loadSdk.mockImplementationOnce(() => {
       throw new Error("chunk unavailable");
