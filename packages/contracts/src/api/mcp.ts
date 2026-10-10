@@ -637,6 +637,17 @@ export const MCP_TOOL_CATALOG = [
     examplePrompt: "이번 주 방문자 수 어때?",
   },
   {
+    name: "page_view_analytics",
+    title: "기간별 방문 분석",
+    description:
+      "지정한 기간의 방문 추이, 이전 기간 비교, 페이지 종류·인기 콘텐츠, 요일 패턴, 유입 경로와 기기를 조회합니다.",
+    category: "stats",
+    exposure: verified,
+    readOnly: true,
+    destructive: false,
+    examplePrompt: "지난 6개월 방문 추이랑 유입 경로 보여줘",
+  },
+  {
     name: "audit_log_get",
     title: "변경 기록 조회",
     description:

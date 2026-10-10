@@ -42,6 +42,7 @@ exports[`openapi contract > 경로/메서드/operationId/스키마 구조가 리
     "ApiMultipartUploadPartResponse",
     "ApiMultipartUploadedPart",
     "ApiOpenApiDocument",
+    "ApiPageViewAnalytics",
     "ApiPageViewStats",
     "ApiPresignRequest",
     "ApiPresignResponse",
@@ -945,6 +946,110 @@ exports[`openapi contract > 경로/메서드/operationId/스키마 구조가 리
             },
           },
           "description": "관리자 대시보드 집계 조회 성공",
+        },
+        "400": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiErrorResponse",
+              },
+            },
+          },
+          "description": "요청 본문/파라미터 검증에 실패했습니다. 발생 조건: UUID 형식 오류, 필수 필드 누락, 스키마 타입 불일치, 빈 PATCH payload 등. 서버는 검증 단계에서 요청을 중단하고 BAD_REQUEST를 반환하며, 클라이언트는 입력값을 보정한 뒤 재요청해야 합니다.",
+        },
+        "401": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiErrorResponse",
+              },
+            },
+          },
+          "description": "인증 세션이 없거나 만료되었습니다. 서버는 세션 확인 단계에서 요청을 거부하고 UNAUTHORIZED를 반환합니다. 클라이언트는 재로그인 후 동일 요청을 재시도해야 합니다.",
+        },
+        "403": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiErrorResponse",
+              },
+            },
+          },
+          "description": "역할 기반 권한 정책에 의해 요청이 거부되었습니다. 서버는 인증 이후 권한 검사(requirePermission/can)에서 접근 가능 여부를 판단하고 FORBIDDEN을 반환합니다. 클라이언트는 권한 범위 내 기능만 노출해야 합니다.",
+        },
+      },
+      "security": [
+        {
+          "cookieAuth": [],
+        },
+      ],
+      "tags": [
+        "Dashboard",
+      ],
+    },
+    "GET /api/admin/page-views/analytics": {
+      "operationId": "getPageViewAnalytics",
+      "parameters": [
+        {
+          "description": "시작일(KST, 포함). 생략하면 종료일 기준 최근 30일",
+          "in": "query",
+          "name": "from",
+          "required": false,
+          "schema": {
+            "description": "시작일(KST, 포함). 생략하면 종료일 기준 최근 30일",
+            "example": "2026-09-11",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "type": "string",
+          },
+        },
+        {
+          "description": "종료일(KST, 포함). 생략하거나 오늘 이후면 오늘",
+          "in": "query",
+          "name": "to",
+          "required": false,
+          "schema": {
+            "description": "종료일(KST, 포함). 생략하거나 오늘 이후면 오늘",
+            "example": "2026-10-10",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "type": "string",
+          },
+        },
+        {
+          "description": "집계 단위. 생략하면 31일 이하 day, 183일 이하 week, 그보다 길면 month",
+          "in": "query",
+          "name": "granularity",
+          "required": false,
+          "schema": {
+            "description": "집계 단위. 생략하면 31일 이하 day, 183일 이하 week, 그보다 길면 month",
+            "enum": [
+              "day",
+              "week",
+              "month",
+            ],
+            "example": "day",
+            "type": "string",
+          },
+        },
+      ],
+      "requestBody": undefined,
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "data": {
+                    "$ref": "#/components/schemas/ApiPageViewAnalytics",
+                  },
+                },
+                "required": [
+                  "data",
+                ],
+                "type": "object",
+              },
+            },
+          },
+          "description": "기간별 방문 분석 조회 성공",
         },
         "400": {
           "content": {

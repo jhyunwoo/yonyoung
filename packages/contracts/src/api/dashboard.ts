@@ -34,3 +34,57 @@ export const apiPageViewStatsSchema = z.object({
 });
 
 export type ApiPageViewStats = z.infer<typeof apiPageViewStatsSchema>;
+
+const pageViewGranularitySchema = z.enum(["day", "week", "month"]);
+const topContentSchema = z.object({
+  resourceId: z.string(),
+  title: z.string(),
+  views: z.number().int(),
+});
+
+export const apiPageViewAnalyticsSchema = z.object({
+  range: z.object({
+    from: z.string(),
+    to: z.string(),
+    days: z.number().int(),
+    granularity: pageViewGranularitySchema,
+  }),
+  previousRange: z.object({ from: z.string(), to: z.string() }),
+  summary: z.object({
+    totalViews: z.number().int(),
+    prevTotalViews: z.number().int(),
+    dailyAverage: z.number(),
+    peak: z.object({ date: z.string(), count: z.number().int() }).nullable(),
+    entries: z.number().int(),
+    prevEntries: z.number().int(),
+  }),
+  trend: z.array(
+    z.object({
+      bucket: z.string(),
+      views: z.number().int(),
+      prevViews: z.number().int(),
+    }),
+  ),
+  byPageType: z.array(
+    z.object({
+      pageType: z.enum(["home", "activity", "exhibition", "notice"]),
+      views: z.number().int(),
+    }),
+  ),
+  topActivities: z.array(topContentSchema),
+  topExhibitions: z.array(topContentSchema),
+  weekdays: z.array(
+    z.object({ weekday: z.number().int(), averageViews: z.number() }),
+  ),
+  referrers: z.array(z.object({ host: z.string(), entries: z.number().int() })),
+  devices: z.array(
+    z.object({
+      device: z.enum(["mobile", "tablet", "desktop"]),
+      entries: z.number().int(),
+    }),
+  ),
+  entriesTrackedSince: z.string().nullable(),
+});
+
+export type ApiPageViewGranularity = z.infer<typeof pageViewGranularitySchema>;
+export type ApiPageViewAnalytics = z.infer<typeof apiPageViewAnalyticsSchema>;

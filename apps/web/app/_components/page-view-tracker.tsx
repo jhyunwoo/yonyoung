@@ -24,6 +24,28 @@ type PageViewTrackerProps = {
  * 페인트 뒤로 밀리면서도, 사용자가 그 사이에 페이지를 떠나 집계가 누락될 위험은
  * 사실상 없다(`keepalive` 가 남은 경우도 처리한다).
  */
+// 문서 로드당 한 번만 진입으로 보낸다. 클라이언트 내비게이션에서는 document.referrer가
+// 첫 유입 경로로 남아 있어서, 매 페이지뷰마다 보내면 같은 유입이 중복으로 잡힌다.
+let entryReported = false;
+
+/**
+ * 진입 정보. 같은 사이트에서 온 새로고침은 진입이 아니므로 null을 돌려준다.
+ * 외부 유입은 경로·쿼리를 빼고 호스트명만 보낸다.
+ */
+const readEntry = (): { entry: true; referrerHost?: string } | null => {
+  if (entryReported) return null;
+  entryReported = true;
+
+  if (document.referrer === "") return { entry: true };
+  try {
+    const referrer = new URL(document.referrer);
+    if (referrer.origin === window.location.origin) return null;
+    return { entry: true, referrerHost: referrer.hostname };
+  } catch {
+    return { entry: true };
+  }
+};
+
 export default function PageViewTracker({ pageType, resourceId }: PageViewTrackerProps) {
   useEffect(() => {
     const post = (path: string, body: unknown) => {
@@ -45,7 +67,7 @@ export default function PageViewTracker({ pageType, resourceId }: PageViewTracke
       }
 
       // 내부 Analytics Engine 집계
-      post("/api/public/page-views", { pageType, resourceId });
+      post("/api/public/page-views", { pageType, resourceId, ...readEntry() });
     });
 
     return () => cancelAnimationFrame(frame);

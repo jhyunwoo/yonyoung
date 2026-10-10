@@ -21,6 +21,7 @@ import type {
   ApiGenerationMemberSummary,
   ApiGeneration,
   ApiLinktree,
+  ApiPageViewAnalytics,
   ApiPageViewStats,
   ApiSiteSettings,
   ApiUser,
@@ -32,6 +33,7 @@ import {
   apiGenerationMemberSummarySchema,
   apiGenerationSchema,
   apiLinktreeSchema,
+  apiPageViewAnalyticsSchema,
   apiPageViewStatsSchema,
   apiSiteSettingsSchema,
   apiUserSchema,
@@ -263,6 +265,17 @@ export const getAdminPageViewStats = (
   cookieHeader: string | null,
 ): Promise<AdminReadResult<ApiPageViewStats>> =>
   readAdminResource("/admin/page-views/dashboard", cookieHeader, apiPageViewStatsSchema);
+
+/** apiSearch는 stats-range의 toAnalyticsApiSearch 결과다. */
+export const getAdminPageViewAnalytics = (
+  cookieHeader: string | null,
+  apiSearch: string,
+): Promise<AdminReadResult<ApiPageViewAnalytics>> =>
+  readAdminResource(
+    `/admin/page-views/analytics?${apiSearch}`,
+    cookieHeader,
+    apiPageViewAnalyticsSchema,
+  );
 
 export const getMcpOverview = (
   cookieHeader: string | null,

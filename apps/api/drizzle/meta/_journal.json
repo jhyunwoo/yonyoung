@@ -99,6 +99,13 @@
       "when": 1791543529359,
       "tag": "0013_drop_mcp_uploads",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1791642298280,
+      "tag": "0014_page_view_entries",
+      "breakpoints": true
     }
   ]
 }

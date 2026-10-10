@@ -1,7 +1,7 @@
 import type { SQL } from "drizzle-orm";
 import { SQLiteSyncDialect } from "drizzle-orm/sqlite-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { activities, pageViews } from "../platform/db/schema";
+import { activities, pageViewEntries, pageViews } from "../platform/db/schema";
 
 const createDBMock = vi.hoisted(() => vi.fn());
 
@@ -68,6 +68,41 @@ describe("db service page-view persistence", () => {
     expect(conflictCalls[0]?.[0]).toMatchObject({
       target: pageViews.id,
     });
+  });
+
+  it("진입은 유입 경로와 기기 행을 KST 일 버킷 ID로 함께 upsert한다", async () => {
+    const mockDb = createMockDb();
+    createDBMock.mockReturnValue(mockDb.db);
+    vi.spyOn(Date, "now").mockReturnValue(
+      Date.parse("2030-01-02T01:23:45.000Z"),
+    );
+    const service = createDbDataService({} as D1Database);
+
+    await service.recordPageViewEntry({
+      referrerHost: "instagram.com",
+      device: "mobile",
+    });
+
+    expect(mockDb.insert).toHaveBeenCalledWith(pageViewEntries);
+    const valueCalls = mockDb.values.mock.calls as unknown[][];
+    expect(valueCalls[0]?.[0]).toEqual([
+      {
+        id: "daily:referrer:instagram.com:1893510000000",
+        dimension: "referrer",
+        value: "instagram.com",
+        entryCount: 1,
+        visitedAt: new Date("2030-01-01T15:00:00.000Z"),
+      },
+      {
+        id: "daily:device:mobile:1893510000000",
+        dimension: "device",
+        value: "mobile",
+        entryCount: 1,
+        visitedAt: new Date("2030-01-01T15:00:00.000Z"),
+      },
+    ]);
+    const conflictCalls = mockDb.onConflictDoUpdate.mock.calls as unknown[][];
+    expect(conflictCalls[0]?.[0]).toMatchObject({ target: pageViewEntries.id });
   });
 
   it("singleton 페이지 ID를 고정값으로 정규화한다", async () => {

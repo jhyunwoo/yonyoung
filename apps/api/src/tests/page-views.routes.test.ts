@@ -204,6 +204,71 @@ describe("page-views routes", () => {
       expect(recordPageView).not.toHaveBeenCalled();
       expect(recordView).not.toHaveBeenCalled();
     });
+
+    it("진입이면 정규화한 유입 경로와 UA로 판별한 기기를 기록한다", async () => {
+      const recordPageViewEntry = fn(async () => undefined);
+      const app = createTestApp({
+        actor: null,
+        dataService: createDataServiceMock({
+          recordPageView: fn(async () => undefined),
+          recordPageViewEntry,
+        }),
+      });
+
+      const response = await app.request("/api/public/page-views", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile/15E148",
+        },
+        body: JSON.stringify({ pageType: "home", entry: true, referrerHost: "WWW.Instagram.com" }),
+      });
+
+      expect(response.status).toBe(200);
+      expect(recordPageViewEntry).toHaveBeenCalledWith({
+        referrerHost: "instagram.com",
+        device: "mobile",
+      });
+    });
+
+    it("진입이 아니면 유입 경로를 기록하지 않는다", async () => {
+      const recordPageViewEntry = fn(async () => undefined);
+      const app = createTestApp({
+        actor: null,
+        dataService: createDataServiceMock({
+          recordPageView: fn(async () => undefined),
+          recordPageViewEntry,
+        }),
+      });
+
+      await app.request("/api/public/page-views", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pageType: "home", referrerHost: "instagram.com" }),
+      });
+
+      expect(recordPageViewEntry).not.toHaveBeenCalled();
+    });
+
+    it("진입 기록이 실패해도 200으로 응답한다", async () => {
+      const app = createTestApp({
+        actor: null,
+        dataService: createDataServiceMock({
+          recordPageView: fn(async () => undefined),
+          recordPageViewEntry: fn(async () => {
+            throw new Error("D1 down");
+          }),
+        }),
+      });
+
+      const response = await app.request("/api/public/page-views", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pageType: "home", entry: true }),
+      });
+
+      expect(response.status).toBe(200);
+    });
   });
 
   describe("GET /api/admin/page-views/stats", () => {

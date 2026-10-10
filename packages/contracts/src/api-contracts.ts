@@ -94,7 +94,12 @@ export type {
   ApiUserResourceHistoryResourceType,
 } from "./api/users";
 
-export type { ApiAdminDashboardStats, ApiPageViewStats } from "./api/dashboard";
+export type {
+  ApiAdminDashboardStats,
+  ApiPageViewAnalytics,
+  ApiPageViewGranularity,
+  ApiPageViewStats,
+} from "./api/dashboard";
 
 export type {
   ApiMultipartUploadAbortRequest,

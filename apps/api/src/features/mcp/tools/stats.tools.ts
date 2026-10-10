@@ -4,6 +4,7 @@ import {
   ApiAuditQuerySchema,
 } from "../../audit/audit.contract";
 import { ApiAdminDashboardStatsQuerySchema } from "../../dashboard/dashboard.contract";
+import { ApiPageViewAnalyticsQuerySchema } from "../../page-views/page-view.contract";
 import { routeTool } from "../tool-definition";
 
 export const statsTools = [
@@ -27,6 +28,13 @@ export const statsTools = [
     path: "/api/admin/page-views/dashboard",
     inputSchema: z.object({}),
     summary: "방문 추이입니다.",
+  }),
+  routeTool({
+    name: "page_view_analytics",
+    method: "GET",
+    path: "/api/admin/page-views/analytics",
+    inputSchema: ApiPageViewAnalyticsQuerySchema,
+    summary: "기간별 방문 분석입니다.",
   }),
   routeTool({
     name: "audit_log_get",

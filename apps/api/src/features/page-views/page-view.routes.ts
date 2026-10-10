@@ -1,9 +1,12 @@
 import { type OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import {
   ApiDashboardPageViewStatsSchema,
+  ApiPageViewAnalyticsQuerySchema,
+  ApiPageViewAnalyticsSchema,
   ApiPageViewStatsSchema,
   ApiRecordPageViewRequestSchema,
 } from "./page-view.contract";
+import { resolveAnalyticsRange } from "./page-view-analytics";
 import {
   dataResponse,
   errorResponses,
@@ -14,7 +17,12 @@ import { ok } from "../../lib/http/response";
 import { type AppDependencies } from "../../lib/services/dependencies";
 import { requireAuthenticatedActor } from "../../shared/http/route-guards";
 import type HonoAppType from "../../types/honoAppType";
-import { normalizePageViewResourceId } from "../../lib/views/page-view-target";
+import {
+  classifyDevice,
+  normalizePageViewResourceId,
+  normalizeReferrerHost,
+} from "../../lib/views/page-view-target";
+import { readValidated } from "../../shared/http/validated-input";
 import { AppError } from "../../shared/errors/AppError";
 
 type App = OpenAPIHono<HonoAppType>;
@@ -82,6 +90,23 @@ const getDashboardPageViewStatsRoute = createRoute({
   },
 });
 
+const getPageViewAnalyticsRoute = createRoute({
+  method: "get",
+  path: "/api/admin/page-views/analytics",
+  tags: ["Dashboard"],
+  operationId: "getPageViewAnalytics",
+  security: [{ cookieAuth: [] }],
+  request: {
+    query: ApiPageViewAnalyticsQuerySchema,
+  },
+  responses: {
+    200: dataResponse(ApiPageViewAnalyticsSchema, "기간별 방문 분석 조회 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+  },
+});
+
 // 조회수 기록은 fire-and-forget이다. 기록 단계의 실패는 무시하고 항상 200으로 응답한다.
 export const registerPageViewRoutes = (
   app: App,
@@ -132,6 +157,17 @@ export const registerPageViewRoutes = (
       // fire-and-forget: 기록 실패는 무시
     }
 
+    if (parsed.data.entry === true) {
+      try {
+        await dataService.recordPageViewEntry({
+          referrerHost: normalizeReferrerHost(parsed.data.referrerHost),
+          device: classifyDevice(c.req.header("user-agent")),
+        });
+      } catch {
+        // fire-and-forget: 기록 실패는 무시
+      }
+    }
+
     // 2. aggregated count 업데이트 (public display용)
     // activity, exhibition, notice, home 타입에 대해 통합 관리
     try {
@@ -166,5 +202,20 @@ export const registerPageViewRoutes = (
       .getDataService(c)
       .getDashboardPageViewStats();
     return ok(c, stats);
+  });
+
+  app.openapi(getPageViewAnalyticsRoute, async (c) => {
+    const actor = await requireAuthenticatedActor(c, dependencies);
+
+    if (actor.role === "unverified") {
+      throw AppError.forbidden();
+    }
+
+    const query = readValidated(c, "query", ApiPageViewAnalyticsQuerySchema);
+    const range = resolveAnalyticsRange(query, Date.now());
+    const analytics = await dependencies
+      .getDataService(c)
+      .getPageViewAnalytics(range);
+    return ok(c, analytics);
   });
 };

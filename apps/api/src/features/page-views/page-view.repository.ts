@@ -1,14 +1,31 @@
 import { and, eq, gte, isNull, lt, sql } from "drizzle-orm";
 import type createDB from "../../lib/db";
-import { activities, exhibitions, pageViews } from "../../platform/db/schema";
+import {
+  activities,
+  exhibitions,
+  pageViewEntries,
+  pageViews,
+} from "../../platform/db/schema";
 import type {
   DashboardPageViewStatsEntity,
+  PageViewAnalyticsEntity,
+  PageViewAnalyticsRange,
   PageViewStatsEntity,
 } from "../../lib/services/types";
 import {
   normalizePageViewResourceId,
+  type PageViewDevice,
   type PageViewType,
 } from "../../lib/views/page-view-target";
+import {
+  addDays,
+  bucketSeries,
+  fillDailySeries,
+  kstDateStartMs,
+  summarizeSeries,
+  toKstDate,
+  weekdayAverages,
+} from "./page-view-analytics";
 
 type Database = ReturnType<typeof createDB>;
 
@@ -74,6 +91,36 @@ export const createPageViewRepository = (db: Database) => ({
         target: pageViews.id,
         set: {
           viewCount: sql`${pageViews.viewCount} + 1`,
+        },
+      });
+  },
+  /**
+   * 진입 한 번을 유입 경로 행과 기기 행에 하나씩 누적한다.
+   * 두 차원의 합계가 항상 같으므로 진입 총수는 기기 행만 더해도 된다.
+   */
+  async recordPageViewEntry(input: {
+    referrerHost: string;
+    device: PageViewDevice;
+  }): Promise<void> {
+    const bucketStart = toKstDailyBucketStart(Date.now());
+    const rows = [
+      { dimension: "referrer", value: input.referrerHost },
+      { dimension: "device", value: input.device },
+    ].map((row) => ({
+      id: `daily:${row.dimension}:${row.value}:${bucketStart}`,
+      dimension: row.dimension,
+      value: row.value,
+      entryCount: 1,
+      visitedAt: new Date(bucketStart),
+    }));
+
+    await db
+      .insert(pageViewEntries)
+      .values(rows)
+      .onConflictDoUpdate({
+        target: pageViewEntries.id,
+        set: {
+          entryCount: sql`${pageViewEntries.entryCount} + 1`,
         },
       });
   },
@@ -281,6 +328,190 @@ export const createPageViewRepository = (db: Database) => ({
         date: row.date,
         count: Number(row.count) || 0,
       })),
+    };
+  },
+
+  async getPageViewAnalytics(
+    range: PageViewAnalyticsRange,
+  ): Promise<PageViewAnalyticsEntity> {
+    const currentStart = new Date(kstDateStartMs(range.from));
+    const currentEnd = new Date(kstDateStartMs(addDays(range.to, 1)));
+    const previousStart = new Date(kstDateStartMs(range.previous.from));
+    const viewsInCurrent = and(
+      gte(pageViews.visitedAt, currentStart),
+      lt(pageViews.visitedAt, currentEnd),
+    );
+    const entriesInCurrent = and(
+      gte(pageViewEntries.visitedAt, currentStart),
+      lt(pageViewEntries.visitedAt, currentEnd),
+    );
+    const kstDay = sql<string>`date((${pageViews.visitedAt} + ${KST_OFFSET_MS}) / 1000, 'unixepoch')`;
+    const viewSum = sql<number>`coalesce(sum(${pageViews.viewCount}), 0)`;
+    const entrySum = sql<number>`coalesce(sum(${pageViewEntries.entryCount}), 0)`;
+
+    const topContent = (
+      table: typeof activities | typeof exhibitions,
+      pageType: PageViewType,
+    ) =>
+      db
+        .select({ resourceId: table.id, title: table.title, views: viewSum })
+        .from(pageViews)
+        .innerJoin(table, eq(table.id, pageViews.resourceId))
+        .where(
+          and(
+            eq(pageViews.pageType, pageType),
+            viewsInCurrent,
+            isNull(table.deletedAt),
+          ),
+        )
+        .groupBy(table.id, table.title)
+        .orderBy(sql`sum(${pageViews.viewCount}) desc`)
+        .limit(10);
+
+    const [
+      dailyRows,
+      pageTypeRows,
+      topActivityRows,
+      topExhibitionRows,
+      deviceRows,
+      previousEntryRows,
+      referrerRows,
+      firstEntryRows,
+    ] = await Promise.all([
+      db
+        .select({ date: kstDay, count: viewSum })
+        .from(pageViews)
+        .where(
+          and(
+            gte(pageViews.visitedAt, previousStart),
+            lt(pageViews.visitedAt, currentEnd),
+          ),
+        )
+        .groupBy(kstDay),
+      db
+        .select({ pageType: pageViews.pageType, views: viewSum })
+        .from(pageViews)
+        .where(viewsInCurrent)
+        .groupBy(pageViews.pageType),
+      topContent(activities, "activity"),
+      topContent(exhibitions, "exhibition"),
+      db
+        .select({ value: pageViewEntries.value, entries: entrySum })
+        .from(pageViewEntries)
+        .where(and(eq(pageViewEntries.dimension, "device"), entriesInCurrent))
+        .groupBy(pageViewEntries.value),
+      db
+        .select({ entries: entrySum })
+        .from(pageViewEntries)
+        .where(
+          and(
+            eq(pageViewEntries.dimension, "device"),
+            gte(pageViewEntries.visitedAt, previousStart),
+            lt(pageViewEntries.visitedAt, currentStart),
+          ),
+        ),
+      db
+        .select({ value: pageViewEntries.value, entries: entrySum })
+        .from(pageViewEntries)
+        .where(and(eq(pageViewEntries.dimension, "referrer"), entriesInCurrent))
+        .groupBy(pageViewEntries.value)
+        .orderBy(sql`sum(${pageViewEntries.entryCount}) desc`)
+        .limit(10),
+      db
+        .select({
+          first: sql<number | null>`min(${pageViewEntries.visitedAt})`,
+        })
+        .from(pageViewEntries),
+    ]);
+
+    const daily = dailyRows.map((row) => ({
+      date: row.date,
+      count: Number(row.count) || 0,
+    }));
+    const current = fillDailySeries(daily, range.from, range.to);
+    const previous = fillDailySeries(
+      daily,
+      range.previous.from,
+      range.previous.to,
+    );
+    const currentSummary = summarizeSeries(current);
+    const previousSummary = summarizeSeries(previous);
+
+    const devices = deviceRows
+      .filter(
+        (row): row is { value: PageViewDevice; entries: number } =>
+          row.value === "mobile" ||
+          row.value === "tablet" ||
+          row.value === "desktop",
+      )
+      .map((row) => ({ device: row.value, entries: Number(row.entries) || 0 }))
+      .sort((a, b) => b.entries - a.entries);
+    const entries = devices.reduce((sum, row) => sum + row.entries, 0);
+
+    // 상위 10개 밖의 유입 경로는 "other"로 합친다. 형식이 틀린 호스트도 이미 "other"로 저장돼 있다.
+    const referrers = referrerRows.map((row) => ({
+      host: row.value,
+      entries: Number(row.entries) || 0,
+    }));
+    const remainder =
+      entries - referrers.reduce((sum, row) => sum + row.entries, 0);
+    if (remainder > 0) {
+      const other = referrers.find((row) => row.host === "other");
+      if (other) {
+        other.entries += remainder;
+      } else {
+        referrers.push({ host: "other", entries: remainder });
+      }
+    }
+
+    const toTopContent = (rows: typeof topActivityRows) =>
+      rows.map((row) => ({
+        resourceId: row.resourceId,
+        title: row.title,
+        views: Number(row.views) || 0,
+      }));
+
+    const firstEntry = firstEntryRows[0]?.first;
+
+    return {
+      range: {
+        from: range.from,
+        to: range.to,
+        days: range.days,
+        granularity: range.granularity,
+      },
+      previousRange: range.previous,
+      summary: {
+        totalViews: currentSummary.total,
+        prevTotalViews: previousSummary.total,
+        dailyAverage: currentSummary.dailyAverage,
+        peak: currentSummary.peak,
+        entries,
+        prevEntries: Number(previousEntryRows[0]?.entries) || 0,
+      },
+      trend: bucketSeries(current, previous, range.granularity),
+      byPageType: pageTypeRows
+        .filter(
+          (row): row is { pageType: PageViewType; views: number } =>
+            row.pageType === "home" ||
+            row.pageType === "activity" ||
+            row.pageType === "exhibition" ||
+            row.pageType === "notice",
+        )
+        .map((row) => ({
+          pageType: row.pageType,
+          views: Number(row.views) || 0,
+        }))
+        .sort((a, b) => b.views - a.views),
+      topActivities: toTopContent(topActivityRows),
+      topExhibitions: toTopContent(topExhibitionRows),
+      weekdays: weekdayAverages(current),
+      referrers,
+      devices,
+      entriesTrackedSince:
+        firstEntry === null || firstEntry === undefined
+          ? null
+          : toKstDate(Number(firstEntry)),
     };
   },
 });

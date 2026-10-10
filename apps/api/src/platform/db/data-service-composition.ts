@@ -105,7 +105,9 @@ export const createDbDataService = (database: D1Database): DataService => {
 
     isActiveViewResource: pageViewRepository.isActiveViewResource,
     recordPageView: pageViewRepository.recordPageView,
+    recordPageViewEntry: pageViewRepository.recordPageViewEntry,
     getPageViewStats: pageViewRepository.getPageViewStats,
     getDashboardPageViewStats: pageViewRepository.getDashboardPageViewStats,
+    getPageViewAnalytics: pageViewRepository.getPageViewAnalytics,
   };
 };

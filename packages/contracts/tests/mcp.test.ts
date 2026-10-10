@@ -15,8 +15,8 @@ describe("MCP 도구 카탈로그", () => {
     }
   });
 
-  it("스펙의 도구 51개를 모두 담는다", () => {
-    expect(MCP_TOOL_CATALOG).toHaveLength(51);
+  it("스펙의 도구 52개를 모두 담는다", () => {
+    expect(MCP_TOOL_CATALOG).toHaveLength(52);
   });
 
   it("파괴적 도구는 읽기 전용일 수 없다", () => {

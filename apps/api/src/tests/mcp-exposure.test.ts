@@ -119,6 +119,7 @@ const sampleArgs = (name: string, actor: Actor): Record<string, unknown> => {
     dashboard_overview: {},
     page_view_stats: {},
     page_view_dashboard: {},
+    page_view_analytics: {},
     audit_log_get: { resourceType: "activity", resourceId: IDs.activity },
   };
   const sample = samples[name];

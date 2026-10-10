@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { type DashboardPageViewStatsEntity } from "../lib/services/types";
+import {
+  type DashboardPageViewStatsEntity,
+  type PageViewAnalyticsEntity,
+  type PageViewAnalyticsRange,
+} from "../lib/services/types";
 import {
   IDs,
   createActor,
@@ -71,4 +75,78 @@ describe("Dashboard Page View Stats API", () => {
       expect(getDashboardPageViewStats).toHaveBeenCalled();
     },
   );
+
+  describe("GET /api/admin/page-views/analytics", () => {
+    const emptyAnalytics: PageViewAnalyticsEntity = {
+      range: { from: "2026-10-01", to: "2026-10-07", days: 7, granularity: "day" },
+      previousRange: { from: "2026-09-24", to: "2026-09-30" },
+      summary: {
+        totalViews: 0,
+        prevTotalViews: 0,
+        dailyAverage: 0,
+        peak: null,
+        entries: 0,
+        prevEntries: 0,
+      },
+      trend: [],
+      byPageType: [],
+      topActivities: [],
+      topExhibitions: [],
+      weekdays: [],
+      referrers: [],
+      devices: [],
+      entriesTrackedSince: null,
+    };
+
+    it("요청한 기간을 해석해 데이터 서비스에 넘긴다", async () => {
+      const getPageViewAnalytics = vi.fn(async (_range: PageViewAnalyticsRange) => emptyAnalytics);
+      const app = createTestApp({
+        actor: createActor("regular_member", IDs.member),
+        dataService: createDataServiceMock({ getPageViewAnalytics }),
+      });
+
+      const response = await app.request(
+        "/api/admin/page-views/analytics?from=2026-10-01&to=2026-10-07&granularity=week",
+      );
+
+      expect(response.status).toBe(200);
+      const body = await readJson<{ data: PageViewAnalyticsEntity }>(response);
+      expect(body.data).toEqual(emptyAnalytics);
+      expect(getPageViewAnalytics).toHaveBeenCalledWith({
+        from: "2026-10-01",
+        to: "2026-10-07",
+        days: 7,
+        granularity: "week",
+        previous: { from: "2026-09-24", to: "2026-09-30" },
+      });
+    });
+
+    it.each([
+      "from=2026-10-07&to=2026-10-01",
+      "from=2026-1-01",
+      "granularity=year",
+    ])("잘못된 쿼리 %s 는 400이다", async (query) => {
+      const app = createTestApp({
+        actor: createActor("president", "admin-id"),
+        dataService: createDataServiceMock({ getPageViewAnalytics: vi.fn() }),
+      });
+
+      const response = await app.request(`/api/admin/page-views/analytics?${query}`);
+      expect(response.status).toBe(400);
+    });
+
+    it("미승인 사용자는 403, 비로그인 사용자는 401이다", async () => {
+      const unverified = createTestApp({
+        actor: createActor("unverified", "user-id"),
+        dataService: createDataServiceMock(),
+      });
+      const anonymous = createTestApp({
+        actor: null,
+        dataService: createDataServiceMock(),
+      });
+
+      expect((await unverified.request("/api/admin/page-views/analytics")).status).toBe(403);
+      expect((await anonymous.request("/api/admin/page-views/analytics")).status).toBe(401);
+    });
+  });
 });

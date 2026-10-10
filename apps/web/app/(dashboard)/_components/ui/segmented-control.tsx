@@ -93,7 +93,8 @@ const SegmentButton = ({
     role="radio"
     aria-checked={isSelected}
     className={cx(
-      "relative min-h-9 rounded-sm px-3 text-caption font-medium",
+      // 버튼과 같은 규칙: 모바일은 44px 터치 타깃, md 이상에서 밀도를 높인다.
+      "relative min-h-11 rounded-sm px-3 text-caption font-medium md:min-h-9",
       "transition-colors duration-150 motion-reduce:transition-none",
       "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)",
       isSelected ? "text-ink" : "text-ink-muted hover:text-ink",

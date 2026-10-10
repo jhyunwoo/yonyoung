@@ -1,4 +1,4 @@
-import type { PageViewType } from "../views/page-view-target";
+import type { PageViewDevice, PageViewType } from "../views/page-view-target";
 
 export type GenerationEntity = {
   id: string;
@@ -258,6 +258,44 @@ export type DashboardPageViewStatsEntity = {
   }>;
 };
 
+export type PageViewGranularity = "day" | "week" | "month";
+
+/** 날짜는 모두 KST 기준 `YYYY-MM-DD`이며 양 끝을 포함한다. */
+export type PageViewAnalyticsRange = {
+  from: string;
+  to: string;
+  days: number;
+  granularity: PageViewGranularity;
+  previous: { from: string; to: string };
+};
+
+export type PageViewAnalyticsEntity = {
+  range: {
+    from: string;
+    to: string;
+    days: number;
+    granularity: PageViewGranularity;
+  };
+  previousRange: { from: string; to: string };
+  summary: {
+    totalViews: number;
+    prevTotalViews: number;
+    dailyAverage: number;
+    peak: { date: string; count: number } | null;
+    entries: number;
+    prevEntries: number;
+  };
+  trend: Array<{ bucket: string; views: number; prevViews: number }>;
+  byPageType: Array<{ pageType: PageViewType; views: number }>;
+  topActivities: Array<{ resourceId: string; title: string; views: number }>;
+  topExhibitions: Array<{ resourceId: string; title: string; views: number }>;
+  /** weekday는 월요일이 0, 일요일이 6이다. */
+  weekdays: Array<{ weekday: number; averageViews: number }>;
+  referrers: Array<{ host: string; entries: number }>;
+  devices: Array<{ device: PageViewDevice; entries: number }>;
+  entriesTrackedSince: string | null;
+};
+
 export type DataService = {
   createAuditLog: (input: {
     resourceType: AuditResourceType;
@@ -514,8 +552,15 @@ export type DataService = {
     pageType: PageViewType,
     resourceId: string | undefined,
   ) => Promise<void>;
+  recordPageViewEntry: (input: {
+    referrerHost: string;
+    device: PageViewDevice;
+  }) => Promise<void>;
   getPageViewStats: () => Promise<PageViewStatsEntity>;
   getDashboardPageViewStats: () => Promise<DashboardPageViewStatsEntity>;
+  getPageViewAnalytics: (
+    range: PageViewAnalyticsRange,
+  ) => Promise<PageViewAnalyticsEntity>;
   deleteUser: (id: string) => Promise<boolean>;
 };
 

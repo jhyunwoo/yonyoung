@@ -1669,6 +1669,50 @@ const handleRequest = async (
       return;
     }
 
+    // 요청한 기간을 그대로 돌려줘 화면 URL → API 쿼리 연결을 검증할 수 있게 한다.
+    if (pathname === "/api/admin/page-views/analytics" && method === "GET") {
+      const from = requestUrl.searchParams.get("from") ?? "2026-05-01";
+      const to = requestUrl.searchParams.get("to") ?? "2026-05-03";
+      const granularity = requestUrl.searchParams.get("granularity") ?? "day";
+      sendData(response, {
+        range: { from, to, days: 3, granularity },
+        previousRange: { from: "2026-04-28", to: "2026-04-30" },
+        summary: {
+          totalViews: 360,
+          prevTotalViews: 300,
+          dailyAverage: 120,
+          peak: { date: to, count: 130 },
+          entries: 90,
+          prevEntries: 0,
+        },
+        trend: [
+          { bucket: from, views: 110, prevViews: 90 },
+          { bucket: "mock-mid", views: 120, prevViews: 100 },
+          { bucket: to, views: 130, prevViews: 110 },
+        ],
+        byPageType: [
+          { pageType: "home", views: 200 },
+          { pageType: "activity", views: 160 },
+        ],
+        topActivities: [{ resourceId: "act-1", title: "목 활동", views: 160 }],
+        topExhibitions: [],
+        weekdays: [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
+          weekday,
+          averageViews: weekday + 0.5,
+        })),
+        referrers: [
+          { host: "direct", entries: 60 },
+          { host: "instagram.com", entries: 30 },
+        ],
+        devices: [
+          { device: "mobile", entries: 70 },
+          { device: "desktop", entries: 20 },
+        ],
+        entriesTrackedSince: "2026-04-01",
+      });
+      return;
+    }
+
     // Admin dashboard stats
     if (pathname === "/api/admin/dashboard" && method === "GET") {
       const generationSortOrder = readNumberQuery(
