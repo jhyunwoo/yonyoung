@@ -778,7 +778,7 @@ describe("public routes", () => {
     ]);
   });
 
-  it("공개 사진가 목록은 기수/멤버를 정렬해 반환하며 민감 정보를 노출하지 않는다", async () => {
+  it("공개 사진가 목록은 최신 기수부터 정렬해 반환하며 민감 정보를 노출하지 않는다", async () => {
     const listGenerations = fn(async () => [
       createGeneration({
         id: IDs.generationAlt,
@@ -844,21 +844,21 @@ describe("public routes", () => {
     }>(response);
 
     expect(body.data.map((item) => item.id)).toEqual([
-      IDs.generation,
       IDs.generationAlt,
+      IDs.generation,
     ]);
     expect(
-      body.data[0]?.members.map((member) => member.id),
+      body.data[1]?.members.map((member) => member.id),
     ).toEqual([IDs.member, IDs.otherUser]);
-    expect(body.data[1]?.members.map((member) => member.id)).toEqual([IDs.manager]);
-    expect(body.data[0]?.members[0]?.showcaseImageUrls).toEqual([
+    expect(body.data[0]?.members.map((member) => member.id)).toEqual([IDs.manager]);
+    expect(body.data[1]?.members[0]?.showcaseImageUrls).toEqual([
       "https://example.com/showcase/member-1.jpg",
       "https://example.com/showcase/member-2.jpg",
     ]);
-    expect(body.data[0]?.members[1]?.showcaseImageUrls).toEqual([]);
-    expect(body.data[0]?.members[0]).not.toHaveProperty("email");
-    expect(body.data[0]?.members[0]).not.toHaveProperty("phoneNumber");
-    expect(body.data[0]?.members[0]).not.toHaveProperty("studentNumber");
+    expect(body.data[1]?.members[1]?.showcaseImageUrls).toEqual([]);
+    expect(body.data[1]?.members[0]).not.toHaveProperty("email");
+    expect(body.data[1]?.members[0]).not.toHaveProperty("phoneNumber");
+    expect(body.data[1]?.members[0]).not.toHaveProperty("studentNumber");
     expect(listGenerations).toHaveBeenCalledTimes(1);
     expect(listUsers).toHaveBeenCalledTimes(1);
   });

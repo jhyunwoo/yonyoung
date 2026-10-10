@@ -565,7 +565,7 @@ export const registerPublicRoutes = (
       const [generations, users] = await Promise.all([
         dataService
           .listGenerations()
-          .then((rows) => [...rows].sort((a, b) => a.sortOrder - b.sortOrder)),
+          .then((rows) => [...rows].sort((a, b) => b.sortOrder - a.sortOrder)),
         dataService.listUsers(),
       ]);
 
