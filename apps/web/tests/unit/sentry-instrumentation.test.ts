@@ -34,4 +34,13 @@ describe("Sentry server initialization", () => {
       }),
     );
   });
+  it("ignores RSC stream aborts caused by client disconnects", async () => {
+    vi.stubEnv("SENTRY_DSN", "https://key@example.com/1");
+    await import("../../sentry.server.config");
+    const { ignoreErrors } = init.mock.calls[0][0];
+    const isIgnored = (message: string) =>
+      ignoreErrors.some((pattern: RegExp) => pattern.test(message));
+    expect(isIgnored("The destination stream closed early.")).toBe(true);
+    expect(isIgnored("The destination stream errored while writing data.")).toBe(false);
+  });
 });
