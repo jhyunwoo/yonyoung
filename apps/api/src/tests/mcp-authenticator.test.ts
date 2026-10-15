@@ -9,6 +9,8 @@ import type HonoAppType from "../types/honoAppType";
 
 const KEY_ID = "test-key";
 const RESOURCE_URL = "https://api.example.test/mcp";
+// 웹 issuer가 아니라 API 자신의 오리진에서 JWKS를 받아야 한다(YONYOUNG-WEB-9).
+const JWKS_URL = "https://api.example.test/api/auth/jwks";
 
 let privateKey: CryptoKey;
 let publicJwk: Record<string, unknown>;
@@ -19,17 +21,17 @@ beforeAll(async () => {
   publicJwk = { ...(await exportJWK(keys.publicKey)), kid: KEY_ID, alg: "ES256" };
 });
 
-// 보호 핸들러와 JWKS는 issuer별로 캐시되므로 테스트마다 issuer를 다르게 둔다.
+// 보호 핸들러는 issuer별로 캐시되므로 테스트마다 issuer를 다르게 둔다.
 const createEnv = (name: string) => ({
   BETTER_AUTH_URL: "https://web.example.test",
   MCP_RESOURCE_URL: RESOURCE_URL,
   MCP_AUTH_ISSUER: `https://${name}.auth.example.test/api/auth`,
 });
 
-const stubJwks = (issuer: string) => {
+const stubJwks = () => {
   const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
     const url = input instanceof Request ? input.url : String(input);
-    if (url !== `${issuer}/jwks`) {
+    if (url !== JWKS_URL) {
       return new Response("not found", { status: 404 });
     }
     return Response.json({ keys: [publicJwk] });
@@ -79,7 +81,7 @@ afterEach(() => {
 describe("createBetterAuthMcpAuthenticator", () => {
   it("유효한 토큰이면 후속 처리에 사용자, 클라이언트, scope를 넘긴다", async () => {
     const env = createEnv("valid");
-    const fetchMock = stubJwks(env.MCP_AUTH_ISSUER);
+    const fetchMock = stubJwks();
     const { app, received } = createProtectedApp();
     const token = await signToken({
       iss: env.MCP_AUTH_ISSUER,
@@ -100,7 +102,7 @@ describe("createBetterAuthMcpAuthenticator", () => {
 
   it("audience가 다르면 401", async () => {
     const env = createEnv("wrong-aud");
-    stubJwks(env.MCP_AUTH_ISSUER);
+    stubJwks();
     const { app, received } = createProtectedApp();
     const token = await signToken({
       iss: env.MCP_AUTH_ISSUER,
@@ -118,7 +120,7 @@ describe("createBetterAuthMcpAuthenticator", () => {
 
   it("issuer가 다르면 401", async () => {
     const env = createEnv("wrong-iss");
-    stubJwks(env.MCP_AUTH_ISSUER);
+    stubJwks();
     const { app, received } = createProtectedApp();
     const token = await signToken({
       iss: "https://evil.example.test/api/auth",
@@ -136,7 +138,7 @@ describe("createBetterAuthMcpAuthenticator", () => {
 
   it("mcp scope가 없으면 403", async () => {
     const env = createEnv("no-scope");
-    stubJwks(env.MCP_AUTH_ISSUER);
+    stubJwks();
     const { app, received } = createProtectedApp();
     const token = await signToken({
       iss: env.MCP_AUTH_ISSUER,
@@ -157,7 +159,7 @@ describe("createBetterAuthMcpAuthenticator", () => {
 
   it("client_credentials 토큰(sub=azp)은 401", async () => {
     const env = createEnv("client-token");
-    stubJwks(env.MCP_AUTH_ISSUER);
+    stubJwks();
     const { app, received } = createProtectedApp();
     const token = await signToken({
       iss: env.MCP_AUTH_ISSUER,
@@ -178,7 +180,7 @@ describe("createBetterAuthMcpAuthenticator", () => {
 
   it("Authorization 헤더가 없으면 resource_metadata를 담은 401", async () => {
     const env = createEnv("no-header");
-    stubJwks(env.MCP_AUTH_ISSUER);
+    stubJwks();
     const { app, received } = createProtectedApp();
 
     const response = await callMcp(app, env);
