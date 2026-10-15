@@ -245,9 +245,7 @@ export const resolveMcpRuntimeEnv = (
   return {
     resourceUrl,
     issuer,
-    // JWKS는 이 Worker가 직접 서빙한다. issuer(웹 도메인)로 받으면 Next 서버를 거쳐 다시 여기로
-    // 돌아오므로 웹 오리진이 잠깐만 불안해도 MCP 인증이 500으로 깨진다(YONYOUNG-WEB-9).
-    jwksUrl: `${resource.origin}/api/auth/jwks`,
+    jwksUrl: `${issuer}/jwks`,
     resourceMetadataUrl: `${resource.origin}/.well-known/oauth-protected-resource${resource.pathname}`,
   };
 };

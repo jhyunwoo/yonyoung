@@ -20,7 +20,7 @@ describe("MCP 런타임 환경", () => {
     expect(resolveMcpRuntimeEnv(AUTH_TEST_ENV)).toEqual({
       resourceUrl: "https://api.example.test/mcp",
       issuer: "https://web.example.test/api/auth",
-      jwksUrl: "https://api.example.test/api/auth/jwks",
+      jwksUrl: "https://web.example.test/api/auth/jwks",
       resourceMetadataUrl:
         "https://api.example.test/.well-known/oauth-protected-resource/mcp",
     });
