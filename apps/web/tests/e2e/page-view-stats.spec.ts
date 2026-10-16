@@ -84,7 +84,7 @@ test.describe("방문 통계 화면", () => {
   test("필터를 고르면 URL·API 요청에 반영되고 칩으로 해제한다", async ({ page }) => {
     await page.goto("/dashboard/stats", { waitUntil: "domcontentloaded" });
     // 갱신 시각 문구는 클라이언트 effect가 돌아야 나온다. 하이드레이션 전에 고른 값은 React가 받지 못한다.
-    await expect(page.getByText(/10초마다 갱신/)).toBeVisible();
+    await expect(page.getByText(/60초마다 갱신/)).toBeVisible();
 
     await page.getByTestId("select-stats-audience").selectOption("external");
     await expect(page).toHaveURL(/audience=external/);
@@ -105,7 +105,7 @@ test.describe("방문 통계 화면", () => {
 
   test("추이 지표를 바꾸면 다시 불러오지 않고 URL만 바뀐다", async ({ page }) => {
     await page.goto("/dashboard/stats", { waitUntil: "domcontentloaded" });
-    await expect(page.getByText(/10초마다 갱신/)).toBeVisible();
+    await expect(page.getByText(/60초마다 갱신/)).toBeVisible();
 
     let refetched = false;
     page.on("request", (request) => {
@@ -160,11 +160,20 @@ test.describe("방문 통계 화면", () => {
     await expect(page).toHaveURL(/audience=member/);
   });
 
+  test("7일 이하 기간만 10초마다, 더 긴 기간은 60초마다 갱신한다", async ({ page }) => {
+    await page.goto("/dashboard/stats?range=7d", {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page.getByText(/10초마다 갱신/)).toBeVisible();
+    await page.goto("/dashboard/stats", { waitUntil: "domcontentloaded" });
+    await expect(page.getByText(/60초마다 갱신/)).toBeVisible();
+  });
+
   test("하이드레이션·런타임 오류 없이 렌더된다", async ({ page }) => {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto("/dashboard/stats", { waitUntil: "domcontentloaded" });
-    await expect(page.getByText(/10초마다 갱신/)).toBeVisible();
+    await expect(page.getByText(/60초마다 갱신/)).toBeVisible();
     await expect(page.getByTestId("stats-composition")).toBeVisible();
     expect(errors).toEqual([]);
   });
