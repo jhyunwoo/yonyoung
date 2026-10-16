@@ -176,6 +176,49 @@ describe("createBetterAuthMcpAuthenticator", () => {
     expect(received).toEqual([]);
   });
 
+  it("JWKS 조회가 한 번 실패하면 다시 시도해 통과시킨다", async () => {
+    const env = createEnv("jwks-blip");
+    const fetchMock = stubJwks(env.MCP_AUTH_ISSUER);
+    fetchMock.mockResolvedValueOnce(new Response("origin error", { status: 522 }));
+    const { app, received } = createProtectedApp();
+    const token = await signToken({
+      iss: env.MCP_AUTH_ISSUER,
+      aud: RESOURCE_URL,
+      sub: "user-1",
+      azp: "client-1",
+      scope: "mcp",
+    });
+
+    const response = await callMcp(app, env, token);
+
+    expect(response.status).toBe(200);
+    expect(received).toHaveLength(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("후속 처리가 던진 오류는 다시 시도하지 않는다", async () => {
+    const env = createEnv("handler-error");
+    stubJwks(env.MCP_AUTH_ISSUER);
+    const authenticate = createBetterAuthMcpAuthenticator();
+    const onAuthenticated = vi.fn(async () => {
+      throw new Error("tool failed");
+    });
+    const app = new Hono<HonoAppType>();
+    app.post("/mcp", (c) => authenticate(c, onAuthenticated));
+    const token = await signToken({
+      iss: env.MCP_AUTH_ISSUER,
+      aud: RESOURCE_URL,
+      sub: "user-1",
+      azp: "client-1",
+      scope: "mcp",
+    });
+
+    const response = await callMcp(app, env, token);
+
+    expect(response.status).toBe(500);
+    expect(onAuthenticated).toHaveBeenCalledTimes(1);
+  });
+
   it("Authorization 헤더가 없으면 resource_metadata를 담은 401", async () => {
     const env = createEnv("no-header");
     stubJwks(env.MCP_AUTH_ISSUER);
