@@ -11,6 +11,8 @@ type StatTileProps = {
   value: ReactNode;
   /** 값 아래 한 줄 보조 설명. */
   caption?: ReactNode;
+  /** caption 아래 블록 요소(스파크라인 등). caption은 <p> 안이라 블록을 넣을 수 없다. */
+  footer?: ReactNode;
   Icon?: ComponentType<{ className?: string }>;
   accent?: StickerAccent;
   className?: string;
@@ -26,6 +28,7 @@ export const StatTile = ({
   label,
   value,
   caption,
+  footer,
   Icon,
   accent,
   className,
@@ -48,12 +51,13 @@ export const StatTile = ({
       </span>
     )}
 
-    <div className="min-w-0">
+    <div className="min-w-0 flex-1">
       <p className="text-eyebrow text-ink-muted uppercase">{label}</p>
       <p className="mt-1 text-h3 text-ink tabular-nums">{value}</p>
       {caption !== undefined && (
         <p className="mt-1 text-caption text-ink-muted">{caption}</p>
       )}
+      {footer !== undefined && <div className="mt-2">{footer}</div>}
     </div>
   </div>
 );
