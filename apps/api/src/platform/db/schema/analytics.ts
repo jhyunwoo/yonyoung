@@ -96,3 +96,20 @@ export const analyticsEvents = sqliteTable(
     index("analytics_events_session_idx").on(table.sessionId),
   ],
 );
+
+/**
+ * 페이지뷰 행보다 먼저 도착한 체류 시간. 빠르게 떠나면 체류 전송이 페이지뷰 기록을 앞지르므로,
+ * 여기 두었다가 페이지뷰를 기록할 때 반영하고 지운다. 하루 지나도 짝이 없으면 정리한다.
+ */
+export const analyticsPendingEngagement = sqliteTable(
+  "analytics_pending_engagement",
+  {
+    pageviewId: text("pageview_id").primaryKey(),
+    visitorId: text("visitor_id").notNull(),
+    engagedMs: integer("engaged_ms").notNull(),
+    receivedAt: integer("received_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    index("analytics_pending_engagement_received_at_idx").on(table.receivedAt),
+  ],
+);

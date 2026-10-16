@@ -118,15 +118,21 @@ const scheduled: ExportedHandlerScheduledHandler<Bindings> = async (
     }),
   );
   // R2 정리와 독립적으로 돌린다. 한쪽 실패가 다른 쪽을 막지 않게 한다.
+  const visitorEvents = createVisitorEventRepository(
+    createDB(resolveD1Database(env)),
+  );
   ctx.waitUntil(
-    createVisitorEventRepository(createDB(resolveD1Database(env)))
-      .purgeAnalyticsEventsBefore(Date.now() - ANALYTICS_EVENT_RETENTION_MS)
-      .catch((error: unknown) => {
-        logger.error({
-          event: "analytics.retention_purge.failed",
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }),
+    Promise.all([
+      visitorEvents.purgeAnalyticsEventsBefore(
+        Date.now() - ANALYTICS_EVENT_RETENTION_MS,
+      ),
+      visitorEvents.purgePendingEngagement(Date.now()),
+    ]).catch((error: unknown) => {
+      logger.error({
+        event: "analytics.retention_purge.failed",
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }),
   );
 };
 

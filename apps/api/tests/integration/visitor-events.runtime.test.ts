@@ -28,6 +28,16 @@ const readEngaged = async (id: string) =>
       .first<{ engaged_ms: number | null }>()
   )?.engaged_ms;
 
+const countPending = async (pageviewId: string) =>
+  (
+    await db
+      .prepare(
+        "SELECT count(*) AS n FROM analytics_pending_engagement WHERE pageview_id = ?",
+      )
+      .bind(pageviewId)
+      .first<{ n: number }>()
+  )?.n;
+
 beforeAll(async () => {
   await applyD1Migrations(db, env.TEST_MIGRATIONS as D1Migration[]);
 });
@@ -94,6 +104,58 @@ describe("analytics_events 쓰기", () => {
 
     expect(await readEngaged("eng-2")).toBeNull();
     expect(await readEngaged("eng-3")).toBeNull();
+  });
+
+  it("페이지뷰보다 먼저 온 체류 시간은 페이지뷰를 기록할 때 반영한다", async () => {
+    const repository = createVisitorEventRepository(createDB(db));
+    const now = Date.now();
+    await repository.recordEngagement({
+      pageviewId: "early-1",
+      visitorId: V1,
+      engagedMs: 500,
+      nowMs: now,
+    });
+    await repository.recordAnalyticsEvent(event("early-1", now));
+
+    expect(await readEngaged("early-1")).toBe(500);
+    expect(await countPending("early-1")).toBe(0);
+  });
+
+  it("먼저 온 체류 시간도 다른 방문자 것이면 반영하지 않는다", async () => {
+    const repository = createVisitorEventRepository(createDB(db));
+    const now = Date.now();
+    await repository.recordEngagement({
+      pageviewId: "early-2",
+      visitorId: "33333333-3333-4333-8333-333333333333",
+      engagedMs: 500,
+      nowMs: now,
+    });
+    await repository.recordAnalyticsEvent(event("early-2", now));
+
+    expect(await readEngaged("early-2")).toBeNull();
+    expect(await countPending("early-2")).toBe(0);
+  });
+
+  it("하루 넘게 짝이 없는 대기 체류 시간만 지운다", async () => {
+    const repository = createVisitorEventRepository(createDB(db));
+    const now = Date.now();
+    await repository.recordEngagement({
+      pageviewId: "orphan-old",
+      visitorId: V1,
+      engagedMs: 500,
+      nowMs: now - 25 * HOUR_MS,
+    });
+    await repository.recordEngagement({
+      pageviewId: "orphan-new",
+      visitorId: V1,
+      engagedMs: 500,
+      nowMs: now,
+    });
+
+    await repository.purgePendingEngagement(now);
+
+    expect(await countPending("orphan-old")).toBe(0);
+    expect(await countPending("orphan-new")).toBe(1);
   });
 
   it("보관 기간이 지난 행만 지운다", async () => {

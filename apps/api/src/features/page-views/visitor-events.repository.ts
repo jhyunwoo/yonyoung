@@ -13,6 +13,7 @@ import type createDB from "../../lib/db";
 import {
   activities,
   analyticsEvents,
+  analyticsPendingEngagement,
   exhibitions,
   pageViews,
 } from "../../platform/db/schema";
@@ -57,10 +58,36 @@ export const createVisitorEventRepository = (
   { maxInsightEvents = MAX_INSIGHT_EVENTS }: { maxInsightEvents?: number } = {},
 ) => ({
   async recordAnalyticsEvent(event: NewAnalyticsEvent): Promise<void> {
-    await db
-      .insert(analyticsEvents)
-      .values({ ...event, visitedAt: new Date(event.visitedAt) })
-      .onConflictDoNothing({ target: analyticsEvents.id });
+    const pending = analyticsPendingEngagement;
+    const pendingOfEvent = and(
+      eq(pending.pageviewId, event.id),
+      eq(pending.visitorId, event.visitorId),
+    );
+    // 한 배치로 묶어 체류 저장(recordEngagement)과 엇갈리지 않게 한다.
+    await db.batch([
+      db
+        .insert(analyticsEvents)
+        .values({ ...event, visitedAt: new Date(event.visitedAt) })
+        .onConflictDoNothing({ target: analyticsEvents.id }),
+      db
+        .update(analyticsEvents)
+        .set({
+          engagedMs: sql`max(coalesce(${analyticsEvents.engagedMs}, 0), ${db
+            .select({ engagedMs: pending.engagedMs })
+            .from(pending)
+            .where(pendingOfEvent)})`,
+        })
+        .where(
+          and(
+            eq(analyticsEvents.id, event.id),
+            sql`exists ${db
+              .select({ one: sql`1` })
+              .from(pending)
+              .where(pendingOfEvent)}`,
+          ),
+        ),
+      db.delete(pending).where(eq(pending.pageviewId, event.id)),
+    ]);
   },
 
   /** 클라이언트는 누적 총량을 보낸다. 큰 값만 남기므로 재전송·순서 뒤바뀜에 안전하다. */
@@ -71,19 +98,59 @@ export const createVisitorEventRepository = (
     nowMs: number;
   }): Promise<void> {
     const engagedMs = Math.min(input.engagedMs, MAX_ENGAGED_MS);
-    await db
-      .update(analyticsEvents)
-      .set({
-        engagedMs: sql`max(coalesce(${analyticsEvents.engagedMs}, 0), ${engagedMs})`,
-      })
-      .where(
-        and(
-          eq(analyticsEvents.id, input.pageviewId),
-          eq(analyticsEvents.visitorId, input.visitorId),
-          gte(
-            analyticsEvents.visitedAt,
-            new Date(input.nowMs - ENGAGEMENT_WINDOW_MS),
+    const pending = analyticsPendingEngagement;
+    // 페이지뷰 행이 아직 없으면 대기 행에 남겨 두고, 있으면 바로 반영한 뒤 대기 행을 지운다.
+    await db.batch([
+      db
+        .insert(pending)
+        .values({
+          pageviewId: input.pageviewId,
+          visitorId: input.visitorId,
+          engagedMs,
+          receivedAt: new Date(input.nowMs),
+        })
+        .onConflictDoUpdate({
+          target: pending.pageviewId,
+          set: {
+            engagedMs: sql`max(${pending.engagedMs}, excluded.engaged_ms)`,
+            receivedAt: new Date(input.nowMs),
+          },
+        }),
+      db
+        .update(analyticsEvents)
+        .set({
+          engagedMs: sql`max(coalesce(${analyticsEvents.engagedMs}, 0), ${engagedMs})`,
+        })
+        .where(
+          and(
+            eq(analyticsEvents.id, input.pageviewId),
+            eq(analyticsEvents.visitorId, input.visitorId),
+            gte(
+              analyticsEvents.visitedAt,
+              new Date(input.nowMs - ENGAGEMENT_WINDOW_MS),
+            ),
           ),
+        ),
+      db.delete(pending).where(
+        and(
+          eq(pending.pageviewId, input.pageviewId),
+          sql`exists ${db
+            .select({ one: sql`1` })
+            .from(analyticsEvents)
+            .where(eq(analyticsEvents.id, input.pageviewId))}`,
+        ),
+      ),
+    ]);
+  },
+
+  /** 페이지뷰가 끝내 오지 않은 대기 체류 시간(봇·검증 실패 페이지 등)을 정리한다. */
+  async purgePendingEngagement(nowMs: number): Promise<void> {
+    await db
+      .delete(analyticsPendingEngagement)
+      .where(
+        lt(
+          analyticsPendingEngagement.receivedAt,
+          new Date(nowMs - ENGAGEMENT_WINDOW_MS),
         ),
       );
   },
