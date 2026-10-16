@@ -2,10 +2,7 @@ import type { ReactElement, ReactNode } from "react";
 import { Children, isValidElement } from "react";
 import { resolveChartChildElement } from "../chart-child-passthrough";
 import type { HeatmapColumn } from "./heatmap-context";
-import {
-  HEATMAP_SEPARATOR_MARKER,
-  HeatmapSeparator,
-} from "./heatmap-separator";
+import { HEATMAP_SEPARATOR_MARKER, HeatmapSeparator } from "./heatmap-separator";
 import type {
   HeatmapSeparatorGroupBy,
   HeatmapSeparatorLayout,
@@ -31,7 +28,7 @@ function isHeatmapSeparatorElement(child: ReactElement): boolean {
 }
 
 function readHeatmapSeparatorConfig(
-  child: ReactElement
+  child: ReactElement,
 ): HeatmapSeparatorParsedConfig | null {
   const props = resolveChartChildElement(child).props as {
     every?: number;
@@ -61,7 +58,7 @@ function readHeatmapSeparatorConfig(
 /** Reads the first {@link HeatmapSeparator} child for separator config. */
 export function resolveHeatmapSeparatorConfig(
   children: ReactNode,
-  chartSeparators?: HeatmapSeparatorParsedConfig | null
+  chartSeparators?: HeatmapSeparatorParsedConfig | null,
 ): HeatmapSeparatorParsedConfig | null {
   let config: HeatmapSeparatorParsedConfig | null = null;
 
@@ -92,7 +89,7 @@ export function resolveHeatmapSeparatorConfig(
 }
 
 function normalizeHeatmapSeparatorConfig(
-  config?: HeatmapSeparatorParsedConfig | null
+  config?: HeatmapSeparatorParsedConfig | null,
 ): HeatmapSeparatorParsedConfig | null {
   if (!config) {
     return null;
@@ -120,7 +117,7 @@ function normalizeHeatmapSeparatorConfig(
 export function resolveHeatmapSeparatorConfigWithData(
   children: ReactNode,
   columns: HeatmapColumn[],
-  chartSeparators?: HeatmapSeparatorParsedConfig | null
+  chartSeparators?: HeatmapSeparatorParsedConfig | null,
 ): HeatmapSeparatorLayout | null {
   const config = resolveHeatmapSeparatorConfig(children, chartSeparators);
   return resolveHeatmapSeparatorLayout(config, columns);

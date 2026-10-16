@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  cloneElement,
-  isValidElement,
-  type ReactElement,
-  useState,
-} from "react";
+import { cloneElement, isValidElement, type ReactElement, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   type LegendItemData,
@@ -39,15 +34,11 @@ export function Legend({
   className = "",
   children,
 }: LegendProps) {
-  const [internalHoveredIndex, setInternalHoveredIndex] = useState<
-    number | null
-  >(null);
+  const [internalHoveredIndex, setInternalHoveredIndex] = useState<number | null>(null);
 
   // Controlled or uncontrolled hover state
   const isControlled = controlledHoveredIndex !== undefined;
-  const hoveredIndex = isControlled
-    ? controlledHoveredIndex
-    : internalHoveredIndex;
+  const hoveredIndex = isControlled ? controlledHoveredIndex : internalHoveredIndex;
   const setHoveredIndex = (index: number | null) => {
     if (isControlled) {
       onHoverChange?.(index);
@@ -66,16 +57,12 @@ export function Legend({
     <LegendProvider value={contextValue}>
       <div className={cn("legend-container flex flex-col gap-2", className)}>
         {title && (
-          <h3 className={cn("mb-1 text-legend-foreground", titleClassName)}>
-            {title}
-          </h3>
+          <h3 className={cn("mb-1 text-legend-foreground", titleClassName)}>{title}</h3>
         )}
         {items.map((item, index) => {
           const isHovered = hoveredIndex === index;
           const isFaded = hoveredIndex !== null && hoveredIndex !== index;
-          const percentage = item.maxValue
-            ? (item.value / item.maxValue) * 100
-            : 0;
+          const percentage = item.maxValue ? (item.value / item.maxValue) * 100 : 0;
 
           const itemContext = {
             item,

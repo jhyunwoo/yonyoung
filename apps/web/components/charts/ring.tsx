@@ -17,7 +17,7 @@ function generateArcPath(
   outerRadius: number,
   startAngle: number,
   endAngle: number,
-  cornerRadius: number
+  cornerRadius: number,
 ): string {
   const generator = arcGenerator<unknown>({
     innerRadius,
@@ -93,7 +93,7 @@ export const Ring = memo(function Ring({
   const expandProgress = useMountProgress(
     enterTransition,
     expandDelay,
-    `${animationKey}-expand-${index}`
+    `${animationKey}-expand-${index}`,
   );
   const expandComplete = useEnterComplete(expandProgress);
 
@@ -101,7 +101,7 @@ export const Ring = memo(function Ring({
   const progressMount = useMountProgress(
     enterTransition,
     progressDelay,
-    `${animationKey}-progress-${index}`
+    `${animationKey}-progress-${index}`,
   );
   const progressComplete = useEnterComplete(progressMount);
 
@@ -118,14 +118,13 @@ export const Ring = memo(function Ring({
       return "";
     }
     const radii = getRingRadii(index);
-    const corner =
-      lineCap === "round" ? (radii.outerRadius - radii.innerRadius) / 2 : 0;
+    const corner = lineCap === "round" ? (radii.outerRadius - radii.innerRadius) / 2 : 0;
     return generateArcPath(
       radii.innerRadius,
       radii.outerRadius,
       startAngle,
       currentEndAngle,
-      corner
+      corner,
     );
   });
 
@@ -133,12 +132,9 @@ export const Ring = memo(function Ring({
 
   const handleMouseEnter = useCallback(
     () => setHoveredIndex(index),
-    [index, setHoveredIndex]
+    [index, setHoveredIndex],
   );
-  const handleMouseLeave = useCallback(
-    () => setHoveredIndex(null),
-    [setHoveredIndex]
-  );
+  const handleMouseLeave = useCallback(() => setHoveredIndex(null), [setHoveredIndex]);
 
   if (!ringData) {
     return null;
@@ -151,14 +147,13 @@ export const Ring = memo(function Ring({
   const isFaded = hoveredIndex !== null && hoveredIndex !== index;
   const isPushedOut = hoveredIndex !== null && hoveredIndex < index;
 
-  const cornerRadius =
-    lineCap === "round" ? (outerRadius - innerRadius) / 2 : 0;
+  const cornerRadius = lineCap === "round" ? (outerRadius - innerRadius) / 2 : 0;
   const bgPath = generateArcPath(
     innerRadius,
     outerRadius,
     startAngle,
     endAngle,
-    cornerRadius
+    cornerRadius,
   );
   const progressEndAngle = startAngle + arcRange * progress;
   const progressPath =
@@ -169,7 +164,7 @@ export const Ring = memo(function Ring({
           outerRadius,
           startAngle,
           progressEndAngle,
-          cornerRadius
+          cornerRadius,
         );
 
   const hoverScale = ringHoverScale(isHovered, isPushedOut);
@@ -183,18 +178,13 @@ export const Ring = memo(function Ring({
 
   // Static hit band (does not scale with hover) so the pointer can't fall
   // off the edge of a growing ring and flicker between hover states.
-  const hitRadii = getRingHitRadii(
-    index,
-    baseInnerRadius,
-    strokeWidth,
-    ringGap
-  );
+  const hitRadii = getRingHitRadii(index, baseInnerRadius, strokeWidth, ringGap);
   const hitboxPath = generateArcPath(
     hitRadii.innerRadius,
     hitRadii.outerRadius,
     startAngle,
     endAngle,
-    0
+    0,
   );
   const hitbox = (
     // biome-ignore lint/a11y/noStaticElementInteractions: SVG path used as hover hitbox for visualization

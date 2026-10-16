@@ -42,8 +42,7 @@ export function SeriesHoverDim({
     legendHoveredIndex !== null &&
     seriesIndex !== undefined &&
     legendHoveredIndex !== seriesIndex;
-  const opacity =
-    enabled && (isChartHovering || isLegendDimmed) ? dimOpacity : 1;
+  const opacity = enabled && (isChartHovering || isLegendDimmed) ? dimOpacity : 1;
   return (
     <motion.g
       animate={{ opacity }}

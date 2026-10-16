@@ -6,8 +6,7 @@ import { createVisitIdentity } from "@/features/public/analytics/visitor-identit
 import { CSRF_HEADER_NAME, CSRF_HEADER_VALUE } from "@/shared/security/csrf";
 
 type PageViewTrackerProps = {
-  pageType:
-    "home" | "activity" | "exhibition" | "about" | "donate" | "linktree";
+  pageType: "home" | "activity" | "exhibition" | "about" | "donate" | "linktree";
   resourceId?: string;
 };
 
@@ -68,10 +67,7 @@ const getVisitIdentity = () => {
   return visitIdentity;
 };
 
-export default function PageViewTracker({
-  pageType,
-  resourceId,
-}: PageViewTrackerProps) {
+export default function PageViewTracker({ pageType, resourceId }: PageViewTrackerProps) {
   useEffect(() => {
     const post = (path: string, body: unknown) => {
       fetch(path, {
@@ -113,10 +109,7 @@ export default function PageViewTracker({
 
     const frame = requestAnimationFrame(() => {
       // 조회수 API — activity / exhibition 리소스만
-      if (
-        (pageType === "activity" || pageType === "exhibition") &&
-        resourceId
-      ) {
+      if ((pageType === "activity" || pageType === "exhibition") && resourceId) {
         post("/api/public/views", { resourceType: pageType, resourceId });
       }
 

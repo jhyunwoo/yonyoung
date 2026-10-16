@@ -78,8 +78,7 @@ export const createVisitIdentity = (
       memory.visitorId = visitorId;
       write(storage, VISITOR_KEY, visitorId);
 
-      const previous =
-        parseSession(read(storage, SESSION_KEY)) ?? memory.session;
+      const previous = parseSession(read(storage, SESSION_KEY)) ?? memory.session;
       const sessionStart =
         previous === null || nowMs - previous.lastActiveAt > SESSION_TIMEOUT_MS;
       const session = {
@@ -91,8 +90,7 @@ export const createVisitIdentity = (
     },
 
     touch(nowMs: number) {
-      const current =
-        parseSession(read(storage, SESSION_KEY)) ?? memory.session;
+      const current = parseSession(read(storage, SESSION_KEY)) ?? memory.session;
       if (current !== null) saveSession({ ...current, lastActiveAt: nowMs });
     },
   };

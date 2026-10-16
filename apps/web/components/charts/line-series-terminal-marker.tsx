@@ -87,8 +87,6 @@ export function LineSeriesTerminalMarker({
 
 LineSeriesTerminalMarker.displayName = "LineSeriesTerminalMarker";
 
-(
-  LineSeriesTerminalMarker as unknown as Record<string, boolean>
-).__isPostOverlay = true;
+(LineSeriesTerminalMarker as unknown as Record<string, boolean>).__isPostOverlay = true;
 
 export default LineSeriesTerminalMarker;

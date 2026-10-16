@@ -31,7 +31,7 @@ export const HeatmapLegendSwatch = memo(function HeatmapLegendSwatch({
     const patternNode = renderPatternPreset(
       style.pattern,
       patternId,
-      heatmapLevelPatternRenderOptions(style)
+      heatmapLevelPatternRenderOptions(style),
     );
     const opacity = style.patternOpacity ?? 1;
 

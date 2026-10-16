@@ -17,7 +17,7 @@ function useActiveItemWidth(
   stackRef: RefObject<HTMLElement | null>,
   items: readonly unknown[],
   activeIndex: number,
-  width: MotionValue<number>
+  width: MotionValue<number>,
 ) {
   const widthsRef = useRef<number[]>([]);
   const activeIndexRef = useRef(activeIndex);
@@ -33,7 +33,7 @@ function useActiveItemWidth(
       }
       widthsRef.current = Array.from(
         stack.querySelectorAll<HTMLElement>("[data-ticker-item]"),
-        (node) => node.getBoundingClientRect().width
+        (node) => node.getBoundingClientRect().width,
       );
       const next = widthsRef.current[activeIndexRef.current];
       if (next === undefined) {
@@ -83,10 +83,7 @@ const DateTickerCompact = memo(function DateTickerCompact({
           ref={stackRef}
           style={{ x: "-50%" }}
         >
-          <span
-            className="whitespace-nowrap font-medium text-sm"
-            data-ticker-item
-          >
+          <span className="whitespace-nowrap font-medium text-sm" data-ticker-item>
             {label}
           </span>
         </motion.div>
@@ -153,12 +150,7 @@ const DateTickerInner = memo(function DateTickerInner({
   const dayStackRef = useRef<HTMLDivElement>(null);
   const monthWidth = useSpring(0, TICKER_SPRING);
   const dayWidth = useSpring(0, TICKER_SPRING);
-  useActiveItemWidth(
-    monthStackRef,
-    monthSegments,
-    currentMonthIndex,
-    monthWidth
-  );
+  useActiveItemWidth(monthStackRef, monthSegments, currentMonthIndex, monthWidth);
   useActiveItemWidth(dayStackRef, parsedLabels, currentIndex, dayWidth);
 
   dayY.set(-currentIndex * TICKER_ITEM_HEIGHT);

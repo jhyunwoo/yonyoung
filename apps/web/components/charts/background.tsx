@@ -67,19 +67,15 @@ export function Background({
   fadeHorizontalLength = 10,
   fadeVerticalLength = 10,
 }: BackgroundProps) {
-  const { innerWidth, innerHeight, isLoaded, enterTransition } =
-    useChartStable();
+  const { innerWidth, innerHeight, isLoaded, enterTransition } = useChartStable();
   const uniqueId = useId();
   const patternId = `chart-background-${uniqueId.replace(/:/g, "")}`;
 
   const hStops = useMemo(
     () => fadeMaskStops(fadeHorizontalLength),
-    [fadeHorizontalLength]
+    [fadeHorizontalLength],
   );
-  const vStops = useMemo(
-    () => fadeMaskStops(fadeVerticalLength),
-    [fadeVerticalLength]
-  );
+  const vStops = useMemo(() => fadeMaskStops(fadeVerticalLength), [fadeVerticalLength]);
 
   if (pattern === "none" || !showFill || innerWidth <= 0 || innerHeight <= 0) {
     return null;
@@ -129,13 +125,7 @@ export function Background({
         <defs>
           {fadeHorizontal ? (
             <>
-              <linearGradient
-                id={hGradientId}
-                x1="0%"
-                x2="100%"
-                y1="0%"
-                y2="0%"
-              >
+              <linearGradient id={hGradientId} x1="0%" x2="100%" y1="0%" y2="0%">
                 {hStops.map((stop) => (
                   <stop
                     key={stop.offset}
@@ -157,13 +147,7 @@ export function Background({
           ) : null}
           {fadeVertical ? (
             <>
-              <linearGradient
-                id={vGradientId}
-                x1="0%"
-                x2="0%"
-                y1="0%"
-                y2="100%"
-              >
+              <linearGradient id={vGradientId} x1="0%" x2="0%" y1="0%" y2="100%">
                 {vStops.map((stop) => (
                   <stop
                     key={stop.offset}

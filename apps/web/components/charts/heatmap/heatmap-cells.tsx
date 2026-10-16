@@ -53,7 +53,7 @@ function computeHeatmapCellFaded(
   hoveredCell: { column: number; row: number } | null,
   hoveredLegendLevel: number | null,
   cell: { column: number; row: number },
-  count: number
+  count: number,
 ): { isHighlighted: boolean; isDimmed: boolean } {
   if (isCellHovering && hoveredCell) {
     const isHighlighted =
@@ -61,8 +61,7 @@ function computeHeatmapCellFaded(
     return { isHighlighted, isDimmed: !isHighlighted };
   }
   if (isLevelHovering && hoveredLegendLevel !== null) {
-    const isHighlighted =
-      getHeatmapContributionLevel(count) === hoveredLegendLevel;
+    const isHighlighted = getHeatmapContributionLevel(count) === hoveredLegendLevel;
     return { isHighlighted, isDimmed: !isHighlighted };
   }
   return { isHighlighted: false, isDimmed: false };
@@ -114,9 +113,7 @@ function syncHeatmapCellLayerOpacities(params: SyncCellLayerParams) {
       dataOpacity.set(0);
       pulseOpacity.set(0);
       shimmerOpacity.set(
-        participates && showLoadingCellsLayer
-          ? 0
-          : HEATMAP_LOADING_BASE_CELL_OPACITY
+        participates && showLoadingCellsLayer ? 0 : HEATMAP_LOADING_BASE_CELL_OPACITY,
       );
     }
     return;
@@ -190,13 +187,7 @@ interface HeatmapCellRectProps {
   activeScale: number;
   rowOpacity: number | readonly number[] | undefined;
   hoverState: { isHighlighted: boolean; isDimmed: boolean };
-  onEnter: (
-    column: number,
-    row: number,
-    bin: HeatmapBin,
-    x: number,
-    y: number
-  ) => void;
+  onEnter: (column: number, row: number, bin: HeatmapBin, x: number, y: number) => void;
   onLeave: () => void;
 }
 
@@ -244,26 +235,18 @@ const HeatmapMotionCell = memo(function HeatmapMotionCell({
   const pulseOpacity = useMotionValue(0);
   const wasShimmerPulsingRef = useRef(false);
 
-  const isLoadingResting =
-    chartStatus === "loading" && chartPhase === "loading";
-  const isAwaitingLoadingConceal =
-    chartStatus === "loading" && chartPhase === "ready";
+  const isLoadingResting = chartStatus === "loading" && chartPhase === "loading";
+  const isAwaitingLoadingConceal = chartStatus === "loading" && chartPhase === "ready";
   const isExitingToLoading = chartPhase === "exitingReady";
   const isRevealActive =
     chartPhase === "revealing" &&
     !isLoaded &&
     (revealMode === "fromLoading" || revealMode === "enter");
-  const isReadyResting =
-    chartStatus === "ready" && chartPhase === "ready" && isLoaded;
+  const isReadyResting = chartStatus === "ready" && chartPhase === "ready" && isLoaded;
 
   const participates = useMemo(
-    () =>
-      heatmapLoadingCellParticipates(
-        cell.column,
-        cell.row,
-        loadingCellRandomness
-      ),
-    [cell.column, cell.row, loadingCellRandomness]
+    () => heatmapLoadingCellParticipates(cell.column, cell.row, loadingCellRandomness),
+    [cell.column, cell.row, loadingCellRandomness],
   );
 
   const showShimmerPulse =
@@ -271,7 +254,7 @@ const HeatmapMotionCell = memo(function HeatmapMotionCell({
 
   const fadeDurationSec = resolveHeatmapEnterFadeDurationSec(
     enterTransition,
-    animationDuration
+    animationDuration,
   );
   const delayMs = computeHeatmapEnterFadeDelayMs({
     column: cell.column,
@@ -281,15 +264,12 @@ const HeatmapMotionCell = memo(function HeatmapMotionCell({
     enterStaggerScale,
     fadeDurationSec,
   });
-  const staggeredTransition = transitionWithDelay(
-    enterTransition,
-    delayMs / 1000
-  );
+  const staggeredTransition = transitionWithDelay(enterTransition, delayMs / 1000);
 
   const readyHoverStyle = resolveHeatmapHoverStyle(
     hoverState.isHighlighted,
     hoverState.isDimmed,
-    { inactiveOpacity, inactiveScale, activeScale }
+    { inactiveOpacity, inactiveScale, activeScale },
   );
   const rowOpacityMultiplier = resolveHeatmapRowOpacity(cell.row, rowOpacity);
   const readyDataOpacity = readyHoverStyle.opacity;
@@ -303,8 +283,7 @@ const HeatmapMotionCell = memo(function HeatmapMotionCell({
       return;
     }
 
-    const isFreshLoadingPulse =
-      isLoadingResting && !wasShimmerPulsingRef.current;
+    const isFreshLoadingPulse = isLoadingResting && !wasShimmerPulsingRef.current;
     wasShimmerPulsingRef.current = true;
 
     if (isFreshLoadingPulse) {
@@ -402,12 +381,8 @@ const HeatmapMotionCell = memo(function HeatmapMotionCell({
       <motion.rect
         {...cellProps}
         fill={targetFill}
-        fillOpacity={
-          (cell.opacity ?? 1) * patternFillOpacity * rowOpacityMultiplier
-        }
-        onPointerEnter={() =>
-          onEnter(cell.column, cell.row, bin, cell.x, cell.y)
-        }
+        fillOpacity={(cell.opacity ?? 1) * patternFillOpacity * rowOpacityMultiplier}
+        onPointerEnter={() => onEnter(cell.column, cell.row, bin, cell.x, cell.y)}
         onPointerLeave={onLeave}
         style={{
           cursor: interactive ? "pointer" : undefined,
@@ -485,7 +460,7 @@ export const HeatmapCells = memo(function HeatmapCells({
       setHoveredCell,
       setHoveredLegendLevel,
       setTooltipData,
-    ]
+    ],
   );
 
   const handleCellLeave = useCallback(() => {
@@ -502,14 +477,13 @@ export const HeatmapCells = memo(function HeatmapCells({
     inactiveScale,
     activeScale,
   });
-  const isCellHovering =
-    cellsInteractive && hoveredCell !== null && inactiveEnabled;
+  const isCellHovering = cellsInteractive && hoveredCell !== null && inactiveEnabled;
   const isLevelHovering =
     cellsInteractive && hoveredLegendLevel !== null && inactiveEnabled;
 
   const displayRange = useMemo(
     () => (hideGhostCells ? resolveHeatmapDisplayRange(data) : null),
-    [data, hideGhostCells]
+    [data, hideGhostCells],
   );
 
   return (
@@ -545,7 +519,7 @@ export const HeatmapCells = memo(function HeatmapCells({
                 hoveredCell,
                 hoveredLegendLevel,
                 cell,
-                bin.count
+                bin.count,
               );
 
               return (
@@ -565,7 +539,7 @@ export const HeatmapCells = memo(function HeatmapCells({
                   rowOpacity={rowOpacity}
                 />
               );
-            })
+            }),
           )}
         </Group>
       )}

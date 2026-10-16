@@ -96,7 +96,10 @@ export const fillDailySeries = (
 const mondayBasedWeekday = (date: string): number =>
   (new Date(toUtcMs(date)).getUTCDay() + 6) % 7;
 
-export const bucketKey = (date: string, granularity: PageViewGranularity): string => {
+export const bucketKey = (
+  date: string,
+  granularity: PageViewGranularity,
+): string => {
   if (granularity === "month") return date.slice(0, 7);
   if (granularity === "week") return addDays(date, -mondayBasedWeekday(date));
   return date;

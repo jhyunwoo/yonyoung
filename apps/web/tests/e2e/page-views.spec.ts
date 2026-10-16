@@ -84,7 +84,11 @@ test.describe("page view tracking", () => {
     const uuid = /^[0-9a-f-]{36}$/;
     let viewBody: Record<string, unknown> | null = null;
     let engagementBody: Record<string, unknown> | null = null;
-    const ok = { status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) };
+    const ok = {
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ok: true }),
+    };
 
     await page.route("**/api/public/page-views", async (route) => {
       viewBody = route.request().postDataJSON() as Record<string, unknown>;

@@ -140,7 +140,7 @@ export const HeatmapSeparator = memo(function HeatmapSeparator({
   const resolvedStroke = gradient ? `url(#${gradientId})` : stroke;
   const resolvedStrokeDasharray = resolveHeatmapSeparatorStrokeDasharray(
     strokeStyle,
-    strokeDasharray
+    strokeDasharray,
   );
   const gradientStops = gradient
     ? buildHeatmapSeparatorGradientStops(gradient, strokeOpacity)
@@ -165,14 +165,14 @@ export const HeatmapSeparator = memo(function HeatmapSeparator({
               <span
                 className={cn(
                   "whitespace-nowrap text-chart-label text-xs",
-                  labelClassName
+                  labelClassName,
                 )}
               >
                 {tick.label}
               </span>
             </div>
           )),
-          container
+          container,
         )
       : null;
 
@@ -237,9 +237,7 @@ export const HeatmapSeparator = memo(function HeatmapSeparator({
   );
 });
 
-(HeatmapSeparator as unknown as Record<string, boolean>)[
-  HEATMAP_SEPARATOR_MARKER
-] = true;
+(HeatmapSeparator as unknown as Record<string, boolean>)[HEATMAP_SEPARATOR_MARKER] = true;
 
 HeatmapSeparator.displayName = "HeatmapSeparator";
 

@@ -129,8 +129,7 @@ function extractBarConfigs(children: ReactNode): LineConfig[] {
     if (isBarComponent && props?.dataKey) {
       // Use stroke for tooltip dot color if provided, otherwise fall back to fill
       // This allows gradient/pattern fills to have a solid dot color
-      const dotColor =
-        props.stroke || props.fill || "var(--chart-line-primary)";
+      const dotColor = props.stroke || props.fill || "var(--chart-line-primary)";
       configs.push({
         dataKey: props.dataKey,
         stroke: dotColor,
@@ -217,7 +216,7 @@ const ChartCore = memo(function ChartCore({
       }
       return String(value ?? "");
     },
-    [xDataKey]
+    [xDataKey],
   );
 
   // For compatibility with ChartContext, provide a Date-based xAccessor
@@ -229,15 +228,13 @@ const ChartCore = memo(function ChartCore({
       }
       return new Date();
     },
-    [xDataKey]
+    [xDataKey],
   );
 
   // Category scale (band) - for the categorical axis
   const categoryScale = useMemo(() => {
     const domain = data.map((d) => categoryAccessor(d));
-    const range: [number, number] = isHorizontal
-      ? [0, innerHeight]
-      : [0, innerWidth];
+    const range: [number, number] = isHorizontal ? [0, innerHeight] : [0, innerWidth];
     return scaleBand<string>({
       range,
       domain,
@@ -351,7 +348,7 @@ const ChartCore = memo(function ChartCore({
   // Pre-compute labels for ticker animation
   const dateLabels = useMemo(
     () => data.map((d) => categoryAccessor(d)),
-    [data, categoryAccessor]
+    [data, categoryAccessor],
   );
 
   // Create a fake time scale for compatibility with ChartContext
@@ -429,8 +426,7 @@ const ChartCore = memo(function ChartCore({
             const value = d[line.dataKey];
             if (typeof value === "number") {
               cumulative += value;
-              const axisScale =
-                yScales[normalizeYAxisId(line.yAxisId)] ?? valueScale;
+              const axisScale = yScales[normalizeYAxisId(line.yAxisId)] ?? valueScale;
               xPositions[line.dataKey] = axisScale(cumulative) ?? 0;
               yPositions[line.dataKey] = barPos + bandWidth / 2;
             }
@@ -440,13 +436,10 @@ const ChartCore = memo(function ChartCore({
           lines.forEach((line, idx) => {
             const value = d[line.dataKey];
             if (typeof value === "number") {
-              const axisScale =
-                yScales[normalizeYAxisId(line.yAxisId)] ?? valueScale;
+              const axisScale = yScales[normalizeYAxisId(line.yAxisId)] ?? valueScale;
               xPositions[line.dataKey] = axisScale(value) ?? 0;
               yPositions[line.dataKey] =
-                barPos +
-                idx * (individualBarHeight + groupGap) +
-                individualBarHeight / 2;
+                barPos + idx * (individualBarHeight + groupGap) + individualBarHeight / 2;
             }
           });
         }
@@ -458,8 +451,7 @@ const ChartCore = memo(function ChartCore({
           const value = d[line.dataKey];
           if (typeof value === "number") {
             cumulative += value;
-            const axisScale =
-              yScales[normalizeYAxisId(line.yAxisId)] ?? primaryYScale;
+            const axisScale = yScales[normalizeYAxisId(line.yAxisId)] ?? primaryYScale;
             const gapOffset = seriesIdx * stackGap;
             yPositions[line.dataKey] = (axisScale(cumulative) ?? 0) - gapOffset;
             seriesIdx++;
@@ -477,8 +469,7 @@ const ChartCore = memo(function ChartCore({
         lines.forEach((line, idx) => {
           const value = d[line.dataKey];
           if (typeof value === "number") {
-            const axisScale =
-              yScales[normalizeYAxisId(line.yAxisId)] ?? primaryYScale;
+            const axisScale = yScales[normalizeYAxisId(line.yAxisId)] ?? primaryYScale;
             const baselineY = axisScale(0) ?? innerHeight;
             const valueY = axisScale(value) ?? 0;
             const barLengthPx = baselineY - valueY;
@@ -496,9 +487,7 @@ const ChartCore = memo(function ChartCore({
             }
 
             xPositions[line.dataKey] =
-              barPos +
-              idx * (individualBarWidth + groupGap) +
-              individualBarWidth / 2;
+              barPos + idx * (individualBarWidth + groupGap) + individualBarWidth / 2;
           }
         });
       }
@@ -539,7 +528,7 @@ const ChartCore = memo(function ChartCore({
       primaryYScale,
       squareSnap,
       innerHeight,
-    ]
+    ],
   );
 
   const handleMouseLeave = useCallback(() => {
@@ -566,7 +555,7 @@ const ChartCore = memo(function ChartCore({
       postOverlayChildren.push(resolvedChild);
     } else if (isClipExcludedComponent(resolvedChild)) {
       clipExcludedChildren.push(
-        isChartClipPassthrough(child.type) ? resolvedChild : child
+        isChartClipPassthrough(child.type) ? resolvedChild : child,
       );
     } else if (isUnderlayComponent(resolvedChild)) {
       underlayChildren.push(resolvedChild);
@@ -575,10 +564,7 @@ const ChartCore = memo(function ChartCore({
     }
   });
 
-  const referenceAreas = useMemo(
-    () => extractReferenceAreaConfigs(children),
-    [children]
-  );
+  const referenceAreas = useMemo(() => extractReferenceAreaConfigs(children), [children]);
 
   const contextValue = {
     ...DEFAULT_CHART_LIFECYCLE,
@@ -622,12 +608,7 @@ const ChartCore = memo(function ChartCore({
 
   return (
     <ChartProvider value={contextValue}>
-      <svg
-        aria-hidden="true"
-        className="overflow-visible"
-        height={height}
-        width={width}
-      >
+      <svg aria-hidden="true" className="overflow-visible" height={height} width={width}>
         {/* Gradient and pattern definitions */}
         {defsChildren.length > 0 && <defs>{defsChildren}</defs>}
 
@@ -641,13 +622,7 @@ const ChartCore = memo(function ChartCore({
           transform={`translate(${margin.left},${margin.top})`}
         >
           {/* Background rect for mouse event detection */}
-          <rect
-            fill="transparent"
-            height={innerHeight}
-            width={innerWidth}
-            x={0}
-            y={0}
-          />
+          <rect fill="transparent" height={innerHeight} width={innerWidth} x={0} y={0} />
 
           {renderKeyedChartLayers(clipExcludedChildren)}
           {renderKeyedChartLayers(underlayChildren)}

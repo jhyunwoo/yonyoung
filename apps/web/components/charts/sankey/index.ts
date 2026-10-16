@@ -1,8 +1,4 @@
-export {
-  SankeyChart,
-  type SankeyChartProps,
-  type SankeyData,
-} from "./sankey-chart";
+export { SankeyChart, type SankeyChartProps, type SankeyData } from "./sankey-chart";
 export {
   type Margin,
   type SankeyContextValue,

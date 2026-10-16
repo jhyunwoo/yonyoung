@@ -33,8 +33,7 @@ export const HeatmapYAxis = memo(function HeatmapYAxis({
   rowOpacity,
   labels: rowLabels,
 }: HeatmapYAxisProps) {
-  const { containerRef, margin, binHeight, gap, yScale, weekStartDay } =
-    useHeatmap();
+  const { containerRef, margin, binHeight, gap, yScale, weekStartDay } = useHeatmap();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -59,7 +58,7 @@ export const HeatmapYAxis = memo(function HeatmapYAxis({
       tickFilter,
       weekStartDay,
       yScale,
-    ]
+    ],
   );
 
   const container = containerRef.current;
@@ -83,17 +82,14 @@ export const HeatmapYAxis = memo(function HeatmapYAxis({
         }}
       >
         <span
-          className={cn(
-            "whitespace-nowrap text-chart-label text-xs",
-            className
-          )}
+          className={cn("whitespace-nowrap text-chart-label text-xs", className)}
           style={{ opacity: resolveHeatmapRowOpacity(tick.row, rowOpacity) }}
         >
           {tick.label}
         </span>
       </div>
     )),
-    container
+    container,
   );
 });
 

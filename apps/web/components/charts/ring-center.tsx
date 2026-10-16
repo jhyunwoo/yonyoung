@@ -76,7 +76,7 @@ export function RingCenter({
         className={cn(
           chartCenterContainerClassName,
           "flex items-center justify-center",
-          className
+          className,
         )}
         style={{ width: centerSize, height: centerSize }}
       >
@@ -102,7 +102,7 @@ export function RingCenter({
       className={cn(
         chartCenterContainerClassName,
         "flex flex-col items-center justify-center text-center",
-        className
+        className,
       )}
       style={{ width: centerSize, height: centerSize }}
     >

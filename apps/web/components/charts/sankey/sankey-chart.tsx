@@ -98,9 +98,9 @@ const SankeyChartCore = memo(function SankeyChartCore({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [revealEpoch, setRevealEpoch] = useState(0);
-  const [internalHoveredNodeIndex, setInternalHoveredNodeIndex] = useState<
-    number | null
-  >(null);
+  const [internalHoveredNodeIndex, setInternalHoveredNodeIndex] = useState<number | null>(
+    null,
+  );
   const isNodeHoverControlled = hoveredNodeIndexProp !== undefined;
   const hoveredNodeIndex = isNodeHoverControlled
     ? hoveredNodeIndexProp
@@ -113,15 +113,11 @@ const SankeyChartCore = memo(function SankeyChartCore({
         setInternalHoveredNodeIndex(index);
       }
     },
-    [isNodeHoverControlled, onNodeHoverChange]
+    [isNodeHoverControlled, onNodeHoverChange],
   );
   const [hoveredLinkIndex, setHoveredLinkIndex] = useState<number | null>(null);
-  const [tooltipData, setTooltipData] = useState<SankeyTooltipData | null>(
-    null
-  );
-  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(
-    null
-  );
+  const [tooltipData, setTooltipData] = useState<SankeyTooltipData | null>(null);
+  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
 
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;
@@ -165,7 +161,7 @@ const SankeyChartCore = memo(function SankeyChartCore({
         return "";
       }
     },
-    []
+    [],
   );
 
   const handleMouseMove = useCallback((event: React.MouseEvent) => {
@@ -217,9 +213,7 @@ const SankeyChartCore = memo(function SankeyChartCore({
           onMouseMove={handleMouseMove}
           width={width}
         >
-          <g transform={`translate(${margin.left},${margin.top})`}>
-            {children}
-          </g>
+          <g transform={`translate(${margin.left},${margin.top})`}>{children}</g>
         </svg>
       </div>
     </SankeyProvider>

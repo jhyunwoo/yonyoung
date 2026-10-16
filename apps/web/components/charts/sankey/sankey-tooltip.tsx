@@ -4,11 +4,7 @@ import type { SankeyLink, SankeyNode } from "d3-sankey";
 import { intFmt } from "../chart-formatters";
 import { TooltipBox } from "../tooltip/tooltip-box";
 import { TooltipContent, type TooltipRow } from "../tooltip/tooltip-content";
-import {
-  type SankeyLinkDatum,
-  type SankeyNodeDatum,
-  useSankey,
-} from "./sankey-context";
+import { type SankeyLinkDatum, type SankeyNodeDatum, useSankey } from "./sankey-context";
 
 // Helper to get node name from link source/target
 type NodeOrIndex = SankeyNode<SankeyNodeDatum, SankeyLinkDatum> | number;
@@ -43,16 +39,8 @@ export function SankeyTooltip({
   formatValue = intFmt,
   className = "",
 }: SankeyTooltipProps) {
-  const {
-    tooltipData,
-    containerRef,
-    width,
-    height,
-    margin,
-    nodes,
-    links,
-    mousePos,
-  } = useSankey();
+  const { tooltipData, containerRef, width, height, margin, nodes, links, mousePos } =
+    useSankey();
 
   if (!tooltipData) {
     return null;
@@ -121,14 +109,8 @@ export function SankeyTooltip({
     }
 
     // Get source and target names
-    const sourceName = getNodeName(
-      link.source as NodeOrIndex,
-      tooltipData.linkIndex
-    );
-    const targetName = getNodeName(
-      link.target as NodeOrIndex,
-      tooltipData.linkIndex
-    );
+    const sourceName = getNodeName(link.source as NodeOrIndex, tooltipData.linkIndex);
+    const targetName = getNodeName(link.target as NodeOrIndex, tooltipData.linkIndex);
 
     // Custom content
     if (linkContent) {

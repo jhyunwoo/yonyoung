@@ -93,8 +93,7 @@ const BarXAxisInner = memo(function BarXAxisInner({
   maxLabels = 12,
   container,
 }: BarXAxisProps & { container: HTMLDivElement }) {
-  const { margin, tooltipData, barScale, bandWidth, barXAccessor, data } =
-    useChart();
+  const { margin, tooltipData, barScale, bandWidth, barXAccessor, data } = useChart();
 
   // Generate labels for each bar
   const labelsToShow = useMemo(() => {
@@ -118,15 +117,7 @@ const BarXAxisInner = memo(function BarXAxisInner({
     // Otherwise, skip some labels to avoid crowding
     const step = Math.ceil(allLabels.length / maxLabels);
     return allLabels.filter((_, i) => i % step === 0);
-  }, [
-    barScale,
-    bandWidth,
-    barXAccessor,
-    data,
-    margin.left,
-    showAllLabels,
-    maxLabels,
-  ]);
+  }, [barScale, bandWidth, barXAccessor, data, margin.left, showAllLabels, maxLabels]);
 
   const isHovering = tooltipData !== null;
   const crosshairX = tooltipData ? tooltipData.x + margin.left : null;
@@ -144,7 +135,7 @@ const BarXAxisInner = memo(function BarXAxisInner({
         />
       ))}
     </div>,
-    container
+    container,
   );
 });
 

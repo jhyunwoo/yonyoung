@@ -1,9 +1,4 @@
-import {
-  Children,
-  isValidElement,
-  type ReactElement,
-  type ReactNode,
-} from "react";
+import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
 import { normalizeYAxisId } from "./y-axis-scales";
 
 export interface ReferenceAreaConfig {
@@ -32,9 +27,7 @@ function isReferenceAreaElement(child: ReactElement): boolean {
 }
 
 /** Collect {@link ReferenceArea} props from chart children for axis label styling. */
-export function extractReferenceAreaConfigs(
-  children: ReactNode
-): ReferenceAreaConfig[] {
+export function extractReferenceAreaConfigs(children: ReactNode): ReferenceAreaConfig[] {
   const configs: ReferenceAreaConfig[] = [];
 
   const visit = (node: ReactNode) => {

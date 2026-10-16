@@ -67,10 +67,7 @@ export {
   resolveHeatmapSeparatorConfig,
   resolveHeatmapSeparatorConfigWithData,
 } from "./heatmap-resolve-separator";
-export {
-  HeatmapSeparator,
-  type HeatmapSeparatorProps,
-} from "./heatmap-separator";
+export { HeatmapSeparator, type HeatmapSeparatorProps } from "./heatmap-separator";
 export { HeatmapTooltip, type HeatmapTooltipProps } from "./heatmap-tooltip";
 export {
   buildHeatmapLegendGradient,

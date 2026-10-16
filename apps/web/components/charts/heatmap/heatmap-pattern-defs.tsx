@@ -28,7 +28,7 @@ export const HeatmapPatternDefs = memo(function HeatmapPatternDefs({
     const node = renderPatternPreset(
       pattern,
       id,
-      heatmapLevelPatternRenderOptions(style)
+      heatmapLevelPatternRenderOptions(style),
     );
 
     return node ? [<Fragment key={id}>{node}</Fragment>] : [];

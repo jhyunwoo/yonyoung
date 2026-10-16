@@ -29,22 +29,17 @@ export interface ChartConfigProviderProps {
   children: ReactNode;
 }
 
-export function ChartConfigProvider({
-  value,
-  children,
-}: ChartConfigProviderProps) {
+export function ChartConfigProvider({ value, children }: ChartConfigProviderProps) {
   const merged = useMemo<ChartConfigValue>(
     () => ({
       ...DEFAULT_CHART_CONFIG,
       ...value,
     }),
-    [value]
+    [value],
   );
 
   return (
-    <ChartConfigContext.Provider value={merged}>
-      {children}
-    </ChartConfigContext.Provider>
+    <ChartConfigContext.Provider value={merged}>{children}</ChartConfigContext.Provider>
   );
 }
 
@@ -52,8 +47,7 @@ export function useChartConfig(): ChartConfigValue {
   return useContext(ChartConfigContext) ?? DEFAULT_CHART_CONFIG;
 }
 
-const DEFAULT_TOOLTIP_BOX_DAMPING =
-  DEFAULT_CHART_CONFIG.tooltipBoxSpring.damping;
+const DEFAULT_TOOLTIP_BOX_DAMPING = DEFAULT_CHART_CONFIG.tooltipBoxSpring.damping;
 
 /** Maps a damping slider to the floating tooltip panel follow spring. `0` = instant. */
 export function resolveTooltipBoxMotion(damping?: number): {
@@ -72,8 +66,7 @@ export function resolveTooltipBoxMotion(damping?: number): {
 
   if (effectiveDamping < DEFAULT_TOOLTIP_BOX_DAMPING) {
     const t =
-      (DEFAULT_TOOLTIP_BOX_DAMPING - effectiveDamping) /
-      DEFAULT_TOOLTIP_BOX_DAMPING;
+      (DEFAULT_TOOLTIP_BOX_DAMPING - effectiveDamping) / DEFAULT_TOOLTIP_BOX_DAMPING;
     stiffness += t * 400;
   } else if (effectiveDamping > DEFAULT_TOOLTIP_BOX_DAMPING) {
     const t =

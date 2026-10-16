@@ -71,7 +71,7 @@ function bracketMarkerPath(
   centerX: number,
   edgeY: number,
   size: number,
-  direction: "down" | "up"
+  direction: "down" | "up",
 ): string {
   const half = size / 2;
   if (direction === "down") {
@@ -146,7 +146,7 @@ export function ReferenceArea({
         xScale,
         yScale,
       }),
-    [innerWidth, innerHeight, x1, x2, y1, y2, ifOverflow, xScale, yScale]
+    [innerWidth, innerHeight, x1, x2, y1, y2, ifOverflow, xScale, yScale],
   );
 
   const usesPattern = pattern !== "none";
@@ -218,10 +218,7 @@ export function ReferenceArea({
               offset={`${100 - fadeEdge}%`}
               style={{ stopColor: "white", stopOpacity: 1 }}
             />
-            <stop
-              offset="100%"
-              style={{ stopColor: "white", stopOpacity: 0 }}
-            />
+            <stop offset="100%" style={{ stopColor: "white", stopOpacity: 0 }} />
           </linearGradient>
           <mask id={hMaskId}>
             <rect

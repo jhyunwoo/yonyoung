@@ -3,10 +3,7 @@
 import { motion } from "motion/react";
 import { memo, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import {
-  defaultHeatmapColorScale,
-  type HeatmapLevelStyles,
-} from "./heatmap-colors";
+import { defaultHeatmapColorScale, type HeatmapLevelStyles } from "./heatmap-colors";
 import { useHeatmapInteractionOptional } from "./heatmap-context";
 import { HeatmapLegendGradient } from "./heatmap-legend-gradient";
 import { HeatmapLegendSwatch } from "./heatmap-legend-swatch";
@@ -111,8 +108,7 @@ export const HeatmapLegend = memo(function HeatmapLegend({
     (tooltipData ? getHeatmapContributionLevel(tooltipData.count) : null);
   const hoverParams = { inactiveOpacity, inactiveScale, activeScale };
   const inactiveEnabled = isHeatmapHoverEffectEnabled(hoverParams);
-  const isDimming =
-    isInteractive && highlightedLevel !== null && inactiveEnabled;
+  const isDimming = isInteractive && highlightedLevel !== null && inactiveEnabled;
 
   const handleLegendEnter = useCallback(
     (level: number) => {
@@ -124,7 +120,7 @@ export const HeatmapLegend = memo(function HeatmapLegend({
       setHoveredCell(null);
       setTooltipData(null);
     },
-    [isInteractive, setHoveredCell, setHoveredLegendLevel, setTooltipData]
+    [isInteractive, setHoveredCell, setHoveredLegendLevel, setTooltipData],
   );
 
   const handleLegendLeave = useCallback(() => {
@@ -144,7 +140,7 @@ export const HeatmapLegend = memo(function HeatmapLegend({
         align === "start" && "justify-start",
         align === "center" && "justify-center",
         align === "end" && "justify-end",
-        className
+        className,
       )}
       style={labelStyle}
     >
@@ -174,7 +170,7 @@ export const HeatmapLegend = memo(function HeatmapLegend({
             const hoverStyle = resolveHeatmapHoverStyle(
               isHighlighted,
               isDimmed,
-              hoverParams
+              hoverParams,
             );
             const style = levelStyles[level];
 

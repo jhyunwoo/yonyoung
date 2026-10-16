@@ -2,12 +2,8 @@
 
 import type { scaleBand, scaleLinear, scaleTime } from "@visx/scale";
 
-type ScaleLinear<Output, _Input = number> = ReturnType<
-  typeof scaleLinear<Output>
->;
-type ScaleTime<Output, _Input = Date | number> = ReturnType<
-  typeof scaleTime<Output>
->;
+type ScaleLinear<Output, _Input = number> = ReturnType<typeof scaleLinear<Output>>;
+type ScaleTime<Output, _Input = Date | number> = ReturnType<typeof scaleTime<Output>>;
 type ScaleBand<Domain extends { toString(): string }> = ReturnType<
   typeof scaleBand<Domain>
 >;
@@ -333,7 +329,7 @@ export function ChartProvider({
       value.composedStacked,
       value.composedStackOffsets,
       value.composedStackGap,
-    ]
+    ],
   );
 
   const hover = useMemo<ChartHoverContextValue>(
@@ -356,14 +352,12 @@ export function ChartProvider({
       value.setHoveredBarIndex,
       value.hoveredCandleIndex,
       value.setHoveredCandleIndex,
-    ]
+    ],
   );
 
   return (
     <ChartStableContext.Provider value={stable}>
-      <ChartHoverContext.Provider value={hover}>
-        {children}
-      </ChartHoverContext.Provider>
+      <ChartHoverContext.Provider value={hover}>{children}</ChartHoverContext.Provider>
     </ChartStableContext.Provider>
   );
 }
@@ -378,19 +372,16 @@ export function useChartStable(): ChartStableContextValue {
   if (!context) {
     throw new Error(
       "useChartStable must be used within a ChartProvider. " +
-        "Make sure your component is wrapped in <LineChart>, <AreaChart>, <BarChart>, or <ComposedChart>."
+        "Make sure your component is wrapped in <LineChart>, <AreaChart>, <BarChart>, or <ComposedChart>.",
     );
   }
   return context;
 }
 
 /** Y-scale for a series axis (`yAxisId` on Line / Area / YAxis). */
-export function useYScale(
-  yAxisId?: string | number
-): ScaleLinear<number, number> {
+export function useYScale(yAxisId?: string | number): ScaleLinear<number, number> {
   const { yScales, yScale } = useChartStable();
-  const id =
-    yAxisId == null || yAxisId === "" ? DEFAULT_Y_AXIS_ID : String(yAxisId);
+  const id = yAxisId == null || yAxisId === "" ? DEFAULT_Y_AXIS_ID : String(yAxisId);
   return yScales[id] ?? yScale;
 }
 
@@ -404,7 +395,7 @@ export function useChartHover(): ChartHoverContextValue {
   if (!context) {
     throw new Error(
       "useChartHover must be used within a ChartProvider. " +
-        "Make sure your component is wrapped in <LineChart>, <AreaChart>, <BarChart>, or <ComposedChart>."
+        "Make sure your component is wrapped in <LineChart>, <AreaChart>, <BarChart>, or <ComposedChart>.",
     );
   }
   return context;

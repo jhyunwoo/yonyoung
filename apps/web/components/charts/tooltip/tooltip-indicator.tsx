@@ -160,13 +160,7 @@ function TooltipIndicatorInner({
         y={0}
       />
     ) : (
-      <rect
-        fill={indicatorFill}
-        height={height}
-        width={pixelWidth}
-        x={rectX}
-        y={0}
-      />
+      <rect fill={indicatorFill} height={height} width={pixelWidth} x={rectX} y={0} />
     );
   }
 

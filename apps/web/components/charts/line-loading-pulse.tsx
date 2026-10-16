@@ -19,7 +19,7 @@ const CLIP_PADDING = 10;
 export type LineLoadingPulseMode = "loop" | "exit" | "enter";
 
 export function resolveLineLoadingPulseMode(
-  phase: ChartPhase
+  phase: ChartPhase,
 ): LineLoadingPulseMode | null {
   switch (phase) {
     case "loading":
@@ -49,7 +49,7 @@ function useGrowExitClip(
   innerWidth: number,
   mode: LineLoadingPulseMode,
   loopEpoch: number,
-  onComplete?: () => void
+  onComplete?: () => void,
 ) {
   const progress = useMotionValue(0);
   const paddedFullWidth = innerWidth + CLIP_PADDING * 2;
@@ -170,7 +170,7 @@ export function LineLoadingPulseStroke({
     innerWidth,
     mode,
     loopEpoch,
-    onCycleComplete
+    onCycleComplete,
   );
 
   if (innerWidth <= 0) {
@@ -187,10 +187,7 @@ export function LineLoadingPulseStroke({
             y={-CLIP_PADDING}
           />
         </clipPath>
-        <linearGradient
-          id={gradientId}
-          {...viewportFadeGradientAttrs(innerWidth)}
-        >
+        <linearGradient id={gradientId} {...viewportFadeGradientAttrs(innerWidth)}>
           {fadeStops.map((stop) => (
             <stop
               key={stop.offset}

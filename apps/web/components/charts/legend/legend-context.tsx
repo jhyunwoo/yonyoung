@@ -54,9 +54,7 @@ export function LegendProvider({
   children: React.ReactNode;
   value: LegendContextValue;
 }) {
-  return (
-    <LegendContext.Provider value={value}>{children}</LegendContext.Provider>
-  );
+  return <LegendContext.Provider value={value}>{children}</LegendContext.Provider>;
 }
 
 export function LegendItemProvider({
@@ -67,9 +65,7 @@ export function LegendItemProvider({
   value: LegendItemContextValue;
 }) {
   return (
-    <LegendItemContext.Provider value={value}>
-      {children}
-    </LegendItemContext.Provider>
+    <LegendItemContext.Provider value={value}>{children}</LegendItemContext.Provider>
   );
 }
 
@@ -84,9 +80,7 @@ export function useLegend(): LegendContextValue {
 export function useLegendItem(): LegendItemContextValue {
   const context = useContext(LegendItemContext);
   if (!context) {
-    throw new Error(
-      "useLegendItem must be used within a <LegendItem> component."
-    );
+    throw new Error("useLegendItem must be used within a <LegendItem> component.");
   }
   return context;
 }

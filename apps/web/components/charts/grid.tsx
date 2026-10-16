@@ -5,15 +5,11 @@ import { motion } from "motion/react";
 import { useId } from "react";
 import { chartCssVars, useChartStable, useYScale } from "./chart-context";
 import { useGridShimmer } from "./use-grid-shimmer";
-import {
-  isLoadingChromePhase,
-  isLoadingGridChromePhase,
-} from "./y-domain-utils";
+import { isLoadingChromePhase, isLoadingGridChromePhase } from "./y-domain-utils";
 
 const DEFAULT_SHIMMER_LENGTH_PX = 140;
 const DEFAULT_SHIMMER_SPEED = 1;
-const DEFAULT_SHIMMER_STROKE =
-  "color-mix(in oklch, var(--foreground) 68%, transparent)";
+const DEFAULT_SHIMMER_STROKE = "color-mix(in oklch, var(--foreground) 68%, transparent)";
 
 export interface GridProps {
   /** Show horizontal grid lines. Default: true */
@@ -81,10 +77,8 @@ function resolveRowTickValues(options: {
   rowTickValues?: number[];
   yScale: { ticks?: (count: number) => number[] };
 }): number[] | undefined {
-  const { hideHorizontalEdgeLines, numTicksRows, rowTickValues, yScale } =
-    options;
-  const ticks =
-    rowTickValues ?? (yScale.ticks ? yScale.ticks(numTicksRows) : []);
+  const { hideHorizontalEdgeLines, numTicksRows, rowTickValues, yScale } = options;
+  const ticks = rowTickValues ?? (yScale.ticks ? yScale.ticks(numTicksRows) : []);
   const filtered = hideEdgeTicks(ticks, hideHorizontalEdgeLines);
   if (filtered === ticks && !rowTickValues && !hideHorizontalEdgeLines) {
     return undefined;
@@ -152,10 +146,7 @@ export function Grid({
     yScale,
   });
   const columnTickValuesResolved =
-    vertical &&
-    columnScale &&
-    typeof columnScale === "function" &&
-    hideVerticalEdgeLines
+    vertical && columnScale && typeof columnScale === "function" && hideVerticalEdgeLines
       ? (() => {
           const ticks = columnScale.ticks?.(numTicksColumns) ?? [];
           const filtered = hideEdgeTicks<number | Date>(ticks, true);
@@ -183,10 +174,7 @@ export function Grid({
             <stop offset="0%" style={{ stopColor: "white", stopOpacity: 0 }} />
             <stop offset="10%" style={{ stopColor: "white", stopOpacity: 1 }} />
             <stop offset="90%" style={{ stopColor: "white", stopOpacity: 1 }} />
-            <stop
-              offset="100%"
-              style={{ stopColor: "white", stopOpacity: 0 }}
-            />
+            <stop offset="100%" style={{ stopColor: "white", stopOpacity: 0 }} />
           </linearGradient>
           <mask id={hMaskId}>
             <rect
@@ -227,10 +215,7 @@ export function Grid({
             <stop offset="0%" style={{ stopColor: "white", stopOpacity: 0 }} />
             <stop offset="10%" style={{ stopColor: "white", stopOpacity: 1 }} />
             <stop offset="90%" style={{ stopColor: "white", stopOpacity: 1 }} />
-            <stop
-              offset="100%"
-              style={{ stopColor: "white", stopOpacity: 0 }}
-            />
+            <stop offset="100%" style={{ stopColor: "white", stopOpacity: 0 }} />
           </linearGradient>
           <mask id={vMaskId}>
             <rect

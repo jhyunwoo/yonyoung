@@ -87,9 +87,7 @@ export function SankeyProvider({
   children: React.ReactNode;
   value: SankeyContextValue;
 }) {
-  return (
-    <SankeyContext.Provider value={value}>{children}</SankeyContext.Provider>
-  );
+  return <SankeyContext.Provider value={value}>{children}</SankeyContext.Provider>;
 }
 
 export function useSankey(): SankeyContextValue {
