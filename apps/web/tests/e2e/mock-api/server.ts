@@ -704,6 +704,11 @@ const handleRequest = async (
       return;
     }
 
+    if (pathname === "/api/public/page-views/engagement" && method === "POST") {
+      sendJson(response, 200, { ok: true });
+      return;
+    }
+
     // 첨부파일 라우트 (공개 목록 + 관리자 CRUD) — 별도 모듈에서 처리
     if (
       handleAttachmentRoutes({

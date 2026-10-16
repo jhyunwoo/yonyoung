@@ -77,4 +77,48 @@ test.describe("page view tracking", () => {
         resourceId: "exh-1",
       });
   });
+
+  test("페이지뷰에 익명 방문자·세션 ID를 함께 보내고, 숨길 때 체류 시간을 보낸다", async ({
+    page,
+  }) => {
+    const uuid = /^[0-9a-f-]{36}$/;
+    let viewBody: Record<string, unknown> | null = null;
+    let engagementBody: Record<string, unknown> | null = null;
+    const ok = { status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) };
+
+    await page.route("**/api/public/page-views", async (route) => {
+      viewBody = route.request().postDataJSON() as Record<string, unknown>;
+      await route.fulfill(ok);
+    });
+    await page.route("**/api/public/page-views/engagement", async (route) => {
+      engagementBody = route.request().postDataJSON() as Record<string, unknown>;
+      await route.fulfill(ok);
+    });
+
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect.poll(() => viewBody).not.toBeNull();
+    const body = viewBody as unknown as Record<string, unknown>;
+    expect(body.visitorId).toMatch(uuid);
+    expect(body.sessionId).toMatch(uuid);
+    expect(body.pageviewId).toMatch(uuid);
+    expect(body.sessionStart).toBe(true);
+
+    await page.evaluate(() => {
+      Object.defineProperty(document, "visibilityState", {
+        value: "hidden",
+        configurable: true,
+      });
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    await expect.poll(() => engagementBody).not.toBeNull();
+    const engagement = engagementBody as unknown as Record<string, unknown>;
+    expect(engagement.pageviewId).toBe(body.pageviewId);
+    expect(engagement.visitorId).toBe(body.visitorId);
+    expect(typeof engagement.engagedMs).toBe("number");
+  });
+
+  test("푸터에 익명 방문 분석 안내가 있다", async ({ page }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect(page.getByTestId("public-footer")).toContainText("익명 방문 분석");
+  });
 });

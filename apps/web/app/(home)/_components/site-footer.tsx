@@ -93,6 +93,10 @@ export default async function SiteFooter() {
             </Suspense>{" "}
             연세대학교 중앙사진동아리 연영회. All rights reserved.
           </p>
+          <p className="mt-2 text-[0.75rem] leading-normal text-(--footer-muted)">
+            익명 방문 분석을 위해 브라우저에 무작위 식별값을 저장합니다. 개인을 식별하는 정보는
+            수집하지 않습니다.
+          </p>
         </div>
       </div>
     </footer>
