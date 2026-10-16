@@ -72,7 +72,7 @@ const getVisitIdentity = () => {
 
 export default function PageViewTracker({ pageType, resourceId }: PageViewTrackerProps) {
   useEffect(() => {
-    const post = (path: string, body: unknown) => {
+    const post = (path: string, body: unknown): Promise<unknown> =>
       fetch(path, {
         method: "POST",
         headers: {
@@ -82,7 +82,6 @@ export default function PageViewTracker({ pageType, resourceId }: PageViewTracke
         body: JSON.stringify(body),
         keepalive: true,
       }).catch(() => {});
-    };
 
     const identity = getVisitIdentity();
     const pageviewId = createRandomId();
@@ -92,6 +91,8 @@ export default function PageViewTracker({ pageType, resourceId }: PageViewTracke
     );
     let visitorId: string | null = null;
     let lastSentMs = 0;
+    // 체류 갱신은 기존 행만 고친다. 페이지뷰 행보다 먼저 도착하면 사라지므로 기록이 끝난 뒤 보낸다.
+    let pageViewRecorded: Promise<unknown> = Promise.resolve();
 
     // 누적 총량을 보낸다. 서버가 큰 값만 남기므로 탭을 여러 번 오가도 안전하다.
     const sendEngagement = () => {
@@ -103,11 +104,10 @@ export default function PageViewTracker({ pageType, resourceId }: PageViewTracke
       if (engagedMs <= lastSentMs) return;
       lastSentMs = engagedMs;
       identity.touch(Date.now());
-      post("/api/public/page-views/engagement", {
-        pageviewId,
-        visitorId,
-        engagedMs,
-      });
+      const body = { pageviewId, visitorId, engagedMs };
+      void pageViewRecorded.then(() =>
+        post("/api/public/page-views/engagement", body),
+      );
     };
 
     const frame = requestAnimationFrame(() => {
@@ -130,7 +130,7 @@ export default function PageViewTracker({ pageType, resourceId }: PageViewTracke
         : {};
 
       // 내부 Analytics Engine 집계
-      post("/api/public/page-views", {
+      pageViewRecorded = post("/api/public/page-views", {
         pageType,
         resourceId,
         ...entry,
