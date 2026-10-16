@@ -115,6 +115,9 @@ const eslintConfig = defineConfig([
     "coverage/**",
     "playwright-report/**",
     "test-results/**",
+    // bklit 레지스트리에서 가져온 차트 소스. 상류 코드 스타일을 따르므로 우리 규칙으로 검사하지 않는다.
+    "components/charts/**",
+    "components/shimmering-text.tsx",
   ]),
 ]);
 
