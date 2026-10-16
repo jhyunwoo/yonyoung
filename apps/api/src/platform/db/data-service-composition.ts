@@ -113,5 +113,6 @@ export const createDbDataService = (database: D1Database): DataService => {
     getPageViewAnalytics: pageViewRepository.getPageViewAnalytics,
     recordAnalyticsEvent: visitorEventRepository.recordAnalyticsEvent,
     recordEngagement: visitorEventRepository.recordEngagement,
+    getVisitorInsights: visitorEventRepository.getVisitorInsights,
   };
 };

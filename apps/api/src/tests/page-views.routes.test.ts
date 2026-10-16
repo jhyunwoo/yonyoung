@@ -553,4 +553,68 @@ describe("POST /api/public/page-views/engagement", () => {
     expect(recordEngagement).not.toHaveBeenCalled();
   });
 });
+
+describe("GET /api/admin/page-views/insights", () => {
+  it("미승인 사용자는 403이다", async () => {
+    const app = createTestApp({ actor: createActor("unverified", IDs.member) });
+    const response = await app.request("/api/admin/page-views/insights");
+    await expectErrorCode(response, "FORBIDDEN");
+  });
+
+  it("기간과 세그먼트를 해석해 넘긴다", async () => {
+    const getVisitorInsights = fn(async () => ({}) as never);
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({ getVisitorInsights }),
+    });
+
+    const response = await app.request(
+      "/api/admin/page-views/insights?from=2026-10-01&to=2026-10-07&audience=external&device=mobile&referrer=WWW.Google.com&landing=activity",
+    );
+
+    expect(response.status).toBe(200);
+    expect(getVisitorInsights).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: "2026-10-01",
+        to: "2026-10-07",
+        granularity: "day",
+      }),
+      {
+        audience: "external",
+        device: "mobile",
+        referrer: "google.com",
+        landing: "activity",
+      },
+    );
+  });
+
+  it("세그먼트를 생략하면 전부 all이다", async () => {
+    const getVisitorInsights = fn(async () => ({}) as never);
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({ getVisitorInsights }),
+    });
+
+    await app.request(
+      "/api/admin/page-views/insights?from=2026-10-01&to=2026-10-07",
+    );
+
+    expect(getVisitorInsights).toHaveBeenCalledWith(expect.anything(), {
+      audience: "all",
+      device: "all",
+      referrer: "all",
+      landing: "all",
+    });
+  });
+
+  it("허용되지 않은 값은 400이다", async () => {
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+    });
+    const response = await app.request(
+      "/api/admin/page-views/insights?audience=robots",
+    );
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+});
 });

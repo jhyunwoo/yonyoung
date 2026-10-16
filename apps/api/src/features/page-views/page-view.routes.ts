@@ -6,6 +6,8 @@ import {
   ApiPageViewStatsSchema,
   ApiRecordEngagementRequestSchema,
   ApiRecordPageViewRequestSchema,
+  ApiVisitorInsightsQuerySchema,
+  ApiVisitorInsightsSchema,
 } from "./page-view.contract";
 import { resolveAnalyticsRange } from "./page-view-analytics";
 import {
@@ -128,6 +130,23 @@ const getPageViewAnalyticsRoute = createRoute({
   },
   responses: {
     200: dataResponse(ApiPageViewAnalyticsSchema, "기간별 방문 분석 조회 성공"),
+    400: errorResponses[400],
+    401: errorResponses[401],
+    403: errorResponses[403],
+  },
+});
+
+const getVisitorInsightsRoute = createRoute({
+  method: "get",
+  path: "/api/admin/page-views/insights",
+  tags: ["Dashboard"],
+  operationId: "getVisitorInsights",
+  security: [{ cookieAuth: [] }],
+  request: {
+    query: ApiVisitorInsightsQuerySchema,
+  },
+  responses: {
+    200: dataResponse(ApiVisitorInsightsSchema, "방문자 분석 조회 성공"),
     400: errorResponses[400],
     401: errorResponses[401],
     403: errorResponses[403],
@@ -307,5 +326,29 @@ export const registerPageViewRoutes = (
       .getDataService(c)
       .getPageViewAnalytics(range);
     return ok(c, analytics);
+  });
+
+  app.openapi(getVisitorInsightsRoute, async (c) => {
+    const actor = await requireAuthenticatedActor(c, dependencies);
+
+    if (actor.role === "unverified") {
+      throw AppError.forbidden();
+    }
+
+    const query = readValidated(c, "query", ApiVisitorInsightsQuerySchema);
+    const range = resolveAnalyticsRange(query, Date.now());
+    const insights = await dependencies
+      .getDataService(c)
+      .getVisitorInsights(range, {
+        audience: query.audience ?? "all",
+        device: query.device ?? "all",
+        // 저장할 때와 같은 규칙으로 정규화해야 www. 같은 표기 차이로 결과가 비지 않는다.
+        referrer:
+          query.referrer === undefined || query.referrer === "all"
+            ? "all"
+            : normalizeReferrerHost(query.referrer),
+        landing: query.landing ?? "all",
+      });
+    return ok(c, insights);
   });
 };

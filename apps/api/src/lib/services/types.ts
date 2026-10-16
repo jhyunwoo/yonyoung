@@ -669,6 +669,8 @@ export type DataService = {
   getPageViewAnalytics: (
     range: PageViewAnalyticsRange,
   ) => Promise<PageViewAnalyticsEntity>;
+  getVisitorInsights: (range: PageViewAnalyticsRange, segment: InsightsSegment) =>
+  Promise<VisitorInsightsEntity>;
   deleteUser: (id: string) => Promise<boolean>;
 };
 

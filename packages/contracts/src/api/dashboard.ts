@@ -88,3 +88,117 @@ export const apiPageViewAnalyticsSchema = z.object({
 
 export type ApiPageViewGranularity = z.infer<typeof pageViewGranularitySchema>;
 export type ApiPageViewAnalytics = z.infer<typeof apiPageViewAnalyticsSchema>;
+
+const insightsPageTypeSchema = z.enum([
+  "home",
+  "activity",
+  "exhibition",
+  "notice",
+]);
+const insightsRateSchema = z.number().min(0).max(1);
+const insightsCoreSchema = z.object({
+  views: z.number().int(),
+  visitors: z.number().int(),
+  sessions: z.number().int(),
+  pagesPerSession: z.number(),
+  avgSessionMs: z.number().int(),
+  bounceRate: insightsRateSchema,
+});
+
+export const apiVisitorInsightsSchema = z.object({
+  range: z.object({
+    from: z.string(),
+    to: z.string(),
+    days: z.number().int(),
+    granularity: pageViewGranularitySchema,
+  }),
+  previousRange: z.object({ from: z.string(), to: z.string() }),
+  eventsTrackedSince: z.string().nullable(),
+  segmented: z.boolean(),
+  summary: insightsCoreSchema.extend({
+    unmeasuredSessions: z.number().int(),
+    newVisitors: z.number().int(),
+    returningVisitors: z.number().int(),
+    prev: insightsCoreSchema,
+  }),
+  trend: z.array(
+    z.object({
+      bucket: z.string(),
+      views: z.number().int(),
+      visitors: z.number().int(),
+      sessions: z.number().int(),
+      avgSessionMs: z.number().int(),
+      newVisitors: z.number().int(),
+      returningVisitors: z.number().int(),
+      prevViews: z.number().int(),
+      prevVisitors: z.number().int(),
+      prevSessions: z.number().int(),
+      prevAvgSessionMs: z.number().int(),
+      collected: z.boolean(),
+    }),
+  ),
+  hourly: z.array(
+    z.object({
+      weekday: z.number().int(),
+      hour: z.number().int(),
+      views: z.number().int(),
+    }),
+  ),
+  referrerFlow: z.array(
+    z.object({
+      referrer: z.string(),
+      landing: insightsPageTypeSchema,
+      sessions: z.number().int(),
+    }),
+  ),
+  pathFlow: z.array(
+    z.object({
+      step: z.union([z.literal(1), z.literal(2)]),
+      from: insightsPageTypeSchema,
+      to: z.union([insightsPageTypeSchema, z.literal("exit")]),
+      sessions: z.number().int(),
+    }),
+  ),
+  content: z.array(
+    z.object({
+      pageType: insightsPageTypeSchema,
+      resourceId: z.string(),
+      title: z.string().nullable(),
+      views: z.number().int(),
+      visitors: z.number().int(),
+      avgEngagedMs: z.number().int().nullable(),
+      entries: z.number().int(),
+      bounceRate: insightsRateSchema.nullable(),
+    }),
+  ),
+  devices: z.array(
+    z.object({
+      device: z.enum(["mobile", "tablet", "desktop"]),
+      sessions: z.number().int(),
+    }),
+  ),
+  audience: z.object({ member: z.number().int(), external: z.number().int() }),
+  depth: z.array(
+    z.object({
+      bucket: z.enum(["1", "2", "3", "4", "5+"]),
+      sessions: z.number().int(),
+    }),
+  ),
+  duration: z.array(
+    z.object({
+      bucket: z.enum(["<10s", "10-30s", "30s-1m", "1-3m", "3-10m", "10m+"]),
+      sessions: z.number().int(),
+    }),
+  ),
+  cohorts: z.array(
+    z.object({
+      week: z.string(),
+      size: z.number().int(),
+      retention: z.array(insightsRateSchema.nullable()),
+    }),
+  ),
+  referrerOptions: z.array(z.string()),
+});
+
+export type ApiVisitorInsights = z.infer<typeof apiVisitorInsightsSchema>;
+export type ApiInsightsPageType = z.infer<typeof insightsPageTypeSchema>;
