@@ -68,3 +68,31 @@ export const pageViewEntries = sqliteTable(
     ),
   ],
 );
+
+/**
+ * 페이지뷰 1회 = 1행. 방문자·세션 ID는 브라우저가 만든 무작위 UUID라 개인을 가리키지 않는다.
+ * referrer_host는 세션 첫 페이지뷰에만 채운다.
+ */
+export const analyticsEvents = sqliteTable(
+  "analytics_events",
+  {
+    id: text("id").primaryKey(),
+    visitorId: text("visitor_id").notNull(),
+    sessionId: text("session_id").notNull(),
+    visitedAt: integer("visited_at", { mode: "timestamp_ms" }).notNull(),
+    pageType: text("page_type").notNull(),
+    resourceId: text("resource_id").notNull(),
+    referrerHost: text("referrer_host"),
+    device: text("device").notNull(),
+    isMember: integer("is_member", { mode: "boolean" }).notNull(),
+    engagedMs: integer("engaged_ms"),
+  },
+  (table) => [
+    index("analytics_events_visited_at_idx").on(table.visitedAt),
+    index("analytics_events_visitor_visited_at_idx").on(
+      table.visitorId,
+      table.visitedAt,
+    ),
+    index("analytics_events_session_idx").on(table.sessionId),
+  ],
+);

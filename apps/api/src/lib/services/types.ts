@@ -296,6 +296,21 @@ export type PageViewAnalyticsEntity = {
   entriesTrackedSince: string | null;
 };
 
+export type AnalyticsEventRow = {
+  id: string;
+  visitorId: string;
+  sessionId: string;
+  visitedAt: number;
+  pageType: PageViewType;
+  resourceId: string;
+  referrerHost: string | null;
+  device: PageViewDevice;
+  isMember: boolean;
+  engagedMs: number | null;
+};
+
+export type NewAnalyticsEvent = Omit<AnalyticsEventRow, "engagedMs">;
+
 export type DataService = {
   createAuditLog: (input: {
     resourceType: AuditResourceType;
