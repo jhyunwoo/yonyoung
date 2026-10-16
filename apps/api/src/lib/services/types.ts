@@ -311,6 +311,92 @@ export type AnalyticsEventRow = {
 
 export type NewAnalyticsEvent = Omit<AnalyticsEventRow, "engagedMs">;
 
+export type InsightsSegment = {
+  audience: "all" | "external" | "member";
+  device: "all" | PageViewDevice;
+  /** "all" | "direct" | "other" | 정규화된 호스트명 */
+  referrer: string;
+  landing: "all" | PageViewType;
+};
+
+export type InsightsCore = {
+  views: number;
+  visitors: number;
+  sessions: number;
+  pagesPerSession: number;
+  avgSessionMs: number;
+  /** 0..1 */
+  bounceRate: number;
+};
+
+export type DepthBucket = "1" | "2" | "3" | "4" | "5+";
+export type DurationBucket =
+  "<10s" | "10-30s" | "30s-1m" | "1-3m" | "3-10m" | "10m+";
+
+export type VisitorInsightsEntity = {
+  range: {
+    from: string;
+    to: string;
+    days: number;
+    granularity: PageViewGranularity;
+  };
+  previousRange: { from: string; to: string };
+  eventsTrackedSince: string | null;
+  segmented: boolean;
+  summary: InsightsCore & {
+    unmeasuredSessions: number;
+    newVisitors: number;
+    returningVisitors: number;
+    prev: InsightsCore;
+  };
+  trend: Array<{
+    bucket: string;
+    views: number;
+    visitors: number;
+    sessions: number;
+    avgSessionMs: number;
+    newVisitors: number;
+    returningVisitors: number;
+    prevViews: number;
+    prevVisitors: number;
+    prevSessions: number;
+    prevAvgSessionMs: number;
+    collected: boolean;
+  }>;
+  hourly: Array<{ weekday: number; hour: number; views: number }>;
+  referrerFlow: Array<{
+    referrer: string;
+    landing: PageViewType;
+    sessions: number;
+  }>;
+  pathFlow: Array<{
+    step: 1 | 2;
+    from: PageViewType;
+    to: PageViewType | "exit";
+    sessions: number;
+  }>;
+  content: Array<{
+    pageType: PageViewType;
+    resourceId: string;
+    title: string | null;
+    views: number;
+    visitors: number;
+    avgEngagedMs: number | null;
+    entries: number;
+    bounceRate: number | null;
+  }>;
+  devices: Array<{ device: PageViewDevice; sessions: number }>;
+  audience: { member: number; external: number };
+  depth: Array<{ bucket: DepthBucket; sessions: number }>;
+  duration: Array<{ bucket: DurationBucket; sessions: number }>;
+  cohorts: Array<{
+    week: string;
+    size: number;
+    retention: Array<number | null>;
+  }>;
+  referrerOptions: string[];
+};
+
 export type DataService = {
   createAuditLog: (input: {
     resourceType: AuditResourceType;
