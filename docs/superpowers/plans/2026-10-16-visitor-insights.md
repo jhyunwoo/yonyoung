@@ -43,48 +43,48 @@
 
 API (`apps/api`)
 
-| 파일 | 책임 |
-|---|---|
-| `src/platform/db/schema/analytics.ts` (수정) | `analyticsEvents` 테이블 |
-| `drizzle/0015_analytics_events.sql` (생성) | 마이그레이션 |
-| `src/lib/views/page-view-target.ts` (수정) | `isUuid`, `isBotUserAgent` |
-| `src/lib/services/types.ts` (수정) | 이벤트·세그먼트·인사이트 타입, DataService 메서드 |
-| `src/features/page-views/visitor-events.repository.ts` (생성) | 이벤트 쓰기·체류 갱신·보관 삭제·인사이트 조회 |
-| `src/features/page-views/visitor-insights.ts` (생성) | 순수 집계 함수 |
-| `src/features/page-views/page-view-analytics.ts` (수정) | `bucketKey`, `mondayOf` export |
-| `src/features/page-views/page-view.contract.ts` (수정) | 요청·응답 스키마 |
-| `src/features/page-views/page-view.routes.ts` (수정) | 기록 확장, 체류·인사이트 라우트 |
-| `src/platform/db/data-service-composition.ts` (수정) | 배선 |
-| `src/index.ts` (수정) | 보관 크론 |
-| `src/tests/visitor-insights.test.ts` (생성) | 집계 단위 테스트 |
-| `src/tests/page-views.routes.test.ts` (수정) | 라우트 테스트 |
-| `tests/integration/visitor-events.runtime.test.ts` (생성) | D1 테스트 |
+| 파일                                                          | 책임                                              |
+| ------------------------------------------------------------- | ------------------------------------------------- |
+| `src/platform/db/schema/analytics.ts` (수정)                  | `analyticsEvents` 테이블                          |
+| `drizzle/0015_analytics_events.sql` (생성)                    | 마이그레이션                                      |
+| `src/lib/views/page-view-target.ts` (수정)                    | `isUuid`, `isBotUserAgent`                        |
+| `src/lib/services/types.ts` (수정)                            | 이벤트·세그먼트·인사이트 타입, DataService 메서드 |
+| `src/features/page-views/visitor-events.repository.ts` (생성) | 이벤트 쓰기·체류 갱신·보관 삭제·인사이트 조회     |
+| `src/features/page-views/visitor-insights.ts` (생성)          | 순수 집계 함수                                    |
+| `src/features/page-views/page-view-analytics.ts` (수정)       | `bucketKey`, `mondayOf` export                    |
+| `src/features/page-views/page-view.contract.ts` (수정)        | 요청·응답 스키마                                  |
+| `src/features/page-views/page-view.routes.ts` (수정)          | 기록 확장, 체류·인사이트 라우트                   |
+| `src/platform/db/data-service-composition.ts` (수정)          | 배선                                              |
+| `src/index.ts` (수정)                                         | 보관 크론                                         |
+| `src/tests/visitor-insights.test.ts` (생성)                   | 집계 단위 테스트                                  |
+| `src/tests/page-views.routes.test.ts` (수정)                  | 라우트 테스트                                     |
+| `tests/integration/visitor-events.runtime.test.ts` (생성)     | D1 테스트                                         |
 
 Contracts (`packages/contracts`)
 
-| 파일 | 책임 |
-|---|---|
-| `src/api/dashboard.ts` (수정) | `apiVisitorInsightsSchema`, 타입 |
-| `src/api-contracts.ts`, `src/api-schemas.ts` (수정) | export |
+| 파일                                                | 책임                             |
+| --------------------------------------------------- | -------------------------------- |
+| `src/api/dashboard.ts` (수정)                       | `apiVisitorInsightsSchema`, 타입 |
+| `src/api-contracts.ts`, `src/api-schemas.ts` (수정) | export                           |
 
 Web (`apps/web`)
 
-| 파일 | 책임 |
-|---|---|
-| `features/public/analytics/visitor-identity.ts` (생성) | 방문자·세션 ID |
-| `features/public/analytics/engagement-timer.ts` (생성) | 보이는 시간 누적 |
-| `app/_components/page-view-tracker.tsx` (수정) | ID·체류 전송 |
-| `app/(home)/_components/site-footer.tsx` (수정) | 고지 문구 |
-| `features/dashboard/stats/stats-range.ts` (수정) | 필터·지표 URL 파싱 |
-| `features/dashboard/stats/insights-format.ts` (생성) | 라벨·숫자 포맷·CSV |
-| `features/dashboard/stats/insights-chart-data.ts` (생성) | API 응답 → 차트 데이터 |
-| `features/dashboard/services/admin-read-service.ts` (수정) | `getAdminVisitorInsights` |
-| `components.json`, `lib/utils.ts`, `components/charts/**` (생성) | bklit 소스 |
-| `app/(dashboard)/globals.css` (수정) | 차트 토큰 |
-| `app/(dashboard)/dashboard/stats/page.tsx` (수정) | 인사이트 조회 |
-| `app/(dashboard)/dashboard/stats/stats-view.tsx` (재작성) | 화면 조립·폴링 |
-| `app/(dashboard)/dashboard/stats/_components/*.tsx` | 섹션 컴포넌트 |
-| `tests/e2e/mock-api/server.ts`, `tests/e2e/page-view-stats.spec.ts` (수정) | e2e |
+| 파일                                                                       | 책임                      |
+| -------------------------------------------------------------------------- | ------------------------- |
+| `features/public/analytics/visitor-identity.ts` (생성)                     | 방문자·세션 ID            |
+| `features/public/analytics/engagement-timer.ts` (생성)                     | 보이는 시간 누적          |
+| `app/_components/page-view-tracker.tsx` (수정)                             | ID·체류 전송              |
+| `app/(home)/_components/site-footer.tsx` (수정)                            | 고지 문구                 |
+| `features/dashboard/stats/stats-range.ts` (수정)                           | 필터·지표 URL 파싱        |
+| `features/dashboard/stats/insights-format.ts` (생성)                       | 라벨·숫자 포맷·CSV        |
+| `features/dashboard/stats/insights-chart-data.ts` (생성)                   | API 응답 → 차트 데이터    |
+| `features/dashboard/services/admin-read-service.ts` (수정)                 | `getAdminVisitorInsights` |
+| `components.json`, `lib/utils.ts`, `components/charts/**` (생성)           | bklit 소스                |
+| `app/(dashboard)/globals.css` (수정)                                       | 차트 토큰                 |
+| `app/(dashboard)/dashboard/stats/page.tsx` (수정)                          | 인사이트 조회             |
+| `app/(dashboard)/dashboard/stats/stats-view.tsx` (재작성)                  | 화면 조립·폴링            |
+| `app/(dashboard)/dashboard/stats/_components/*.tsx`                        | 섹션 컴포넌트             |
+| `tests/e2e/mock-api/server.ts`, `tests/e2e/page-view-stats.spec.ts` (수정) | e2e                       |
 
 ---
 
@@ -93,6 +93,7 @@ Web (`apps/web`)
 ### Task 1: `analytics_events` 테이블과 쓰기 저장소
 
 **Files:**
+
 - Modify: `apps/api/src/platform/db/schema/analytics.ts`
 - Create: `apps/api/drizzle/0015_analytics_events.sql` (drizzle-kit 생성)
 - Modify: `apps/api/src/lib/services/types.ts`
@@ -100,6 +101,7 @@ Web (`apps/web`)
 - Test: `apps/api/tests/integration/visitor-events.runtime.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `type AnalyticsEventRow = { id: string; visitorId: string; sessionId: string; visitedAt: number; pageType: PageViewType; resourceId: string; referrerHost: string | null; device: PageViewDevice; isMember: boolean; engagedMs: number | null }`
   - `type NewAnalyticsEvent = Omit<AnalyticsEventRow, "engagedMs">`
@@ -225,11 +227,26 @@ describe("analytics_events 쓰기", () => {
     const now = Date.now();
     await repository.recordAnalyticsEvent(event("eng-1", now));
 
-    await repository.recordEngagement({ pageviewId: "eng-1", visitorId: V1, engagedMs: 5000, nowMs: now });
-    await repository.recordEngagement({ pageviewId: "eng-1", visitorId: V1, engagedMs: 3000, nowMs: now });
+    await repository.recordEngagement({
+      pageviewId: "eng-1",
+      visitorId: V1,
+      engagedMs: 5000,
+      nowMs: now,
+    });
+    await repository.recordEngagement({
+      pageviewId: "eng-1",
+      visitorId: V1,
+      engagedMs: 3000,
+      nowMs: now,
+    });
     expect(await readEngaged("eng-1")).toBe(5000);
 
-    await repository.recordEngagement({ pageviewId: "eng-1", visitorId: V1, engagedMs: 99 * 60 * 1000, nowMs: now });
+    await repository.recordEngagement({
+      pageviewId: "eng-1",
+      visitorId: V1,
+      engagedMs: 99 * 60 * 1000,
+      nowMs: now,
+    });
     expect(await readEngaged("eng-1")).toBe(30 * 60 * 1000);
   });
 
@@ -239,7 +256,12 @@ describe("analytics_events 쓰기", () => {
     await repository.recordAnalyticsEvent(event("eng-2", now - 25 * HOUR_MS));
     await repository.recordAnalyticsEvent(event("eng-3", now));
 
-    await repository.recordEngagement({ pageviewId: "eng-2", visitorId: V1, engagedMs: 5000, nowMs: now });
+    await repository.recordEngagement({
+      pageviewId: "eng-2",
+      visitorId: V1,
+      engagedMs: 5000,
+      nowMs: now,
+    });
     await repository.recordEngagement({
       pageviewId: "eng-3",
       visitorId: "33333333-3333-4333-8333-333333333333",
@@ -254,7 +276,9 @@ describe("analytics_events 쓰기", () => {
   it("보관 기간이 지난 행만 지운다", async () => {
     const repository = createVisitorEventRepository(createDB(db));
     const now = Date.now();
-    await repository.recordAnalyticsEvent(event("old-1", now - 800 * 24 * HOUR_MS));
+    await repository.recordAnalyticsEvent(
+      event("old-1", now - 800 * 24 * HOUR_MS),
+    );
     await repository.recordAnalyticsEvent(event("new-1", now));
 
     await repository.purgeAnalyticsEventsBefore(now - 731 * 24 * HOUR_MS);
@@ -316,7 +340,10 @@ export const createVisitorEventRepository = (db: Database) => ({
         and(
           eq(analyticsEvents.id, input.pageviewId),
           eq(analyticsEvents.visitorId, input.visitorId),
-          gte(analyticsEvents.visitedAt, new Date(input.nowMs - ENGAGEMENT_WINDOW_MS)),
+          gte(
+            analyticsEvents.visitedAt,
+            new Date(input.nowMs - ENGAGEMENT_WINDOW_MS),
+          ),
         ),
       );
   },
@@ -348,6 +375,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 2: 기록 라우트 확장과 체류 시간 라우트
 
 **Files:**
+
 - Modify: `apps/api/src/lib/views/page-view-target.ts`
 - Modify: `apps/api/src/features/page-views/page-view.contract.ts`
 - Modify: `apps/api/src/features/page-views/page-view.routes.ts`
@@ -357,6 +385,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 - Update: `apps/api/src/tests/__snapshots__/openapi-contract.snapshot.test.ts.snap`
 
 **Interfaces:**
+
 - Consumes: Task 1 `createVisitorEventRepository`, `NewAnalyticsEvent`
 - Produces:
   - `isUuid(value: string | undefined): value is string`, `isBotUserAgent(userAgent: string | undefined): boolean`
@@ -369,191 +398,197 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 `apps/api/src/tests/page-views.routes.test.ts` 맨 아래 `describe("page-views routes", ...)` 블록 안에 추가:
 
 ```ts
-  describe("방문자 이벤트 기록", () => {
-    const VISIT = {
-      visitorId: "11111111-1111-4111-8111-111111111111",
-      sessionId: "22222222-2222-4222-8222-222222222222",
-      pageviewId: "33333333-3333-4333-8333-333333333333",
-    };
-    const post = (
-      app: ReturnType<typeof createTestApp>,
-      body: unknown,
-      userAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile",
-    ) =>
-      app.request("/api/public/page-views", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "User-Agent": userAgent },
-        body: JSON.stringify(body),
-      });
+describe("방문자 이벤트 기록", () => {
+  const VISIT = {
+    visitorId: "11111111-1111-4111-8111-111111111111",
+    sessionId: "22222222-2222-4222-8222-222222222222",
+    pageviewId: "33333333-3333-4333-8333-333333333333",
+  };
+  const post = (
+    app: ReturnType<typeof createTestApp>,
+    body: unknown,
+    userAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile",
+  ) =>
+    app.request("/api/public/page-views", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "User-Agent": userAgent },
+      body: JSON.stringify(body),
+    });
 
-    it("세션 첫 페이지뷰는 유입 경로·기기·회원 여부와 함께 이벤트로 남긴다", async () => {
-      const recordAnalyticsEvent = fn(async () => undefined);
-      const app = createTestApp({
-        actor: createActor("regular_member", IDs.member),
-        dataService: createDataServiceMock({
-          recordPageView: async () => undefined,
-          recordAnalyticsEvent,
-        }),
-      });
+  it("세션 첫 페이지뷰는 유입 경로·기기·회원 여부와 함께 이벤트로 남긴다", async () => {
+    const recordAnalyticsEvent = fn(async () => undefined);
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({
+        recordPageView: async () => undefined,
+        recordAnalyticsEvent,
+      }),
+    });
 
-      await post(app, {
+    await post(app, {
+      pageType: "home",
+      ...VISIT,
+      sessionStart: true,
+      sessionReferrerHost: "www.Google.com",
+    });
+
+    expect(recordAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: VISIT.pageviewId,
+        visitorId: VISIT.visitorId,
+        sessionId: VISIT.sessionId,
         pageType: "home",
-        ...VISIT,
-        sessionStart: true,
-        sessionReferrerHost: "www.Google.com",
-      });
-
-      expect(recordAnalyticsEvent).toHaveBeenCalledWith(
-        expect.objectContaining({
-          id: VISIT.pageviewId,
-          visitorId: VISIT.visitorId,
-          sessionId: VISIT.sessionId,
-          pageType: "home",
-          resourceId: "home",
-          referrerHost: "google.com",
-          device: "mobile",
-          isMember: true,
-        }),
-      );
-    });
-
-    it("세션 중간 페이지뷰는 유입 경로를 비우고, 비로그인은 회원이 아니다", async () => {
-      const recordAnalyticsEvent = fn(async () => undefined);
-      const app = createTestApp({
-        actor: null,
-        dataService: createDataServiceMock({
-          recordPageView: async () => undefined,
-          recordAnalyticsEvent,
-        }),
-      });
-
-      await post(app, { pageType: "home", ...VISIT });
-
-      expect(recordAnalyticsEvent).toHaveBeenCalledWith(
-        expect.objectContaining({ referrerHost: null, isMember: false }),
-      );
-    });
-
-    it("세션 시작인데 유입 경로가 없으면 직접 접속으로 남긴다", async () => {
-      const recordAnalyticsEvent = fn(async () => undefined);
-      const app = createTestApp({
-        actor: null,
-        dataService: createDataServiceMock({
-          recordPageView: async () => undefined,
-          recordAnalyticsEvent,
-        }),
-      });
-
-      await post(app, { pageType: "home", ...VISIT, sessionStart: true });
-
-      expect(recordAnalyticsEvent).toHaveBeenCalledWith(
-        expect.objectContaining({ referrerHost: "direct" }),
-      );
-    });
-
-    it("ID가 없는 옛 클라이언트 요청은 합계만 기록하고 이벤트는 남기지 않는다", async () => {
-      const recordPageView = fn(async () => undefined);
-      const recordAnalyticsEvent = fn(async () => undefined);
-      const app = createTestApp({
-        actor: null,
-        dataService: createDataServiceMock({ recordPageView, recordAnalyticsEvent }),
-      });
-
-      const response = await post(app, { pageType: "home", visitorId: "not-a-uuid" });
-
-      expect(response.status).toBe(200);
-      expect(recordPageView).toHaveBeenCalledWith("home", "home");
-      expect(recordAnalyticsEvent).not.toHaveBeenCalled();
-    });
-
-    it("봇 UA는 이벤트를 남기지 않는다", async () => {
-      const recordAnalyticsEvent = fn(async () => undefined);
-      const app = createTestApp({
-        actor: null,
-        dataService: createDataServiceMock({
-          recordPageView: async () => undefined,
-          recordAnalyticsEvent,
-        }),
-      });
-
-      await post(
-        app,
-        { pageType: "home", ...VISIT },
-        "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
-      );
-
-      expect(recordAnalyticsEvent).not.toHaveBeenCalled();
-    });
-
-    it("회원 확인이 실패해도 비회원으로 기록한다", async () => {
-      const recordAnalyticsEvent = fn(async () => undefined);
-      const app = createTestApp({
-        actor: null,
-        resolveActor: async () => {
-          throw new Error("session lookup failed");
-        },
-        dataService: createDataServiceMock({
-          recordPageView: async () => undefined,
-          recordAnalyticsEvent,
-        }),
-      });
-
-      await post(app, { pageType: "home", ...VISIT });
-
-      expect(recordAnalyticsEvent).toHaveBeenCalledWith(
-        expect.objectContaining({ isMember: false }),
-      );
-    });
+        resourceId: "home",
+        referrerHost: "google.com",
+        device: "mobile",
+        isMember: true,
+      }),
+    );
   });
 
-  describe("POST /api/public/page-views/engagement", () => {
-    const BODY = {
-      pageviewId: "33333333-3333-4333-8333-333333333333",
-      visitorId: "11111111-1111-4111-8111-111111111111",
-      engagedMs: 12_000,
-    };
-    const post = (app: ReturnType<typeof createTestApp>, body: unknown) =>
-      app.request("/api/public/page-views/engagement", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-    it("체류 시간을 기록한다", async () => {
-      const recordEngagement = fn(async () => undefined);
-      const app = createTestApp({
-        actor: null,
-        dataService: createDataServiceMock({ recordEngagement }),
-      });
-
-      const response = await post(app, BODY);
-
-      expect(response.status).toBe(200);
-      expect(recordEngagement).toHaveBeenCalledWith(
-        expect.objectContaining({ ...BODY, nowMs: expect.any(Number) }),
-      );
+  it("세션 중간 페이지뷰는 유입 경로를 비우고, 비로그인은 회원이 아니다", async () => {
+    const recordAnalyticsEvent = fn(async () => undefined);
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({
+        recordPageView: async () => undefined,
+        recordAnalyticsEvent,
+      }),
     });
 
-    it("형식이 틀리면 400이다", async () => {
-      const app = createTestApp({ actor: null });
-      const response = await post(app, { ...BODY, engagedMs: -1 });
-      await expectErrorCode(response, 400);
-    });
+    await post(app, { pageType: "home", ...VISIT });
 
-    it("레이트리밋에 걸리면 기록하지 않고 200을 돌려준다", async () => {
-      const recordEngagement = fn(async () => undefined);
-      const app = createTestApp({
-        actor: null,
-        allowPageViewWrite: () => false,
-        dataService: createDataServiceMock({ recordEngagement }),
-      });
-
-      const response = await post(app, BODY);
-
-      expect(response.status).toBe(200);
-      expect(recordEngagement).not.toHaveBeenCalled();
-    });
+    expect(recordAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ referrerHost: null, isMember: false }),
+    );
   });
+
+  it("세션 시작인데 유입 경로가 없으면 직접 접속으로 남긴다", async () => {
+    const recordAnalyticsEvent = fn(async () => undefined);
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({
+        recordPageView: async () => undefined,
+        recordAnalyticsEvent,
+      }),
+    });
+
+    await post(app, { pageType: "home", ...VISIT, sessionStart: true });
+
+    expect(recordAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ referrerHost: "direct" }),
+    );
+  });
+
+  it("ID가 없는 옛 클라이언트 요청은 합계만 기록하고 이벤트는 남기지 않는다", async () => {
+    const recordPageView = fn(async () => undefined);
+    const recordAnalyticsEvent = fn(async () => undefined);
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({
+        recordPageView,
+        recordAnalyticsEvent,
+      }),
+    });
+
+    const response = await post(app, {
+      pageType: "home",
+      visitorId: "not-a-uuid",
+    });
+
+    expect(response.status).toBe(200);
+    expect(recordPageView).toHaveBeenCalledWith("home", "home");
+    expect(recordAnalyticsEvent).not.toHaveBeenCalled();
+  });
+
+  it("봇 UA는 이벤트를 남기지 않는다", async () => {
+    const recordAnalyticsEvent = fn(async () => undefined);
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({
+        recordPageView: async () => undefined,
+        recordAnalyticsEvent,
+      }),
+    });
+
+    await post(
+      app,
+      { pageType: "home", ...VISIT },
+      "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+    );
+
+    expect(recordAnalyticsEvent).not.toHaveBeenCalled();
+  });
+
+  it("회원 확인이 실패해도 비회원으로 기록한다", async () => {
+    const recordAnalyticsEvent = fn(async () => undefined);
+    const app = createTestApp({
+      actor: null,
+      resolveActor: async () => {
+        throw new Error("session lookup failed");
+      },
+      dataService: createDataServiceMock({
+        recordPageView: async () => undefined,
+        recordAnalyticsEvent,
+      }),
+    });
+
+    await post(app, { pageType: "home", ...VISIT });
+
+    expect(recordAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ isMember: false }),
+    );
+  });
+});
+
+describe("POST /api/public/page-views/engagement", () => {
+  const BODY = {
+    pageviewId: "33333333-3333-4333-8333-333333333333",
+    visitorId: "11111111-1111-4111-8111-111111111111",
+    engagedMs: 12_000,
+  };
+  const post = (app: ReturnType<typeof createTestApp>, body: unknown) =>
+    app.request("/api/public/page-views/engagement", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+  it("체류 시간을 기록한다", async () => {
+    const recordEngagement = fn(async () => undefined);
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({ recordEngagement }),
+    });
+
+    const response = await post(app, BODY);
+
+    expect(response.status).toBe(200);
+    expect(recordEngagement).toHaveBeenCalledWith(
+      expect.objectContaining({ ...BODY, nowMs: expect.any(Number) }),
+    );
+  });
+
+  it("형식이 틀리면 400이다", async () => {
+    const app = createTestApp({ actor: null });
+    const response = await post(app, { ...BODY, engagedMs: -1 });
+    await expectErrorCode(response, 400);
+  });
+
+  it("레이트리밋에 걸리면 기록하지 않고 200을 돌려준다", async () => {
+    const recordEngagement = fn(async () => undefined);
+    const app = createTestApp({
+      actor: null,
+      allowPageViewWrite: () => false,
+      dataService: createDataServiceMock({ recordEngagement }),
+    });
+
+    const response = await post(app, BODY);
+
+    expect(response.status).toBe(200);
+    expect(recordEngagement).not.toHaveBeenCalled();
+  });
+});
 ```
 
 `expectErrorCode`의 실제 시그니처를 `src/tests/test-helpers.ts`에서 확인하고, 두 번째 인자가 상태 코드가 아니라 에러 코드 문자열이면 같은 파일의 기존 400 테스트와 같은 형태로 맞춘다.
@@ -614,8 +649,14 @@ export const isBotUserAgent = (userAgent: string | undefined): boolean =>
 ```ts
 export const ApiRecordEngagementRequestSchema = z
   .object({
-    pageviewId: z.string().uuid().openapi({ example: "33333333-3333-4333-8333-333333333333" }),
-    visitorId: z.string().uuid().openapi({ example: "11111111-1111-4111-8111-111111111111" }),
+    pageviewId: z
+      .string()
+      .uuid()
+      .openapi({ example: "33333333-3333-4333-8333-333333333333" }),
+    visitorId: z
+      .string()
+      .uuid()
+      .openapi({ example: "11111111-1111-4111-8111-111111111111" }),
     engagedMs: z.number().int().min(0).max(1_800_000).openapi({
       description: "페이지가 보인 누적 시간(ms). 페이지뷰당 최대 30분",
       example: 12000,
@@ -630,13 +671,13 @@ export const ApiRecordEngagementRequestSchema = z
 `apps/api/src/lib/services/types.ts`의 DataService 타입에서 `recordPageViewEntry` 선언 다음에 추가(파일 상단 import에 `NewAnalyticsEvent`는 같은 파일이므로 불필요):
 
 ```ts
-  recordAnalyticsEvent: (event: NewAnalyticsEvent) => Promise<void>;
-  recordEngagement: (input: {
-    pageviewId: string;
-    visitorId: string;
-    engagedMs: number;
-    nowMs: number;
-  }) => Promise<void>;
+recordAnalyticsEvent: (event: NewAnalyticsEvent) => Promise<void>;
+recordEngagement: (input: {
+  pageviewId: string;
+  visitorId: string;
+  engagedMs: number;
+  nowMs: number;
+}) => Promise<void>;
 ```
 
 `apps/api/src/platform/db/data-service-composition.ts`:
@@ -648,7 +689,7 @@ import { createVisitorEventRepository } from "../../features/page-views/visitor-
 `const pageViewRepository = createPageViewRepository(db);` 다음 줄:
 
 ```ts
-  const visitorEventRepository = createVisitorEventRepository(db);
+const visitorEventRepository = createVisitorEventRepository(db);
 ```
 
 `getPageViewAnalytics: pageViewRepository.getPageViewAnalytics,` 다음 줄:
@@ -694,7 +735,10 @@ const recordEngagementRoute = createRoute({
   tags: ["Public"],
   operationId: "recordPageViewEngagement",
   request: {
-    body: jsonBody(ApiRecordEngagementRequestSchema, "체류 시간 기록 요청 본문"),
+    body: jsonBody(
+      ApiRecordEngagementRequestSchema,
+      "체류 시간 기록 요청 본문",
+    ),
   },
   responses: {
     200: {
@@ -713,72 +757,72 @@ const recordEngagementRoute = createRoute({
 `recordPageViewRoute` 핸들러에서 `// 2. aggregated count 업데이트` 블록이 끝난 뒤, `return c.json({ ok: true } as const, 200);` 바로 앞에 추가:
 
 ```ts
-    const { visitorId, sessionId, pageviewId } = parsed.data;
-    const userAgent = c.req.header("user-agent");
-    if (
-      isUuid(visitorId) &&
-      isUuid(sessionId) &&
-      isUuid(pageviewId) &&
-      !isBotUserAgent(userAgent)
-    ) {
-      let isMember = false;
-      try {
-        isMember = (await dependencies.resolveActor(c)) !== null;
-      } catch {
-        // 세션 조회가 실패해도 방문 기록은 남긴다.
-      }
-      try {
-        await dataService.recordAnalyticsEvent({
-          id: pageviewId,
-          visitorId,
-          sessionId,
-          visitedAt: Date.now(),
-          pageType,
-          resourceId,
-          referrerHost:
-            parsed.data.sessionStart === true
-              ? normalizeReferrerHost(parsed.data.sessionReferrerHost)
-              : null,
-          device: classifyDevice(userAgent),
-          isMember,
-        });
-      } catch {
-        // fire-and-forget: 기록 실패는 무시
-      }
-    }
+const { visitorId, sessionId, pageviewId } = parsed.data;
+const userAgent = c.req.header("user-agent");
+if (
+  isUuid(visitorId) &&
+  isUuid(sessionId) &&
+  isUuid(pageviewId) &&
+  !isBotUserAgent(userAgent)
+) {
+  let isMember = false;
+  try {
+    isMember = (await dependencies.resolveActor(c)) !== null;
+  } catch {
+    // 세션 조회가 실패해도 방문 기록은 남긴다.
+  }
+  try {
+    await dataService.recordAnalyticsEvent({
+      id: pageviewId,
+      visitorId,
+      sessionId,
+      visitedAt: Date.now(),
+      pageType,
+      resourceId,
+      referrerHost:
+        parsed.data.sessionStart === true
+          ? normalizeReferrerHost(parsed.data.sessionReferrerHost)
+          : null,
+      device: classifyDevice(userAgent),
+      isMember,
+    });
+  } catch {
+    // fire-and-forget: 기록 실패는 무시
+  }
+}
 ```
 
 `registerPageViewRoutes` 안, `app.openapi(getPageViewStatsRoute, ...)` 앞에 추가:
 
 ```ts
-  app.openapi(recordEngagementRoute, async (c) => {
-    let body: unknown;
-    try {
-      body = await c.req.json();
-    } catch {
-      throw AppError.badRequest("잘못된 요청 본문입니다.");
-    }
+app.openapi(recordEngagementRoute, async (c) => {
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    throw AppError.badRequest("잘못된 요청 본문입니다.");
+  }
 
-    const parsed = ApiRecordEngagementRequestSchema.safeParse(body);
-    if (!parsed.success) {
-      throw AppError.badRequest(
-        parsed.error.issues[0]?.message ?? "잘못된 요청입니다.",
-      );
-    }
+  const parsed = ApiRecordEngagementRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    throw AppError.badRequest(
+      parsed.error.issues[0]?.message ?? "잘못된 요청입니다.",
+    );
+  }
 
-    if (!(await dependencies.allowPageViewWrite(c))) {
-      return c.json({ ok: true } as const, 200);
-    }
-
-    try {
-      await dependencies
-        .getDataService(c)
-        .recordEngagement({ ...parsed.data, nowMs: Date.now() });
-    } catch {
-      // fire-and-forget: 기록 실패는 무시
-    }
+  if (!(await dependencies.allowPageViewWrite(c))) {
     return c.json({ ok: true } as const, 200);
-  });
+  }
+
+  try {
+    await dependencies
+      .getDataService(c)
+      .recordEngagement({ ...parsed.data, nowMs: Date.now() });
+  } catch {
+    // fire-and-forget: 기록 실패는 무시
+  }
+  return c.json({ ok: true } as const, 200);
+});
 ```
 
 - [ ] **Step 7: 통과 확인**
@@ -808,9 +852,11 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 3: 원시 이벤트 보관 크론
 
 **Files:**
+
 - Modify: `apps/api/src/index.ts`
 
 **Interfaces:**
+
 - Consumes: Task 1 `createVisitorEventRepository`, `ANALYTICS_EVENT_RETENTION_MS`
 
 삭제 로직은 Task 1의 D1 테스트(`보관 기간이 지난 행만 지운다`)가 검증했다. 이 태스크는 크론 배선만 한다.
@@ -830,17 +876,17 @@ import {
 `scheduled` 핸들러의 기존 `ctx.waitUntil(...)` 다음에 추가:
 
 ```ts
-  // R2 정리와 독립적으로 돌린다. 한쪽 실패가 다른 쪽을 막지 않게 한다.
-  ctx.waitUntil(
-    createVisitorEventRepository(createDB(resolveD1Database(env)))
-      .purgeAnalyticsEventsBefore(Date.now() - ANALYTICS_EVENT_RETENTION_MS)
-      .catch((error: unknown) => {
-        logger.error({
-          event: "analytics.retention_purge.failed",
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }),
-  );
+// R2 정리와 독립적으로 돌린다. 한쪽 실패가 다른 쪽을 막지 않게 한다.
+ctx.waitUntil(
+  createVisitorEventRepository(createDB(resolveD1Database(env)))
+    .purgeAnalyticsEventsBefore(Date.now() - ANALYTICS_EVENT_RETENTION_MS)
+    .catch((error: unknown) => {
+      logger.error({
+        event: "analytics.retention_purge.failed",
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }),
+);
 ```
 
 `createDB`의 실제 경로·기본 export 여부를 `src/lib/db` 파일에서 확인하고 맞춘다(다른 파일들은 `import createDB from "../../lib/db"`를 쓴다).
@@ -864,12 +910,14 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 4: 브라우저 방문자 식별과 체류 타이머
 
 **Files:**
+
 - Create: `apps/web/features/public/analytics/visitor-identity.ts`
 - Create: `apps/web/features/public/analytics/engagement-timer.ts`
 - Test: `apps/web/tests/unit/features/public/visitor-identity.test.ts`
 - Test: `apps/web/tests/unit/features/public/engagement-timer.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `SESSION_TIMEOUT_MS = 1_800_000`
   - `createVisitIdentity(storage: StorageLike | null, newId?: () => string)` → `{ resolve(nowMs: number): { visitorId: string; sessionId: string; sessionStart: boolean }; touch(nowMs: number): void }`
@@ -1091,7 +1139,8 @@ export const createVisitIdentity = (
       memory.visitorId = visitorId;
       write(storage, VISITOR_KEY, visitorId);
 
-      const previous = parseSession(read(storage, SESSION_KEY)) ?? memory.session;
+      const previous =
+        parseSession(read(storage, SESSION_KEY)) ?? memory.session;
       const sessionStart =
         previous === null || nowMs - previous.lastActiveAt > SESSION_TIMEOUT_MS;
       const session = {
@@ -1103,7 +1152,8 @@ export const createVisitIdentity = (
     },
 
     touch(nowMs: number) {
-      const current = parseSession(read(storage, SESSION_KEY)) ?? memory.session;
+      const current =
+        parseSession(read(storage, SESSION_KEY)) ?? memory.session;
       if (current !== null) saveSession({ ...current, lastActiveAt: nowMs });
     },
   };
@@ -1153,11 +1203,13 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 5: 트래커 연결과 푸터 고지
 
 **Files:**
+
 - Modify: `apps/web/app/_components/page-view-tracker.tsx`
 - Modify: `apps/web/app/(home)/_components/site-footer.tsx`
 - Test: `apps/web/tests/e2e/page-views.spec.ts`
 
 **Interfaces:**
+
 - Consumes: Task 4 `createVisitIdentity`, `createEngagementTimer`; Task 2 요청 필드와 engagement 엔드포인트
 
 - [ ] **Step 1: 기존 e2e가 무엇을 검증하는지 확인**
@@ -1170,36 +1222,48 @@ Run: `sed -n 1,200p apps/web/tests/e2e/page-views.spec.ts`
 `apps/web/tests/e2e/page-views.spec.ts`의 최상위 `test.describe` 안에 추가:
 
 ```ts
-  test("페이지뷰에 익명 방문자·세션 ID를 함께 보내고, 숨길 때 체류 시간을 보낸다", async ({ page }) => {
-    const uuid = /^[0-9a-f-]{36}$/;
-    const viewRequest = page.waitForRequest(
-      (request) => request.url().endsWith("/api/public/page-views") && request.method() === "POST",
-    );
-    await page.goto("/", { waitUntil: "domcontentloaded" });
-    const body = (await viewRequest).postDataJSON() as Record<string, unknown>;
+test("페이지뷰에 익명 방문자·세션 ID를 함께 보내고, 숨길 때 체류 시간을 보낸다", async ({
+  page,
+}) => {
+  const uuid = /^[0-9a-f-]{36}$/;
+  const viewRequest = page.waitForRequest(
+    (request) =>
+      request.url().endsWith("/api/public/page-views") &&
+      request.method() === "POST",
+  );
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  const body = (await viewRequest).postDataJSON() as Record<string, unknown>;
 
-    expect(body.visitorId).toMatch(uuid);
-    expect(body.sessionId).toMatch(uuid);
-    expect(body.pageviewId).toMatch(uuid);
-    expect(body.sessionStart).toBe(true);
+  expect(body.visitorId).toMatch(uuid);
+  expect(body.sessionId).toMatch(uuid);
+  expect(body.pageviewId).toMatch(uuid);
+  expect(body.sessionStart).toBe(true);
 
-    const engagementRequest = page.waitForRequest((request) =>
-      request.url().endsWith("/api/public/page-views/engagement"),
-    );
-    await page.evaluate(() => {
-      Object.defineProperty(document, "visibilityState", { value: "hidden", configurable: true });
-      document.dispatchEvent(new Event("visibilitychange"));
+  const engagementRequest = page.waitForRequest((request) =>
+    request.url().endsWith("/api/public/page-views/engagement"),
+  );
+  await page.evaluate(() => {
+    Object.defineProperty(document, "visibilityState", {
+      value: "hidden",
+      configurable: true,
     });
-    const engagement = (await engagementRequest).postDataJSON() as Record<string, unknown>;
-    expect(engagement.pageviewId).toBe(body.pageviewId);
-    expect(engagement.visitorId).toBe(body.visitorId);
-    expect(typeof engagement.engagedMs).toBe("number");
+    document.dispatchEvent(new Event("visibilitychange"));
   });
+  const engagement = (await engagementRequest).postDataJSON() as Record<
+    string,
+    unknown
+  >;
+  expect(engagement.pageviewId).toBe(body.pageviewId);
+  expect(engagement.visitorId).toBe(body.visitorId);
+  expect(typeof engagement.engagedMs).toBe("number");
+});
 
-  test("푸터에 익명 방문 분석 안내가 있다", async ({ page }) => {
-    await page.goto("/", { waitUntil: "domcontentloaded" });
-    await expect(page.getByTestId("public-footer")).toContainText("익명 방문 분석");
-  });
+test("푸터에 익명 방문 분석 안내가 있다", async ({ page }) => {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await expect(page.getByTestId("public-footer")).toContainText(
+    "익명 방문 분석",
+  );
+});
 ```
 
 목업 API(`tests/e2e/mock-api/server.ts`)가 `/api/public/page-views/engagement`에 응답하지 않아도 요청 자체는 잡힌다. 404로 콘솔 에러가 나서 다른 테스트가 실패하면 기존 `/api/public/page-views` 처리 분기 옆에 같은 형태로 `{ ok: true }`를 돌려주는 분기를 추가한다.
@@ -1222,7 +1286,8 @@ import { createVisitIdentity } from "@/features/public/analytics/visitor-identit
 import { CSRF_HEADER_NAME, CSRF_HEADER_VALUE } from "@/shared/security/csrf";
 
 type PageViewTrackerProps = {
-  pageType: "home" | "activity" | "exhibition" | "about" | "donate" | "linktree";
+  pageType:
+    "home" | "activity" | "exhibition" | "about" | "donate" | "linktree";
   resourceId?: string;
 };
 
@@ -1283,7 +1348,10 @@ const getVisitIdentity = () => {
   return visitIdentity;
 };
 
-export default function PageViewTracker({ pageType, resourceId }: PageViewTrackerProps) {
+export default function PageViewTracker({
+  pageType,
+  resourceId,
+}: PageViewTrackerProps) {
   useEffect(() => {
     const post = (path: string, body: unknown) => {
       fetch(path, {
@@ -1309,16 +1377,26 @@ export default function PageViewTracker({ pageType, resourceId }: PageViewTracke
     // 누적 총량을 보낸다. 서버가 큰 값만 남기므로 탭을 여러 번 오가도 안전하다.
     const sendEngagement = () => {
       if (visitorId === null) return;
-      const engagedMs = Math.min(Math.round(timer.total(performance.now())), MAX_ENGAGED_MS);
+      const engagedMs = Math.min(
+        Math.round(timer.total(performance.now())),
+        MAX_ENGAGED_MS,
+      );
       if (engagedMs <= lastSentMs) return;
       lastSentMs = engagedMs;
       identity.touch(Date.now());
-      post("/api/public/page-views/engagement", { pageviewId, visitorId, engagedMs });
+      post("/api/public/page-views/engagement", {
+        pageviewId,
+        visitorId,
+        engagedMs,
+      });
     };
 
     const frame = requestAnimationFrame(() => {
       // 조회수 API — activity / exhibition 리소스만
-      if ((pageType === "activity" || pageType === "exhibition") && resourceId) {
+      if (
+        (pageType === "activity" || pageType === "exhibition") &&
+        resourceId
+      ) {
         post("/api/public/views", { resourceType: pageType, resourceId });
       }
 
@@ -1375,9 +1453,10 @@ export default function PageViewTracker({ pageType, resourceId }: PageViewTracke
 `apps/web/app/(home)/_components/site-footer.tsx`에서 저작권 `<p>`를 담은 `<div className="border-t ...">` 안, 저작권 `<p>` 다음에 추가:
 
 ```tsx
-          <p className="mt-2 text-[0.75rem] leading-normal text-(--footer-muted)">
-            익명 방문 분석을 위해 브라우저에 무작위 식별값을 저장합니다. 개인을 식별하는 정보는 수집하지 않습니다.
-          </p>
+<p className="mt-2 text-[0.75rem] leading-normal text-(--footer-muted)">
+  익명 방문 분석을 위해 브라우저에 무작위 식별값을 저장합니다. 개인을 식별하는
+  정보는 수집하지 않습니다.
+</p>
 ```
 
 - [ ] **Step 6: 통과 확인**
@@ -1407,12 +1486,14 @@ git push origin dev
 ### Task 6: 집계 순수 함수
 
 **Files:**
+
 - Modify: `apps/api/src/features/page-views/page-view-analytics.ts`
 - Modify: `apps/api/src/lib/services/types.ts`
 - Create: `apps/api/src/features/page-views/visitor-insights.ts`
 - Test: `apps/api/src/tests/visitor-insights.test.ts`
 
 **Interfaces:**
+
 - Consumes: Task 1 `AnalyticsEventRow`; 기존 `PageViewAnalyticsRange`, `addDays`, `kstDateStartMs`, `toKstDate`, `KST_OFFSET_MS`
 - Produces:
   - `page-view-analytics.ts`: `export const bucketKey(date: string, granularity: PageViewGranularity): string`, `export const mondayOf(date: string): string`
@@ -1452,10 +1533,16 @@ export type InsightsCore = {
 };
 
 export type DepthBucket = "1" | "2" | "3" | "4" | "5+";
-export type DurationBucket = "<10s" | "10-30s" | "30s-1m" | "1-3m" | "3-10m" | "10m+";
+export type DurationBucket =
+  "<10s" | "10-30s" | "30s-1m" | "1-3m" | "3-10m" | "10m+";
 
 export type VisitorInsightsEntity = {
-  range: { from: string; to: string; days: number; granularity: PageViewGranularity };
+  range: {
+    from: string;
+    to: string;
+    days: number;
+    granularity: PageViewGranularity;
+  };
   previousRange: { from: string; to: string };
   eventsTrackedSince: string | null;
   segmented: boolean;
@@ -1480,8 +1567,17 @@ export type VisitorInsightsEntity = {
     collected: boolean;
   }>;
   hourly: Array<{ weekday: number; hour: number; views: number }>;
-  referrerFlow: Array<{ referrer: string; landing: PageViewType; sessions: number }>;
-  pathFlow: Array<{ step: 1 | 2; from: PageViewType; to: PageViewType | "exit"; sessions: number }>;
+  referrerFlow: Array<{
+    referrer: string;
+    landing: PageViewType;
+    sessions: number;
+  }>;
+  pathFlow: Array<{
+    step: 1 | 2;
+    from: PageViewType;
+    to: PageViewType | "exit";
+    sessions: number;
+  }>;
   content: Array<{
     pageType: PageViewType;
     resourceId: string;
@@ -1496,7 +1592,11 @@ export type VisitorInsightsEntity = {
   audience: { member: number; external: number };
   depth: Array<{ bucket: DepthBucket; sessions: number }>;
   duration: Array<{ bucket: DurationBucket; sessions: number }>;
-  cohorts: Array<{ week: string; size: number; retention: Array<number | null> }>;
+  cohorts: Array<{
+    week: string;
+    size: number;
+    retention: Array<number | null>;
+  }>;
   referrerOptions: string[];
 };
 ```
@@ -1524,14 +1624,20 @@ const RANGE: PageViewAnalyticsRange = {
   granularity: "day",
   previous: { from: "2026-09-24", to: "2026-09-30" },
 };
-const ALL: InsightsSegment = { audience: "all", device: "all", referrer: "all", landing: "all" };
+const ALL: InsightsSegment = {
+  audience: "all",
+  device: "all",
+  referrer: "all",
+  landing: "all",
+};
 
 /** "2026-10-01T10:00" 같은 KST 시각을 epoch ms로 */
 const at = (kst: string) => Date.parse(`${kst}:00+09:00`);
 
 let seq = 0;
 const ev = (
-  fields: Partial<AnalyticsEventRow> & Pick<AnalyticsEventRow, "sessionId" | "visitedAt">,
+  fields: Partial<AnalyticsEventRow> &
+    Pick<AnalyticsEventRow, "sessionId" | "visitedAt">,
 ): AnalyticsEventRow => ({
   id: `e${++seq}`,
   visitorId: "v1",
@@ -1544,7 +1650,10 @@ const ev = (
   ...fields,
 });
 
-const run = (events: AnalyticsEventRow[], extra: Partial<VisitorInsightsInput> = {}) =>
+const run = (
+  events: AnalyticsEventRow[],
+  extra: Partial<VisitorInsightsInput> = {},
+) =>
   computeVisitorInsights({
     range: RANGE,
     segment: ALL,
@@ -1556,10 +1665,35 @@ const run = (events: AnalyticsEventRow[], extra: Partial<VisitorInsightsInput> =
   });
 
 const BASIC = () => [
-  ev({ sessionId: "s1", visitedAt: at("2026-10-01T10:00"), referrerHost: "google.com", engagedMs: 5_000 }),
-  ev({ sessionId: "s1", visitedAt: at("2026-10-01T10:02"), pageType: "activity", resourceId: "a1", engagedMs: 20_000 }),
-  ev({ sessionId: "s2", visitorId: "v2", visitedAt: at("2026-10-02T12:00"), pageType: "exhibition", resourceId: "x1", referrerHost: "direct", device: "mobile" }),
-  ev({ sessionId: "s3", visitedAt: at("2026-10-03T09:00"), referrerHost: "direct", engagedMs: 40_000, isMember: true }),
+  ev({
+    sessionId: "s1",
+    visitedAt: at("2026-10-01T10:00"),
+    referrerHost: "google.com",
+    engagedMs: 5_000,
+  }),
+  ev({
+    sessionId: "s1",
+    visitedAt: at("2026-10-01T10:02"),
+    pageType: "activity",
+    resourceId: "a1",
+    engagedMs: 20_000,
+  }),
+  ev({
+    sessionId: "s2",
+    visitorId: "v2",
+    visitedAt: at("2026-10-02T12:00"),
+    pageType: "exhibition",
+    resourceId: "x1",
+    referrerHost: "direct",
+    device: "mobile",
+  }),
+  ev({
+    sessionId: "s3",
+    visitedAt: at("2026-10-03T09:00"),
+    referrerHost: "direct",
+    engagedMs: 40_000,
+    isMember: true,
+  }),
 ];
 
 describe("computeVisitorInsights", () => {
@@ -1577,13 +1711,29 @@ describe("computeVisitorInsights", () => {
   });
 
   it("세그먼트는 세션 단위로 거른다", () => {
-    expect(run(BASIC(), { segment: { ...ALL, audience: "member" } }).summary.sessions).toBe(1);
-    expect(run(BASIC(), { segment: { ...ALL, audience: "external" } }).summary.sessions).toBe(2);
-    expect(run(BASIC(), { segment: { ...ALL, landing: "exhibition" } }).summary.sessions).toBe(1);
-    expect(run(BASIC(), { segment: { ...ALL, device: "mobile" } }).summary.sessions).toBe(1);
+    expect(
+      run(BASIC(), { segment: { ...ALL, audience: "member" } }).summary
+        .sessions,
+    ).toBe(1);
+    expect(
+      run(BASIC(), { segment: { ...ALL, audience: "external" } }).summary
+        .sessions,
+    ).toBe(2);
+    expect(
+      run(BASIC(), { segment: { ...ALL, landing: "exhibition" } }).summary
+        .sessions,
+    ).toBe(1);
+    expect(
+      run(BASIC(), { segment: { ...ALL, device: "mobile" } }).summary.sessions,
+    ).toBe(1);
     // 활동 페이지는 s1 의 두 번째 페이지라 진입 페이지 필터에 걸리지 않는다.
-    expect(run(BASIC(), { segment: { ...ALL, landing: "activity" } }).summary.sessions).toBe(0);
-    const google = run(BASIC(), { segment: { ...ALL, referrer: "google.com" } });
+    expect(
+      run(BASIC(), { segment: { ...ALL, landing: "activity" } }).summary
+        .sessions,
+    ).toBe(0);
+    const google = run(BASIC(), {
+      segment: { ...ALL, referrer: "google.com" },
+    });
     expect(google.summary).toMatchObject({ sessions: 1, views: 2 });
   });
 
@@ -1615,9 +1765,24 @@ describe("computeVisitorInsights", () => {
       { range, trackedSinceMs: at("2026-10-06T00:00") },
     );
     expect(result.trend).toEqual([
-      expect.objectContaining({ bucket: "2026-10-01", sessions: 1, prevSessions: 1, collected: false }),
-      expect.objectContaining({ bucket: "2026-10-05", sessions: 1, prevSessions: 1, collected: true }),
-      expect.objectContaining({ bucket: "2026-10-12", sessions: 0, prevSessions: 0, collected: true }),
+      expect.objectContaining({
+        bucket: "2026-10-01",
+        sessions: 1,
+        prevSessions: 1,
+        collected: false,
+      }),
+      expect.objectContaining({
+        bucket: "2026-10-05",
+        sessions: 1,
+        prevSessions: 1,
+        collected: true,
+      }),
+      expect.objectContaining({
+        bucket: "2026-10-12",
+        sessions: 0,
+        prevSessions: 0,
+        collected: true,
+      }),
     ]);
   });
 
@@ -1633,7 +1798,11 @@ describe("computeVisitorInsights", () => {
     const result = run(BASIC(), { legacy: { current, previous } });
     expect(result.summary.views).toBe(28);
     expect(result.summary.prev.views).toBe(14);
-    expect(result.trend[0]).toMatchObject({ views: 1, prevViews: 2, sessions: 1 });
+    expect(result.trend[0]).toMatchObject({
+      views: 1,
+      prevViews: 2,
+      sessions: 1,
+    });
   });
 
   it("요일·시간은 KST 기준이다", () => {
@@ -1648,15 +1817,30 @@ describe("computeVisitorInsights", () => {
 
   it("유입 흐름은 상위 6개 밖을 other로 접는다", () => {
     const hosts: Array<[string, number]> = [
-      ["a.com", 7], ["b.com", 6], ["c.com", 5], ["d.com", 4], ["e.com", 3], ["f.com", 2], ["g.com", 1],
+      ["a.com", 7],
+      ["b.com", 6],
+      ["c.com", 5],
+      ["d.com", 4],
+      ["e.com", 3],
+      ["f.com", 2],
+      ["g.com", 1],
     ];
     const events = hosts.flatMap(([host, count]) =>
       Array.from({ length: count }, (_, i) =>
-        ev({ sessionId: `${host}-${i}`, visitorId: `${host}-${i}`, visitedAt: at("2026-10-01T10:00"), referrerHost: host }),
+        ev({
+          sessionId: `${host}-${i}`,
+          visitorId: `${host}-${i}`,
+          visitedAt: at("2026-10-01T10:00"),
+          referrerHost: host,
+        }),
       ),
     );
     const { referrerFlow, referrerOptions } = run(events);
-    expect(referrerFlow).toContainEqual({ referrer: "other", landing: "home", sessions: 1 });
+    expect(referrerFlow).toContainEqual({
+      referrer: "other",
+      landing: "home",
+      sessions: 1,
+    });
     expect(referrerFlow.some((row) => row.referrer === "g.com")).toBe(false);
     expect(referrerOptions[0]).toBe("a.com");
     expect(referrerOptions).toContain("g.com");
@@ -1665,9 +1849,23 @@ describe("computeVisitorInsights", () => {
   it("이동 경로는 1·2단계와 이탈을 센다", () => {
     const { pathFlow } = run([
       ev({ sessionId: "p", visitedAt: at("2026-10-01T10:00") }),
-      ev({ sessionId: "p", visitedAt: at("2026-10-01T10:01"), pageType: "activity", resourceId: "a1" }),
-      ev({ sessionId: "p", visitedAt: at("2026-10-01T10:02"), pageType: "exhibition", resourceId: "x1" }),
-      ev({ sessionId: "q", visitorId: "v2", visitedAt: at("2026-10-01T11:00") }),
+      ev({
+        sessionId: "p",
+        visitedAt: at("2026-10-01T10:01"),
+        pageType: "activity",
+        resourceId: "a1",
+      }),
+      ev({
+        sessionId: "p",
+        visitedAt: at("2026-10-01T10:02"),
+        pageType: "exhibition",
+        resourceId: "x1",
+      }),
+      ev({
+        sessionId: "q",
+        visitorId: "v2",
+        visitedAt: at("2026-10-01T11:00"),
+      }),
     ]);
     expect(pathFlow).toEqual(
       expect.arrayContaining([
@@ -1681,24 +1879,74 @@ describe("computeVisitorInsights", () => {
 
   it("콘텐츠별 조회·방문자·체류·진입·이탈을 모은다", () => {
     const { content } = run([
-      ev({ sessionId: "a", visitedAt: at("2026-10-01T10:00"), engagedMs: 1_000 }),
-      ev({ sessionId: "a", visitedAt: at("2026-10-01T10:01"), pageType: "activity", resourceId: "a1" }),
-      ev({ sessionId: "b", visitorId: "v2", visitedAt: at("2026-10-01T11:00"), pageType: "activity", resourceId: "a1", engagedMs: 3_000 }),
+      ev({
+        sessionId: "a",
+        visitedAt: at("2026-10-01T10:00"),
+        engagedMs: 1_000,
+      }),
+      ev({
+        sessionId: "a",
+        visitedAt: at("2026-10-01T10:01"),
+        pageType: "activity",
+        resourceId: "a1",
+      }),
+      ev({
+        sessionId: "b",
+        visitorId: "v2",
+        visitedAt: at("2026-10-01T11:00"),
+        pageType: "activity",
+        resourceId: "a1",
+        engagedMs: 3_000,
+      }),
     ]);
     expect(content).toEqual([
-      { pageType: "activity", resourceId: "a1", views: 2, visitors: 2, avgEngagedMs: 3_000, entries: 1, bounceRate: 1 },
-      { pageType: "home", resourceId: "home", views: 1, visitors: 1, avgEngagedMs: 1_000, entries: 1, bounceRate: 0 },
+      {
+        pageType: "activity",
+        resourceId: "a1",
+        views: 2,
+        visitors: 2,
+        avgEngagedMs: 3_000,
+        entries: 1,
+        bounceRate: 1,
+      },
+      {
+        pageType: "home",
+        resourceId: "home",
+        views: 1,
+        visitors: 1,
+        avgEngagedMs: 1_000,
+        entries: 1,
+        bounceRate: 0,
+      },
     ]);
   });
 
   it("세션 깊이와 체류 분포 구간을 채운다", () => {
     const deep = Array.from({ length: 6 }, (_, i) =>
-      ev({ sessionId: "deep", visitorId: "v3", visitedAt: at("2026-10-02T10:00") + i * 1000 }),
+      ev({
+        sessionId: "deep",
+        visitorId: "v3",
+        visitedAt: at("2026-10-02T10:00") + i * 1000,
+      }),
     );
     const { depth, duration } = run([
-      ev({ sessionId: "one", visitedAt: at("2026-10-01T10:00"), engagedMs: 5_000 }),
-      ev({ sessionId: "two", visitorId: "v2", visitedAt: at("2026-10-01T11:00"), engagedMs: 20_000 }),
-      ev({ sessionId: "two", visitorId: "v2", visitedAt: at("2026-10-01T11:01"), engagedMs: 20_000 }),
+      ev({
+        sessionId: "one",
+        visitedAt: at("2026-10-01T10:00"),
+        engagedMs: 5_000,
+      }),
+      ev({
+        sessionId: "two",
+        visitorId: "v2",
+        visitedAt: at("2026-10-01T11:00"),
+        engagedMs: 20_000,
+      }),
+      ev({
+        sessionId: "two",
+        visitorId: "v2",
+        visitedAt: at("2026-10-01T11:01"),
+        engagedMs: 20_000,
+      }),
       ...deep,
     ]);
     expect(depth).toEqual([
@@ -1730,7 +1978,11 @@ describe("computeVisitorInsights", () => {
       [
         ev({ sessionId: "c1", visitedAt: at("2026-10-01T10:00") }),
         ev({ sessionId: "c2", visitedAt: at("2026-10-06T10:00") }),
-        ev({ sessionId: "old", visitorId: "v2", visitedAt: at("2026-10-02T10:00") }),
+        ev({
+          sessionId: "old",
+          visitorId: "v2",
+          visitedAt: at("2026-10-02T10:00"),
+        }),
       ],
       {
         range,
@@ -1741,13 +1993,25 @@ describe("computeVisitorInsights", () => {
       },
     );
     expect(cohorts).toEqual([
-      { week: "2026-09-28", size: 1, retention: [1, 0, 0, null, null, null, null, null] },
+      {
+        week: "2026-09-28",
+        size: 1,
+        retention: [1, 0, 0, null, null, null, null, null],
+      },
     ]);
   });
 
   it("이벤트가 없고 수집 전이면 모든 값이 비어 있다", () => {
-    const result = run([], { trackedSinceMs: null, segment: { ...ALL, audience: "member" } });
-    expect(result.summary).toMatchObject({ views: 0, sessions: 0, bounceRate: 0, avgSessionMs: 0 });
+    const result = run([], {
+      trackedSinceMs: null,
+      segment: { ...ALL, audience: "member" },
+    });
+    expect(result.summary).toMatchObject({
+      views: 0,
+      sessions: 0,
+      bounceRate: 0,
+      avgSessionMs: 0,
+    });
     expect(result.segmented).toBe(true);
     expect(result.eventsTrackedSince).toBeNull();
     expect(result.trend).toHaveLength(7);
@@ -1779,7 +2043,10 @@ import type {
   PageViewAnalyticsRange,
   VisitorInsightsEntity,
 } from "../../lib/services/types";
-import type { PageViewDevice, PageViewType } from "../../lib/views/page-view-target";
+import type {
+  PageViewDevice,
+  PageViewType,
+} from "../../lib/views/page-view-target";
 import {
   KST_OFFSET_MS,
   addDays,
@@ -1800,7 +2067,10 @@ export type VisitorInsightsInput = {
   firstSeen: ReadonlyMap<string, number>;
   trackedSinceMs: number | null;
   /** 필터가 없을 때만 넘긴다. 기존 page_views 합계(빈 날 0 채움) */
-  legacy: { current: readonly DailyPoint[]; previous: readonly DailyPoint[] } | null;
+  legacy: {
+    current: readonly DailyPoint[];
+    previous: readonly DailyPoint[];
+  } | null;
 };
 
 type ContentRow = Omit<VisitorInsightsEntity["content"][number], "title">;
@@ -1825,7 +2095,10 @@ const CONTENT_LIMIT = 50;
 const REFERRER_FLOW_LIMIT = 6;
 const REFERRER_OPTION_LIMIT = 10;
 const DEPTH_BUCKETS: readonly DepthBucket[] = ["1", "2", "3", "4", "5+"];
-const DURATION_BUCKETS: ReadonlyArray<{ bucket: DurationBucket; underMs: number }> = [
+const DURATION_BUCKETS: ReadonlyArray<{
+  bucket: DurationBucket;
+  underMs: number;
+}> = [
   { bucket: "<10s", underMs: 10_000 },
   { bucket: "10-30s", underMs: 30_000 },
   { bucket: "30s-1m", underMs: 60_000 },
@@ -1838,7 +2111,8 @@ const round = (value: number, digits: number) => {
   const factor = 10 ** digits;
   return Math.round(value * factor) / factor;
 };
-const ratio = (part: number, whole: number) => (whole === 0 ? 0 : round(part / whole, 4));
+const ratio = (part: number, whole: number) =>
+  whole === 0 ? 0 : round(part / whole, 4);
 
 export const isSegmented = (segment: InsightsSegment): boolean =>
   segment.audience !== "all" ||
@@ -1871,28 +2145,41 @@ const toSessions = (events: readonly AnalyticsEventRow[]): Session[] => {
 };
 
 const matchesSegment = (session: Session, segment: InsightsSegment) =>
-  (segment.audience === "all" || (segment.audience === "member") === session.isMember) &&
+  (segment.audience === "all" ||
+    (segment.audience === "member") === session.isMember) &&
   (segment.device === "all" || segment.device === session.device) &&
   (segment.referrer === "all" || segment.referrer === session.referrer) &&
   (segment.landing === "all" || segment.landing === session.landing);
 
-const isMeasured = (session: Session) => session.events.some((event) => event.engagedMs !== null);
+const isMeasured = (session: Session) =>
+  session.events.some((event) => event.engagedMs !== null);
 const engagedMsOf = (session: Session) =>
   session.events.reduce((sum, event) => sum + (event.engagedMs ?? 0), 0);
 
-const summarize = (sessions: readonly Session[]): InsightsCore & { unmeasuredSessions: number } => {
-  const views = sessions.reduce((sum, session) => sum + session.events.length, 0);
+const summarize = (
+  sessions: readonly Session[],
+): InsightsCore & { unmeasuredSessions: number } => {
+  const views = sessions.reduce(
+    (sum, session) => sum + session.events.length,
+    0,
+  );
   const measured = sessions.filter(isMeasured);
-  const bounces = sessions.filter((session) => session.events.length === 1).length;
+  const bounces = sessions.filter(
+    (session) => session.events.length === 1,
+  ).length;
   return {
     views,
     visitors: new Set(sessions.map((session) => session.visitorId)).size,
     sessions: sessions.length,
-    pagesPerSession: sessions.length === 0 ? 0 : round(views / sessions.length, 1),
+    pagesPerSession:
+      sessions.length === 0 ? 0 : round(views / sessions.length, 1),
     avgSessionMs:
       measured.length === 0
         ? 0
-        : Math.round(measured.reduce((sum, session) => sum + engagedMsOf(session), 0) / measured.length),
+        : Math.round(
+            measured.reduce((sum, session) => sum + engagedMsOf(session), 0) /
+              measured.length,
+          ),
     bounceRate: ratio(bounces, sessions.length),
     unmeasuredSessions: sessions.length - measured.length,
   };
@@ -1910,9 +2197,12 @@ const countBy = <T>(items: readonly T[], keyOf: (item: T) => string) => {
 const byCountDesc = (counts: Map<string, number>) =>
   [...counts.entries()].sort((a, b) => b[1] - a[1]);
 
-const sum = (days: readonly DailyPoint[]) => days.reduce((total, day) => total + day.count, 0);
+const sum = (days: readonly DailyPoint[]) =>
+  days.reduce((total, day) => total + day.count, 0);
 
-export const computeVisitorInsights = (input: VisitorInsightsInput): ComputedVisitorInsights => {
+export const computeVisitorInsights = (
+  input: VisitorInsightsInput,
+): ComputedVisitorInsights => {
   const { range, segment, legacy } = input;
   const currentStart = kstDateStartMs(range.from);
   const currentEnd = kstDateStartMs(addDays(range.to, 1));
@@ -1920,18 +2210,26 @@ export const computeVisitorInsights = (input: VisitorInsightsInput): ComputedVis
 
   // 세션은 첫 이벤트 시각으로 기간에 귀속한다.
   const sessions = toSessions(input.events);
-  const currentAll = sessions.filter((s) => s.start >= currentStart && s.start < currentEnd);
+  const currentAll = sessions.filter(
+    (s) => s.start >= currentStart && s.start < currentEnd,
+  );
   const current = currentAll.filter((s) => matchesSegment(s, segment));
   const previous = sessions.filter(
-    (s) => s.start >= previousStart && s.start < currentStart && matchesSegment(s, segment),
+    (s) =>
+      s.start >= previousStart &&
+      s.start < currentStart &&
+      matchesSegment(s, segment),
   );
   // 첫 방문 기록이 없으면 이번이 첫 방문이다.
-  const firstSeenOf = (visitorId: string) => input.firstSeen.get(visitorId) ?? currentStart;
-  const trackedSince = input.trackedSinceMs === null ? null : toKstDate(input.trackedSinceMs);
+  const firstSeenOf = (visitorId: string) =>
+    input.firstSeen.get(visitorId) ?? currentStart;
+  const trackedSince =
+    input.trackedSinceMs === null ? null : toKstDate(input.trackedSinceMs);
 
   // ── 추이 ──
   const dates: string[] = [];
-  for (let date = range.from; date <= range.to; date = addDays(date, 1)) dates.push(date);
+  for (let date = range.from; date <= range.to; date = addDays(date, 1))
+    dates.push(date);
   type Bucket = {
     label: string;
     lastDate: string;
@@ -1960,12 +2258,17 @@ export const computeVisitorInsights = (input: VisitorInsightsInput): ComputedVis
   const bucketOf = (date: string | undefined) =>
     date === undefined ? undefined : buckets.get(keyOfDate.get(date) ?? "");
   const dayOffset = (fromDate: string, ms: number) =>
-    Math.round((kstDateStartMs(toKstDate(ms)) - kstDateStartMs(fromDate)) / DAY_MS);
+    Math.round(
+      (kstDateStartMs(toKstDate(ms)) - kstDateStartMs(fromDate)) / DAY_MS,
+    );
 
-  for (const session of current) bucketOf(toKstDate(session.start))?.current.push(session);
+  for (const session of current)
+    bucketOf(toKstDate(session.start))?.current.push(session);
   // 이전 기간 i번째 날은 현재 기간 i번째 날과 같은 버킷에 넣는다.
   for (const session of previous) {
-    bucketOf(dates[dayOffset(range.previous.from, session.start)])?.previous.push(session);
+    bucketOf(
+      dates[dayOffset(range.previous.from, session.start)],
+    )?.previous.push(session);
   }
   if (legacy !== null) {
     dates.forEach((date, index) => {
@@ -2011,7 +2314,9 @@ export const computeVisitorInsights = (input: VisitorInsightsInput): ComputedVis
     bounceRate: previousSummary.bounceRate,
   };
   const visitorIds = new Set(current.map((s) => s.visitorId));
-  const newVisitors = [...visitorIds].filter((v) => firstSeenOf(v) >= currentStart).length;
+  const newVisitors = [...visitorIds].filter(
+    (v) => firstSeenOf(v) >= currentStart,
+  ).length;
 
   // ── 요일 × 시간 ──
   const hourly = Array.from({ length: 168 }, (_, index) => ({
@@ -2034,11 +2339,20 @@ export const computeVisitorInsights = (input: VisitorInsightsInput): ComputedVis
       .slice(0, REFERRER_FLOW_LIMIT)
       .map(([host]) => host),
   );
-  const flows = new Map<string, { referrer: string; landing: PageViewType; sessions: number }>();
+  const flows = new Map<
+    string,
+    { referrer: string; landing: PageViewType; sessions: number }
+  >();
   for (const session of current) {
-    const referrer = topReferrers.has(session.referrer) ? session.referrer : "other";
+    const referrer = topReferrers.has(session.referrer)
+      ? session.referrer
+      : "other";
     const key = `${referrer}|${session.landing}`;
-    const row = flows.get(key) ?? { referrer, landing: session.landing, sessions: 0 };
+    const row = flows.get(key) ?? {
+      referrer,
+      landing: session.landing,
+      sessions: 0,
+    };
     row.sessions += 1;
     flows.set(key, row);
   }
@@ -2046,7 +2360,11 @@ export const computeVisitorInsights = (input: VisitorInsightsInput): ComputedVis
   // ── 이동 경로 ──
   type PathRow = VisitorInsightsEntity["pathFlow"][number];
   const paths = new Map<string, PathRow>();
-  const addPath = (step: 1 | 2, from: PageViewType, to: PageViewType | "exit") => {
+  const addPath = (
+    step: 1 | 2,
+    from: PageViewType,
+    to: PageViewType | "exit",
+  ) => {
     const key = `${step}|${from}|${to}`;
     const row = paths.get(key) ?? { step, from, to, sessions: 0 };
     row.sessions += 1;
@@ -2104,7 +2422,10 @@ export const computeVisitorInsights = (input: VisitorInsightsInput): ComputedVis
       resourceId: acc.resourceId,
       views: acc.views,
       visitors: acc.visitors.size,
-      avgEngagedMs: acc.engagedCount === 0 ? null : Math.round(acc.engagedSum / acc.engagedCount),
+      avgEngagedMs:
+        acc.engagedCount === 0
+          ? null
+          : Math.round(acc.engagedSum / acc.engagedCount),
       entries: acc.entries,
       bounceRate: acc.entries === 0 ? null : ratio(acc.bounces, acc.entries),
     }));
@@ -2142,13 +2463,20 @@ export const computeVisitorInsights = (input: VisitorInsightsInput): ComputedVis
       retention: Array.from({ length: COHORT_WEEKS }, (_, index) => {
         const target = addDays(week, 7 * (index + 1));
         if (target > range.to) return null;
-        const returned = members.filter((v) => activeWeeks.get(v)?.has(target)).length;
+        const returned = members.filter((v) =>
+          activeWeeks.get(v)?.has(target),
+        ).length;
         return ratio(returned, members.length);
       }),
     }));
 
   return {
-    range: { from: range.from, to: range.to, days: range.days, granularity: range.granularity },
+    range: {
+      from: range.from,
+      to: range.to,
+      days: range.days,
+      granularity: range.granularity,
+    },
     previousRange: { from: range.previous.from, to: range.previous.to },
     eventsTrackedSince: trackedSince,
     segmented: isSegmented(segment),
@@ -2157,22 +2485,32 @@ export const computeVisitorInsights = (input: VisitorInsightsInput): ComputedVis
       views: legacy !== null ? sum(legacy.current) : currentSummary.views,
       newVisitors,
       returningVisitors: visitorIds.size - newVisitors,
-      prev: { ...previousCore, views: legacy !== null ? sum(legacy.previous) : previousCore.views },
+      prev: {
+        ...previousCore,
+        views: legacy !== null ? sum(legacy.previous) : previousCore.views,
+      },
     },
     trend,
     hourly,
     referrerFlow: [...flows.values()].sort((a, b) => b.sessions - a.sessions),
-    pathFlow: [...paths.values()].sort((a, b) => a.step - b.step || b.sessions - a.sessions),
+    pathFlow: [...paths.values()].sort(
+      (a, b) => a.step - b.step || b.sessions - a.sessions,
+    ),
     content,
-    devices: byCountDesc(countBy(current, (s) => s.device)).map(([device, count]) => ({
-      device: device as PageViewDevice,
-      sessions: count,
-    })),
+    devices: byCountDesc(countBy(current, (s) => s.device)).map(
+      ([device, count]) => ({
+        device: device as PageViewDevice,
+        sessions: count,
+      }),
+    ),
     audience: {
       member: current.filter((s) => s.isMember).length,
       external: current.filter((s) => !s.isMember).length,
     },
-    depth: DEPTH_BUCKETS.map((bucket) => ({ bucket, sessions: depthCounts.get(bucket) ?? 0 })),
+    depth: DEPTH_BUCKETS.map((bucket) => ({
+      bucket,
+      sessions: depthCounts.get(bucket) ?? 0,
+    })),
     duration: DURATION_BUCKETS.map(({ bucket }) => ({
       bucket,
       sessions: durationCounts.get(bucket) ?? 0,
@@ -2206,10 +2544,12 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 7: 인사이트 조회 저장소
 
 **Files:**
+
 - Modify: `apps/api/src/features/page-views/visitor-events.repository.ts`
 - Test: `apps/api/tests/integration/visitor-events.runtime.test.ts`
 
 **Interfaces:**
+
 - Consumes: Task 6 `computeVisitorInsights`, `isSegmented`, `VisitorInsightsEntity`, `InsightsSegment`
 - Produces: `repository.getVisitorInsights(range: PageViewAnalyticsRange, segment: InsightsSegment): Promise<VisitorInsightsEntity>`
 
@@ -2221,7 +2561,12 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 describe("방문자 인사이트 조회", () => {
   const kst = (value: string) => Date.parse(`${value}:00+09:00`);
   const kstMidnight = (date: string) => Date.parse(`${date}T00:00:00+09:00`);
-  const ALL = { audience: "all", device: "all", referrer: "all", landing: "all" } as const;
+  const ALL = {
+    audience: "all",
+    device: "all",
+    referrer: "all",
+    landing: "all",
+  } as const;
   const RANGE = {
     from: "2026-08-01",
     to: "2026-08-07",
@@ -2248,11 +2593,45 @@ describe("방문자 인사이트 조회", () => {
         )
         .bind(kstMidnight("2026-08-02")),
     ]);
-    const base = { sessionId: "is1", visitorId: "iv1", device: "desktop" as const, isMember: false };
-    await repository.recordAnalyticsEvent({ ...base, id: "i1", visitedAt: kst("2026-07-20T10:00"), pageType: "home", resourceId: "home", referrerHost: "direct", sessionId: "is0" });
-    await repository.recordAnalyticsEvent({ ...base, id: "i2", visitedAt: kst("2026-08-02T10:00"), pageType: "home", resourceId: "home", referrerHost: "google.com" });
-    await repository.recordAnalyticsEvent({ ...base, id: "i3", visitedAt: kst("2026-08-02T10:01"), pageType: "activity", resourceId: "va1", referrerHost: null });
-    await repository.recordAnalyticsEvent({ ...base, id: "i4", visitedAt: kst("2026-08-02T10:02"), pageType: "activity", resourceId: "va2", referrerHost: null });
+    const base = {
+      sessionId: "is1",
+      visitorId: "iv1",
+      device: "desktop" as const,
+      isMember: false,
+    };
+    await repository.recordAnalyticsEvent({
+      ...base,
+      id: "i1",
+      visitedAt: kst("2026-07-20T10:00"),
+      pageType: "home",
+      resourceId: "home",
+      referrerHost: "direct",
+      sessionId: "is0",
+    });
+    await repository.recordAnalyticsEvent({
+      ...base,
+      id: "i2",
+      visitedAt: kst("2026-08-02T10:00"),
+      pageType: "home",
+      resourceId: "home",
+      referrerHost: "google.com",
+    });
+    await repository.recordAnalyticsEvent({
+      ...base,
+      id: "i3",
+      visitedAt: kst("2026-08-02T10:01"),
+      pageType: "activity",
+      resourceId: "va1",
+      referrerHost: null,
+    });
+    await repository.recordAnalyticsEvent({
+      ...base,
+      id: "i4",
+      visitedAt: kst("2026-08-02T10:02"),
+      pageType: "activity",
+      resourceId: "va2",
+      referrerHost: null,
+    });
   });
 
   it("필터가 없으면 합계 페이지뷰와 이벤트 지표를 함께 돌려주고 제목을 붙인다", async () => {
@@ -2260,17 +2639,33 @@ describe("방문자 인사이트 조회", () => {
     const result = await repository.getVisitorInsights(RANGE, ALL);
 
     expect(result.segmented).toBe(false);
-    expect(result.summary).toMatchObject({ views: 9, sessions: 1, visitors: 1, returningVisitors: 1 });
+    expect(result.summary).toMatchObject({
+      views: 9,
+      sessions: 1,
+      visitors: 1,
+      returningVisitors: 1,
+    });
     expect(result.content).toEqual([
-      expect.objectContaining({ pageType: "home", resourceId: "home", title: null }),
-      expect.objectContaining({ pageType: "activity", resourceId: "va1", title: "여름 출사" }),
+      expect.objectContaining({
+        pageType: "home",
+        resourceId: "home",
+        title: null,
+      }),
+      expect.objectContaining({
+        pageType: "activity",
+        resourceId: "va1",
+        title: "여름 출사",
+      }),
     ]);
     expect(result.eventsTrackedSince).not.toBeNull();
   });
 
   it("필터가 있으면 페이지뷰도 이벤트에서 센다", async () => {
     const repository = createVisitorEventRepository(createDB(db));
-    const result = await repository.getVisitorInsights(RANGE, { ...ALL, referrer: "google.com" });
+    const result = await repository.getVisitorInsights(RANGE, {
+      ...ALL,
+      referrer: "google.com",
+    });
 
     expect(result.segmented).toBe(true);
     expect(result.summary.views).toBe(3);
@@ -2292,15 +2687,28 @@ Expected: FAIL — `getVisitorInsights is not a function`.
 ```ts
 import { and, eq, gte, inArray, isNull, lt, sql } from "drizzle-orm";
 import type createDB from "../../lib/db";
-import { activities, analyticsEvents, exhibitions, pageViews } from "../../platform/db/schema";
+import {
+  activities,
+  analyticsEvents,
+  exhibitions,
+  pageViews,
+} from "../../platform/db/schema";
 import type {
   InsightsSegment,
   NewAnalyticsEvent,
   PageViewAnalyticsRange,
   VisitorInsightsEntity,
 } from "../../lib/services/types";
-import type { PageViewDevice, PageViewType } from "../../lib/views/page-view-target";
-import { KST_OFFSET_MS, addDays, fillDailySeries, kstDateStartMs } from "./page-view-analytics";
+import type {
+  PageViewDevice,
+  PageViewType,
+} from "../../lib/views/page-view-target";
+import {
+  KST_OFFSET_MS,
+  addDays,
+  fillDailySeries,
+  kstDateStartMs,
+} from "./page-view-analytics";
 import { computeVisitorInsights, isSegmented } from "./visitor-insights";
 ```
 
@@ -2416,6 +2824,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 8: 인사이트 API와 공유 계약
 
 **Files:**
+
 - Modify: `apps/api/src/features/page-views/page-view.contract.ts`
 - Modify: `apps/api/src/features/page-views/page-view.routes.ts`
 - Modify: `apps/api/src/lib/services/types.ts` (DataService)
@@ -2425,6 +2834,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 - Update: OpenAPI 스냅샷, `apps/api/docs/dashboard-stats-api.md`
 
 **Interfaces:**
+
 - Consumes: Task 7 `getVisitorInsights`
 - Produces:
   - `GET /api/admin/page-views/insights?from&to&granularity&audience&device&referrer&landing` → `{ data: VisitorInsights }`
@@ -2436,54 +2846,69 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 `page-views.routes.test.ts`에 추가:
 
 ```ts
-  describe("GET /api/admin/page-views/insights", () => {
-    it("미승인 사용자는 403이다", async () => {
-      const app = createTestApp({ actor: createActor("unverified", IDs.member) });
-      const response = await app.request("/api/admin/page-views/insights");
-      await expectErrorCode(response, 403);
+describe("GET /api/admin/page-views/insights", () => {
+  it("미승인 사용자는 403이다", async () => {
+    const app = createTestApp({ actor: createActor("unverified", IDs.member) });
+    const response = await app.request("/api/admin/page-views/insights");
+    await expectErrorCode(response, 403);
+  });
+
+  it("기간과 세그먼트를 해석해 넘긴다", async () => {
+    const getVisitorInsights = fn(async () => ({}) as never);
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({ getVisitorInsights }),
     });
 
-    it("기간과 세그먼트를 해석해 넘긴다", async () => {
-      const getVisitorInsights = fn(async () => ({}) as never);
-      const app = createTestApp({
-        actor: createActor("regular_member", IDs.member),
-        dataService: createDataServiceMock({ getVisitorInsights }),
-      });
+    const response = await app.request(
+      "/api/admin/page-views/insights?from=2026-10-01&to=2026-10-07&audience=external&device=mobile&referrer=WWW.Google.com&landing=activity",
+    );
 
-      const response = await app.request(
-        "/api/admin/page-views/insights?from=2026-10-01&to=2026-10-07&audience=external&device=mobile&referrer=WWW.Google.com&landing=activity",
-      );
+    expect(response.status).toBe(200);
+    expect(getVisitorInsights).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: "2026-10-01",
+        to: "2026-10-07",
+        granularity: "day",
+      }),
+      {
+        audience: "external",
+        device: "mobile",
+        referrer: "google.com",
+        landing: "activity",
+      },
+    );
+  });
 
-      expect(response.status).toBe(200);
-      expect(getVisitorInsights).toHaveBeenCalledWith(
-        expect.objectContaining({ from: "2026-10-01", to: "2026-10-07", granularity: "day" }),
-        { audience: "external", device: "mobile", referrer: "google.com", landing: "activity" },
-      );
+  it("세그먼트를 생략하면 전부 all이다", async () => {
+    const getVisitorInsights = fn(async () => ({}) as never);
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({ getVisitorInsights }),
     });
 
-    it("세그먼트를 생략하면 전부 all이다", async () => {
-      const getVisitorInsights = fn(async () => ({}) as never);
-      const app = createTestApp({
-        actor: createActor("regular_member", IDs.member),
-        dataService: createDataServiceMock({ getVisitorInsights }),
-      });
+    await app.request(
+      "/api/admin/page-views/insights?from=2026-10-01&to=2026-10-07",
+    );
 
-      await app.request("/api/admin/page-views/insights?from=2026-10-01&to=2026-10-07");
-
-      expect(getVisitorInsights).toHaveBeenCalledWith(expect.anything(), {
-        audience: "all",
-        device: "all",
-        referrer: "all",
-        landing: "all",
-      });
-    });
-
-    it("허용되지 않은 값은 400이다", async () => {
-      const app = createTestApp({ actor: createActor("regular_member", IDs.member) });
-      const response = await app.request("/api/admin/page-views/insights?audience=robots");
-      await expectErrorCode(response, 400);
+    expect(getVisitorInsights).toHaveBeenCalledWith(expect.anything(), {
+      audience: "all",
+      device: "all",
+      referrer: "all",
+      landing: "all",
     });
   });
+
+  it("허용되지 않은 값은 400이다", async () => {
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+    });
+    const response = await app.request(
+      "/api/admin/page-views/insights?audience=robots",
+    );
+    await expectErrorCode(response, 400);
+  });
+});
 ```
 
 응답 스키마 검증 때문에 `{}` 반환이 500이 되면 `getVisitorInsights` 목이 `computeVisitorInsights`로 만든 실제 빈 결과를 돌려주게 바꾼다:
@@ -2491,7 +2916,13 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```ts
 import { computeVisitorInsights } from "../features/page-views/visitor-insights";
 const emptyInsights = computeVisitorInsights({
-  range: { from: "2026-10-01", to: "2026-10-07", days: 7, granularity: "day", previous: { from: "2026-09-24", to: "2026-09-30" } },
+  range: {
+    from: "2026-10-01",
+    to: "2026-10-07",
+    days: 7,
+    granularity: "day",
+    previous: { from: "2026-09-24", to: "2026-09-30" },
+  },
   segment: { audience: "all", device: "all", referrer: "all", landing: "all" },
   events: [],
   firstSeen: new Map(),
@@ -2516,25 +2947,30 @@ const deviceEnum = z.enum(["mobile", "tablet", "desktop"]);
 const rate = z.number().min(0).max(1);
 
 // .extend()는 원본의 openapi 이름(ApiPageViewAnalyticsQuery)까지 물려받을 수 있어 필드만 펼쳐 새로 만든다.
-export const ApiVisitorInsightsQuerySchema = z.object({
-  ...ApiPageViewAnalyticsQuerySchema.shape,
-  audience: z.enum(["all", "external", "member"]).optional().openapi({
-    description: "방문자 구분. 회원 이벤트가 하나라도 있는 세션은 회원 세션",
-    example: "external",
-  }),
-  device: z.enum(["all", "mobile", "tablet", "desktop"]).optional().openapi({
-    description: "세션 첫 페이지뷰의 기기",
-    example: "mobile",
-  }),
-  referrer: z.string().max(253).optional().openapi({
-    description: "세션 유입 경로. all, direct, 또는 호스트명",
-    example: "google.com",
-  }),
-  landing: z.enum(["all", "home", "activity", "exhibition", "notice"]).optional().openapi({
-    description: "세션 첫 페이지 종류",
-    example: "activity",
-  }),
-}).openapi("ApiVisitorInsightsQuery");
+export const ApiVisitorInsightsQuerySchema = z
+  .object({
+    ...ApiPageViewAnalyticsQuerySchema.shape,
+    audience: z.enum(["all", "external", "member"]).optional().openapi({
+      description: "방문자 구분. 회원 이벤트가 하나라도 있는 세션은 회원 세션",
+      example: "external",
+    }),
+    device: z.enum(["all", "mobile", "tablet", "desktop"]).optional().openapi({
+      description: "세션 첫 페이지뷰의 기기",
+      example: "mobile",
+    }),
+    referrer: z.string().max(253).optional().openapi({
+      description: "세션 유입 경로. all, direct, 또는 호스트명",
+      example: "google.com",
+    }),
+    landing: z
+      .enum(["all", "home", "activity", "exhibition", "notice"])
+      .optional()
+      .openapi({
+        description: "세션 첫 페이지 종류",
+        example: "activity",
+      }),
+  })
+  .openapi("ApiVisitorInsightsQuery");
 
 const insightsCore = z.object({
   views: nonNegativeInt,
@@ -2554,7 +2990,10 @@ export const ApiVisitorInsightsSchema = z
       granularity: z.enum(["day", "week", "month"]),
     }),
     previousRange: z.object({ from: z.string(), to: z.string() }),
-    eventsTrackedSince: z.string().nullable().openapi({ description: "방문자 이벤트 수집 시작일(KST)" }),
+    eventsTrackedSince: z
+      .string()
+      .nullable()
+      .openapi({ description: "방문자 이벤트 수집 시작일(KST)" }),
     segmented: z.boolean().openapi({ description: "필터가 하나라도 켜졌는지" }),
     summary: insightsCore.extend({
       unmeasuredSessions: nonNegativeInt,
@@ -2579,9 +3018,19 @@ export const ApiVisitorInsightsSchema = z
       }),
     ),
     hourly: z.array(
-      z.object({ weekday: z.number().int().min(0).max(6), hour: z.number().int().min(0).max(23), views: nonNegativeInt }),
+      z.object({
+        weekday: z.number().int().min(0).max(6),
+        hour: z.number().int().min(0).max(23),
+        views: nonNegativeInt,
+      }),
     ),
-    referrerFlow: z.array(z.object({ referrer: z.string(), landing: pageTypeEnum, sessions: nonNegativeInt })),
+    referrerFlow: z.array(
+      z.object({
+        referrer: z.string(),
+        landing: pageTypeEnum,
+        sessions: nonNegativeInt,
+      }),
+    ),
     pathFlow: z.array(
       z.object({
         step: z.union([z.literal(1), z.literal(2)]),
@@ -2602,9 +3051,16 @@ export const ApiVisitorInsightsSchema = z
         bounceRate: rate.nullable(),
       }),
     ),
-    devices: z.array(z.object({ device: deviceEnum, sessions: nonNegativeInt })),
+    devices: z.array(
+      z.object({ device: deviceEnum, sessions: nonNegativeInt }),
+    ),
     audience: z.object({ member: nonNegativeInt, external: nonNegativeInt }),
-    depth: z.array(z.object({ bucket: z.enum(["1", "2", "3", "4", "5+"]), sessions: nonNegativeInt })),
+    depth: z.array(
+      z.object({
+        bucket: z.enum(["1", "2", "3", "4", "5+"]),
+        sessions: nonNegativeInt,
+      }),
+    ),
     duration: z.array(
       z.object({
         bucket: z.enum(["<10s", "10-30s", "30s-1m", "1-3m", "3-10m", "10m+"]),
@@ -2612,7 +3068,11 @@ export const ApiVisitorInsightsSchema = z
       }),
     ),
     cohorts: z.array(
-      z.object({ week: z.string(), size: nonNegativeInt, retention: z.array(rate.nullable()) }),
+      z.object({
+        week: z.string(),
+        size: nonNegativeInt,
+        retention: z.array(rate.nullable()),
+      }),
     ),
     referrerOptions: z.array(z.string()),
   })
@@ -2624,10 +3084,8 @@ export const ApiVisitorInsightsSchema = z
 `types.ts` DataService에 `getPageViewAnalytics` 다음:
 
 ```ts
-  getVisitorInsights: (
-    range: PageViewAnalyticsRange,
-    segment: InsightsSegment,
-  ) => Promise<VisitorInsightsEntity>;
+getVisitorInsights: (range: PageViewAnalyticsRange, segment: InsightsSegment) =>
+  Promise<VisitorInsightsEntity>;
 ```
 
 `data-service-composition.ts`에 `recordEngagement` 다음:
@@ -2660,16 +3118,18 @@ const getVisitorInsightsRoute = createRoute({
 `registerPageViewRoutes` 끝(analytics 핸들러 다음)에:
 
 ```ts
-  app.openapi(getVisitorInsightsRoute, async (c) => {
-    const actor = await requireAuthenticatedActor(c, dependencies);
+app.openapi(getVisitorInsightsRoute, async (c) => {
+  const actor = await requireAuthenticatedActor(c, dependencies);
 
-    if (actor.role === "unverified") {
-      throw AppError.forbidden();
-    }
+  if (actor.role === "unverified") {
+    throw AppError.forbidden();
+  }
 
-    const query = readValidated(c, "query", ApiVisitorInsightsQuerySchema);
-    const range = resolveAnalyticsRange(query, Date.now());
-    const insights = await dependencies.getDataService(c).getVisitorInsights(range, {
+  const query = readValidated(c, "query", ApiVisitorInsightsQuerySchema);
+  const range = resolveAnalyticsRange(query, Date.now());
+  const insights = await dependencies
+    .getDataService(c)
+    .getVisitorInsights(range, {
       audience: query.audience ?? "all",
       device: query.device ?? "all",
       // 저장할 때와 같은 규칙으로 정규화해야 www. 같은 표기 차이로 결과가 비지 않는다.
@@ -2679,8 +3139,8 @@ const getVisitorInsightsRoute = createRoute({
           : normalizeReferrerHost(query.referrer),
       landing: query.landing ?? "all",
     });
-    return ok(c, insights);
-  });
+  return ok(c, insights);
+});
 ```
 
 - [ ] **Step 5: 공유 계약**
@@ -2688,7 +3148,12 @@ const getVisitorInsightsRoute = createRoute({
 `packages/contracts/src/api/dashboard.ts` 끝에 추가:
 
 ```ts
-const insightsPageTypeSchema = z.enum(["home", "activity", "exhibition", "notice"]);
+const insightsPageTypeSchema = z.enum([
+  "home",
+  "activity",
+  "exhibition",
+  "notice",
+]);
 const insightsRateSchema = z.number().min(0).max(1);
 const insightsCoreSchema = z.object({
   views: z.number().int(),
@@ -2731,9 +3196,19 @@ export const apiVisitorInsightsSchema = z.object({
       collected: z.boolean(),
     }),
   ),
-  hourly: z.array(z.object({ weekday: z.number().int(), hour: z.number().int(), views: z.number().int() })),
+  hourly: z.array(
+    z.object({
+      weekday: z.number().int(),
+      hour: z.number().int(),
+      views: z.number().int(),
+    }),
+  ),
   referrerFlow: z.array(
-    z.object({ referrer: z.string(), landing: insightsPageTypeSchema, sessions: z.number().int() }),
+    z.object({
+      referrer: z.string(),
+      landing: insightsPageTypeSchema,
+      sessions: z.number().int(),
+    }),
   ),
   pathFlow: z.array(
     z.object({
@@ -2756,10 +3231,18 @@ export const apiVisitorInsightsSchema = z.object({
     }),
   ),
   devices: z.array(
-    z.object({ device: z.enum(["mobile", "tablet", "desktop"]), sessions: z.number().int() }),
+    z.object({
+      device: z.enum(["mobile", "tablet", "desktop"]),
+      sessions: z.number().int(),
+    }),
   ),
   audience: z.object({ member: z.number().int(), external: z.number().int() }),
-  depth: z.array(z.object({ bucket: z.enum(["1", "2", "3", "4", "5+"]), sessions: z.number().int() })),
+  depth: z.array(
+    z.object({
+      bucket: z.enum(["1", "2", "3", "4", "5+"]),
+      sessions: z.number().int(),
+    }),
+  ),
   duration: z.array(
     z.object({
       bucket: z.enum(["<10s", "10-30s", "30s-1m", "1-3m", "3-10m", "10m+"]),
@@ -2767,7 +3250,11 @@ export const apiVisitorInsightsSchema = z.object({
     }),
   ),
   cohorts: z.array(
-    z.object({ week: z.string(), size: z.number().int(), retention: z.array(insightsRateSchema.nullable()) }),
+    z.object({
+      week: z.string(),
+      size: z.number().int(),
+      retention: z.array(insightsRateSchema.nullable()),
+    }),
   ),
   referrerOptions: z.array(z.string()),
 });
@@ -2783,14 +3270,33 @@ export type ApiInsightsPageType = z.infer<typeof insightsPageTypeSchema>;
 ```ts
 it("방문자 인사이트 스키마는 코호트의 null 칸과 이탈 노드를 받는다", () => {
   const parsed = apiVisitorInsightsSchema.safeParse({
-    range: { from: "2026-10-01", to: "2026-10-07", days: 7, granularity: "day" },
+    range: {
+      from: "2026-10-01",
+      to: "2026-10-07",
+      days: 7,
+      granularity: "day",
+    },
     previousRange: { from: "2026-09-24", to: "2026-09-30" },
     eventsTrackedSince: null,
     segmented: false,
     summary: {
-      views: 0, visitors: 0, sessions: 0, pagesPerSession: 0, avgSessionMs: 0, bounceRate: 0,
-      unmeasuredSessions: 0, newVisitors: 0, returningVisitors: 0,
-      prev: { views: 0, visitors: 0, sessions: 0, pagesPerSession: 0, avgSessionMs: 0, bounceRate: 0 },
+      views: 0,
+      visitors: 0,
+      sessions: 0,
+      pagesPerSession: 0,
+      avgSessionMs: 0,
+      bounceRate: 0,
+      unmeasuredSessions: 0,
+      newVisitors: 0,
+      returningVisitors: 0,
+      prev: {
+        views: 0,
+        visitors: 0,
+        sessions: 0,
+        pagesPerSession: 0,
+        avgSessionMs: 0,
+        bounceRate: 0,
+      },
     },
     trend: [],
     hourly: [],
@@ -2837,11 +3343,13 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 9: 조회 옵션 URL 모델과 읽기 서비스
 
 **Files:**
+
 - Modify: `apps/web/features/dashboard/stats/stats-range.ts`
 - Modify: `apps/web/features/dashboard/services/admin-read-service.ts`
 - Test: `apps/web/tests/unit/features/dashboard/stats-range.test.ts`
 
 **Interfaces:**
+
 - Consumes: Task 8 `ApiVisitorInsights`, `apiVisitorInsightsSchema`
 - Produces:
   - `type StatsFilters = { audience: "all" | "external" | "member"; device: "all" | "mobile" | "tablet" | "desktop"; referrer: string; landing: "all" | ApiInsightsPageType }`
@@ -2861,16 +3369,33 @@ describe("조회 옵션 필터", () => {
 
   it("필터와 지표를 URL에서 읽는다", () => {
     const query = parseStatsSearchParams(
-      { audience: "member", device: "mobile", referrer: "google.com", landing: "activity", metric: "duration" },
+      {
+        audience: "member",
+        device: "mobile",
+        referrer: "google.com",
+        landing: "activity",
+        metric: "duration",
+      },
       today,
     );
-    expect(query.filters).toEqual({ audience: "member", device: "mobile", referrer: "google.com", landing: "activity" });
+    expect(query.filters).toEqual({
+      audience: "member",
+      device: "mobile",
+      referrer: "google.com",
+      landing: "activity",
+    });
     expect(query.metric).toBe("duration");
   });
 
   it("잘못된 값은 기본값으로 돌린다", () => {
     const query = parseStatsSearchParams(
-      { audience: "robots", device: "fridge", referrer: "https://evil/path", landing: "admin", metric: "money" },
+      {
+        audience: "robots",
+        device: "fridge",
+        referrer: "https://evil/path",
+        landing: "admin",
+        metric: "money",
+      },
       today,
     );
     expect(query.filters).toEqual(DEFAULT_FILTERS);
@@ -2880,12 +3405,21 @@ describe("조회 옵션 필터", () => {
   it("기본값이 아닌 필터만 URL에 남기고 왕복해도 같다", () => {
     const query = {
       ...presetQuery("30d", today),
-      filters: { ...DEFAULT_FILTERS, audience: "external" as const, referrer: "direct" },
+      filters: {
+        ...DEFAULT_FILTERS,
+        audience: "external" as const,
+        referrer: "direct",
+      },
       metric: "visitors" as const,
     };
     const search = toStatsSearch(query);
     expect(search).toBe("audience=external&referrer=direct&metric=visitors");
-    expect(parseStatsSearchParams(Object.fromEntries(new URLSearchParams(search)), today)).toEqual(query);
+    expect(
+      parseStatsSearchParams(
+        Object.fromEntries(new URLSearchParams(search)),
+        today,
+      ),
+    ).toEqual(query);
   });
 
   it("API 요청에는 지표를 빼고 필터만 보낸다", () => {
@@ -2894,12 +3428,20 @@ describe("조회 옵션 필터", () => {
       filters: { ...DEFAULT_FILTERS, landing: "exhibition" as const },
       metric: "sessions" as const,
     };
-    expect(toInsightsApiSearch(query)).toBe("from=2026-10-10&to=2026-10-16&landing=exhibition");
+    expect(toInsightsApiSearch(query)).toBe(
+      "from=2026-10-10&to=2026-10-16&landing=exhibition",
+    );
   });
 
   it("켜진 필터 수를 센다", () => {
     expect(activeFilterCount(DEFAULT_FILTERS)).toBe(0);
-    expect(activeFilterCount({ ...DEFAULT_FILTERS, device: "tablet", referrer: "direct" })).toBe(2);
+    expect(
+      activeFilterCount({
+        ...DEFAULT_FILTERS,
+        device: "tablet",
+        referrer: "direct",
+      }),
+    ).toBe(2);
   });
 });
 ```
@@ -2958,15 +3500,21 @@ const METRICS = ["views", "visitors", "sessions", "duration"] as const;
 // API의 normalizeReferrerHost가 저장하는 형태(소문자 호스트, direct)만 받는다.
 const REFERRER_PATTERN = /^(all|direct|[a-z0-9-]+(\.[a-z0-9-]+)+)$/;
 
-const pick = <T extends string>(allowed: readonly T[], value: string | undefined, fallback: T): T =>
-  allowed.includes(value as T) ? (value as T) : fallback;
+const pick = <T extends string>(
+  allowed: readonly T[],
+  value: string | undefined,
+  fallback: T,
+): T => (allowed.includes(value as T) ? (value as T) : fallback);
 
 const parseFilters = (params: SearchParamsRecord): StatsFilters => {
   const referrer = readParam(params, "referrer");
   return {
     audience: pick(AUDIENCES, readParam(params, "audience"), "all"),
     device: pick(DEVICES, readParam(params, "device"), "all"),
-    referrer: referrer !== undefined && REFERRER_PATTERN.test(referrer) ? referrer : "all",
+    referrer:
+      referrer !== undefined && REFERRER_PATTERN.test(referrer)
+        ? referrer
+        : "all",
     landing: pick(LANDINGS, readParam(params, "landing"), "all"),
   };
 };
@@ -2986,7 +3534,10 @@ export const activeFilterCount = (filters: StatsFilters): number =>
 `presetQuery`를:
 
 ```ts
-export const presetQuery = (preset: StatsPreset, today: string): StatsQuery => ({
+export const presetQuery = (
+  preset: StatsPreset,
+  today: string,
+): StatsQuery => ({
   preset,
   ...presetRange(preset, today),
   granularity: null,
@@ -3009,10 +3560,10 @@ export const presetQuery = (preset: StatsPreset, today: string): StatsQuery => (
 `toStatsSearch`의 `granularity` 처리 다음에:
 
 ```ts
-  appendFilters(params, query.filters);
-  if (query.metric !== "views") {
-    params.set("metric", query.metric);
-  }
+appendFilters(params, query.filters);
+if (query.metric !== "views") {
+  params.set("metric", query.metric);
+}
 ```
 
 `toAnalyticsApiSearch`, `trendToCsv`, `trendCsvFileName`을 지우고 추가:
@@ -3069,12 +3620,14 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 10: bklit UI 도입, 차트 토큰, 데이터 변환·포맷 함수
 
 **Files:**
+
 - Create: `apps/web/components.json`, `apps/web/lib/utils.ts`(CLI 생성), `apps/web/components/charts/**`(CLI 생성)
 - Modify: `apps/web/package.json`(CLI가 의존성 추가), `apps/web/app/(dashboard)/globals.css`
 - Create: `apps/web/features/dashboard/stats/insights-format.ts`, `apps/web/features/dashboard/stats/insights-chart-data.ts`
 - Test: `apps/web/tests/unit/features/dashboard/insights-format.test.ts`, `apps/web/tests/unit/features/dashboard/insights-chart-data.test.ts`
 
 **Interfaces:**
+
 - Produces (`insights-format.ts`):
   - `PAGE_TYPE_LABEL`, `DEVICE_LABEL`, `AUDIENCE_LABEL`, `WEEKDAY_LABEL`, `PAGE_TYPE_COLOR`, `DEVICE_COLOR`
   - `referrerLabel(host: string): string`, `formatDuration(ms: number): string`, `formatPercent(ratio: number): string`, `formatCount(n: number): string`
@@ -3127,6 +3680,7 @@ Expected: `components/charts/**`, `lib/utils.ts` 생성, `package.json`에 visx�
 
 Run: `git status --short && git diff --stat`
 확인할 것:
+
 - `components/ui/skeleton.tsx` 등 기존 파일이 바뀌었으면 `git checkout -- <파일>`로 되돌린다.
 - `app/(dashboard)/globals.css`에 CLI가 `:root`/`.dark`/`@theme inline` 블록을 넣었으면 **그 블록을 지운다**(Step 3에서 프로젝트 토큰으로 직접 정의한다).
 - `app/(home)/globals.css`가 바뀌었으면 되돌린다.
@@ -3136,83 +3690,83 @@ Run: `git status --short && git diff --stat`
 `app/(dashboard)/globals.css`의 `:root { ... }` 블록 끝(닫는 `}` 직전)에 추가:
 
 ```css
-  /* ── 차트 (bklit UI) ──
+/* ── 차트 (bklit UI) ──
    * 분류 색은 dataviz 검증기로 라이트 surface(#fff) 기준 6개 검사를 통과했다.
    * 색은 엔티티에 고정한다(홈=1, 활동=2, 전시=3, 공지=4, 이탈·기타·이전 기간=5). */
-  --chart-1: #0075de;
-  --chart-2: #dd5b00;
-  --chart-3: #009b8f;
-  --chart-4: #9b5fd0;
-  --chart-5: var(--ink-muted);
-  --chart-background: var(--surface);
-  --chart-foreground: var(--ink);
-  --chart-foreground-muted: var(--ink-muted);
-  --chart-label: var(--ink-muted);
-  --chart-grid: var(--hairline);
-  --chart-crosshair: var(--ink-faint);
-  --chart-brush-border: var(--hairline);
-  --chart-line-primary: var(--chart-1);
-  --chart-line-secondary: var(--chart-5);
-  --chart-indicator-color: var(--ink-faint);
-  --chart-indicator-secondary-color: var(--hairline);
-  --chart-tooltip-background: var(--surface-raised);
-  --chart-tooltip-foreground: var(--ink);
-  --chart-tooltip-muted: var(--ink-muted);
-  --chart-marker-background: var(--surface-sunken);
-  --chart-marker-border: var(--hairline-strong);
-  --chart-marker-foreground: var(--ink-secondary);
-  --chart-marker-badge-background: var(--surface-raised);
-  --chart-marker-badge-foreground: var(--ink);
-  --chart-segment-background: var(--surface-sunken);
-  --chart-segment-line: var(--hairline);
-  /* 크기(순차) 스케일: 파랑 한 색상, 밝음 → 어두움 */
-  --chart-scale-01: #e8f2fd;
-  --chart-scale-02: #b6d9f8;
-  --chart-scale-03: #62aef0;
-  --chart-scale-04: #0075de;
-  --chart-scale-05: #005bab;
-  --chart-scale-pattern-color: var(--surface-sunken);
-  --legend: var(--surface);
-  --legend-foreground: var(--ink);
-  --legend-muted: var(--surface-sunken);
-  --legend-muted-foreground: var(--ink-muted);
-  --legend-track: var(--hairline);
-  /* bklit 소스가 쓰는 shadcn 기본 이름 */
-  --foreground: var(--ink);
-  --muted: var(--surface-sunken);
-  --muted-foreground: var(--ink-muted);
-  --border: var(--hairline);
-  --popover: var(--surface-raised);
-  --popover-foreground: var(--ink);
+--chart-1: #0075de;
+--chart-2: #dd5b00;
+--chart-3: #009b8f;
+--chart-4: #9b5fd0;
+--chart-5: var(--ink-muted);
+--chart-background: var(--surface);
+--chart-foreground: var(--ink);
+--chart-foreground-muted: var(--ink-muted);
+--chart-label: var(--ink-muted);
+--chart-grid: var(--hairline);
+--chart-crosshair: var(--ink-faint);
+--chart-brush-border: var(--hairline);
+--chart-line-primary: var(--chart-1);
+--chart-line-secondary: var(--chart-5);
+--chart-indicator-color: var(--ink-faint);
+--chart-indicator-secondary-color: var(--hairline);
+--chart-tooltip-background: var(--surface-raised);
+--chart-tooltip-foreground: var(--ink);
+--chart-tooltip-muted: var(--ink-muted);
+--chart-marker-background: var(--surface-sunken);
+--chart-marker-border: var(--hairline-strong);
+--chart-marker-foreground: var(--ink-secondary);
+--chart-marker-badge-background: var(--surface-raised);
+--chart-marker-badge-foreground: var(--ink);
+--chart-segment-background: var(--surface-sunken);
+--chart-segment-line: var(--hairline);
+/* 크기(순차) 스케일: 파랑 한 색상, 밝음 → 어두움 */
+--chart-scale-01: #e8f2fd;
+--chart-scale-02: #b6d9f8;
+--chart-scale-03: #62aef0;
+--chart-scale-04: #0075de;
+--chart-scale-05: #005bab;
+--chart-scale-pattern-color: var(--surface-sunken);
+--legend: var(--surface);
+--legend-foreground: var(--ink);
+--legend-muted: var(--surface-sunken);
+--legend-muted-foreground: var(--ink-muted);
+--legend-track: var(--hairline);
+/* bklit 소스가 쓰는 shadcn 기본 이름 */
+--foreground: var(--ink);
+--muted: var(--surface-sunken);
+--muted-foreground: var(--ink-muted);
+--border: var(--hairline);
+--popover: var(--surface-raised);
+--popover-foreground: var(--ink);
 ```
 
 `.dark { ... }` 블록 끝에 추가:
 
 ```css
-  /* 다크 분류 색: surface(#232322) 기준 6개 검사 통과. 라이트 값을 뒤집지 않고 따로 고른 단계다. */
-  --chart-1: #3b8fe8;
-  --chart-2: #e2701f;
-  --chart-3: #13a89a;
-  --chart-4: #9d6fd6;
-  /* 다크에서는 많을수록 밝다 */
-  --chart-scale-01: #1d2a3a;
-  --chart-scale-02: #2c527d;
-  --chart-scale-03: #1668c4;
-  --chart-scale-04: #3b8fe8;
-  --chart-scale-05: #8cc0f5;
+/* 다크 분류 색: surface(#232322) 기준 6개 검사 통과. 라이트 값을 뒤집지 않고 따로 고른 단계다. */
+--chart-1: #3b8fe8;
+--chart-2: #e2701f;
+--chart-3: #13a89a;
+--chart-4: #9d6fd6;
+/* 다크에서는 많을수록 밝다 */
+--chart-scale-01: #1d2a3a;
+--chart-scale-02: #2c527d;
+--chart-scale-03: #1668c4;
+--chart-scale-04: #3b8fe8;
+--chart-scale-05: #8cc0f5;
 ```
 
 `@theme inline { ... }` 블록 끝에 추가(bklit 클래스 `text-chart-label`, `bg-chart-tooltip-background`, `text-foreground`, `bg-muted` 등이 동작하도록):
 
 ```css
-  --color-chart-label: var(--chart-label);
-  --color-chart-tooltip-background: var(--chart-tooltip-background);
-  --color-chart-tooltip-foreground: var(--chart-tooltip-foreground);
-  --color-chart-tooltip-muted: var(--chart-tooltip-muted);
-  --color-foreground: var(--foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-border: var(--border);
+--color-chart-label: var(--chart-label);
+--color-chart-tooltip-background: var(--chart-tooltip-background);
+--color-chart-tooltip-foreground: var(--chart-tooltip-foreground);
+--color-chart-tooltip-muted: var(--chart-tooltip-muted);
+--color-foreground: var(--foreground);
+--color-muted: var(--muted);
+--color-muted-foreground: var(--muted-foreground);
+--color-border: var(--border);
 ```
 
 검증: `node /tmp/claude-1000/bundled-skills/*/*/dataviz/scripts/validate_palette.js "#0075de,#dd5b00,#009b8f,#9b5fd0" --mode light --surface "#ffffff"`와 다크 값(`--mode dark --surface "#232322"`)이 모두 PASS인지 다시 확인한다(스킬 경로는 `dataviz` 스킬을 불러 확인).
@@ -3226,24 +3780,30 @@ Run: `git status --short && git diff --stat`
 3. `components/charts/heatmap/heatmap-x-axis.tsx`: props에 `formatColumn?: (columnIndex: number) => string | null`를 추가한다. `labels` 계산 맨 앞에:
 
 ```tsx
-    if (formatColumn) {
-      return data.flatMap((_, columnIndex) => {
-        const label = formatColumn(columnIndex);
-        return label === null
-          ? []
-          : [{ label, x: margin.left + xScale(columnIndex), key: String(columnIndex) }];
-      });
-    }
+if (formatColumn) {
+  return data.flatMap((_, columnIndex) => {
+    const label = formatColumn(columnIndex);
+    return label === null
+      ? []
+      : [
+          {
+            label,
+            x: margin.left + xScale(columnIndex),
+            key: String(columnIndex),
+          },
+        ];
+  });
+}
 ```
 
-   의존성 배열에 `formatColumn`을 넣는다.
-4. `components/charts/heatmap/heatmap-tooltip.tsx`: props에 `formatHeader?: (cell: { column: number; row: number }) => React.ReactNode`를 추가하고, `<TooltipHeader>` 안을 `formatHeader ? formatHeader(displayData) : (기존 날짜·요일 두 줄)`로 바꾼다.
+의존성 배열에 `formatColumn`을 넣는다. 4. `components/charts/heatmap/heatmap-tooltip.tsx`: props에 `formatHeader?: (cell: { column: number; row: number }) => React.ReactNode`를 추가하고, `<TooltipHeader>` 안을 `formatHeader ? formatHeader(displayData) : (기존 날짜·요일 두 줄)`로 바꾼다.
 
 - [ ] **Step 5: 설치 검증**
 
 Run: `pnpm --filter @yonyoung/web typecheck && pnpm --filter @yonyoung/web lint`
 
 가져온 소스에서 오류가 나면:
+
 - 타입 오류(엄격 옵션, `noUncheckedIndexedAccess` 등)는 해당 줄을 최소 수정한다.
 - 린트 규칙 위반이 소스 전반에 걸쳐 많으면 `apps/web/eslint.config.mjs`의 ignore 목록에 `components/charts/**`를 "bklit 레지스트리에서 가져온 소스" 주석과 함께 추가한다.
 - `stats-view.tsx`/`page.tsx`의 import 오류(Task 9)는 Task 13에서 고치므로 남겨 둔다. 그 외 오류는 0이어야 한다.
@@ -3283,13 +3843,27 @@ describe("insights-format", () => {
 
   it("추이 CSV는 BOM·CRLF와 모든 지표 열을 담는다", () => {
     const insights = {
-      range: { from: "2026-10-01", to: "2026-10-02", days: 2, granularity: "day" },
+      range: {
+        from: "2026-10-01",
+        to: "2026-10-02",
+        days: 2,
+        granularity: "day",
+      },
       previousRange: { from: "2026-09-29", to: "2026-09-30" },
       trend: [
         {
-          bucket: "2026-10-01", views: 10, visitors: 4, sessions: 5, avgSessionMs: 61_000,
-          newVisitors: 3, returningVisitors: 1, prevViews: 8, prevVisitors: 3, prevSessions: 4,
-          prevAvgSessionMs: 30_000, collected: true,
+          bucket: "2026-10-01",
+          views: 10,
+          visitors: 4,
+          sessions: 5,
+          avgSessionMs: 61_000,
+          newVisitors: 3,
+          returningVisitors: 1,
+          prevViews: 8,
+          prevVisitors: 3,
+          prevSessions: 4,
+          prevAvgSessionMs: 30_000,
+          collected: true,
         },
       ],
     } as unknown as ApiVisitorInsights;
@@ -3297,9 +3871,13 @@ describe("insights-format", () => {
     const csv = insightsTrendToCsv(insights);
     expect(csv.startsWith("﻿")).toBe(true);
     expect(csv).toContain("\r\n");
-    expect(csv).toContain("구간,페이지뷰,방문자,세션,평균 체류(초),신규 방문자,재방문 방문자,이전 페이지뷰,이전 방문자,이전 세션,이전 평균 체류(초),수집 여부");
+    expect(csv).toContain(
+      "구간,페이지뷰,방문자,세션,평균 체류(초),신규 방문자,재방문 방문자,이전 페이지뷰,이전 방문자,이전 세션,이전 평균 체류(초),수집 여부",
+    );
     expect(csv).toContain("2026-10-01,10,4,5,61,3,1,8,3,4,30,수집");
-    expect(insightsCsvFileName(insights)).toBe("visitor-insights_2026-10-01_2026-10-02_day.csv");
+    expect(insightsCsvFileName(insights)).toBe(
+      "visitor-insights_2026-10-01_2026-10-02_day.csv",
+    );
   });
 });
 ```
@@ -3318,20 +3896,36 @@ import {
 } from "@/features/dashboard/stats/insights-chart-data";
 
 const point = {
-  bucket: "2026-10-01", views: 10, visitors: 4, sessions: 5, avgSessionMs: 60_000,
-  newVisitors: 3, returningVisitors: 1, prevViews: 8, prevVisitors: 3, prevSessions: 4,
-  prevAvgSessionMs: 30_000, collected: true,
+  bucket: "2026-10-01",
+  views: 10,
+  visitors: 4,
+  sessions: 5,
+  avgSessionMs: 60_000,
+  newVisitors: 3,
+  returningVisitors: 1,
+  prevViews: 8,
+  prevVisitors: 3,
+  prevSessions: 4,
+  prevAvgSessionMs: 30_000,
+  collected: true,
 };
 
 describe("insights-chart-data", () => {
   it("버킷 문자열을 KST 자정 Date로 바꾼다", () => {
-    expect(bucketToDate("2026-10-01").toISOString()).toBe("2026-09-30T15:00:00.000Z");
-    expect(bucketToDate("2026-10").toISOString()).toBe("2026-09-30T15:00:00.000Z");
+    expect(bucketToDate("2026-10-01").toISOString()).toBe(
+      "2026-09-30T15:00:00.000Z",
+    );
+    expect(bucketToDate("2026-10").toISOString()).toBe(
+      "2026-09-30T15:00:00.000Z",
+    );
   });
 
   it("지표별 현재·이전 값을 고른다. 체류는 초 단위다", () => {
     expect(metricValue(point, "views")).toEqual({ current: 10, previous: 8 });
-    expect(metricValue(point, "duration")).toEqual({ current: 60, previous: 30 });
+    expect(metricValue(point, "duration")).toEqual({
+      current: 60,
+      previous: 30,
+    });
   });
 
   it("요일×시간 168칸을 24열 7행으로 만든다", () => {
@@ -3351,7 +3945,12 @@ describe("insights-chart-data", () => {
       { referrer: "google.com", landing: "home", sessions: 3 },
       { referrer: "direct", landing: "activity", sessions: 2 },
     ]);
-    expect(data.nodes.map((node) => node.name)).toEqual(["google.com", "직접 접속", "홈", "활동"]);
+    expect(data.nodes.map((node) => node.name)).toEqual([
+      "google.com",
+      "직접 접속",
+      "홈",
+      "활동",
+    ]);
     expect(data.links).toEqual([
       { source: 0, target: 2, value: 3 },
       { source: 1, target: 3, value: 2 },
@@ -3384,7 +3983,10 @@ describe("insights-chart-data", () => {
         { ...point, bucket: "2026-10-02", collected: false },
         { ...point, bucket: "2026-10-03", collected: true },
       ]),
-    ).toEqual({ from: bucketToDate("2026-10-01"), to: bucketToDate("2026-10-02") });
+    ).toEqual({
+      from: bucketToDate("2026-10-01"),
+      to: bucketToDate("2026-10-02"),
+    });
     expect(uncollectedRange([point])).toBeNull();
   });
 });
@@ -3409,9 +4011,25 @@ export const PAGE_TYPE_LABEL = {
   notice: "공지",
 } as const;
 
-export const DEVICE_LABEL = { mobile: "모바일", tablet: "태블릿", desktop: "데스크톱" } as const;
-export const AUDIENCE_LABEL = { all: "전체", external: "외부 방문자", member: "회원" } as const;
-export const WEEKDAY_LABEL = ["월", "화", "수", "목", "금", "토", "일"] as const;
+export const DEVICE_LABEL = {
+  mobile: "모바일",
+  tablet: "태블릿",
+  desktop: "데스크톱",
+} as const;
+export const AUDIENCE_LABEL = {
+  all: "전체",
+  external: "외부 방문자",
+  member: "회원",
+} as const;
+export const WEEKDAY_LABEL = [
+  "월",
+  "화",
+  "수",
+  "목",
+  "금",
+  "토",
+  "일",
+] as const;
 
 /** 색은 엔티티에 고정한다. 필터로 항목 수가 바뀌어도 남은 항목 색이 바뀌지 않는다. */
 export const PAGE_TYPE_COLOR = {
@@ -3433,9 +4051,11 @@ export const referrerLabel = (host: string): string => {
   return host;
 };
 
-export const formatCount = (value: number): string => value.toLocaleString("ko-KR");
+export const formatCount = (value: number): string =>
+  value.toLocaleString("ko-KR");
 
-export const formatPercent = (ratio: number): string => `${(ratio * 100).toFixed(1)}%`;
+export const formatPercent = (ratio: number): string =>
+  `${(ratio * 100).toFixed(1)}%`;
 
 export const formatDuration = (ms: number): string => {
   const seconds = Math.round(ms / 1000);
@@ -3527,7 +4147,9 @@ export const toHourlyColumns = (hourly: ApiVisitorInsights["hourly"]) =>
     bin: hour,
     bins: Array.from({ length: 7 }, (_, weekday) => ({
       bin: weekday,
-      count: hourly.find((cell) => cell.weekday === weekday && cell.hour === hour)?.views ?? 0,
+      count:
+        hourly.find((cell) => cell.weekday === weekday && cell.hour === hour)
+          ?.views ?? 0,
       date: new Date(REFERENCE_MONDAY_UTC + (weekday * 24 + hour) * 3_600_000),
     })),
   }));
@@ -3547,10 +4169,15 @@ const buildSankey = (
     target: nodeOf(link.to),
     value: link.value,
   }));
-  return { nodes: [...index.keys()].map((name) => ({ name })), links: sankeyLinks };
+  return {
+    nodes: [...index.keys()].map((name) => ({ name })),
+    links: sankeyLinks,
+  };
 };
 
-export const toReferrerSankey = (rows: ApiVisitorInsights["referrerFlow"]): SankeyData =>
+export const toReferrerSankey = (
+  rows: ApiVisitorInsights["referrerFlow"],
+): SankeyData =>
   buildSankey(
     rows.map((row) => ({
       from: referrerLabel(row.referrer),
@@ -3563,7 +4190,9 @@ const STEP_LABEL = { 1: "진입", 2: "2번째", 3: "3번째" } as const;
 const pageLabel = (page: keyof typeof PAGE_TYPE_LABEL | "exit") =>
   page === "exit" ? "이탈" : PAGE_TYPE_LABEL[page];
 
-export const toPathSankey = (rows: ApiVisitorInsights["pathFlow"]): SankeyData =>
+export const toPathSankey = (
+  rows: ApiVisitorInsights["pathFlow"],
+): SankeyData =>
   buildSankey(
     [...rows]
       .sort((a, b) => a.step - b.step)
@@ -3605,6 +4234,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 11: 공통 카드, KPI, 추이 차트
 
 **Files:**
+
 - Create: `apps/web/app/(dashboard)/dashboard/stats/_components/chart-card.tsx`
 - Create: `apps/web/app/(dashboard)/dashboard/stats/_components/delta.tsx`
 - Create: `apps/web/app/(dashboard)/dashboard/stats/_components/kpi-grid.tsx`
@@ -3612,6 +4242,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 - Modify: `apps/web/app/(dashboard)/_components/ui/stat-tile.tsx` (`footer` prop)
 
 **Interfaces:**
+
 - Consumes: Task 10 포맷·변환 함수, bklit `ComposedChart`, `LineChart`, `Line`, `SeriesBar`, `Grid`, `XAxis`, `YAxis`, `ChartTooltip`, `ReferenceArea`
 - Produces:
   - `<ChartCard title description? actions? empty?: string | null table?: { columns: string[]; rows: Array<Array<string>> } testId?>{children}</ChartCard>`
@@ -3642,17 +4273,32 @@ type ChartCardProps = {
   /** 값이 있으면 차트 대신 이 문구를 보여 준다. */
   empty?: string | null;
   /** 같은 숫자를 표로도 제공해 색이나 모양만으로 읽지 않아도 되게 한다. */
-  table?: { columns: readonly string[]; rows: ReadonlyArray<readonly string[]> };
+  table?: {
+    columns: readonly string[];
+    rows: ReadonlyArray<readonly string[]>;
+  };
   testId?: string;
   children: ReactNode;
 };
 
-export default function ChartCard({ title, description, actions, empty, table, testId, children }: ChartCardProps) {
+export default function ChartCard({
+  title,
+  description,
+  actions,
+  empty,
+  table,
+  testId,
+  children,
+}: ChartCardProps) {
   return (
     <Card data-testid={testId}>
       <CardHeader title={title} description={description} actions={actions} />
       <div className="mt-4">
-        {empty ? <p className="text-caption text-ink-muted">{empty}</p> : children}
+        {empty ? (
+          <p className="text-caption text-ink-muted">{empty}</p>
+        ) : (
+          children
+        )}
       </div>
       {!empty && table && table.rows.length > 0 && (
         <details className="mt-4 text-body-sm">
@@ -3719,11 +4365,19 @@ type DeltaProps = {
  * 이전 기간 대비 증감. 이전 값이 0이면 비율이 의미가 없어 "+100%" 같은 숫자를 만들지 않고 문장으로 쓴다.
  * 화살표와 부호를 함께 써서 색만으로 증감을 전달하지 않는다.
  */
-export default function Delta({ current, previous, kind = "relative", lowerIsBetter = false }: DeltaProps) {
+export default function Delta({
+  current,
+  previous,
+  kind = "relative",
+  lowerIsBetter = false,
+}: DeltaProps) {
   if (kind === "relative" && previous === 0) {
     return <>이전 기간 기록 없음</>;
   }
-  const change = kind === "points" ? (current - previous) * 100 : ((current - previous) / previous) * 100;
+  const change =
+    kind === "points"
+      ? (current - previous) * 100
+      : ((current - previous) / previous) * 100;
   const isUp = change >= 0;
   const isGood = isUp !== lowerIsBetter;
   return (
@@ -3762,7 +4416,9 @@ export default function Delta({ current, previous, kind = "relative", lowerIsBet
 구조 분해에 `footer`를 더하고, caption `<p>` 다음 줄에:
 
 ```tsx
-      {footer !== undefined && <div className="mt-2">{footer}</div>}
+{
+  footer !== undefined && <div className="mt-2">{footer}</div>;
+}
 ```
 
 `kpi-grid.tsx`:
@@ -3771,20 +4427,40 @@ export default function Delta({ current, previous, kind = "relative", lowerIsBet
 "use client";
 
 import type { ApiVisitorInsights } from "@yonyoung/contracts";
-import { BarChart3Icon, ClockIcon, LayersIcon, LogOutIcon, MousePointerClickIcon, UsersIcon } from "lucide-react";
+import {
+  BarChart3Icon,
+  ClockIcon,
+  LayersIcon,
+  LogOutIcon,
+  MousePointerClickIcon,
+  UsersIcon,
+} from "lucide-react";
 import { Line, LineChart } from "@/components/charts";
 import { StatTile } from "@/app/(dashboard)/_components/ui/stat-tile";
 import { bucketToDate } from "@/features/dashboard/stats/insights-chart-data";
-import { formatCount, formatDuration, formatPercent } from "@/features/dashboard/stats/insights-format";
+import {
+  formatCount,
+  formatDuration,
+  formatPercent,
+} from "@/features/dashboard/stats/insights-format";
 import Delta from "./delta";
 
 type TrendKey = "views" | "visitors" | "sessions" | "avgSessionMs";
 
-const Sparkline = ({ insights, dataKey }: { insights: ApiVisitorInsights; dataKey: TrendKey }) => (
+const Sparkline = ({
+  insights,
+  dataKey,
+}: {
+  insights: ApiVisitorInsights;
+  dataKey: TrendKey;
+}) => (
   // 숫자는 타일이 전달한다. 스파크라인은 흐름만 보여 주는 장식이라 보조 기술에서 숨긴다.
   <div aria-hidden="true" className="h-8 w-full">
     <LineChart
-      data={insights.trend.map((point) => ({ date: bucketToDate(point.bucket), value: point[dataKey] }))}
+      data={insights.trend.map((point) => ({
+        date: bucketToDate(point.bucket),
+        value: point[dataKey],
+      }))}
       aspectRatio="6 / 1"
       margin={{ top: 2, right: 0, bottom: 2, left: 0 }}
     >
@@ -3793,14 +4469,23 @@ const Sparkline = ({ insights, dataKey }: { insights: ApiVisitorInsights; dataKe
   </div>
 );
 
-export default function KpiGrid({ insights }: { insights: ApiVisitorInsights }) {
+export default function KpiGrid({
+  insights,
+}: {
+  insights: ApiVisitorInsights;
+}) {
   const { summary } = insights;
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" data-testid="stats-kpis">
+    <div
+      className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+      data-testid="stats-kpis"
+    >
       <StatTile
         label="순방문자"
         value={formatCount(summary.visitors)}
-        caption={<Delta current={summary.visitors} previous={summary.prev.visitors} />}
+        caption={
+          <Delta current={summary.visitors} previous={summary.prev.visitors} />
+        }
         footer={<Sparkline insights={insights} dataKey="visitors" />}
         Icon={UsersIcon}
         accent="sky"
@@ -3808,7 +4493,9 @@ export default function KpiGrid({ insights }: { insights: ApiVisitorInsights }) 
       <StatTile
         label="세션"
         value={formatCount(summary.sessions)}
-        caption={<Delta current={summary.sessions} previous={summary.prev.sessions} />}
+        caption={
+          <Delta current={summary.sessions} previous={summary.prev.sessions} />
+        }
         footer={<Sparkline insights={insights} dataKey="sessions" />}
         Icon={LayersIcon}
         accent="teal"
@@ -3816,15 +4503,24 @@ export default function KpiGrid({ insights }: { insights: ApiVisitorInsights }) 
       <StatTile
         label="페이지뷰"
         value={formatCount(summary.views)}
-        caption={<Delta current={summary.views} previous={summary.prev.views} />}
+        caption={
+          <Delta current={summary.views} previous={summary.prev.views} />
+        }
         footer={<Sparkline insights={insights} dataKey="views" />}
         Icon={BarChart3Icon}
         accent="purple"
       />
       <StatTile
         label="세션당 페이지"
-        value={summary.pagesPerSession.toLocaleString("ko-KR", { maximumFractionDigits: 1 })}
-        caption={<Delta current={summary.pagesPerSession} previous={summary.prev.pagesPerSession} />}
+        value={summary.pagesPerSession.toLocaleString("ko-KR", {
+          maximumFractionDigits: 1,
+        })}
+        caption={
+          <Delta
+            current={summary.pagesPerSession}
+            previous={summary.prev.pagesPerSession}
+          />
+        }
         Icon={MousePointerClickIcon}
         accent="green"
       />
@@ -3833,9 +4529,14 @@ export default function KpiGrid({ insights }: { insights: ApiVisitorInsights }) 
         value={formatDuration(summary.avgSessionMs)}
         caption={
           <>
-            <Delta current={summary.avgSessionMs} previous={summary.prev.avgSessionMs} />
+            <Delta
+              current={summary.avgSessionMs}
+              previous={summary.prev.avgSessionMs}
+            />
             {summary.unmeasuredSessions > 0 && (
-              <span className="block">측정 안 된 세션 {formatCount(summary.unmeasuredSessions)}개 제외</span>
+              <span className="block">
+                측정 안 된 세션 {formatCount(summary.unmeasuredSessions)}개 제외
+              </span>
             )}
           </>
         }
@@ -3848,7 +4549,12 @@ export default function KpiGrid({ insights }: { insights: ApiVisitorInsights }) 
         value={formatPercent(summary.bounceRate)}
         caption={
           <>
-            <Delta current={summary.bounceRate} previous={summary.prev.bounceRate} kind="points" lowerIsBetter />
+            <Delta
+              current={summary.bounceRate}
+              previous={summary.prev.bounceRate}
+              kind="points"
+              lowerIsBetter
+            />
             <span className="block">페이지 1개만 본 세션 비율</span>
           </>
         }
@@ -3870,10 +4576,26 @@ export default function KpiGrid({ insights }: { insights: ApiVisitorInsights }) 
 "use client";
 
 import type { ApiVisitorInsights } from "@yonyoung/contracts";
-import { ChartTooltip, ComposedChart, Grid, Line, ReferenceArea, SeriesBar, XAxis, YAxis } from "@/components/charts";
+import {
+  ChartTooltip,
+  ComposedChart,
+  Grid,
+  Line,
+  ReferenceArea,
+  SeriesBar,
+  XAxis,
+  YAxis,
+} from "@/components/charts";
 import { SegmentedControl } from "@/app/(dashboard)/_components/ui/segmented-control";
-import { bucketToDate, metricValue, uncollectedRange } from "@/features/dashboard/stats/insights-chart-data";
-import { formatCount, NEUTRAL_COLOR } from "@/features/dashboard/stats/insights-format";
+import {
+  bucketToDate,
+  metricValue,
+  uncollectedRange,
+} from "@/features/dashboard/stats/insights-chart-data";
+import {
+  formatCount,
+  NEUTRAL_COLOR,
+} from "@/features/dashboard/stats/insights-format";
 import type { StatsMetric } from "@/features/dashboard/stats/stats-range";
 import ChartCard from "./chart-card";
 
@@ -3884,7 +4606,12 @@ const METRIC_OPTIONS: ReadonlyArray<{ value: StatsMetric; label: string }> = [
   { value: "sessions", label: "세션" },
   { value: "duration", label: "평균 체류" },
 ];
-const UNIT: Record<StatsMetric, string> = { views: "회", visitors: "명", sessions: "회", duration: "초" };
+const UNIT: Record<StatsMetric, string> = {
+  views: "회",
+  visitors: "명",
+  sessions: "회",
+  duration: "초",
+};
 
 type TrendCardProps = {
   insights: ApiVisitorInsights;
@@ -3892,7 +4619,11 @@ type TrendCardProps = {
   onMetricChange: (metric: StatsMetric) => void;
 };
 
-export default function TrendCard({ insights, metric, onMetricChange }: TrendCardProps) {
+export default function TrendCard({
+  insights,
+  metric,
+  onMetricChange,
+}: TrendCardProps) {
   // 필터 없는 페이지뷰만 합계 테이블에서 오므로 수집 전 구간이 없다. 나머지는 이벤트 기반이다.
   const usesEvents = metric !== "views" || insights.segmented;
   const pending = usesEvents ? uncollectedRange(insights.trend) : null;
@@ -3923,11 +4654,17 @@ export default function TrendCard({ insights, metric, onMetricChange }: TrendCar
           testIdPrefix="btn-stats-metric"
         />
       }
-      empty={hasAny ? null : "이 기간과 비교 기간 모두 기록이 없습니다. 기간을 넓히거나 필터를 줄여 보세요."}
+      empty={
+        hasAny
+          ? null
+          : "이 기간과 비교 기간 모두 기록이 없습니다. 기간을 넓히거나 필터를 줄여 보세요."
+      }
       table={{
         columns: ["구간", `선택 기간(${unit})`, `이전 기간(${unit})`],
         rows: insights.trend.map((point, index) => [
-          point.collected || !usesEvents ? point.bucket : `${point.bucket} (수집 전)`,
+          point.collected || !usesEvents
+            ? point.bucket
+            : `${point.bucket} (수집 전)`,
           formatCount(data[index]!.current),
           formatCount(data[index]!.previous),
         ]),
@@ -3937,38 +4674,68 @@ export default function TrendCard({ insights, metric, onMetricChange }: TrendCar
         {metric === "visitors" ? (
           <>
             <span className="flex items-center gap-1.5">
-              <span aria-hidden="true" className="h-2.5 w-2.5 rounded-xs bg-(--chart-1)" />
+              <span
+                aria-hidden="true"
+                className="h-2.5 w-2.5 rounded-xs bg-(--chart-1)"
+              />
               신규
             </span>
             <span className="flex items-center gap-1.5">
-              <span aria-hidden="true" className="h-2.5 w-2.5 rounded-xs bg-(--chart-3)" />
+              <span
+                aria-hidden="true"
+                className="h-2.5 w-2.5 rounded-xs bg-(--chart-3)"
+              />
               재방문
             </span>
           </>
         ) : (
           <span className="flex items-center gap-1.5">
-            <span aria-hidden="true" className="h-0.5 w-4 rounded-full bg-(--chart-1)" />
+            <span
+              aria-hidden="true"
+              className="h-0.5 w-4 rounded-full bg-(--chart-1)"
+            />
             선택 기간
           </span>
         )}
         <span className="flex items-center gap-1.5">
-          <span aria-hidden="true" className="w-4 border-t-2 border-dashed border-(--chart-5)" />
+          <span
+            aria-hidden="true"
+            className="w-4 border-t-2 border-dashed border-(--chart-5)"
+          />
           이전 기간
         </span>
         {pending && (
           <span className="flex items-center gap-1.5">
-            <span aria-hidden="true" className="h-2.5 w-4 rounded-xs bg-canvas-soft" />
+            <span
+              aria-hidden="true"
+              className="h-2.5 w-4 rounded-xs bg-canvas-soft"
+            />
             수집 전
           </span>
         )}
       </div>
-      <ComposedChart data={data} stacked={metric === "visitors"} aspectRatio="5 / 2">
+      <ComposedChart
+        data={data}
+        stacked={metric === "visitors"}
+        aspectRatio="5 / 2"
+      >
         <Grid horizontal />
-        {pending && <ReferenceArea x1={pending.from} x2={pending.to} fill="var(--canvas-soft)" fillOpacity={1} />}
+        {pending && (
+          <ReferenceArea
+            x1={pending.from}
+            x2={pending.to}
+            fill="var(--canvas-soft)"
+            fillOpacity={1}
+          />
+        )}
         {metric === "visitors" ? (
           <>
             <SeriesBar dataKey="newVisitors" fill="var(--chart-1)" radius={2} />
-            <SeriesBar dataKey="returningVisitors" fill="var(--chart-3)" radius={2} />
+            <SeriesBar
+              dataKey="returningVisitors"
+              fill="var(--chart-3)"
+              radius={2}
+            />
           </>
         ) : (
           <Line dataKey="current" stroke="var(--chart-1)" />
@@ -3980,11 +4747,29 @@ export default function TrendCard({ insights, metric, onMetricChange }: TrendCar
           rows={(point) => [
             ...(metric === "visitors"
               ? [
-                  { color: "var(--chart-1)", label: "신규", value: formatCount(Number(point.newVisitors)) },
-                  { color: "var(--chart-3)", label: "재방문", value: formatCount(Number(point.returningVisitors)) },
+                  {
+                    color: "var(--chart-1)",
+                    label: "신규",
+                    value: formatCount(Number(point.newVisitors)),
+                  },
+                  {
+                    color: "var(--chart-3)",
+                    label: "재방문",
+                    value: formatCount(Number(point.returningVisitors)),
+                  },
                 ]
-              : [{ color: "var(--chart-1)", label: "선택 기간", value: `${formatCount(Number(point.current))}${unit}` }]),
-            { color: NEUTRAL_COLOR, label: "이전 기간", value: `${formatCount(Number(point.previous))}${unit}` },
+              : [
+                  {
+                    color: "var(--chart-1)",
+                    label: "선택 기간",
+                    value: `${formatCount(Number(point.current))}${unit}`,
+                  },
+                ]),
+            {
+              color: NEUTRAL_COLOR,
+              label: "이전 기간",
+              value: `${formatCount(Number(point.previous))}${unit}`,
+            },
           ]}
         />
       </ComposedChart>
@@ -4014,6 +4799,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 12: 패턴 섹션 (히트맵, 구성 비율, 흐름, 분포, 코호트, 콘텐츠 표)
 
 **Files:**
+
 - Create: `apps/web/app/(dashboard)/dashboard/stats/_components/hourly-heatmap-card.tsx`
 - Create: `.../_components/composition-card.tsx`
 - Create: `.../_components/flow-cards.tsx`
@@ -4022,6 +4808,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 - Create: `.../_components/content-table.tsx`
 
 **Interfaces:**
+
 - Consumes: Task 10 변환·포맷, Task 11 `ChartCard`; bklit `HeatmapChart`, `HeatmapCells`, `HeatmapXAxis`(formatColumn), `HeatmapYAxis`(labels), `HeatmapTooltip`(formatHeader), `HeatmapLegend`, `HeatmapInteractionProvider`, `HeatmapInteractionBoundary`, `RingChart`, `Ring`, `RingCenter`, `SankeyChart`, `SankeyLink`, `SankeyNode`, `SankeyTooltip`, `BarChart`, `Bar`, `BarXAxis`
 - Produces: `<HourlyHeatmapCard insights />`, `<CompositionCard insights />`, `<ReferrerFlowCard insights />`, `<PathFlowCard insights />`, `<DepthCard insights />`, `<DurationCard insights />`, `<CohortCard insights />`, `<ContentTable insights />`
 
@@ -4044,7 +4831,10 @@ import {
   HeatmapYAxis,
 } from "@/components/charts";
 import { toHourlyColumns } from "@/features/dashboard/stats/insights-chart-data";
-import { formatCount, WEEKDAY_LABEL } from "@/features/dashboard/stats/insights-format";
+import {
+  formatCount,
+  WEEKDAY_LABEL,
+} from "@/features/dashboard/stats/insights-format";
 import ChartCard from "./chart-card";
 
 const LEVEL_COLORS = [
@@ -4055,11 +4845,17 @@ const LEVEL_COLORS = [
   "var(--chart-scale-05)",
 ] as const;
 
-export default function HourlyHeatmapCard({ insights }: { insights: ApiVisitorInsights }) {
+export default function HourlyHeatmapCard({
+  insights,
+}: {
+  insights: ApiVisitorInsights;
+}) {
   const columns = toHourlyColumns(insights.hourly);
   const total = insights.hourly.reduce((sum, cell) => sum + cell.views, 0);
   const viewsAt = (weekday: number, hour: number) =>
-    insights.hourly.find((cell) => cell.weekday === weekday && cell.hour === hour)?.views ?? 0;
+    insights.hourly.find(
+      (cell) => cell.weekday === weekday && cell.hour === hour,
+    )?.views ?? 0;
 
   return (
     <ChartCard
@@ -4071,19 +4867,30 @@ export default function HourlyHeatmapCard({ insights }: { insights: ApiVisitorIn
         columns: ["시간", ...WEEKDAY_LABEL],
         rows: Array.from({ length: 24 }, (_, hour) => [
           `${hour}시`,
-          ...WEEKDAY_LABEL.map((_, weekday) => formatCount(viewsAt(weekday, hour))),
+          ...WEEKDAY_LABEL.map((_, weekday) =>
+            formatCount(viewsAt(weekday, hour)),
+          ),
         ]),
       }}
     >
       <HeatmapInteractionProvider>
         <HeatmapInteractionBoundary>
           <div className="flex w-full flex-col items-stretch gap-3">
-            <HeatmapChart className="w-full" data={columns} layout="fluid" levelColors={LEVEL_COLORS}>
+            <HeatmapChart
+              className="w-full"
+              data={columns}
+              layout="fluid"
+              levelColors={LEVEL_COLORS}
+            >
               <HeatmapCells />
-              <HeatmapXAxis formatColumn={(hour) => (hour % 3 === 0 ? `${hour}시` : null)} />
+              <HeatmapXAxis
+                formatColumn={(hour) => (hour % 3 === 0 ? `${hour}시` : null)}
+              />
               <HeatmapYAxis labels={WEEKDAY_LABEL} tickFilter="all" />
               <HeatmapTooltip
-                formatHeader={({ column, row }) => `${WEEKDAY_LABEL[row]}요일 ${column}시`}
+                formatHeader={({ column, row }) =>
+                  `${WEEKDAY_LABEL[row]}요일 ${column}시`
+                }
                 formatLabel={(count) => `페이지뷰 ${formatCount(count)}회`}
               />
             </HeatmapChart>
@@ -4117,7 +4924,15 @@ import ChartCard from "./chart-card";
 
 type Slice = { label: string; value: number; color: string };
 
-const RingBlock = ({ title, slices, unit }: { title: string; slices: Slice[]; unit: string }) => {
+const RingBlock = ({
+  title,
+  slices,
+  unit,
+}: {
+  title: string;
+  slices: Slice[];
+  unit: string;
+}) => {
   const total = slices.reduce((sum, slice) => sum + slice.value, 0);
   const data = slices.map((slice) => ({ ...slice, maxValue: total }));
   return (
@@ -4132,14 +4947,22 @@ const RingBlock = ({ title, slices, unit }: { title: string; slices: Slice[]; un
       <figcaption className="w-full">
         <ul className="flex flex-col gap-1 text-caption">
           {slices.map((slice) => (
-            <li key={slice.label} className="flex items-center justify-between gap-2">
+            <li
+              key={slice.label}
+              className="flex items-center justify-between gap-2"
+            >
               <span className="flex items-center gap-1.5 text-ink">
-                <span aria-hidden="true" className="h-2.5 w-2.5 rounded-full" style={{ background: slice.color }} />
+                <span
+                  aria-hidden="true"
+                  className="h-2.5 w-2.5 rounded-full"
+                  style={{ background: slice.color }}
+                />
                 {slice.label}
               </span>
               <span className="tabular-nums text-ink-muted">
                 {formatCount(slice.value)}
-                {unit} · {total === 0 ? "0%" : formatPercent(slice.value / total)}
+                {unit} ·{" "}
+                {total === 0 ? "0%" : formatPercent(slice.value / total)}
               </span>
             </li>
           ))}
@@ -4149,12 +4972,19 @@ const RingBlock = ({ title, slices, unit }: { title: string; slices: Slice[]; un
   );
 };
 
-export default function CompositionCard({ insights }: { insights: ApiVisitorInsights }) {
-  const deviceSlices = (["mobile", "desktop", "tablet"] as const).map((device) => ({
-    label: DEVICE_LABEL[device],
-    value: insights.devices.find((row) => row.device === device)?.sessions ?? 0,
-    color: DEVICE_COLOR[device],
-  }));
+export default function CompositionCard({
+  insights,
+}: {
+  insights: ApiVisitorInsights;
+}) {
+  const deviceSlices = (["mobile", "desktop", "tablet"] as const).map(
+    (device) => ({
+      label: DEVICE_LABEL[device],
+      value:
+        insights.devices.find((row) => row.device === device)?.sessions ?? 0,
+      color: DEVICE_COLOR[device],
+    }),
+  );
   const sessions = insights.audience.member + insights.audience.external;
 
   return (
@@ -4170,16 +5000,32 @@ export default function CompositionCard({ insights }: { insights: ApiVisitorInsi
           title="방문자 구분"
           unit="회"
           slices={[
-            { label: "외부 방문자", value: insights.audience.external, color: "var(--chart-1)" },
-            { label: "회원", value: insights.audience.member, color: "var(--chart-2)" },
+            {
+              label: "외부 방문자",
+              value: insights.audience.external,
+              color: "var(--chart-1)",
+            },
+            {
+              label: "회원",
+              value: insights.audience.member,
+              color: "var(--chart-2)",
+            },
           ]}
         />
         <RingBlock
           title="신규/재방문"
           unit="명"
           slices={[
-            { label: "신규", value: insights.summary.newVisitors, color: "var(--chart-1)" },
-            { label: "재방문", value: insights.summary.returningVisitors, color: "var(--chart-3)" },
+            {
+              label: "신규",
+              value: insights.summary.newVisitors,
+              color: "var(--chart-1)",
+            },
+            {
+              label: "재방문",
+              value: insights.summary.returningVisitors,
+              color: "var(--chart-3)",
+            },
           ]}
         />
       </div>
@@ -4198,8 +5044,17 @@ export default function CompositionCard({ insights }: { insights: ApiVisitorInsi
 "use client";
 
 import type { ApiVisitorInsights } from "@yonyoung/contracts";
-import { SankeyChart, SankeyLink, SankeyNode, SankeyTooltip } from "@/components/charts";
-import { toPathSankey, toReferrerSankey, type SankeyData } from "@/features/dashboard/stats/insights-chart-data";
+import {
+  SankeyChart,
+  SankeyLink,
+  SankeyNode,
+  SankeyTooltip,
+} from "@/components/charts";
+import {
+  toPathSankey,
+  toReferrerSankey,
+  type SankeyData,
+} from "@/features/dashboard/stats/insights-chart-data";
 import {
   formatCount,
   NEUTRAL_COLOR,
@@ -4210,14 +5065,14 @@ import {
 import ChartCard from "./chart-card";
 
 const LABEL_TO_COLOR = new Map<string, string>(
-  (Object.keys(PAGE_TYPE_LABEL) as Array<keyof typeof PAGE_TYPE_LABEL>).map((type) => [
-    PAGE_TYPE_LABEL[type],
-    PAGE_TYPE_COLOR[type],
-  ]),
+  (Object.keys(PAGE_TYPE_LABEL) as Array<keyof typeof PAGE_TYPE_LABEL>).map(
+    (type) => [PAGE_TYPE_LABEL[type], PAGE_TYPE_COLOR[type]],
+  ),
 );
 
 // 노드 이름 끝의 페이지 종류로 색을 고른다. 유입 경로·이탈은 중립색이다.
-const nodeColor = (name: string) => LABEL_TO_COLOR.get(name.split(": ").pop() ?? name) ?? NEUTRAL_COLOR;
+const nodeColor = (name: string) =>
+  LABEL_TO_COLOR.get(name.split(": ").pop() ?? name) ?? NEUTRAL_COLOR;
 
 const Flow = ({ data }: { data: SankeyData }) => (
   <SankeyChart data={data} aspectRatio="16 / 10" nodePadding={16}>
@@ -4227,13 +5082,21 @@ const Flow = ({ data }: { data: SankeyData }) => (
   </SankeyChart>
 );
 
-export function ReferrerFlowCard({ insights }: { insights: ApiVisitorInsights }) {
+export function ReferrerFlowCard({
+  insights,
+}: {
+  insights: ApiVisitorInsights;
+}) {
   return (
     <ChartCard
       testId="stats-referrer-flow"
       title="유입 경로 → 진입 페이지"
       description="세션 기준, 상위 6개 밖은 기타"
-      empty={insights.referrerFlow.length === 0 ? "이 기간·조건에 기록된 세션이 없습니다." : null}
+      empty={
+        insights.referrerFlow.length === 0
+          ? "이 기간·조건에 기록된 세션이 없습니다."
+          : null
+      }
       table={{
         columns: ["유입 경로", "진입 페이지", "세션"],
         rows: insights.referrerFlow.map((row) => [
@@ -4256,7 +5119,11 @@ export function PathFlowCard({ insights }: { insights: ApiVisitorInsights }) {
       testId="stats-path-flow"
       title="세션 이동 경로"
       description="진입 → 2번째 → 3번째 페이지, 각 단계의 이탈 포함"
-      empty={insights.pathFlow.length === 0 ? "이 기간·조건에 기록된 세션이 없습니다." : null}
+      empty={
+        insights.pathFlow.length === 0
+          ? "이 기간·조건에 기록된 세션이 없습니다."
+          : null
+      }
       table={{
         columns: ["단계", "이전 페이지", "다음 페이지", "세션"],
         rows: insights.pathFlow.map((row) => [
@@ -4281,11 +5148,23 @@ export function PathFlowCard({ insights }: { insights: ApiVisitorInsights }) {
 "use client";
 
 import type { ApiVisitorInsights } from "@yonyoung/contracts";
-import { Bar, BarChart, BarXAxis, ChartTooltip, Grid } from "@/components/charts";
+import {
+  Bar,
+  BarChart,
+  BarXAxis,
+  ChartTooltip,
+  Grid,
+} from "@/components/charts";
 import { formatCount } from "@/features/dashboard/stats/insights-format";
 import ChartCard from "./chart-card";
 
-const DEPTH_LABEL = { "1": "1페이지", "2": "2페이지", "3": "3페이지", "4": "4페이지", "5+": "5페이지+" } as const;
+const DEPTH_LABEL = {
+  "1": "1페이지",
+  "2": "2페이지",
+  "3": "3페이지",
+  "4": "4페이지",
+  "5+": "5페이지+",
+} as const;
 const DURATION_LABEL = {
   "<10s": "10초 미만",
   "10-30s": "10~30초",
@@ -4295,26 +5174,46 @@ const DURATION_LABEL = {
   "10m+": "10분 이상",
 } as const;
 
-const Distribution = ({ rows }: { rows: Array<{ name: string; sessions: number }> }) => (
+const Distribution = ({
+  rows,
+}: {
+  rows: Array<{ name: string; sessions: number }>;
+}) => (
   <BarChart data={rows} xDataKey="name" aspectRatio="2 / 1">
     <Grid horizontal />
     <Bar dataKey="sessions" fill="var(--chart-1)" lineCap={4} />
     <BarXAxis showAllLabels />
     <ChartTooltip
-      rows={(point) => [{ color: "var(--chart-1)", label: "세션", value: `${formatCount(Number(point.sessions))}회` }]}
+      rows={(point) => [
+        {
+          color: "var(--chart-1)",
+          label: "세션",
+          value: `${formatCount(Number(point.sessions))}회`,
+        },
+      ]}
     />
   </BarChart>
 );
 
 export function DepthCard({ insights }: { insights: ApiVisitorInsights }) {
-  const rows = insights.depth.map((row) => ({ name: DEPTH_LABEL[row.bucket], sessions: row.sessions }));
+  const rows = insights.depth.map((row) => ({
+    name: DEPTH_LABEL[row.bucket],
+    sessions: row.sessions,
+  }));
   return (
     <ChartCard
       testId="stats-depth"
       title="세션 깊이"
       description="한 세션에서 본 페이지 수"
-      empty={rows.every((row) => row.sessions === 0) ? "이 기간·조건에 기록된 세션이 없습니다." : null}
-      table={{ columns: ["페이지 수", "세션"], rows: rows.map((row) => [row.name, formatCount(row.sessions)]) }}
+      empty={
+        rows.every((row) => row.sessions === 0)
+          ? "이 기간·조건에 기록된 세션이 없습니다."
+          : null
+      }
+      table={{
+        columns: ["페이지 수", "세션"],
+        rows: rows.map((row) => [row.name, formatCount(row.sessions)]),
+      }}
     >
       <Distribution rows={rows} />
     </ChartCard>
@@ -4322,7 +5221,10 @@ export function DepthCard({ insights }: { insights: ApiVisitorInsights }) {
 }
 
 export function DurationCard({ insights }: { insights: ApiVisitorInsights }) {
-  const rows = insights.duration.map((row) => ({ name: DURATION_LABEL[row.bucket], sessions: row.sessions }));
+  const rows = insights.duration.map((row) => ({
+    name: DURATION_LABEL[row.bucket],
+    sessions: row.sessions,
+  }));
   return (
     <ChartCard
       testId="stats-duration"
@@ -4332,8 +5234,15 @@ export function DurationCard({ insights }: { insights: ApiVisitorInsights }) {
           ? `세션 기준, 측정 안 된 ${formatCount(insights.summary.unmeasuredSessions)}개 제외`
           : "세션 기준"
       }
-      empty={rows.every((row) => row.sessions === 0) ? "체류 시간이 측정된 세션이 없습니다." : null}
-      table={{ columns: ["체류 시간", "세션"], rows: rows.map((row) => [row.name, formatCount(row.sessions)]) }}
+      empty={
+        rows.every((row) => row.sessions === 0)
+          ? "체류 시간이 측정된 세션이 없습니다."
+          : null
+      }
+      table={{
+        columns: ["체류 시간", "세션"],
+        rows: rows.map((row) => [row.name, formatCount(row.sessions)]),
+      }}
     >
       <Distribution rows={rows} />
     </ChartCard>
@@ -4349,7 +5258,10 @@ bklit 히트맵은 행이 요일 7개로 고정이라 8주 재방문을 담을 �
 
 ```tsx
 import type { ApiVisitorInsights } from "@yonyoung/contracts";
-import { formatCount, formatPercent } from "@/features/dashboard/stats/insights-format";
+import {
+  formatCount,
+  formatPercent,
+} from "@/features/dashboard/stats/insights-format";
 import ChartCard from "./chart-card";
 
 const WEEKS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
@@ -4364,24 +5276,46 @@ const LEVEL_BG = [
   "bg-(--chart-scale-05)",
 ] as const;
 // 진한 두 단계는 흰 글자로 대비를 맞춘다.
-const LEVEL_TEXT = ["text-ink", "text-ink", "text-ink", "text-white", "text-white"] as const;
+const LEVEL_TEXT = [
+  "text-ink",
+  "text-ink",
+  "text-ink",
+  "text-white",
+  "text-white",
+] as const;
 
-export default function CohortCard({ insights }: { insights: ApiVisitorInsights }) {
+export default function CohortCard({
+  insights,
+}: {
+  insights: ApiVisitorInsights;
+}) {
   return (
     <ChartCard
       testId="stats-cohorts"
       title="주별 재방문 코호트"
       description="첫 방문 주(월요일 시작)별로 1~8주 뒤 다시 온 방문자 비율. 빈칸은 아직 오지 않은 주"
-      empty={insights.cohorts.length === 0 ? "이 기간에 처음 방문한 방문자가 없습니다." : null}
+      empty={
+        insights.cohorts.length === 0
+          ? "이 기간에 처음 방문한 방문자가 없습니다."
+          : null
+      }
     >
       <div className="overflow-x-auto">
         <table className="w-full min-w-[36rem] border-separate border-spacing-0.5 text-caption tabular-nums">
           <thead className="text-ink-muted">
             <tr>
-              <th scope="col" className="px-2 py-1 text-left font-medium">첫 방문 주</th>
-              <th scope="col" className="px-2 py-1 text-right font-medium">방문자</th>
+              <th scope="col" className="px-2 py-1 text-left font-medium">
+                첫 방문 주
+              </th>
+              <th scope="col" className="px-2 py-1 text-right font-medium">
+                방문자
+              </th>
               {WEEKS.map((week) => (
-                <th key={week} scope="col" className="px-2 py-1 text-center font-medium">
+                <th
+                  key={week}
+                  scope="col"
+                  className="px-2 py-1 text-center font-medium"
+                >
                   {week}주 후
                 </th>
               ))}
@@ -4390,8 +5324,15 @@ export default function CohortCard({ insights }: { insights: ApiVisitorInsights 
           <tbody>
             {insights.cohorts.map((cohort) => (
               <tr key={cohort.week}>
-                <th scope="row" className="px-2 py-1 text-left font-normal text-ink">{cohort.week}</th>
-                <td className="px-2 py-1 text-right text-ink">{formatCount(cohort.size)}</td>
+                <th
+                  scope="row"
+                  className="px-2 py-1 text-left font-normal text-ink"
+                >
+                  {cohort.week}
+                </th>
+                <td className="px-2 py-1 text-right text-ink">
+                  {formatCount(cohort.size)}
+                </td>
                 {cohort.retention.map((rate, index) => (
                   <td
                     key={WEEKS[index]}
@@ -4445,26 +5386,42 @@ const COLUMNS: ReadonlyArray<{ key: SortKey; label: string }> = [
   { key: "bounceRate", label: "이탈률" },
 ];
 
-const HREF_PREFIX = { activity: "/archive/records", exhibition: "/archive/exhibitions" } as const;
+const HREF_PREFIX = {
+  activity: "/archive/records",
+  exhibition: "/archive/exhibitions",
+} as const;
 
 const titleOf = (row: Row) => row.title ?? PAGE_TYPE_LABEL[row.pageType];
 
-export default function ContentTable({ insights }: { insights: ApiVisitorInsights }) {
+export default function ContentTable({
+  insights,
+}: {
+  insights: ApiVisitorInsights;
+}) {
   const [sortKey, setSortKey] = useState<SortKey>("views");
   // null(측정 안 됨)은 정렬 방향과 관계없이 맨 아래로 보낸다.
-  const rows = [...insights.content].sort((a, b) => (b[sortKey] ?? -1) - (a[sortKey] ?? -1));
+  const rows = [...insights.content].sort(
+    (a, b) => (b[sortKey] ?? -1) - (a[sortKey] ?? -1),
+  );
 
   return (
     <Card data-testid="stats-content">
-      <CardHeader title="콘텐츠" description="조회수 상위 50개. 열 이름을 누르면 그 기준으로 정렬" />
+      <CardHeader
+        title="콘텐츠"
+        description="조회수 상위 50개. 열 이름을 누르면 그 기준으로 정렬"
+      />
       {rows.length === 0 ? (
-        <p className="mt-4 text-caption text-ink-muted">이 기간·조건에 조회된 페이지가 없습니다.</p>
+        <p className="mt-4 text-caption text-ink-muted">
+          이 기간·조건에 조회된 페이지가 없습니다.
+        </p>
       ) : (
         <div className="mt-4 max-h-[32rem] overflow-auto rounded-md border border-hairline">
           <table className="w-full min-w-[40rem] text-left text-body-sm tabular-nums">
             <thead className="sticky top-0 bg-canvas-soft text-caption text-ink-muted">
               <tr>
-                <th scope="col" className="px-3 py-2 font-medium">페이지</th>
+                <th scope="col" className="px-3 py-2 font-medium">
+                  페이지
+                </th>
                 {COLUMNS.map((column) => (
                   <th
                     key={column.key}
@@ -4488,8 +5445,11 @@ export default function ContentTable({ insights }: { insights: ApiVisitorInsight
               {rows.map((row) => (
                 <tr key={`${row.pageType}:${row.resourceId}`}>
                   <td className="px-3 py-2 text-ink">
-                    <span className="mr-2 text-caption text-ink-muted">{PAGE_TYPE_LABEL[row.pageType]}</span>
-                    {row.pageType === "activity" || row.pageType === "exhibition" ? (
+                    <span className="mr-2 text-caption text-ink-muted">
+                      {PAGE_TYPE_LABEL[row.pageType]}
+                    </span>
+                    {row.pageType === "activity" ||
+                    row.pageType === "exhibition" ? (
                       <Link
                         href={`${HREF_PREFIX[row.pageType]}/${row.resourceId}`}
                         className="text-primary-text hover:underline"
@@ -4500,14 +5460,24 @@ export default function ContentTable({ insights }: { insights: ApiVisitorInsight
                       titleOf(row)
                     )}
                   </td>
-                  <td className="px-3 py-2 text-right text-ink">{formatCount(row.views)}</td>
-                  <td className="px-3 py-2 text-right text-ink">{formatCount(row.visitors)}</td>
                   <td className="px-3 py-2 text-right text-ink">
-                    {row.avgEngagedMs === null ? "–" : formatDuration(row.avgEngagedMs)}
+                    {formatCount(row.views)}
                   </td>
-                  <td className="px-3 py-2 text-right text-ink">{formatCount(row.entries)}</td>
                   <td className="px-3 py-2 text-right text-ink">
-                    {row.bounceRate === null ? "–" : formatPercent(row.bounceRate)}
+                    {formatCount(row.visitors)}
+                  </td>
+                  <td className="px-3 py-2 text-right text-ink">
+                    {row.avgEngagedMs === null
+                      ? "–"
+                      : formatDuration(row.avgEngagedMs)}
+                  </td>
+                  <td className="px-3 py-2 text-right text-ink">
+                    {formatCount(row.entries)}
+                  </td>
+                  <td className="px-3 py-2 text-right text-ink">
+                    {row.bounceRate === null
+                      ? "–"
+                      : formatPercent(row.bounceRate)}
                   </td>
                 </tr>
               ))}
@@ -4539,6 +5509,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 13: 조회 옵션 컨트롤과 화면 조립
 
 **Files:**
+
 - Create: `apps/web/app/(dashboard)/dashboard/stats/_components/stats-filter-controls.tsx`
 - Modify: `apps/web/app/(dashboard)/dashboard/stats/page.tsx`
 - Rewrite: `apps/web/app/(dashboard)/dashboard/stats/stats-view.tsx`
@@ -4546,6 +5517,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 - Modify: `apps/web/features/dashboard/services/admin-read-service.ts` (쓰지 않게 된 `getAdminPageViewAnalytics` 정리)
 
 **Interfaces:**
+
 - Consumes: Task 9 `StatsQuery`, `toInsightsApiSearch`, `toStatsSearch`, `activeFilterCount`, `getAdminVisitorInsights`; Task 11–12 컴포넌트
 - Produces: `<StatsFilterControls filters referrerOptions onChange />`
 
@@ -4565,7 +5537,11 @@ import {
   PAGE_TYPE_LABEL,
   referrerLabel,
 } from "@/features/dashboard/stats/insights-format";
-import { DEFAULT_FILTERS, activeFilterCount, type StatsFilters } from "@/features/dashboard/stats/stats-range";
+import {
+  DEFAULT_FILTERS,
+  activeFilterCount,
+  type StatsFilters,
+} from "@/features/dashboard/stats/stats-range";
 
 type StatsFilterControlsProps = {
   filters: StatsFilters;
@@ -4587,10 +5563,23 @@ const chipLabel = (key: keyof StatsFilters, value: string) => {
   }
 };
 
-export default function StatsFilterControls({ filters, referrerOptions, onChange }: StatsFilterControlsProps) {
-  const referrers = [...new Set(["direct", ...referrerOptions, ...(filters.referrer === "all" ? [] : [filters.referrer])])];
-  const set = <K extends keyof StatsFilters>(key: K, value: StatsFilters[K]) => onChange({ ...filters, [key]: value });
-  const active = (Object.keys(filters) as Array<keyof StatsFilters>).filter((key) => filters[key] !== "all");
+export default function StatsFilterControls({
+  filters,
+  referrerOptions,
+  onChange,
+}: StatsFilterControlsProps) {
+  const referrers = [
+    ...new Set([
+      "direct",
+      ...referrerOptions,
+      ...(filters.referrer === "all" ? [] : [filters.referrer]),
+    ]),
+  ];
+  const set = <K extends keyof StatsFilters>(key: K, value: StatsFilters[K]) =>
+    onChange({ ...filters, [key]: value });
+  const active = (Object.keys(filters) as Array<keyof StatsFilters>).filter(
+    (key) => filters[key] !== "all",
+  );
 
   return (
     <div className="flex flex-col gap-3" data-testid="stats-filters">
@@ -4601,10 +5590,14 @@ export default function StatsFilterControls({ filters, referrerOptions, onChange
               {...control}
               data-testid="select-stats-audience"
               value={filters.audience}
-              onChange={(event) => set("audience", event.target.value as StatsFilters["audience"])}
+              onChange={(event) =>
+                set("audience", event.target.value as StatsFilters["audience"])
+              }
             >
               {(["all", "external", "member"] as const).map((value) => (
-                <option key={value} value={value}>{AUDIENCE_LABEL[value]}</option>
+                <option key={value} value={value}>
+                  {AUDIENCE_LABEL[value]}
+                </option>
               ))}
             </Select>
           )}
@@ -4615,11 +5608,15 @@ export default function StatsFilterControls({ filters, referrerOptions, onChange
               {...control}
               data-testid="select-stats-device"
               value={filters.device}
-              onChange={(event) => set("device", event.target.value as StatsFilters["device"])}
+              onChange={(event) =>
+                set("device", event.target.value as StatsFilters["device"])
+              }
             >
               <option value="all">전체</option>
               {(["mobile", "tablet", "desktop"] as const).map((value) => (
-                <option key={value} value={value}>{DEVICE_LABEL[value]}</option>
+                <option key={value} value={value}>
+                  {DEVICE_LABEL[value]}
+                </option>
               ))}
             </Select>
           )}
@@ -4634,7 +5631,9 @@ export default function StatsFilterControls({ filters, referrerOptions, onChange
             >
               <option value="all">전체</option>
               {referrers.map((host) => (
-                <option key={host} value={host}>{referrerLabel(host)}</option>
+                <option key={host} value={host}>
+                  {referrerLabel(host)}
+                </option>
               ))}
             </Select>
           )}
@@ -4645,18 +5644,27 @@ export default function StatsFilterControls({ filters, referrerOptions, onChange
               {...control}
               data-testid="select-stats-landing"
               value={filters.landing}
-              onChange={(event) => set("landing", event.target.value as StatsFilters["landing"])}
+              onChange={(event) =>
+                set("landing", event.target.value as StatsFilters["landing"])
+              }
             >
               <option value="all">전체</option>
-              {(["home", "activity", "exhibition", "notice"] as const).map((value) => (
-                <option key={value} value={value}>{PAGE_TYPE_LABEL[value]}</option>
-              ))}
+              {(["home", "activity", "exhibition", "notice"] as const).map(
+                (value) => (
+                  <option key={value} value={value}>
+                    {PAGE_TYPE_LABEL[value]}
+                  </option>
+                ),
+              )}
             </Select>
           )}
         </Field>
       </div>
       {active.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2" aria-label="켜진 필터">
+        <div
+          className="flex flex-wrap items-center gap-2"
+          aria-label="켜진 필터"
+        >
           {active.map((key) => (
             <button
               key={key}
@@ -4750,7 +5758,10 @@ import { Button } from "@/app/(dashboard)/_components/ui/button";
 import { EmptyState } from "@/app/(dashboard)/_components/ui/empty-state";
 import { PageHeader } from "@/app/(dashboard)/_components/ui/page-header";
 import { adminRequest } from "@/features/dashboard/api/admin-api/http";
-import { insightsCsvFileName, insightsTrendToCsv } from "@/features/dashboard/stats/insights-format";
+import {
+  insightsCsvFileName,
+  insightsTrendToCsv,
+} from "@/features/dashboard/stats/insights-format";
 import {
   toInsightsApiSearch,
   toStatsSearch,
@@ -4789,7 +5800,9 @@ const formatTime = () =>
 
 const downloadCsv = (insights: ApiVisitorInsights) => {
   const url = URL.createObjectURL(
-    new Blob([insightsTrendToCsv(insights)], { type: "text/csv;charset=utf-8" }),
+    new Blob([insightsTrendToCsv(insights)], {
+      type: "text/csv;charset=utf-8",
+    }),
   );
   const anchor = document.createElement("a");
   anchor.href = url;
@@ -4862,7 +5875,11 @@ export default function StatsView({
   const changeMetric = (next: StatsMetric) => {
     setMetric(next);
     const search = toStatsSearch({ ...query, metric: next });
-    window.history.replaceState(null, "", search === "" ? pathname : `${pathname}?${search}`);
+    window.history.replaceState(
+      null,
+      "",
+      search === "" ? pathname : `${pathname}?${search}`,
+    );
   };
 
   const header = (
@@ -4871,7 +5888,9 @@ export default function StatsView({
       description={
         insights !== null
           ? `${insights.range.from} ~ ${insights.range.to} (${insights.range.days}일), 비교 기간 ${insights.previousRange.from} ~ ${insights.previousRange.to}${
-              isLive && lastUpdated !== null ? `. ${lastUpdated} 기준, 10초마다 갱신` : ""
+              isLive && lastUpdated !== null
+                ? `. ${lastUpdated} 기준, 10초마다 갱신`
+                : ""
             }`
           : "기간과 조건을 골라 방문자 사용 패턴을 확인합니다."
       }
@@ -4879,7 +5898,9 @@ export default function StatsView({
         insights !== null ? (
           <Button
             variant="utility"
-            leadingIcon={<DownloadIcon className="h-4 w-4" aria-hidden="true" />}
+            leadingIcon={
+              <DownloadIcon className="h-4 w-4" aria-hidden="true" />
+            }
             onClick={() => downloadCsv(insights)}
             data-testid="btn-stats-csv"
           >
@@ -4946,17 +5967,26 @@ export default function StatsView({
 
       {error !== null && (
         <p role="status" className="text-caption text-danger-text">
-          최신 값으로 갱신하지 못했습니다({error}). 아래는 마지막으로 불러온 값입니다.
+          최신 값으로 갱신하지 못했습니다({error}). 아래는 마지막으로 불러온
+          값입니다.
         </p>
       )}
       {collectionNote !== null && (
-        <p role="note" data-testid="stats-collection-note" className="text-caption text-ink-muted">
+        <p
+          role="note"
+          data-testid="stats-collection-note"
+          className="text-caption text-ink-muted"
+        >
           {collectionNote}
         </p>
       )}
 
       <KpiGrid insights={insights} />
-      <TrendCard insights={insights} metric={metric} onMetricChange={changeMetric} />
+      <TrendCard
+        insights={insights}
+        metric={metric}
+        onMetricChange={changeMetric}
+      />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <HourlyHeatmapCard insights={insights} />
@@ -5007,10 +6037,12 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ### Task 14: e2e, 렌더 확인, 마무리
 
 **Files:**
+
 - Modify: `apps/web/tests/e2e/mock-api/server.ts`
 - Modify: `apps/web/tests/e2e/page-view-stats.spec.ts`
 
 **Interfaces:**
+
 - Consumes: Task 13 화면의 testid: `btn-stats-csv`, `select-stats-audience|device|referrer|landing`, `chip-stats-<key>`, `btn-stats-clear-filters`, `btn-stats-metric-<metric>`, `stats-collection-note`, `stats-trend`, `stats-hourly`, `stats-content`
 
 - [ ] **Step 1: 목업 API 응답 추가**
@@ -5018,74 +6050,155 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 `tests/e2e/mock-api/server.ts`의 `/api/admin/page-views/analytics` 분기 다음에:
 
 ```ts
-    // 요청한 기간·필터를 그대로 돌려줘 화면 URL → API 쿼리 연결을 검증할 수 있게 한다.
-    if (pathname === "/api/admin/page-views/insights" && method === "GET") {
-      const from = requestUrl.searchParams.get("from") ?? "2026-05-01";
-      const to = requestUrl.searchParams.get("to") ?? "2026-05-03";
-      const granularity = requestUrl.searchParams.get("granularity") ?? "day";
-      const segmented = ["audience", "device", "referrer", "landing"].some((key) =>
-        requestUrl.searchParams.has(key),
-      );
-      const core = { views: 360, visitors: 120, sessions: 150, pagesPerSession: 2.4, avgSessionMs: 95_000, bounceRate: 0.42 };
-      sendData(response, {
-        range: { from, to, days: 3, granularity },
-        previousRange: { from: "2026-04-28", to: "2026-04-30" },
-        eventsTrackedSince: "2026-05-02",
-        segmented,
-        summary: {
-          ...core,
-          unmeasuredSessions: 12,
-          newVisitors: 80,
-          returningVisitors: 40,
-          prev: { ...core, views: 300, visitors: 100, sessions: 130, bounceRate: 0.5 },
-        },
-        trend: [
-          { bucket: from, views: 110, visitors: 0, sessions: 0, avgSessionMs: 0, newVisitors: 0, returningVisitors: 0, prevViews: 90, prevVisitors: 0, prevSessions: 0, prevAvgSessionMs: 0, collected: false },
-          { bucket: "mock-mid", views: 120, visitors: 60, sessions: 75, avgSessionMs: 90_000, newVisitors: 40, returningVisitors: 20, prevViews: 100, prevVisitors: 50, prevSessions: 65, prevAvgSessionMs: 80_000, collected: true },
-          { bucket: to, views: 130, visitors: 60, sessions: 75, avgSessionMs: 100_000, newVisitors: 40, returningVisitors: 20, prevViews: 110, prevVisitors: 50, prevSessions: 65, prevAvgSessionMs: 85_000, collected: true },
-        ],
-        hourly: Array.from({ length: 168 }, (_, index) => ({
-          weekday: Math.floor(index / 24),
-          hour: index % 24,
-          views: index % 24 >= 9 && index % 24 <= 22 ? (index % 7) + 1 : 0,
-        })),
-        referrerFlow: [
-          { referrer: "direct", landing: "home", sessions: 70 },
-          { referrer: "google.com", landing: "activity", sessions: 50 },
-          { referrer: "instagram.com", landing: "exhibition", sessions: 30 },
-        ],
-        pathFlow: [
-          { step: 1, from: "home", to: "activity", sessions: 40 },
-          { step: 1, from: "home", to: "exit", sessions: 30 },
-          { step: 1, from: "activity", to: "exit", sessions: 50 },
-          { step: 2, from: "activity", to: "exhibition", sessions: 15 },
-          { step: 2, from: "activity", to: "exit", sessions: 25 },
-        ],
-        content: [
-          { pageType: "activity", resourceId: "act-1", title: "목 활동", views: 160, visitors: 70, avgEngagedMs: 120_000, entries: 50, bounceRate: 0.4 },
-          { pageType: "home", resourceId: "home", title: null, views: 200, visitors: 100, avgEngagedMs: 30_000, entries: 70, bounceRate: 0.43 },
-        ],
-        devices: [
-          { device: "mobile", sessions: 100 },
-          { device: "desktop", sessions: 45 },
-          { device: "tablet", sessions: 5 },
-        ],
-        audience: { member: 20, external: 130 },
-        depth: [
-          { bucket: "1", sessions: 63 }, { bucket: "2", sessions: 40 }, { bucket: "3", sessions: 25 },
-          { bucket: "4", sessions: 12 }, { bucket: "5+", sessions: 10 },
-        ],
-        duration: [
-          { bucket: "<10s", sessions: 30 }, { bucket: "10-30s", sessions: 25 }, { bucket: "30s-1m", sessions: 30 },
-          { bucket: "1-3m", sessions: 35 }, { bucket: "3-10m", sessions: 15 }, { bucket: "10m+", sessions: 3 },
-        ],
-        cohorts: [
-          { week: "2026-04-27", size: 50, retention: [0.3, 0.2, null, null, null, null, null, null] },
-        ],
-        referrerOptions: ["direct", "google.com", "instagram.com"],
-      });
-      return;
-    }
+// 요청한 기간·필터를 그대로 돌려줘 화면 URL → API 쿼리 연결을 검증할 수 있게 한다.
+if (pathname === "/api/admin/page-views/insights" && method === "GET") {
+  const from = requestUrl.searchParams.get("from") ?? "2026-05-01";
+  const to = requestUrl.searchParams.get("to") ?? "2026-05-03";
+  const granularity = requestUrl.searchParams.get("granularity") ?? "day";
+  const segmented = ["audience", "device", "referrer", "landing"].some((key) =>
+    requestUrl.searchParams.has(key),
+  );
+  const core = {
+    views: 360,
+    visitors: 120,
+    sessions: 150,
+    pagesPerSession: 2.4,
+    avgSessionMs: 95_000,
+    bounceRate: 0.42,
+  };
+  sendData(response, {
+    range: { from, to, days: 3, granularity },
+    previousRange: { from: "2026-04-28", to: "2026-04-30" },
+    eventsTrackedSince: "2026-05-02",
+    segmented,
+    summary: {
+      ...core,
+      unmeasuredSessions: 12,
+      newVisitors: 80,
+      returningVisitors: 40,
+      prev: {
+        ...core,
+        views: 300,
+        visitors: 100,
+        sessions: 130,
+        bounceRate: 0.5,
+      },
+    },
+    trend: [
+      {
+        bucket: from,
+        views: 110,
+        visitors: 0,
+        sessions: 0,
+        avgSessionMs: 0,
+        newVisitors: 0,
+        returningVisitors: 0,
+        prevViews: 90,
+        prevVisitors: 0,
+        prevSessions: 0,
+        prevAvgSessionMs: 0,
+        collected: false,
+      },
+      {
+        bucket: "mock-mid",
+        views: 120,
+        visitors: 60,
+        sessions: 75,
+        avgSessionMs: 90_000,
+        newVisitors: 40,
+        returningVisitors: 20,
+        prevViews: 100,
+        prevVisitors: 50,
+        prevSessions: 65,
+        prevAvgSessionMs: 80_000,
+        collected: true,
+      },
+      {
+        bucket: to,
+        views: 130,
+        visitors: 60,
+        sessions: 75,
+        avgSessionMs: 100_000,
+        newVisitors: 40,
+        returningVisitors: 20,
+        prevViews: 110,
+        prevVisitors: 50,
+        prevSessions: 65,
+        prevAvgSessionMs: 85_000,
+        collected: true,
+      },
+    ],
+    hourly: Array.from({ length: 168 }, (_, index) => ({
+      weekday: Math.floor(index / 24),
+      hour: index % 24,
+      views: index % 24 >= 9 && index % 24 <= 22 ? (index % 7) + 1 : 0,
+    })),
+    referrerFlow: [
+      { referrer: "direct", landing: "home", sessions: 70 },
+      { referrer: "google.com", landing: "activity", sessions: 50 },
+      { referrer: "instagram.com", landing: "exhibition", sessions: 30 },
+    ],
+    pathFlow: [
+      { step: 1, from: "home", to: "activity", sessions: 40 },
+      { step: 1, from: "home", to: "exit", sessions: 30 },
+      { step: 1, from: "activity", to: "exit", sessions: 50 },
+      { step: 2, from: "activity", to: "exhibition", sessions: 15 },
+      { step: 2, from: "activity", to: "exit", sessions: 25 },
+    ],
+    content: [
+      {
+        pageType: "activity",
+        resourceId: "act-1",
+        title: "목 활동",
+        views: 160,
+        visitors: 70,
+        avgEngagedMs: 120_000,
+        entries: 50,
+        bounceRate: 0.4,
+      },
+      {
+        pageType: "home",
+        resourceId: "home",
+        title: null,
+        views: 200,
+        visitors: 100,
+        avgEngagedMs: 30_000,
+        entries: 70,
+        bounceRate: 0.43,
+      },
+    ],
+    devices: [
+      { device: "mobile", sessions: 100 },
+      { device: "desktop", sessions: 45 },
+      { device: "tablet", sessions: 5 },
+    ],
+    audience: { member: 20, external: 130 },
+    depth: [
+      { bucket: "1", sessions: 63 },
+      { bucket: "2", sessions: 40 },
+      { bucket: "3", sessions: 25 },
+      { bucket: "4", sessions: 12 },
+      { bucket: "5+", sessions: 10 },
+    ],
+    duration: [
+      { bucket: "<10s", sessions: 30 },
+      { bucket: "10-30s", sessions: 25 },
+      { bucket: "30s-1m", sessions: 30 },
+      { bucket: "1-3m", sessions: 35 },
+      { bucket: "3-10m", sessions: 15 },
+      { bucket: "10m+", sessions: 3 },
+    ],
+    cohorts: [
+      {
+        week: "2026-04-27",
+        size: 50,
+        retention: [0.3, 0.2, null, null, null, null, null, null],
+      },
+    ],
+    referrerOptions: ["direct", "google.com", "instagram.com"],
+  });
+  return;
+}
 ```
 
 - [ ] **Step 2: e2e 갱신**
@@ -5096,71 +6209,89 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 2. CSV 테스트 기대값을 바꾼다:
 
 ```ts
-    expect(download.suggestedFilename()).toBe("visitor-insights_2026-05-01_2026-05-03_day.csv");
-    const content = await readFile((await download.path())!, "utf8");
-    expect(content).toContain("2026-05-03,130,60,75,100,40,20,110,50,65,85,수집");
+expect(download.suggestedFilename()).toBe(
+  "visitor-insights_2026-05-01_2026-05-03_day.csv",
+);
+const content = await readFile((await download.path())!, "utf8");
+expect(content).toContain("2026-05-03,130,60,75,100,40,20,110,50,65,85,수집");
 ```
 
 3. 테마 테스트의 `getByRole("heading", { name: "유입 경로" })`를 `getByRole("heading", { name: "유입 경로 → 진입 페이지" })`로 바꾼다.
 4. 추가:
 
 ```ts
-  test("필터를 고르면 URL·API 요청에 반영되고 칩으로 해제한다", async ({ page }) => {
-    await page.goto("/dashboard/stats", { waitUntil: "domcontentloaded" });
+test("필터를 고르면 URL·API 요청에 반영되고 칩으로 해제한다", async ({
+  page,
+}) => {
+  await page.goto("/dashboard/stats", { waitUntil: "domcontentloaded" });
 
-    const insightsRequest = page.waitForRequest((request) =>
-      request.url().includes("/api/admin/page-views/insights") && request.url().includes("audience=external"),
-    );
-    await page.getByTestId("select-stats-audience").selectOption("external");
-    await expect(page).toHaveURL(/audience=external/);
-    await insightsRequest.catch(() => undefined);
+  const insightsRequest = page.waitForRequest(
+    (request) =>
+      request.url().includes("/api/admin/page-views/insights") &&
+      request.url().includes("audience=external"),
+  );
+  await page.getByTestId("select-stats-audience").selectOption("external");
+  await expect(page).toHaveURL(/audience=external/);
+  await insightsRequest.catch(() => undefined);
 
-    await page.getByTestId("select-stats-landing").selectOption("activity");
-    await expect(page).toHaveURL(/audience=external&landing=activity/);
-    await expect(page.getByTestId("chip-stats-audience")).toContainText("외부 방문자");
+  await page.getByTestId("select-stats-landing").selectOption("activity");
+  await expect(page).toHaveURL(/audience=external&landing=activity/);
+  await expect(page.getByTestId("chip-stats-audience")).toContainText(
+    "외부 방문자",
+  );
 
-    await page.getByTestId("chip-stats-audience").click();
-    await expect(page).not.toHaveURL(/audience=/);
-    await expect(page).toHaveURL(/landing=activity/);
+  await page.getByTestId("chip-stats-audience").click();
+  await expect(page).not.toHaveURL(/audience=/);
+  await expect(page).toHaveURL(/landing=activity/);
 
-    await page.getByTestId("select-stats-device").selectOption("mobile");
-    await page.getByTestId("btn-stats-clear-filters").click();
-    await expect(page).not.toHaveURL(/device=|landing=/);
+  await page.getByTestId("select-stats-device").selectOption("mobile");
+  await page.getByTestId("btn-stats-clear-filters").click();
+  await expect(page).not.toHaveURL(/device=|landing=/);
+});
+
+test("추이 지표를 바꾸면 다시 불러오지 않고 URL만 바뀐다", async ({ page }) => {
+  await page.goto("/dashboard/stats", { waitUntil: "domcontentloaded" });
+  await expect(page.getByTestId("stats-trend")).toBeVisible();
+
+  let refetched = false;
+  page.on("request", (request) => {
+    if (
+      request.url().includes("/dashboard/stats") &&
+      request.headers()["rsc"] === "1"
+    )
+      refetched = true;
   });
+  await page.getByTestId("btn-stats-metric-visitors").click();
+  await expect(page).toHaveURL(/metric=visitors/);
+  await expect(
+    page.getByTestId("stats-trend").getByText("재방문"),
+  ).toBeVisible();
+  expect(refetched).toBe(false);
+});
 
-  test("추이 지표를 바꾸면 다시 불러오지 않고 URL만 바뀐다", async ({ page }) => {
-    await page.goto("/dashboard/stats", { waitUntil: "domcontentloaded" });
-    await expect(page.getByTestId("stats-trend")).toBeVisible();
-
-    let refetched = false;
-    page.on("request", (request) => {
-      if (request.url().includes("/dashboard/stats") && request.headers()["rsc"] === "1") refetched = true;
-    });
-    await page.getByTestId("btn-stats-metric-visitors").click();
-    await expect(page).toHaveURL(/metric=visitors/);
-    await expect(page.getByTestId("stats-trend").getByText("재방문")).toBeVisible();
-    expect(refetched).toBe(false);
+test("수집 시작 전 구간이 있으면 안내한다", async ({ page }) => {
+  await page.goto("/dashboard/stats?from=2026-05-01&to=2026-05-03", {
+    waitUntil: "domcontentloaded",
   });
+  await expect(page.getByTestId("stats-collection-note")).toContainText(
+    "2026-05-02부터 수집",
+  );
+});
 
-  test("수집 시작 전 구간이 있으면 안내한다", async ({ page }) => {
-    await page.goto("/dashboard/stats?from=2026-05-01&to=2026-05-03", { waitUntil: "domcontentloaded" });
-    await expect(page.getByTestId("stats-collection-note")).toContainText("2026-05-02부터 수집");
-  });
+test("차트마다 표로 보기를 열 수 있다", async ({ page }) => {
+  await page.goto("/dashboard/stats", { waitUntil: "domcontentloaded" });
+  const hourly = page.getByTestId("stats-hourly");
+  await hourly.getByText("표로 보기").click();
+  await expect(hourly.getByRole("columnheader", { name: "월" })).toBeVisible();
+});
 
-  test("차트마다 표로 보기를 열 수 있다", async ({ page }) => {
-    await page.goto("/dashboard/stats", { waitUntil: "domcontentloaded" });
-    const hourly = page.getByTestId("stats-hourly");
-    await hourly.getByText("표로 보기").click();
-    await expect(hourly.getByRole("columnheader", { name: "월" })).toBeVisible();
-  });
-
-  test("콘텐츠 표는 열 이름으로 정렬한다", async ({ page }) => {
-    await page.goto("/dashboard/stats", { waitUntil: "domcontentloaded" });
-    const table = page.getByTestId("stats-content");
-    await expect(table.locator("tbody tr").first()).toContainText("홈");
-    await table.getByRole("button", { name: "평균 체류" }).click();
-    await expect(table.locator("tbody tr").first()).toContainText("목 활동");
-  });
+test("콘텐츠 표는 열 이름으로 정렬한다", async ({ page }) => {
+  await page.goto("/dashboard/stats", { waitUntil: "domcontentloaded" });
+  const table = page.getByTestId("stats-content");
+  await expect(table.locator("tbody tr").first()).toContainText("홈");
+  await table.getByRole("button", { name: "평균 체류" }).click();
+  await expect(table.locator("tbody tr").first()).toContainText("목 활동");
+});
 ```
 
 모바일 터치 영역 테스트의 testId 목록에 `"select-stats-audience"`를 더한다(셀렉트도 44px 이상이어야 한다). 실패하면 `Select`에 `min-h-11`을 준다.

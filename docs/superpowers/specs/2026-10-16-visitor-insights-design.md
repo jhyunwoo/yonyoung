@@ -48,9 +48,9 @@ GET /api/admin/page-views/insights?from&to&granularity&audience&device&referrer&
 
 `apps/web/features/public/analytics/visitor-identity.ts`(신규)가 관리한다.
 
-| 키 | 저장 위치 | 값 | 규칙 |
-|---|---|---|---|
-| `yy_vid` | localStorage | UUID v4 | 없으면 생성. 이후 유지 |
+| 키        | 저장 위치    | 값                               | 규칙                                                                                   |
+| --------- | ------------ | -------------------------------- | -------------------------------------------------------------------------------------- |
+| `yy_vid`  | localStorage | UUID v4                          | 없으면 생성. 이후 유지                                                                 |
 | `yy_sess` | localStorage | `{ id: UUID, lastActiveAt: ms }` | `now - lastActiveAt > 30분`이면 새 id. 페이지뷰와 체류 전송 때마다 `lastActiveAt` 갱신 |
 
 - localStorage 접근이 실패하면(프라이빗 모드, 차단) 모듈 변수에 만든 임시 ID를 쓴다. 그 문서가 살아 있는 동안만 유지된다.
@@ -95,18 +95,18 @@ GET /api/admin/page-views/insights?from&to&granularity&audience&device&referrer&
 
 `apps/api/src/platform/db/schema/analytics.ts`에 추가, 마이그레이션 `0015_analytics_events.sql`.
 
-| 열 | 타입 | 설명 |
-|---|---|---|
-| `id` | text PK | pageviewId |
-| `visitor_id` | text not null | |
-| `session_id` | text not null | |
-| `visited_at` | integer(ms) not null | 서버 수신 시각 |
-| `page_type` | text not null | home / activity / exhibition / notice |
-| `resource_id` | text not null | `normalizePageViewResourceId` 결과 |
-| `referrer_host` | text null | 세션 첫 페이지뷰에만. `direct` 또는 정규화된 호스트 |
-| `device` | text not null | mobile / tablet / desktop |
-| `is_member` | integer(bool) not null | |
-| `engaged_ms` | integer null | null = 측정 안 됨 |
+| 열              | 타입                   | 설명                                                |
+| --------------- | ---------------------- | --------------------------------------------------- |
+| `id`            | text PK                | pageviewId                                          |
+| `visitor_id`    | text not null          |                                                     |
+| `session_id`    | text not null          |                                                     |
+| `visited_at`    | integer(ms) not null   | 서버 수신 시각                                      |
+| `page_type`     | text not null          | home / activity / exhibition / notice               |
+| `resource_id`   | text not null          | `normalizePageViewResourceId` 결과                  |
+| `referrer_host` | text null              | 세션 첫 페이지뷰에만. `direct` 또는 정규화된 호스트 |
+| `device`        | text not null          | mobile / tablet / desktop                           |
+| `is_member`     | integer(bool) not null |                                                     |
+| `engaged_ms`    | integer null           | null = 측정 안 됨                                   |
 
 인덱스: `(visited_at)`, `(visitor_id, visited_at)`, `(session_id)`.
 
@@ -119,30 +119,30 @@ GET /api/admin/page-views/insights?from&to&granularity&audience&device&referrer&
 
 모든 날짜·시간은 KST다. 집계는 `apps/api/src/features/page-views/visitor-insights.ts`(신규)의 순수 함수가 이벤트 배열을 받아 계산한다.
 
-| 지표 | 정의 |
-|---|---|
-| 페이지뷰 | 이벤트 행 수 |
-| 순방문자 | 고유 `visitor_id` 수 |
-| 세션 | 고유 `session_id` 수. 세션의 기간 귀속은 첫 이벤트 시각 기준 |
-| 세션당 페이지 | 페이지뷰 / 세션 |
-| 평균 체류 시간 | 세션별 `engaged_ms` 합의 평균. 측정된 이벤트가 하나도 없는 세션은 제외하고, 제외 수를 함께 돌려준다 |
-| 이탈률 | 페이지뷰가 1개인 세션 / 세션 |
-| 신규 방문자 | 전체 기간 첫 이벤트가 조회 기간 안에 있는 방문자 |
-| 재방문 방문자 | 조회 기간에 왔고 조회 기간 시작 전에도 이벤트가 있는 방문자 |
-| 진입 | 세션의 첫 이벤트 |
-| 주별 코호트 | 첫 방문 주(월요일 시작)별 방문자 집합. k주 후 재방문율 = 그 집합 중 (첫 주 + k)주에 이벤트가 있는 비율. k = 1..8. 조회 기간 끝을 넘는 칸은 null |
+| 지표           | 정의                                                                                                                                            |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| 페이지뷰       | 이벤트 행 수                                                                                                                                    |
+| 순방문자       | 고유 `visitor_id` 수                                                                                                                            |
+| 세션           | 고유 `session_id` 수. 세션의 기간 귀속은 첫 이벤트 시각 기준                                                                                    |
+| 세션당 페이지  | 페이지뷰 / 세션                                                                                                                                 |
+| 평균 체류 시간 | 세션별 `engaged_ms` 합의 평균. 측정된 이벤트가 하나도 없는 세션은 제외하고, 제외 수를 함께 돌려준다                                             |
+| 이탈률         | 페이지뷰가 1개인 세션 / 세션                                                                                                                    |
+| 신규 방문자    | 전체 기간 첫 이벤트가 조회 기간 안에 있는 방문자                                                                                                |
+| 재방문 방문자  | 조회 기간에 왔고 조회 기간 시작 전에도 이벤트가 있는 방문자                                                                                     |
+| 진입           | 세션의 첫 이벤트                                                                                                                                |
+| 주별 코호트    | 첫 방문 주(월요일 시작)별 방문자 집합. k주 후 재방문율 = 그 집합 중 (첫 주 + k)주에 이벤트가 있는 비율. k = 1..8. 조회 기간 끝을 넘는 칸은 null |
 
 ## 5. 조회 옵션
 
 URL 쿼리(기존 `range`, `from`, `to`, `granularity`에 추가):
 
-| 키 | 값 | 기본 | 적용 단위 |
-|---|---|---|---|
-| `audience` | `all` / `external` / `member` | `all` | 세션. 세션 안에 회원 이벤트가 하나라도 있으면 회원 세션 |
-| `device` | `all` / `mobile` / `tablet` / `desktop` | `all` | 세션(첫 이벤트의 기기) |
-| `referrer` | `all` / `direct` / 호스트명 | `all` | 세션(첫 이벤트의 리퍼러) |
-| `landing` | `all` / `home` / `activity` / `exhibition` / `notice` | `all` | 세션(첫 이벤트의 페이지 종류) |
-| `metric` | `views` / `visitors` / `sessions` / `duration` | `views` | 추이 차트만. 웹 전용, API로 보내지 않음 |
+| 키         | 값                                                    | 기본    | 적용 단위                                               |
+| ---------- | ----------------------------------------------------- | ------- | ------------------------------------------------------- |
+| `audience` | `all` / `external` / `member`                         | `all`   | 세션. 세션 안에 회원 이벤트가 하나라도 있으면 회원 세션 |
+| `device`   | `all` / `mobile` / `tablet` / `desktop`               | `all`   | 세션(첫 이벤트의 기기)                                  |
+| `referrer` | `all` / `direct` / 호스트명                           | `all`   | 세션(첫 이벤트의 리퍼러)                                |
+| `landing`  | `all` / `home` / `activity` / `exhibition` / `notice` | `all`   | 세션(첫 이벤트의 페이지 종류)                           |
+| `metric`   | `views` / `visitors` / `sessions` / `duration`        | `views` | 추이 차트만. 웹 전용, API로 보내지 않음                 |
 
 필터는 **세션 세그먼트**다. 조건에 맞는 세션을 고른 뒤 그 세션들의 모든 이벤트로 모든 지표를 계산한다. 그래서 "진입 페이지: 활동"을 고르면 활동 글로 들어온 세션이 그 뒤 본 홈·전시 조회도 함께 보인다. (설계 대화의 "페이지 종류 필터"를 세그먼트 모델과 맞추려고 "진입 페이지 종류"로 정의했다.)
 
