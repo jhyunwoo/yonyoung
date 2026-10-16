@@ -1,13 +1,12 @@
 import { describe, expect, it } from "vitest";
-import type { ApiPageViewAnalytics } from "@yonyoung/contracts";
 import {
+  activeFilterCount,
+  DEFAULT_FILTERS,
   kstToday,
   parseStatsSearchParams,
   presetQuery,
-  toAnalyticsApiSearch,
+  toInsightsApiSearch,
   toStatsSearch,
-  trendCsvFileName,
-  trendToCsv,
   validateCustomRange,
 } from "@/features/dashboard/stats/stats-range";
 
@@ -26,6 +25,8 @@ describe("parseStatsSearchParams", () => {
       from: "2026-09-11",
       to: TODAY,
       granularity: null,
+      filters: DEFAULT_FILTERS,
+      metric: "views",
     });
   });
 
@@ -49,6 +50,8 @@ describe("parseStatsSearchParams", () => {
       from: "2026-01-01",
       to: "2026-03-31",
       granularity: "month",
+      filters: DEFAULT_FILTERS,
+      metric: "views",
     });
   });
 
@@ -95,9 +98,11 @@ describe("URL 직렬화", () => {
       from: "2026-01-01",
       to: "2026-01-31",
       granularity: null,
+      filters: DEFAULT_FILTERS,
+      metric: "views",
     } as const;
     expect(toStatsSearch(custom)).toBe("from=2026-01-01&to=2026-01-31");
-    expect(toAnalyticsApiSearch(presetQuery("7d", TODAY))).toBe(
+    expect(toInsightsApiSearch(presetQuery("7d", TODAY))).toBe(
       "from=2026-10-04&to=2026-10-10",
     );
   });
@@ -109,22 +114,80 @@ describe("URL 직렬화", () => {
   });
 });
 
-describe("trendToCsv", () => {
-  const analytics = {
-    range: { from: "2026-10-01", to: "2026-10-02", days: 2, granularity: "day" },
-    previousRange: { from: "2026-09-29", to: "2026-09-30" },
-    trend: [
-      { bucket: "2026-10-01", views: 3, prevViews: 1 },
-      { bucket: "2026-10-02", views: 0, prevViews: 4 },
-    ],
-  } as ApiPageViewAnalytics;
+describe("조회 옵션 필터", () => {
+  const today = "2026-10-16";
 
-  it("BOM과 CRLF가 붙은 CSV를 만든다", () => {
-    expect(trendToCsv(analytics)).toBe(
-      "﻿구간,조회수,이전 기간 조회수 (2026-09-29~2026-09-30)\r\n" +
-        "2026-10-01,3,1\r\n" +
-        "2026-10-02,0,4\r\n",
+  it("필터와 지표를 URL에서 읽는다", () => {
+    const query = parseStatsSearchParams(
+      {
+        audience: "member",
+        device: "mobile",
+        referrer: "google.com",
+        landing: "activity",
+        metric: "duration",
+      },
+      today,
     );
-    expect(trendCsvFileName(analytics)).toBe("page-views_2026-10-01_2026-10-02_day.csv");
+    expect(query.filters).toEqual({
+      audience: "member",
+      device: "mobile",
+      referrer: "google.com",
+      landing: "activity",
+    });
+    expect(query.metric).toBe("duration");
+  });
+
+  it("잘못된 값은 기본값으로 돌린다", () => {
+    const query = parseStatsSearchParams(
+      {
+        audience: "robots",
+        device: "fridge",
+        referrer: "https://evil/path",
+        landing: "admin",
+        metric: "money",
+      },
+      today,
+    );
+    expect(query.filters).toEqual(DEFAULT_FILTERS);
+    expect(query.metric).toBe("views");
+  });
+
+  it("기본값이 아닌 필터만 URL에 남기고 왕복해도 같다", () => {
+    const query = {
+      ...presetQuery("30d", today),
+      filters: {
+        ...DEFAULT_FILTERS,
+        audience: "external" as const,
+        referrer: "direct",
+      },
+      metric: "visitors" as const,
+    };
+    const search = toStatsSearch(query);
+    expect(search).toBe("audience=external&referrer=direct&metric=visitors");
+    expect(
+      parseStatsSearchParams(Object.fromEntries(new URLSearchParams(search)), today),
+    ).toEqual(query);
+  });
+
+  it("API 요청에는 지표를 빼고 필터만 보낸다", () => {
+    const query = {
+      ...presetQuery("7d", today),
+      filters: { ...DEFAULT_FILTERS, landing: "exhibition" as const },
+      metric: "sessions" as const,
+    };
+    expect(toInsightsApiSearch(query)).toBe(
+      "from=2026-10-10&to=2026-10-16&landing=exhibition",
+    );
+  });
+
+  it("켜진 필터 수를 센다", () => {
+    expect(activeFilterCount(DEFAULT_FILTERS)).toBe(0);
+    expect(
+      activeFilterCount({
+        ...DEFAULT_FILTERS,
+        device: "tablet",
+        referrer: "direct",
+      }),
+    ).toBe(2);
   });
 });

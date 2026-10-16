@@ -25,6 +25,7 @@ import type {
   ApiPageViewStats,
   ApiSiteSettings,
   ApiUser,
+  ApiVisitorInsights,
 } from "@yonyoung/contracts";
 import {
   apiActivitySchema,
@@ -37,6 +38,7 @@ import {
   apiPageViewStatsSchema,
   apiSiteSettingsSchema,
   apiUserSchema,
+  apiVisitorInsightsSchema,
 } from "@yonyoung/contracts/schemas";
 
 const ADMIN_API_BASE_PATH = "/api";
@@ -275,6 +277,17 @@ export const getAdminPageViewAnalytics = (
     `/admin/page-views/analytics?${apiSearch}`,
     cookieHeader,
     apiPageViewAnalyticsSchema,
+  );
+
+/** apiSearch는 stats-range의 toInsightsApiSearch 결과다. */
+export const getAdminVisitorInsights = (
+  cookieHeader: string | null,
+  apiSearch: string,
+): Promise<AdminReadResult<ApiVisitorInsights>> =>
+  readAdminResource(
+    `/admin/page-views/insights?${apiSearch}`,
+    cookieHeader,
+    apiVisitorInsightsSchema,
   );
 
 export const getMcpOverview = (
