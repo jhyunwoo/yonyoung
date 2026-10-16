@@ -24,13 +24,15 @@ const point = {
 };
 
 describe("insights-chart-data", () => {
-  it("버킷 문자열을 KST 자정 Date로 바꾼다", () => {
-    expect(bucketToDate("2026-10-01").toISOString()).toBe(
-      "2026-09-30T15:00:00.000Z",
-    );
-    expect(bucketToDate("2026-10").toISOString()).toBe(
-      "2026-09-30T15:00:00.000Z",
-    );
+  it("버킷 문자열을 브라우저 시간대와 무관하게 그 날짜의 로컬 자정으로 바꾼다", () => {
+    const day = bucketToDate("2026-10-01");
+    expect([day.getFullYear(), day.getMonth(), day.getDate(), day.getHours()]).toEqual([
+      2026, 9, 1, 0,
+    ]);
+    const month = bucketToDate("2026-10");
+    expect([month.getFullYear(), month.getMonth(), month.getDate()]).toEqual([
+      2026, 9, 1,
+    ]);
   });
 
   it("지표별 현재·이전 값을 고른다. 체류는 초 단위다", () => {
@@ -67,6 +69,13 @@ describe("insights-chart-data", () => {
     expect(data.links).toEqual([
       { source: 0, target: 2, value: 3 },
       { source: 1, target: 3, value: 2 },
+    ]);
+    // 들어오는 흐름이 없는 첫 열은 source로 표시해야 노드 값이 나가는 세션 합으로 보인다.
+    expect(data.nodes.map((node) => node.category)).toEqual([
+      "source",
+      "source",
+      undefined,
+      undefined,
     ]);
   });
 

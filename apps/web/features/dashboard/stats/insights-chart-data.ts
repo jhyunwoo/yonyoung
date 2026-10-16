@@ -5,13 +5,18 @@ import { PAGE_TYPE_LABEL, referrerLabel } from "./insights-format";
 type TrendPoint = ApiVisitorInsights["trend"][number];
 
 export type SankeyData = {
-  nodes: Array<{ name: string }>;
+  nodes: Array<{ name: string; category?: "source" }>;
   links: Array<{ source: number; target: number; value: number }>;
 };
 
-/** 버킷은 KST 날짜(YYYY-MM-DD) 또는 월(YYYY-MM)이다. */
-export const bucketToDate = (bucket: string): Date =>
-  new Date(`${bucket.length === 7 ? `${bucket}-01` : bucket}T00:00:00+09:00`);
+/**
+ * 버킷은 KST 날짜(YYYY-MM-DD) 또는 월(YYYY-MM)이다. 차트는 Date를 브라우저 시간대로 포맷하므로
+ * 로컬 자정으로 만들어야 어느 시간대에서 보든 버킷과 같은 날짜가 찍힌다.
+ */
+export const bucketToDate = (bucket: string): Date => {
+  const [year, month, day = 1] = bucket.split("-").map(Number);
+  return new Date(year!, month! - 1, day);
+};
 
 export const metricValue = (point: TrendPoint, metric: StatsMetric) => {
   switch (metric) {
@@ -58,8 +63,12 @@ const buildSankey = (
     target: nodeOf(link.to),
     value: link.value,
   }));
+  const targets = new Set(sankeyLinks.map((link) => link.target));
   return {
-    nodes: [...index.keys()].map((name) => ({ name })),
+    // bklit 노드는 source일 때만 나가는 흐름을 합쳐 값으로 보여 준다.
+    nodes: [...index.keys()].map((name, nodeIndex) =>
+      targets.has(nodeIndex) ? { name } : { name, category: "source" as const },
+    ),
     links: sankeyLinks,
   };
 };

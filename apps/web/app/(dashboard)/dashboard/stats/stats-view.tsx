@@ -228,14 +228,11 @@ export default function StatsView({
       <KpiGrid insights={insights} />
       <TrendCard insights={insights} metric={metric} onMetricChange={changeMetric} />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <HourlyHeatmapCard insights={insights} />
-        <CompositionCard insights={insights} />
-      </div>
-      <div className="grid gap-4 lg:grid-cols-2">
-        <ReferrerFlowCard insights={insights} />
-        <PathFlowCard insights={insights} />
-      </div>
+      {/* 히트맵 24열, 링 3개, 흐름도의 양쪽 라벨은 반폭 카드에서 겹치므로 한 줄씩 쓴다. */}
+      <HourlyHeatmapCard insights={insights} />
+      <CompositionCard insights={insights} />
+      <ReferrerFlowCard insights={insights} />
+      <PathFlowCard insights={insights} />
       <div className="grid gap-4 md:grid-cols-2">
         <DepthCard insights={insights} />
         <DurationCard insights={insights} />

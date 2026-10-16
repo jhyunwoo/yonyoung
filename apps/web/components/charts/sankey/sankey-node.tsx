@@ -5,11 +5,7 @@ import { motion, type Transition } from "motion/react";
 import { type ReactNode, useCallback, useMemo } from "react";
 import { intFmt } from "../chart-formatters";
 import { transitionWithDelay } from "../motion-utils";
-import {
-  type SankeyLinkDatum,
-  type SankeyNodeDatum,
-  useSankey,
-} from "./sankey-context";
+import { type SankeyLinkDatum, type SankeyNodeDatum, useSankey } from "./sankey-context";
 
 // Helper to get node index from link source/target
 type NodeOrIndex = SankeyNodeType<SankeyNodeDatum, SankeyLinkDatum> | number;
@@ -43,7 +39,7 @@ export interface SankeyNodeProps {
   /** Custom node color function */
   getNodeColor?: (
     node: SankeyNodeType<SankeyNodeDatum, SankeyLinkDatum>,
-    index: number
+    index: number,
   ) => string;
 }
 
@@ -235,10 +231,8 @@ function AnimatedNode({
   const { enterTransition, revealEpoch } = useSankey();
 
   const nodeAnimDuration = animationDuration * 0.6;
-  const staggerDelaySec =
-    ((index / totalNodes) * nodeAnimDuration * 0.4) / 1000;
-  const nameLabelDelaySec =
-    staggerDelaySec + (nodeAnimDuration * 0.6 * 0.3) / 1000;
+  const staggerDelaySec = ((index / totalNodes) * nodeAnimDuration * 0.4) / 1000;
+  const nameLabelDelaySec = staggerDelaySec + (nodeAnimDuration * 0.6 * 0.3) / 1000;
   const valueLabelDelaySec = nameLabelDelaySec + 0.06;
 
   const nodeEnter = transitionWithDelay(enterTransition, staggerDelaySec);
@@ -296,7 +290,7 @@ function AnimatedNode({
               opacity={valueOpacity}
               transition={valueEnter}
             >
-              {intFmt(value)} sessions
+              세션 {intFmt(value)}
             </NodeLabel>
           ) : null}
         </>
@@ -335,15 +329,12 @@ export function SankeyNode({
       "var(--chart-4)",
       "var(--chart-5)",
     ],
-    []
+    [],
   );
 
   // Get color for a node
   const getColor = useCallback(
-    (
-      node: SankeyNodeType<SankeyNodeDatum, SankeyLinkDatum>,
-      index: number
-    ): string => {
+    (node: SankeyNodeType<SankeyNodeDatum, SankeyLinkDatum>, index: number): string => {
       if (fill) {
         return fill;
       }
@@ -353,7 +344,7 @@ export function SankeyNode({
 
       return defaultColors[index % defaultColors.length] ?? "var(--chart-1)";
     },
-    [fill, getNodeColorProp, defaultColors]
+    [fill, getNodeColorProp, defaultColors],
   );
 
   // Check if a node is connected to the hovered element
@@ -383,7 +374,7 @@ export function SankeyNode({
       }
       return false;
     },
-    [hoveredNodeIndex, hoveredLinkIndex, links]
+    [hoveredNodeIndex, hoveredLinkIndex, links],
   );
 
   const isAnyHovered = hoveredNodeIndex !== null || hoveredLinkIndex !== null;

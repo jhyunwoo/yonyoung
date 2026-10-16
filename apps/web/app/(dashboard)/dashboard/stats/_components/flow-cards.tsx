@@ -28,11 +28,22 @@ const nodeColor = (name: string) =>
   LABEL_TO_COLOR.get(name.split(": ").pop() ?? name) ?? NEUTRAL_COLOR;
 
 const Flow = ({ data }: { data: SankeyData }) => (
-  <SankeyChart data={data} aspectRatio="16 / 10" nodePadding={16}>
-    <SankeyLink getNodeColor={(node) => nodeColor(String(node.name))} />
-    <SankeyNode getNodeColor={(node) => nodeColor(String(node.name))} />
-    <SankeyTooltip formatValue={(value) => `${formatCount(value)}세션`} />
-  </SankeyChart>
+  // 좁은 화면에서 열 사이 라벨이 겹치지 않도록 최소 폭을 두고 가로로 스크롤한다.
+  <div className="overflow-x-auto">
+    <div className="min-w-[40rem]">
+      <SankeyChart
+        data={data}
+        aspectRatio="16 / 7"
+        nodePadding={16}
+        // 기본 여백(좌우 180px)은 카드 폭에서 그림 영역을 거의 남기지 않는다. 라벨 길이에 맞춰 줄인다.
+        margin={{ top: 16, right: 120, bottom: 16, left: 120 }}
+      >
+        <SankeyLink getNodeColor={(node) => nodeColor(String(node.name))} />
+        <SankeyNode getNodeColor={(node) => nodeColor(String(node.name))} />
+        <SankeyTooltip formatValue={(value) => `${formatCount(value)}세션`} />
+      </SankeyChart>
+    </div>
+  </div>
 );
 
 export function ReferrerFlowCard({ insights }: { insights: ApiVisitorInsights }) {
