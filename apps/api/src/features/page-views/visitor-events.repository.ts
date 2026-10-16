@@ -38,6 +38,9 @@ export const ANALYTICS_EVENT_RETENTION_MS = 731 * DAY_MS;
  * 넘으면 최신 이벤트만 집계하고 응답에 truncated를 싣는다.
  */
 export const MAX_INSIGHT_EVENTS = 200_000;
+const CONTENT_LIMIT = 50;
+// D1은 쿼리당 바인딩 변수가 100개까지다.
+const TITLE_LOOKUP_CHUNK = 90;
 
 export const createVisitorEventRepository = (
   db: Database,
@@ -91,6 +94,16 @@ export const createVisitorEventRepository = (
     const segmented = isSegmented(segment);
     const kstDay = sql<string>`date((${pageViews.visitedAt} + ${KST_OFFSET_MS}) / 1000, 'unixepoch')`;
 
+    const sessionsInWindow = db
+      .selectDistinct({ sessionId: analyticsEvents.sessionId })
+      .from(analyticsEvents)
+      .where(
+        and(
+          gte(analyticsEvents.visitedAt, previousStart),
+          lt(analyticsEvents.visitedAt, currentEnd),
+        ),
+      );
+
     const visitorsInRange = db
       .selectDistinct({ visitorId: analyticsEvents.visitorId })
       .from(analyticsEvents)
@@ -101,7 +114,7 @@ export const createVisitorEventRepository = (
         ),
       );
 
-    const [eventRows, firstSeenRows, trackedRows, legacyRows] =
+    const [eventRows, firstSeenRows, trackedRows, legacyRows, earlierRows] =
       await Promise.all([
         db
           .select()
@@ -143,7 +156,18 @@ export const createVisitorEventRepository = (
                 ),
               )
               .groupBy(kstDay),
+        // 비교 기간 전에 시작한 세션은 뒷부분만 읽혀 시작·진입 페이지가 틀어지므로 뺀다.
+        db
+          .selectDistinct({ sessionId: analyticsEvents.sessionId })
+          .from(analyticsEvents)
+          .where(
+            and(
+              lt(analyticsEvents.visitedAt, previousStart),
+              inArray(analyticsEvents.sessionId, sessionsInWindow),
+            ),
+          ),
       ]);
+    const startedEarlier = new Set(earlierRows.map((row) => row.sessionId));
 
     const daily = legacyRows.map((row) => ({
       date: row.date,
@@ -153,12 +177,15 @@ export const createVisitorEventRepository = (
     const computed = computeVisitorInsights({
       range,
       segment,
-      events: eventRows.slice(0, maxInsightEvents).map((row) => ({
-        ...row,
-        visitedAt: row.visitedAt.getTime(),
-        pageType: row.pageType as PageViewType,
-        device: row.device as PageViewDevice,
-      })),
+      events: eventRows
+        .slice(0, maxInsightEvents)
+        .filter((row) => !startedEarlier.has(row.sessionId))
+        .map((row) => ({
+          ...row,
+          visitedAt: row.visitedAt.getTime(),
+          pageType: row.pageType as PageViewType,
+          device: row.device as PageViewDevice,
+        })),
       firstSeen: new Map(
         firstSeenRows.map((row) => [row.visitorId, Number(row.first)]),
       ),
@@ -184,12 +211,20 @@ export const createVisitorEventRepository = (
       const ids = computed.content
         .filter((row) => row.pageType === pageType)
         .map((row) => row.resourceId);
-      if (ids.length === 0) return new Map<string, string>();
-      const rows = await db
-        .select({ id: table.id, title: table.title })
-        .from(table)
-        .where(and(inArray(table.id, ids), isNull(table.deletedAt)));
-      return new Map(rows.map((row) => [row.id, row.title]));
+      const titles = new Map<string, string>();
+      for (let index = 0; index < ids.length; index += TITLE_LOOKUP_CHUNK) {
+        const rows = await db
+          .select({ id: table.id, title: table.title })
+          .from(table)
+          .where(
+            and(
+              inArray(table.id, ids.slice(index, index + TITLE_LOOKUP_CHUNK)),
+              isNull(table.deletedAt),
+            ),
+          );
+        for (const row of rows) titles.set(row.id, row.title);
+      }
+      return titles;
     };
     const [activityTitles, exhibitionTitles] = await Promise.all([
       titlesOf(activities, "activity"),
@@ -199,8 +234,8 @@ export const createVisitorEventRepository = (
     return {
       ...computed,
       truncated: eventRows.length > maxInsightEvents,
-      content: computed.content.flatMap(
-        (row): VisitorInsightsEntity["content"] => {
+      content: computed.content
+        .flatMap((row): VisitorInsightsEntity["content"] => {
           if (row.pageType === "activity" || row.pageType === "exhibition") {
             const title = (
               row.pageType === "activity" ? activityTitles : exhibitionTitles
@@ -208,8 +243,8 @@ export const createVisitorEventRepository = (
             return title === undefined ? [] : [{ ...row, title }];
           }
           return [{ ...row, title: null }];
-        },
-      ),
+        })
+        .slice(0, CONTENT_LIMIT),
     };
   },
 });

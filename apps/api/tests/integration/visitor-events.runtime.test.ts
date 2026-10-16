@@ -258,3 +258,108 @@ describe("방문자 인사이트 읽기 상한", () => {
     expect(result.summary.sessions).toBe(2);
   });
 });
+
+describe("방문자 인사이트 기간 경계", () => {
+  const kst = (value: string) => Date.parse(`${value}:00+09:00`);
+  const ALL = {
+    audience: "all",
+    device: "all",
+    referrer: "all",
+    landing: "all",
+  } as const;
+  const base = {
+    device: "desktop" as const,
+    isMember: false,
+    referrerHost: null,
+  };
+
+  it("비교 기간 시작 전에 시작한 세션은 어느 기간에도 세지 않는다", async () => {
+    const repository = createVisitorEventRepository(createDB(db));
+    await repository.recordAnalyticsEvent({
+      ...base,
+      id: "bd-1",
+      visitorId: "bd-v1",
+      sessionId: "bd-s1",
+      visitedAt: kst("2025-09-30T23:58"),
+      pageType: "home",
+      resourceId: "home",
+    });
+    await repository.recordAnalyticsEvent({
+      ...base,
+      id: "bd-2",
+      visitorId: "bd-v1",
+      sessionId: "bd-s1",
+      visitedAt: kst("2025-10-01T00:02"),
+      pageType: "activity",
+      resourceId: "bd-a",
+    });
+    await repository.recordAnalyticsEvent({
+      ...base,
+      id: "bd-3",
+      visitorId: "bd-v2",
+      sessionId: "bd-s2",
+      visitedAt: kst("2025-10-02T10:00"),
+      pageType: "home",
+      resourceId: "home",
+    });
+
+    const result = await repository.getVisitorInsights(
+      {
+        from: "2025-10-08",
+        to: "2025-10-14",
+        days: 7,
+        granularity: "day",
+        previous: { from: "2025-10-01", to: "2025-10-07" },
+      },
+      ALL,
+    );
+
+    expect(result.summary.prev.sessions).toBe(1);
+  });
+
+  it("삭제된 페이지를 뺀 뒤 상위 콘텐츠를 고른다", async () => {
+    await db.batch([
+      db.prepare(
+        "INSERT INTO generations (id, name, sort_order, start_date, end_date) VALUES ('tg1', '70기', 70, 0, 0)",
+      ),
+      db.prepare(
+        "INSERT INTO activities (id, title, description, start_date, end_date, cover_image_url, generation_id) VALUES ('ta-live', '남은 활동', '', 0, 0, '', 'tg1')",
+      ),
+    ]);
+    const repository = createVisitorEventRepository(createDB(db));
+    const visitedAt = kst("2025-11-03T10:00");
+    const view = (id: string, resourceId: string, sessionId: string) =>
+      repository.recordAnalyticsEvent({
+        ...base,
+        id,
+        visitorId: "tc-v",
+        sessionId,
+        visitedAt,
+        pageType: "activity",
+        resourceId,
+      });
+    // 없는 활동 50개가 두 번씩 보여 살아 있는 활동(한 번)보다 위에 있다.
+    await Promise.all(
+      Array.from({ length: 50 }, (_, index) => [
+        view(`tc-gone-${index}-a`, `tc-gone-${index}`, `tc-s-${index}-a`),
+        view(`tc-gone-${index}-b`, `tc-gone-${index}`, `tc-s-${index}-b`),
+      ]).flat(),
+    );
+    await view("tc-live", "ta-live", "tc-s-live");
+
+    const result = await repository.getVisitorInsights(
+      {
+        from: "2025-11-03",
+        to: "2025-11-09",
+        days: 7,
+        granularity: "day",
+        previous: { from: "2025-10-27", to: "2025-11-02" },
+      },
+      ALL,
+    );
+
+    expect(result.content).toEqual([
+      expect.objectContaining({ resourceId: "ta-live", title: "남은 활동" }),
+    ]);
+  });
+});

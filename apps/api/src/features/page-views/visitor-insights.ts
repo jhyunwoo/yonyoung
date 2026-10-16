@@ -58,7 +58,6 @@ type Session = {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const COHORT_WEEKS = 8;
-const CONTENT_LIMIT = 50;
 const REFERRER_FLOW_LIMIT = 6;
 const REFERRER_OPTION_LIMIT = 10;
 const DEPTH_BUCKETS: readonly DepthBucket[] = ["1", "2", "3", "4", "5+"];
@@ -384,9 +383,9 @@ export const computeVisitorInsights = (
       contents.set(key, acc);
     });
   }
+  // 상위 몇 개를 남길지는 삭제된 페이지를 뺀 뒤 저장소에서 정한다.
   const content: ContentRow[] = [...contents.values()]
     .sort((a, b) => b.views - a.views)
-    .slice(0, CONTENT_LIMIT)
     .map((acc) => ({
       pageType: acc.pageType,
       resourceId: acc.resourceId,
