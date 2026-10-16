@@ -112,3 +112,116 @@ describe("analytics_events 쓰기", () => {
     expect(ids.results.map((row) => row.id)).toEqual(["new-1"]);
   });
 });
+describe("방문자 인사이트 조회", () => {
+  const kst = (value: string) => Date.parse(`${value}:00+09:00`);
+  const kstMidnight = (date: string) => Date.parse(`${date}T00:00:00+09:00`);
+  const ALL = {
+    audience: "all",
+    device: "all",
+    referrer: "all",
+    landing: "all",
+  } as const;
+  const RANGE = {
+    from: "2026-08-01",
+    to: "2026-08-07",
+    days: 7,
+    granularity: "day" as const,
+    previous: { from: "2026-07-25", to: "2026-07-31" },
+  };
+
+  beforeAll(async () => {
+    const repository = createVisitorEventRepository(createDB(db));
+    await db.batch([
+      db.prepare(
+        "INSERT INTO generations (id, name, sort_order, start_date, end_date) VALUES ('vg1', '61기', 61, 0, 0)",
+      ),
+      db.prepare(
+        "INSERT INTO activities (id, title, description, start_date, end_date, cover_image_url, generation_id) VALUES ('va1', '여름 출사', '', 0, 0, '', 'vg1')",
+      ),
+      db.prepare(
+        "INSERT INTO activities (id, title, description, start_date, end_date, cover_image_url, generation_id, deleted_at) VALUES ('va2', '삭제된 활동', '', 0, 0, '', 'vg1', 1)",
+      ),
+      db
+        .prepare(
+          "INSERT INTO page_views (id, page_type, resource_id, view_count, visited_at) VALUES ('pv-1', 'home', 'home', 9, ?)",
+        )
+        .bind(kstMidnight("2026-08-02")),
+    ]);
+    const base = {
+      sessionId: "is1",
+      visitorId: "iv1",
+      device: "desktop" as const,
+      isMember: false,
+    };
+    await repository.recordAnalyticsEvent({
+      ...base,
+      id: "i1",
+      visitedAt: kst("2026-07-20T10:00"),
+      pageType: "home",
+      resourceId: "home",
+      referrerHost: "direct",
+      sessionId: "is0",
+    });
+    await repository.recordAnalyticsEvent({
+      ...base,
+      id: "i2",
+      visitedAt: kst("2026-08-02T10:00"),
+      pageType: "home",
+      resourceId: "home",
+      referrerHost: "google.com",
+    });
+    await repository.recordAnalyticsEvent({
+      ...base,
+      id: "i3",
+      visitedAt: kst("2026-08-02T10:01"),
+      pageType: "activity",
+      resourceId: "va1",
+      referrerHost: null,
+    });
+    await repository.recordAnalyticsEvent({
+      ...base,
+      id: "i4",
+      visitedAt: kst("2026-08-02T10:02"),
+      pageType: "activity",
+      resourceId: "va2",
+      referrerHost: null,
+    });
+  });
+
+  it("필터가 없으면 합계 페이지뷰와 이벤트 지표를 함께 돌려주고 제목을 붙인다", async () => {
+    const repository = createVisitorEventRepository(createDB(db));
+    const result = await repository.getVisitorInsights(RANGE, ALL);
+
+    expect(result.segmented).toBe(false);
+    expect(result.summary).toMatchObject({
+      views: 9,
+      sessions: 1,
+      visitors: 1,
+      returningVisitors: 1,
+    });
+    expect(result.content).toEqual([
+      expect.objectContaining({
+        pageType: "home",
+        resourceId: "home",
+        title: null,
+      }),
+      expect.objectContaining({
+        pageType: "activity",
+        resourceId: "va1",
+        title: "여름 출사",
+      }),
+    ]);
+    expect(result.eventsTrackedSince).not.toBeNull();
+  });
+
+  it("필터가 있으면 페이지뷰도 이벤트에서 센다", async () => {
+    const repository = createVisitorEventRepository(createDB(db));
+    const result = await repository.getVisitorInsights(RANGE, {
+      ...ALL,
+      referrer: "google.com",
+    });
+
+    expect(result.segmented).toBe(true);
+    expect(result.summary.views).toBe(3);
+  });
+});
