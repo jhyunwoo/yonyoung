@@ -85,6 +85,8 @@ export default function StatsView({
     setLastUpdated(formatTime());
 
     const refresh = async () => {
+      // 갱신마다 두 기간 이벤트를 다시 훑는다. 아무도 보지 않는 탭까지 DB를 두드리지 않게 한다.
+      if (document.visibilityState !== "visible") return;
       try {
         const data = await adminRequest<ApiVisitorInsights>(
           `/admin/page-views/insights?${toInsightsApiSearch(query)}`,
