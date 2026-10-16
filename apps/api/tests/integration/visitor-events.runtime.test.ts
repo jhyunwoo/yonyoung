@@ -317,6 +317,42 @@ describe("방문자 인사이트 기간 경계", () => {
     expect(result.summary.prev.sessions).toBe(1);
   });
 
+  it("읽기 상한은 기간 전에 시작한 세션을 뺀 이벤트에 적용한다", async () => {
+    const writer = createVisitorEventRepository(createDB(db));
+    const event = (id: string, sessionId: string, at: string) =>
+      writer.recordAnalyticsEvent({
+        ...base,
+        id,
+        visitorId: "cb-v",
+        sessionId,
+        visitedAt: kst(at),
+        pageType: "home",
+        resourceId: "home",
+      });
+    // 가장 최근 두 이벤트는 기간 전에 시작한 세션의 뒷부분이다.
+    await event("cb-0", "cb-early", "2025-12-24T23:58");
+    await event("cb-1", "cb-early", "2025-12-25T00:02");
+    await event("cb-2", "cb-early", "2025-12-25T00:05");
+    await event("cb-3", "cb-inside", "2025-12-25T00:01");
+
+    const capped = createVisitorEventRepository(createDB(db), {
+      maxInsightEvents: 2,
+    });
+    const result = await capped.getVisitorInsights(
+      {
+        from: "2026-01-01",
+        to: "2026-01-07",
+        days: 7,
+        granularity: "day",
+        previous: { from: "2025-12-25", to: "2025-12-31" },
+      },
+      ALL,
+    );
+
+    expect(result.summary.prev.sessions).toBe(1);
+    expect(result.truncated).toBe(false);
+  });
+
   it("삭제된 페이지를 뺀 뒤 상위 콘텐츠를 고른다", async () => {
     await db.batch([
       db.prepare(

@@ -1,4 +1,14 @@
-import { and, desc, eq, gte, inArray, isNull, lt, sql } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  lt,
+  notInArray,
+  sql,
+} from "drizzle-orm";
 import type createDB from "../../lib/db";
 import {
   activities,
@@ -103,6 +113,17 @@ export const createVisitorEventRepository = (
           lt(analyticsEvents.visitedAt, currentEnd),
         ),
       );
+    // 비교 기간 전에 시작한 세션은 뒷부분만 읽혀 시작·진입 페이지가 틀어지므로 뺀다.
+    // 읽기 상한보다 먼저 빼야 상한 자리를 빼앗지 않는다.
+    const sessionsStartedEarlier = db
+      .selectDistinct({ sessionId: analyticsEvents.sessionId })
+      .from(analyticsEvents)
+      .where(
+        and(
+          lt(analyticsEvents.visitedAt, previousStart),
+          inArray(analyticsEvents.sessionId, sessionsInWindow),
+        ),
+      );
 
     const visitorsInRange = db
       .selectDistinct({ visitorId: analyticsEvents.visitorId })
@@ -114,7 +135,7 @@ export const createVisitorEventRepository = (
         ),
       );
 
-    const [eventRows, firstSeenRows, trackedRows, legacyRows, earlierRows] =
+    const [eventRows, firstSeenRows, trackedRows, legacyRows] =
       await Promise.all([
         db
           .select()
@@ -123,6 +144,7 @@ export const createVisitorEventRepository = (
             and(
               gte(analyticsEvents.visitedAt, previousStart),
               lt(analyticsEvents.visitedAt, currentEnd),
+              notInArray(analyticsEvents.sessionId, sessionsStartedEarlier),
             ),
           )
           .orderBy(desc(analyticsEvents.visitedAt))
@@ -156,18 +178,7 @@ export const createVisitorEventRepository = (
                 ),
               )
               .groupBy(kstDay),
-        // 비교 기간 전에 시작한 세션은 뒷부분만 읽혀 시작·진입 페이지가 틀어지므로 뺀다.
-        db
-          .selectDistinct({ sessionId: analyticsEvents.sessionId })
-          .from(analyticsEvents)
-          .where(
-            and(
-              lt(analyticsEvents.visitedAt, previousStart),
-              inArray(analyticsEvents.sessionId, sessionsInWindow),
-            ),
-          ),
       ]);
-    const startedEarlier = new Set(earlierRows.map((row) => row.sessionId));
 
     const daily = legacyRows.map((row) => ({
       date: row.date,
@@ -177,15 +188,12 @@ export const createVisitorEventRepository = (
     const computed = computeVisitorInsights({
       range,
       segment,
-      events: eventRows
-        .slice(0, maxInsightEvents)
-        .filter((row) => !startedEarlier.has(row.sessionId))
-        .map((row) => ({
-          ...row,
-          visitedAt: row.visitedAt.getTime(),
-          pageType: row.pageType as PageViewType,
-          device: row.device as PageViewDevice,
-        })),
+      events: eventRows.slice(0, maxInsightEvents).map((row) => ({
+        ...row,
+        visitedAt: row.visitedAt.getTime(),
+        pageType: row.pageType as PageViewType,
+        device: row.device as PageViewDevice,
+      })),
       firstSeen: new Map(
         firstSeenRows.map((row) => [row.visitorId, Number(row.first)]),
       ),
