@@ -369,8 +369,13 @@ export const ApiVisitorInsightsSchema = z
     }),
     summary: insightsCore.extend({
       unmeasuredSessions: nonNegativeInt,
-      newVisitors: nonNegativeInt,
-      returningVisitors: nonNegativeInt,
+      newVisitors: nonNegativeInt.openapi({
+        description:
+          "생애 첫 세션이 조회 기간과 필터에 모두 들어온 방문자 수. 첫 세션이 필터에서 빠지면 재방문으로 센다",
+      }),
+      returningVisitors: nonNegativeInt.openapi({
+        description: "조회 기간 방문자 중 신규가 아닌 방문자 수",
+      }),
       prev: insightsCore,
     }),
     trend: z.array(
