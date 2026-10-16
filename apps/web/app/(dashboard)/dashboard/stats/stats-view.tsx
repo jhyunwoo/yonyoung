@@ -13,6 +13,7 @@ import {
   insightsTrendToCsv,
 } from "@/features/dashboard/stats/insights-format";
 import {
+  daysBetweenInclusive,
   toInsightsApiSearch,
   toStatsSearch,
   type StatsMetric,
@@ -37,7 +38,10 @@ type StatsViewProps = {
   error: string | null;
 };
 
-const REFRESH_INTERVAL_MS = 10_000;
+// 갱신마다 두 기간 이벤트를 다시 훑는다. 긴 기간은 비용이 크고 몇 초 단위 변화가 추이에 보이지도 않는다.
+const SHORT_RANGE_DAYS = 7;
+const refreshIntervalMs = (query: StatsQuery) =>
+  daysBetweenInclusive(query.from, query.to) <= SHORT_RANGE_DAYS ? 10_000 : 60_000;
 
 const formatTime = () =>
   new Date().toLocaleTimeString("ko-KR", {
@@ -75,6 +79,7 @@ export default function StatsView({
   const [metric, setMetric] = useState<StatsMetric>(query.metric);
   // 과거 기간은 숫자가 바뀌지 않으므로 오늘이 포함될 때만 주기적으로 다시 불러온다.
   const isLive = query.to === today;
+  const refreshMs = refreshIntervalMs(query);
 
   useEffect(() => {
     if (!isLive) return;
@@ -85,7 +90,7 @@ export default function StatsView({
     setLastUpdated(formatTime());
 
     const refresh = async () => {
-      // 갱신마다 두 기간 이벤트를 다시 훑는다. 아무도 보지 않는 탭까지 DB를 두드리지 않게 한다.
+      // 아무도 보지 않는 탭까지 DB를 두드리지 않게 한다.
       if (document.visibilityState !== "visible") return;
       try {
         const data = await adminRequest<ApiVisitorInsights>(
@@ -106,12 +111,12 @@ export default function StatsView({
       }
     };
 
-    const timer = setInterval(() => void refresh(), REFRESH_INTERVAL_MS);
+    const timer = setInterval(() => void refresh(), refreshMs);
     return () => {
       active = false;
       clearInterval(timer);
     };
-  }, [isLive, query]);
+  }, [isLive, query, refreshMs]);
 
   const navigate = (next: StatsQuery) => {
     const search = toStatsSearch({ ...next, metric });
@@ -139,7 +144,9 @@ export default function StatsView({
       description={
         insights !== null
           ? `${insights.range.from} ~ ${insights.range.to} (${insights.range.days}일), 비교 기간 ${insights.previousRange.from} ~ ${insights.previousRange.to}${
-              isLive && lastUpdated !== null ? `. ${lastUpdated} 기준, 10초마다 갱신` : ""
+              isLive && lastUpdated !== null
+                ? `. ${lastUpdated} 기준, ${refreshMs / 1000}초마다 갱신`
+                : ""
             }`
           : "기간과 조건을 골라 방문자 사용 패턴을 확인합니다."
       }
