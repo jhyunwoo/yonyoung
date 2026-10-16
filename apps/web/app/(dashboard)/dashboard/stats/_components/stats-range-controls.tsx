@@ -56,7 +56,8 @@ export default function StatsRangeControls({
     }
     setIsCustomOpen(false);
     setCustomError(null);
-    onChange(presetQuery(next, today));
+    // 기간만 바꾸고 켜 둔 필터는 유지한다.
+    onChange({ ...presetQuery(next, today), filters: query.filters });
   };
 
   const handleCustomSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -64,7 +65,13 @@ export default function StatsRangeControls({
     const error = validateCustomRange(customFrom, customTo, today);
     setCustomError(error);
     if (error === null) {
-      onChange({ preset: "custom", from: customFrom, to: customTo, granularity: null });
+      onChange({
+        ...query,
+        preset: "custom",
+        from: customFrom,
+        to: customTo,
+        granularity: null,
+      });
     }
   };
 

@@ -14,12 +14,12 @@ import {
 type Row = ApiVisitorInsights["content"][number];
 type SortKey = "views" | "visitors" | "avgEngagedMs" | "entries" | "bounceRate";
 
-const COLUMNS: ReadonlyArray<{ key: SortKey; label: string }> = [
-  { key: "views", label: "조회수" },
-  { key: "visitors", label: "방문자" },
-  { key: "avgEngagedMs", label: "평균 체류" },
-  { key: "entries", label: "진입" },
-  { key: "bounceRate", label: "이탈률" },
+const COLUMNS: ReadonlyArray<{ key: SortKey; label: string; testId: string }> = [
+  { key: "views", label: "조회수", testId: "views" },
+  { key: "visitors", label: "방문자", testId: "visitors" },
+  { key: "avgEngagedMs", label: "평균 체류", testId: "duration" },
+  { key: "entries", label: "진입", testId: "entries" },
+  { key: "bounceRate", label: "이탈률", testId: "bounce" },
 ];
 
 const HREF_PREFIX = {
@@ -63,6 +63,7 @@ export default function ContentTable({ insights }: { insights: ApiVisitorInsight
                   >
                     <button
                       type="button"
+                      data-testid={`btn-stats-sort-${column.testId}`}
                       onClick={() => setSortKey(column.key)}
                       className="min-h-11 w-full rounded-xs px-2 text-right hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
                     >

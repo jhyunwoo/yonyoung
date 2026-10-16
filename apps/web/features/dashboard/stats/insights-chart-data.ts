@@ -38,8 +38,7 @@ export const toHourlyColumns = (hourly: ApiVisitorInsights["hourly"]) =>
     bins: Array.from({ length: 7 }, (_, weekday) => ({
       bin: weekday,
       count:
-        hourly.find((cell) => cell.weekday === weekday && cell.hour === hour)
-          ?.views ?? 0,
+        hourly.find((cell) => cell.weekday === weekday && cell.hour === hour)?.views ?? 0,
       date: new Date(REFERENCE_MONDAY_UTC + (weekday * 24 + hour) * 3_600_000),
     })),
   }));
@@ -65,9 +64,7 @@ const buildSankey = (
   };
 };
 
-export const toReferrerSankey = (
-  rows: ApiVisitorInsights["referrerFlow"],
-): SankeyData =>
+export const toReferrerSankey = (rows: ApiVisitorInsights["referrerFlow"]): SankeyData =>
   buildSankey(
     rows.map((row) => ({
       from: referrerLabel(row.referrer),
@@ -80,9 +77,7 @@ const STEP_LABEL = { 1: "진입", 2: "2번째", 3: "3번째" } as const;
 const pageLabel = (page: keyof typeof PAGE_TYPE_LABEL | "exit") =>
   page === "exit" ? "이탈" : PAGE_TYPE_LABEL[page];
 
-export const toPathSankey = (
-  rows: ApiVisitorInsights["pathFlow"],
-): SankeyData =>
+export const toPathSankey = (rows: ApiVisitorInsights["pathFlow"]): SankeyData =>
   buildSankey(
     [...rows]
       .sort((a, b) => a.step - b.step)

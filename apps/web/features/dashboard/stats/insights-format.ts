@@ -17,15 +17,7 @@ export const AUDIENCE_LABEL = {
   external: "외부 방문자",
   member: "회원",
 } as const;
-export const WEEKDAY_LABEL = [
-  "월",
-  "화",
-  "수",
-  "목",
-  "금",
-  "토",
-  "일",
-] as const;
+export const WEEKDAY_LABEL = ["월", "화", "수", "목", "금", "토", "일"] as const;
 
 /** 색은 엔티티에 고정한다. 필터로 항목 수가 바뀌어도 남은 항목 색이 바뀌지 않는다. */
 export const PAGE_TYPE_COLOR = {
@@ -47,11 +39,9 @@ export const referrerLabel = (host: string): string => {
   return host;
 };
 
-export const formatCount = (value: number): string =>
-  value.toLocaleString("ko-KR");
+export const formatCount = (value: number): string => value.toLocaleString("ko-KR");
 
-export const formatPercent = (ratio: number): string =>
-  `${(ratio * 100).toFixed(1)}%`;
+export const formatPercent = (ratio: number): string => `${(ratio * 100).toFixed(1)}%`;
 
 export const formatDuration = (ms: number): string => {
   const seconds = Math.round(ms / 1000);
