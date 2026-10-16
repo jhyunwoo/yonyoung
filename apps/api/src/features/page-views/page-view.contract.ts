@@ -364,6 +364,9 @@ export const ApiVisitorInsightsSchema = z
       .nullable()
       .openapi({ description: "방문자 이벤트 수집 시작일(KST)" }),
     segmented: z.boolean().openapi({ description: "필터가 하나라도 켜졌는지" }),
+    truncated: z.boolean().openapi({
+      description: "이벤트가 읽기 상한(200,000건)을 넘어 최신 것만 집계했는지",
+    }),
     summary: insightsCore.extend({
       unmeasuredSessions: nonNegativeInt,
       newVisitors: nonNegativeInt,

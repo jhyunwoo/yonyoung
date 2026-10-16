@@ -38,7 +38,10 @@ export type VisitorInsightsInput = {
 };
 
 type ContentRow = Omit<VisitorInsightsEntity["content"][number], "title">;
-export type ComputedVisitorInsights = Omit<VisitorInsightsEntity, "content"> & {
+export type ComputedVisitorInsights = Omit<
+  VisitorInsightsEntity,
+  "content" | "truncated"
+> & {
   content: ContentRow[];
 };
 
@@ -426,7 +429,8 @@ export const computeVisitorInsights = (
       size: members.length,
       retention: Array.from({ length: COHORT_WEEKS }, (_, index) => {
         const target = addDays(week, 7 * (index + 1));
-        if (target > range.to) return null;
+        // 기간 안에 다 들어오지 않은 주는 아직 끝나지 않았으므로 0%가 아니라 빈칸이다.
+        if (addDays(target, 6) > range.to) return null;
         const returned = members.filter((v) =>
           activeWeeks.get(v)?.has(target),
         ).length;

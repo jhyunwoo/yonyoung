@@ -43,6 +43,7 @@ describe("shared/contracts/api-schemas", () => {
       previousRange: { from: "2026-09-24", to: "2026-09-30" },
       eventsTrackedSince: null,
       segmented: false,
+      truncated: false,
       summary: {
         views: 0,
         visitors: 0,

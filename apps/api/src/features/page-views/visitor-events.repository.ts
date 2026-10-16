@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, isNull, lt, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lt, sql } from "drizzle-orm";
 import type createDB from "../../lib/db";
 import {
   activities,
@@ -33,7 +33,16 @@ const ENGAGEMENT_WINDOW_MS = DAY_MS;
 export const MAX_ENGAGED_MS = 30 * 60 * 1000;
 export const ANALYTICS_EVENT_RETENTION_MS = 731 * DAY_MS;
 
-export const createVisitorEventRepository = (db: Database) => ({
+/**
+ * 조회 시 메모리로 읽는 이벤트 상한. 공개 엔드포인트로 행을 부풀려도 대시보드가 멈추지 않게 한다.
+ * 넘으면 최신 이벤트만 집계하고 응답에 truncated를 싣는다.
+ */
+export const MAX_INSIGHT_EVENTS = 200_000;
+
+export const createVisitorEventRepository = (
+  db: Database,
+  { maxInsightEvents = MAX_INSIGHT_EVENTS }: { maxInsightEvents?: number } = {},
+) => ({
   async recordAnalyticsEvent(event: NewAnalyticsEvent): Promise<void> {
     await db
       .insert(analyticsEvents)
@@ -102,7 +111,9 @@ export const createVisitorEventRepository = (db: Database) => ({
               gte(analyticsEvents.visitedAt, previousStart),
               lt(analyticsEvents.visitedAt, currentEnd),
             ),
-          ),
+          )
+          .orderBy(desc(analyticsEvents.visitedAt))
+          .limit(maxInsightEvents + 1),
         db
           .select({
             visitorId: analyticsEvents.visitorId,
@@ -142,7 +153,7 @@ export const createVisitorEventRepository = (db: Database) => ({
     const computed = computeVisitorInsights({
       range,
       segment,
-      events: eventRows.map((row) => ({
+      events: eventRows.slice(0, maxInsightEvents).map((row) => ({
         ...row,
         visitedAt: row.visitedAt.getTime(),
         pageType: row.pageType as PageViewType,
@@ -187,6 +198,7 @@ export const createVisitorEventRepository = (db: Database) => ({
 
     return {
       ...computed,
+      truncated: eventRows.length > maxInsightEvents,
       content: computed.content.flatMap(
         (row): VisitorInsightsEntity["content"] => {
           if (row.pageType === "activity" || row.pageType === "exhibition") {

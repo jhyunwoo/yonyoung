@@ -115,6 +115,7 @@ export const apiVisitorInsightsSchema = z.object({
   previousRange: z.object({ from: z.string(), to: z.string() }),
   eventsTrackedSince: z.string().nullable(),
   segmented: z.boolean(),
+  truncated: z.boolean(),
   summary: insightsCoreSchema.extend({
     unmeasuredSessions: z.number().int(),
     newVisitors: z.number().int(),

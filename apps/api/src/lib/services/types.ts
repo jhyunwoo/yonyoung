@@ -343,6 +343,8 @@ export type VisitorInsightsEntity = {
   previousRange: { from: string; to: string };
   eventsTrackedSince: string | null;
   segmented: boolean;
+  /** 이벤트가 읽기 상한을 넘어 최신 것만 집계했는지 */
+  truncated: boolean;
   summary: InsightsCore & {
     unmeasuredSessions: number;
     newVisitors: number;

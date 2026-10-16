@@ -13,13 +13,13 @@ const LEVEL_BG = [
   "bg-(--chart-scale-04)",
   "bg-(--chart-scale-05)",
 ] as const;
-// 진한 두 단계는 흰 글자로 대비를 맞춘다.
+// 라이트는 진한 두 단계가 어두운 파랑이라 흰 글자, 다크는 같은 단계가 밝은 파랑이라 어두운 글자를 쓴다.
 const LEVEL_TEXT = [
   "text-ink",
   "text-ink",
   "text-ink",
-  "text-white",
-  "text-white",
+  "text-white dark:text-canvas",
+  "text-white dark:text-canvas",
 ] as const;
 
 export default function CohortCard({ insights }: { insights: ApiVisitorInsights }) {

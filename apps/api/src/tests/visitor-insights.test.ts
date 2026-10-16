@@ -358,7 +358,7 @@ describe("computeVisitorInsights", () => {
     ]);
   });
 
-  it("주별 코호트는 기간 끝을 넘는 칸을 null로 둔다", () => {
+  it("주별 코호트는 기간 끝에 다 들어오지 않은 주를 null로 둔다", () => {
     const range: PageViewAnalyticsRange = {
       from: "2026-10-01",
       to: "2026-10-21",
@@ -388,7 +388,7 @@ describe("computeVisitorInsights", () => {
       {
         week: "2026-09-28",
         size: 1,
-        retention: [1, 0, 0, null, null, null, null, null],
+        retention: [1, 0, null, null, null, null, null, null],
       },
     ]);
   });

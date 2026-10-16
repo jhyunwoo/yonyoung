@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   SESSION_TIMEOUT_MS,
+  createRandomId,
   createVisitIdentity,
 } from "@/features/public/analytics/visitor-identity";
 
@@ -83,5 +84,25 @@ describe("createVisitIdentity", () => {
     const visit = createVisitIdentity(storage, sequentialIds()).resolve(0);
     expect(visit.visitorId).toBe("00000000-0000-4000-8000-000000000001");
     expect(visit.sessionStart).toBe(true);
+  });
+});
+
+describe("createRandomId", () => {
+  const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("randomUUID가 없는 브라우저에서도 UUID v4를 만든다", () => {
+    const getRandomValues = globalThis.crypto.getRandomValues.bind(globalThis.crypto);
+    vi.stubGlobal("crypto", { getRandomValues });
+    expect(createRandomId()).toMatch(UUID_V4);
+    expect(createVisitIdentity(null).resolve(0).visitorId).toMatch(UUID_V4);
+  });
+
+  it("crypto가 아예 없어도 예외 없이 UUID 형식을 돌려준다", () => {
+    vi.stubGlobal("crypto", undefined);
+    expect(createRandomId()).toMatch(UUID_V4);
   });
 });

@@ -225,3 +225,36 @@ describe("방문자 인사이트 조회", () => {
     expect(result.summary.views).toBe(3);
   });
 });
+
+describe("방문자 인사이트 읽기 상한", () => {
+  it("상한을 넘는 이벤트는 최신 것만 읽고 잘렸다고 알린다", async () => {
+    const kst = (value: string) => Date.parse(`${value}:00+09:00`);
+    const writer = createVisitorEventRepository(createDB(db));
+    const base = {
+      visitorId: "cap-v",
+      device: "desktop" as const,
+      isMember: false,
+      pageType: "home" as const,
+      resourceId: "home",
+      referrerHost: "direct",
+    };
+    await writer.recordAnalyticsEvent({ ...base, id: "cap-1", sessionId: "cap-s1", visitedAt: kst("2025-03-02T10:00") });
+    await writer.recordAnalyticsEvent({ ...base, id: "cap-2", sessionId: "cap-s2", visitedAt: kst("2025-03-03T10:00") });
+    await writer.recordAnalyticsEvent({ ...base, id: "cap-3", sessionId: "cap-s3", visitedAt: kst("2025-03-04T10:00") });
+
+    const capped = createVisitorEventRepository(createDB(db), { maxInsightEvents: 2 });
+    const result = await capped.getVisitorInsights(
+      {
+        from: "2025-03-01",
+        to: "2025-03-07",
+        days: 7,
+        granularity: "day",
+        previous: { from: "2025-02-22", to: "2025-02-28" },
+      },
+      { audience: "all", device: "all", referrer: "all", landing: "all" },
+    );
+
+    expect(result.truncated).toBe(true);
+    expect(result.summary.sessions).toBe(2);
+  });
+});

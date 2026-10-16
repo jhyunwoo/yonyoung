@@ -343,10 +343,13 @@ export const registerPageViewRoutes = (
         audience: query.audience ?? "all",
         device: query.device ?? "all",
         // 저장할 때와 같은 규칙으로 정규화해야 www. 같은 표기 차이로 결과가 비지 않는다.
+        // "direct"는 호스트명 형식이 아니라 정규화하면 "other"가 되므로 그대로 넘긴다.
         referrer:
           query.referrer === undefined || query.referrer === "all"
             ? "all"
-            : normalizeReferrerHost(query.referrer),
+            : query.referrer === "direct"
+              ? "direct"
+              : normalizeReferrerHost(query.referrer),
         landing: query.landing ?? "all",
       });
     return ok(c, insights);

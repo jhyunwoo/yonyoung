@@ -1739,6 +1739,8 @@ const handleRequest = async (
         previousRange: { from: "2026-04-28", to: "2026-04-30" },
         eventsTrackedSince: "2026-05-02",
         segmented,
+        // 이 종료일이면 읽기 상한에 걸린 응답을 흉내 낸다.
+        truncated: to === "2026-05-04",
         summary: {
           ...core,
           unmeasuredSessions: 12,
@@ -1861,6 +1863,12 @@ const handleRequest = async (
             week: "2026-04-27",
             size: 50,
             retention: [0.3, 0.2, null, null, null, null, null, null],
+          },
+          // 진한 단계(4·5)의 글자 대비를 테마별로 검사하려고 높은 재방문율을 둔다.
+          {
+            week: "2026-05-04",
+            size: 20,
+            retention: [0.9, 0.7, null, null, null, null, null, null],
           },
         ],
         referrerOptions: ["direct", "google.com", "instagram.com"],

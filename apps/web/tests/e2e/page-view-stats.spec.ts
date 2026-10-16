@@ -127,6 +127,15 @@ test.describe("방문 통계 화면", () => {
     );
   });
 
+  test("이벤트가 읽기 상한에 걸리면 알린다", async ({ page }) => {
+    await page.goto("/dashboard/stats?from=2026-05-01&to=2026-05-04", {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page.getByTestId("stats-truncated-note")).toContainText(
+      "최근 200,000건",
+    );
+  });
+
   test("차트마다 표로 보기를 열 수 있다", async ({ page }) => {
     await page.goto("/dashboard/stats", { waitUntil: "domcontentloaded" });
     const hourly = page.getByTestId("stats-hourly");

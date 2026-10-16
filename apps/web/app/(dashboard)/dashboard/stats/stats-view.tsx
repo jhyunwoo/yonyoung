@@ -215,6 +215,16 @@ export default function StatsView({
           최신 값으로 갱신하지 못했습니다({error}). 아래는 마지막으로 불러온 값입니다.
         </p>
       )}
+      {insights.truncated && (
+        <p
+          role="note"
+          data-testid="stats-truncated-note"
+          className="text-caption text-warning-text"
+        >
+          기록이 많아 이 기간의 가장 최근 200,000건만 집계했습니다. 기간을 줄이면 전체가
+          반영됩니다.
+        </p>
+      )}
       {collectionNote !== null && (
         <p
           role="note"

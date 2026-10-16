@@ -588,6 +588,23 @@ describe("GET /api/admin/page-views/insights", () => {
     );
   });
 
+  it("직접 접속 필터는 그대로 direct로 넘긴다", async () => {
+    const getVisitorInsights = fn(async () => ({}) as never);
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({ getVisitorInsights }),
+    });
+
+    await app.request(
+      "/api/admin/page-views/insights?from=2026-10-01&to=2026-10-07&referrer=direct",
+    );
+
+    expect(getVisitorInsights).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ referrer: "direct" }),
+    );
+  });
+
   it("세그먼트를 생략하면 전부 all이다", async () => {
     const getVisitorInsights = fn(async () => ({}) as never);
     const app = createTestApp({

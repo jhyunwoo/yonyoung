@@ -2,7 +2,10 @@
 
 import { useEffect } from "react";
 import { createEngagementTimer } from "@/features/public/analytics/engagement-timer";
-import { createVisitIdentity } from "@/features/public/analytics/visitor-identity";
+import {
+  createRandomId,
+  createVisitIdentity,
+} from "@/features/public/analytics/visitor-identity";
 import { CSRF_HEADER_NAME, CSRF_HEADER_VALUE } from "@/shared/security/csrf";
 
 type PageViewTrackerProps = {
@@ -82,7 +85,7 @@ export default function PageViewTracker({ pageType, resourceId }: PageViewTracke
     };
 
     const identity = getVisitIdentity();
-    const pageviewId = crypto.randomUUID();
+    const pageviewId = createRandomId();
     const timer = createEngagementTimer(
       performance.now(),
       document.visibilityState === "visible",
