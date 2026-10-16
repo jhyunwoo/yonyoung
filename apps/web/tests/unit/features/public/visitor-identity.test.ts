@@ -54,6 +54,16 @@ describe("createVisitIdentity", () => {
     expect(second.sessionId).toBe(first.sessionId);
   });
 
+  it("이미 만료된 세션은 touch로 되살리지 않는다", () => {
+    const identity = createVisitIdentity(memoryStorage(), sequentialIds());
+    const first = identity.resolve(0);
+    // 한 시간 띄워 둔 페이지를 닫을 때의 touch
+    identity.touch(SESSION_TIMEOUT_MS * 2);
+    const next = identity.resolve(SESSION_TIMEOUT_MS * 2);
+    expect(next.sessionId).not.toBe(first.sessionId);
+    expect(next.sessionStart).toBe(true);
+  });
+
   it("다른 탭(같은 저장소)도 같은 방문자·세션을 본다", () => {
     const storage = memoryStorage();
     const ids = sequentialIds();

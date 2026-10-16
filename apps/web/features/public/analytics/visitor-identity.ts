@@ -116,7 +116,9 @@ export const createVisitIdentity = (
 
     touch(nowMs: number) {
       const current = parseSession(read(storage, SESSION_KEY)) ?? memory.session;
-      if (current !== null) saveSession({ ...current, lastActiveAt: nowMs });
+      // 오래 띄워 둔 페이지를 닫는 시점은 활동이 아니다. 이미 끊긴 세션을 늘리면 다음 페이지가 그 세션을 이어 쓴다.
+      if (current === null || nowMs - current.lastActiveAt > SESSION_TIMEOUT_MS) return;
+      saveSession({ ...current, lastActiveAt: nowMs });
     },
   };
 };
