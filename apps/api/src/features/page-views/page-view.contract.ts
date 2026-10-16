@@ -70,6 +70,27 @@ export const ApiRecordPageViewRequestSchema = z
       description: "외부 유입 경로의 호스트명. 직접 접속이면 생략한다.",
       example: "instagram.com",
     }),
+    // UUID 검증은 라우트가 한다. 형식이 틀려도 기존 합계 기록은 400 없이 살려야 하기 때문이다.
+    visitorId: z.string().max(64).optional().openapi({
+      description: "브라우저가 만든 익명 방문자 UUID",
+      example: "11111111-1111-4111-8111-111111111111",
+    }),
+    sessionId: z.string().max(64).optional().openapi({
+      description: "30분 비활성 기준 세션 UUID",
+      example: "22222222-2222-4222-8222-222222222222",
+    }),
+    pageviewId: z.string().max(64).optional().openapi({
+      description: "이번 페이지뷰 UUID. 체류 시간 전송에 쓴다",
+      example: "33333333-3333-4333-8333-333333333333",
+    }),
+    sessionStart: z.boolean().optional().openapi({
+      description: "새 세션의 첫 페이지뷰이면 true",
+      example: true,
+    }),
+    sessionReferrerHost: z.string().max(253).optional().openapi({
+      description: "세션 시작 시 외부 유입 호스트명. 직접 접속이면 생략",
+      example: "google.com",
+    }),
   })
   .superRefine((value, ctx) => {
     if (
@@ -85,6 +106,24 @@ export const ApiRecordPageViewRequestSchema = z
     }
   })
   .openapi("ApiRecordPageViewRequest");
+
+export const ApiRecordEngagementRequestSchema = z
+  .object({
+    pageviewId: z
+      .string()
+      .uuid()
+      .openapi({ example: "33333333-3333-4333-8333-333333333333" }),
+    visitorId: z
+      .string()
+      .uuid()
+      .openapi({ example: "11111111-1111-4111-8111-111111111111" }),
+    engagedMs: z.number().int().min(0).max(1_800_000).openapi({
+      description: "페이지가 보인 누적 시간(ms). 페이지뷰당 최대 30분",
+      example: 12000,
+    }),
+  })
+  .strict()
+  .openapi("ApiRecordEngagementRequest");
 
 export const ApiPageViewStatsSchema = z
   .object({

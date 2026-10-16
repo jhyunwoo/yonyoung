@@ -571,6 +571,13 @@ export type DataService = {
     referrerHost: string;
     device: PageViewDevice;
   }) => Promise<void>;
+  recordAnalyticsEvent: (event: NewAnalyticsEvent) => Promise<void>;
+  recordEngagement: (input: {
+    pageviewId: string;
+    visitorId: string;
+    engagedMs: number;
+    nowMs: number;
+  }) => Promise<void>;
   getPageViewStats: () => Promise<PageViewStatsEntity>;
   getDashboardPageViewStats: () => Promise<DashboardPageViewStatsEntity>;
   getPageViewAnalytics: (

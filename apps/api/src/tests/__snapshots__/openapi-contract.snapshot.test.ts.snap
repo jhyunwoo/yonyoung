@@ -48,6 +48,7 @@ exports[`openapi contract > 경로/메서드/operationId/스키마 구조가 리
     "ApiPresignResponse",
     "ApiPublicGenerationMember",
     "ApiPublicGenerationWithMembers",
+    "ApiRecordEngagementRequest",
     "ApiRecordPageViewRequest",
     "ApiRecordPageViewResponse",
     "ApiRecordViewBody",
@@ -6882,6 +6883,47 @@ exports[`openapi contract > 경로/메서드/operationId/스키마 구조가 리
             },
           },
           "description": "방문 기록 처리 결과 (실패해도 200으로 응답)",
+        },
+        "400": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiErrorResponse",
+              },
+            },
+          },
+          "description": "요청 본문/파라미터 검증에 실패했습니다. 발생 조건: UUID 형식 오류, 필수 필드 누락, 스키마 타입 불일치, 빈 PATCH payload 등. 서버는 검증 단계에서 요청을 중단하고 BAD_REQUEST를 반환하며, 클라이언트는 입력값을 보정한 뒤 재요청해야 합니다.",
+        },
+      },
+      "security": undefined,
+      "tags": [
+        "Public",
+      ],
+    },
+    "POST /api/public/page-views/engagement": {
+      "operationId": "recordPageViewEngagement",
+      "parameters": undefined,
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiRecordEngagementRequest",
+            },
+          },
+        },
+        "description": "체류 시간 기록 요청 본문",
+        "required": true,
+      },
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiRecordPageViewResponse",
+              },
+            },
+          },
+          "description": "체류 시간 기록 처리 결과 (실패해도 200으로 응답)",
         },
         "400": {
           "content": {

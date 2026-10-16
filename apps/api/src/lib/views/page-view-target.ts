@@ -53,3 +53,15 @@ export const classifyDevice = (userAgent: string | undefined): PageViewDevice =>
   }
   return "desktop";
 };
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export const isUuid = (value: string | undefined): value is string =>
+  value !== undefined && UUID_PATTERN.test(value);
+
+// 자바스크립트를 실행하는 크롤러(구글 렌더러 등)도 트래커를 돌린다. 방문자 지표에서만 뺀다.
+const BOT_PATTERN = /bot|crawl|spider|slurp|headless|lighthouse|preview/i;
+
+export const isBotUserAgent = (userAgent: string | undefined): boolean =>
+  userAgent !== undefined && BOT_PATTERN.test(userAgent);

@@ -4,6 +4,7 @@ import {
   ApiPageViewAnalyticsQuerySchema,
   ApiPageViewAnalyticsSchema,
   ApiPageViewStatsSchema,
+  ApiRecordEngagementRequestSchema,
   ApiRecordPageViewRequestSchema,
 } from "./page-view.contract";
 import { resolveAnalyticsRange } from "./page-view-analytics";
@@ -19,6 +20,8 @@ import { requireAuthenticatedActor } from "../../shared/http/route-guards";
 import type HonoAppType from "../../types/honoAppType";
 import {
   classifyDevice,
+  isBotUserAgent,
+  isUuid,
   normalizePageViewResourceId,
   normalizeReferrerHost,
 } from "../../lib/views/page-view-target";
@@ -51,6 +54,30 @@ const recordPageViewRoute = createRoute({
   responses: {
     200: {
       description: "방문 기록 처리 결과 (실패해도 200으로 응답)",
+      content: {
+        "application/json": {
+          schema: RecordPageViewResponseSchema,
+        },
+      },
+    },
+    400: errorResponses[400],
+  },
+});
+
+const recordEngagementRoute = createRoute({
+  method: "post",
+  path: "/api/public/page-views/engagement",
+  tags: ["Public"],
+  operationId: "recordPageViewEngagement",
+  request: {
+    body: jsonBody(
+      ApiRecordEngagementRequestSchema,
+      "체류 시간 기록 요청 본문",
+    ),
+  },
+  responses: {
+    200: {
+      description: "체류 시간 기록 처리 결과 (실패해도 200으로 응답)",
       content: {
         "application/json": {
           schema: RecordPageViewResponseSchema,
@@ -177,6 +204,69 @@ export const registerPageViewRoutes = (
       // fire-and-forget: 기록 실패는 무시
     }
 
+    const { visitorId, sessionId, pageviewId } = parsed.data;
+    const userAgent = c.req.header("user-agent");
+    if (
+      isUuid(visitorId) &&
+      isUuid(sessionId) &&
+      isUuid(pageviewId) &&
+      !isBotUserAgent(userAgent)
+    ) {
+      let isMember = false;
+      try {
+        isMember = (await dependencies.resolveActor(c)) !== null;
+      } catch {
+        // 세션 조회가 실패해도 방문 기록은 남긴다.
+      }
+      try {
+        await dataService.recordAnalyticsEvent({
+          id: pageviewId,
+          visitorId,
+          sessionId,
+          visitedAt: Date.now(),
+          pageType,
+          resourceId,
+          referrerHost:
+            parsed.data.sessionStart === true
+              ? normalizeReferrerHost(parsed.data.sessionReferrerHost)
+              : null,
+          device: classifyDevice(userAgent),
+          isMember,
+        });
+      } catch {
+        // fire-and-forget: 기록 실패는 무시
+      }
+    }
+
+    return c.json({ ok: true } as const, 200);
+  });
+
+  app.openapi(recordEngagementRoute, async (c) => {
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      throw AppError.badRequest("잘못된 요청 본문입니다.");
+    }
+
+    const parsed = ApiRecordEngagementRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      throw AppError.badRequest(
+        parsed.error.issues[0]?.message ?? "잘못된 요청입니다.",
+      );
+    }
+
+    if (!(await dependencies.allowPageViewWrite(c))) {
+      return c.json({ ok: true } as const, 200);
+    }
+
+    try {
+      await dependencies
+        .getDataService(c)
+        .recordEngagement({ ...parsed.data, nowMs: Date.now() });
+    } catch {
+      // fire-and-forget: 기록 실패는 무시
+    }
     return c.json({ ok: true } as const, 200);
   });
 
