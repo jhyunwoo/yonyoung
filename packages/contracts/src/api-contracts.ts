@@ -99,6 +99,8 @@ export type {
   ApiPageViewAnalytics,
   ApiPageViewGranularity,
   ApiPageViewStats,
+  ApiVisitorInsights,
+  ApiInsightsPageType,
 } from "./api/dashboard";
 
 export type {

@@ -21,10 +21,10 @@ import type {
   ApiGenerationMemberSummary,
   ApiGeneration,
   ApiLinktree,
-  ApiPageViewAnalytics,
   ApiPageViewStats,
   ApiSiteSettings,
   ApiUser,
+  ApiVisitorInsights,
 } from "@yonyoung/contracts";
 import {
   apiActivitySchema,
@@ -33,10 +33,10 @@ import {
   apiGenerationMemberSummarySchema,
   apiGenerationSchema,
   apiLinktreeSchema,
-  apiPageViewAnalyticsSchema,
   apiPageViewStatsSchema,
   apiSiteSettingsSchema,
   apiUserSchema,
+  apiVisitorInsightsSchema,
 } from "@yonyoung/contracts/schemas";
 
 const ADMIN_API_BASE_PATH = "/api";
@@ -266,15 +266,15 @@ export const getAdminPageViewStats = (
 ): Promise<AdminReadResult<ApiPageViewStats>> =>
   readAdminResource("/admin/page-views/dashboard", cookieHeader, apiPageViewStatsSchema);
 
-/** apiSearch는 stats-range의 toAnalyticsApiSearch 결과다. */
-export const getAdminPageViewAnalytics = (
+/** apiSearch는 stats-range의 toInsightsApiSearch 결과다. */
+export const getAdminVisitorInsights = (
   cookieHeader: string | null,
   apiSearch: string,
-): Promise<AdminReadResult<ApiPageViewAnalytics>> =>
+): Promise<AdminReadResult<ApiVisitorInsights>> =>
   readAdminResource(
-    `/admin/page-views/analytics?${apiSearch}`,
+    `/admin/page-views/insights?${apiSearch}`,
     cookieHeader,
-    apiPageViewAnalyticsSchema,
+    apiVisitorInsightsSchema,
   );
 
 export const getMcpOverview = (

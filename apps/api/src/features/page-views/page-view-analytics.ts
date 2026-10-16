@@ -96,11 +96,17 @@ export const fillDailySeries = (
 const mondayBasedWeekday = (date: string): number =>
   (new Date(toUtcMs(date)).getUTCDay() + 6) % 7;
 
-const bucketKey = (date: string, granularity: PageViewGranularity): string => {
+export const bucketKey = (
+  date: string,
+  granularity: PageViewGranularity,
+): string => {
   if (granularity === "month") return date.slice(0, 7);
   if (granularity === "week") return addDays(date, -mondayBasedWeekday(date));
   return date;
 };
+
+export const mondayOf = (date: string): string =>
+  addDays(date, -mondayBasedWeekday(date));
 
 /**
  * 이전 기간의 i번째 날은 현재 기간 i번째 날과 같은 버킷에 넣는다.

@@ -5,6 +5,11 @@ import type { Bindings } from "./bindings/types";
 import { resolveD1Database } from "./infra/db/client";
 import { resolveR2Bucket } from "./infra/r2/client";
 import { runR2OrphanSweep } from "./lib/storage/orphan-sweep";
+import createDB from "./lib/db";
+import {
+  ANALYTICS_EVENT_RETENTION_MS,
+  createVisitorEventRepository,
+} from "./features/page-views/visitor-events.repository";
 import { logger } from "./shared/logging/logger";
 
 const app = createApp();
@@ -108,6 +113,23 @@ const scheduled: ExportedHandlerScheduledHandler<Bindings> = async (
       }))().catch((error: unknown) => {
       logger.error({
         event: "r2.orphan_sweep.failed",
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }),
+  );
+  // R2 정리와 독립적으로 돌린다. 한쪽 실패가 다른 쪽을 막지 않게 한다.
+  const visitorEvents = createVisitorEventRepository(
+    createDB(resolveD1Database(env)),
+  );
+  ctx.waitUntil(
+    Promise.all([
+      visitorEvents.purgeAnalyticsEventsBefore(
+        Date.now() - ANALYTICS_EVENT_RETENTION_MS,
+      ),
+      visitorEvents.purgePendingEngagement(Date.now()),
+    ]).catch((error: unknown) => {
+      logger.error({
+        event: "analytics.retention_purge.failed",
         error: error instanceof Error ? error.message : String(error),
       });
     }),

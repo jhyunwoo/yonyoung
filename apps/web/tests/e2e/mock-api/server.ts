@@ -704,6 +704,11 @@ const handleRequest = async (
       return;
     }
 
+    if (pathname === "/api/public/page-views/engagement" && method === "POST") {
+      sendJson(response, 200, { ok: true });
+      return;
+    }
+
     // 첨부파일 라우트 (공개 목록 + 관리자 CRUD) — 별도 모듈에서 처리
     if (
       handleAttachmentRoutes({
@@ -1709,6 +1714,164 @@ const handleRequest = async (
           { device: "desktop", entries: 20 },
         ],
         entriesTrackedSince: "2026-04-01",
+      });
+      return;
+    }
+
+    // 요청한 기간·필터를 그대로 돌려줘 화면 URL → API 쿼리 연결을 검증할 수 있게 한다.
+    if (pathname === "/api/admin/page-views/insights" && method === "GET") {
+      const from = requestUrl.searchParams.get("from") ?? "2026-05-01";
+      const to = requestUrl.searchParams.get("to") ?? "2026-05-03";
+      const granularity = requestUrl.searchParams.get("granularity") ?? "day";
+      const segmented = ["audience", "device", "referrer", "landing"].some((key) =>
+        requestUrl.searchParams.has(key),
+      );
+      const core = {
+        views: 360,
+        visitors: 120,
+        sessions: 150,
+        pagesPerSession: 2.4,
+        avgSessionMs: 95_000,
+        bounceRate: 0.42,
+      };
+      sendData(response, {
+        range: { from, to, days: 3, granularity },
+        previousRange: { from: "2026-04-28", to: "2026-04-30" },
+        eventsTrackedSince: "2026-05-02",
+        segmented,
+        // 이 종료일이면 읽기 상한에 걸린 응답을 흉내 낸다.
+        truncated: to === "2026-05-04",
+        summary: {
+          ...core,
+          unmeasuredSessions: 12,
+          newVisitors: 80,
+          returningVisitors: 40,
+          prev: {
+            ...core,
+            views: 300,
+            visitors: 100,
+            sessions: 130,
+            bounceRate: 0.5,
+          },
+        },
+        trend: [
+          {
+            bucket: from,
+            views: 110,
+            visitors: 0,
+            sessions: 0,
+            avgSessionMs: 0,
+            newVisitors: 0,
+            returningVisitors: 0,
+            prevViews: 90,
+            prevVisitors: 0,
+            prevSessions: 0,
+            prevAvgSessionMs: 0,
+            collected: false,
+          },
+          {
+            bucket: "2026-05-02",
+            views: 120,
+            visitors: 60,
+            sessions: 75,
+            avgSessionMs: 90_000,
+            newVisitors: 40,
+            returningVisitors: 20,
+            prevViews: 100,
+            prevVisitors: 50,
+            prevSessions: 65,
+            prevAvgSessionMs: 80_000,
+            collected: true,
+          },
+          {
+            bucket: to,
+            views: 130,
+            visitors: 60,
+            sessions: 75,
+            avgSessionMs: 100_000,
+            newVisitors: 40,
+            returningVisitors: 20,
+            prevViews: 110,
+            prevVisitors: 50,
+            prevSessions: 65,
+            prevAvgSessionMs: 85_000,
+            collected: true,
+          },
+        ],
+        hourly: Array.from({ length: 168 }, (_, index) => ({
+          weekday: Math.floor(index / 24),
+          hour: index % 24,
+          views: index % 24 >= 9 && index % 24 <= 22 ? (index % 7) + 1 : 0,
+        })),
+        referrerFlow: [
+          { referrer: "direct", landing: "home", sessions: 70 },
+          { referrer: "google.com", landing: "activity", sessions: 50 },
+          { referrer: "instagram.com", landing: "exhibition", sessions: 30 },
+        ],
+        pathFlow: [
+          { step: 1, from: "home", to: "activity", sessions: 40 },
+          { step: 1, from: "home", to: "exit", sessions: 30 },
+          { step: 1, from: "activity", to: "exit", sessions: 50 },
+          { step: 2, from: "activity", to: "exhibition", sessions: 15 },
+          { step: 2, from: "activity", to: "exit", sessions: 25 },
+        ],
+        content: [
+          {
+            pageType: "activity",
+            resourceId: "act-1",
+            title: "목 활동",
+            views: 160,
+            visitors: 70,
+            avgEngagedMs: 120_000,
+            entries: 50,
+            bounceRate: 0.4,
+          },
+          {
+            pageType: "home",
+            resourceId: "home",
+            title: null,
+            views: 200,
+            visitors: 100,
+            avgEngagedMs: 30_000,
+            entries: 70,
+            bounceRate: 0.43,
+          },
+        ],
+        devices: [
+          { device: "mobile", sessions: 100 },
+          { device: "desktop", sessions: 45 },
+          { device: "tablet", sessions: 5 },
+        ],
+        audience: { member: 20, external: 130 },
+        depth: [
+          { bucket: "1", sessions: 63 },
+          { bucket: "2", sessions: 40 },
+          { bucket: "3", sessions: 25 },
+          { bucket: "4", sessions: 12 },
+          { bucket: "5+", sessions: 10 },
+        ],
+        duration: [
+          { bucket: "<10s", sessions: 30 },
+          { bucket: "10-30s", sessions: 25 },
+          { bucket: "30s-1m", sessions: 30 },
+          { bucket: "1-3m", sessions: 35 },
+          { bucket: "3-10m", sessions: 15 },
+          { bucket: "10m+", sessions: 3 },
+        ],
+        cohorts: [
+          {
+            week: "2026-04-27",
+            size: 50,
+            retention: [0.3, 0.2, null, null, null, null, null, null],
+          },
+          // 진한 단계(4·5)의 글자 대비를 테마별로 검사하려고 높은 재방문율을 둔다.
+          {
+            week: "2026-05-04",
+            size: 20,
+            retention: [0.9, 0.7, null, null, null, null, null, null],
+          },
+        ],
+        referrerOptions: ["direct", "google.com", "instagram.com"],
       });
       return;
     }

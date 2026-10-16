@@ -1,4 +1,4 @@
-import type { ApiPageViewAnalytics, ApiPageViewGranularity } from "@yonyoung/contracts";
+import type { ApiInsightsPageType, ApiPageViewGranularity } from "@yonyoung/contracts";
 
 export type StatsPreset = "7d" | "30d" | "6m" | "1y";
 
@@ -18,15 +18,35 @@ const DEFAULT_PRESET: StatsPreset = "30d";
 /** API의 MAX_ANALYTICS_RANGE_DAYS와 같아야 한다. */
 export const MAX_STATS_RANGE_DAYS = 731;
 
+export type StatsFilters = {
+  audience: "all" | "external" | "member";
+  device: "all" | "mobile" | "tablet" | "desktop";
+  /** "all" | "direct" | 호스트명 */
+  referrer: string;
+  landing: "all" | ApiInsightsPageType;
+};
+
+export type StatsMetric = "views" | "visitors" | "sessions" | "duration";
+
+export const DEFAULT_FILTERS: StatsFilters = {
+  audience: "all",
+  device: "all",
+  referrer: "all",
+  landing: "all",
+};
+
 /**
  * 프리셋은 URL에 `range=6m`처럼 상대값으로 남긴다. 공유한 링크를 나중에 열어도 "최근 6개월"로 보인다.
  * granularity가 null이면 API가 기간 길이에 맞춰 고른다.
+ * metric은 화면 전용이라 API로 보내지 않는다.
  */
 export type StatsQuery = {
   preset: StatsPreset | "custom";
   from: string;
   to: string;
   granularity: ApiPageViewGranularity | null;
+  filters: StatsFilters;
+  metric: StatsMetric;
 };
 
 type SearchParamsRecord = Record<string, string | string[] | undefined>;
@@ -84,10 +104,47 @@ const isPreset = (value: string | undefined): value is StatsPreset =>
 const isGranularity = (value: string | undefined): value is ApiPageViewGranularity =>
   value === "day" || value === "week" || value === "month";
 
+const AUDIENCES = ["all", "external", "member"] as const;
+const DEVICES = ["all", "mobile", "tablet", "desktop"] as const;
+const LANDINGS = ["all", "home", "activity", "exhibition", "notice"] as const;
+const METRICS = ["views", "visitors", "sessions", "duration"] as const;
+// API의 normalizeReferrerHost가 저장하는 형태(소문자 호스트, direct)만 받는다.
+const REFERRER_PATTERN = /^(all|direct|[a-z0-9-]+(\.[a-z0-9-]+)+)$/;
+
+const pick = <T extends string>(
+  allowed: readonly T[],
+  value: string | undefined,
+  fallback: T,
+): T => (allowed.includes(value as T) ? (value as T) : fallback);
+
+const parseFilters = (params: SearchParamsRecord): StatsFilters => {
+  const referrer = readParam(params, "referrer");
+  return {
+    audience: pick(AUDIENCES, readParam(params, "audience"), "all"),
+    device: pick(DEVICES, readParam(params, "device"), "all"),
+    referrer:
+      referrer !== undefined && REFERRER_PATTERN.test(referrer) ? referrer : "all",
+    landing: pick(LANDINGS, readParam(params, "landing"), "all"),
+  };
+};
+
+const FILTER_KEYS = ["audience", "device", "referrer", "landing"] as const;
+
+const appendFilters = (params: URLSearchParams, filters: StatsFilters) => {
+  for (const key of FILTER_KEYS) {
+    if (filters[key] !== "all") params.set(key, filters[key]);
+  }
+};
+
+export const activeFilterCount = (filters: StatsFilters): number =>
+  FILTER_KEYS.filter((key) => filters[key] !== "all").length;
+
 export const presetQuery = (preset: StatsPreset, today: string): StatsQuery => ({
   preset,
   ...presetRange(preset, today),
   granularity: null,
+  filters: DEFAULT_FILTERS,
+  metric: "views",
 });
 
 /** 손으로 고친 URL처럼 잘못된 값은 버리고 기본값(최근 30일)으로 돌아간다. */
@@ -97,6 +154,8 @@ export const parseStatsSearchParams = (
 ): StatsQuery => {
   const granularityParam = readParam(params, "granularity");
   const granularity = isGranularity(granularityParam) ? granularityParam : null;
+  const filters = parseFilters(params);
+  const metric = pick(METRICS, readParam(params, "metric"), "views");
 
   const from = readParam(params, "from");
   const to = readParam(params, "to");
@@ -105,12 +164,12 @@ export const parseStatsSearchParams = (
     isValidDate(to) &&
     validateCustomRange(from, to, today) === null
   ) {
-    return { preset: "custom", from, to, granularity };
+    return { preset: "custom", from, to, granularity, filters, metric };
   }
 
   const rangeParam = readParam(params, "range");
   const preset = isPreset(rangeParam) ? rangeParam : DEFAULT_PRESET;
-  return { ...presetQuery(preset, today), granularity };
+  return { ...presetQuery(preset, today), granularity, filters, metric };
 };
 
 /** 화면 URL용. 기본값은 생략해 `/dashboard/stats`가 그대로 최근 30일을 뜻하게 한다. */
@@ -125,34 +184,19 @@ export const toStatsSearch = (query: StatsQuery): string => {
   if (query.granularity !== null) {
     params.set("granularity", query.granularity);
   }
-  return params.toString();
-};
-
-/** API 요청용. 프리셋도 절대 날짜로 풀어 보낸다. */
-export const toAnalyticsApiSearch = (query: StatsQuery): string => {
-  const params = new URLSearchParams({ from: query.from, to: query.to });
-  if (query.granularity !== null) {
-    params.set("granularity", query.granularity);
+  appendFilters(params, query.filters);
+  if (query.metric !== "views") {
+    params.set("metric", query.metric);
   }
   return params.toString();
 };
 
-export const trendToCsv = (analytics: ApiPageViewAnalytics): string => {
-  const rows = [
-    [
-      "구간",
-      "조회수",
-      `이전 기간 조회수 (${analytics.previousRange.from}~${analytics.previousRange.to})`,
-    ],
-    ...analytics.trend.map((point) => [
-      point.bucket,
-      String(point.views),
-      String(point.prevViews),
-    ]),
-  ];
-  // Excel이 UTF-8 한글을 깨뜨리지 않도록 BOM을 붙이고, 줄바꿈도 Excel 기본값인 CRLF를 쓴다.
-  return `﻿${rows.map((row) => row.join(",")).join("\r\n")}\r\n`;
+/** API 요청용. 프리셋도 절대 날짜로 풀어 보낸다. */
+export const toInsightsApiSearch = (query: StatsQuery): string => {
+  const params = new URLSearchParams({ from: query.from, to: query.to });
+  if (query.granularity !== null) {
+    params.set("granularity", query.granularity);
+  }
+  appendFilters(params, query.filters);
+  return params.toString();
 };
-
-export const trendCsvFileName = (analytics: ApiPageViewAnalytics): string =>
-  `page-views_${analytics.range.from}_${analytics.range.to}_${analytics.range.granularity}.csv`;

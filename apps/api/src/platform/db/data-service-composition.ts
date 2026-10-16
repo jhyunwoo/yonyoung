@@ -8,6 +8,7 @@ import { createExhibitionRepository } from "../../features/exhibitions/exhibitio
 import { createGenerationRepository } from "../../features/generations/generation.repository";
 import { createLinktreeRepository } from "../../features/linktree/linktree.repository";
 import { createPageViewRepository } from "../../features/page-views/page-view.repository";
+import { createVisitorEventRepository } from "../../features/page-views/visitor-events.repository";
 import { createRecruitingPlanRepository } from "../../features/recruiting-plan/recruiting-plan.repository";
 import { createSiteSettingsRepository } from "../../features/site-settings/site-settings.repository";
 import { createUserRepository } from "../../features/users/user.repository";
@@ -32,6 +33,7 @@ export const createDbDataService = (database: D1Database): DataService => {
   const userRepository = createUserRepository(db);
   const dashboardReadRepository = createDashboardReadRepository(db);
   const pageViewRepository = createPageViewRepository(db);
+  const visitorEventRepository = createVisitorEventRepository(db);
   return {
     createAuditLog: auditRepository.recordAuditLog,
     listAuditLogs: auditRepository.listAuditLogs,
@@ -109,5 +111,8 @@ export const createDbDataService = (database: D1Database): DataService => {
     getPageViewStats: pageViewRepository.getPageViewStats,
     getDashboardPageViewStats: pageViewRepository.getDashboardPageViewStats,
     getPageViewAnalytics: pageViewRepository.getPageViewAnalytics,
+    recordAnalyticsEvent: visitorEventRepository.recordAnalyticsEvent,
+    recordEngagement: visitorEventRepository.recordEngagement,
+    getVisitorInsights: visitorEventRepository.getVisitorInsights,
   };
 };

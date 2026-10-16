@@ -76,6 +76,7 @@ export {
   apiAdminDashboardStatsSchema,
   apiPageViewAnalyticsSchema,
   apiPageViewStatsSchema,
+  apiVisitorInsightsSchema,
 } from "./api/dashboard";
 
 export {

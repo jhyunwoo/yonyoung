@@ -88,6 +88,55 @@
   --sidebar-width: 17rem;
   --sidebar-width-md: 15rem;
   --topbar-height: 3.5rem;
+
+  /* ── 차트 (bklit UI) ──
+   * 분류 색은 dataviz 검증기로 라이트 surface(#fff) 기준 6개 검사를 통과했다.
+   * 색은 엔티티에 고정한다(홈=1, 활동=2, 전시=3, 공지=4, 이탈·기타·이전 기간=5). */
+  --chart-1: #0075de;
+  --chart-2: #dd5b00;
+  --chart-3: #009b8f;
+  --chart-4: #9b5fd0;
+  --chart-5: var(--ink-muted);
+  --chart-background: var(--surface);
+  --chart-foreground: var(--ink);
+  --chart-foreground-muted: var(--ink-muted);
+  --chart-label: var(--ink-muted);
+  --chart-grid: var(--hairline);
+  --chart-crosshair: var(--ink-faint);
+  --chart-brush-border: var(--hairline);
+  --chart-line-primary: var(--chart-1);
+  --chart-line-secondary: var(--chart-5);
+  --chart-indicator-color: var(--ink-faint);
+  --chart-indicator-secondary-color: var(--hairline);
+  --chart-tooltip-background: var(--surface-raised);
+  --chart-tooltip-foreground: var(--ink);
+  --chart-tooltip-muted: var(--ink-muted);
+  --chart-marker-background: var(--surface-sunken);
+  --chart-marker-border: var(--hairline-strong);
+  --chart-marker-foreground: var(--ink-secondary);
+  --chart-marker-badge-background: var(--surface-raised);
+  --chart-marker-badge-foreground: var(--ink);
+  --chart-segment-background: var(--surface-sunken);
+  --chart-segment-line: var(--hairline);
+  /* 크기(순차) 스케일: 파랑 한 색상, 밝음 → 어두움 */
+  --chart-scale-01: #e8f2fd;
+  --chart-scale-02: #b6d9f8;
+  --chart-scale-03: #62aef0;
+  --chart-scale-04: #0075de;
+  --chart-scale-05: #005bab;
+  --chart-scale-pattern-color: var(--surface-sunken);
+  --legend: var(--surface);
+  --legend-foreground: var(--ink);
+  --legend-muted: var(--surface-sunken);
+  --legend-muted-foreground: var(--ink-muted);
+  --legend-track: var(--hairline);
+  /* bklit 소스가 쓰는 shadcn 기본 이름 */
+  --foreground: var(--ink);
+  --muted: var(--surface-sunken);
+  --muted-foreground: var(--ink-muted);
+  --border: var(--hairline);
+  --popover: var(--surface-raised);
+  --popover-foreground: var(--ink);
 }
 
 .dark {
@@ -142,6 +191,18 @@
     0 23px 52px rgba(0, 0, 0, 0.4);
   --shadow-focus: 0 0 0 3px rgba(90, 169, 242, 0.3);
   --scrim: rgba(0, 0, 0, 0.62);
+
+  /* 다크 분류 색: surface(#232322) 기준 6개 검사 통과. 라이트 값을 뒤집지 않고 따로 고른 단계다. */
+  --chart-1: #3b8fe8;
+  --chart-2: #e2701f;
+  --chart-3: #13a89a;
+  --chart-4: #9d6fd6;
+  /* 다크에서는 많을수록 밝다 */
+  --chart-scale-01: #1d2a3a;
+  --chart-scale-02: #2c527d;
+  --chart-scale-03: #1668c4;
+  --chart-scale-04: #3b8fe8;
+  --chart-scale-05: #8cc0f5;
 }
 
 /* @theme inline 이어야 유틸이 var(--…) 를 그대로 내보내고,
@@ -251,6 +312,19 @@
   --font-sans:
     "Pretendard Variable", Pretendard, Inter, -apple-system, system-ui, "Segoe UI",
     "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", Helvetica, Arial, sans-serif;
+
+  --color-chart-label: var(--chart-label);
+  --color-chart-tooltip-background: var(--chart-tooltip-background);
+  --color-chart-tooltip-foreground: var(--chart-tooltip-foreground);
+  --color-chart-tooltip-muted: var(--chart-tooltip-muted);
+  --color-legend-foreground: var(--legend-foreground);
+  --color-legend-muted: var(--legend-muted);
+  --color-legend-muted-foreground: var(--legend-muted-foreground);
+  --color-legend-track: var(--legend-track);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
 }
 
 @layer base {

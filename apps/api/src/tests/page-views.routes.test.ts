@@ -361,4 +361,277 @@ describe("page-views routes", () => {
       },
     );
   });
+
+describe("방문자 이벤트 기록", () => {
+  const VISIT = {
+    visitorId: "11111111-1111-4111-8111-111111111111",
+    sessionId: "22222222-2222-4222-8222-222222222222",
+    pageviewId: "33333333-3333-4333-8333-333333333333",
+  };
+  const post = (
+    app: ReturnType<typeof createTestApp>,
+    body: unknown,
+    userAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile",
+  ) =>
+    app.request("/api/public/page-views", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "User-Agent": userAgent },
+      body: JSON.stringify(body),
+    });
+
+  it("세션 첫 페이지뷰는 유입 경로·기기·회원 여부와 함께 이벤트로 남긴다", async () => {
+    const recordAnalyticsEvent = fn(async () => undefined);
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({
+        recordPageView: async () => undefined,
+        recordAnalyticsEvent,
+      }),
+    });
+
+    await post(app, {
+      pageType: "home",
+      ...VISIT,
+      sessionStart: true,
+      sessionReferrerHost: "www.Google.com",
+    });
+
+    expect(recordAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: VISIT.pageviewId,
+        visitorId: VISIT.visitorId,
+        sessionId: VISIT.sessionId,
+        pageType: "home",
+        resourceId: "home",
+        referrerHost: "google.com",
+        device: "mobile",
+        isMember: true,
+      }),
+    );
+  });
+
+  it("세션 중간 페이지뷰는 유입 경로를 비우고, 비로그인은 회원이 아니다", async () => {
+    const recordAnalyticsEvent = fn(async () => undefined);
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({
+        recordPageView: async () => undefined,
+        recordAnalyticsEvent,
+      }),
+    });
+
+    await post(app, { pageType: "home", ...VISIT });
+
+    expect(recordAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ referrerHost: null, isMember: false }),
+    );
+  });
+
+  it("세션 시작인데 유입 경로가 없으면 직접 접속으로 남긴다", async () => {
+    const recordAnalyticsEvent = fn(async () => undefined);
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({
+        recordPageView: async () => undefined,
+        recordAnalyticsEvent,
+      }),
+    });
+
+    await post(app, { pageType: "home", ...VISIT, sessionStart: true });
+
+    expect(recordAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ referrerHost: "direct" }),
+    );
+  });
+
+  it("ID가 없는 옛 클라이언트 요청은 합계만 기록하고 이벤트는 남기지 않는다", async () => {
+    const recordPageView = fn(async () => undefined);
+    const recordAnalyticsEvent = fn(async () => undefined);
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({
+        recordPageView,
+        recordAnalyticsEvent,
+      }),
+    });
+
+    const response = await post(app, {
+      pageType: "home",
+      visitorId: "not-a-uuid",
+    });
+
+    expect(response.status).toBe(200);
+    expect(recordPageView).toHaveBeenCalledWith("home", "home");
+    expect(recordAnalyticsEvent).not.toHaveBeenCalled();
+  });
+
+  it("봇 UA는 이벤트를 남기지 않는다", async () => {
+    const recordAnalyticsEvent = fn(async () => undefined);
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({
+        recordPageView: async () => undefined,
+        recordAnalyticsEvent,
+      }),
+    });
+
+    await post(
+      app,
+      { pageType: "home", ...VISIT },
+      "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+    );
+
+    expect(recordAnalyticsEvent).not.toHaveBeenCalled();
+  });
+
+  it("회원 확인이 실패해도 비회원으로 기록한다", async () => {
+    const recordAnalyticsEvent = fn(async () => undefined);
+    const app = createTestApp({
+      actor: null,
+      resolveActor: async () => {
+        throw new Error("session lookup failed");
+      },
+      dataService: createDataServiceMock({
+        recordPageView: async () => undefined,
+        recordAnalyticsEvent,
+      }),
+    });
+
+    await post(app, { pageType: "home", ...VISIT });
+
+    expect(recordAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ isMember: false }),
+    );
+  });
+});
+
+describe("POST /api/public/page-views/engagement", () => {
+  const BODY = {
+    pageviewId: "33333333-3333-4333-8333-333333333333",
+    visitorId: "11111111-1111-4111-8111-111111111111",
+    engagedMs: 12_000,
+  };
+  const post = (app: ReturnType<typeof createTestApp>, body: unknown) =>
+    app.request("/api/public/page-views/engagement", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+  it("체류 시간을 기록한다", async () => {
+    const recordEngagement = fn(async () => undefined);
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({ recordEngagement }),
+    });
+
+    const response = await post(app, BODY);
+
+    expect(response.status).toBe(200);
+    expect(recordEngagement).toHaveBeenCalledWith(
+      expect.objectContaining({ ...BODY, nowMs: expect.any(Number) }),
+    );
+  });
+
+  it("형식이 틀리면 400이다", async () => {
+    const app = createTestApp({ actor: null });
+    const response = await post(app, { ...BODY, engagedMs: -1 });
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+
+  it("레이트리밋에 걸리면 기록하지 않고 200을 돌려준다", async () => {
+    const recordEngagement = fn(async () => undefined);
+    const app = createTestApp({
+      actor: null,
+      allowPageViewWrite: () => false,
+      dataService: createDataServiceMock({ recordEngagement }),
+    });
+
+    const response = await post(app, BODY);
+
+    expect(response.status).toBe(200);
+    expect(recordEngagement).not.toHaveBeenCalled();
+  });
+});
+
+describe("GET /api/admin/page-views/insights", () => {
+  it("미승인 사용자는 403이다", async () => {
+    const app = createTestApp({ actor: createActor("unverified", IDs.member) });
+    const response = await app.request("/api/admin/page-views/insights");
+    await expectErrorCode(response, "FORBIDDEN");
+  });
+
+  it("기간과 세그먼트를 해석해 넘긴다", async () => {
+    const getVisitorInsights = fn(async () => ({}) as never);
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({ getVisitorInsights }),
+    });
+
+    const response = await app.request(
+      "/api/admin/page-views/insights?from=2026-10-01&to=2026-10-07&audience=external&device=mobile&referrer=WWW.Google.com&landing=activity",
+    );
+
+    expect(response.status).toBe(200);
+    expect(getVisitorInsights).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: "2026-10-01",
+        to: "2026-10-07",
+        granularity: "day",
+      }),
+      {
+        audience: "external",
+        device: "mobile",
+        referrer: "google.com",
+        landing: "activity",
+      },
+    );
+  });
+
+  it("직접 접속 필터는 그대로 direct로 넘긴다", async () => {
+    const getVisitorInsights = fn(async () => ({}) as never);
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({ getVisitorInsights }),
+    });
+
+    await app.request(
+      "/api/admin/page-views/insights?from=2026-10-01&to=2026-10-07&referrer=direct",
+    );
+
+    expect(getVisitorInsights).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ referrer: "direct" }),
+    );
+  });
+
+  it("세그먼트를 생략하면 전부 all이다", async () => {
+    const getVisitorInsights = fn(async () => ({}) as never);
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      dataService: createDataServiceMock({ getVisitorInsights }),
+    });
+
+    await app.request(
+      "/api/admin/page-views/insights?from=2026-10-01&to=2026-10-07",
+    );
+
+    expect(getVisitorInsights).toHaveBeenCalledWith(expect.anything(), {
+      audience: "all",
+      device: "all",
+      referrer: "all",
+      landing: "all",
+    });
+  });
+
+  it("허용되지 않은 값은 400이다", async () => {
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+    });
+    const response = await app.request(
+      "/api/admin/page-views/insights?audience=robots",
+    );
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+});
 });

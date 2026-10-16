@@ -68,3 +68,48 @@ export const pageViewEntries = sqliteTable(
     ),
   ],
 );
+
+/**
+ * 페이지뷰 1회 = 1행. 방문자·세션 ID는 브라우저가 만든 무작위 UUID라 개인을 가리키지 않는다.
+ * referrer_host는 세션 첫 페이지뷰에만 채운다.
+ */
+export const analyticsEvents = sqliteTable(
+  "analytics_events",
+  {
+    id: text("id").primaryKey(),
+    visitorId: text("visitor_id").notNull(),
+    sessionId: text("session_id").notNull(),
+    visitedAt: integer("visited_at", { mode: "timestamp_ms" }).notNull(),
+    pageType: text("page_type").notNull(),
+    resourceId: text("resource_id").notNull(),
+    referrerHost: text("referrer_host"),
+    device: text("device").notNull(),
+    isMember: integer("is_member", { mode: "boolean" }).notNull(),
+    engagedMs: integer("engaged_ms"),
+  },
+  (table) => [
+    index("analytics_events_visited_at_idx").on(table.visitedAt),
+    index("analytics_events_visitor_visited_at_idx").on(
+      table.visitorId,
+      table.visitedAt,
+    ),
+    index("analytics_events_session_idx").on(table.sessionId),
+  ],
+);
+
+/**
+ * 페이지뷰 행보다 먼저 도착한 체류 시간. 빠르게 떠나면 체류 전송이 페이지뷰 기록을 앞지르므로,
+ * 여기 두었다가 페이지뷰를 기록할 때 반영하고 지운다. 하루 지나도 짝이 없으면 정리한다.
+ */
+export const analyticsPendingEngagement = sqliteTable(
+  "analytics_pending_engagement",
+  {
+    pageviewId: text("pageview_id").primaryKey(),
+    visitorId: text("visitor_id").notNull(),
+    engagedMs: integer("engaged_ms").notNull(),
+    receivedAt: integer("received_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    index("analytics_pending_engagement_received_at_idx").on(table.receivedAt),
+  ],
+);

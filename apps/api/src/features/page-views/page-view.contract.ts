@@ -70,6 +70,27 @@ export const ApiRecordPageViewRequestSchema = z
       description: "외부 유입 경로의 호스트명. 직접 접속이면 생략한다.",
       example: "instagram.com",
     }),
+    // UUID 검증은 라우트가 한다. 형식이 틀려도 기존 합계 기록은 400 없이 살려야 하기 때문이다.
+    visitorId: z.string().max(64).optional().openapi({
+      description: "브라우저가 만든 익명 방문자 UUID",
+      example: "11111111-1111-4111-8111-111111111111",
+    }),
+    sessionId: z.string().max(64).optional().openapi({
+      description: "30분 비활성 기준 세션 UUID",
+      example: "22222222-2222-4222-8222-222222222222",
+    }),
+    pageviewId: z.string().max(64).optional().openapi({
+      description: "이번 페이지뷰 UUID. 체류 시간 전송에 쓴다",
+      example: "33333333-3333-4333-8333-333333333333",
+    }),
+    sessionStart: z.boolean().optional().openapi({
+      description: "새 세션의 첫 페이지뷰이면 true",
+      example: true,
+    }),
+    sessionReferrerHost: z.string().max(253).optional().openapi({
+      description: "세션 시작 시 외부 유입 호스트명. 직접 접속이면 생략",
+      example: "google.com",
+    }),
   })
   .superRefine((value, ctx) => {
     if (
@@ -85,6 +106,24 @@ export const ApiRecordPageViewRequestSchema = z
     }
   })
   .openapi("ApiRecordPageViewRequest");
+
+export const ApiRecordEngagementRequestSchema = z
+  .object({
+    pageviewId: z
+      .string()
+      .uuid()
+      .openapi({ example: "33333333-3333-4333-8333-333333333333" }),
+    visitorId: z
+      .string()
+      .uuid()
+      .openapi({ example: "11111111-1111-4111-8111-111111111111" }),
+    engagedMs: z.number().int().min(0).max(1_800_000).openapi({
+      description: "페이지가 보인 누적 시간(ms). 페이지뷰당 최대 30분",
+      example: 12000,
+    }),
+  })
+  .strict()
+  .openapi("ApiRecordEngagementRequest");
 
 export const ApiPageViewStatsSchema = z
   .object({
@@ -271,3 +310,147 @@ export const ApiPageViewAnalyticsSchema = z
     }),
   })
   .openapi("ApiPageViewAnalytics");
+
+const pageTypeEnum = z.enum(["home", "activity", "exhibition", "notice"]);
+const deviceEnum = z.enum(["mobile", "tablet", "desktop"]);
+const rate = z.number().min(0).max(1);
+
+// .extend()는 원본의 openapi 이름(ApiPageViewAnalyticsQuery)까지 물려받을 수 있어 필드만 펼쳐 새로 만든다.
+export const ApiVisitorInsightsQuerySchema = z
+  .object({
+    ...ApiPageViewAnalyticsQuerySchema.shape,
+    audience: z.enum(["all", "external", "member"]).optional().openapi({
+      description: "방문자 구분. 회원 이벤트가 하나라도 있는 세션은 회원 세션",
+      example: "external",
+    }),
+    device: z.enum(["all", "mobile", "tablet", "desktop"]).optional().openapi({
+      description: "세션 첫 페이지뷰의 기기",
+      example: "mobile",
+    }),
+    referrer: z.string().max(253).optional().openapi({
+      description: "세션 유입 경로. all, direct, 또는 호스트명",
+      example: "google.com",
+    }),
+    landing: z
+      .enum(["all", "home", "activity", "exhibition", "notice"])
+      .optional()
+      .openapi({
+        description: "세션 첫 페이지 종류",
+        example: "activity",
+      }),
+  })
+  .openapi("ApiVisitorInsightsQuery");
+
+const insightsCore = z.object({
+  views: nonNegativeInt,
+  visitors: nonNegativeInt,
+  sessions: nonNegativeInt,
+  pagesPerSession: z.number().nonnegative(),
+  avgSessionMs: nonNegativeInt,
+  bounceRate: rate,
+});
+
+export const ApiVisitorInsightsSchema = z
+  .object({
+    range: z.object({
+      from: z.string(),
+      to: z.string(),
+      days: nonNegativeInt,
+      granularity: z.enum(["day", "week", "month"]),
+    }),
+    previousRange: z.object({ from: z.string(), to: z.string() }),
+    eventsTrackedSince: z
+      .string()
+      .nullable()
+      .openapi({ description: "방문자 이벤트 수집 시작일(KST)" }),
+    segmented: z.boolean().openapi({ description: "필터가 하나라도 켜졌는지" }),
+    truncated: z.boolean().openapi({
+      description: "이벤트가 읽기 상한(200,000건)을 넘어 최신 것만 집계했는지",
+    }),
+    summary: insightsCore.extend({
+      unmeasuredSessions: nonNegativeInt,
+      newVisitors: nonNegativeInt.openapi({
+        description:
+          "생애 첫 세션이 조회 기간과 필터에 모두 들어온 방문자 수. 첫 세션이 필터에서 빠지면 재방문으로 센다",
+      }),
+      returningVisitors: nonNegativeInt.openapi({
+        description: "조회 기간 방문자 중 신규가 아닌 방문자 수",
+      }),
+      prev: insightsCore,
+    }),
+    trend: z.array(
+      z.object({
+        bucket: z.string(),
+        views: nonNegativeInt,
+        visitors: nonNegativeInt,
+        sessions: nonNegativeInt,
+        avgSessionMs: nonNegativeInt,
+        newVisitors: nonNegativeInt,
+        returningVisitors: nonNegativeInt,
+        prevViews: nonNegativeInt,
+        prevVisitors: nonNegativeInt,
+        prevSessions: nonNegativeInt,
+        prevAvgSessionMs: nonNegativeInt,
+        collected: z.boolean(),
+      }),
+    ),
+    hourly: z.array(
+      z.object({
+        weekday: z.number().int().min(0).max(6),
+        hour: z.number().int().min(0).max(23),
+        views: nonNegativeInt,
+      }),
+    ),
+    referrerFlow: z.array(
+      z.object({
+        referrer: z.string(),
+        landing: pageTypeEnum,
+        sessions: nonNegativeInt,
+      }),
+    ),
+    pathFlow: z.array(
+      z.object({
+        step: z.union([z.literal(1), z.literal(2)]),
+        from: pageTypeEnum,
+        to: z.union([pageTypeEnum, z.literal("exit")]),
+        sessions: nonNegativeInt,
+      }),
+    ),
+    content: z.array(
+      z.object({
+        pageType: pageTypeEnum,
+        resourceId: z.string(),
+        title: z.string().nullable(),
+        views: nonNegativeInt,
+        visitors: nonNegativeInt,
+        avgEngagedMs: nonNegativeInt.nullable(),
+        entries: nonNegativeInt,
+        bounceRate: rate.nullable(),
+      }),
+    ),
+    devices: z.array(
+      z.object({ device: deviceEnum, sessions: nonNegativeInt }),
+    ),
+    audience: z.object({ member: nonNegativeInt, external: nonNegativeInt }),
+    depth: z.array(
+      z.object({
+        bucket: z.enum(["1", "2", "3", "4", "5+"]),
+        sessions: nonNegativeInt,
+      }),
+    ),
+    duration: z.array(
+      z.object({
+        bucket: z.enum(["<10s", "10-30s", "30s-1m", "1-3m", "3-10m", "10m+"]),
+        sessions: nonNegativeInt,
+      }),
+    ),
+    cohorts: z.array(
+      z.object({
+        week: z.string(),
+        size: nonNegativeInt,
+        retention: z.array(rate.nullable()),
+      }),
+    ),
+    referrerOptions: z.array(z.string()),
+  })
+  .openapi("ApiVisitorInsights");

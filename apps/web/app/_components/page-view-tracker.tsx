@@ -1,12 +1,20 @@
 "use client";
 
 import { useEffect } from "react";
+import { createEngagementTimer } from "@/features/public/analytics/engagement-timer";
+import {
+  createRandomId,
+  createVisitIdentity,
+} from "@/features/public/analytics/visitor-identity";
 import { CSRF_HEADER_NAME, CSRF_HEADER_VALUE } from "@/shared/security/csrf";
 
 type PageViewTrackerProps = {
   pageType: "home" | "activity" | "exhibition" | "about" | "donate" | "linktree";
   resourceId?: string;
 };
+
+/** API 상한과 같다. 넘는 값은 400이 되므로 보내기 전에 자른다. */
+const MAX_ENGAGED_MS = 30 * 60 * 1000;
 
 /**
  * 페이지뷰 집계.
@@ -46,6 +54,22 @@ const readEntry = (): { entry: true; referrerHost?: string } | null => {
   }
 };
 
+let visitIdentity: ReturnType<typeof createVisitIdentity> | null = null;
+
+// localStorage 접근은 일부 브라우저 설정에서 getter 자체가 예외를 던진다.
+const getVisitIdentity = () => {
+  if (visitIdentity === null) {
+    let storage: Storage | null = null;
+    try {
+      storage = window.localStorage;
+    } catch {
+      storage = null;
+    }
+    visitIdentity = createVisitIdentity(storage);
+  }
+  return visitIdentity;
+};
+
 export default function PageViewTracker({ pageType, resourceId }: PageViewTrackerProps) {
   useEffect(() => {
     const post = (path: string, body: unknown) => {
@@ -60,17 +84,80 @@ export default function PageViewTracker({ pageType, resourceId }: PageViewTracke
       }).catch(() => {});
     };
 
+    const identity = getVisitIdentity();
+    const pageviewId = createRandomId();
+    const timer = createEngagementTimer(
+      performance.now(),
+      document.visibilityState === "visible",
+    );
+    let visitorId: string | null = null;
+    let lastSentMs = 0;
+
+    // 누적 총량을 보낸다. 서버가 큰 값만 남기므로 탭을 여러 번 오가도 안전하다.
+    const sendEngagement = () => {
+      if (visitorId === null) return;
+      const engagedMs = Math.min(
+        Math.round(timer.total(performance.now())),
+        MAX_ENGAGED_MS,
+      );
+      if (engagedMs <= lastSentMs) return;
+      lastSentMs = engagedMs;
+      identity.touch(Date.now());
+      post("/api/public/page-views/engagement", {
+        pageviewId,
+        visitorId,
+        engagedMs,
+      });
+    };
+
     const frame = requestAnimationFrame(() => {
       // 조회수 API — activity / exhibition 리소스만
       if ((pageType === "activity" || pageType === "exhibition") && resourceId) {
         post("/api/public/views", { resourceType: pageType, resourceId });
       }
 
+      const entry = readEntry();
+      const visit = identity.resolve(Date.now());
+      visitorId = visit.visitorId;
+      // 세션 유입 경로는 문서 로드 첫 페이지뷰의 외부 리퍼러만 인정한다. 사이트 안 이동 뒤 시작된 세션은 직접 접속이다.
+      const session = visit.sessionStart
+        ? {
+            sessionStart: true,
+            ...(entry?.referrerHost !== undefined
+              ? { sessionReferrerHost: entry.referrerHost }
+              : {}),
+          }
+        : {};
+
       // 내부 Analytics Engine 집계
-      post("/api/public/page-views", { pageType, resourceId, ...readEntry() });
+      post("/api/public/page-views", {
+        pageType,
+        resourceId,
+        ...entry,
+        visitorId: visit.visitorId,
+        sessionId: visit.sessionId,
+        pageviewId,
+        ...session,
+      });
     });
 
-    return () => cancelAnimationFrame(frame);
+    const onVisibilityChange = () => {
+      const now = performance.now();
+      if (document.visibilityState === "hidden") {
+        timer.pause(now);
+        sendEngagement();
+      } else {
+        timer.resume(now);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      timer.pause(performance.now());
+      sendEngagement();
+    };
   }, [pageType, resourceId]);
 
   return null;
