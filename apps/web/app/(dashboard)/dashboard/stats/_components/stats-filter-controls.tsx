@@ -59,6 +59,7 @@ export default function StatsFilterControls({
         <Field label="방문자 구분">
           {(control) => (
             <Select
+              className="min-h-11"
               {...control}
               data-testid="select-stats-audience"
               value={filters.audience}
@@ -77,6 +78,7 @@ export default function StatsFilterControls({
         <Field label="기기">
           {(control) => (
             <Select
+              className="min-h-11"
               {...control}
               data-testid="select-stats-device"
               value={filters.device}
@@ -96,6 +98,7 @@ export default function StatsFilterControls({
         <Field label="유입 경로">
           {(control) => (
             <Select
+              className="min-h-11"
               {...control}
               data-testid="select-stats-referrer"
               value={filters.referrer}
@@ -113,6 +116,7 @@ export default function StatsFilterControls({
         <Field label="진입 페이지">
           {(control) => (
             <Select
+              className="min-h-11"
               {...control}
               data-testid="select-stats-landing"
               value={filters.landing}

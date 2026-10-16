@@ -70,7 +70,7 @@ export function RingCenter({
   const centerSize = baseInnerRadius * 2 - 16;
 
   // If custom render function is provided, use it
-  if (children && hoveredData) {
+  if (children) {
     return (
       <div
         className={cn(
@@ -84,7 +84,12 @@ export function RingCenter({
           value: displayValue,
           label: displayLabel,
           isHovered: hoveredIndex !== null,
-          data: hoveredData,
+          // 호버 전에도 render prop을 쓴다. 기본 NumberFlow는 SSR 출력이 달라 하이드레이션이 깨진다.
+          data: hoveredData ?? {
+            label: displayLabel,
+            value: displayValue,
+            maxValue: displayValue,
+          },
         })}
       </div>
     );

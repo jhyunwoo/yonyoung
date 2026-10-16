@@ -58,9 +58,11 @@ test.describe("방문 통계 화면", () => {
     await page.getByTestId("btn-stats-csv").click();
     const download = await downloadPromise;
 
-    expect(download.suggestedFilename()).toBe("page-views_2026-05-01_2026-05-03_day.csv");
+    expect(download.suggestedFilename()).toBe(
+      "visitor-insights_2026-05-01_2026-05-03_day.csv",
+    );
     const content = await readFile((await download.path())!, "utf8");
-    expect(content).toContain("2026-05-01,110,90");
+    expect(content).toContain("2026-05-03,130,60,75,100,40,20,110,50,65,85,수집");
   });
 
   test("모바일에서 기간·집계 단위 버튼은 44px 이상 터치 영역을 가진다", async ({
@@ -69,17 +71,102 @@ test.describe("방문 통계 화면", () => {
     test.skip(testInfo.project.name !== "mobile-chromium", "터치 기기 기준 검사");
     await page.goto("/dashboard/stats", { waitUntil: "domcontentloaded" });
 
-    for (const testId of ["btn-stats-period-7d", "btn-stats-granularity-day"]) {
+    for (const testId of [
+      "btn-stats-period-7d",
+      "btn-stats-granularity-day",
+      "select-stats-audience",
+    ]) {
       const box = await page.getByTestId(testId).boundingBox();
       expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
     }
+  });
+
+  test("필터를 고르면 URL·API 요청에 반영되고 칩으로 해제한다", async ({ page }) => {
+    await page.goto("/dashboard/stats", { waitUntil: "domcontentloaded" });
+    // 갱신 시각 문구는 클라이언트 effect가 돌아야 나온다. 하이드레이션 전에 고른 값은 React가 받지 못한다.
+    await expect(page.getByText(/10초마다 갱신/)).toBeVisible();
+
+    await page.getByTestId("select-stats-audience").selectOption("external");
+    await expect(page).toHaveURL(/audience=external/);
+
+    await page.getByTestId("select-stats-landing").selectOption("activity");
+    await expect(page).toHaveURL(/audience=external&landing=activity/);
+    await expect(page.getByTestId("chip-stats-audience")).toContainText("외부 방문자");
+
+    await page.getByTestId("chip-stats-audience").click();
+    await expect(page).not.toHaveURL(/audience=/);
+    await expect(page).toHaveURL(/landing=activity/);
+
+    await page.getByTestId("select-stats-device").selectOption("mobile");
+    await expect(page).toHaveURL(/device=mobile/);
+    await page.getByTestId("btn-stats-clear-filters").click();
+    await expect(page).not.toHaveURL(/device=|landing=/);
+  });
+
+  test("추이 지표를 바꾸면 다시 불러오지 않고 URL만 바뀐다", async ({ page }) => {
+    await page.goto("/dashboard/stats", { waitUntil: "domcontentloaded" });
+    await expect(page.getByText(/10초마다 갱신/)).toBeVisible();
+
+    let refetched = false;
+    page.on("request", (request) => {
+      if (request.url().includes("/dashboard/stats") && request.headers()["rsc"] === "1")
+        refetched = true;
+    });
+    await page.getByTestId("btn-stats-metric-visitors").click();
+    await expect(page).toHaveURL(/metric=visitors/);
+    await expect(page.getByTestId("stats-trend").getByText("재방문")).toBeVisible();
+    expect(refetched).toBe(false);
+  });
+
+  test("수집 시작 전 구간이 있으면 안내한다", async ({ page }) => {
+    await page.goto("/dashboard/stats?from=2026-05-01&to=2026-05-03", {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page.getByTestId("stats-collection-note")).toContainText(
+      "2026-05-02부터 수집",
+    );
+  });
+
+  test("차트마다 표로 보기를 열 수 있다", async ({ page }) => {
+    await page.goto("/dashboard/stats", { waitUntil: "domcontentloaded" });
+    const hourly = page.getByTestId("stats-hourly");
+    await hourly.getByText("표로 보기").click();
+    await expect(hourly.getByRole("columnheader", { name: "월" })).toBeVisible();
+  });
+
+  test("콘텐츠 표는 열 이름으로 정렬한다", async ({ page }) => {
+    await page.goto("/dashboard/stats", { waitUntil: "domcontentloaded" });
+    const table = page.getByTestId("stats-content");
+    await expect(table.locator("tbody tr").first()).toContainText("홈");
+    await table.getByRole("button", { name: "평균 체류" }).click();
+    await expect(table.locator("tbody tr").first()).toContainText("목 활동");
+  });
+
+  test("기간을 바꿔도 켜 둔 필터는 유지된다", async ({ page }) => {
+    await page.goto("/dashboard/stats?audience=member", {
+      waitUntil: "domcontentloaded",
+    });
+    await page.getByTestId("btn-stats-period-6m").click();
+    await expect(page).toHaveURL(/range=6m/);
+    await expect(page).toHaveURL(/audience=member/);
+  });
+
+  test("하이드레이션·런타임 오류 없이 렌더된다", async ({ page }) => {
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.goto("/dashboard/stats", { waitUntil: "domcontentloaded" });
+    await expect(page.getByText(/10초마다 갱신/)).toBeVisible();
+    await expect(page.getByTestId("stats-composition")).toBeVisible();
+    expect(errors).toEqual([]);
   });
 
   for (const theme of ["light", "dark"] as const) {
     test(`${theme} 테마에서 대비와 가로 넘침이 없다`, async ({ page }) => {
       await page.goto("/dashboard/stats", { waitUntil: "domcontentloaded" });
       await setTheme(page, theme);
-      await expect(page.getByRole("heading", { name: "유입 경로" })).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "유입 경로 → 진입 페이지" }),
+      ).toBeVisible();
       await assertNoHorizontalOverflow(page, `stats-${theme}`);
       await assertReadable(page);
     });

@@ -29,7 +29,17 @@ const RingBlock = ({
         {data.map((slice, index) => (
           <Ring index={index} key={slice.label} color={slice.color} />
         ))}
-        <RingCenter defaultLabel={title} />
+        {/* 기본 NumberFlow는 서버(텍스트)와 클라이언트(커스텀 엘리먼트) 출력이 달라 하이드레이션이 깨진다. */}
+        <RingCenter defaultLabel={title}>
+          {({ value, label }) => (
+            <div className="flex flex-col items-center text-center">
+              <span className="text-body font-semibold text-ink tabular-nums">
+                {formatCount(value)}
+              </span>
+              <span className="text-caption text-ink-muted">{label}</span>
+            </div>
+          )}
+        </RingCenter>
       </RingChart>
       {/* 범례에 숫자와 비율을 함께 써서 색 없이도 읽힌다. */}
       <figcaption className="w-full">
