@@ -190,6 +190,13 @@ export const computeVisitorInsights = (
   // 첫 방문 기록이 없으면 이번이 첫 방문이다.
   const firstSeenOf = (visitorId: string) =>
     input.firstSeen.get(visitorId) ?? currentStart;
+  // 신규는 방문자의 생애 첫 세션이 보이는 경우다. 필터가 첫 세션을 빼면 남은 세션은 재방문이다.
+  const isFirstSession = (session: Session) => {
+    const first = input.firstSeen.get(session.visitorId);
+    return first === undefined || session.start <= first;
+  };
+  const newVisitorsIn = (list: readonly Session[]) =>
+    new Set(list.filter(isFirstSession).map((s) => s.visitorId));
   const trackedSince =
     input.trackedSinceMs === null ? null : toKstDate(input.trackedSinceMs);
 
@@ -245,14 +252,11 @@ export const computeVisitorInsights = (
     });
   }
 
-  const trend = [...buckets.entries()].map(([key, bucket]) => {
+  const trend = [...buckets.values()].map((bucket) => {
     const cur = summarize(bucket.current);
     const prev = summarize(bucket.previous);
     const visitorIds = new Set(bucket.current.map((s) => s.visitorId));
-    const newVisitors = [...visitorIds].filter((visitorId) => {
-      const first = firstSeenOf(visitorId);
-      return first >= currentStart && keyOfDate.get(toKstDate(first)) === key;
-    }).length;
+    const newVisitors = newVisitorsIn(bucket.current).size;
     return {
       bucket: bucket.label,
       views: legacy !== null ? bucket.legacyViews : cur.views,
@@ -281,9 +285,8 @@ export const computeVisitorInsights = (
     bounceRate: previousSummary.bounceRate,
   };
   const visitorIds = new Set(current.map((s) => s.visitorId));
-  const newVisitors = [...visitorIds].filter(
-    (v) => firstSeenOf(v) >= currentStart,
-  ).length;
+  const newVisitorIds = newVisitorsIn(current);
+  const newVisitors = newVisitorIds.size;
 
   // ── 요일 × 시간 ──
   const hourly = Array.from({ length: 168 }, (_, index) => ({
@@ -416,10 +419,8 @@ export const computeVisitorInsights = (
     }
   }
   const cohortMembers = new Map<string, string[]>();
-  for (const visitorId of visitorIds) {
-    const first = firstSeenOf(visitorId);
-    if (first < currentStart) continue;
-    const week = mondayOf(toKstDate(first));
+  for (const visitorId of newVisitorIds) {
+    const week = mondayOf(toKstDate(firstSeenOf(visitorId)));
     cohortMembers.set(week, [...(cohortMembers.get(week) ?? []), visitorId]);
   }
   const cohorts = [...cohortMembers.entries()]

@@ -139,6 +139,31 @@ describe("computeVisitorInsights", () => {
     expect(summary).toMatchObject({ newVisitors: 1, returningVisitors: 1 });
   });
 
+  it("필터가 첫 세션을 뺀 방문자는 요약과 추이 모두 재방문이다", () => {
+    const result = run(
+      [
+        ev({ sessionId: "f1", visitedAt: at("2026-10-01T10:00") }),
+        ev({
+          sessionId: "f2",
+          visitedAt: at("2026-10-03T10:00"),
+          pageType: "activity",
+          resourceId: "a1",
+        }),
+      ],
+      {
+        segment: { ...ALL, landing: "activity" },
+        firstSeen: new Map([["v1", at("2026-10-01T10:00")]]),
+      },
+    );
+    expect(result.summary).toMatchObject({
+      newVisitors: 0,
+      returningVisitors: 1,
+    });
+    const trendNew = result.trend.reduce((sum, row) => sum + row.newVisitors, 0);
+    expect(trendNew).toBe(0);
+    expect(result.cohorts).toEqual([]);
+  });
+
   it("주 단위 추이는 기간 첫날을 첫 버킷 라벨로 쓰고 이전 기간을 같은 순번 날짜에 맞춘다", () => {
     const range: PageViewAnalyticsRange = {
       from: "2026-10-01",
