@@ -103,6 +103,20 @@ const getProtectedHandler = (env: McpRuntimeEnv): ProtectedHandler => {
 export const createBetterAuthMcpAuthenticator =
   (): McpRequestAuthenticator => async (c, onAuthenticated) => {
     const request = c.req.raw;
-    continuations.set(request, onAuthenticated);
-    return getProtectedHandler(resolveMcpRuntimeEnv(c.env))(request);
+    let authenticated = false;
+    continuations.set(request, (identity) => {
+      authenticated = true;
+      return onAuthenticated(identity);
+    });
+    const handler = getProtectedHandler(resolveMcpRuntimeEnv(c.env));
+    try {
+      return await handler(request);
+    } catch (error) {
+      // JWKS는 웹 도메인을 거쳐 받으므로 웹 오리진이 잠깐 끊기면 검증 단계에서 던진다
+      // (YONYOUNG-WEB-9). 후속 처리 전 실패만 한 번 다시 시도해 도구가 두 번 실행되지 않게 한다.
+      if (authenticated) {
+        throw error;
+      }
+      return handler(request);
+    }
   };
