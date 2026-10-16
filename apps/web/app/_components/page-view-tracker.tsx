@@ -113,7 +113,7 @@ export default function PageViewTracker({ pageType, resourceId }: PageViewTracke
     const frame = requestAnimationFrame(() => {
       // 조회수 API — activity / exhibition 리소스만
       if ((pageType === "activity" || pageType === "exhibition") && resourceId) {
-        post("/api/public/views", { resourceType: pageType, resourceId });
+        void post("/api/public/views", { resourceType: pageType, resourceId });
       }
 
       const entry = readEntry();
