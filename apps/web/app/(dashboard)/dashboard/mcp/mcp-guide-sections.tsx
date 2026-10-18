@@ -1,5 +1,6 @@
 import type { ApiMcpOverview } from "@yonyoung/contracts/mcp";
-import { Badge, Card, CardBody, CardHeader } from "@/app/(dashboard)/_components/ui";
+import { Badge } from "@/app/(dashboard)/_components/ui/badge";
+import { Card, CardBody, CardHeader } from "@/app/(dashboard)/_components/ui/card";
 import { groupToolsByCategory } from "@/features/mcp/mcp-tool-groups";
 import CopyUrlButton from "@/app/(dashboard)/dashboard/mcp/copy-url-button";
 

@@ -101,20 +101,3 @@ export const CardBody = ({
   className?: string;
   children: ReactNode;
 }) => <div className={cx("text-body-sm text-ink-secondary", className)}>{children}</div>;
-
-export const CardFooter = ({
-  className,
-  children,
-}: {
-  className?: string;
-  children: ReactNode;
-}) => (
-  <div
-    className={cx(
-      "mt-5 flex flex-wrap items-center gap-2 border-t border-hairline pt-4",
-      className,
-    )}
-  >
-    {children}
-  </div>
-);

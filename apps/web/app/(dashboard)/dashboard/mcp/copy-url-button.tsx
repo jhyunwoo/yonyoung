@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/app/(dashboard)/_components/ui";
+import { Button } from "@/app/(dashboard)/_components/ui/button";
 
 export default function CopyUrlButton({ url }: { url: string }) {
   const [copied, setCopied] = useState(false);

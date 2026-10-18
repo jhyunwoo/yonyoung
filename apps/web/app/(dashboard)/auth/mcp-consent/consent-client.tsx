@@ -6,13 +6,9 @@ import {
   apiMcpConsentContextSchema,
   type ApiMcpConsentContext,
 } from "@yonyoung/contracts/mcp";
-import {
-  Alert,
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-} from "@/app/(dashboard)/_components/ui";
+import { Alert } from "@/app/(dashboard)/_components/ui/alert";
+import { Button } from "@/app/(dashboard)/_components/ui/button";
+import { Card, CardBody, CardHeader } from "@/app/(dashboard)/_components/ui/card";
 import { authClient } from "@/features/auth/client/auth-client";
 import { groupToolsByCategory } from "@/features/mcp/mcp-tool-groups";
 

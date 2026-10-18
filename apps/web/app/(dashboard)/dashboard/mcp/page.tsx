@@ -1,11 +1,7 @@
-import {
-  Alert,
-  Card,
-  CardBody,
-  CardHeader,
-  PageContainer,
-  PageHeader,
-} from "@/app/(dashboard)/_components/ui";
+import { Alert } from "@/app/(dashboard)/_components/ui/alert";
+import { Card, CardBody, CardHeader } from "@/app/(dashboard)/_components/ui/card";
+import { PageContainer } from "@/app/(dashboard)/_components/ui/layout-parts";
+import { PageHeader } from "@/app/(dashboard)/_components/ui/page-header";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import {
   getMcpConnections,

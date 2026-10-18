@@ -29,32 +29,6 @@ export const PageContainer = ({
 );
 
 /**
- * 긴 폼의 하단 고정 액션 바.
- *
- * 모바일에서 저장 버튼을 찾으려고 끝까지 스크롤할 필요를 없앤다.
- * 홈 인디케이터에 가리지 않도록 safe-area 인셋을 더한다.
- */
-export const StickyActionBar = ({
-  className,
-  children,
-}: {
-  className?: string;
-  children: ReactNode;
-}) => (
-  <div
-    className={cx(
-      "sticky bottom-0 z-10 -mx-4 mt-2 flex flex-col-reverse gap-2 border-t border-hairline",
-      "bg-surface/95 px-4 pt-3 backdrop-blur md:-mx-6 md:px-6",
-      "pb-[calc(env(safe-area-inset-bottom)+0.75rem)]",
-      "sm:flex-row sm:items-center sm:justify-end",
-      className,
-    )}
-  >
-    {children}
-  </div>
-);
-
-/**
  * 키보드 사용자가 사이드바 전체를 탭으로 통과하지 않고 본문으로 건너뛰게 한다.
  * 평소에는 숨겨져 있다가 포커스를 받으면 나타난다.
  */
