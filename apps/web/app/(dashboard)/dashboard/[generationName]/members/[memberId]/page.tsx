@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
+import { resolveProfileUserId } from "@/features/auth/profile/read-editable-profile-data";
 import {
   getAdminUserById,
   listAdminGenerationMembers,
@@ -48,10 +49,7 @@ export default async function GenerationMemberDetailPage({
     serverAuthGuard.requireSession(),
   ]);
   const profile = await serverAuthGuard.getCurrentUserProfile(session);
-  const viewerId =
-    profile && typeof profile.id === "string" && profile.id.trim().length > 0
-      ? profile.id.trim()
-      : session.user.id;
+  const viewerId = resolveProfileUserId(profile, session.user.id);
 
   const memberId = decodeMemberId(rawMemberId);
   if (!memberId) {
