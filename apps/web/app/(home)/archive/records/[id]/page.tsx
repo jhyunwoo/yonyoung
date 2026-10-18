@@ -77,7 +77,7 @@ async function RecordDetailContent({ params }: RecordDetailPageProps) {
   // 활동 정보와 첨부 자료는 독립적이므로 병렬로 조회한다
   const [activity, attachments] = await Promise.all([
     getActivity(id),
-    getPublicAttachments("activity", id).catch(() => []),
+    getPublicAttachments("activity", id),
   ]);
 
   if (!activity) {

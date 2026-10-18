@@ -44,6 +44,16 @@ const ARCHIVE_CACHE_PROFILE = "days";
 /** 운영 중 손으로 자주 바꾸는 설정성 데이터(사이트 설정·링크트리·리크루팅)의 캐시 수명. */
 const SETTINGS_CACHE_PROFILE = "hours";
 
+/**
+ * 조회에 실패해 폴백 값을 돌려줄 때의 캐시 수명.
+ *
+ * 폴백(빈 목록·기본 설정)을 정상 응답과 같은 `days`/`hours`로 캐시하면 API 장애가 끝난
+ * 뒤에도 그 수명 동안 빈 화면이 남는다. 짧아야 다음 재검증에서 다시 시도한다. 다만
+ * `expire`가 5분보다 짧은 프로필(`seconds`)은 프리렌더에서 동적 입력으로 취급되므로
+ * `minutes`다(`features/seo/og/og-cover-image.ts`의 실패 수명과 같은 이유).
+ */
+const FAILURE_CACHE_PROFILE = "minutes";
+
 type PublicLinkItem = ApiLinktreeItem & {
   groupName: string;
 };
@@ -57,14 +67,22 @@ const readPublic = async <T>(path: string, schema: z.ZodType<T>): Promise<T> => 
   });
 };
 
+/**
+ * 폴백 여부를 결과와 함께 돌려준다. 캐시 함수는 `ok`를 보고 `cacheLife`를 한 번만 고른다 —
+ * `cacheLife`는 여러 번 부르면 가장 짧은 값이 남으므로 미리 긴 수명을 걸어 둘 수 없다.
+ * 분기마다 따로 부르는 이유: 빌드가 생성하는 `cacheLife` 타입은 프로필마다 오버로드가 따로라
+ * `ok ? "days" : "minutes"` 같은 합집합 인자를 받지 않는다.
+ */
+type PublicReadResult<T> = { ok: boolean; data: T };
+
 const readPublicWithFallback = async <T>(input: {
   path: string;
   schema: z.ZodType<T>;
   fallback: T;
   event: string;
-}): Promise<T> => {
+}): Promise<PublicReadResult<T>> => {
   try {
-    return await readPublic<T>(input.path, input.schema);
+    return { ok: true, data: await readPublic<T>(input.path, input.schema) };
   } catch (error) {
     logger.warn({
       event: input.event,
@@ -83,22 +101,27 @@ const readPublicWithFallback = async <T>(input: {
             },
     });
 
-    return input.fallback;
+    return { ok: false, data: input.fallback };
   }
 };
 
 export const listPublicActivities = async (): Promise<ApiActivity[]> => {
   "use cache";
 
-  cacheLife(ARCHIVE_CACHE_PROFILE);
   cacheTag(PUBLIC_CACHE_TAGS.activities);
 
-  return readPublicWithFallback({
+  const result = await readPublicWithFallback({
     path: "/api/public/activities",
     schema: z.array(apiActivitySchema),
     fallback: [],
     event: "public.activities.read_fallback",
   });
+  if (result.ok) {
+    cacheLife(ARCHIVE_CACHE_PROFILE);
+  } else {
+    cacheLife(FAILURE_CACHE_PROFILE);
+  }
+  return result.data;
 };
 
 /**
@@ -117,19 +140,34 @@ export const getPublicActivityById = async (id: string): Promise<ApiActivity> =>
   return readPublic<ApiActivity>(`/api/public/activities/${id}`, apiActivitySchema);
 };
 
-export const listPublicExhibitions = async (): Promise<ApiExhibition[]> => {
+/**
+ * 전시 목록을 폴백 여부와 함께 캐시한다.
+ *
+ * `getFeaturedPublicExhibition`은 자기 `cacheLife`를 명시하므로 안쪽 캐시의 짧은 수명이
+ * 바깥으로 전파되지 않는다. 바깥도 목록이 폴백이었는지 알아야 실패를 `hours`로 굳히지
+ * 않을 수 있어서 결과째 공유한다.
+ */
+const readPublicExhibitions = async (): Promise<PublicReadResult<ApiExhibition[]>> => {
   "use cache";
 
-  cacheLife(ARCHIVE_CACHE_PROFILE);
   cacheTag(PUBLIC_CACHE_TAGS.exhibitions);
 
-  return readPublicWithFallback({
+  const result = await readPublicWithFallback({
     path: "/api/public/exhibitions",
     schema: z.array(apiExhibitionSchema),
     fallback: [],
     event: "public.exhibitions.read_fallback",
   });
+  if (result.ok) {
+    cacheLife(ARCHIVE_CACHE_PROFILE);
+  } else {
+    cacheLife(FAILURE_CACHE_PROFILE);
+  }
+  return result;
 };
+
+export const listPublicExhibitions = async (): Promise<ApiExhibition[]> =>
+  (await readPublicExhibitions()).data;
 
 /** 전시 하나의 상세. 활동 상세와 같은 이유로 엔티티 태그만 붙인다. */
 export const getPublicExhibitionById = async (id: string): Promise<ApiExhibition> => {
@@ -153,38 +191,53 @@ export const getPublicExhibitionById = async (id: string): Promise<ApiExhibition
 export const getFeaturedPublicExhibition = async (): Promise<ApiExhibition | null> => {
   "use cache";
 
-  cacheLife(SETTINGS_CACHE_PROFILE);
   cacheTag(PUBLIC_CACHE_TAGS.exhibitions);
 
-  return pickFeaturedPublicExhibition(await listPublicExhibitions());
+  const exhibitions = await readPublicExhibitions();
+  if (exhibitions.ok) {
+    cacheLife(SETTINGS_CACHE_PROFILE);
+  } else {
+    cacheLife(FAILURE_CACHE_PROFILE);
+  }
+  return pickFeaturedPublicExhibition(exhibitions.data);
 };
 
 export const listPublicLinktrees = async (): Promise<ApiLinktree[]> => {
   "use cache";
 
-  cacheLife(SETTINGS_CACHE_PROFILE);
   cacheTag(PUBLIC_CACHE_TAGS.linktree);
 
-  return readPublicWithFallback({
+  const result = await readPublicWithFallback({
     path: "/api/public/linktree",
     schema: z.array(apiLinktreeSchema),
     fallback: [],
     event: "public.linktree.read_fallback",
   });
+  if (result.ok) {
+    cacheLife(SETTINGS_CACHE_PROFILE);
+  } else {
+    cacheLife(FAILURE_CACHE_PROFILE);
+  }
+  return result.data;
 };
 
 export const getPublicSiteSettings = async (): Promise<ApiSiteSettings> => {
   "use cache";
 
-  cacheLife(SETTINGS_CACHE_PROFILE);
   cacheTag(PUBLIC_CACHE_TAGS.siteSettings);
 
-  return readPublicWithFallback({
+  const result = await readPublicWithFallback({
     path: "/api/public/site-settings",
     schema: apiSiteSettingsSchema,
     fallback: DEFAULT_SITE_SETTINGS,
     event: "public.site-settings.read_fallback",
   });
+  if (result.ok) {
+    cacheLife(SETTINGS_CACHE_PROFILE);
+  } else {
+    cacheLife(FAILURE_CACHE_PROFILE);
+  }
+  return result.data;
 };
 
 /**
@@ -197,7 +250,6 @@ export const getPublicAttachments = async (
 ): Promise<ApiAttachment[]> => {
   "use cache";
 
-  cacheLife(ARCHIVE_CACHE_PROFILE);
   cacheTag(PUBLIC_CACHE_TAGS.attachments);
 
   const query = new URLSearchParams({ scope });
@@ -205,41 +257,57 @@ export const getPublicAttachments = async (
     query.set("resourceId", resourceId);
   }
 
-  return readPublicWithFallback({
+  const result = await readPublicWithFallback({
     path: `/api/public/attachments?${query.toString()}`,
     schema: z.array(apiAttachmentSchema),
     fallback: [],
     event: "public.attachments.read_fallback",
   });
+  if (result.ok) {
+    cacheLife(ARCHIVE_CACHE_PROFILE);
+  } else {
+    cacheLife(FAILURE_CACHE_PROFILE);
+  }
+  return result.data;
 };
 
 export const getPublicCurrentRecruitingPlan =
   async (): Promise<ApiRecruitingPlan | null> => {
     "use cache";
 
-    cacheLife(SETTINGS_CACHE_PROFILE);
     cacheTag(PUBLIC_CACHE_TAGS.recruitingPlan);
 
-    return readPublicWithFallback({
+    const result = await readPublicWithFallback({
       path: "/api/public/recruiting-plan/current",
       schema: apiRecruitingPlanSchema.nullable(),
       fallback: null,
       event: "public.recruiting-plan.read_fallback",
     });
+    if (result.ok) {
+      cacheLife(SETTINGS_CACHE_PROFILE);
+    } else {
+      cacheLife(FAILURE_CACHE_PROFILE);
+    }
+    return result.data;
   };
 
 export const listPublicGenerations = async (): Promise<ApiGeneration[]> => {
   "use cache";
 
-  cacheLife(ARCHIVE_CACHE_PROFILE);
   cacheTag(PUBLIC_CACHE_TAGS.generations);
 
-  return readPublicWithFallback({
+  const result = await readPublicWithFallback({
     path: "/api/public/generations",
     schema: z.array(apiGenerationSchema),
     fallback: [],
     event: "public.generations.read_fallback",
   });
+  if (result.ok) {
+    cacheLife(ARCHIVE_CACHE_PROFILE);
+  } else {
+    cacheLife(FAILURE_CACHE_PROFILE);
+  }
+  return result.data;
 };
 
 export const listPublicPhotographers = async (): Promise<
@@ -247,15 +315,20 @@ export const listPublicPhotographers = async (): Promise<
 > => {
   "use cache";
 
-  cacheLife(ARCHIVE_CACHE_PROFILE);
   cacheTag(PUBLIC_CACHE_TAGS.photographers);
 
-  return readPublicWithFallback({
+  const result = await readPublicWithFallback({
     path: "/api/public/photographers",
     schema: z.array(apiPublicGenerationWithMembersSchema),
     fallback: [],
     event: "public.photographers.read_fallback",
   });
+  if (result.ok) {
+    cacheLife(ARCHIVE_CACHE_PROFILE);
+  } else {
+    cacheLife(FAILURE_CACHE_PROFILE);
+  }
+  return result.data;
 };
 
 export const flattenLinktreeItems = (linktrees: ApiLinktree[]): PublicLinkItem[] => {

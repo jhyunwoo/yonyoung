@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
-import {
-  listPublicLinktrees,
-  safeList,
-} from "@/features/public/services/public-read-service";
+import { listPublicLinktrees } from "@/features/public/services/public-read-service";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
 import PageTitleHero from "@/app/(home)/_components/page-title-hero";
@@ -20,7 +17,7 @@ export const metadata: Metadata = createPageMetadata(PAGE_SEO.linktree);
 export const instant = true;
 
 export default async function LinktreePage() {
-  const linktrees = await safeList(listPublicLinktrees, []);
+  const linktrees = await listPublicLinktrees();
 
   return (
     <div className="min-h-screen bg-(--bg-primary)">

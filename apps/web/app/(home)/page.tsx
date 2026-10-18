@@ -10,7 +10,6 @@ import {
   getFeaturedPublicExhibition,
   listPublicActivities,
   listPublicLinktrees,
-  safeList,
 } from "@/features/public/services/public-read-service";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import { summarizeRichTextHtml } from "@/features/media/rich-text/rich-text";
@@ -21,15 +20,15 @@ import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
 
 const getHomePrimaryData = async () => {
   return Promise.all([
-    safeList(listPublicActivities, []),
+    listPublicActivities(),
     // 히어로에 띄울 전시는 "지금" 기준으로 골라야 해서 서버 캐시 안에서 결정한다.
     // 예전에는 클라이언트가 하이드레이션 후 다시 골라 LCP 이미지를 두 번 받았다.
-    safeList(getFeaturedPublicExhibition, null),
+    getFeaturedPublicExhibition(),
   ]);
 };
 
 const getHomeQuickLinks = async () => {
-  const linktrees = await safeList(listPublicLinktrees, []);
+  const linktrees = await listPublicLinktrees();
   return flattenLinktreeItems(linktrees).slice(0, 6);
 };
 

@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { Suspense } from "react";
-import { DEFAULT_SITE_SETTINGS } from "@yonyoung/contracts";
 import { getPublicSiteSettings } from "@/features/public/services/public-read-service";
 import CurrentYear from "@/app/(home)/_components/current-year";
 
@@ -9,7 +8,7 @@ const infoContentClass = "break-all text-[0.9rem] leading-[1.6] text-(--footer-m
 const infoLinkClass = `${infoContentClass} inline-flex min-h-11 w-full items-center`;
 
 export default async function SiteFooter() {
-  const siteSettings = await getPublicSiteSettings().catch(() => DEFAULT_SITE_SETTINGS);
+  const siteSettings = await getPublicSiteSettings();
   const instagramId = siteSettings.footerInstagramId.replace(/^@+/, "");
   const instagramUrl = `https://www.instagram.com/${encodeURIComponent(instagramId)}`;
 

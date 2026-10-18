@@ -83,4 +83,65 @@ describe("public-read-service", () => {
 
     expect(result).toEqual([]);
   });
+
+  describe("cacheLife", () => {
+    const cacheLife = vi.fn();
+
+    beforeEach(() => {
+      cacheLife.mockReset();
+      vi.doMock("next/cache", () => ({ cacheLife, cacheTag: vi.fn() }));
+    });
+
+    afterEach(() => {
+      vi.doUnmock("next/cache");
+    });
+
+    const jsonResponse = (body: unknown) =>
+      new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+
+    it("caches a successful read with its normal profile", async () => {
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse({ data: [] })));
+
+      const { listPublicActivities } =
+        await import("@/features/public/services/public-read-service");
+      await listPublicActivities();
+
+      expect(cacheLife.mock.calls).toEqual([["days"]]);
+    });
+
+    // 폴백을 days/hours 로 굳히면 API 장애가 끝난 뒤에도 그 수명 동안 빈 화면이 남는다.
+    it("caches a fallback only for minutes", async () => {
+      vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("down")));
+
+      const { getPublicSiteSettings } =
+        await import("@/features/public/services/public-read-service");
+      await getPublicSiteSettings();
+
+      expect(cacheLife.mock.calls).toEqual([["minutes"]]);
+    });
+
+    it("keeps the featured exhibition short-lived when the list read failed", async () => {
+      vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("down")));
+
+      const { getFeaturedPublicExhibition } =
+        await import("@/features/public/services/public-read-service");
+      const result = await getFeaturedPublicExhibition();
+
+      expect(result).toBeNull();
+      expect(cacheLife.mock.calls).toEqual([["minutes"], ["minutes"]]);
+    });
+
+    it("caches the featured exhibition for hours when the list read succeeded", async () => {
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse({ data: [] })));
+
+      const { getFeaturedPublicExhibition } =
+        await import("@/features/public/services/public-read-service");
+      await getFeaturedPublicExhibition();
+
+      expect(cacheLife.mock.calls).toEqual([["days"], ["hours"]]);
+    });
+  });
 });

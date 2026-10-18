@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  listPublicGenerations,
-  safeList,
-} from "@/features/public/services/public-read-service";
+import { listPublicGenerations } from "@/features/public/services/public-read-service";
 import { formatKoreanYearRange } from "@/shared/utils/date-formatters";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
@@ -21,7 +18,7 @@ const annualActivities = [
 export const metadata: Metadata = createPageMetadata(PAGE_SEO.about);
 
 const getPublicGenerations = async () => {
-  return safeList(listPublicGenerations, []);
+  return listPublicGenerations();
 };
 
 /**
