@@ -96,4 +96,79 @@ test.describe("관리자 업로드", () => {
     const created = state.activities.find((activity) => activity.title === title);
     expect(created?.detailImages).toHaveLength(DETAIL_IMAGE_COUNT);
   });
+
+  test("활동 수정에서 세부 사진을 지우고 새 사진을 더해 저장한다", async ({
+    page,
+    context,
+    request,
+  }, testInfo) => {
+    const namespace = `${testInfo.project.name}-w${testInfo.parallelIndex}-activity-edit`;
+    await resetMockState(request, namespace);
+    await setMockSession(context, { role: "president", namespace });
+    const before = await getMockState(request, namespace);
+    const beforeImages =
+      before.activities.find((activity) => activity.id === "act-1")?.detailImages ?? [];
+    const removedImageId = beforeImages[0]?.id ?? "";
+
+    await page.goto(`${GENERATION_PATH}/activities/act-1/edit`, {
+      waitUntil: "domcontentloaded",
+    });
+    await routeUploadsToSameOrigin(page);
+
+    await page.getByTestId(`sortable-image-remove-${removedImageId}`).click();
+    await page.locator('input[type="file"]').nth(1).setInputFiles(pngFile("added.png"));
+    await page.getByTestId("activity-edit-submit").click();
+
+    await page.waitForURL((url) => url.pathname.endsWith("/activities/act-1"), {
+      timeout: 60_000,
+    });
+
+    const after = await getMockState(request, namespace);
+    const afterImages =
+      after.activities.find((activity) => activity.id === "act-1")?.detailImages ?? [];
+    expect(afterImages).toHaveLength(beforeImages.length);
+    expect(afterImages.map((image) => image.id)).not.toContain(removedImageId);
+  });
+
+  test("대표 사진과 세부 사진으로 전시를 만든다", async ({
+    page,
+    context,
+    request,
+  }, testInfo) => {
+    const namespace = `${testInfo.project.name}-w${testInfo.parallelIndex}-exhibition-create`;
+    await resetMockState(request, namespace);
+    await setMockSession(context, { role: "president", namespace });
+
+    await page.goto(`${GENERATION_PATH}/exhibitions/new`, {
+      waitUntil: "domcontentloaded",
+    });
+    await routeUploadsToSameOrigin(page);
+
+    const title = `전시 업로드 ${Date.now()}`;
+    await page.getByPlaceholder("예: 연영회 60기 정기전").fill(title);
+    await page.getByPlaceholder("예: 서울시립미술관").fill("학생회관");
+    await page.locator(".ProseMirror").click();
+    await page.keyboard.type("전시 설명");
+    const dateInputs = page.locator('input[type="date"]');
+    await dateInputs.nth(0).fill("2030-05-01");
+    await dateInputs.nth(1).fill("2030-05-03");
+
+    const fileInputs = page.locator('input[type="file"]');
+    await fileInputs.nth(0).setInputFiles(pngFile("cover.png"));
+    await fileInputs.nth(1).setInputFiles([pngFile("d1.png"), pngFile("d2.png")]);
+
+    await page.getByTestId("exhibition-create-submit").click();
+
+    await page.waitForURL(
+      (url) =>
+        /\/exhibitions\/[^/]+$/.test(url.pathname) && !url.pathname.endsWith("/new"),
+      { timeout: 60_000 },
+    );
+    await expect(page.getByText(title, { exact: true })).toBeVisible();
+
+    const state = await getMockState(request, namespace);
+    const created = state.exhibitions.find((exhibition) => exhibition.title === title);
+    expect(created?.place).toBe("학생회관");
+    expect(created?.detailImages).toHaveLength(2);
+  });
 });
