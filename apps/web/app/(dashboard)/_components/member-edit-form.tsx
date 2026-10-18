@@ -19,13 +19,14 @@ import {
   coerceMemberRoleValue,
   type MemberRoleValue,
 } from "@/features/dashboard/members/member-role-options";
-import { Skeleton } from "@/components/ui/skeleton";
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import { useGuardedSubmit } from "@/shared/react/use-guarded-submit";
 import UploadProgressBar from "@/app/(dashboard)/_components/upload-progress-bar";
 
 type MemberEditFormProps = {
   user: ApiUser;
+  /** 소속 기수 선택지. 상세 페이지가 서버에서 읽어 내려 준다. */
+  generations: ApiGeneration[];
   onSaved: (user: ApiUser) => void;
   onCancel?: () => void;
   inline?: boolean;
@@ -41,6 +42,7 @@ const ERROR_FALLBACK_MESSAGE =
 
 export default function MemberEditForm({
   user,
+  generations,
   onSaved,
   onCancel,
   inline = false,
@@ -58,8 +60,6 @@ export default function MemberEditForm({
     user.generationIds ?? (user.generationId ? [user.generationId] : []),
   );
 
-  const [allGenerations, setAllGenerations] = useState<ApiGeneration[]>([]);
-  const [isLoadingGenerations, setIsLoadingGenerations] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -120,38 +120,6 @@ export default function MemberEditForm({
     const objectUrl = URL.createObjectURL(nextFile);
     setSelectedImageObjectUrl(objectUrl);
   };
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadGenerations = async () => {
-      setIsLoadingGenerations(true);
-      try {
-        const rows = await adminResourceApi.listGenerations();
-        if (!isMounted) {
-          return;
-        }
-
-        setAllGenerations(rows);
-      } catch {
-        if (!isMounted) {
-          return;
-        }
-
-        setAllGenerations([]);
-      } finally {
-        if (isMounted) {
-          setIsLoadingGenerations(false);
-        }
-      }
-    };
-
-    void loadGenerations();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   const generationIdSet = useMemo(() => new Set(generationIds), [generationIds]);
 
@@ -388,20 +356,11 @@ export default function MemberEditForm({
           <legend className="px-1 text-sm font-medium text-ink-secondary">
             소속 기수
           </legend>
-          {isLoadingGenerations ? (
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <Skeleton
-                  key={`member-generation-loading-${index + 1}`}
-                  className="h-9 w-full"
-                />
-              ))}
-            </div>
-          ) : allGenerations.length === 0 ? (
+          {generations.length === 0 ? (
             <p className="text-sm text-ink-muted">선택 가능한 기수가 없습니다.</p>
           ) : (
             <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {allGenerations.map((generation) => (
+              {generations.map((generation) => (
                 <li key={generation.id}>
                   <label className="flex cursor-pointer items-center gap-2 rounded-md border border-hairline px-3 py-2 text-sm text-ink-secondary">
                     <input

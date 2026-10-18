@@ -5,10 +5,7 @@ import type {
   ApiAuditLog,
   ApiAuditResourceType,
   ApiExhibition,
-  ApiGeneration,
-  ApiGenerationMemberSummary,
   ApiLinktree,
-  ApiUser,
   ApiUserResourceHistory,
 } from "@yonyoung/contracts";
 import { adminRequest } from "@/features/dashboard/api/admin-api/http";
@@ -86,12 +83,7 @@ export const adminResourceApi = {
     );
   },
 
-  listGenerations: () => apiRequest.get<ApiGeneration[]>("/generations"),
   createGeneration: bindAdminWriteAction(createGenerationAction),
-  listGenerationMembers: (generationId: string) =>
-    apiRequest.get<ApiGenerationMemberSummary[]>(
-      `/generations/${encodeURIComponent(generationId)}/members`,
-    ),
   updateGeneration: bindAdminWriteAction(updateGenerationAction),
   reorderGenerations: bindAdminWriteAction(reorderGenerationsAction),
   deleteGeneration: bindAdminWriteAction(deleteGenerationAction),
@@ -135,8 +127,6 @@ export const adminResourceApi = {
 
   upsertCurrentRecruitingPlan: bindAdminWriteAction(upsertCurrentRecruitingPlanAction),
 
-  getUserById: (id: string) =>
-    apiRequest.get<ApiUser>(`/users/${encodeURIComponent(id)}`),
   getUserResourceHistory: (
     id: string,
     input: {

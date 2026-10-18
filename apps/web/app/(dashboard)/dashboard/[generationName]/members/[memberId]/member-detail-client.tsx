@@ -1,25 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import type { ApiGenerationMemberSummary, ApiUser } from "@yonyoung/contracts";
-import { AdminApiError } from "@/shared/http/http";
-import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
+import type {
+  ApiGeneration,
+  ApiGenerationMemberSummary,
+  ApiUser,
+} from "@yonyoung/contracts";
 import { formatKoreanDate } from "@/shared/utils/date-formatters";
 import {
   buildMemberDisplayInitial,
   buildMemberDisplayName,
 } from "@/features/dashboard/members/display-name";
-import {
-  buildMemberRoleLabel,
-  canEditMemberProfile,
-  isExecutiveRole,
-} from "@/features/dashboard/members/member-role-label";
-import { Skeleton } from "@/components/ui/skeleton";
+import { buildMemberRoleLabel } from "@/features/dashboard/members/member-role-label";
 import AuditHistoryPanel from "@/app/(dashboard)/_components/audit-history-panel";
 import LastUpdatedMeta from "@/app/(dashboard)/_components/last-updated-meta";
 import MemberEditForm from "@/app/(dashboard)/_components/member-edit-form";
-import { readErrorMessage } from "@/shared/http/read-error-message";
 
 type MemberDetailClientProps = {
   generation: {
@@ -27,15 +23,14 @@ type MemberDetailClientProps = {
     name: string;
     path: string;
   };
-  memberId: string;
-  viewer: {
-    id: string;
-    role: string | null;
-  };
+  initialSummary: ApiGenerationMemberSummary;
+  /** 상세 열람 권한이 없으면 null이고, 제한 정보만 보여 준다. */
+  initialFullUser: ApiUser | null;
+  generationNamesById: Record<string, string>;
+  generations: ApiGeneration[];
+  isSelf: boolean;
+  canEdit: boolean;
 };
-
-const ERROR_FALLBACK_MESSAGE =
-  "멤버 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 const readGenerationNameText = (
   user: ApiUser,
@@ -53,159 +48,18 @@ const readGenerationNameText = (
 
 export default function MemberDetailClient({
   generation,
-  memberId,
-  viewer,
+  initialSummary,
+  initialFullUser,
+  generationNamesById,
+  generations,
+  isSelf,
+  canEdit,
 }: MemberDetailClientProps) {
-  const canReadFullByRole = isExecutiveRole(viewer.role);
-  const isSelf = viewer.id === memberId;
-  const canReadFullDetail = canReadFullByRole || isSelf;
-  const canEdit = canEditMemberProfile(viewer.role);
-
-  const [summary, setSummary] = useState<ApiGenerationMemberSummary | null>(null);
-  const [fullUser, setFullUser] = useState<ApiUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [summary, setSummary] = useState(initialSummary);
+  const [fullUser, setFullUser] = useState(initialFullUser);
   const [isEditing, setIsEditing] = useState(false);
-  const [generationNamesById, setGenerationNamesById] = useState<Record<string, string>>({
-    [generation.id]: generation.name,
-  });
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const load = async () => {
-      setIsLoading(true);
-      setErrorMessage(null);
-
-      try {
-        const members = await adminResourceApi.listGenerationMembers(generation.id);
-        const targetSummary = members.find((member) => member.id === memberId) ?? null;
-        if (!targetSummary) {
-          if (!isMounted) {
-            return;
-          }
-
-          setSummary(null);
-          setFullUser(null);
-          setErrorMessage("해당 기수에서 멤버를 찾을 수 없습니다.");
-          return;
-        }
-
-        let nextFullUser: ApiUser | null = null;
-        if (canReadFullDetail) {
-          try {
-            nextFullUser = await adminResourceApi.getUserById(memberId);
-          } catch (error) {
-            if (!(error instanceof AdminApiError && error.status === 403)) {
-              throw error;
-            }
-          }
-        }
-
-        let nextGenerationNamesById: Record<string, string> = {
-          [generation.id]: generation.name,
-        };
-        try {
-          const generations = await adminResourceApi.listGenerations();
-          nextGenerationNamesById = generations.reduce<Record<string, string>>(
-            (acc, item) => {
-              acc[item.id] = item.name;
-              return acc;
-            },
-            nextGenerationNamesById,
-          );
-        } catch {
-          // 기수명 조회 실패 시 기본값(현재 기수)으로만 표시한다.
-        }
-
-        if (!isMounted) {
-          return;
-        }
-
-        setSummary(targetSummary);
-        setFullUser(nextFullUser);
-        setGenerationNamesById(nextGenerationNamesById);
-        setIsEditing(false);
-      } catch (error) {
-        if (!isMounted) {
-          return;
-        }
-
-        setSummary(null);
-        setFullUser(null);
-        setErrorMessage(readErrorMessage(error, ERROR_FALLBACK_MESSAGE));
-        setIsEditing(false);
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    void load();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [canReadFullDetail, generation.id, generation.name, memberId]);
-
-  const currentUserLike = useMemo(() => {
-    if (fullUser) {
-      return fullUser;
-    }
-
-    return summary;
-  }, [fullUser, summary]);
-
-  if (isLoading) {
-    return (
-      <div className="px-4 py-6 md:px-8 md:py-8">
-        <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
-          <div className="space-y-4" aria-hidden="true">
-            <Skeleton className="h-4 w-24" />
-            <div className="flex items-center gap-4">
-              <Skeleton className="h-16 w-16 rounded-full" />
-              <div className="space-y-2">
-                <Skeleton className="h-7 w-44" />
-                <Skeleton className="h-4 w-32" />
-              </div>
-            </div>
-            <div className="rounded-lg border border-hairline p-4">
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {Array.from({ length: 9 }).map((_, index) => (
-                  <div
-                    key={`generation-member-detail-skeleton-${index + 1}`}
-                    className="space-y-2"
-                  >
-                    <Skeleton className="h-3 w-16" />
-                    <Skeleton className="h-4 w-24" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-    );
-  }
-
-  if (errorMessage || !currentUserLike) {
-    return (
-      <div className="px-4 py-6 md:px-8 md:py-8">
-        <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
-          <p className="text-sm text-danger-text">
-            {errorMessage ?? "멤버 정보를 찾을 수 없습니다."}
-          </p>
-          <Link
-            href={`${generation.path}/members`}
-            className="mt-4 inline-flex text-sm font-semibold text-ink-secondary hover:text-ink"
-          >
-            멤버 목록으로 돌아가기
-          </Link>
-        </section>
-      </div>
-    );
-  }
+  const currentUserLike = fullUser ?? summary;
 
   const displayName = buildMemberDisplayName(currentUserLike);
   const profileImage = currentUserLike.image;
@@ -267,25 +121,20 @@ export default function MemberDetailClient({
           {isEditing && canInlineEdit && fullUser ? (
             <MemberEditForm
               user={fullUser}
+              generations={generations}
               inline
               onCancel={() => setIsEditing(false)}
               onSaved={(updated) => {
                 setFullUser(updated);
-                setSummary((previous) => {
-                  if (!previous) {
-                    return previous;
-                  }
-
-                  return {
-                    ...previous,
-                    name: updated.name,
-                    image: updated.image,
-                    familyName: updated.familyName,
-                    givenName: updated.givenName,
-                    department: updated.department,
-                    role: updated.role,
-                  };
-                });
+                setSummary((previous) => ({
+                  ...previous,
+                  name: updated.name,
+                  image: updated.image,
+                  familyName: updated.familyName,
+                  givenName: updated.givenName,
+                  department: updated.department,
+                  role: updated.role,
+                }));
                 setIsEditing(false);
               }}
             />

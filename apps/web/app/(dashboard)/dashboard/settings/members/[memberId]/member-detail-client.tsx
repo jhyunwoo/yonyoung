@@ -1,144 +1,36 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import type { ApiUser } from "@yonyoung/contracts";
-import { readErrorMessage } from "@/shared/http/read-error-message";
-import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
+import type { ApiGeneration, ApiUser } from "@yonyoung/contracts";
 import { formatKoreanDate } from "@/shared/utils/date-formatters";
 import {
   buildMemberDisplayInitial,
   buildMemberDisplayName,
 } from "@/features/dashboard/members/display-name";
 import { readMemberGenerationNameText } from "@/features/dashboard/members/member-directory";
-import {
-  buildMemberRoleLabel,
-  canEditMemberProfile,
-} from "@/features/dashboard/members/member-role-label";
-import { Skeleton } from "@/components/ui/skeleton";
+import { buildMemberRoleLabel } from "@/features/dashboard/members/member-role-label";
 import LastUpdatedMeta from "@/app/(dashboard)/_components/last-updated-meta";
 import MemberEditForm from "@/app/(dashboard)/_components/member-edit-form";
 import { PaginatedHistorySection } from "@/app/(dashboard)/_components/members/member-resource-history";
 
-const ERROR_FALLBACK_MESSAGE =
-  "멤버 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
-
 type MemberDetailClientProps = {
   memberId: string;
-  viewerRole: string | null;
+  initialUser: ApiUser;
+  generations: ApiGeneration[];
+  generationNamesById: Record<string, string>;
+  canEdit: boolean;
 };
 
 export default function MemberDetailClient({
   memberId,
-  viewerRole,
+  initialUser,
+  generations,
+  generationNamesById,
+  canEdit,
 }: MemberDetailClientProps) {
-  const [user, setUser] = useState<ApiUser | null>(null);
-  const [generationNamesById, setGenerationNamesById] = useState<Record<string, string>>(
-    {},
-  );
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [user, setUser] = useState(initialUser);
   const [isEditing, setIsEditing] = useState(false);
-
-  const canEdit = canEditMemberProfile(viewerRole);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const load = async () => {
-      setIsLoading(true);
-      setErrorMessage(null);
-
-      try {
-        const [targetUser, generations] = await Promise.all([
-          adminResourceApi.getUserById(memberId),
-          adminResourceApi.listGenerations(),
-        ]);
-
-        if (!isMounted) {
-          return;
-        }
-
-        const nextGenerationNamesById = generations.reduce<Record<string, string>>(
-          (acc, item) => {
-            acc[item.id] = item.name;
-            return acc;
-          },
-          {},
-        );
-
-        setUser(targetUser);
-        setGenerationNamesById(nextGenerationNamesById);
-        setIsEditing(false);
-      } catch (error) {
-        if (!isMounted) {
-          return;
-        }
-        setUser(null);
-        setErrorMessage(readErrorMessage(error, ERROR_FALLBACK_MESSAGE));
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    void load();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [memberId]);
-
-  if (isLoading) {
-    return (
-      <div className="px-4 py-6 md:px-8 md:py-8">
-        <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
-          <div className="space-y-4" aria-hidden="true">
-            <Skeleton className="h-4 w-32" />
-            <div className="flex items-center gap-4">
-              <Skeleton className="h-16 w-16 rounded-full" />
-              <div className="space-y-2">
-                <Skeleton className="h-7 w-44" />
-                <Skeleton className="h-4 w-24" />
-              </div>
-            </div>
-            <div className="rounded-lg border border-hairline p-4">
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {Array.from({ length: 9 }).map((_, index) => (
-                  <div
-                    key={`settings-member-detail-skeleton-${index + 1}`}
-                    className="space-y-2"
-                  >
-                    <Skeleton className="h-3 w-16" />
-                    <Skeleton className="h-4 w-24" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-    );
-  }
-
-  if (errorMessage || !user) {
-    return (
-      <div className="px-4 py-6 md:px-8 md:py-8">
-        <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
-          <p className="text-sm text-danger-text">
-            {errorMessage ?? "멤버 정보를 찾을 수 없습니다."}
-          </p>
-          <Link
-            href="/dashboard/settings/members"
-            className="mt-4 inline-flex text-sm font-semibold text-ink-secondary hover:text-ink"
-          >
-            멤버 목록으로 돌아가기
-          </Link>
-        </section>
-      </div>
-    );
-  }
 
   const displayName = buildMemberDisplayName(user);
   const avatarFallback = buildMemberDisplayInitial(displayName);
@@ -191,6 +83,7 @@ export default function MemberDetailClient({
           {isEditing && canEdit ? (
             <MemberEditForm
               user={user}
+              generations={generations}
               inline
               onCancel={() => setIsEditing(false)}
               onSaved={(updated) => {
