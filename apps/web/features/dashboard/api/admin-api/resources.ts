@@ -8,7 +8,6 @@ import type {
   ApiGeneration,
   ApiGenerationMemberSummary,
   ApiLinktree,
-  ApiRecruitingPlan,
   ApiUser,
   ApiUserResourceHistory,
 } from "@yonyoung/contracts";
@@ -134,8 +133,6 @@ export const adminResourceApi = {
 
   updateSiteSettings: bindAdminWriteAction(updateSiteSettingsAction),
 
-  getCurrentRecruitingPlan: () =>
-    apiRequest.get<ApiRecruitingPlan | null>("/recruiting-plan/current"),
   upsertCurrentRecruitingPlan: bindAdminWriteAction(upsertCurrentRecruitingPlanAction),
 
   getUserById: (id: string) =>
