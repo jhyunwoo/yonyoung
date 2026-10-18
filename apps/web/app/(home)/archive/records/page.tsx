@@ -69,7 +69,9 @@ export default async function ArchiveRecordsPage() {
                       alt={activity.title}
                       fill
                       unoptimized={shouldUseUnoptimizedImage(activity.coverImageUrl)}
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      // 768~1024px 는 minmax(180px,1fr) auto-fit 이라 한 칸이 화면의 29% 를
+                      // 넘지 않고, 그 위는 max-w-[1400px] 4열(px-8, gap-6) → 최대 316px 이다.
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 30vw, (max-width: 1400px) 25vw, 316px"
                       className="object-cover"
                     />
                   </div>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getImageProps } from "next/image";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
@@ -8,7 +9,31 @@ import {
   HIGH_CONTRAST_RICH_TEXT_CLASS_NAMES,
   RichTextContent,
 } from "@/features/media/rich-text/rich-text-content";
+import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import PageTitleHero from "@/app/(home)/_components/page-title-hero";
+
+/**
+ * 홍보 이미지 한 칸의 표시 폭. 콘텐츠(max-w-300 - px-8 - 섹션 p-5)를 lg 3열(gap-4)로
+ * 나누면 354px 을 넘지 않는다.
+ */
+const PROMOTION_IMAGE_SIZES =
+  "(min-width: 1200px) 354px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw";
+
+/**
+ * 홍보 이미지는 원본 비율 그대로(`h-auto`) 보여야 해서 next/image 의 `fill` 로 바꿀 수 없다.
+ * 대신 같은 전역 로더로 `srcSet` 만 받아 `<img>` 에 붙여 원본 대신 표시 폭에 맞는 변환본을 받는다.
+ */
+const buildPromotionImageProps = (imageUrl: string) => {
+  const { src, srcSet, sizes } = getImageProps({
+    src: imageUrl,
+    alt: "",
+    fill: true,
+    sizes: PROMOTION_IMAGE_SIZES,
+    unoptimized: shouldUseUnoptimizedImage(imageUrl),
+  }).props;
+
+  return { src, srcSet, sizes };
+};
 
 const qualificationItems = [
   "사진에 대한 열정과 관심이 있는 분",
@@ -196,7 +221,7 @@ export default async function RecruitingPage() {
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={imageUrl}
+                          {...buildPromotionImageProps(imageUrl)}
                           alt={`모집 홍보 이미지 ${index + 1}`}
                           className="block h-auto w-full"
                           loading="lazy"

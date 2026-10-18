@@ -184,7 +184,8 @@ export default async function HomePage() {
                       alt={activity.title}
                       fill
                       unoptimized={shouldUseUnoptimizedImage(activity.coverImageUrl)}
-                      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                      // SectionShell 이 max-w-[1200px] 라 3열(gap-8) 한 칸은 380px 을 넘지 않는다.
+                      sizes="(min-width: 1200px) 380px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                       className="h-full w-full object-cover"
                     />
                   </div>

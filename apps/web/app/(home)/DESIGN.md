@@ -811,8 +811,9 @@ inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold
 - **`next/image`만 사용한다.** raw `<img>` 금지.
 - **전역 커스텀 로더**(`features/media/images/cloudflare-image-loader.ts`)가 R2 URL을 Cloudflare Image Transformations로 보낸다. `images.loader: "custom"`이라 `/_next/image` 엔드포인트는 **존재하지 않는다**.
 - **`sizes` 필수.** 표준값:
-  - 3열 카드: `(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw`
-  - 히어로: `(min-width: 768px) 40vw, 100vw`
+  - 3열 카드: `(min-width: 1200px) 380px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw`
+  - 히어로: `(min-width: 1264px) 522px, (min-width: 768px) 45vw, 100vw`
+  - 컨테이너가 `max-w-*` 에 닿는 폭부터는 vw 대신 실제 칸 폭(px)을 적는다. vw 만 쓰면 넓은 화면에서 표시 폭보다 큰 변환본을 받는다.
   - 갤러리 타일: `(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 34vw`
 - **`priority`는 히어로 이미지와 로고에만.** 나머지는 지연 로드.
 - 변환 대상이 아닌 자산(로컬 `/public`, 구글 프로필)은 `shouldUseUnoptimizedImage()`로 판정해 `unoptimized`를 넘긴다.

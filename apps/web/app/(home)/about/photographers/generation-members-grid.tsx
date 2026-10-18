@@ -10,6 +10,7 @@ import {
   buildMemberDisplayName,
 } from "@/features/dashboard/members/display-name";
 import { buildMemberRoleLabel } from "@/features/dashboard/members/member-role-label";
+import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 
 /** 모달 퇴장 시간 — globals.css 의 `.photographer-modal-*` 전환과 같아야 한다. */
 const MODAL_EXIT_MS = 200;
@@ -134,7 +135,7 @@ export default function GenerationMembersGrid({
                         src={member.image}
                         alt={`${displayName} 프로필`}
                         fill
-                        unoptimized
+                        unoptimized={shouldUseUnoptimizedImage(member.image)}
                         sizes="(min-width: 768px) 56px, 48px"
                         className="h-full w-full object-cover"
                       />
@@ -193,7 +194,7 @@ export default function GenerationMembersGrid({
                     src={displayedMember.image}
                     alt={`${selectedMemberDisplayName} 프로필`}
                     fill
-                    unoptimized
+                    unoptimized={shouldUseUnoptimizedImage(displayedMember.image)}
                     sizes="(min-width: 768px) 224px, 160px"
                     className="h-full w-full object-cover"
                   />
