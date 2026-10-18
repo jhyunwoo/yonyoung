@@ -10,6 +10,7 @@ import {
 import { useResetOnChange } from "@/shared/react/use-reset-on-change";
 import { useMountTransition } from "@/shared/react/use-mount-transition";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
+import { useBodyScrollLock } from "@/app/(home)/_components/hooks/use-body-scroll-lock";
 
 /** 모달 퇴장 시간 — globals.css 의 `.photographer-modal-*` 전환과 같아야 한다. */
 const MODAL_EXIT_MS = 200;
@@ -70,13 +71,12 @@ export function GenerationMembersController({
   // 다른 기수를 보여 주기 시작하면 열려 있던 멤버 상세를 닫는다.
   useResetOnChange(generationId, () => setIsModalOpen(false));
 
+  useBodyScrollLock(isModalVisible);
+
   useEffect(() => {
     if (!isModalVisible) {
       return;
     }
-
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -86,7 +86,6 @@ export function GenerationMembersController({
 
     window.addEventListener("keydown", onKeyDown);
     return () => {
-      document.body.style.overflow = originalOverflow;
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [isModalVisible]);
