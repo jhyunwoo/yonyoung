@@ -11,27 +11,17 @@ import {
   API_PROXY_ALLOWED_PREFIXES,
   API_PROXY_BLOCKED_PREFIXES,
 } from "@/server/security/api-proxy-prefixes";
-import { fetchWithTimeout, FetchTimeoutError } from "@/server/http/fetch-with-timeout";
+import { fetchWithTimeout } from "@/server/http/fetch-with-timeout";
+import {
+  copyProxyResponse,
+  createUpstreamErrorResponse,
+} from "@/server/http/proxy-response";
 
 type RouteContext = {
   params: Promise<{ path: string[] }>;
 };
 
 const UPSTREAM_REQUEST_TIMEOUT_MS = 45_000;
-
-const HOP_BY_HOP_HEADERS = new Set([
-  "connection",
-  "keep-alive",
-  "proxy-authenticate",
-  "proxy-authorization",
-  "te",
-  "trailer",
-  "transfer-encoding",
-  "upgrade",
-  "host",
-  "content-encoding",
-  "content-length",
-]);
 
 const resolveForwardedProtocol = (request: NextRequest): "http" | "https" => {
   return request.nextUrl.protocol === "http:" ? "http" : "https";
@@ -55,52 +45,6 @@ const buildClientIpHeaders = (request: NextRequest): Record<string, string> => {
     "x-yonyoung-client-ip": clientIp,
     "x-yonyoung-proxy-auth": secret,
   };
-};
-
-const copyResponse = (upstream: Response): NextResponse => {
-  const response = new NextResponse(upstream.body, {
-    status: upstream.status,
-    statusText: upstream.statusText,
-  });
-
-  upstream.headers.forEach((value, key) => {
-    const normalizedKey = key.toLowerCase();
-    // set-cookie는 여러 개일 수 있어 set()으로 복사하면 마지막 하나만 남는다. 아래에서 개별 append 한다.
-    if (HOP_BY_HOP_HEADERS.has(normalizedKey) || normalizedKey === "set-cookie") {
-      return;
-    }
-    response.headers.set(key, value);
-  });
-
-  for (const cookie of upstream.headers.getSetCookie()) {
-    response.headers.append("set-cookie", cookie);
-  }
-
-  return response;
-};
-
-const createUpstreamErrorResponse = (error: unknown): NextResponse => {
-  if (error instanceof FetchTimeoutError) {
-    return NextResponse.json(
-      { ok: false, message: "Upstream API request timed out." },
-      {
-        status: 504,
-        headers: {
-          "Cache-Control": "private, no-store, max-age=0",
-        },
-      },
-    );
-  }
-
-  return NextResponse.json(
-    { ok: false, message: "Upstream API request failed." },
-    {
-      status: 502,
-      headers: {
-        "Cache-Control": "private, no-store, max-age=0",
-      },
-    },
-  );
 };
 
 const handle = async (
@@ -158,10 +102,10 @@ const handle = async (
       UPSTREAM_REQUEST_TIMEOUT_MS,
     );
   } catch (error) {
-    return createUpstreamErrorResponse(error);
+    return createUpstreamErrorResponse(error, "Upstream API");
   }
 
-  return copyResponse(upstreamResponse);
+  return copyProxyResponse(upstreamResponse);
 };
 
 export const GET = handle;
