@@ -21,7 +21,9 @@ import { useGuardedSubmit } from "@/shared/react/use-guarded-submit";
 import DateRangeFields from "@/app/(dashboard)/_components/date-range-fields";
 import CoverImageField from "@/app/(dashboard)/_components/media/cover-image-field";
 import DetailImagesField from "@/app/(dashboard)/_components/media/detail-images-field";
-import ExhibitionRichTextEditor from "@/app/(dashboard)/dashboard/[generationName]/exhibitions/_components/exhibition-rich-text-editor";
+import RichTextEditor, {
+  EMPTY_RICH_TEXT_HTML,
+} from "@/app/(dashboard)/_components/rich-text-editor";
 import { readExhibitionErrorMessage } from "@/app/(dashboard)/dashboard/[generationName]/exhibitions/_components/exhibition-shared";
 import { hasMeaningfulRichTextHtml } from "@/features/media/rich-text/rich-text";
 import { validateDateRange } from "@/shared/utils/date-input";
@@ -32,8 +34,6 @@ type ExhibitionCreateFormProps = {
   generationName: string;
 };
 
-const EMPTY_DESCRIPTION_HTML = "<p></p>";
-
 export default function ExhibitionCreateForm({
   generationId,
   generationPath,
@@ -43,7 +43,7 @@ export default function ExhibitionCreateForm({
 
   const [title, setTitle] = useState("");
   const [place, setPlace] = useState("");
-  const [descriptionHtml, setDescriptionHtml] = useState(EMPTY_DESCRIPTION_HTML);
+  const [descriptionHtml, setDescriptionHtml] = useState(EMPTY_RICH_TEXT_HTML);
   const [startDateInput, setStartDateInput] = useState("");
   const [endDateInput, setEndDateInput] = useState("");
   const cover = useSelectedImageFile();
@@ -191,7 +191,7 @@ export default function ExhibitionCreateForm({
 
         <div className="space-y-1">
           <span className="text-sm font-semibold text-ink">전시 상세 설명</span>
-          <ExhibitionRichTextEditor
+          <RichTextEditor
             value={descriptionHtml}
             onChange={setDescriptionHtml}
             disabled={isSaving}

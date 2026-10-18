@@ -4,25 +4,11 @@ import { getAdminExhibitionById } from "@/features/dashboard/services/admin-read
 import AdminReadErrorNotice from "@/app/(dashboard)/_components/admin-read-error";
 import { isAdminRole } from "@/features/auth/model/auth-shared";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
+import {
+  resolveInitialNoticeMessage,
+  type SearchParams,
+} from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-initial-notice-message";
 import ExhibitionEditForm from "@/app/(dashboard)/dashboard/[generationName]/exhibitions/_components/exhibition-edit-form";
-
-type SearchParams = Promise<Record<string, string | string[] | undefined>>;
-
-const resolveInitialNoticeMessage = async (
-  searchParams: SearchParams,
-): Promise<string | null> => {
-  const params = await searchParams;
-  if (params.error !== "detail-upload-failed") {
-    return null;
-  }
-
-  const messageParam = params.message;
-  if (typeof messageParam === "string" && messageParam.trim().length > 0) {
-    return `전시는 생성되었지만 일부 세부 이미지 업로드에 실패했습니다: ${messageParam}`;
-  }
-
-  return "전시는 생성되었지만 일부 세부 이미지 업로드에 실패했습니다. 이미지 업로드를 다시 시도해 주세요.";
-};
 
 export default async function GenerationExhibitionEditPage({
   params,
@@ -35,7 +21,7 @@ export default async function GenerationExhibitionEditPage({
     params,
     requireDashboardGeneration(params),
     serverAuthGuard.requireSession(),
-    resolveInitialNoticeMessage(searchParams),
+    resolveInitialNoticeMessage(searchParams, "전시는"),
   ]);
 
   if (!isAdminRole(session.user.role)) {

@@ -82,11 +82,6 @@ export default function ActivityEditForm({
     setErrorMessage(null);
     setNoticeMessage(null);
 
-    if (!activity) {
-      setErrorMessage("활동 정보를 먼저 불러와 주세요.");
-      return;
-    }
-
     const trimmedTitle = title.trim();
     if (!trimmedTitle || !hasMeaningfulRichTextHtml(description)) {
       setErrorMessage("활동 제목과 설명을 모두 입력해 주세요.");

@@ -28,7 +28,9 @@ import LastUpdatedMeta from "@/app/(dashboard)/_components/last-updated-meta";
 import DateRangeFields from "@/app/(dashboard)/_components/date-range-fields";
 import CoverImageField from "@/app/(dashboard)/_components/media/cover-image-field";
 import DetailImagesField from "@/app/(dashboard)/_components/media/detail-images-field";
-import ExhibitionRichTextEditor from "@/app/(dashboard)/dashboard/[generationName]/exhibitions/_components/exhibition-rich-text-editor";
+import RichTextEditor, {
+  EMPTY_RICH_TEXT_HTML,
+} from "@/app/(dashboard)/_components/rich-text-editor";
 import { readExhibitionErrorMessage } from "@/app/(dashboard)/dashboard/[generationName]/exhibitions/_components/exhibition-shared";
 import { hasMeaningfulRichTextHtml } from "@/features/media/rich-text/rich-text";
 import { formatTimestampToDateInput, validateDateRange } from "@/shared/utils/date-input";
@@ -40,8 +42,6 @@ type ExhibitionEditFormProps = {
   generationPath: string;
   initialMessage: string | null;
 };
-
-const EMPTY_DESCRIPTION_HTML = "<p></p>";
 
 export default function ExhibitionEditForm({
   exhibition,
@@ -58,7 +58,7 @@ export default function ExhibitionEditForm({
   const [title, setTitle] = useState(exhibition.title);
   const [place, setPlace] = useState(exhibition.place);
   const [descriptionHtml, setDescriptionHtml] = useState(
-    exhibition.description.length > 0 ? exhibition.description : EMPTY_DESCRIPTION_HTML,
+    exhibition.description.length > 0 ? exhibition.description : EMPTY_RICH_TEXT_HTML,
   );
   const [startDateInput, setStartDateInput] = useState(
     formatTimestampToDateInput(exhibition.startDate),
@@ -87,11 +87,6 @@ export default function ExhibitionEditForm({
   const handleSubmit = async () => {
     setErrorMessage(null);
     setNoticeMessage(null);
-
-    if (!exhibition) {
-      setErrorMessage("전시 정보를 먼저 불러와 주세요.");
-      return;
-    }
 
     const trimmedTitle = title.trim();
     const trimmedPlace = place.trim();
@@ -218,7 +213,7 @@ export default function ExhibitionEditForm({
 
         <div className="space-y-1">
           <span className="text-sm font-semibold text-ink">전시 상세 설명</span>
-          <ExhibitionRichTextEditor
+          <RichTextEditor
             value={descriptionHtml}
             onChange={setDescriptionHtml}
             disabled={isSaving}
