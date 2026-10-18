@@ -1,9 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   apiActivitySchema,
-  apiCreateActivityImageInputSchema,
   apiCreateActivityInputSchema,
-  apiCreateExhibitionImageInputSchema,
   apiCreateExhibitionInputSchema,
   apiCreateGenerationInputSchema,
   apiCreateLinktreeInputSchema,

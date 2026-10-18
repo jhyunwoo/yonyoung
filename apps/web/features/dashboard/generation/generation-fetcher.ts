@@ -12,10 +12,11 @@ const PUBLIC_GENERATIONS_PATH = "/api/public/generations";
 const GENERATIONS_READ_TIMEOUT_MS = 10_000;
 
 /**
- * 성공한 목록의 캐시 수명. 공개 기수 목록(`listPublicGenerations`)과 같은 `days`다.
- * 기수·사용자 쓰기가 `admin:generations` 태그를 `updateTag`로 버리므로 만료에 기대지 않는다.
+ * 성공한 목록의 캐시 수명. 대시보드 쓰기는 `admin:generations` 태그를 `updateTag`로 버리지만
+ * MCP 도구는 API로 기수를 직접 바꿔 이 태그를 거치지 않으므로, 만료가 길면 안 된다.
+ * 그래서 이전과 같은 기본 프로필(15분 재검증)을 유지한다.
  */
-const GENERATIONS_CACHE_PROFILE = "days";
+const GENERATIONS_CACHE_PROFILE = "default";
 
 /**
  * 실패(빈 목록)의 캐시 수명. 짧아야 일시적인 API 장애가 빈 기수 목록으로 굳지 않는다.

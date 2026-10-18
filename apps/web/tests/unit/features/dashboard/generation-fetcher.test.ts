@@ -57,7 +57,7 @@ describe("features/dashboard/generation/generation-fetcher", () => {
     );
     expect(cacheTagMock).toHaveBeenCalledWith("admin:generations");
     expect(cacheLifeMock).toHaveBeenCalledTimes(1);
-    expect(cacheLifeMock).toHaveBeenCalledWith("days");
+    expect(cacheLifeMock).toHaveBeenCalledWith("default");
   });
 
   it("returns generation list from data envelope response", async () => {
