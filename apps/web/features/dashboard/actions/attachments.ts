@@ -60,15 +60,11 @@ export const updateAttachmentAction = async (
   scope: ApiAttachmentScope,
   input: ApiUpdateAttachmentInput,
 ): Promise<AdminWriteActionResult<ApiAttachment>> => {
-  const parsedPayload = parseActionInput(apiUpdateAttachmentInputSchema, input);
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
-  const payload = parsedPayload.data;
   return writeRequest({
     path: `/attachments/${id}`,
     method: "PATCH",
-    body: payload,
+    bodySchema: apiUpdateAttachmentInputSchema,
+    body: input,
     responseSchema: apiAttachmentSchema,
     accessScope: accessScopeByAttachmentScope(scope),
     tags: ATTACHMENT_CACHE_TAGS,
@@ -78,7 +74,7 @@ export const updateAttachmentAction = async (
 export const deleteAttachmentAction = async (
   id: string,
   scope: ApiAttachmentScope,
-): Promise<AdminWriteActionResult<undefined>> => {
+): Promise<AdminWriteActionResult<void>> => {
   const idResult = parseActionInput(z.string().min(1), id);
   if (!idResult.ok) {
     return idResult;

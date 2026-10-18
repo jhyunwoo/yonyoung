@@ -6,7 +6,6 @@ import {
   writeRequest,
   type AdminWriteActionResult,
 } from "@/features/dashboard/actions/admin-write-core";
-import { parseActionInput } from "@/features/dashboard/actions/action-input";
 import { CACHE_TAGS, publicExhibitionTag } from "@/server/cache/tags";
 import {
   apiCreateExhibitionImageInputSchema,
@@ -44,15 +43,11 @@ const exhibitionTags = (id: string) =>
 export const createExhibitionAction = async (
   input: ApiCreateExhibitionInput,
 ): Promise<AdminWriteActionResult<ApiExhibition>> => {
-  const parsedPayload = parseActionInput(apiCreateExhibitionInputSchema, input);
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
-  const payload = parsedPayload.data;
   return writeRequest({
     path: "/exhibitions",
     method: "POST",
-    body: payload,
+    bodySchema: apiCreateExhibitionInputSchema,
+    body: input,
     responseSchema: apiExhibitionSchema,
     accessScope: "manager",
     tags: EXHIBITION_COLLECTION_TAGS,
@@ -63,15 +58,11 @@ export const updateExhibitionAction = async (
   id: string,
   input: ApiUpdateExhibitionInput,
 ): Promise<AdminWriteActionResult<ApiExhibition>> => {
-  const parsedPayload = parseActionInput(apiUpdateExhibitionInputSchema, input);
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
-  const payload = parsedPayload.data;
   return writeRequest({
     path: `/exhibitions/${id}`,
     method: "PATCH",
-    body: payload,
+    bodySchema: apiUpdateExhibitionInputSchema,
+    body: input,
     responseSchema: apiExhibitionSchema,
     accessScope: "manager",
     tags: exhibitionTags(id),
@@ -94,15 +85,11 @@ export const addExhibitionImageAction = async (
   id: string,
   input: ApiCreateExhibitionImageInput,
 ): Promise<AdminWriteActionResult<ApiExhibitionImage>> => {
-  const parsedPayload = parseActionInput(apiCreateExhibitionImageInputSchema, input);
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
-  const payload = parsedPayload.data;
   return writeRequest({
     path: `/exhibitions/${id}/images`,
     method: "POST",
-    body: payload,
+    bodySchema: apiCreateExhibitionImageInputSchema,
+    body: input,
     responseSchema: apiExhibitionImageSchema,
     accessScope: "manager",
     tags: exhibitionTags(id),
@@ -113,18 +100,11 @@ export const addExhibitionImagesAction = async (
   id: string,
   inputs: ApiCreateExhibitionImageInput[],
 ): Promise<AdminWriteActionResult<ApiExhibitionImage[]>> => {
-  const parsedPayload = parseActionInput(
-    z.array(apiCreateExhibitionImageInputSchema).max(IMAGE_BATCH_MAX_ITEMS),
-    inputs,
-  );
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
-  const payload = parsedPayload.data;
   return writeRequest({
     path: `/exhibitions/${id}/images/batch`,
     method: "POST",
-    body: payload,
+    bodySchema: z.array(apiCreateExhibitionImageInputSchema).max(IMAGE_BATCH_MAX_ITEMS),
+    body: inputs,
     responseSchema: z.array(apiExhibitionImageSchema),
     accessScope: "manager",
     tags: exhibitionTags(id),
@@ -136,15 +116,11 @@ export const updateExhibitionImageAction = async (
   imageId: string,
   input: ApiUpdateExhibitionImageInput,
 ): Promise<AdminWriteActionResult<ApiExhibitionImage>> => {
-  const parsedPayload = parseActionInput(apiUpdateExhibitionImageInputSchema, input);
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
-  const payload = parsedPayload.data;
   return writeRequest({
     path: `/exhibitions/${id}/images/${imageId}`,
     method: "PATCH",
-    body: payload,
+    bodySchema: apiUpdateExhibitionImageInputSchema,
+    body: input,
     responseSchema: apiExhibitionImageSchema,
     accessScope: "manager",
     tags: exhibitionTags(id),
@@ -155,18 +131,13 @@ export const updateExhibitionImagesAction = async (
   id: string,
   inputs: ApiUpdateExhibitionImageBatchItemInput[],
 ): Promise<AdminWriteActionResult<ApiExhibitionImage[]>> => {
-  const parsedPayload = parseActionInput(
-    z.array(apiUpdateExhibitionImageBatchItemInputSchema).max(IMAGE_BATCH_MAX_ITEMS),
-    inputs,
-  );
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
-  const payload = parsedPayload.data;
   return writeRequest({
     path: `/exhibitions/${id}/images/batch`,
     method: "PATCH",
-    body: payload,
+    bodySchema: z
+      .array(apiUpdateExhibitionImageBatchItemInputSchema)
+      .max(IMAGE_BATCH_MAX_ITEMS),
+    body: inputs,
     responseSchema: z.array(apiExhibitionImageSchema),
     accessScope: "manager",
     tags: exhibitionTags(id),

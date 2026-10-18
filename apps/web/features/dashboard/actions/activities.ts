@@ -6,7 +6,6 @@ import {
   writeRequest,
   type AdminWriteActionResult,
 } from "@/features/dashboard/actions/admin-write-core";
-import { parseActionInput } from "@/features/dashboard/actions/action-input";
 import { CACHE_TAGS, publicActivityTag } from "@/server/cache/tags";
 import {
   apiActivityImageSchema,
@@ -47,15 +46,11 @@ const activityTags = (id: string) =>
 export const createActivityAction = async (
   input: ApiCreateActivityInput,
 ): Promise<AdminWriteActionResult<ApiActivity>> => {
-  const parsedPayload = parseActionInput(apiCreateActivityInputSchema, input);
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
-  const payload = parsedPayload.data;
   return writeRequest({
     path: "/activities",
     method: "POST",
-    body: payload,
+    bodySchema: apiCreateActivityInputSchema,
+    body: input,
     responseSchema: apiActivitySchema,
     accessScope: "manager",
     tags: ACTIVITY_COLLECTION_TAGS,
@@ -66,15 +61,11 @@ export const updateActivityAction = async (
   id: string,
   input: ApiUpdateActivityInput,
 ): Promise<AdminWriteActionResult<ApiActivity>> => {
-  const parsedPayload = parseActionInput(apiUpdateActivityInputSchema, input);
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
-  const payload = parsedPayload.data;
   return writeRequest({
     path: `/activities/${id}`,
     method: "PATCH",
-    body: payload,
+    bodySchema: apiUpdateActivityInputSchema,
+    body: input,
     responseSchema: apiActivitySchema,
     accessScope: "manager",
     tags: activityTags(id),
@@ -97,15 +88,11 @@ export const addActivityImageAction = async (
   id: string,
   input: ApiCreateActivityImageInput,
 ): Promise<AdminWriteActionResult<ApiActivityImage>> => {
-  const parsedPayload = parseActionInput(apiCreateActivityImageInputSchema, input);
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
-  const payload = parsedPayload.data;
   return writeRequest({
     path: `/activities/${id}/images`,
     method: "POST",
-    body: payload,
+    bodySchema: apiCreateActivityImageInputSchema,
+    body: input,
     responseSchema: apiActivityImageSchema,
     accessScope: "manager",
     tags: activityTags(id),
@@ -116,18 +103,11 @@ export const addActivityImagesAction = async (
   id: string,
   inputs: ApiCreateActivityImageInput[],
 ): Promise<AdminWriteActionResult<ApiActivityImage[]>> => {
-  const parsedPayload = parseActionInput(
-    z.array(apiCreateActivityImageInputSchema).max(IMAGE_BATCH_MAX_ITEMS),
-    inputs,
-  );
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
-  const payload = parsedPayload.data;
   return writeRequest({
     path: `/activities/${id}/images/batch`,
     method: "POST",
-    body: payload,
+    bodySchema: z.array(apiCreateActivityImageInputSchema).max(IMAGE_BATCH_MAX_ITEMS),
+    body: inputs,
     responseSchema: z.array(apiActivityImageSchema),
     accessScope: "manager",
     tags: activityTags(id),
@@ -139,15 +119,11 @@ export const updateActivityImageAction = async (
   imageId: string,
   input: ApiUpdateActivityImageInput,
 ): Promise<AdminWriteActionResult<ApiActivityImage>> => {
-  const parsedPayload = parseActionInput(apiUpdateActivityImageInputSchema, input);
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
-  const payload = parsedPayload.data;
   return writeRequest({
     path: `/activities/${id}/images/${imageId}`,
     method: "PATCH",
-    body: payload,
+    bodySchema: apiUpdateActivityImageInputSchema,
+    body: input,
     responseSchema: apiActivityImageSchema,
     accessScope: "manager",
     tags: activityTags(id),
@@ -158,18 +134,13 @@ export const updateActivityImagesAction = async (
   id: string,
   inputs: ApiUpdateActivityImageBatchItemInput[],
 ): Promise<AdminWriteActionResult<ApiActivityImage[]>> => {
-  const parsedPayload = parseActionInput(
-    z.array(apiUpdateActivityImageBatchItemInputSchema).max(IMAGE_BATCH_MAX_ITEMS),
-    inputs,
-  );
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
-  const payload = parsedPayload.data;
   return writeRequest({
     path: `/activities/${id}/images/batch`,
     method: "PATCH",
-    body: payload,
+    bodySchema: z
+      .array(apiUpdateActivityImageBatchItemInputSchema)
+      .max(IMAGE_BATCH_MAX_ITEMS),
+    body: inputs,
     responseSchema: z.array(apiActivityImageSchema),
     accessScope: "manager",
     tags: activityTags(id),

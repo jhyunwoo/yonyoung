@@ -87,15 +87,11 @@ export const updateUserAction = async (
 export const bulkUpdateUsersRoleAction = async (
   input: ApiBulkUpdateUserRoleInput,
 ): Promise<BulkUpdateUsersRoleActionResult> => {
-  const parsedPayload = parseActionInput(apiBulkUpdateUserRoleInputSchema, input);
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
-  const payload = parsedPayload.data;
   return writeRequest({
     path: "/users/bulk-role",
     method: "PATCH",
-    body: payload,
+    bodySchema: apiBulkUpdateUserRoleInputSchema,
+    body: input,
     responseSchema: apiUserSchema.array(),
     accessScope: "user_manager",
     tags: USER_CACHE_TAGS,

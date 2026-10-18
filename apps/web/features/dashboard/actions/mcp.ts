@@ -8,7 +8,7 @@ import {
 
 export const revokeMcpConnectionAction = async (
   clientId: string,
-): Promise<AdminWriteActionResult<undefined>> =>
+): Promise<AdminWriteActionResult<void>> =>
   writeRequest({
     path: `/mcp/connections/${encodeURIComponent(clientId)}`,
     method: "DELETE",

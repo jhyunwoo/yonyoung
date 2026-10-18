@@ -12,6 +12,7 @@ import {
   assertAdminWriteAccess,
   type AdminWriteAccessScope,
 } from "@/features/dashboard/actions/admin-write-access";
+import { parseActionInput } from "@/features/dashboard/actions/action-input";
 import { readCookieHeader } from "@/shared/http/http";
 import type { AdminCacheTag, PublicCacheTag } from "@/server/cache/tags";
 import {
@@ -106,18 +107,29 @@ export const toAdminWriteActionFailure = (
 
 /**
  * 관리자 API 쓰기 요청 공통 처리.
- * 흐름: 권한 확인 → 쿠키/추적 헤더 수집 → API 호출 → 성공 시 캐시 태그 무효화.
+ * 흐름: 입력 검증(bodySchema) → 권한 확인 → 쿠키/추적 헤더 수집 → API 호출 → 성공 시 캐시 태그 무효화.
  */
 export const writeRequest = async <TResponse>(input: {
   path: string;
   method: "POST" | "PATCH" | "DELETE";
   body?: unknown;
+  /** 주면 body를 이 계약 스키마로 먼저 검증하고, 파싱된 값을 보낸다. 실패는 결과 값으로 돌려준다. */
+  bodySchema?: z.ZodType;
   responseSchema: z.ZodType<TResponse>;
   tags: readonly CacheTag[];
   timeoutMs?: number;
   requireAdminAccess?: boolean;
   accessScope?: AdminWriteAccessScope;
 }): Promise<AdminWriteActionResult<TResponse>> => {
+  let body = input.body;
+  if (input.bodySchema) {
+    const parsedBody = parseActionInput(input.bodySchema, input.body);
+    if (!parsedBody.ok) {
+      return parsedBody;
+    }
+    body = parsedBody.data;
+  }
+
   if (input.requireAdminAccess !== false) {
     try {
       await requireAdminAccess(input.accessScope);
@@ -136,7 +148,7 @@ export const writeRequest = async <TResponse>(input: {
     const result = await honoRequest<TResponse>({
       path: `${ADMIN_API_BASE_PATH}${input.path}`,
       method: input.method,
-      body: input.body,
+      body,
       cache: "no-store",
       responseSchema: input.responseSchema,
       timeoutMs: input.timeoutMs ?? 45_000,
