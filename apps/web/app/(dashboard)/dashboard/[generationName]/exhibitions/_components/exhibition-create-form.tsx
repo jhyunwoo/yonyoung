@@ -21,11 +21,12 @@ import { useGuardedSubmit } from "@/shared/react/use-guarded-submit";
 import DateRangeFields from "@/app/(dashboard)/_components/date-range-fields";
 import CoverImageField from "@/app/(dashboard)/_components/media/cover-image-field";
 import DetailImagesField from "@/app/(dashboard)/_components/media/detail-images-field";
-import RichTextEditor, {
-  EMPTY_RICH_TEXT_HTML,
-} from "@/app/(dashboard)/_components/rich-text-editor";
+import RichTextEditor from "@/app/(dashboard)/_components/lazy-rich-text-editor";
 import { readExhibitionErrorMessage } from "@/app/(dashboard)/dashboard/[generationName]/exhibitions/_components/exhibition-shared";
-import { hasMeaningfulRichTextHtml } from "@/features/media/rich-text/rich-text";
+import {
+  EMPTY_RICH_TEXT_HTML,
+  hasMeaningfulRichTextHtml,
+} from "@/features/media/rich-text/rich-text";
 import { validateDateRange } from "@/shared/utils/date-input";
 
 type ExhibitionCreateFormProps = {

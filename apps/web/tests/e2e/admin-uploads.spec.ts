@@ -61,6 +61,9 @@ test.describe("관리자 업로드", () => {
       waitUntil: "domcontentloaded",
     });
     await routeUploadsToSameOrigin(page);
+    // 에디터는 클라이언트에서만 뜨므로, 보이면 하이드레이션이 끝난 것이다. 그 전에 입력하면
+    // 하이드레이션이 제어 input 값을 비워 버린다.
+    await expect(page.locator(".ProseMirror")).toBeVisible();
 
     const title = `대량 업로드 ${Date.now()}`;
     await page.getByPlaceholder("예: 60기 정기 촬영 워크숍").fill(title);
@@ -114,6 +117,9 @@ test.describe("관리자 업로드", () => {
       waitUntil: "domcontentloaded",
     });
     await routeUploadsToSameOrigin(page);
+    // 에디터는 클라이언트에서만 뜨므로, 보이면 하이드레이션이 끝난 것이다. 그 전에 입력하면
+    // 하이드레이션이 제어 input 값을 비워 버린다.
+    await expect(page.locator(".ProseMirror")).toBeVisible();
 
     await page.getByTestId(`sortable-image-remove-${removedImageId}`).click();
     await page.locator('input[type="file"]').nth(1).setInputFiles(pngFile("added.png"));
@@ -143,6 +149,9 @@ test.describe("관리자 업로드", () => {
       waitUntil: "domcontentloaded",
     });
     await routeUploadsToSameOrigin(page);
+    // 에디터는 클라이언트에서만 뜨므로, 보이면 하이드레이션이 끝난 것이다. 그 전에 입력하면
+    // 하이드레이션이 제어 input 값을 비워 버린다.
+    await expect(page.locator(".ProseMirror")).toBeVisible();
 
     const title = `전시 업로드 ${Date.now()}`;
     await page.getByPlaceholder("예: 연영회 60기 정기전").fill(title);

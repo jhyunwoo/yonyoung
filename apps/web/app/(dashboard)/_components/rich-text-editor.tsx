@@ -14,6 +14,7 @@ import { TableRow } from "@tiptap/extension-table-row";
 import Underline from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { EMPTY_RICH_TEXT_HTML } from "@/features/media/rich-text/rich-text";
 
 type RichTextEditorProps = {
   value: string;
@@ -28,8 +29,6 @@ type ToolbarButtonProps = {
   active?: boolean;
   disabled?: boolean;
 };
-
-export const EMPTY_RICH_TEXT_HTML = "<p></p>";
 
 const ToolbarButton = ({
   label,

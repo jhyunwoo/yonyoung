@@ -18,10 +18,11 @@ import {
   uploadCoverOnce,
 } from "@/features/media/upload/upload-cover-once";
 import { useDetailImageField } from "@/features/media/upload/use-detail-image-field";
-import { hasMeaningfulRichTextHtml } from "@/features/media/rich-text/rich-text";
-import RichTextEditor, {
+import {
   EMPTY_RICH_TEXT_HTML,
-} from "@/app/(dashboard)/_components/rich-text-editor";
+  hasMeaningfulRichTextHtml,
+} from "@/features/media/rich-text/rich-text";
+import RichTextEditor from "@/app/(dashboard)/_components/lazy-rich-text-editor";
 import DateRangeFields from "@/app/(dashboard)/_components/date-range-fields";
 import CoverImageField from "@/app/(dashboard)/_components/media/cover-image-field";
 import DetailImagesField from "@/app/(dashboard)/_components/media/detail-images-field";

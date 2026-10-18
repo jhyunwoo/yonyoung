@@ -26,7 +26,7 @@ import AuditHistoryPanel from "@/app/(dashboard)/_components/audit-history-panel
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import { useGuardedSubmit } from "@/shared/react/use-guarded-submit";
 import LastUpdatedMeta from "@/app/(dashboard)/_components/last-updated-meta";
-import RichTextEditor from "@/app/(dashboard)/_components/rich-text-editor";
+import RichTextEditor from "@/app/(dashboard)/_components/lazy-rich-text-editor";
 import DateRangeFields from "@/app/(dashboard)/_components/date-range-fields";
 import CoverImageField from "@/app/(dashboard)/_components/media/cover-image-field";
 import DetailImagesField from "@/app/(dashboard)/_components/media/detail-images-field";
