@@ -8,21 +8,13 @@ import {
   isSameGenerationRouteName,
 } from "@/features/dashboard/generation/dashboard-generation-route";
 import { asRecord } from "@/shared/http/http";
+import { trimToNull } from "@/shared/utils/trim-to-null";
 
 export type DashboardGenerationOption = Pick<
   ApiGeneration,
   "id" | "name" | "sortOrder" | "startDate" | "endDate" | "updatedAt" | "updatedBy"
 > & {
   path: string;
-};
-
-const readTrimmedOrNull = (value: unknown): string | null => {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
 };
 
 const withCurrentUserUpdatedByFallback = (
@@ -45,7 +37,7 @@ const withCurrentUserUpdatedByFallback = (
   }
 
   const resolvedName =
-    readTrimmedOrNull(generation.updatedBy.name) ??
+    trimToNull(generation.updatedBy.name) ??
     currentUser.name ??
     generation.updatedBy.name;
 
@@ -97,9 +89,9 @@ export const getAccessibleDashboardGenerationOptions = async (
   };
   const currentUserProfile = {
     id: session.user.id,
-    name: readTrimmedOrNull(mergedUser.name),
-    familyName: readTrimmedOrNull(mergedUser.familyName),
-    givenName: readTrimmedOrNull(mergedUser.givenName),
+    name: trimToNull(mergedUser.name),
+    familyName: trimToNull(mergedUser.familyName),
+    givenName: trimToNull(mergedUser.givenName),
   };
 
   const accessibleGenerations = getAccessibleGenerations(

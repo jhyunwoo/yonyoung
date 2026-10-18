@@ -109,7 +109,7 @@ export const isPresidentRole = (role: unknown): role is typeof PRESIDENT_ROLE =>
   typeof role === "string" && role === PRESIDENT_ROLE;
 
 export const isPresidentOrVicePresidentRole = (role: unknown): boolean =>
-  typeof role === "string" && (role === "president" || role === "vice_president");
+  typeof role === "string" && (role === PRESIDENT_ROLE || role === "vice_president");
 
 /**
  * canAccessAdminPage 조건을 평가해 사용 가능 여부를 판별합니다.
@@ -127,19 +127,23 @@ export const canAccessAdminPage = (session: SessionWithRole): boolean => {
   return normalizeLegacyRole(getRoleFromSession(session)) !== UNVERIFIED_ROLE;
 };
 
-/**
- * canManageGenerations 조건을 평가해 사용 가능 여부를 판별합니다.
- * @param session 인증/인가 상태를 포함한 세션 정보입니다.
- * @returns 조건 판별 결과(boolean)를 반환합니다.
- * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
- */
-export const canManageGenerations = (session: SessionWithRole): boolean => {
+/** 회장·부회장 세션인지. 기수 관리와 전역 사용자 관리가 지금은 같은 규칙을 쓴다. */
+const hasLeadershipRole = (session: SessionWithRole): boolean => {
   if (!session) {
     return false;
   }
 
   return isPresidentOrVicePresidentRole(getRoleFromSession(session));
 };
+
+/**
+ * canManageGenerations 조건을 평가해 사용 가능 여부를 판별합니다.
+ * @param session 인증/인가 상태를 포함한 세션 정보입니다.
+ * @returns 조건 판별 결과(boolean)를 반환합니다.
+ * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
+ */
+export const canManageGenerations = (session: SessionWithRole): boolean =>
+  hasLeadershipRole(session);
 
 /**
  * canManageGlobalUsers 조건을 평가해 사용 가능 여부를 판별합니다.
@@ -147,13 +151,8 @@ export const canManageGenerations = (session: SessionWithRole): boolean => {
  * @returns 조건 판별 결과(boolean)를 반환합니다.
  * @remarks 호출부와의 계약(입력 검증, null 처리, 에러 전파 규칙)을 일관되게 유지해야 합니다.
  */
-export const canManageGlobalUsers = (session: SessionWithRole): boolean => {
-  if (!session) {
-    return false;
-  }
-
-  return isPresidentOrVicePresidentRole(getRoleFromSession(session));
-};
+export const canManageGlobalUsers = (session: SessionWithRole): boolean =>
+  hasLeadershipRole(session);
 
 export const resolvePostSignInPath = (input: {
   role: unknown;

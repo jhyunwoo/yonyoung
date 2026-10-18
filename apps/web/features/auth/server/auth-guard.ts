@@ -21,20 +21,13 @@ import {
   unwrapDataEnvelope,
 } from "@/shared/http/http";
 import { readServerForwardedRequestContext } from "@/server/http/request-context";
+import { trimToNull } from "@/shared/utils/trim-to-null";
 
 const SIGN_IN_PATH = "/auth/sign-in";
 const USER_PATH_PREFIX = "/api/users";
 const CURRENT_USER_PATH = `${USER_PATH_PREFIX}/me`;
 /** 프로필 조회는 보조 정보라 실패하면 세션 값으로 폴백한다. 렌더가 매달리지 않게 상한을 둔다. */
 const PROFILE_REQUEST_TIMEOUT_MS = 8000;
-
-const readTrimmedString = (value: unknown): string | null => {
-  if (typeof value !== "string") {
-    return null;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
 
 const sanitizeProfileRecord = (value: unknown): Record<string, unknown> | null => {
   const source = asRecord(value);
@@ -44,7 +37,7 @@ const sanitizeProfileRecord = (value: unknown): Record<string, unknown> | null =
 
   const output: Record<string, unknown> = {};
 
-  const id = readTrimmedString(source.id);
+  const id = trimToNull(source.id);
   if (id) {
     output.id = id;
   }

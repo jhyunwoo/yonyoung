@@ -1,5 +1,6 @@
 import {
-  type PRESIGN_PATHS,
+  clampProgress,
+  type PresignPath,
   uploadWithPresign,
 } from "@/features/dashboard/api/admin-api/upload";
 import { mapWithConcurrency } from "@/shared/utils/map-with-concurrency";
@@ -11,23 +12,6 @@ import { mapWithConcurrency } from "@/shared/utils/map-with-concurrency";
  * 슬롯만 다음 파일에 재사용하도록 한도보다 충분히 작게 둔다.
  */
 export const UPLOAD_BATCH_CONCURRENCY = 4;
-
-type PresignPath = (typeof PRESIGN_PATHS)[keyof typeof PRESIGN_PATHS];
-
-const clampProgress = (progress: number): number => {
-  if (!Number.isFinite(progress)) {
-    return 0;
-  }
-
-  if (progress < 0) {
-    return 0;
-  }
-  if (progress > 100) {
-    return 100;
-  }
-
-  return Math.round(progress);
-};
 
 export const uploadFilesWithPresign = async (input: {
   presignPath: PresignPath;

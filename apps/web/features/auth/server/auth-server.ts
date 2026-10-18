@@ -1,10 +1,12 @@
 import {
+  asRecord,
   clearTimeoutController,
   createTimeoutController,
   resolveApiBaseUrl,
 } from "@/shared/http/http";
 import { applyForwardedRequestContextHeaders } from "@/shared/http/http";
 import { readServerForwardedRequestContext } from "@/server/http/request-context";
+import { trimToNull } from "@/shared/utils/trim-to-null";
 import type { AuthSession } from "@/features/auth/model/auth-shared";
 
 const SESSION_PATH = "/api/auth/get-session";
@@ -31,25 +33,6 @@ export const isSessionUnavailableError = (
 /** 일시적인 서버 상태로 보고 재시도를 권해야 하는 응답 코드 */
 const isTransientSessionStatus = (status: number): boolean =>
   status === 408 || status === 429 || status >= 500;
-
-const asRecord = (value: unknown): Record<string, unknown> | null => {
-  if (typeof value !== "object" || value === null) {
-    return null;
-  }
-  return value as Record<string, unknown>;
-};
-
-const readNonEmptyString = (
-  source: Record<string, unknown>,
-  key: string,
-): string | null => {
-  const value = source[key];
-  if (typeof value !== "string") {
-    return null;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
 
 const readNullableString = (
   source: Record<string, unknown>,
@@ -105,16 +88,16 @@ const parseSessionPayload = (payload: unknown): AuthSession | null => {
     return null;
   }
 
-  const sessionId = readNonEmptyString(sessionRecord, "id");
-  const sessionUserId = readNonEmptyString(sessionRecord, "userId");
+  const sessionId = trimToNull(sessionRecord.id);
+  const sessionUserId = trimToNull(sessionRecord.userId);
   const rawExpiresAt = sessionRecord.expiresAt;
   const expiresAt =
     typeof rawExpiresAt === "string" || typeof rawExpiresAt === "number"
       ? rawExpiresAt
       : null;
-  const userId = readNonEmptyString(userRecord, "id");
-  const email = readNonEmptyString(userRecord, "email");
-  const name = readNonEmptyString(userRecord, "name");
+  const userId = trimToNull(userRecord.id);
+  const email = trimToNull(userRecord.email);
+  const name = trimToNull(userRecord.name);
 
   if (!sessionId || !sessionUserId || expiresAt === null || !userId || !email || !name) {
     return null;
@@ -139,8 +122,8 @@ const parseSessionPayload = (payload: unknown): AuthSession | null => {
       phoneNumber: readNullableString(userRecord, "phoneNumber"),
       collaborationAvailable: readNullableBoolean(userRecord, "collaborationAvailable"),
       personalLink: readNullableString(userRecord, "personalLink"),
-      role: readNonEmptyString(userRecord, "role"),
-      generationId: readNonEmptyString(userRecord, "generationId"),
+      role: trimToNull(userRecord.role),
+      generationId: trimToNull(userRecord.generationId),
       generationIds: readOptionalStringArray(userRecord, "generationIds"),
       latestGenerationSortOrder: readNullableNumber(
         userRecord,

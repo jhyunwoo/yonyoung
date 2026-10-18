@@ -43,7 +43,7 @@ const readUploadProgress = (loaded: number, total: number): number => {
   return raw;
 };
 
-const clampProgress = (progress: number): number => {
+export const clampProgress = (progress: number): number => {
   if (!Number.isFinite(progress)) {
     return 0;
   }
