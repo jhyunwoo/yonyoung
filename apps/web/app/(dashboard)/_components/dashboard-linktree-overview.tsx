@@ -6,11 +6,10 @@ import { EmptyState } from "@/app/(dashboard)/_components/ui/empty-state";
 import {
   flattenLinktreeItems,
   listPublicLinktrees,
-  safeList,
 } from "@/features/public/services/public-read-service";
 
 export default async function DashboardLinktreeOverview() {
-  const linktrees = await safeList(listPublicLinktrees, []);
+  const linktrees = await listPublicLinktrees();
   const visibleGroups = linktrees.filter((group) => group.items.length > 0);
   const totalLinkCount = flattenLinktreeItems(visibleGroups).length;
 
