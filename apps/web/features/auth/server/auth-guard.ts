@@ -162,6 +162,8 @@ const getCurrentUserProfile = cache(
     }
 
     const headers = await buildForwardedHeaders();
+    // 폴백 조회 두 건(단건 → 목록)이 함께 같은 상한 안에서 끝나야 렌더가 매달리지 않는다.
+    const { controller, timeoutId } = createTimeoutController(PROFILE_REQUEST_TIMEOUT_MS);
 
     try {
       const userByIdResponse = await fetch(
@@ -170,6 +172,7 @@ const getCurrentUserProfile = cache(
           method: "GET",
           headers,
           cache: "no-store",
+          signal: controller.signal,
         },
       );
 
@@ -187,6 +190,7 @@ const getCurrentUserProfile = cache(
         method: "GET",
         headers,
         cache: "no-store",
+        signal: controller.signal,
       });
       if (!usersResponse.ok) {
         return null;
@@ -209,6 +213,8 @@ const getCurrentUserProfile = cache(
       return sanitizeProfileRecord(matchedUser);
     } catch {
       return null;
+    } finally {
+      clearTimeoutController(timeoutId);
     }
   },
 );

@@ -150,6 +150,9 @@ describe("features/auth/server/auth-guard", () => {
       "https://api.example.com/api/users/non-uuid-user-id",
     );
     expect(fetchMock.mock.calls[2]?.[0]).toBe("https://api.example.com/api/users");
+    for (const call of fetchMock.mock.calls) {
+      expect((call[1] as RequestInit | undefined)?.signal).toBeInstanceOf(AbortSignal);
+    }
   });
 
   it("prefers /api/users/me when available", async () => {
