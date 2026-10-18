@@ -11,6 +11,10 @@ import {
   enforceRequestBodyLimit,
   enforceSameOriginProtection,
 } from "@/server/security/request-guards";
+import {
+  createIngestAcceptedResponse,
+  parseIngestBody,
+} from "@/app/api/internal/ingest-request";
 
 const clientErrorPayloadSchema = z.object({
   event: z.enum(["client.error", "client.unhandledrejection", "router.transition.start"]),
@@ -20,24 +24,6 @@ const clientErrorPayloadSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
   sampledAt: z.number().finite(),
 });
-
-const parseBody = async (request: NextRequest): Promise<unknown> => {
-  const contentType = request.headers.get("content-type") ?? "";
-  if (contentType.includes("application/json")) {
-    return request.json().catch(() => null);
-  }
-
-  const text = await request.text().catch(() => "");
-  if (!text) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
-};
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const csrfProtectionResponse = enforceSameOriginProtection(request);
@@ -53,7 +39,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return bodyLimitResponse;
   }
 
-  const body = await parseBody(request);
+  const body = await parseIngestBody(request);
   const parsed = clientErrorPayloadSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -86,13 +72,5 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
   }
 
-  return NextResponse.json(
-    { ok: true },
-    {
-      status: 202,
-      headers: {
-        "Cache-Control": "private, no-store, max-age=0",
-      },
-    },
-  );
+  return createIngestAcceptedResponse();
 }
