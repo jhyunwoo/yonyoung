@@ -1,6 +1,5 @@
 import { notFound, redirect } from "next/navigation";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
-import { readCookieHeader } from "@/shared/http/http";
 import { getAdminActivityById } from "@/features/dashboard/services/admin-read-service";
 import AdminReadErrorNotice from "@/app/(dashboard)/_components/admin-read-error";
 import { isAdminRole } from "@/features/auth/model/auth-shared";
@@ -44,7 +43,7 @@ export default async function GenerationActivityEditPage({
     redirect(`${generation.path}/activities/${activityId}`);
   }
 
-  const activityResult = await getAdminActivityById(activityId, await readCookieHeader());
+  const activityResult = await getAdminActivityById(activityId);
 
   if (!activityResult.ok && activityResult.error.reason === "not_found") {
     notFound();

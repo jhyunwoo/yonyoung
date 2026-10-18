@@ -1,6 +1,5 @@
 import { PageContainer } from "@/app/(dashboard)/_components/ui/layout-parts";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
-import { readCookieHeader } from "@/shared/http/http";
 import {
   listAdminGenerations,
   listAdminUsers,
@@ -11,10 +10,9 @@ import GenerationManagementClient from "@/app/(dashboard)/dashboard/settings/gen
 export default async function SettingsGenerationsPage() {
   await serverAuthGuard.requirePresidentAccess();
 
-  const cookieHeader = await readCookieHeader();
   const [generationsResult, usersResult] = await Promise.all([
-    listAdminGenerations(cookieHeader),
-    listAdminUsers(cookieHeader),
+    listAdminGenerations(),
+    listAdminUsers(),
   ]);
 
   if (!generationsResult.ok) {

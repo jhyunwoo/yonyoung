@@ -3,11 +3,10 @@ import SiteSettingsForm from "@/app/(dashboard)/dashboard/settings/site/site-set
 import AttachmentManager from "@/app/(dashboard)/_components/attachment-manager";
 import AdminReadErrorNotice from "@/app/(dashboard)/_components/admin-read-error";
 import { getAdminSiteSettings } from "@/features/dashboard/services/admin-read-service";
-import { readCookieHeader } from "@/shared/http/http";
 
 export default async function SettingsSitePage() {
   await serverAuthGuard.requirePresidentAccess();
-  const settingsResult = await getAdminSiteSettings(await readCookieHeader());
+  const settingsResult = await getAdminSiteSettings();
 
   return (
     <div className="space-y-8 px-4 py-6 md:px-8 md:py-8">

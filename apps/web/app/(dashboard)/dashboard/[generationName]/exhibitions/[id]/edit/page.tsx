@@ -1,6 +1,5 @@
 import { notFound, redirect } from "next/navigation";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
-import { readCookieHeader } from "@/shared/http/http";
 import { getAdminExhibitionById } from "@/features/dashboard/services/admin-read-service";
 import AdminReadErrorNotice from "@/app/(dashboard)/_components/admin-read-error";
 import { isAdminRole } from "@/features/auth/model/auth-shared";
@@ -43,7 +42,7 @@ export default async function GenerationExhibitionEditPage({
     redirect(`${generation.path}/exhibitions/${id}`);
   }
 
-  const exhibitionResult = await getAdminExhibitionById(id, await readCookieHeader());
+  const exhibitionResult = await getAdminExhibitionById(id);
 
   if (!exhibitionResult.ok && exhibitionResult.error.reason === "not_found") {
     notFound();

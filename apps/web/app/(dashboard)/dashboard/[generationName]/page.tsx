@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { formatAuditActor } from "@/features/dashboard/ui/audit-display";
 import { formatKoreanDate, formatKoreanDateRange } from "@/shared/utils/date-formatters";
-import { readCookieHeader } from "@/shared/http/http";
 import {
   listAdminActivities,
   listAdminExhibitions,
@@ -20,11 +19,10 @@ const GenerationDashboardSummary = async (input: {
   generationId: string;
   generationPath: string;
 }) => {
-  const cookieHeader = await readCookieHeader();
   const [activitiesResult, exhibitionsResult, membersResult] = await Promise.all([
-    listAdminActivities(input.generationId, cookieHeader),
-    listAdminExhibitions(input.generationId, cookieHeader),
-    listAdminGenerationMembers(input.generationId, cookieHeader),
+    listAdminActivities(input.generationId),
+    listAdminExhibitions(input.generationId),
+    listAdminGenerationMembers(input.generationId),
   ]);
 
   // 요약 카드는 읽기 실패 시에도 나머지 항목을 계속 보여 준다.

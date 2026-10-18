@@ -5,7 +5,6 @@ import {
   parseStatsSearchParams,
   toInsightsApiSearch,
 } from "@/features/dashboard/stats/stats-range";
-import { readCookieHeader } from "@/shared/http/http";
 import StatsView from "./stats-view";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 
@@ -23,8 +22,7 @@ export default async function StatsPage({ searchParams }: StatsPageProps) {
   const today = kstToday();
   const query = parseStatsSearchParams(await searchParams, today);
   const apiSearch = toInsightsApiSearch(query);
-  const cookieHeader = await readCookieHeader();
-  const result = await getAdminVisitorInsights(cookieHeader, apiSearch);
+  const result = await getAdminVisitorInsights(apiSearch);
   const insights = result.ok ? result.data : null;
   const error = result.ok ? null : result.error.message;
 

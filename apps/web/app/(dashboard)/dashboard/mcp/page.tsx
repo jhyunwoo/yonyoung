@@ -11,7 +11,6 @@ import {
   getMcpConnections,
   getMcpOverview,
 } from "@/features/dashboard/services/admin-read-service";
-import { readCookieHeader } from "@/shared/http/http";
 import McpConnectionsClient from "@/app/(dashboard)/dashboard/mcp/connections-client";
 import {
   ChatGptSection,
@@ -29,10 +28,9 @@ export const metadata = {
 
 export default async function McpGuidePage() {
   await serverAuthGuard.requireSession();
-  const cookieHeader = await readCookieHeader();
   const [overview, connections] = await Promise.all([
-    getMcpOverview(cookieHeader),
-    getMcpConnections(cookieHeader),
+    getMcpOverview(),
+    getMcpConnections(),
   ]);
 
   return (

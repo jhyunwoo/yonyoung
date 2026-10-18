@@ -3,7 +3,6 @@ import LinktreeGroupEditForm from "@/app/(dashboard)/_components/linktree-group-
 import AdminReadErrorNotice from "@/app/(dashboard)/_components/admin-read-error";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { isAdminRole } from "@/features/auth/model/auth-shared";
-import { readCookieHeader } from "@/shared/http/http";
 import { getAdminLinktreeById } from "@/features/dashboard/services/admin-read-service";
 
 const LIST_PATH = "/dashboard/settings/linktree";
@@ -23,7 +22,7 @@ export default async function SettingsLinktreeEditPage({
     redirect(`${LIST_PATH}/${linktreeId}`);
   }
 
-  const linktreeResult = await getAdminLinktreeById(linktreeId, await readCookieHeader());
+  const linktreeResult = await getAdminLinktreeById(linktreeId);
 
   if (!linktreeResult.ok && linktreeResult.error.reason === "not_found") {
     notFound();

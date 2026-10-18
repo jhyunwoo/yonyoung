@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { readCookieHeader } from "@/shared/http/http";
 import { listAdminActivities } from "@/features/dashboard/services/admin-read-service";
 import AdminReadErrorNotice from "@/app/(dashboard)/_components/admin-read-error";
 import { formatAuditActor } from "@/features/dashboard/ui/audit-display";
@@ -24,8 +23,7 @@ export default async function GenerationActivitiesList({
   generationName,
   canManage,
 }: GenerationActivitiesListProps) {
-  const cookieHeader = await readCookieHeader();
-  const result = await listAdminActivities(generationId, cookieHeader);
+  const result = await listAdminActivities(generationId);
   const activities = result.ok ? sortActivitiesByStartDateDesc(result.data) : [];
 
   return (

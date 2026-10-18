@@ -1,6 +1,5 @@
 import "server-only";
 
-import { headers } from "next/headers";
 import { updateTag } from "next/cache";
 import { z } from "zod";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
@@ -20,6 +19,7 @@ import {
   INVALID_RESPONSE_CODE,
   honoRequest,
 } from "@/server/http/hono-client";
+import { readCorrelationHeaders } from "@/server/http/request-context";
 
 /**
  * 관리자 쓰기 서버 액션 공통 코어.
@@ -53,21 +53,6 @@ const tagsToUpdate = (tags: readonly CacheTag[]): void => {
   for (const tag of tags) {
     updateTag(tag);
   }
-};
-
-/** 요청 추적용 상관관계 헤더(x-request-id/x-trace-id)를 읽거나 새로 만듭니다. */
-const readCorrelationHeaders = async (): Promise<{
-  requestId: string;
-  traceId: string;
-}> => {
-  const requestHeaders = await headers();
-  const requestId = requestHeaders.get("x-request-id")?.trim() || crypto.randomUUID();
-  const traceId = requestHeaders.get("x-trace-id")?.trim() || crypto.randomUUID();
-
-  return {
-    requestId,
-    traceId,
-  };
 };
 
 /** 세션 API 장애를 서버 액션 실패 결과로 바꾼다 (예외로 던지면 프로덕션에서 원인이 가려진다). */
