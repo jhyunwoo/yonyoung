@@ -339,9 +339,6 @@ importers:
       '@visx/event':
         specifier: 4.0.0
         version: 4.0.0(@types/react@19.3.0)(react@19.3.1)
-      '@visx/gradient':
-        specifier: 4.0.0
-        version: 4.0.0(@types/react@19.3.0)(react@19.3.1)
       '@visx/grid':
         specifier: 4.0.0
         version: 4.0.0(@types/react@19.3.0)(react@19.3.1)
@@ -399,9 +396,6 @@ importers:
       server-only:
         specifier: 0.0.1
         version: 0.0.1
-      sharp:
-        specifier: 0.35.5
-        version: 0.35.5(@types/node@26.6.4)
       tailwind-merge:
         specifier: ^3.7.0
         version: 3.7.0
@@ -3282,15 +3276,6 @@ packages:
 
   '@visx/event@4.0.0':
     resolution: {integrity: sha512-sOcVVzOUxOefF8mQenRFtutoEO7P9icpTcSJM36Sv13sepQbPBuYLknX7RV+EzqyNLOze5cO5GmLIUNH82FOoA==}
-    peerDependencies:
-      '@types/react': ^18.0.0 || ^19.0.0
-      react: ^18.0.0 || ^19.0.0
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-
-  '@visx/gradient@4.0.0':
-    resolution: {integrity: sha512-AycKA/9Hhx9BXOdWACqYKGU+Dkq/gWzgaDAK/MkVDjXME+3Sl8oE6mn/ZO54gi6wg9qNHhWLnp8XKPJSp4/pzA==}
     peerDependencies:
       '@types/react': ^18.0.0 || ^19.0.0
       react: ^18.0.0 || ^19.0.0
@@ -8042,12 +8027,6 @@ snapshots:
   '@visx/event@4.0.0(@types/react@19.3.0)(react@19.3.1)':
     dependencies:
       '@visx/point': 4.0.0
-      react: 19.3.1
-    optionalDependencies:
-      '@types/react': 19.3.0
-
-  '@visx/gradient@4.0.0(@types/react@19.3.0)(react@19.3.1)':
-    dependencies:
       react: 19.3.1
     optionalDependencies:
       '@types/react': 19.3.0

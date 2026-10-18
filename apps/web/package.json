@@ -43,7 +43,6 @@
     "@uppy/core": "^6.2.0",
     "@visx/curve": "4.0.0",
     "@visx/event": "4.0.0",
-    "@visx/gradient": "4.0.0",
     "@visx/grid": "4.0.0",
     "@visx/group": "4.0.0",
     "@visx/heatmap": "4.0.0",
@@ -63,7 +62,6 @@
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "server-only": "0.0.1",
-    "sharp": "0.35.5",
     "tailwind-merge": "^3.7.0",
     "xss": "1.0.15",
     "zod": "^4.6.5"
