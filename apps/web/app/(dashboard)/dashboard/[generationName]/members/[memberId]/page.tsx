@@ -7,6 +7,7 @@ import {
   listAdminGenerationMembers,
   listAdminGenerations,
 } from "@/features/dashboard/services/admin-read-service";
+import { decodeMemberId } from "@/features/dashboard/members/decode-member-id";
 import { buildMemberGenerationNamesById } from "@/features/dashboard/members/member-directory";
 import {
   canEditMemberProfile,
@@ -15,20 +16,6 @@ import {
 import AdminReadErrorNotice from "@/app/(dashboard)/_components/admin-read-error";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
 import MemberDetailClient from "@/app/(dashboard)/dashboard/[generationName]/members/[memberId]/member-detail-client";
-
-const decodeMemberId = (rawMemberId: string): string | null => {
-  const trimmedMemberId = rawMemberId.trim();
-  if (trimmedMemberId.length === 0) {
-    return null;
-  }
-
-  try {
-    const decoded = decodeURIComponent(trimmedMemberId).trim();
-    return decoded.length > 0 ? decoded : null;
-  } catch {
-    return null;
-  }
-};
 
 const MemberDetailUnavailable = ({
   membersPath,

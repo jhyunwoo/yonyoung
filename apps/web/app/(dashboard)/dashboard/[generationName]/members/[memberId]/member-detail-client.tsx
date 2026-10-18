@@ -7,14 +7,11 @@ import type {
   ApiGenerationMemberSummary,
   ApiUser,
 } from "@yonyoung/contracts";
-import { formatKoreanDate } from "@/shared/utils/date-formatters";
-import {
-  buildMemberDisplayInitial,
-  buildMemberDisplayName,
-} from "@/features/dashboard/members/display-name";
+import { buildMemberDisplayName } from "@/features/dashboard/members/display-name";
 import { buildMemberRoleLabel } from "@/features/dashboard/members/member-role-label";
 import AuditHistoryPanel from "@/app/(dashboard)/_components/audit-history-panel";
-import LastUpdatedMeta from "@/app/(dashboard)/_components/last-updated-meta";
+import MemberFullInfoList from "@/app/(dashboard)/_components/members/member-full-info-list";
+import MemberProfileHeader from "@/app/(dashboard)/_components/members/member-profile-header";
 import MemberEditForm from "@/app/(dashboard)/_components/member-edit-form";
 
 type MemberDetailClientProps = {
@@ -30,20 +27,6 @@ type MemberDetailClientProps = {
   generations: ApiGeneration[];
   isSelf: boolean;
   canEdit: boolean;
-};
-
-const readGenerationNameText = (
-  user: ApiUser,
-  generationNamesById: Record<string, string>,
-): string => {
-  const ids = user.generationIds ?? (user.generationId ? [user.generationId] : []);
-  if (ids.length === 0) {
-    return "없음";
-  }
-
-  const uniqueIds = Array.from(new Set(ids));
-  const names = uniqueIds.map((id) => generationNamesById[id] ?? "알 수 없는 기수");
-  return names.join(", ");
 };
 
 export default function MemberDetailClient({
@@ -62,8 +45,6 @@ export default function MemberDetailClient({
   const currentUserLike = fullUser ?? summary;
 
   const displayName = buildMemberDisplayName(currentUserLike);
-  const profileImage = currentUserLike.image;
-  const avatarFallback = buildMemberDisplayInitial(displayName);
   const roleLabel = buildMemberRoleLabel(currentUserLike.role);
   const showsFullDetails = Boolean(fullUser);
   const canInlineEdit = canEdit && Boolean(fullUser);
@@ -79,27 +60,11 @@ export default function MemberDetailClient({
             Members
           </Link>
 
-          <div className="mt-4 flex flex-wrap items-center gap-4">
-            <div className="h-16 w-16 overflow-hidden rounded-full border border-hairline bg-canvas-soft">
-              {profileImage ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={profileImage}
-                  alt={`${displayName} 프로필 이미지`}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-base font-semibold text-ink-muted">
-                  {avatarFallback}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <h1 className="text-2xl font-bold text-ink md:text-3xl">{displayName}</h1>
-              <p className="mt-1 text-sm text-ink-muted">{generation.name} 멤버 상세</p>
-            </div>
-
+          <MemberProfileHeader
+            displayName={displayName}
+            image={currentUserLike.image}
+            subtitle={`${generation.name} 멤버 상세`}
+          >
             {isSelf ? (
               <span className="rounded-full border border-hairline-strong bg-canvas-soft px-3 py-1 text-xs font-semibold text-ink-secondary">
                 내 정보
@@ -116,7 +81,7 @@ export default function MemberDetailClient({
                 수정
               </button>
             ) : null}
-          </div>
+          </MemberProfileHeader>
 
           {isEditing && canInlineEdit && fullUser ? (
             <MemberEditForm
@@ -158,73 +123,10 @@ export default function MemberDetailClient({
               </div>
 
               {showsFullDetails && fullUser ? (
-                <div className="mt-6 rounded-lg border border-hairline p-4">
-                  <h2 className="text-sm font-semibold text-ink">전체 정보</h2>
-                  <dl className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                    <div>
-                      <dt className="text-xs font-semibold text-ink-muted">이메일</dt>
-                      <dd className="mt-1 text-sm text-ink wrap-anywhere">
-                        {fullUser.email}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs font-semibold text-ink-muted">성</dt>
-                      <dd className="mt-1 text-sm text-ink">
-                        {fullUser.familyName ?? "-"}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs font-semibold text-ink-muted">이름</dt>
-                      <dd className="mt-1 text-sm text-ink">
-                        {fullUser.givenName ?? "-"}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs font-semibold text-ink-muted">대학</dt>
-                      <dd className="mt-1 text-sm text-ink">{fullUser.college ?? "-"}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs font-semibold text-ink-muted">학번</dt>
-                      <dd className="mt-1 text-sm text-ink">
-                        {fullUser.studentNumber ?? "-"}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs font-semibold text-ink-muted">전화번호</dt>
-                      <dd className="mt-1 text-sm text-ink">
-                        {fullUser.phoneNumber ?? "-"}
-                      </dd>
-                    </div>
-                    <div className="md:col-span-2 xl:col-span-3">
-                      <dt className="text-xs font-semibold text-ink-muted">소속 기수</dt>
-                      <dd className="mt-1 break-all text-sm text-ink">
-                        {readGenerationNameText(fullUser, generationNamesById)}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs font-semibold text-ink-muted">생성일</dt>
-                      <dd className="mt-1 text-sm text-ink">
-                        {formatKoreanDate(fullUser.createdAt)}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs font-semibold text-ink-muted">수정일</dt>
-                      <dd className="mt-1 text-sm text-ink">
-                        {formatKoreanDate(fullUser.updatedAt)}
-                      </dd>
-                    </div>
-                    <div className="md:col-span-2 xl:col-span-3">
-                      <dt className="text-xs font-semibold text-ink-muted">최근 수정</dt>
-                      <dd className="mt-1">
-                        <LastUpdatedMeta
-                          updatedAt={fullUser.updatedAt}
-                          updatedBy={fullUser.updatedBy}
-                          className="text-sm text-ink"
-                        />
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
+                <MemberFullInfoList
+                  user={fullUser}
+                  generationNamesById={generationNamesById}
+                />
               ) : (
                 <p className="mt-6 rounded-lg border border-warning-hairline bg-warning-soft p-4 text-sm text-warning-text">
                   제한 정보만 열람할 수 있습니다.

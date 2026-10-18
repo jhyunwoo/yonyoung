@@ -3,14 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { ApiGeneration, ApiUser } from "@yonyoung/contracts";
-import { formatKoreanDate } from "@/shared/utils/date-formatters";
-import {
-  buildMemberDisplayInitial,
-  buildMemberDisplayName,
-} from "@/features/dashboard/members/display-name";
-import { readMemberGenerationNameText } from "@/features/dashboard/members/member-directory";
+import { buildMemberDisplayName } from "@/features/dashboard/members/display-name";
 import { buildMemberRoleLabel } from "@/features/dashboard/members/member-role-label";
-import LastUpdatedMeta from "@/app/(dashboard)/_components/last-updated-meta";
+import MemberFullInfoList, {
+  MemberInfoItem,
+} from "@/app/(dashboard)/_components/members/member-full-info-list";
+import MemberProfileHeader from "@/app/(dashboard)/_components/members/member-profile-header";
 import MemberEditForm from "@/app/(dashboard)/_components/member-edit-form";
 import { PaginatedHistorySection } from "@/app/(dashboard)/_components/members/member-resource-history";
 
@@ -33,7 +31,6 @@ export default function MemberDetailClient({
   const [isEditing, setIsEditing] = useState(false);
 
   const displayName = buildMemberDisplayName(user);
-  const avatarFallback = buildMemberDisplayInitial(displayName);
   const roleLabel = buildMemberRoleLabel(user.role);
 
   return (
@@ -47,27 +44,11 @@ export default function MemberDetailClient({
             Settings / Members
           </Link>
 
-          <div className="mt-4 flex flex-wrap items-center gap-4">
-            <div className="h-16 w-16 overflow-hidden rounded-full border border-hairline bg-canvas-soft">
-              {user.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={user.image}
-                  alt={`${displayName} 프로필 이미지`}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-base font-semibold text-ink-muted">
-                  {avatarFallback}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <h1 className="text-2xl font-bold text-ink md:text-3xl">{displayName}</h1>
-              <p className="mt-1 text-sm text-ink-muted">전체 멤버 상세</p>
-            </div>
-
+          <MemberProfileHeader
+            displayName={displayName}
+            image={user.image}
+            subtitle="전체 멤버 상세"
+          >
             {canEdit && !isEditing ? (
               <button
                 type="button"
@@ -78,7 +59,7 @@ export default function MemberDetailClient({
                 수정
               </button>
             ) : null}
-          </div>
+          </MemberProfileHeader>
 
           {isEditing && canEdit ? (
             <MemberEditForm
@@ -92,71 +73,12 @@ export default function MemberDetailClient({
               }}
             />
           ) : (
-            <div className="mt-6 rounded-lg border border-hairline p-4">
-              <h2 className="text-sm font-semibold text-ink">전체 정보</h2>
-              <dl className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                <div>
-                  <dt className="text-xs font-semibold text-ink-muted">회원 구분</dt>
-                  <dd className="mt-1 text-sm text-ink">{roleLabel}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold text-ink-muted">이메일</dt>
-                  <dd className="mt-1 text-sm text-ink wrap-anywhere">{user.email}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold text-ink-muted">성</dt>
-                  <dd className="mt-1 text-sm text-ink">{user.familyName ?? "-"}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold text-ink-muted">이름</dt>
-                  <dd className="mt-1 text-sm text-ink">{user.givenName ?? "-"}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold text-ink-muted">대학</dt>
-                  <dd className="mt-1 text-sm text-ink">{user.college ?? "-"}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold text-ink-muted">학과</dt>
-                  <dd className="mt-1 text-sm text-ink">{user.department ?? "-"}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold text-ink-muted">학번</dt>
-                  <dd className="mt-1 text-sm text-ink">{user.studentNumber ?? "-"}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold text-ink-muted">전화번호</dt>
-                  <dd className="mt-1 text-sm text-ink">{user.phoneNumber ?? "-"}</dd>
-                </div>
-                <div className="md:col-span-2 xl:col-span-3">
-                  <dt className="text-xs font-semibold text-ink-muted">소속 기수</dt>
-                  <dd className="mt-1 break-all text-sm text-ink">
-                    {readMemberGenerationNameText(user, generationNamesById)}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold text-ink-muted">생성일</dt>
-                  <dd className="mt-1 text-sm text-ink">
-                    {formatKoreanDate(user.createdAt)}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold text-ink-muted">수정일</dt>
-                  <dd className="mt-1 text-sm text-ink">
-                    {formatKoreanDate(user.updatedAt)}
-                  </dd>
-                </div>
-                <div className="md:col-span-2 xl:col-span-3">
-                  <dt className="text-xs font-semibold text-ink-muted">최근 수정</dt>
-                  <dd className="mt-1">
-                    <LastUpdatedMeta
-                      updatedAt={user.updatedAt}
-                      updatedBy={user.updatedBy}
-                      className="text-sm text-ink"
-                    />
-                  </dd>
-                </div>
-              </dl>
-            </div>
+            <MemberFullInfoList
+              user={user}
+              generationNamesById={generationNamesById}
+              leading={<MemberInfoItem label="회원 구분">{roleLabel}</MemberInfoItem>}
+              showsDepartment
+            />
           )}
         </section>
 

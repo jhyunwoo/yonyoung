@@ -6,24 +6,11 @@ import {
   listAdminGenerations,
   type AdminReadError,
 } from "@/features/dashboard/services/admin-read-service";
+import { decodeMemberId } from "@/features/dashboard/members/decode-member-id";
 import { buildMemberGenerationNamesById } from "@/features/dashboard/members/member-directory";
 import { canEditMemberProfile } from "@/features/dashboard/members/member-role-label";
 import AdminReadErrorNotice from "@/app/(dashboard)/_components/admin-read-error";
 import MemberDetailClient from "@/app/(dashboard)/dashboard/settings/members/[memberId]/member-detail-client";
-
-const decodeMemberId = (rawMemberId: string): string | null => {
-  const trimmedMemberId = rawMemberId.trim();
-  if (trimmedMemberId.length === 0) {
-    return null;
-  }
-
-  try {
-    const decoded = decodeURIComponent(trimmedMemberId).trim();
-    return decoded.length > 0 ? decoded : null;
-  } catch {
-    return null;
-  }
-};
 
 const MemberDetailUnavailable = ({ error }: { error: AdminReadError }) => (
   <div className="px-4 py-6 md:px-8 md:py-8">
