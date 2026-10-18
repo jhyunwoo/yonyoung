@@ -45,7 +45,7 @@ export const updateGenerationAction = async (
   input: ApiUpdateGenerationInput,
 ): Promise<AdminWriteActionResult<ApiGeneration>> => {
   return writeRequest({
-    path: `/generations/${id}`,
+    path: `/generations/${encodeURIComponent(id)}`,
     method: "PATCH",
     bodySchema: apiUpdateGenerationInputSchema,
     body: input,
@@ -74,7 +74,7 @@ export const deleteGenerationAction = async (
   id: string,
 ): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
-    path: `/generations/${id}`,
+    path: `/generations/${encodeURIComponent(id)}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
     accessScope: "leadership",

@@ -61,7 +61,7 @@ export const updateAttachmentAction = async (
   input: ApiUpdateAttachmentInput,
 ): Promise<AdminWriteActionResult<ApiAttachment>> => {
   return writeRequest({
-    path: `/attachments/${id}`,
+    path: `/attachments/${encodeURIComponent(id)}`,
     method: "PATCH",
     bodySchema: apiUpdateAttachmentInputSchema,
     body: input,
@@ -81,7 +81,7 @@ export const deleteAttachmentAction = async (
   }
   const parsedId = idResult.data;
   return writeRequest({
-    path: `/attachments/${parsedId}`,
+    path: `/attachments/${encodeURIComponent(parsedId)}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
     accessScope: accessScopeByAttachmentScope(scope),

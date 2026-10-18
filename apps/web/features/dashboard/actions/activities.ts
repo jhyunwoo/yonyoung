@@ -62,7 +62,7 @@ export const updateActivityAction = async (
   input: ApiUpdateActivityInput,
 ): Promise<AdminWriteActionResult<ApiActivity>> => {
   return writeRequest({
-    path: `/activities/${id}`,
+    path: `/activities/${encodeURIComponent(id)}`,
     method: "PATCH",
     bodySchema: apiUpdateActivityInputSchema,
     body: input,
@@ -76,7 +76,7 @@ export const deleteActivityAction = async (
   id: string,
 ): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
-    path: `/activities/${id}`,
+    path: `/activities/${encodeURIComponent(id)}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
     accessScope: "manager",
@@ -89,7 +89,7 @@ export const addActivityImageAction = async (
   input: ApiCreateActivityImageInput,
 ): Promise<AdminWriteActionResult<ApiActivityImage>> => {
   return writeRequest({
-    path: `/activities/${id}/images`,
+    path: `/activities/${encodeURIComponent(id)}/images`,
     method: "POST",
     bodySchema: apiCreateActivityImageInputSchema,
     body: input,
@@ -104,7 +104,7 @@ export const addActivityImagesAction = async (
   inputs: ApiCreateActivityImageInput[],
 ): Promise<AdminWriteActionResult<ApiActivityImage[]>> => {
   return writeRequest({
-    path: `/activities/${id}/images/batch`,
+    path: `/activities/${encodeURIComponent(id)}/images/batch`,
     method: "POST",
     bodySchema: z.array(apiCreateActivityImageInputSchema).max(IMAGE_BATCH_MAX_ITEMS),
     body: inputs,
@@ -120,7 +120,7 @@ export const updateActivityImageAction = async (
   input: ApiUpdateActivityImageInput,
 ): Promise<AdminWriteActionResult<ApiActivityImage>> => {
   return writeRequest({
-    path: `/activities/${id}/images/${imageId}`,
+    path: `/activities/${encodeURIComponent(id)}/images/${encodeURIComponent(imageId)}`,
     method: "PATCH",
     bodySchema: apiUpdateActivityImageInputSchema,
     body: input,
@@ -135,7 +135,7 @@ export const updateActivityImagesAction = async (
   inputs: ApiUpdateActivityImageBatchItemInput[],
 ): Promise<AdminWriteActionResult<ApiActivityImage[]>> => {
   return writeRequest({
-    path: `/activities/${id}/images/batch`,
+    path: `/activities/${encodeURIComponent(id)}/images/batch`,
     method: "PATCH",
     bodySchema: z
       .array(apiUpdateActivityImageBatchItemInputSchema)
@@ -152,7 +152,7 @@ export const deleteActivityImageAction = async (
   imageId: string,
 ): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
-    path: `/activities/${id}/images/${imageId}`,
+    path: `/activities/${encodeURIComponent(id)}/images/${encodeURIComponent(imageId)}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
     accessScope: "manager",

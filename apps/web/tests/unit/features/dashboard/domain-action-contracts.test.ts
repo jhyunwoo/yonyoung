@@ -504,6 +504,15 @@ describe("dashboard domain action contracts", () => {
     });
   }
 
+  it("경로의 id는 인코딩하고 캐시 태그에는 원본 id를 쓴다", async () => {
+    await deleteActivityImageAction("activity/1", "image?1");
+
+    expect(lastRequest()).toMatchObject({
+      path: "/activities/activity%2F1/images/image%3F1",
+      tags: ["admin:activities", "public:activities", "public:activity:activity/1"],
+    });
+  });
+
   it("batch payload를 request schema와 함께 넘겨 writeRequest가 검증하게 한다", async () => {
     await addActivityImagesAction("activity-1", [
       {

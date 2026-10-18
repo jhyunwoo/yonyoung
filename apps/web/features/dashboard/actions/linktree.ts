@@ -47,7 +47,7 @@ export const updateLinktreeAction = async (
   input: ApiUpdateLinktreeInput,
 ): Promise<AdminWriteActionResult<ApiLinktree>> => {
   return writeRequest({
-    path: `/linktree/${id}`,
+    path: `/linktree/${encodeURIComponent(id)}`,
     method: "PATCH",
     bodySchema: apiUpdateLinktreeInputSchema,
     body: input,
@@ -61,7 +61,7 @@ export const deleteLinktreeAction = async (
   id: string,
 ): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
-    path: `/linktree/${id}`,
+    path: `/linktree/${encodeURIComponent(id)}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
     accessScope: "manager",
@@ -74,7 +74,7 @@ export const addLinktreeItemAction = async (
   input: ApiCreateLinktreeItemInput,
 ): Promise<AdminWriteActionResult<ApiLinktreeItem>> => {
   return writeRequest({
-    path: `/linktree/${id}/items`,
+    path: `/linktree/${encodeURIComponent(id)}/items`,
     method: "POST",
     bodySchema: apiCreateLinktreeItemInputSchema,
     body: input,
@@ -90,7 +90,7 @@ export const updateLinktreeItemAction = async (
   input: ApiUpdateLinktreeItemInput,
 ): Promise<AdminWriteActionResult<ApiLinktreeItem>> => {
   return writeRequest({
-    path: `/linktree/${id}/items/${itemId}`,
+    path: `/linktree/${encodeURIComponent(id)}/items/${encodeURIComponent(itemId)}`,
     method: "PATCH",
     bodySchema: apiUpdateLinktreeItemInputSchema,
     body: input,
@@ -105,7 +105,7 @@ export const deleteLinktreeItemAction = async (
   itemId: string,
 ): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
-    path: `/linktree/${id}/items/${itemId}`,
+    path: `/linktree/${encodeURIComponent(id)}/items/${encodeURIComponent(itemId)}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
     accessScope: "manager",

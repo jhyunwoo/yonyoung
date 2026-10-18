@@ -59,7 +59,7 @@ export const updateExhibitionAction = async (
   input: ApiUpdateExhibitionInput,
 ): Promise<AdminWriteActionResult<ApiExhibition>> => {
   return writeRequest({
-    path: `/exhibitions/${id}`,
+    path: `/exhibitions/${encodeURIComponent(id)}`,
     method: "PATCH",
     bodySchema: apiUpdateExhibitionInputSchema,
     body: input,
@@ -73,7 +73,7 @@ export const deleteExhibitionAction = async (
   id: string,
 ): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
-    path: `/exhibitions/${id}`,
+    path: `/exhibitions/${encodeURIComponent(id)}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
     accessScope: "leadership",
@@ -86,7 +86,7 @@ export const addExhibitionImageAction = async (
   input: ApiCreateExhibitionImageInput,
 ): Promise<AdminWriteActionResult<ApiExhibitionImage>> => {
   return writeRequest({
-    path: `/exhibitions/${id}/images`,
+    path: `/exhibitions/${encodeURIComponent(id)}/images`,
     method: "POST",
     bodySchema: apiCreateExhibitionImageInputSchema,
     body: input,
@@ -101,7 +101,7 @@ export const addExhibitionImagesAction = async (
   inputs: ApiCreateExhibitionImageInput[],
 ): Promise<AdminWriteActionResult<ApiExhibitionImage[]>> => {
   return writeRequest({
-    path: `/exhibitions/${id}/images/batch`,
+    path: `/exhibitions/${encodeURIComponent(id)}/images/batch`,
     method: "POST",
     bodySchema: z.array(apiCreateExhibitionImageInputSchema).max(IMAGE_BATCH_MAX_ITEMS),
     body: inputs,
@@ -117,7 +117,7 @@ export const updateExhibitionImageAction = async (
   input: ApiUpdateExhibitionImageInput,
 ): Promise<AdminWriteActionResult<ApiExhibitionImage>> => {
   return writeRequest({
-    path: `/exhibitions/${id}/images/${imageId}`,
+    path: `/exhibitions/${encodeURIComponent(id)}/images/${encodeURIComponent(imageId)}`,
     method: "PATCH",
     bodySchema: apiUpdateExhibitionImageInputSchema,
     body: input,
@@ -132,7 +132,7 @@ export const updateExhibitionImagesAction = async (
   inputs: ApiUpdateExhibitionImageBatchItemInput[],
 ): Promise<AdminWriteActionResult<ApiExhibitionImage[]>> => {
   return writeRequest({
-    path: `/exhibitions/${id}/images/batch`,
+    path: `/exhibitions/${encodeURIComponent(id)}/images/batch`,
     method: "PATCH",
     bodySchema: z
       .array(apiUpdateExhibitionImageBatchItemInputSchema)
@@ -149,7 +149,7 @@ export const deleteExhibitionImageAction = async (
   imageId: string,
 ): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
-    path: `/exhibitions/${id}/images/${imageId}`,
+    path: `/exhibitions/${encodeURIComponent(id)}/images/${encodeURIComponent(imageId)}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
     accessScope: "manager",

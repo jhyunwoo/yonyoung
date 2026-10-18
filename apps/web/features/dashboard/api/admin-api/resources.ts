@@ -98,9 +98,12 @@ export const adminResourceApi = {
 
   listGenerations: () => apiRequest.get<ApiGeneration[]>("/generations"),
   createGeneration: bindAdminWriteAction(createGenerationAction),
-  getGenerationById: (id: string) => apiRequest.get<ApiGeneration>(`/generations/${id}`),
+  getGenerationById: (id: string) =>
+    apiRequest.get<ApiGeneration>(`/generations/${encodeURIComponent(id)}`),
   listGenerationMembers: (generationId: string) =>
-    apiRequest.get<ApiGenerationMemberSummary[]>(`/generations/${generationId}/members`),
+    apiRequest.get<ApiGenerationMemberSummary[]>(
+      `/generations/${encodeURIComponent(generationId)}/members`,
+    ),
   updateGeneration: bindAdminWriteAction(updateGenerationAction),
   reorderGenerations: bindAdminWriteAction(reorderGenerationsAction),
   deleteGeneration: bindAdminWriteAction(deleteGenerationAction),
@@ -110,7 +113,8 @@ export const adminResourceApi = {
       withOptionalQuery("/activities", { generationId: input.generationId }),
     ),
   createActivity: bindAdminWriteAction(createActivityAction),
-  getActivityById: (id: string) => apiRequest.get<ApiActivity>(`/activities/${id}`),
+  getActivityById: (id: string) =>
+    apiRequest.get<ApiActivity>(`/activities/${encodeURIComponent(id)}`),
   updateActivity: bindAdminWriteAction(updateActivityAction),
   deleteActivity: bindAdminWriteAction(deleteActivityAction),
   addActivityImage: bindAdminWriteAction(addActivityImageAction),
@@ -124,7 +128,8 @@ export const adminResourceApi = {
       withOptionalQuery("/exhibitions", { generationId: input.generationId }),
     ),
   createExhibition: bindAdminWriteAction(createExhibitionAction),
-  getExhibitionById: (id: string) => apiRequest.get<ApiExhibition>(`/exhibitions/${id}`),
+  getExhibitionById: (id: string) =>
+    apiRequest.get<ApiExhibition>(`/exhibitions/${encodeURIComponent(id)}`),
   updateExhibition: bindAdminWriteAction(updateExhibitionAction),
   deleteExhibition: bindAdminWriteAction(deleteExhibitionAction),
   addExhibitionImage: bindAdminWriteAction(addExhibitionImageAction),
@@ -143,7 +148,8 @@ export const adminResourceApi = {
 
   listLinktrees: () => apiRequest.get<ApiLinktree[]>("/linktree"),
   createLinktree: bindAdminWriteAction(createLinktreeAction),
-  getLinktreeById: (id: string) => apiRequest.get<ApiLinktree>(`/linktree/${id}`),
+  getLinktreeById: (id: string) =>
+    apiRequest.get<ApiLinktree>(`/linktree/${encodeURIComponent(id)}`),
   updateLinktree: bindAdminWriteAction(updateLinktreeAction),
   deleteLinktree: bindAdminWriteAction(deleteLinktreeAction),
   addLinktreeItem: bindAdminWriteAction(addLinktreeItemAction),
@@ -158,7 +164,8 @@ export const adminResourceApi = {
   upsertCurrentRecruitingPlan: bindAdminWriteAction(upsertCurrentRecruitingPlanAction),
 
   listUsers: () => apiRequest.get<ApiUser[]>("/users"),
-  getUserById: (id: string) => apiRequest.get<ApiUser>(`/users/${id}`),
+  getUserById: (id: string) =>
+    apiRequest.get<ApiUser>(`/users/${encodeURIComponent(id)}`),
   getUserResourceHistory: (
     id: string,
     input: {
@@ -178,7 +185,7 @@ export const adminResourceApi = {
         ? Math.min(100, Math.floor(input.pageSize))
         : 10;
     return apiRequest.get<ApiUserResourceHistory>(
-      withOptionalQuery(`/users/${id}/resource-history`, {
+      withOptionalQuery(`/users/${encodeURIComponent(id)}/resource-history`, {
         page: String(safePage),
         pageSize: String(safePageSize),
         action: input.action,

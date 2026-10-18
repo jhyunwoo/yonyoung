@@ -75,7 +75,7 @@ export const updateUserAction = async (
   const payload = parsedPayload.data;
 
   return writeRequest({
-    path: `/users/${id}`,
+    path: `/users/${encodeURIComponent(id)}`,
     method: "PATCH",
     body: payload,
     responseSchema: apiUserSchema,
@@ -102,7 +102,7 @@ export const deleteUserAction = async (
   id: string,
 ): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
-    path: `/users/${id}`,
+    path: `/users/${encodeURIComponent(id)}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
     accessScope: "user_manager",
