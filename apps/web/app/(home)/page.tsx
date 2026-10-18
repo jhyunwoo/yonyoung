@@ -16,6 +16,7 @@ import { summarizeRichTextHtml } from "@/features/media/rich-text/rich-text";
 import { resolveSiteUrl } from "@/features/seo/metadata/seo";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
 import JsonLd from "@/features/seo/structured-data/json-ld";
+import { buildOrganizationId } from "@/features/seo/structured-data/schema-builders";
 import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
 
 const getHomePrimaryData = async () => {
@@ -108,7 +109,7 @@ export default async function HomePage() {
 
   const recentActivities = activities.slice(0, 6);
   const siteUrl = resolveSiteUrl();
-  const organizationId = `${siteUrl}/#organization`;
+  const organizationId = buildOrganizationId(siteUrl);
   const websiteId = `${siteUrl}/#website`;
   const organizationJsonLd = {
     "@context": "https://schema.org",

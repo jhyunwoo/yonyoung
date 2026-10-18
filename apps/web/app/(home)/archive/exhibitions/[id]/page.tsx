@@ -9,11 +9,15 @@ import { summarizeRichTextHtml } from "@/features/media/rich-text/rich-text";
 import { RichTextContent } from "@/features/media/rich-text/rich-text-content";
 import { createPageMetadata, resolveSiteUrl } from "@/features/seo/metadata/seo";
 import JsonLd from "@/features/seo/structured-data/json-ld";
+import {
+  buildBreadcrumbJsonLd,
+  buildOrganizationRef,
+} from "@/features/seo/structured-data/schema-builders";
 import PageViewTracker from "@/app/_components/page-view-tracker";
 import ArchiveDetailSkeleton from "@/app/(home)/_components/archive-detail-skeleton";
 import {
   PhotoGallery,
-  type PhotoGalleryItem,
+  toDetailGalleryItems,
 } from "@/app/(home)/_components/photo-gallery";
 
 // 공개된 전시 전부를 빌드 시점에 굽는다. 목록에 없는 id는 App Shell을 받은 뒤
@@ -115,60 +119,13 @@ async function ExhibitionDetailContent({ params }: ExhibitionDetailPageProps) {
       "@type": "Place",
       name: exhibition.place,
     },
-    organizer: {
-      "@type": "Organization",
-      "@id": `${siteUrl}/#organization`,
-      name: "연영회",
-      url: siteUrl,
-    },
+    organizer: buildOrganizationRef(siteUrl),
   };
-  const breadcrumbJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "홈",
-        item: siteUrl,
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: "전시회",
-        item: `${siteUrl}/archive/exhibitions`,
-      },
-      {
-        "@type": "ListItem",
-        position: 3,
-        name: exhibition.title,
-        item: pageUrl,
-      },
-    ],
-  };
-
-  // 상세 이미지가 없으면 커버 이미지 한 장으로 대체 (커버는 크기 정보가 없어 폴백 측정 사용)
-  const galleryItems: PhotoGalleryItem[] =
-    exhibition.detailImages.length > 0
-      ? exhibition.detailImages
-          .slice()
-          .sort((a, b) => a.sortOrder - b.sortOrder)
-          .map((image, index) => ({
-            key: image.id,
-            imageUrl: image.imageUrl,
-            alt: `${exhibition.title} 상세 이미지 ${index + 1}`,
-            width: image.width,
-            height: image.height,
-          }))
-      : [
-          {
-            key: `${exhibition.id}-cover`,
-            imageUrl: exhibition.coverImageUrl,
-            alt: `${exhibition.title} 대표 이미지`,
-            width: null,
-            height: null,
-          },
-        ];
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: "홈", url: siteUrl },
+    { name: "전시회", url: `${siteUrl}/archive/exhibitions` },
+    { name: exhibition.title, url: pageUrl },
+  ]);
 
   return (
     <>
@@ -191,7 +148,7 @@ async function ExhibitionDetailContent({ params }: ExhibitionDetailPageProps) {
       </header>
 
       <PhotoGallery
-        items={galleryItems}
+        items={toDetailGalleryItems(exhibition)}
         fallbackAspect={2 / 3}
         refAspect={0.75}
         data-testid="exhibition-detail-gallery"

@@ -12,6 +12,46 @@ export type PhotoGalleryItem = {
   height: number | null;
 };
 
+/** 활동·전시 상세처럼 대표 이미지와 상세 이미지 목록을 가진 게시물 */
+type GalleryEntity = {
+  id: string;
+  title: string;
+  coverImageUrl: string;
+  detailImages: {
+    id: string;
+    imageUrl: string;
+    sortOrder: number;
+    width: number | null;
+    height: number | null;
+  }[];
+};
+
+/**
+ * 상세 페이지 갤러리 항목. 상세 이미지를 sortOrder 순으로 늘어놓고, 상세 이미지가
+ * 없으면 대표 이미지 한 장으로 대체한다(대표 이미지는 크기 정보가 없어 폴백 측정을 쓴다).
+ */
+export const toDetailGalleryItems = (entity: GalleryEntity): PhotoGalleryItem[] =>
+  entity.detailImages.length > 0
+    ? entity.detailImages
+        .slice()
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((image, index) => ({
+          key: image.id,
+          imageUrl: image.imageUrl,
+          alt: `${entity.title} 상세 이미지 ${index + 1}`,
+          width: image.width,
+          height: image.height,
+        }))
+    : [
+        {
+          key: `${entity.id}-cover`,
+          imageUrl: entity.coverImageUrl,
+          alt: `${entity.title} 대표 이미지`,
+          width: null,
+          height: null,
+        },
+      ];
+
 type PhotoGalleryProps = {
   items: PhotoGalleryItem[];
   /** 치수 미상(레거시) 이미지에 우선 적용할 비율 (예: 4 / 3) */
