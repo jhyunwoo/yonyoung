@@ -185,14 +185,15 @@ HTTP 리다이렉트 대신 **200 + 스켈레톤 깜빡임**을 보고 클라이
 공개 라우트의 기본값은 **서버 컴포넌트**다. 클라이언트로 내려가는 것은 실제 상호작용이
 필요한 아일랜드뿐이며, 목록/타일처럼 개수가 늘어나는 것은 아일랜드로 만들지 않는다.
 
-| 아일랜드                  | 하는 일                                                         |
-| ------------------------- | --------------------------------------------------------------- |
-| `RevealObserver`          | 페이지 전체의 등장 애니메이션 트리거 (IntersectionObserver 1개) |
-| `HeroParallax`            | 스크롤 진행도를 CSS 변수 하나에 쓴다                            |
-| `SiteHeaderScrollState`   | 스크롤 여부를 `<html data-public-scrolled>` 로 알린다           |
-| `SiteHeaderNav`           | 활성 경로 표시 · 드롭다운 · 모바일 메뉴                         |
-| `SiteHeaderThemeSwitcher` | 테마 상태를 직접 소유한다                                       |
-| `PhotoGalleryController`  | 갤러리 전체의 클릭/hover/포커스를 이벤트 위임으로 받는다        |
+| 아일랜드                      | 하는 일                                                         |
+| ----------------------------- | --------------------------------------------------------------- |
+| `RevealObserver`              | 페이지 전체의 등장 애니메이션 트리거 (IntersectionObserver 1개) |
+| `HeroParallax`                | 스크롤 진행도를 CSS 변수 하나에 쓴다                            |
+| `SiteHeaderScrollState`       | 스크롤 여부를 `<html data-public-scrolled>` 로 알린다           |
+| `SiteHeaderNav`               | 활성 경로 표시 · 드롭다운 · 모바일 메뉴                         |
+| `SiteHeaderThemeSwitcher`     | 테마 상태를 직접 소유한다                                       |
+| `PhotoGalleryController`      | 갤러리 전체의 클릭/hover/포커스를 이벤트 위임으로 받는다        |
+| `GenerationMembersController` | 기수별 사진가 그리드의 클릭을 위임으로 받아 상세 모달을 연다    |
 
 **공개 라우트에서 motion/framer-motion 을 쓰지 않는다.** 헤더가 모든 공개 페이지에 있어서
 `AnimatePresence` import 하나가 공개 번들 전체에 gzip 약 43KB 를 얹었다. 등장·패럴랙스·

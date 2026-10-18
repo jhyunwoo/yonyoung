@@ -1,19 +1,18 @@
-"use client";
-
-import { useResetOnChange } from "@/shared/react/use-reset-on-change";
-import type { ApiPublicGenerationWithMembers } from "@yonyoung/contracts";
+import type {
+  ApiPublicGenerationMember,
+  ApiPublicGenerationWithMembers,
+} from "@yonyoung/contracts";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
-import { useMountTransition } from "@/shared/react/use-mount-transition";
 import {
   buildMemberDisplayInitial,
   buildMemberDisplayName,
 } from "@/features/dashboard/members/display-name";
 import { buildMemberRoleLabel } from "@/features/dashboard/members/member-role-label";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
-
-/** 모달 퇴장 시간 — globals.css 의 `.photographer-modal-*` 전환과 같아야 한다. */
-const MODAL_EXIT_MS = 200;
+import {
+  GenerationMembersController,
+  type PhotographerDetail,
+} from "./generation-members-controller";
 
 type GenerationMembersGridProps = {
   generation: Pick<
@@ -22,271 +21,98 @@ type GenerationMembersGridProps = {
   >;
 };
 
+const UUID_LIKE_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const buildGenerationDisplayName = (
+  generation: GenerationMembersGridProps["generation"],
+): string => {
+  const trimmedName = generation.name.trim();
+  if (trimmedName.length === 0 || UUID_LIKE_PATTERN.test(trimmedName)) {
+    return `${generation.sortOrder}기`;
+  }
+  return trimmedName;
+};
+
+const toPhotographerDetail = (member: ApiPublicGenerationMember): PhotographerDetail => {
+  const displayName = buildMemberDisplayName(member);
+  const personalLink = member.personalLink?.trim();
+
+  return {
+    id: member.id,
+    image: member.image,
+    displayName,
+    initial: buildMemberDisplayInitial(displayName),
+    roleLabel: buildMemberRoleLabel(member.role),
+    personalLink: personalLink ? personalLink : null,
+    collaborationAvailable: member.collaborationAvailable,
+  };
+};
+
+/**
+ * 기수 하나의 멤버 그리드 — 서버 컴포넌트다.
+ *
+ * 예전에는 파일 전체가 `"use client"` 라 기수마다 멤버 타일 전부가 하이드레이션됐다.
+ * 타일에 필요한 것은 "눌렸다"는 신호뿐이므로 `PhotoGallery` 와 같은 방식으로 타일은
+ * 서버 HTML 로 내보내고, 모달 상태와 클릭은 `GenerationMembersController` 하나가
+ * `<ul>` 에서 이벤트 위임으로 받는다. 표시 이름·역할 같은 파생 값도 여기서 만든다.
+ */
 export default function GenerationMembersGrid({
   generation,
 }: GenerationMembersGridProps) {
-  // 닫아도 id 는 지우지 않는다 — 퇴장 애니메이션 동안 같은 멤버가 그대로 보여야 한다.
-  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const selectedMember = useMemo(() => {
-    if (!selectedMemberId) {
-      return null;
-    }
-    return generation.members.find((member) => member.id === selectedMemberId) ?? null;
-  }, [generation.members, selectedMemberId]);
-
-  // 닫히는 동안에도 마운트를 유지해 퇴장 애니메이션이 보이게 한다(AnimatePresence 대체).
-  const isModalVisible = isModalOpen && selectedMember !== null;
-  const { isMounted: isModalMounted, state: modalState } = useMountTransition(
-    isModalVisible,
-    MODAL_EXIT_MS,
-  );
-  const displayedMember = selectedMember;
-
-  // 다른 기수를 보여 주기 시작하면 열려 있던 멤버 상세를 닫는다.
-  useResetOnChange(generation.id, () => setIsModalOpen(false));
-
-  useEffect(() => {
-    if (!isModalVisible) {
-      return;
-    }
-
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsModalOpen(false);
-      }
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.body.style.overflow = originalOverflow;
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [isModalVisible]);
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-  };
-
-  const selectedMemberDisplayName = displayedMember
-    ? buildMemberDisplayName(displayedMember)
-    : "이름 미등록";
-  const generationDisplayName = (() => {
-    const trimmedName = generation.name.trim();
-    const uuidLikePattern =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (trimmedName.length === 0 || uuidLikePattern.test(trimmedName)) {
-      return `${generation.sortOrder}기`;
-    }
-    return trimmedName;
-  })();
-  const selectedMemberRoleLabel = displayedMember
-    ? buildMemberRoleLabel(displayedMember.role)
-    : "역할 미지정";
-  const selectedMemberPersonalLink = displayedMember?.personalLink?.trim().length
-    ? displayedMember.personalLink.trim()
-    : null;
-  const collaborationStatus = displayedMember?.collaborationAvailable
-    ? {
-        label: "가능",
-        badgeClassName: "border-emerald-200 bg-emerald-50 text-emerald-700",
-        dotClassName: "bg-emerald-500",
-      }
-    : {
-        label: "불가",
-        badgeClassName: "border-rose-200 bg-rose-50 text-rose-700",
-        dotClassName: "bg-rose-500",
-      };
+  const members = generation.members.map(toPhotographerDetail);
 
   return (
-    <>
-      <ul className="grid grid-cols-4 gap-x-3 gap-y-4 sm:grid-cols-6 md:grid-cols-8 md:gap-x-4 md:gap-y-5 lg:grid-cols-10 xl:grid-cols-12">
-        {generation.members.map((member) => {
-          const displayName = buildMemberDisplayName(member);
-          const fallbackInitial = buildMemberDisplayInitial(displayName);
-          return (
-            <li key={member.id} data-testid={`about-photographers-member-${member.id}`}>
-              <button
-                type="button"
-                className="flex w-full flex-col items-center gap-2 text-center"
-                aria-label={`${displayName} 상세 정보 보기`}
-                onClick={() => {
-                  setSelectedMemberId(member.id);
-                  setIsModalOpen(true);
-                }}
-                data-testid={`about-photographers-member-button-${member.id}`}
-              >
-                <div
-                  className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-(--surface-strong-border) bg-(--surface-muted) p-0.5 shadow-[0_0_0_1px_rgba(15,16,24,0.08)] md:h-14 md:w-14"
-                  data-testid={`about-photographers-member-avatar-${member.id}`}
-                >
-                  <div
-                    className="relative h-full w-full overflow-hidden rounded-full bg-(--surface-border)"
-                    // 사진이 없으면 이니셜만 그리므로 기다릴 이미지도 없다
-                    data-image-skeleton={member.image ? "" : undefined}
-                    suppressHydrationWarning
-                  >
-                    {member.image ? (
-                      <Image
-                        src={member.image}
-                        alt={`${displayName} 프로필`}
-                        fill
-                        unoptimized={shouldUseUnoptimizedImage(member.image)}
-                        sizes="(min-width: 768px) 56px, 48px"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-(--text-muted)">
-                        {fallbackInitial}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <span
-                  className="text-xs font-semibold tracking-tight text-(--text-primary) md:text-sm"
-                  data-testid={`about-photographers-member-name-${member.id}`}
-                >
-                  {displayName}
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-
-      {isModalMounted && displayedMember ? (
-        <div
-          className="photographer-modal-overlay fixed inset-0 z-[1100] flex items-end justify-center bg-black/60 px-3 py-3 backdrop-blur-sm sm:items-center sm:px-4 sm:py-8"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="about-photographers-member-modal-title"
-          data-testid="about-photographers-member-modal"
-          data-state={modalState}
-        >
+    <GenerationMembersController
+      generationId={generation.id}
+      generationDisplayName={buildGenerationDisplayName(generation)}
+      members={members}
+    >
+      {members.map((member) => (
+        <li key={member.id} data-testid={`about-photographers-member-${member.id}`}>
           <button
             type="button"
-            data-testid="about-photographers-member-modal-close-overlay"
-            className="absolute inset-0"
-            onClick={closeModal}
-            aria-label="사용자 정보 모달 닫기"
-          />
-          <div
-            className="photographer-modal-card relative z-10 flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[620px] flex-col overflow-hidden rounded-2xl border border-(--surface-border) bg-(--surface-elevated) shadow-[0_30px_80px_rgba(8,10,19,0.34)] ring-1 ring-black/5 will-change-transform sm:max-h-[calc(100dvh-4rem)]"
-            data-testid="about-photographers-member-modal-card"
-            data-state={modalState}
+            className="flex w-full flex-col items-center gap-2 text-center"
+            aria-label={`${member.displayName} 상세 정보 보기`}
+            // 핸들러 대신 표시만 한다. 클릭은 컨트롤러가 위임으로 받는다
+            data-member-id={member.id}
+            data-testid={`about-photographers-member-button-${member.id}`}
           >
             <div
-              className="pointer-events-none absolute inset-x-16 top-2 -z-10 h-12 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(122,132,148,0.2),rgba(122,132,148,0))] blur-xl"
-              aria-hidden="true"
-            />
-            <div className="flex shrink-0 justify-center bg-(--surface-muted) px-6 pt-8 pb-2">
+              className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-(--surface-strong-border) bg-(--surface-muted) p-0.5 shadow-[0_0_0_1px_rgba(15,16,24,0.08)] md:h-14 md:w-14"
+              data-testid={`about-photographers-member-avatar-${member.id}`}
+            >
               <div
-                className="relative aspect-square w-40 overflow-hidden rounded-2xl border border-(--surface-border) bg-(--surface-border) md:w-56"
-                data-image-skeleton={displayedMember.image ? "" : undefined}
+                className="relative h-full w-full overflow-hidden rounded-full bg-(--surface-border)"
+                // 사진이 없으면 이니셜만 그리므로 기다릴 이미지도 없다
+                data-image-skeleton={member.image ? "" : undefined}
                 suppressHydrationWarning
               >
-                {displayedMember.image ? (
+                {member.image ? (
                   <Image
-                    src={displayedMember.image}
-                    alt={`${selectedMemberDisplayName} 프로필`}
+                    src={member.image}
+                    alt={`${member.displayName} 프로필`}
                     fill
-                    unoptimized={shouldUseUnoptimizedImage(displayedMember.image)}
-                    sizes="(min-width: 768px) 224px, 160px"
+                    unoptimized={shouldUseUnoptimizedImage(member.image)}
+                    sizes="(min-width: 768px) 56px, 48px"
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-5xl font-semibold text-(--text-muted)">
-                    {buildMemberDisplayInitial(selectedMemberDisplayName)}
+                  <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-(--text-muted)">
+                    {member.initial}
                   </div>
                 )}
               </div>
             </div>
-
-            <div
-              className="overflow-y-auto overscroll-contain p-5 sm:p-6 md:p-8"
-              data-testid="about-photographers-member-modal-content"
+            <span
+              className="text-xs font-semibold tracking-tight text-(--text-primary) md:text-sm"
+              data-testid={`about-photographers-member-name-${member.id}`}
             >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3
-                    id="about-photographers-member-modal-title"
-                    className="text-xl font-semibold text-(--text-primary) sm:text-2xl"
-                  >
-                    {selectedMemberDisplayName}
-                  </h3>
-                  <p className="mt-2 text-base text-(--text-secondary) sm:text-xl">
-                    {generationDisplayName} · {selectedMemberRoleLabel}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="rounded-lg border border-(--surface-border) px-3 py-1.5 text-sm text-(--text-primary)"
-                  onClick={closeModal}
-                  data-testid="about-photographers-member-modal-close"
-                >
-                  닫기
-                </button>
-              </div>
-
-              <dl className="mt-8 border-t border-(--surface-border) text-sm">
-                <div className="flex items-center justify-between gap-3 border-b border-(--surface-border) py-4">
-                  <dt className="text-(--text-muted)">기수</dt>
-                  <dd className="font-medium text-(--text-primary)">
-                    {generationDisplayName}
-                  </dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 border-b border-(--surface-border) py-4">
-                  <dt className="text-(--text-muted)">역할</dt>
-                  <dd className="font-medium text-(--text-primary)">
-                    {selectedMemberRoleLabel}
-                  </dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 border-b border-(--surface-border) py-4">
-                  <dt className="text-(--text-muted)">협업 가능 여부</dt>
-                  <dd className="font-medium text-(--text-primary)">
-                    <span
-                      className={[
-                        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold",
-                        collaborationStatus.badgeClassName,
-                      ]
-                        .join(" ")
-                        .trim()}
-                      data-testid="about-photographers-member-collaboration-status"
-                    >
-                      <span
-                        className={`h-1.5 w-1.5 rounded-full ${collaborationStatus.dotClassName}`}
-                        aria-hidden="true"
-                      />
-                      {collaborationStatus.label}
-                    </span>
-                  </dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 border-b border-(--surface-border) py-4">
-                  <dt className="text-(--text-muted)">개인 링크</dt>
-                  <dd className="font-medium text-(--text-primary)">
-                    {selectedMemberPersonalLink ? (
-                      <a
-                        href={selectedMemberPersonalLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-(--text-primary) underline underline-offset-2"
-                      >
-                        바로가기
-                      </a>
-                    ) : (
-                      "미등록"
-                    )}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          </div>
-        </div>
-      ) : null}
-    </>
+              {member.displayName}
+            </span>
+          </button>
+        </li>
+      ))}
+    </GenerationMembersController>
   );
 }
