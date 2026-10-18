@@ -31,7 +31,7 @@ import {
 
 const ADMIN_API_BASE_PATH = "/api";
 
-export type CacheTag = AdminCacheTag | PublicCacheTag;
+type CacheTag = AdminCacheTag | PublicCacheTag;
 
 export type AdminWriteActionFailure = {
   ok: false;
@@ -49,14 +49,14 @@ export type AdminWriteActionResult<T> =
   | AdminWriteActionFailure;
 
 /** 쓰기 성공 후 관련 캐시 태그를 일괄 무효화합니다. */
-export const tagsToUpdate = (tags: readonly CacheTag[]): void => {
+const tagsToUpdate = (tags: readonly CacheTag[]): void => {
   for (const tag of tags) {
     updateTag(tag);
   }
 };
 
 /** 요청 추적용 상관관계 헤더(x-request-id/x-trace-id)를 읽거나 새로 만듭니다. */
-export const readCorrelationHeaders = async (): Promise<{
+const readCorrelationHeaders = async (): Promise<{
   requestId: string;
   traceId: string;
 }> => {
@@ -82,9 +82,7 @@ export const toSessionUnavailableFailure = (
 });
 
 /** 세션 확인 + 요청 범위(scope)에 맞는 관리자 쓰기 권한을 검증합니다 (UX 레벨, 최종 권한은 API가 판정). */
-export const requireAdminAccess = async (
-  scope: AdminWriteAccessScope = "verified_member",
-) => {
+const requireAdminAccess = async (scope: AdminWriteAccessScope = "verified_member") => {
   const session = await serverAuthGuard.requireSession();
   assertAdminWriteAccess(session, scope);
 };
@@ -95,9 +93,7 @@ export const readNoContentSchema = z
   .nullable()
   .transform(() => undefined);
 
-export const toAdminWriteActionFailure = (
-  error: HonoApiError,
-): AdminWriteActionFailure => ({
+const toAdminWriteActionFailure = (error: HonoApiError): AdminWriteActionFailure => ({
   ok: false,
   errorMessage: error.message,
   status: error.status,

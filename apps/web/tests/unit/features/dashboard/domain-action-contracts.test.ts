@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  apiActivityImageSchema,
   apiActivitySchema,
   apiCreateActivityImageInputSchema,
   apiCreateActivityInputSchema,
@@ -9,7 +8,6 @@ import {
   apiCreateGenerationInputSchema,
   apiCreateLinktreeInputSchema,
   apiCreateLinktreeItemInputSchema,
-  apiExhibitionImageSchema,
   apiExhibitionSchema,
   apiGenerationSchema,
   apiLinktreeItemSchema,
@@ -17,9 +15,7 @@ import {
   apiRecruitingPlanSchema,
   apiReorderGenerationsInputSchema,
   apiSiteSettingsSchema,
-  apiUpdateActivityImageInputSchema,
   apiUpdateActivityInputSchema,
-  apiUpdateExhibitionImageInputSchema,
   apiUpdateExhibitionInputSchema,
   apiUpdateGenerationInputSchema,
   apiUpdateLinktreeInputSchema,
@@ -58,23 +54,19 @@ vi.mock("@/features/dashboard/actions/admin-write-core", () => ({
 }));
 
 import {
-  addActivityImageAction,
   addActivityImagesAction,
   createActivityAction,
   deleteActivityAction,
   deleteActivityImageAction,
   updateActivityAction,
-  updateActivityImageAction,
   updateActivityImagesAction,
 } from "@/features/dashboard/actions/activities";
 import {
-  addExhibitionImageAction,
   addExhibitionImagesAction,
   createExhibitionAction,
   deleteExhibitionAction,
   deleteExhibitionImageAction,
   updateExhibitionAction,
-  updateExhibitionImageAction,
   updateExhibitionImagesAction,
 } from "@/features/dashboard/actions/exhibitions";
 import {
@@ -177,16 +169,6 @@ const actionContracts: ActionContract[] = [
     responseSchema: noContentSchema,
   },
   {
-    name: "활동 이미지 생성",
-    invoke: () => addActivityImageAction("activity-1", activityImageInput),
-    path: "/activities/activity-1/images",
-    method: "POST",
-    accessScope: "manager",
-    tags: ["admin:activities", "public:activities", "public:activity:activity-1"],
-    responseSchema: apiActivityImageSchema,
-    bodySchema: apiCreateActivityImageInputSchema,
-  },
-  {
     name: "활동 이미지 일괄 생성",
     invoke: () => addActivityImagesAction("activity-1", [activityImageInput]),
     path: "/activities/activity-1/images/batch",
@@ -195,16 +177,6 @@ const actionContracts: ActionContract[] = [
     tags: ["admin:activities", "public:activities", "public:activity:activity-1"],
     responseSchema: "array",
     bodySchema: "array",
-  },
-  {
-    name: "활동 이미지 수정",
-    invoke: () => updateActivityImageAction("activity-1", "image-1", { sortOrder: 1 }),
-    path: "/activities/activity-1/images/image-1",
-    method: "PATCH",
-    accessScope: "manager",
-    tags: ["admin:activities", "public:activities", "public:activity:activity-1"],
-    responseSchema: apiActivityImageSchema,
-    bodySchema: apiUpdateActivityImageInputSchema,
   },
   {
     name: "활동 이미지 일괄 수정",
@@ -256,16 +228,6 @@ const actionContracts: ActionContract[] = [
     responseSchema: noContentSchema,
   },
   {
-    name: "전시 이미지 생성",
-    invoke: () => addExhibitionImageAction("exhibition-1", exhibitionImageInput),
-    path: "/exhibitions/exhibition-1/images",
-    method: "POST",
-    accessScope: "manager",
-    tags: ["admin:exhibitions", "public:exhibitions", "public:exhibition:exhibition-1"],
-    responseSchema: apiExhibitionImageSchema,
-    bodySchema: apiCreateExhibitionImageInputSchema,
-  },
-  {
     name: "전시 이미지 일괄 생성",
     invoke: () => addExhibitionImagesAction("exhibition-1", [exhibitionImageInput]),
     path: "/exhibitions/exhibition-1/images/batch",
@@ -274,17 +236,6 @@ const actionContracts: ActionContract[] = [
     tags: ["admin:exhibitions", "public:exhibitions", "public:exhibition:exhibition-1"],
     responseSchema: "array",
     bodySchema: "array",
-  },
-  {
-    name: "전시 이미지 수정",
-    invoke: () =>
-      updateExhibitionImageAction("exhibition-1", "image-1", { sortOrder: 1 }),
-    path: "/exhibitions/exhibition-1/images/image-1",
-    method: "PATCH",
-    accessScope: "manager",
-    tags: ["admin:exhibitions", "public:exhibitions", "public:exhibition:exhibition-1"],
-    responseSchema: apiExhibitionImageSchema,
-    bodySchema: apiUpdateExhibitionImageInputSchema,
   },
   {
     name: "전시 이미지 일괄 수정",

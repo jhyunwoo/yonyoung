@@ -13,7 +13,6 @@ import {
   apiCreateActivityImageInputSchema,
   apiCreateActivityInputSchema,
   apiUpdateActivityImageBatchItemInputSchema,
-  apiUpdateActivityImageInputSchema,
   apiUpdateActivityInputSchema,
 } from "@yonyoung/contracts/schemas";
 import type {
@@ -22,7 +21,6 @@ import type {
   ApiCreateActivityImageInput,
   ApiCreateActivityInput,
   ApiUpdateActivityImageBatchItemInput,
-  ApiUpdateActivityImageInput,
   ApiUpdateActivityInput,
 } from "@yonyoung/contracts";
 import { IMAGE_BATCH_MAX_ITEMS } from "@yonyoung/contracts";
@@ -84,21 +82,6 @@ export const deleteActivityAction = async (
   });
 };
 
-export const addActivityImageAction = async (
-  id: string,
-  input: ApiCreateActivityImageInput,
-): Promise<AdminWriteActionResult<ApiActivityImage>> => {
-  return writeRequest({
-    path: `/activities/${encodeURIComponent(id)}/images`,
-    method: "POST",
-    bodySchema: apiCreateActivityImageInputSchema,
-    body: input,
-    responseSchema: apiActivityImageSchema,
-    accessScope: "manager",
-    tags: activityTags(id),
-  });
-};
-
 export const addActivityImagesAction = async (
   id: string,
   inputs: ApiCreateActivityImageInput[],
@@ -109,22 +92,6 @@ export const addActivityImagesAction = async (
     bodySchema: z.array(apiCreateActivityImageInputSchema).max(IMAGE_BATCH_MAX_ITEMS),
     body: inputs,
     responseSchema: z.array(apiActivityImageSchema),
-    accessScope: "manager",
-    tags: activityTags(id),
-  });
-};
-
-export const updateActivityImageAction = async (
-  id: string,
-  imageId: string,
-  input: ApiUpdateActivityImageInput,
-): Promise<AdminWriteActionResult<ApiActivityImage>> => {
-  return writeRequest({
-    path: `/activities/${encodeURIComponent(id)}/images/${encodeURIComponent(imageId)}`,
-    method: "PATCH",
-    bodySchema: apiUpdateActivityImageInputSchema,
-    body: input,
-    responseSchema: apiActivityImageSchema,
     accessScope: "manager",
     tags: activityTags(id),
   });

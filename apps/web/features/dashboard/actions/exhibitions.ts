@@ -13,7 +13,6 @@ import {
   apiExhibitionImageSchema,
   apiExhibitionSchema,
   apiUpdateExhibitionImageBatchItemInputSchema,
-  apiUpdateExhibitionImageInputSchema,
   apiUpdateExhibitionInputSchema,
 } from "@yonyoung/contracts/schemas";
 import type {
@@ -22,7 +21,6 @@ import type {
   ApiExhibition,
   ApiExhibitionImage,
   ApiUpdateExhibitionImageBatchItemInput,
-  ApiUpdateExhibitionImageInput,
   ApiUpdateExhibitionInput,
 } from "@yonyoung/contracts";
 import { IMAGE_BATCH_MAX_ITEMS } from "@yonyoung/contracts";
@@ -81,21 +79,6 @@ export const deleteExhibitionAction = async (
   });
 };
 
-export const addExhibitionImageAction = async (
-  id: string,
-  input: ApiCreateExhibitionImageInput,
-): Promise<AdminWriteActionResult<ApiExhibitionImage>> => {
-  return writeRequest({
-    path: `/exhibitions/${encodeURIComponent(id)}/images`,
-    method: "POST",
-    bodySchema: apiCreateExhibitionImageInputSchema,
-    body: input,
-    responseSchema: apiExhibitionImageSchema,
-    accessScope: "manager",
-    tags: exhibitionTags(id),
-  });
-};
-
 export const addExhibitionImagesAction = async (
   id: string,
   inputs: ApiCreateExhibitionImageInput[],
@@ -106,22 +89,6 @@ export const addExhibitionImagesAction = async (
     bodySchema: z.array(apiCreateExhibitionImageInputSchema).max(IMAGE_BATCH_MAX_ITEMS),
     body: inputs,
     responseSchema: z.array(apiExhibitionImageSchema),
-    accessScope: "manager",
-    tags: exhibitionTags(id),
-  });
-};
-
-export const updateExhibitionImageAction = async (
-  id: string,
-  imageId: string,
-  input: ApiUpdateExhibitionImageInput,
-): Promise<AdminWriteActionResult<ApiExhibitionImage>> => {
-  return writeRequest({
-    path: `/exhibitions/${encodeURIComponent(id)}/images/${encodeURIComponent(imageId)}`,
-    method: "PATCH",
-    bodySchema: apiUpdateExhibitionImageInputSchema,
-    body: input,
-    responseSchema: apiExhibitionImageSchema,
     accessScope: "manager",
     tags: exhibitionTags(id),
   });

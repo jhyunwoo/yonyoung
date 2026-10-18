@@ -1,5 +1,4 @@
 import "server-only";
-import { getRequestContext } from "@/server/observability/context";
 import { redact } from "@/server/observability/redact";
 
 export type LogLevel = "debug" | "info" | "warn" | "error";
@@ -17,15 +16,14 @@ export type LogPayload = {
 };
 
 const emit = (level: LogLevel, payload: LogPayload): void => {
-  const context = getRequestContext();
   const base = {
     ts: new Date().toISOString(),
     level,
     event: payload.event,
-    requestId: payload.requestId ?? context?.requestId,
-    traceId: payload.traceId ?? context?.traceId,
-    route: payload.route ?? context?.route,
-    method: payload.method ?? context?.method,
+    requestId: payload.requestId,
+    traceId: payload.traceId,
+    route: payload.route,
+    method: payload.method,
     status: payload.status,
     durationMs: payload.durationMs,
   };

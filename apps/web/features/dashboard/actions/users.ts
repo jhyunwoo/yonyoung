@@ -4,7 +4,6 @@ import { forbidden } from "next/navigation";
 import { canManageGlobalUsers } from "@/features/auth/model/auth-shared";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import {
-  readNoContentSchema,
   writeRequest,
   type AdminWriteActionResult,
   toSessionUnavailableFailure,
@@ -93,18 +92,6 @@ export const bulkUpdateUsersRoleAction = async (
     bodySchema: apiBulkUpdateUserRoleInputSchema,
     body: input,
     responseSchema: apiUserSchema.array(),
-    accessScope: "user_manager",
-    tags: USER_CACHE_TAGS,
-  });
-};
-
-export const deleteUserAction = async (
-  id: string,
-): Promise<AdminWriteActionResult<void>> => {
-  return writeRequest({
-    path: `/users/${encodeURIComponent(id)}`,
-    method: "DELETE",
-    responseSchema: readNoContentSchema,
     accessScope: "user_manager",
     tags: USER_CACHE_TAGS,
   });
