@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import type { ApiInsightsPageType } from "@yonyoung/contracts";
 import { createEngagementTimer } from "@/features/public/analytics/engagement-timer";
 import {
   createRandomId,
@@ -9,7 +10,11 @@ import {
 import { CSRF_HEADER_NAME, CSRF_HEADER_VALUE } from "@/shared/security/csrf";
 
 type PageViewTrackerProps = {
-  pageType: "home" | "activity" | "exhibition" | "about" | "donate" | "linktree";
+  /**
+   * API(`POST /api/public/page-views`)가 받는 값만 허용한다. 방문자 인사이트가 집계하는
+   * 페이지 유형과 같은 집합이라 그 계약 타입을 쓴다. 이 밖의 값은 400 으로 버려진다.
+   */
+  pageType: ApiInsightsPageType;
   resourceId?: string;
 };
 

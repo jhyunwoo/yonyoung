@@ -13,10 +13,6 @@ import ArchiveViewCounts, {
 
 export const metadata: Metadata = createPageMetadata(PAGE_SEO.archiveRecords);
 
-const getArchiveRecords = async () => {
-  return listPublicActivities();
-};
-
 /**
  * Instant Navigation 계약 (Next.js 16.3).
  *
@@ -28,7 +24,7 @@ const getArchiveRecords = async () => {
 export const instant = true;
 
 export default async function ArchiveRecordsPage() {
-  const activities = await getArchiveRecords();
+  const activities = await listPublicActivities();
   const activityIds = activities.map((a) => a.id);
 
   return (

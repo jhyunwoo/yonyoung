@@ -17,15 +17,6 @@ const annualActivities = [
 
 export const metadata: Metadata = createPageMetadata(PAGE_SEO.about);
 
-const getPublicGenerations = async () => {
-  return listPublicGenerations();
-};
-
-/**
- * AboutPage 컴포넌트의 화면 구조와 상태 기반 렌더링 로직을 정의합니다.
- * @returns 렌더링할 JSX 트리를 반환합니다.
- * @remarks UI 상태와 권한 조건이 변경될 때 렌더링 분기가 달라질 수 있습니다.
- */
 /**
  * Instant Navigation 계약 (Next.js 16.3).
  *
@@ -37,7 +28,7 @@ const getPublicGenerations = async () => {
 export const instant = true;
 
 export default async function AboutPage() {
-  const generations = await getPublicGenerations();
+  const generations = await listPublicGenerations();
   const splitIndex = Math.ceil(annualActivities.length / 2);
   const activityColumns = [
     annualActivities.slice(0, splitIndex),

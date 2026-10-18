@@ -1,3 +1,4 @@
+import { storedAspect } from "./photo-gallery-aspect";
 import { PhotoGalleryController } from "./photo-gallery-controller";
 import { PhotoGalleryTile } from "./photo-gallery-tile";
 
@@ -93,11 +94,7 @@ export function PhotoGallery({
         <PhotoGalleryTile
           key={item.key}
           item={item}
-          aspect={
-            item.width !== null && item.height !== null && item.height > 0
-              ? item.width / item.height
-              : fallbackAspect
-          }
+          aspect={storedAspect(item) ?? fallbackAspect}
           index={index}
         />
       ))}
