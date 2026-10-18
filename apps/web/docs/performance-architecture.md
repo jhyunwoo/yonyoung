@@ -193,7 +193,7 @@ HTTP 리다이렉트 대신 **200 + 스켈레톤 깜빡임**을 보고 클라이
 | `SiteHeaderThemeSwitcher` | 테마 상태를 직접 소유한다                                       |
 | `PhotoGalleryController`  | 갤러리 전체의 클릭/hover/포커스를 이벤트 위임으로 받는다        |
 
-**공개 라우트에서 framer-motion 을 쓰지 않는다.** 헤더가 모든 공개 페이지에 있어서
+**공개 라우트에서 motion/framer-motion 을 쓰지 않는다.** 헤더가 모든 공개 페이지에 있어서
 `AnimatePresence` import 하나가 공개 번들 전체에 gzip 약 43KB 를 얹었다. 등장·패럴랙스·
 호버·오버레이 전환은 전부 `app/(home)/globals.css` 의 CSS 전환과 위 아일랜드로 구현돼
 있고, 값(지속시간·이징·오프셋)은 framer 시절과 같다. 대시보드는 계속 써도 된다 —

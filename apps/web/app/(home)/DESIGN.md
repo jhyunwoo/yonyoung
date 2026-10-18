@@ -787,7 +787,7 @@ inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold
 2. 스크롤 등장은 **`once: true`** — 스크롤을 되돌릴 때 다시 재생하지 않는다.
 3. hover 이동량은 작게: `scale-[1.03]` 또는 `-translate-y-[2px]`~`[5px]`.
 4. **`scroll-behavior: smooth`**가 `html`에 전역 적용되어 있다.
-5. **공개 라우트에서 framer-motion 을 쓰지 않는다.** 위 값들은 전부 `globals.css` 의
+5. **공개 라우트에서 motion/framer-motion 을 쓰지 않는다.** 위 값들은 전부 `globals.css` 의
    CSS 전환과 아일랜드 두 개(`RevealObserver`, `HeroParallax`)로 구현돼 있다. 라이브러리를
    다시 들이면 공개 번들이 gzip 43KB 늘어난다 — `docs/performance-architecture.md` 참고.
 

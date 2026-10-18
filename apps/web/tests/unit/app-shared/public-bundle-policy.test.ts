@@ -29,14 +29,17 @@ const publicSources = collectSourceFiles(PUBLIC_ROOT).map((file) => ({
 }));
 
 describe("공개 라우트 번들 정책", () => {
-  it("공개 라우트는 framer-motion 을 import 하지 않는다", () => {
+  it("공개 라우트는 motion/framer-motion 을 import 하지 않는다", () => {
     /*
       헤더가 모든 공개 페이지에 있어서 import 하나가 공개 번들 전체에 gzip 약 43KB 를
       얹는다. 등장·패럴랙스·오버레이 전환은 globals.css 와 아일랜드 두 개로 구현돼
-      있다 — docs/performance-architecture.md 참고.
+      있다 — docs/performance-architecture.md 참고. `motion`(및 `motion/react` 같은
+      하위 경로)은 framer-motion 을 그대로 다시 내보내므로 함께 막는다.
     */
     const offenders = publicSources
-      .filter(({ source }) => /from\s+["']framer-motion["']/.test(source))
+      .filter(({ source }) =>
+        /from\s+["'](framer-motion|motion(\/[^"']*)?)["']/.test(source),
+      )
       .map(({ file }) => file);
 
     expect(offenders).toEqual([]);
