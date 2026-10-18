@@ -13,7 +13,7 @@ import {
  * 돌려주고, 상세 페이지는 이 id에 대해 평소처럼 404를 렌더링한다
  * (조회가 실패하면 `notFound()`로 떨어지는 기존 경로를 그대로 탄다).
  */
-export const PLACEHOLDER_PARAM_ID = "__placeholder__";
+const PLACEHOLDER_PARAM_ID = "__placeholder__";
 
 type IdParam = { id: string };
 

@@ -5,7 +5,6 @@ import {
   writeRequest,
   type AdminWriteActionResult,
 } from "@/features/dashboard/actions/admin-write-core";
-import { parseActionInput } from "@/features/dashboard/actions/action-input";
 import { CACHE_TAGS } from "@/server/cache/tags";
 import {
   apiCreateGenerationInputSchema,
@@ -30,15 +29,11 @@ const GENERATION_CACHE_TAGS = [
 export const createGenerationAction = async (
   input: ApiCreateGenerationInput,
 ): Promise<AdminWriteActionResult<ApiGeneration>> => {
-  const parsedPayload = parseActionInput(apiCreateGenerationInputSchema, input);
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
-  const payload = parsedPayload.data;
   return writeRequest({
     path: "/generations",
     method: "POST",
-    body: payload,
+    bodySchema: apiCreateGenerationInputSchema,
+    body: input,
     responseSchema: apiGenerationSchema,
     accessScope: "leadership",
     tags: GENERATION_CACHE_TAGS,
@@ -49,15 +44,11 @@ export const updateGenerationAction = async (
   id: string,
   input: ApiUpdateGenerationInput,
 ): Promise<AdminWriteActionResult<ApiGeneration>> => {
-  const parsedPayload = parseActionInput(apiUpdateGenerationInputSchema, input);
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
-  const payload = parsedPayload.data;
   return writeRequest({
-    path: `/generations/${id}`,
+    path: `/generations/${encodeURIComponent(id)}`,
     method: "PATCH",
-    body: payload,
+    bodySchema: apiUpdateGenerationInputSchema,
+    body: input,
     responseSchema: apiGenerationSchema,
     accessScope: "leadership",
     tags: GENERATION_CACHE_TAGS,
@@ -68,14 +59,11 @@ export const updateGenerationAction = async (
 export const reorderGenerationsAction = async (
   input: ApiReorderGenerationsInput,
 ): Promise<AdminWriteActionResult<ApiGeneration[]>> => {
-  const parsedPayload = parseActionInput(apiReorderGenerationsInputSchema, input);
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
   return writeRequest({
     path: "/generations/reorder",
     method: "POST",
-    body: parsedPayload.data,
+    bodySchema: apiReorderGenerationsInputSchema,
+    body: input,
     responseSchema: apiGenerationSchema.array(),
     accessScope: "leadership",
     tags: GENERATION_CACHE_TAGS,
@@ -86,7 +74,7 @@ export const deleteGenerationAction = async (
   id: string,
 ): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
-    path: `/generations/${id}`,
+    path: `/generations/${encodeURIComponent(id)}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
     accessScope: "leadership",

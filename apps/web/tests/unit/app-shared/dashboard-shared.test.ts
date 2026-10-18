@@ -8,26 +8,8 @@ import {
   readLinktreeErrorMessage,
   sortLinktreesByName,
 } from "@/app/(dashboard)/_components/linktree-shared";
-import {
-  buildActivityImageSortPayload,
-  formatTimestampToDateInput as formatActivityDateInput,
-  parseDateInputToTimestamp as parseActivityDateInput,
-  readActivityErrorMessage,
-  sortActivitiesByStartDateDesc,
-  summarizeActivityDescription,
-  validateActivityDateRange,
-} from "@/app/(dashboard)/dashboard/[generationName]/activities/_components/activity-shared";
-import {
-  buildExhibitionImageMutationPlan,
-  buildExhibitionImageSortPayload,
-  formatTimestampToDateInput as formatExhibitionDateInput,
-  hasMeaningfulExhibitionDescription,
-  parseDateInputToTimestamp as parseExhibitionDateInput,
-  readExhibitionErrorMessage,
-  sortExhibitionsByStartDateDesc,
-  summarizeExhibitionDescription,
-  validateExhibitionDateRange,
-} from "@/app/(dashboard)/dashboard/[generationName]/exhibitions/_components/exhibition-shared";
+import { readActivityErrorMessage } from "@/app/(dashboard)/dashboard/[generationName]/activities/_components/activity-shared";
+import { readExhibitionErrorMessage } from "@/app/(dashboard)/dashboard/[generationName]/exhibitions/_components/exhibition-shared";
 import {
   USER_ROLE_FILTER_ALL,
   USER_ROLE_FILTER_NONE,
@@ -38,13 +20,7 @@ import {
   sortGenerationsBySortOrderDesc,
   validateGenerationFormInput,
 } from "@/app/(dashboard)/dashboard/settings/generations/generation-management-shared";
-import type {
-  ApiActivity,
-  ApiExhibition,
-  ApiGeneration,
-  ApiLinktree,
-  ApiUser,
-} from "@yonyoung/contracts";
+import type { ApiGeneration, ApiLinktree, ApiUser } from "@yonyoung/contracts";
 
 describe("dashboard shared helpers", () => {
   it("handles linktree helpers", () => {
@@ -72,103 +48,9 @@ describe("dashboard shared helpers", () => {
     ).toBe("bad");
   });
 
-  it("handles activity helpers", () => {
+  it("handles activity and exhibition error messages", () => {
     expect(readActivityErrorMessage(new Error("fail"))).toBe("fail");
-    expect(
-      sortActivitiesByStartDateDesc([
-        { id: "a", startDate: 1 },
-        { id: "b", startDate: 2 },
-      ] as unknown as ApiActivity[]).map((item) => item.id),
-    ).toEqual(["b", "a"]);
-    expect(summarizeActivityDescription("<p>Hello there world</p>", 5)).toBe("Hello...");
-
-    const date = parseActivityDateInput("2025-03-01");
-    expect(date).not.toBeNull();
-    expect(parseActivityDateInput("2025-02-30")).toBeNull();
-    expect(formatActivityDateInput(date ?? 0)).toBe("2025-03-01");
-
-    expect(
-      validateActivityDateRange({
-        startDateInput: "2025-03-01",
-        endDateInput: "2025-03-05",
-      }),
-    ).toMatchObject({ startDate: expect.any(Number), endDate: expect.any(Number) });
-    expect(
-      validateActivityDateRange({
-        startDateInput: "2025-03-10",
-        endDateInput: "2025-03-05",
-      }),
-    ).toEqual({ errorMessage: "활동 종료일은 시작일보다 빠를 수 없습니다." });
-
-    expect(
-      buildActivityImageSortPayload([
-        { id: "b", sortOrder: -2 },
-        { id: "a", sortOrder: 1.7 },
-      ]),
-    ).toEqual([
-      { imageId: "b", sortOrder: 0 },
-      { imageId: "a", sortOrder: 2 },
-    ]);
-  });
-
-  it("handles exhibition helpers", () => {
     expect(readExhibitionErrorMessage(new Error("fail"))).toBe("fail");
-    expect(
-      sortExhibitionsByStartDateDesc([
-        { id: "a", startDate: 1 },
-        { id: "b", startDate: 2 },
-      ] as unknown as ApiExhibition[]).map((item) => item.id),
-    ).toEqual(["b", "a"]);
-
-    expect(hasMeaningfulExhibitionDescription("<p>&nbsp;</p>")).toBe(false);
-    expect(summarizeExhibitionDescription("<p>Hello exhibition world</p>", 8)).toBe(
-      "Hello ex...",
-    );
-
-    const date = parseExhibitionDateInput("2026-01-31");
-    expect(date).not.toBeNull();
-    expect(parseExhibitionDateInput("2026-13-31")).toBeNull();
-    expect(formatExhibitionDateInput(date ?? 0)).toBe("2026-01-31");
-
-    expect(
-      validateExhibitionDateRange({
-        startDateInput: "2026-01-01",
-        endDateInput: "2026-01-05",
-      }),
-    ).toMatchObject({ startDate: expect.any(Number), endDate: expect.any(Number) });
-    expect(
-      validateExhibitionDateRange({
-        startDateInput: "2026-01-10",
-        endDateInput: "2026-01-05",
-      }),
-    ).toEqual({ errorMessage: "전시 종료일은 시작일보다 빠를 수 없습니다." });
-
-    expect(
-      buildExhibitionImageSortPayload([
-        { id: "x", sortOrder: 10 },
-        { id: "y", sortOrder: 1.2 },
-      ]),
-    ).toEqual([
-      { imageId: "y", sortOrder: 1 },
-      { imageId: "x", sortOrder: 10 },
-    ]);
-
-    expect(
-      buildExhibitionImageMutationPlan({
-        existingImages: [
-          { id: "e1", sortOrder: 0 },
-          { id: "e2", sortOrder: 1 },
-        ],
-        deletedImageIds: ["e1"],
-        createdImages: [{ id: "new-1", sortOrder: 2 }],
-      }),
-    ).toEqual({
-      deleteImageIds: ["e1"],
-      sortPayload: [
-        { imageId: "e2", sortOrder: 1 },
-        { imageId: "new-1", sortOrder: 2 },
-      ],
-    });
   });
 
   it("handles generation management helpers", () => {

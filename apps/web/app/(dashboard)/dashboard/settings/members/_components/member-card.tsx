@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Link from "next/link";
 import type { ApiUser } from "@yonyoung/contracts";
 import {
@@ -17,7 +18,9 @@ type MemberCardProps = {
   onToggle: (userId: string) => void;
 };
 
-export default function MemberCard({
+// 검색어를 입력할 때마다 목록 전체가 다시 그려지지 않도록 props가 같으면 건너뛴다.
+// 부모는 onToggle과 generationNamesById를 안정된 참조로 넘긴다.
+const MemberCard = memo(function MemberCard({
   user,
   generationNamesById,
   isSelected,
@@ -139,4 +142,6 @@ export default function MemberCard({
       </div>
     </li>
   );
-}
+});
+
+export default MemberCard;

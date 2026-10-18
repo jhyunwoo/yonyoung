@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { rescanOnDocumentChange } from "./rescan-on-document-change";
 
 /*
   이미지 로딩 스켈레톤 해제 트리거 — 공개 레이아웃에 딱 하나만 둔다.
@@ -22,7 +23,7 @@ import { useEffect } from "react";
     - error → 실패도 완료로 처리한다. 아니면 깨진 이미지 위에 스켈레톤이 영영 남는다.
     - complete 스캔 → 캐시에서 즉시 온 이미지는 하이드레이션 전에 load 가 끝나 있다.
       스트리밍·클라이언트 네비게이션으로 나중에 도착하는 마크업도 있으므로
-      MutationObserver 로 재스캔한다(한 프레임에 한 번만 모아서).
+      문서가 바뀔 때마다 재스캔한다(`rescanOnDocumentChange`, 한 프레임에 한 번만).
 
   프레임에 `suppressHydrationWarning` 이 필요한 이유도 여기서 나온다. 스트리밍으로
   뒤늦게 하이드레이션되는 본문은 이 아일랜드가 먼저 `data-image-loaded` 를 붙일 수
@@ -50,9 +51,7 @@ export default function ImageSkeletonObserver() {
       }
     };
 
-    let scanQueued = false;
-    const scan = () => {
-      scanQueued = false;
+    const stopRescan = rescanOnDocumentChange(() => {
       for (const frame of document.querySelectorAll(FRAME_SELECTOR)) {
         const image = frame.querySelector("img");
         // 표시만 있고 이미지가 없으면(조건부 렌더 실수) 기다릴 대상이 없다.
@@ -61,33 +60,13 @@ export default function ImageSkeletonObserver() {
           clearFrame(frame);
         }
       }
-    };
-
-    const queueScan = () => {
-      if (scanQueued) {
-        return;
-      }
-      scanQueued = true;
-      requestAnimationFrame(scan);
-    };
-
-    scan();
+    });
 
     document.addEventListener("load", onSettled, true);
     document.addEventListener("error", onSettled, true);
 
-    const mutationObserver = new MutationObserver((records) => {
-      for (const record of records) {
-        if (record.addedNodes.length > 0) {
-          queueScan();
-          return;
-        }
-      }
-    });
-    mutationObserver.observe(document.body, { childList: true, subtree: true });
-
     return () => {
-      mutationObserver.disconnect();
+      stopRescan();
       document.removeEventListener("load", onSettled, true);
       document.removeEventListener("error", onSettled, true);
     };

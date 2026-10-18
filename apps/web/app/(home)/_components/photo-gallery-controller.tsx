@@ -11,6 +11,7 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from "react";
 import type { PhotoGalleryItem } from "./photo-gallery";
+import { storedAspect } from "./photo-gallery-aspect";
 import { PhotoLightbox } from "./photo-lightbox";
 import { PhotoPreloadImages } from "./photo-preload-images";
 
@@ -150,12 +151,9 @@ export function PhotoGalleryController({
   }, [items]);
 
   const aspects = useMemo(() => {
-    return items.map((item) => {
-      if (item.width !== null && item.height !== null && item.height > 0) {
-        return item.width / item.height;
-      }
-      return measuredAspects[item.key] ?? fallbackAspect;
-    });
+    return items.map(
+      (item) => storedAspect(item) ?? measuredAspects[item.key] ?? fallbackAspect,
+    );
   }, [items, measuredAspects, fallbackAspect]);
 
   /**

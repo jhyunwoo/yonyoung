@@ -19,7 +19,8 @@ const readRemovedItems = (
 };
 
 type UseImageUploadStateOptions = {
-  initialItems?: UploadImageItem[];
+  /** 함수로 넘기면 첫 렌더에서만 호출한다(매 렌더마다 목록을 다시 만들지 않는다). */
+  initialItems?: UploadImageItem[] | (() => UploadImageItem[]);
   maxItems?: number;
 };
 
@@ -76,9 +77,13 @@ const normalizeItems = (
 
 export const useImageUploadState = (options: UseImageUploadStateOptions = {}) => {
   // 정규화는 objectURL 해제를 동반하므로 첫 렌더에서 딱 한 번만 수행해야 한다.
-  const [items, setItems] = useState<UploadImageItem[]>(() =>
-    normalizeItems(options.initialItems ?? [], options.maxItems),
-  );
+  const [items, setItems] = useState<UploadImageItem[]>(() => {
+    const initialItems =
+      typeof options.initialItems === "function"
+        ? options.initialItems()
+        : (options.initialItems ?? []);
+    return normalizeItems(initialItems, options.maxItems);
+  });
   // 언마운트 정리에서 최신 목록을 읽어야 하는데 cleanup은 클로저가 낡을 수 있다.
   const itemsRef = useRef<UploadImageItem[]>(items);
 

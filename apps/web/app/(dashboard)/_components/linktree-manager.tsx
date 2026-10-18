@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { formatAuditActor } from "@/features/dashboard/ui/audit-display";
-import { readCookieHeader } from "@/shared/http/http";
 import { listAdminLinktrees } from "@/features/dashboard/services/admin-read-service";
 import AdminReadErrorNotice from "@/app/(dashboard)/_components/admin-read-error";
 import { formatKoreanDate } from "@/shared/utils/date-formatters";
@@ -15,8 +14,7 @@ export default async function LinktreeManager({
   canWrite,
   basePath,
 }: LinktreeManagerProps) {
-  const cookieHeader = await readCookieHeader();
-  const result = await listAdminLinktrees(cookieHeader);
+  const result = await listAdminLinktrees();
   const linktrees = result.ok ? sortLinktreesByName(result.data) : [];
 
   return (

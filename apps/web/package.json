@@ -24,7 +24,6 @@
     "test:ci": "pnpm fonts:check && pnpm lint && pnpm typecheck && pnpm test:unit:coverage && pnpm test:e2e:full"
   },
   "dependencies": {
-    "@base-ui/react": "^1.9.0",
     "@better-auth/oauth-provider": "1.7.7",
     "@dnd-kit/core": "6.3.1",
     "@dnd-kit/sortable": "10.0.0",
@@ -43,7 +42,6 @@
     "@uppy/core": "^6.2.0",
     "@visx/curve": "4.0.0",
     "@visx/event": "4.0.0",
-    "@visx/gradient": "4.0.0",
     "@visx/grid": "4.0.0",
     "@visx/group": "4.0.0",
     "@visx/heatmap": "4.0.0",
@@ -55,16 +53,13 @@
     "better-auth": "^1.7.7",
     "clsx": "^2.1.1",
     "d3-array": "^3.2.4",
-    "d3-sankey": "^0.12.3",
     "d3-shape": "^3.2.0",
-    "framer-motion": "^14.3.0",
     "lucide-react": "^1.58.0",
     "motion": "^14.3.0",
     "next": "^16.4.2",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "server-only": "0.0.1",
-    "sharp": "0.35.5",
     "tailwind-merge": "^3.7.0",
     "xss": "1.0.15",
     "zod": "^4.6.5"

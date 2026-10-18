@@ -219,17 +219,6 @@ export const unwrapDataEnvelope = <T>(payload: unknown): T | null => {
 };
 
 // ---------------------------------------------------------------------------
-// Cookie header (server-only)
-// ---------------------------------------------------------------------------
-
-export const readCookieHeader = async (): Promise<string | null> => {
-  const { cookies } = await import("next/headers");
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-  return cookieHeader.length > 0 ? cookieHeader : null;
-};
-
-// ---------------------------------------------------------------------------
 // Centralised API base URL resolution
 // ---------------------------------------------------------------------------
 

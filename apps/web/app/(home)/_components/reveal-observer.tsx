@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { rescanOnDocumentChange } from "./rescan-on-document-change";
 
 /*
   등장 애니메이션 트리거 — 공개 레이아웃에 딱 하나만 둔다.
@@ -10,8 +11,8 @@ import { useEffect } from "react";
   globals.css 가 처리한다.
 
   스트리밍으로 나중에 도착하는 Suspense 콘텐츠와 클라이언트 네비게이션으로
-  갈아끼워지는 본문도 잡아야 하므로 MutationObserver 로 재스캔한다. 재스캔은
-  requestAnimationFrame 으로 한 프레임에 한 번만 모아서 처리한다.
+  갈아끼워지는 본문도 잡아야 하므로 문서가 바뀔 때마다 재스캔한다
+  (`rescanOnDocumentChange`, 한 프레임에 한 번만).
 */
 const REVEAL_SELECTOR = "[data-reveal]:not([data-reveal-shown])";
 const ROOT_MARGIN = "-10% 0px";
@@ -37,36 +38,14 @@ export default function RevealObserver() {
       { rootMargin: ROOT_MARGIN },
     );
 
-    let scanQueued = false;
-    const scan = () => {
-      scanQueued = false;
+    const stopRescan = rescanOnDocumentChange(() => {
       for (const element of document.querySelectorAll(REVEAL_SELECTOR)) {
         observer.observe(element);
       }
-    };
-
-    const queueScan = () => {
-      if (scanQueued) {
-        return;
-      }
-      scanQueued = true;
-      requestAnimationFrame(scan);
-    };
-
-    scan();
-
-    const mutationObserver = new MutationObserver((records) => {
-      for (const record of records) {
-        if (record.addedNodes.length > 0) {
-          queueScan();
-          return;
-        }
-      }
     });
-    mutationObserver.observe(document.body, { childList: true, subtree: true });
 
     return () => {
-      mutationObserver.disconnect();
+      stopRescan();
       observer.disconnect();
     };
   }, []);

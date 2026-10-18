@@ -1,14 +1,14 @@
 "use client";
 
 import { useResetOnChange } from "@/shared/react/use-reset-on-change";
-import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import type {
   ApiAdminUpdateUserInput,
   ApiGeneration,
   ApiUser,
 } from "@yonyoung/contracts";
 import { IMAGE_UPLOAD_ACCEPT } from "@yonyoung/contracts";
-import { AdminApiError } from "@/shared/http/http";
+import { readErrorMessage } from "@/shared/http/read-error-message";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import {
   PRESIGN_PATHS,
@@ -19,13 +19,15 @@ import {
   coerceMemberRoleValue,
   type MemberRoleValue,
 } from "@/features/dashboard/members/member-role-options";
-import { Skeleton } from "@/components/ui/skeleton";
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import { useGuardedSubmit } from "@/shared/react/use-guarded-submit";
 import UploadProgressBar from "@/app/(dashboard)/_components/upload-progress-bar";
+import { useSelectedImageFile } from "@/features/media/upload/use-selected-image-file";
 
 type MemberEditFormProps = {
   user: ApiUser;
+  /** 소속 기수 선택지. 상세 페이지가 서버에서 읽어 내려 준다. */
+  generations: ApiGeneration[];
   onSaved: (user: ApiUser) => void;
   onCancel?: () => void;
   inline?: boolean;
@@ -36,26 +38,17 @@ const toNullableText = (value: string): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const readErrorMessage = (error: unknown): string => {
-  if (error instanceof AdminApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error && error.message.length > 0) {
-    return error.message;
-  }
-
-  return "사용자 정보를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
-};
+const ERROR_FALLBACK_MESSAGE =
+  "사용자 정보를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 export default function MemberEditForm({
   user,
+  generations,
   onSaved,
   onCancel,
   inline = false,
 }: MemberEditFormProps) {
   const [name, setName] = useState(user.name);
-  const [image, setImage] = useState(user.image ?? "");
   const [familyName, setFamilyName] = useState(user.familyName ?? "");
   const [givenName, setGivenName] = useState(user.givenName ?? "");
   const [college, setCollege] = useState(user.college ?? "");
@@ -67,22 +60,24 @@ export default function MemberEditForm({
     user.generationIds ?? (user.generationId ? [user.generationId] : []),
   );
 
-  const [allGenerations, setAllGenerations] = useState<ApiGeneration[]>([]);
-  const [isLoadingGenerations, setIsLoadingGenerations] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
-  const [selectedImageObjectUrl, setSelectedImageObjectUrl] = useState<string | null>(
-    null,
-  );
   const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
-  const profileFileInputRef = useRef<HTMLInputElement | null>(null);
+  const {
+    imageUrl: image,
+    selectedFile: selectedImageFile,
+    fileInputRef: profileFileInputRef,
+    previewUrl: imagePreviewUrl,
+    selectFile: handleImageChange,
+    openFilePicker: openProfileFilePicker,
+    reset: resetImageSelection,
+  } = useSelectedImageFile(user.image ?? "");
 
   // 다른 멤버를 편집하기 시작하면 폼 초안을 그 멤버의 서버 값으로 되돌린다.
   useResetOnChange(user, () => {
     setName(user.name);
-    setImage(user.image ?? "");
+    resetImageSelection(user.image ?? "");
     setFamilyName(user.familyName ?? "");
     setGivenName(user.givenName ?? "");
     setCollege(user.college ?? "");
@@ -93,74 +88,10 @@ export default function MemberEditForm({
     setGenerationIds(
       user.generationIds ?? (user.generationId ? [user.generationId] : []),
     );
-    setSelectedImageFile(null);
-    setSelectedImageObjectUrl((previous) => {
-      if (previous) {
-        URL.revokeObjectURL(previous);
-      }
-      return null;
-    });
     setUploadProgressPercent(null);
     setErrorMessage(null);
     setSuccessMessage(null);
   });
-
-  useEffect(() => {
-    return () => {
-      if (selectedImageObjectUrl) {
-        URL.revokeObjectURL(selectedImageObjectUrl);
-      }
-    };
-  }, [selectedImageObjectUrl]);
-
-  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextFile = event.target.files?.[0] ?? null;
-
-    if (selectedImageObjectUrl) {
-      URL.revokeObjectURL(selectedImageObjectUrl);
-      setSelectedImageObjectUrl(null);
-    }
-
-    setSelectedImageFile(nextFile);
-    if (!nextFile) {
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(nextFile);
-    setSelectedImageObjectUrl(objectUrl);
-  };
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadGenerations = async () => {
-      setIsLoadingGenerations(true);
-      try {
-        const rows = await adminResourceApi.listGenerations();
-        if (!isMounted) {
-          return;
-        }
-
-        setAllGenerations(rows);
-      } catch {
-        if (!isMounted) {
-          return;
-        }
-
-        setAllGenerations([]);
-      } finally {
-        if (isMounted) {
-          setIsLoadingGenerations(false);
-        }
-      }
-    };
-
-    void loadGenerations();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   const generationIdSet = useMemo(() => new Set(generationIds), [generationIds]);
 
@@ -213,18 +144,13 @@ export default function MemberEditForm({
       };
 
       const updated = await adminResourceApi.updateUser(user.id, payload);
-      setImage(updated.image ?? "");
-      setSelectedImageFile(null);
-      if (selectedImageObjectUrl) {
-        URL.revokeObjectURL(selectedImageObjectUrl);
-      }
-      setSelectedImageObjectUrl(null);
+      resetImageSelection(updated.image ?? "");
       setUploadProgressPercent(null);
       onSaved(updated);
       setSuccessMessage("사용자 정보가 저장되었습니다.");
     } catch (error) {
       setUploadProgressPercent(null);
-      setErrorMessage(readErrorMessage(error));
+      setErrorMessage(readErrorMessage(error, ERROR_FALLBACK_MESSAGE));
     } finally {
       setIsSaving(false);
     }
@@ -236,10 +162,8 @@ export default function MemberEditForm({
       return;
     }
 
-    profileFileInputRef.current?.click();
+    openProfileFilePicker();
   };
-
-  const imagePreviewUrl = selectedImageObjectUrl ?? image;
 
   return (
     <section
@@ -397,20 +321,11 @@ export default function MemberEditForm({
           <legend className="px-1 text-sm font-medium text-ink-secondary">
             소속 기수
           </legend>
-          {isLoadingGenerations ? (
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <Skeleton
-                  key={`member-generation-loading-${index + 1}`}
-                  className="h-9 w-full"
-                />
-              ))}
-            </div>
-          ) : allGenerations.length === 0 ? (
+          {generations.length === 0 ? (
             <p className="text-sm text-ink-muted">선택 가능한 기수가 없습니다.</p>
           ) : (
             <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {allGenerations.map((generation) => (
+              {generations.map((generation) => (
                 <li key={generation.id}>
                   <label className="flex cursor-pointer items-center gap-2 rounded-md border border-hairline px-3 py-2 text-sm text-ink-secondary">
                     <input

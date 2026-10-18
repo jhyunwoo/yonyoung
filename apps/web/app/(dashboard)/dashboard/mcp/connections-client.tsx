@@ -3,12 +3,10 @@
 import { Bot } from "lucide-react";
 import { useRef, useState } from "react";
 import type { ApiMcpConnection } from "@yonyoung/contracts/mcp";
-import {
-  Button,
-  EmptyState,
-  useConfirm,
-  useToast,
-} from "@/app/(dashboard)/_components/ui";
+import { Button } from "@/app/(dashboard)/_components/ui/button";
+import { EmptyState } from "@/app/(dashboard)/_components/ui/empty-state";
+import { useConfirm } from "@/app/(dashboard)/_components/ui/confirm-provider";
+import { useToast } from "@/app/(dashboard)/_components/ui/toast-provider";
 import { revokeMcpConnectionAction } from "@/features/dashboard/actions/mcp";
 
 const formatDate = (value: string) =>

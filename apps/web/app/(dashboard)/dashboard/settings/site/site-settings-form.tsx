@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
-import { AdminApiError } from "@/shared/http/http";
+import { readErrorMessage } from "@/shared/http/read-error-message";
 import {
   type ApiSiteSettings,
   type ApiUpdateSiteSettingsInput,
@@ -17,17 +17,8 @@ import { useGuardedSubmit } from "@/shared/react/use-guarded-submit";
 const inputClassName =
   "w-full rounded-lg border border-hairline-strong px-3 py-2 text-sm text-ink outline-none transition focus-visible:border-primary focus-visible:shadow-(--shadow-focus)";
 
-const readErrorMessage = (error: unknown): string => {
-  if (error instanceof AdminApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error && error.message.length > 0) {
-    return error.message;
-  }
-
-  return "기본 설정 저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
-};
+const ERROR_FALLBACK_MESSAGE =
+  "기본 설정 저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
 
 const normalizeInput = (state: ApiSiteSettings): ApiUpdateSiteSettingsInput => ({
   footerOpenChatUrl: state.footerOpenChatUrl.trim(),
@@ -144,7 +135,7 @@ export default function SiteSettingsForm({ initialSettings }: SiteSettingsFormPr
       setSuccessMessage("기본 설정을 저장했습니다.");
       router.refresh();
     } catch (error) {
-      setErrorMessage(readErrorMessage(error));
+      setErrorMessage(readErrorMessage(error, ERROR_FALLBACK_MESSAGE));
     } finally {
       setIsSaving(false);
     }

@@ -1,5 +1,7 @@
 import type { AuthUser } from "@/features/auth/model/auth-shared";
 import { formatKoreanName } from "@/features/dashboard/members/display-name";
+import { asRecord } from "@/shared/http/http";
+import { trimToNull } from "@/shared/utils/trim-to-null";
 
 type EditableUserProfile = {
   image: string;
@@ -15,14 +17,6 @@ type EditableUserProfile = {
 };
 
 type EditableUserProfileKey = keyof EditableUserProfile;
-
-const asRecord = (value: unknown): Record<string, unknown> | null => {
-  if (typeof value !== "object" || value === null) {
-    return null;
-  }
-
-  return value as Record<string, unknown>;
-};
 
 const readString = (
   source: Record<string, unknown> | null | undefined,
@@ -42,32 +36,6 @@ const readTrimmedStringByKey = (
 ): string | null => {
   const value = readString(source, key).trim();
   return value.length > 0 ? value : null;
-};
-
-const readTrimmedSessionString = (value: string | null | undefined): string | null => {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const trimmedValue = value.trim();
-  return trimmedValue.length > 0 ? trimmedValue : null;
-};
-
-const readTrimmedRecordString = (
-  source: Record<string, unknown> | null | undefined,
-  key: string,
-): string | null => {
-  if (!source) {
-    return null;
-  }
-
-  const value = source[key];
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const trimmedValue = value.trim();
-  return trimmedValue.length > 0 ? trimmedValue : null;
 };
 
 const readBooleanByKey = (
@@ -128,18 +96,12 @@ export const buildDashboardViewerProfile = (
   profile: Record<string, unknown> | null,
 ): DashboardViewerProfile => {
   const familyName =
-    readTrimmedStringByKey(profile, "familyName") ??
-    readTrimmedSessionString(sessionUser.familyName);
+    readTrimmedStringByKey(profile, "familyName") ?? trimToNull(sessionUser.familyName);
   const givenName =
-    readTrimmedStringByKey(profile, "givenName") ??
-    readTrimmedSessionString(sessionUser.givenName);
-  const name =
-    readTrimmedRecordString(profile, "name") ??
-    readTrimmedSessionString(sessionUser.name);
-  const image =
-    readTrimmedStringByKey(profile, "image") ??
-    readTrimmedSessionString(sessionUser.image);
-  const profileId = readTrimmedRecordString(profile, "id");
+    readTrimmedStringByKey(profile, "givenName") ?? trimToNull(sessionUser.givenName);
+  const name = trimToNull(profile?.name) ?? trimToNull(sessionUser.name);
+  const image = readTrimmedStringByKey(profile, "image") ?? trimToNull(sessionUser.image);
+  const profileId = trimToNull(profile?.id);
 
   const displayName = formatKoreanName({
     familyName,

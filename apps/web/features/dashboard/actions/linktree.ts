@@ -5,7 +5,6 @@ import {
   writeRequest,
   type AdminWriteActionResult,
 } from "@/features/dashboard/actions/admin-write-core";
-import { parseActionInput } from "@/features/dashboard/actions/action-input";
 import { CACHE_TAGS } from "@/server/cache/tags";
 import {
   apiCreateLinktreeInputSchema,
@@ -32,15 +31,11 @@ const LINKTREE_CACHE_TAGS = [
 export const createLinktreeAction = async (
   input: ApiCreateLinktreeInput,
 ): Promise<AdminWriteActionResult<ApiLinktree>> => {
-  const parsedPayload = parseActionInput(apiCreateLinktreeInputSchema, input);
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
-  const payload = parsedPayload.data;
   return writeRequest({
     path: "/linktree",
     method: "POST",
-    body: payload,
+    bodySchema: apiCreateLinktreeInputSchema,
+    body: input,
     responseSchema: apiLinktreeSchema,
     accessScope: "manager",
     tags: LINKTREE_CACHE_TAGS,
@@ -51,15 +46,11 @@ export const updateLinktreeAction = async (
   id: string,
   input: ApiUpdateLinktreeInput,
 ): Promise<AdminWriteActionResult<ApiLinktree>> => {
-  const parsedPayload = parseActionInput(apiUpdateLinktreeInputSchema, input);
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
-  const payload = parsedPayload.data;
   return writeRequest({
-    path: `/linktree/${id}`,
+    path: `/linktree/${encodeURIComponent(id)}`,
     method: "PATCH",
-    body: payload,
+    bodySchema: apiUpdateLinktreeInputSchema,
+    body: input,
     responseSchema: apiLinktreeSchema,
     accessScope: "manager",
     tags: LINKTREE_CACHE_TAGS,
@@ -70,7 +61,7 @@ export const deleteLinktreeAction = async (
   id: string,
 ): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
-    path: `/linktree/${id}`,
+    path: `/linktree/${encodeURIComponent(id)}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
     accessScope: "manager",
@@ -82,15 +73,11 @@ export const addLinktreeItemAction = async (
   id: string,
   input: ApiCreateLinktreeItemInput,
 ): Promise<AdminWriteActionResult<ApiLinktreeItem>> => {
-  const parsedPayload = parseActionInput(apiCreateLinktreeItemInputSchema, input);
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
-  const payload = parsedPayload.data;
   return writeRequest({
-    path: `/linktree/${id}/items`,
+    path: `/linktree/${encodeURIComponent(id)}/items`,
     method: "POST",
-    body: payload,
+    bodySchema: apiCreateLinktreeItemInputSchema,
+    body: input,
     responseSchema: apiLinktreeItemSchema,
     accessScope: "manager",
     tags: LINKTREE_CACHE_TAGS,
@@ -102,15 +89,11 @@ export const updateLinktreeItemAction = async (
   itemId: string,
   input: ApiUpdateLinktreeItemInput,
 ): Promise<AdminWriteActionResult<ApiLinktreeItem>> => {
-  const parsedPayload = parseActionInput(apiUpdateLinktreeItemInputSchema, input);
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
-  const payload = parsedPayload.data;
   return writeRequest({
-    path: `/linktree/${id}/items/${itemId}`,
+    path: `/linktree/${encodeURIComponent(id)}/items/${encodeURIComponent(itemId)}`,
     method: "PATCH",
-    body: payload,
+    bodySchema: apiUpdateLinktreeItemInputSchema,
+    body: input,
     responseSchema: apiLinktreeItemSchema,
     accessScope: "manager",
     tags: LINKTREE_CACHE_TAGS,
@@ -122,7 +105,7 @@ export const deleteLinktreeItemAction = async (
   itemId: string,
 ): Promise<AdminWriteActionResult<void>> => {
   return writeRequest({
-    path: `/linktree/${id}/items/${itemId}`,
+    path: `/linktree/${encodeURIComponent(id)}/items/${encodeURIComponent(itemId)}`,
     method: "DELETE",
     responseSchema: readNoContentSchema,
     accessScope: "manager",

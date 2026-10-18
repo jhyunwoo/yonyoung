@@ -101,6 +101,18 @@ const validateTestIdPattern = (attribute: ts.JsxAttribute): boolean => {
 
     if (ts.isTemplateExpression(expression)) {
       const prefix = expression.head.text;
+      // 공용 필드 컴포넌트는 `${testIdPrefix}-cover-select`처럼 호출부가 고른 접두사를 붙인다.
+      // 접두사는 타입(리터럴 유니온)으로 묶여 있으므로 뒤에 붙는 고정 부분만 검사한다.
+      const [onlySpan] = expression.templateSpans;
+      if (
+        prefix.length === 0 &&
+        expression.templateSpans.length === 1 &&
+        onlySpan &&
+        ts.isIdentifier(onlySpan.expression) &&
+        onlySpan.expression.text === "testIdPrefix"
+      ) {
+        return /^(?:-[a-z0-9]+)+$/.test(onlySpan.literal.text);
+      }
       return (
         prefix.length > 0 &&
         TEST_ID_PATTERN.test(prefix.endsWith("-") ? prefix.slice(0, -1) : prefix)

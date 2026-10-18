@@ -1,62 +1,77 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const { cacheLifeMock, cacheTagMock } = vi.hoisted(() => ({
+  cacheLifeMock: vi.fn(),
+  cacheTagMock: vi.fn(),
+}));
+
+vi.mock("next/cache", () => ({
+  cacheLife: cacheLifeMock,
+  cacheTag: cacheTagMock,
+}));
+
 import { fetchGenerationsFromServer } from "@/features/dashboard/generation/generation-fetcher";
+
+const generation = (id: string, sortOrder: number) => ({
+  id,
+  name: `${sortOrder}기`,
+  sortOrder,
+  startDate: 1,
+  endDate: 2,
+  createdAt: 1,
+  updatedAt: 1,
+  updatedBy: null,
+});
+
+const jsonResponse = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
 
 describe("features/dashboard/generation/generation-fetcher", () => {
   const originalApiBaseUrl = process.env.API_BASE_URL;
 
   beforeEach(() => {
     process.env.API_BASE_URL = "http://127.0.0.1:4010";
+    cacheLifeMock.mockClear();
+    cacheTagMock.mockClear();
+    vi.spyOn(console, "warn").mockImplementation(() => {});
   });
 
   afterEach(() => {
     process.env.API_BASE_URL = originalApiBaseUrl;
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
-  it("returns generation list from array response", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(
-        async () =>
-          new Response(
-            JSON.stringify([
-              { id: "gen-59", name: "59기", sortOrder: 59 },
-              { id: "invalid" },
-            ]),
-            { status: 200, headers: { "content-type": "application/json" } },
-          ),
-      ),
-    );
+  it("returns generation list from array response and caches it long", async () => {
+    const fetchMock = vi.fn(async () => jsonResponse([generation("gen-59", 59)]));
+    vi.stubGlobal("fetch", fetchMock);
 
     await expect(fetchGenerationsFromServer()).resolves.toEqual([
-      { id: "gen-59", name: "59기", sortOrder: 59 },
+      generation("gen-59", 59),
     ]);
+    expect(String((fetchMock.mock.calls[0] as unknown[])[0])).toBe(
+      "http://127.0.0.1:4010/api/public/generations?fresh=1",
+    );
+    expect(cacheTagMock).toHaveBeenCalledWith("admin:generations");
+    expect(cacheLifeMock).toHaveBeenCalledTimes(1);
+    expect(cacheLifeMock).toHaveBeenCalledWith("default");
   });
 
   it("returns generation list from data envelope response", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(
-        async () =>
-          new Response(
-            JSON.stringify({
-              data: [
-                { id: "gen-58", name: "58기", sortOrder: 58 },
-                { id: "broken", sortOrder: "x" },
-              ],
-            }),
-            { status: 200, headers: { "content-type": "application/json" } },
-          ),
-      ),
+      vi.fn(async () => jsonResponse({ data: [generation("gen-58", 58)] })),
     );
 
     await expect(fetchGenerationsFromServer()).resolves.toEqual([
-      { id: "gen-58", name: "58기", sortOrder: 58 },
+      generation("gen-58", 58),
     ]);
   });
 
-  it("returns empty array on non-ok, invalid payload, or errors", async () => {
+  it("returns empty array with a short cache life on non-ok, invalid payload, or errors", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => new Response("", { status: 500 })),
@@ -65,13 +80,13 @@ describe("features/dashboard/generation/generation-fetcher", () => {
 
     vi.stubGlobal(
       "fetch",
-      vi.fn(
-        async () =>
-          new Response(JSON.stringify({ hello: "world" }), {
-            status: 200,
-            headers: { "content-type": "application/json" },
-          }),
-      ),
+      vi.fn(async () => jsonResponse({ hello: "world" })),
+    );
+    await expect(fetchGenerationsFromServer()).resolves.toEqual([]);
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse([generation("gen-59", 59), { id: "invalid" }])),
     );
     await expect(fetchGenerationsFromServer()).resolves.toEqual([]);
 
@@ -82,5 +97,10 @@ describe("features/dashboard/generation/generation-fetcher", () => {
       }),
     );
     await expect(fetchGenerationsFromServer()).resolves.toEqual([]);
+
+    expect(cacheLifeMock).toHaveBeenCalledTimes(4);
+    expect(cacheLifeMock.mock.calls.every(([profile]) => profile === "minutes")).toBe(
+      true,
+    );
   });
 });

@@ -1,40 +1,28 @@
-import { resolveApiBaseUrl } from "@/shared/http/http";
-import { cacheTag } from "next/cache";
+import { z } from "zod";
+import { cacheLife, cacheTag } from "next/cache";
 import { CACHE_TAGS } from "@/server/cache/tags";
 import { toFreshPublicReadPath } from "@/server/http/fresh-public-read";
-import type { ApiGeneration, DataEnvelope } from "@yonyoung/contracts";
+import { HonoApiError, honoRequest } from "@/server/http/hono-client";
+import { logger } from "@/server/observability/logger";
+import { apiGenerationSchema } from "@yonyoung/contracts/schemas";
+import type { ApiGeneration } from "@yonyoung/contracts";
 
 const PUBLIC_GENERATIONS_PATH = "/api/public/generations";
 
-const isGeneration = (value: unknown): value is ApiGeneration => {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
+const GENERATIONS_READ_TIMEOUT_MS = 10_000;
 
-  const candidate = value as Record<string, unknown>;
-  return (
-    typeof candidate.id === "string" &&
-    typeof candidate.name === "string" &&
-    typeof candidate.sortOrder === "number"
-  );
-};
+/**
+ * 성공한 목록의 캐시 수명. 대시보드 쓰기는 `admin:generations` 태그를 `updateTag`로 버리지만
+ * MCP 도구는 API로 기수를 직접 바꿔 이 태그를 거치지 않으므로, 만료가 길면 안 된다.
+ * 그래서 이전과 같은 기본 프로필(15분 재검증)을 유지한다.
+ */
+const GENERATIONS_CACHE_PROFILE = "default";
 
-const parseGenerationList = (payload: unknown): ApiGeneration[] => {
-  if (Array.isArray(payload)) {
-    return payload.filter(isGeneration);
-  }
-
-  if (
-    typeof payload === "object" &&
-    payload !== null &&
-    "data" in payload &&
-    Array.isArray((payload as DataEnvelope<unknown>).data)
-  ) {
-    return ((payload as DataEnvelope<unknown[]>).data ?? []).filter(isGeneration);
-  }
-
-  return [];
-};
+/**
+ * 실패(빈 목록)의 캐시 수명. 짧아야 일시적인 API 장애가 빈 기수 목록으로 굳지 않는다.
+ * `seconds`는 프리렌더에서 동적 입력으로 취급되므로 `minutes`다(`og-cover-image.ts`와 같은 이유).
+ */
+const GENERATIONS_FAILURE_CACHE_PROFILE = "minutes";
 
 export const fetchGenerationsFromServer = async (): Promise<ApiGeneration[]> => {
   "use cache";
@@ -42,24 +30,28 @@ export const fetchGenerationsFromServer = async (): Promise<ApiGeneration[]> => 
   cacheTag(CACHE_TAGS.admin.generations);
 
   try {
-    const response = await fetch(
-      `${resolveApiBaseUrl()}${toFreshPublicReadPath(PUBLIC_GENERATIONS_PATH)}`,
-      {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
+    const generations = await honoRequest({
+      path: toFreshPublicReadPath(PUBLIC_GENERATIONS_PATH),
+      method: "GET",
+      responseSchema: z.array(apiGenerationSchema),
+      timeoutMs: GENERATIONS_READ_TIMEOUT_MS,
+    });
+
+    cacheLife(GENERATIONS_CACHE_PROFILE);
+    return generations;
+  } catch (error) {
+    logger.warn({
+      event: "dashboard.generations.read_fallback",
+      route: PUBLIC_GENERATIONS_PATH,
+      method: "GET",
+      status: error instanceof HonoApiError ? error.status : 500,
+      error: {
+        code: error instanceof HonoApiError ? error.code : undefined,
+        message: error instanceof Error ? error.message : "Unknown error",
       },
-    );
+    });
 
-    if (!response.ok) {
-      return [];
-    }
-
-    const payload = (await response.json().catch(() => null)) as unknown;
-    const result = parseGenerationList(payload);
-    return result;
-  } catch {
+    cacheLife(GENERATIONS_FAILURE_CACHE_PROFILE);
     return [];
   }
 };

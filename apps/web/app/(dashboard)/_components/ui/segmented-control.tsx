@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "motion/react";
 import type { ButtonHTMLAttributes } from "react";
 
 import { cx } from "@/app/(dashboard)/_components/ui/cx";

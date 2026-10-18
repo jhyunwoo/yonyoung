@@ -3,7 +3,6 @@ import { promisify } from "node:util";
 import { execFile } from "node:child_process";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import { cache } from "react";
 
 const execFileAsync = promisify(execFile);
 
@@ -30,14 +29,17 @@ const readPackageVersion = async (packageJsonPath: string): Promise<string> => {
   }
 };
 
-const readGitUpdatedAt = async (repoRoot: string): Promise<number | null> => {
+/** 모노레포라 저장소 전체가 아니라 프로젝트 디렉터리(`-- .`)의 마지막 커밋 시각을 읽는다. */
+const readGitUpdatedAt = async (projectRoot: string): Promise<number | null> => {
   try {
     const { stdout } = await execFileAsync("git", [
       "-C",
-      repoRoot,
+      projectRoot,
       "log",
       "-1",
       "--format=%cI",
+      "--",
+      ".",
     ]);
     const timestampMs = Date.parse(stdout.trim());
 
@@ -72,9 +74,11 @@ const readProjectMeta = async (
   };
 };
 
-export const readDashboardRuntimeMeta = cache(async (): Promise<DashboardRuntimeMeta> => {
+const readRuntimeMeta = async (): Promise<DashboardRuntimeMeta> => {
+  // `pnpm --filter @yonyoung/web start`의 cwd는 apps/web, API는 같은 워크스페이스의 apps/api다.
+  // 배포 환경에 git이나 apps/api가 없으면 각 값은 "unknown"/null로 남는다.
   const webRoot = process.cwd();
-  const apiRoot = path.resolve(webRoot, "../yonyoung-api");
+  const apiRoot = path.resolve(webRoot, "../api");
   const [web, api] = await Promise.all([
     readProjectMeta(webRoot),
     readProjectMeta(apiRoot),
@@ -84,4 +88,15 @@ export const readDashboardRuntimeMeta = cache(async (): Promise<DashboardRuntime
     web,
     api,
   };
-});
+};
+
+/**
+ * 값은 배포마다 고정이므로 프로세스당 한 번만 읽는다 (요청마다 git 프로세스를 띄우지 않는다).
+ * 하위 읽기가 모두 실패를 값으로 바꾸므로 이 promise는 reject되지 않는다.
+ */
+let runtimeMetaPromise: Promise<DashboardRuntimeMeta> | undefined;
+
+export const readDashboardRuntimeMeta = (): Promise<DashboardRuntimeMeta> => {
+  runtimeMetaPromise ??= readRuntimeMeta();
+  return runtimeMetaPromise;
+};

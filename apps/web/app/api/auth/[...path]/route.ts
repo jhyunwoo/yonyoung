@@ -9,27 +9,17 @@ import {
   resolvePublicRequestOrigin,
 } from "@/server/security/request-guards";
 import { isServerToServerOAuthPath } from "@/server/security/oauth-proxy-paths";
-import { fetchWithTimeout, FetchTimeoutError } from "@/server/http/fetch-with-timeout";
+import { fetchWithTimeout } from "@/server/http/fetch-with-timeout";
+import {
+  copyProxyResponse,
+  createUpstreamErrorResponse,
+} from "@/server/http/proxy-response";
 
 type RouteContext = {
   params: Promise<{ path: string[] }>;
 };
 
 const UPSTREAM_REQUEST_TIMEOUT_MS = 15_000;
-
-const HOP_BY_HOP_HEADERS = new Set([
-  "connection",
-  "keep-alive",
-  "proxy-authenticate",
-  "proxy-authorization",
-  "te",
-  "trailer",
-  "transfer-encoding",
-  "upgrade",
-  "host",
-  "content-encoding",
-  "content-length",
-]);
 
 const resolveForwardedRequestOrigin = (
   request: NextRequest,
@@ -47,53 +37,6 @@ const resolveForwardedRequestOrigin = (
     host: publicUrl.host,
     protocol: publicUrl.protocol === "http:" ? "http" : "https",
   };
-};
-
-const createProxyResponse = (response: Response): NextResponse => {
-  const nextResponse = new NextResponse(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-  });
-
-  response.headers.forEach((value, key) => {
-    const normalized = key.toLowerCase();
-    if (HOP_BY_HOP_HEADERS.has(normalized) || normalized === "set-cookie") {
-      return;
-    }
-
-    nextResponse.headers.set(key, value);
-  });
-
-  const setCookies = response.headers.getSetCookie();
-  for (const cookie of setCookies) {
-    nextResponse.headers.append("set-cookie", cookie);
-  }
-
-  return nextResponse;
-};
-
-const createUpstreamErrorResponse = (error: unknown): NextResponse => {
-  if (error instanceof FetchTimeoutError) {
-    return NextResponse.json(
-      { ok: false, message: "Authentication API request timed out." },
-      {
-        status: 504,
-        headers: {
-          "Cache-Control": "private, no-store, max-age=0",
-        },
-      },
-    );
-  }
-
-  return NextResponse.json(
-    { ok: false, message: "Authentication API request failed." },
-    {
-      status: 502,
-      headers: {
-        "Cache-Control": "private, no-store, max-age=0",
-      },
-    },
-  );
 };
 
 const handle = async (
@@ -164,10 +107,10 @@ const handle = async (
       UPSTREAM_REQUEST_TIMEOUT_MS,
     );
   } catch (error) {
-    return createUpstreamErrorResponse(error);
+    return createUpstreamErrorResponse(error, "Authentication API");
   }
 
-  return createProxyResponse(upstreamResponse);
+  return copyProxyResponse(upstreamResponse);
 };
 
 export const GET = handle;

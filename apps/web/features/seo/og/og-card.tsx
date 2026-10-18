@@ -24,7 +24,7 @@ const FONT_REGULAR_URL =
   "https://fonts.gstatic.com/ea/notosanskr/v2/NotoSansKR-Regular.otf";
 const FONT_BOLD_URL = "https://fonts.gstatic.com/ea/notosanskr/v2/NotoSansKR-Bold.otf";
 
-export const truncateOgText = (value: string, maxLength: number): string => {
+const truncateOgText = (value: string, maxLength: number): string => {
   const trimmed = value.trim();
   if (trimmed.length <= maxLength) {
     return trimmed;

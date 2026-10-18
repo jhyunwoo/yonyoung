@@ -1,6 +1,5 @@
 import "server-only";
 
-import { headers } from "next/headers";
 import { updateTag } from "next/cache";
 import { z } from "zod";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
@@ -12,13 +11,15 @@ import {
   assertAdminWriteAccess,
   type AdminWriteAccessScope,
 } from "@/features/dashboard/actions/admin-write-access";
-import { readCookieHeader } from "@/shared/http/http";
+import { parseActionInput } from "@/features/dashboard/actions/action-input";
 import type { AdminCacheTag, PublicCacheTag } from "@/server/cache/tags";
 import {
   HonoApiError,
   INVALID_RESPONSE_CODE,
   honoRequest,
 } from "@/server/http/hono-client";
+import { readCorrelationHeaders } from "@/server/http/request-context";
+import { readCookieHeader } from "@/server/http/cookie-header";
 
 /**
  * 관리자 쓰기 서버 액션 공통 코어.
@@ -30,7 +31,7 @@ import {
 
 const ADMIN_API_BASE_PATH = "/api";
 
-export type CacheTag = AdminCacheTag | PublicCacheTag;
+type CacheTag = AdminCacheTag | PublicCacheTag;
 
 export type AdminWriteActionFailure = {
   ok: false;
@@ -48,25 +49,10 @@ export type AdminWriteActionResult<T> =
   | AdminWriteActionFailure;
 
 /** 쓰기 성공 후 관련 캐시 태그를 일괄 무효화합니다. */
-export const tagsToUpdate = (tags: readonly CacheTag[]): void => {
+const tagsToUpdate = (tags: readonly CacheTag[]): void => {
   for (const tag of tags) {
     updateTag(tag);
   }
-};
-
-/** 요청 추적용 상관관계 헤더(x-request-id/x-trace-id)를 읽거나 새로 만듭니다. */
-export const readCorrelationHeaders = async (): Promise<{
-  requestId: string;
-  traceId: string;
-}> => {
-  const requestHeaders = await headers();
-  const requestId = requestHeaders.get("x-request-id")?.trim() || crypto.randomUUID();
-  const traceId = requestHeaders.get("x-trace-id")?.trim() || crypto.randomUUID();
-
-  return {
-    requestId,
-    traceId,
-  };
 };
 
 /** 세션 API 장애를 서버 액션 실패 결과로 바꾼다 (예외로 던지면 프로덕션에서 원인이 가려진다). */
@@ -81,9 +67,7 @@ export const toSessionUnavailableFailure = (
 });
 
 /** 세션 확인 + 요청 범위(scope)에 맞는 관리자 쓰기 권한을 검증합니다 (UX 레벨, 최종 권한은 API가 판정). */
-export const requireAdminAccess = async (
-  scope: AdminWriteAccessScope = "verified_member",
-) => {
+const requireAdminAccess = async (scope: AdminWriteAccessScope = "verified_member") => {
   const session = await serverAuthGuard.requireSession();
   assertAdminWriteAccess(session, scope);
 };
@@ -94,9 +78,7 @@ export const readNoContentSchema = z
   .nullable()
   .transform(() => undefined);
 
-export const toAdminWriteActionFailure = (
-  error: HonoApiError,
-): AdminWriteActionFailure => ({
+const toAdminWriteActionFailure = (error: HonoApiError): AdminWriteActionFailure => ({
   ok: false,
   errorMessage: error.message,
   status: error.status,
@@ -106,18 +88,29 @@ export const toAdminWriteActionFailure = (
 
 /**
  * 관리자 API 쓰기 요청 공통 처리.
- * 흐름: 권한 확인 → 쿠키/추적 헤더 수집 → API 호출 → 성공 시 캐시 태그 무효화.
+ * 흐름: 입력 검증(bodySchema) → 권한 확인 → 쿠키/추적 헤더 수집 → API 호출 → 성공 시 캐시 태그 무효화.
  */
 export const writeRequest = async <TResponse>(input: {
   path: string;
   method: "POST" | "PATCH" | "DELETE";
   body?: unknown;
+  /** 주면 body를 이 계약 스키마로 먼저 검증하고, 파싱된 값을 보낸다. 실패는 결과 값으로 돌려준다. */
+  bodySchema?: z.ZodType;
   responseSchema: z.ZodType<TResponse>;
   tags: readonly CacheTag[];
   timeoutMs?: number;
   requireAdminAccess?: boolean;
   accessScope?: AdminWriteAccessScope;
 }): Promise<AdminWriteActionResult<TResponse>> => {
+  let body = input.body;
+  if (input.bodySchema) {
+    const parsedBody = parseActionInput(input.bodySchema, input.body);
+    if (!parsedBody.ok) {
+      return parsedBody;
+    }
+    body = parsedBody.data;
+  }
+
   if (input.requireAdminAccess !== false) {
     try {
       await requireAdminAccess(input.accessScope);
@@ -136,7 +129,7 @@ export const writeRequest = async <TResponse>(input: {
     const result = await honoRequest<TResponse>({
       path: `${ADMIN_API_BASE_PATH}${input.path}`,
       method: input.method,
-      body: input.body,
+      body,
       cache: "no-store",
       responseSchema: input.responseSchema,
       timeoutMs: input.timeoutMs ?? 45_000,

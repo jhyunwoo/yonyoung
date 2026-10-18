@@ -19,7 +19,10 @@ import {
   type StatsMetric,
   type StatsQuery,
 } from "@/features/dashboard/stats/stats-range";
-import { AdminApiError } from "@/shared/http/http";
+import {
+  formatRefreshTime,
+  useLiveRefresh,
+} from "@/app/(dashboard)/_components/use-live-refresh";
 import CohortCard from "./_components/cohort-card";
 import CompositionCard from "./_components/composition-card";
 import ContentTable from "./_components/content-table";
@@ -42,14 +45,6 @@ type StatsViewProps = {
 const SHORT_RANGE_DAYS = 7;
 const refreshIntervalMs = (query: StatsQuery) =>
   daysBetweenInclusive(query.from, query.to) <= SHORT_RANGE_DAYS ? 10_000 : 60_000;
-
-const formatTime = () =>
-  new Date().toLocaleTimeString("ko-KR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
 
 const downloadCsv = (insights: ApiVisitorInsights) => {
   const url = URL.createObjectURL(
@@ -83,40 +78,26 @@ export default function StatsView({
 
   useEffect(() => {
     if (!isLive) return;
-    let active = true;
-
     // 갱신 시각은 클라이언트 로컬 시간이라 렌더 중에 계산하면 hydration 이 어긋난다.
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 클라이언트에서만 알 수 있는 값이다.
-    setLastUpdated(formatTime());
+    setLastUpdated(formatRefreshTime());
+  }, [isLive]);
 
-    const refresh = async () => {
-      // 아무도 보지 않는 탭까지 DB를 두드리지 않게 한다.
-      if (document.visibilityState !== "visible") return;
-      try {
-        const data = await adminRequest<ApiVisitorInsights>(
-          `/admin/page-views/insights?${toInsightsApiSearch(query)}`,
-          "GET",
-        );
-        if (!active) return;
-        setInsights(data);
-        setError(null);
-        setLastUpdated(formatTime());
-      } catch (err) {
-        if (!active) return;
-        setError(
-          err instanceof AdminApiError || err instanceof Error
-            ? err.message
-            : "알 수 없는 오류가 발생했습니다.",
-        );
-      }
-    };
-
-    const timer = setInterval(() => void refresh(), refreshMs);
-    return () => {
-      active = false;
-      clearInterval(timer);
-    };
-  }, [isLive, query, refreshMs]);
+  useLiveRefresh({
+    enabled: isLive,
+    intervalMs: refreshMs,
+    load: () =>
+      adminRequest<ApiVisitorInsights>(
+        `/admin/page-views/insights?${toInsightsApiSearch(query)}`,
+        "GET",
+      ),
+    onData: (data) => {
+      setInsights(data);
+      setError(null);
+      setLastUpdated(formatRefreshTime());
+    },
+    onError: setError,
+  });
 
   const navigate = (next: StatsQuery) => {
     const search = toStatsSearch({ ...next, metric });

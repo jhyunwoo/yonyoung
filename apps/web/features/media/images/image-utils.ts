@@ -13,7 +13,8 @@ const OPTIMIZED_DOMAIN_SUFFIXES = [
 
 /**
  * 신뢰된 미디어 호스트(R2 스토리지, 동아리 웹 도메인, 구글 이미지, 상대 경로 등)는
- * Next.js Image Optimizer(서버 리사이징, WebP/AVIF 인코딩)를 사용할 수 있도록 false를 반환합니다.
+ * 전역 커스텀 로더(`cloudflare-image-loader.ts`)를 거치도록 false를 반환합니다. 로더는
+ * R2 미디어를 Cloudflare Image Transformations 로 리사이즈하고, 그 밖의 src 는 그대로 둡니다.
  * 검증되지 않은 외부 HTTP/HTTPS URL이나 blob/data URL은 unoptimized: true를 반환합니다.
  */
 export const shouldUseUnoptimizedImage = (src: string): boolean => {
@@ -21,7 +22,7 @@ export const shouldUseUnoptimizedImage = (src: string): boolean => {
     return false;
   }
 
-  // 상대 경로는 Next.js 최적화 대상
+  // 상대 경로는 로더를 거친다(/api/public/media 프록시 URL 은 변환 대상)
   if (src.startsWith("/")) {
     return false;
   }

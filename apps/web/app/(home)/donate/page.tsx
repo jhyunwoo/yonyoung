@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { DEFAULT_SITE_SETTINGS } from "@yonyoung/contracts";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
 import {
@@ -24,8 +23,8 @@ export const instant = true;
 export default async function DonatePage() {
   // 설정과 첨부 자료는 서로 독립적이므로 병렬로 조회한다
   const [siteSettings, attachments] = await Promise.all([
-    getPublicSiteSettings().catch(() => DEFAULT_SITE_SETTINGS),
-    getPublicAttachments("site_donate").catch(() => []),
+    getPublicSiteSettings(),
+    getPublicAttachments("site_donate"),
   ]);
 
   return (

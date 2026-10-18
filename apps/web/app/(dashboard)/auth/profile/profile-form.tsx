@@ -7,7 +7,7 @@ import {
   PRESIGN_PATHS,
   uploadWithPresign,
 } from "@/features/dashboard/api/admin-api/upload";
-import { AdminApiError } from "@/shared/http/http";
+import { readErrorMessage } from "@/shared/http/read-error-message";
 import {
   AUTH_PROFILE_PATH,
   hasCompletedRequiredProfile,
@@ -20,7 +20,7 @@ import {
   type ProfileFieldErrors,
   type ProfileFormValues,
 } from "@/features/auth/profile/profile-form-model";
-import { useProfileImageSelection } from "@/features/auth/profile/use-profile-image-selection";
+import { useSelectedImageFile } from "@/features/media/upload/use-selected-image-file";
 import ProfileFields from "@/app/(dashboard)/auth/profile/_components/profile-fields";
 import ProfileImageField from "@/app/(dashboard)/auth/profile/_components/profile-image-field";
 
@@ -35,18 +35,6 @@ type ProfileFormProps = {
 
 const DEFAULT_SAVE_ERROR_MESSAGE =
   "기본 정보 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.";
-
-const readErrorMessage = (error: unknown): string => {
-  if (error instanceof AdminApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  return DEFAULT_SAVE_ERROR_MESSAGE;
-};
 
 export default function AuthProfileForm({
   userId,
@@ -76,7 +64,7 @@ export default function AuthProfileForm({
     selectFile: selectImageFile,
     openFilePicker: openImageFilePicker,
     reset: resetImageSelection,
-  } = useProfileImageSelection(initialProfile.image);
+  } = useSelectedImageFile(initialProfile.image);
 
   const [fieldErrors, setFieldErrors] = useState<ProfileFieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -147,7 +135,7 @@ export default function AuthProfileForm({
       router.refresh();
     } catch (error) {
       setUploadProgressPercent(null);
-      setSubmitError(readErrorMessage(error));
+      setSubmitError(readErrorMessage(error, DEFAULT_SAVE_ERROR_MESSAGE));
     } finally {
       setIsSaving(false);
     }

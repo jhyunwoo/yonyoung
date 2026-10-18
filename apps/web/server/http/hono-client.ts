@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getApiBaseUrl } from "@/server/env";
 import { fetchWithTimeout, FetchTimeoutError } from "@/server/http/fetch-with-timeout";
 import { readServerForwardedRequestContext } from "@/server/http/request-context";
-import { applyForwardedRequestContextHeaders } from "@/shared/http/http";
+import { applyForwardedRequestContextHeaders, normalizePath } from "@/shared/http/http";
 
 const DataEnvelopeSchema = z.object({
   data: z.unknown(),
@@ -55,9 +55,6 @@ type HonoRequestOptions<TResponse> = {
   traceId?: string;
   cookieHeader?: string | null;
 };
-
-const normalizePath = (path: string): string =>
-  path.startsWith("/") ? path : `/${path}`;
 
 const tryReadJson = async (response: Response): Promise<unknown> => {
   const contentType = response.headers.get("content-type") ?? "";

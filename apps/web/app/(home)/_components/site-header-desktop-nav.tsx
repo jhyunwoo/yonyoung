@@ -43,7 +43,6 @@ type DesktopNavItemProps = {
   isClickClosed: boolean;
   onTriggerClick: () => void;
   onClearClickState: () => void;
-  onSubmenuNavigate: () => void;
 };
 
 /**
@@ -69,7 +68,6 @@ function DesktopNavItem({
   isClickClosed,
   onTriggerClick,
   onClearClickState,
-  onSubmenuNavigate,
 }: DesktopNavItemProps) {
   const [isPointerInside, setIsPointerInside] = useState(false);
   const [isFocusInside, setIsFocusInside] = useState(false);
@@ -182,7 +180,7 @@ function DesktopNavItem({
               className="block whitespace-nowrap px-6 py-[0.8rem] text-[0.85rem] text-(--text-primary) transition-colors duration-200 hover:bg-(--surface-muted)"
               // 같은 경로를 다시 고르면 pathname 이 안 바뀌어 부모의 effect 가
               // 안 돈다. 그래서 여기서도 명시적으로 닫는다.
-              onClick={onSubmenuNavigate}
+              onClick={onClearClickState}
             >
               {child.label}
             </Link>
@@ -252,7 +250,6 @@ export default function SiteHeaderDesktopNav({ pathname }: { pathname: string })
             )
           }
           onClearClickState={() => setClickState(null)}
-          onSubmenuNavigate={() => setClickState(null)}
         />
       ))}
     </ul>

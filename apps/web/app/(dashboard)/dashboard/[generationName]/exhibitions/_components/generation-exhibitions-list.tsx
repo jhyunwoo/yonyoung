@@ -1,15 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
-import { readCookieHeader } from "@/shared/http/http";
 import { listAdminExhibitions } from "@/features/dashboard/services/admin-read-service";
 import AdminReadErrorNotice from "@/app/(dashboard)/_components/admin-read-error";
 import { formatAuditActor } from "@/features/dashboard/ui/audit-display";
 import { formatKoreanDate, formatKoreanDateRange } from "@/shared/utils/date-formatters";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
-import {
-  sortExhibitionsByStartDateDesc,
-  summarizeExhibitionDescription,
-} from "@/app/(dashboard)/dashboard/[generationName]/exhibitions/_components/exhibition-shared";
+import { summarizeRichTextHtml } from "@/features/media/rich-text/rich-text";
+import { sortByStartDateDesc } from "@/shared/utils/date-input";
 
 type GenerationExhibitionsListProps = {
   generationId: string;
@@ -24,9 +21,8 @@ export default async function GenerationExhibitionsList({
   generationName,
   canManage,
 }: GenerationExhibitionsListProps) {
-  const cookieHeader = await readCookieHeader();
-  const result = await listAdminExhibitions(generationId, cookieHeader);
-  const exhibitions = result.ok ? sortExhibitionsByStartDateDesc(result.data) : [];
+  const result = await listAdminExhibitions(generationId);
+  const exhibitions = result.ok ? sortByStartDateDesc(result.data) : [];
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
@@ -93,7 +89,7 @@ export default async function GenerationExhibitionsList({
                   </p>
                   <p className="mt-1 text-xs text-ink-muted">장소: {exhibition.place}</p>
                   <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-ink-muted">
-                    {summarizeExhibitionDescription(exhibition.description)}
+                    {summarizeRichTextHtml(exhibition.description)}
                   </p>
                   <p className="mt-3 text-xs text-ink-muted">
                     최근 수정: {formatKoreanDate(exhibition.updatedAt)} ·{" "}

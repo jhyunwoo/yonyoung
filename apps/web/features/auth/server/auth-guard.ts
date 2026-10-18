@@ -16,25 +16,18 @@ import {
   applyForwardedRequestContextHeaders,
   clearTimeoutController,
   createTimeoutController,
-  readCookieHeader,
-  resolveApiBaseUrl,
   unwrapDataEnvelope,
 } from "@/shared/http/http";
+import { getApiBaseUrl } from "@/server/env";
+import { readCookieHeader } from "@/server/http/cookie-header";
 import { readServerForwardedRequestContext } from "@/server/http/request-context";
+import { trimToNull } from "@/shared/utils/trim-to-null";
 
 const SIGN_IN_PATH = "/auth/sign-in";
 const USER_PATH_PREFIX = "/api/users";
 const CURRENT_USER_PATH = `${USER_PATH_PREFIX}/me`;
 /** 프로필 조회는 보조 정보라 실패하면 세션 값으로 폴백한다. 렌더가 매달리지 않게 상한을 둔다. */
 const PROFILE_REQUEST_TIMEOUT_MS = 8000;
-
-const readTrimmedString = (value: unknown): string | null => {
-  if (typeof value !== "string") {
-    return null;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
 
 const sanitizeProfileRecord = (value: unknown): Record<string, unknown> | null => {
   const source = asRecord(value);
@@ -44,7 +37,7 @@ const sanitizeProfileRecord = (value: unknown): Record<string, unknown> | null =
 
   const output: Record<string, unknown> = {};
 
-  const id = readTrimmedString(source.id);
+  const id = trimToNull(source.id);
   if (id) {
     output.id = id;
   }
@@ -133,7 +126,7 @@ const getCurrentUserMe = cache(async (): Promise<Record<string, unknown> | null>
   const { controller, timeoutId } = createTimeoutController(PROFILE_REQUEST_TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${resolveApiBaseUrl()}${CURRENT_USER_PATH}`, {
+    const response = await fetch(`${getApiBaseUrl()}${CURRENT_USER_PATH}`, {
       method: "GET",
       headers,
       cache: "no-store",
@@ -162,14 +155,17 @@ const getCurrentUserProfile = cache(
     }
 
     const headers = await buildForwardedHeaders();
+    // 폴백 조회 두 건(단건 → 목록)이 함께 같은 상한 안에서 끝나야 렌더가 매달리지 않는다.
+    const { controller, timeoutId } = createTimeoutController(PROFILE_REQUEST_TIMEOUT_MS);
 
     try {
       const userByIdResponse = await fetch(
-        `${resolveApiBaseUrl()}${USER_PATH_PREFIX}/${encodeURIComponent(session.user.id)}`,
+        `${getApiBaseUrl()}${USER_PATH_PREFIX}/${encodeURIComponent(session.user.id)}`,
         {
           method: "GET",
           headers,
           cache: "no-store",
+          signal: controller.signal,
         },
       );
 
@@ -183,10 +179,11 @@ const getCurrentUserProfile = cache(
         return null;
       }
 
-      const usersResponse = await fetch(`${resolveApiBaseUrl()}${USER_PATH_PREFIX}`, {
+      const usersResponse = await fetch(`${getApiBaseUrl()}${USER_PATH_PREFIX}`, {
         method: "GET",
         headers,
         cache: "no-store",
+        signal: controller.signal,
       });
       if (!usersResponse.ok) {
         return null;
@@ -209,6 +206,8 @@ const getCurrentUserProfile = cache(
       return sanitizeProfileRecord(matchedUser);
     } catch {
       return null;
+    } finally {
+      clearTimeoutController(timeoutId);
     }
   },
 );

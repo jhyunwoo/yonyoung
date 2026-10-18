@@ -5,7 +5,6 @@ import userEvent from "@testing-library/user-event";
 import { DEFAULT_SITE_SETTINGS } from "@yonyoung/contracts";
 
 const refreshMock = vi.hoisted(() => vi.fn());
-const getSiteSettingsMock = vi.hoisted(() => vi.fn());
 const updateSiteSettingsMock = vi.hoisted(() => vi.fn());
 const listAuditLogsMock = vi.hoisted(() => vi.fn());
 
@@ -17,7 +16,6 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/features/dashboard/api/admin-api/resources", () => ({
   adminResourceApi: {
-    getSiteSettings: getSiteSettingsMock,
     updateSiteSettings: updateSiteSettingsMock,
     listAuditLogs: listAuditLogsMock,
   },
@@ -28,9 +26,7 @@ import SiteSettingsForm from "@/app/(dashboard)/dashboard/settings/site/site-set
 describe("SiteSettingsForm", () => {
   beforeEach(() => {
     refreshMock.mockReset();
-    getSiteSettingsMock.mockReset();
     updateSiteSettingsMock.mockReset();
-    getSiteSettingsMock.mockResolvedValue({ ...DEFAULT_SITE_SETTINGS });
     listAuditLogsMock.mockReset();
     listAuditLogsMock.mockResolvedValue([]);
   });
@@ -50,7 +46,7 @@ describe("SiteSettingsForm", () => {
     ).toBeDisabled();
   });
 
-  it("서버가 내려 준 실제 설정으로 폼을 채우고 마운트 시 다시 읽지 않는다", () => {
+  it("서버가 내려 준 실제 설정으로 폼을 채운다", () => {
     render(
       <SiteSettingsForm
         initialSettings={{ ...DEFAULT_SITE_SETTINGS, footerEmail: "real@yonsei.ac.kr" }}
@@ -58,7 +54,6 @@ describe("SiteSettingsForm", () => {
     );
 
     expect(screen.getByLabelText("이메일")).toHaveValue("real@yonsei.ac.kr");
-    expect(getSiteSettingsMock).not.toHaveBeenCalled();
   });
 
   it("shows email validation error and blocks submit when email format is invalid", async () => {

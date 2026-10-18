@@ -10,6 +10,10 @@ import {
   enforceRequestBodyLimit,
   enforceSameOriginProtection,
 } from "@/server/security/request-guards";
+import {
+  createIngestAcceptedResponse,
+  parseIngestBody,
+} from "@/app/api/internal/ingest-request";
 
 const webVitalsPayloadSchema = z.object({
   id: z.string().min(1),
@@ -21,24 +25,6 @@ const webVitalsPayloadSchema = z.object({
   navigationType: z.string().optional(),
   sampledAt: z.number().finite().optional(),
 });
-
-const parseBody = async (request: NextRequest): Promise<unknown> => {
-  const contentType = request.headers.get("content-type") ?? "";
-  if (contentType.includes("application/json")) {
-    return request.json().catch(() => null);
-  }
-
-  const text = await request.text().catch(() => "");
-  if (!text) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
-};
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const csrfProtectionResponse = enforceSameOriginProtection(request);
@@ -54,7 +40,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return bodyLimitResponse;
   }
 
-  const body = await parseBody(request);
+  const body = await parseIngestBody(request);
   const parsed = webVitalsPayloadSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ ok: false }, { status: 400 });
@@ -74,13 +60,5 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     metric: summarizeWebVitalForLog(parsed.data),
   });
 
-  return NextResponse.json(
-    { ok: true },
-    {
-      status: 202,
-      headers: {
-        "Cache-Control": "private, no-store, max-age=0",
-      },
-    },
-  );
+  return createIngestAcceptedResponse();
 }

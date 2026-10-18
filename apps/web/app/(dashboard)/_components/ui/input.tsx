@@ -1,8 +1,4 @@
-import type {
-  InputHTMLAttributes,
-  SelectHTMLAttributes,
-  TextareaHTMLAttributes,
-} from "react";
+import type { InputHTMLAttributes, SelectHTMLAttributes } from "react";
 
 import { cx } from "@/app/(dashboard)/_components/ui/cx";
 
@@ -27,14 +23,6 @@ const CONTROL_CLASS = cx(
 
 export const Input = ({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) => (
   <input className={cx(CONTROL_CLASS, className)} {...rest} />
-);
-
-export const Textarea = ({
-  className,
-  rows = 4,
-  ...rest
-}: TextareaHTMLAttributes<HTMLTextAreaElement>) => (
-  <textarea rows={rows} className={cx(CONTROL_CLASS, "resize-y", className)} {...rest} />
 );
 
 /**

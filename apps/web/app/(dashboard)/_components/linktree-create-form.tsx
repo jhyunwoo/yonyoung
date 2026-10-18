@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
@@ -11,10 +11,8 @@ import {
   normalizeLinktreeName,
   readLinktreeErrorMessage,
 } from "@/app/(dashboard)/_components/linktree-shared";
-import { Skeleton } from "@/components/ui/skeleton";
 
 type LinktreeCreateFormProps = {
-  canWrite: boolean;
   listPath: string;
 };
 
@@ -39,10 +37,7 @@ const createItemDraft = (id: number): LinktreeItemDraft => ({
   link: "",
 });
 
-export default function LinktreeCreateForm({
-  canWrite,
-  listPath,
-}: LinktreeCreateFormProps) {
+export default function LinktreeCreateForm({ listPath }: LinktreeCreateFormProps) {
   const router = useRouter();
   const [groupName, setGroupName] = useState("");
   const [itemDrafts, setItemDrafts] = useState<LinktreeItemDraft[]>([createItemDraft(0)]);
@@ -51,14 +46,6 @@ export default function LinktreeCreateForm({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const createdLinktreeRef = useRef<{ id: string; name: string } | null>(null);
   const addedDraftIdsRef = useRef(new Set<number>());
-
-  useEffect(() => {
-    if (canWrite) {
-      return;
-    }
-
-    router.replace(listPath);
-  }, [canWrite, listPath, router]);
 
   const handleAddItemDraft = () => {
     setItemDrafts((prev) => [...prev, createItemDraft(nextItemId)]);
@@ -153,18 +140,6 @@ export default function LinktreeCreateForm({
     }
   };
   const submitForm = useGuardedSubmit(handleSubmit);
-
-  if (!canWrite) {
-    return (
-      <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
-        <div className="space-y-3" aria-hidden="true">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-8 w-36" />
-          <Skeleton className="h-3 w-64" />
-        </div>
-      </section>
-    );
-  }
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">

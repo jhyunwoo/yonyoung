@@ -4,8 +4,14 @@ import { Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useState, type ComponentType } from "react";
 
 import { cx } from "@/app/(dashboard)/_components/ui/cx";
-
-type ThemeMode = "light" | "dark" | "system";
+import {
+  applyThemeToDocument,
+  isThemeMode,
+  readSystemPrefersDark,
+  resolveTheme,
+  storeThemeMode,
+  type ThemeMode,
+} from "@/features/public/theme/theme-mode";
 
 const MODES: readonly {
   value: ThemeMode;
@@ -17,24 +23,16 @@ const MODES: readonly {
   { value: "system", label: "시스템 설정 따르기", Icon: Monitor },
 ];
 
-const isThemeMode = (value: string | undefined): value is ThemeMode =>
-  value === "light" || value === "dark" || value === "system";
-
-/** public/theme-init.js 와 동일한 방식으로 DOM 과 localStorage 를 갱신한다. */
+/**
+ * public/theme-init.js 와 동일한 방식으로 DOM 과 localStorage 를 갱신한다.
+ * 공개 사이트 헤더의 테마 전환과 같은 함수를 써서 저장 키·DOM 표식이 갈라지지 않게 한다.
+ */
 const applyThemeMode = (mode: ThemeMode): void => {
-  const root = document.documentElement;
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const resolved = mode === "system" ? (prefersDark ? "dark" : "light") : mode;
-
-  root.classList.toggle("dark", resolved === "dark");
-  root.dataset.theme = resolved;
-  root.dataset.themeMode = mode;
-
-  try {
-    window.localStorage.setItem("theme", mode);
-  } catch {
-    // 프라이빗 모드 등에서 저장이 막혀도 화면 전환은 이미 끝났다.
-  }
+  applyThemeToDocument({
+    resolvedTheme: resolveTheme(mode, readSystemPrefersDark()),
+    mode,
+  });
+  storeThemeMode(mode);
 };
 
 /**

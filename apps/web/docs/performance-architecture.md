@@ -91,6 +91,7 @@ URL 별 런타임 프리페치가 카드 수만큼 살아나 서버 호출·RSC 
 | 아카이브(활동·전시·기수·사진가·첨부)            | `days`                  | 쓰기 시 `updateTag` 로 즉시 무효화하므로 만료에 기댈 필요가 없다 |
 | 설정성(사이트 설정·링크트리·리크루팅·노출 전시) | `hours`                 | 운영 중 손으로 자주 바꾼다                                       |
 | 관리자 읽기 전부                                | 캐시 안 함 (`no-store`) | 권한별로 갈리는 데이터다                                         |
+| 공개 읽기가 실패해 폴백을 돌려준 결과           | `minutes`               | 장애 중의 빈 목록·기본 설정이 수일 동안 굳지 않게 한다           |
 
 모든 `"use cache"` 스코프는 `cacheLife` 를 **명시**한다. 생략하면 `default`(15분)가
 붙고, `stale` 이 짧으면 그 결과가 라우트 App Shell 에 들어가지 못한다.
@@ -184,16 +185,17 @@ HTTP 리다이렉트 대신 **200 + 스켈레톤 깜빡임**을 보고 클라이
 공개 라우트의 기본값은 **서버 컴포넌트**다. 클라이언트로 내려가는 것은 실제 상호작용이
 필요한 아일랜드뿐이며, 목록/타일처럼 개수가 늘어나는 것은 아일랜드로 만들지 않는다.
 
-| 아일랜드                  | 하는 일                                                         |
-| ------------------------- | --------------------------------------------------------------- |
-| `RevealObserver`          | 페이지 전체의 등장 애니메이션 트리거 (IntersectionObserver 1개) |
-| `HeroParallax`            | 스크롤 진행도를 CSS 변수 하나에 쓴다                            |
-| `SiteHeaderScrollState`   | 스크롤 여부를 `<html data-public-scrolled>` 로 알린다           |
-| `SiteHeaderNav`           | 활성 경로 표시 · 드롭다운 · 모바일 메뉴                         |
-| `SiteHeaderThemeSwitcher` | 테마 상태를 직접 소유한다                                       |
-| `PhotoGalleryController`  | 갤러리 전체의 클릭/hover/포커스를 이벤트 위임으로 받는다        |
+| 아일랜드                      | 하는 일                                                         |
+| ----------------------------- | --------------------------------------------------------------- |
+| `RevealObserver`              | 페이지 전체의 등장 애니메이션 트리거 (IntersectionObserver 1개) |
+| `HeroParallax`                | 스크롤 진행도를 CSS 변수 하나에 쓴다                            |
+| `SiteHeaderScrollState`       | 스크롤 여부를 `<html data-public-scrolled>` 로 알린다           |
+| `SiteHeaderNav`               | 활성 경로 표시 · 드롭다운 · 모바일 메뉴                         |
+| `SiteHeaderThemeSwitcher`     | 테마 상태를 직접 소유한다                                       |
+| `PhotoGalleryController`      | 갤러리 전체의 클릭/hover/포커스를 이벤트 위임으로 받는다        |
+| `GenerationMembersController` | 기수별 사진가 그리드의 클릭을 위임으로 받아 상세 모달을 연다    |
 
-**공개 라우트에서 framer-motion 을 쓰지 않는다.** 헤더가 모든 공개 페이지에 있어서
+**공개 라우트에서 motion/framer-motion 을 쓰지 않는다.** 헤더가 모든 공개 페이지에 있어서
 `AnimatePresence` import 하나가 공개 번들 전체에 gzip 약 43KB 를 얹었다. 등장·패럴랙스·
 호버·오버레이 전환은 전부 `app/(home)/globals.css` 의 CSS 전환과 위 아일랜드로 구현돼
 있고, 값(지속시간·이징·오프셋)은 framer 시절과 같다. 대시보드는 계속 써도 된다 —

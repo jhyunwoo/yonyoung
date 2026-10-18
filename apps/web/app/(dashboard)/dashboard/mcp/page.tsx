@@ -1,17 +1,12 @@
-import {
-  Alert,
-  Card,
-  CardBody,
-  CardHeader,
-  PageContainer,
-  PageHeader,
-} from "@/app/(dashboard)/_components/ui";
+import { Alert } from "@/app/(dashboard)/_components/ui/alert";
+import { Card, CardBody, CardHeader } from "@/app/(dashboard)/_components/ui/card";
+import { PageContainer } from "@/app/(dashboard)/_components/ui/layout-parts";
+import { PageHeader } from "@/app/(dashboard)/_components/ui/page-header";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import {
   getMcpConnections,
   getMcpOverview,
 } from "@/features/dashboard/services/admin-read-service";
-import { readCookieHeader } from "@/shared/http/http";
 import McpConnectionsClient from "@/app/(dashboard)/dashboard/mcp/connections-client";
 import {
   ChatGptSection,
@@ -29,10 +24,9 @@ export const metadata = {
 
 export default async function McpGuidePage() {
   await serverAuthGuard.requireSession();
-  const cookieHeader = await readCookieHeader();
   const [overview, connections] = await Promise.all([
-    getMcpOverview(cookieHeader),
-    getMcpConnections(cookieHeader),
+    getMcpOverview(),
+    getMcpConnections(),
   ]);
 
   return (

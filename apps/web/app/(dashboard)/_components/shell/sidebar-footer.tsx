@@ -1,7 +1,7 @@
 "use client";
 
 import { useResetOnChange } from "@/shared/react/use-reset-on-change";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ChevronDown, LogOut, UserCircle2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";

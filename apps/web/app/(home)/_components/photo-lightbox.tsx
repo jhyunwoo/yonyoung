@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useEffect, useRef, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
+import { useBodyScrollLock } from "./hooks/use-body-scroll-lock";
 import { LIGHTBOX_IMAGE_SIZES } from "./photo-preload-images";
 
 export type PhotoLightboxItem = {
@@ -78,7 +79,9 @@ export function PhotoLightbox({
     EXIT_MS,
   );
 
-  // 배경 스크롤 잠금 + 포커스 이동/복귀
+  useBodyScrollLock(isVisible);
+
+  // 포커스 이동/복귀
   useEffect(() => {
     if (!isVisible) {
       return;
@@ -86,12 +89,9 @@ export function PhotoLightbox({
 
     restoreFocusRef.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     panelRef.current?.focus();
 
     return () => {
-      document.body.style.overflow = originalOverflow;
       restoreFocusRef.current?.focus();
     };
   }, [isVisible]);

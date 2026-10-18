@@ -12,7 +12,7 @@ import type {
   ApiUserResourceHistory,
   ApiUserResourceHistoryItem,
 } from "@yonyoung/contracts";
-import { AdminApiError } from "@/shared/http/http";
+import { readErrorMessage } from "@/shared/http/read-error-message";
 import { formatKoreanDate } from "@/shared/utils/date-formatters";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -25,17 +25,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const HISTORY_PAGE_SIZE = 10;
 
-const readErrorMessage = (error: unknown): string => {
-  if (error instanceof AdminApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error && error.message.length > 0) {
-    return error.message;
-  }
-
-  return "멤버 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
-};
+const ERROR_FALLBACK_MESSAGE =
+  "멤버 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 const readHistoryResourceLabel = (
   resourceType: ApiUserResourceHistoryItem["resourceType"],
@@ -230,7 +221,7 @@ export const PaginatedHistorySection = ({
           return;
         }
 
-        setErrorMessage(readErrorMessage(error));
+        setErrorMessage(readErrorMessage(error, ERROR_FALLBACK_MESSAGE));
       } finally {
         if (isMounted) {
           setIsLoading(false);

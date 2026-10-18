@@ -2,6 +2,7 @@
 
 import { RotateCcw } from "lucide-react";
 import { captureBrowserException } from "@/lib/observability/sentry-client";
+import { reportClientError } from "@/lib/observability/report-client-error";
 import { useEffect } from "react";
 
 import { Alert } from "@/app/(dashboard)/_components/ui/alert";
@@ -17,21 +18,7 @@ type DashboardErrorPageProps = {
 export default function DashboardErrorPage({ error, reset }: DashboardErrorPageProps) {
   useEffect(() => {
     void captureBrowserException(error);
-    navigator.sendBeacon(
-      "/api/internal/client-error",
-      new Blob(
-        [
-          JSON.stringify({
-            event: "client.error",
-            path: window.location.pathname,
-            message: error.message,
-            stack: error.stack,
-            sampledAt: Date.now(),
-          }),
-        ],
-        { type: "application/json; charset=UTF-8" },
-      ),
-    );
+    reportClientError(error);
   }, [error]);
 
   return (

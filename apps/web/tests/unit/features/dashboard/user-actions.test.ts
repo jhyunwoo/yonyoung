@@ -1,4 +1,3 @@
-import type * as HttpModule from "@/shared/http/http";
 import type * as HonoClientModule from "@/server/http/hono-client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ApiUser } from "@yonyoung/contracts";
@@ -36,14 +35,9 @@ vi.mock("@/features/dashboard/actions/admin-write-access", () => ({
   assertAdminWriteAccess: assertAdminWriteAccessMock,
 }));
 
-vi.mock("@/shared/http/http", async (importOriginal) => {
-  const actual = await importOriginal<typeof HttpModule>();
-
-  return {
-    ...actual,
-    readCookieHeader: readCookieHeaderMock,
-  };
-});
+vi.mock("@/server/http/cookie-header", () => ({
+  readCookieHeader: readCookieHeaderMock,
+}));
 
 vi.mock("@/server/http/hono-client", async (importOriginal) => {
   const actual = await importOriginal<typeof HonoClientModule>();

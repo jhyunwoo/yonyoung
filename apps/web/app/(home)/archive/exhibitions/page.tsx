@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  listPublicExhibitions,
-  safeList,
-} from "@/features/public/services/public-read-service";
+import { listPublicExhibitions } from "@/features/public/services/public-read-service";
 import { formatKoreanDateCompact } from "@/shared/utils/date-formatters";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
@@ -15,10 +12,6 @@ import ArchiveViewCounts, {
 } from "@/app/(home)/_components/archive-view-counts";
 
 export const metadata: Metadata = createPageMetadata(PAGE_SEO.archiveExhibitions);
-
-const getArchiveExhibitions = async () => {
-  return safeList(listPublicExhibitions, []);
-};
 
 /**
  * Instant Navigation 계약 (Next.js 16.3).
@@ -31,7 +24,7 @@ const getArchiveExhibitions = async () => {
 export const instant = true;
 
 export default async function ArchiveExhibitionsPage() {
-  const exhibitions = await getArchiveExhibitions();
+  const exhibitions = await listPublicExhibitions();
   const exhibitionIds = exhibitions.map((e) => e.id);
 
   return (
@@ -76,7 +69,9 @@ export default async function ArchiveExhibitionsPage() {
                         alt={exhibition.title}
                         fill
                         unoptimized={shouldUseUnoptimizedImage(exhibition.coverImageUrl)}
-                        sizes="(max-width: 768px) 100vw, 50vw"
+                        // 모바일은 max-w-[400px]에서 px-6 를 뺀 352px, 그 위는 max-w-[1060px]
+                        // 3열(px-8, gap-10)의 한 칸 (1060 - 64 - 80) / 3 ≈ 306px 이 최대다.
+                        sizes="(max-width: 768px) 352px, 306px"
                         className="object-cover"
                       />
                     </div>

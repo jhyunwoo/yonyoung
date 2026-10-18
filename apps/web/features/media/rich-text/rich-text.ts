@@ -1,5 +1,8 @@
 import filterXss, { type IFilterXSSOptions } from "xss";
 
+/** 에디터가 비어 있을 때 내보내는 HTML. */
+export const EMPTY_RICH_TEXT_HTML = "<p></p>";
+
 const RICH_TEXT_TAG_PATTERN = /<[^>]*>/g;
 const NON_BREAKING_SPACE_PATTERN = /(?:\u00a0|&nbsp;|&#160;)/gi;
 const MULTI_WHITESPACE_PATTERN = /\s+/g;

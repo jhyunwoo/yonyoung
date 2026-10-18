@@ -8,7 +8,10 @@ import { ArrowDownIcon, ArrowUpIcon, BarChart3 } from "lucide-react";
 import { Card, CardHeader } from "@/app/(dashboard)/_components/ui/card";
 import { EmptyState } from "@/app/(dashboard)/_components/ui/empty-state";
 import { adminRequest } from "@/features/dashboard/api/admin-api/http";
-import { AdminApiError } from "@/shared/http/http";
+import {
+  formatRefreshTime,
+  useLiveRefresh,
+} from "@/app/(dashboard)/_components/use-live-refresh";
 
 const formatNumber = (value: number): string => {
   if (!Number.isFinite(value) || value <= 0) {
@@ -60,15 +63,6 @@ type DashboardPageViewsCardProps = {
   initialError?: string | null;
 };
 
-const getFormattedTime = () => {
-  return new Date().toLocaleTimeString("ko-KR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
-};
-
 export default function DashboardPageViewsCard({
   initialStats,
   initialError,
@@ -78,48 +72,26 @@ export default function DashboardPageViewsCard({
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
   useEffect(() => {
-    let active = true;
-
     if (initialStats) {
       // 서버가 내려준 통계의 "갱신 시각"은 클라이언트 로컬 시간으로 보여 준다.
       // 렌더 중에 계산하면 서버 렌더 결과와 달라져 hydration 불일치가 나므로
       // 마운트 이후에만 채운다.
       // eslint-disable-next-line react-hooks/set-state-in-effect -- 클라이언트에서만 알 수 있는 값이다.
-      setLastUpdated(getFormattedTime());
+      setLastUpdated(formatRefreshTime());
     }
-
-    const fetchStats = async () => {
-      try {
-        const data = await adminRequest<ApiPageViewStats>(
-          "/admin/page-views/dashboard",
-          "GET",
-        );
-        if (active) {
-          setStats(data);
-          setError(null);
-          setLastUpdated(getFormattedTime());
-        }
-      } catch (err) {
-        if (active) {
-          const msg =
-            err instanceof AdminApiError
-              ? err.message
-              : err instanceof Error
-                ? err.message
-                : "알 수 없는 오류가 발생했습니다.";
-          setError(msg);
-          setStats(null);
-        }
-      }
-    };
-
-    const timer = setInterval(() => void fetchStats(), 10000);
-
-    return () => {
-      active = false;
-      clearInterval(timer);
-    };
   }, [initialStats]);
+
+  // 갱신이 실패해도 마지막으로 불러온 통계는 그대로 둔다. 오류 화면은 아직 받은 값이 없을 때만 보인다.
+  useLiveRefresh({
+    intervalMs: 10_000,
+    load: () => adminRequest<ApiPageViewStats>("/admin/page-views/dashboard", "GET"),
+    onData: (data) => {
+      setStats(data);
+      setError(null);
+      setLastUpdated(formatRefreshTime());
+    },
+    onError: setError,
+  });
 
   const trend = stats?.dailyTrend ?? [];
   const todayViews = stats?.today.count ?? 0;

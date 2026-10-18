@@ -1,5 +1,4 @@
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
-import { readCookieHeader } from "@/shared/http/http";
 import {
   listAdminGenerations,
   listAdminUsers,
@@ -10,10 +9,9 @@ import MembersGrid from "@/app/(dashboard)/dashboard/settings/members/members-gr
 export default async function SettingsMembersPage() {
   await serverAuthGuard.requireGlobalUserManagementAccess();
 
-  const cookieHeader = await readCookieHeader();
   const [usersResult, generationsResult] = await Promise.all([
-    listAdminUsers(cookieHeader),
-    listAdminGenerations(cookieHeader),
+    listAdminUsers(),
+    listAdminGenerations(),
   ]);
 
   return (

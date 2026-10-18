@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 
 type DailyTrendItem = {
   date: string;
@@ -9,16 +9,11 @@ type DailyTrendItem = {
 
 type PageViewChartProps = {
   data: DailyTrendItem[];
-  /** data와 같은 순번으로 짝지은 이전 기간 값. 있으면 점선으로 겹쳐 그린다. */
-  comparison?: number[];
-  /** 툴팁 숫자 뒤에 붙는 단위. */
-  unit?: string;
 };
 
 type HoveredItem = {
   date: string;
   count: number;
-  previous: number | undefined;
   x: number; // percentage (0-100)
   y: number; // percentage (0-100)
 };
@@ -30,17 +25,14 @@ const toPoints = (values: number[], maxCount: number): string => {
     .join(" ");
 };
 
-export default function PageViewChart({
-  data,
-  comparison,
-  unit = "명",
-}: PageViewChartProps) {
+export default function PageViewChart({ data }: PageViewChartProps) {
   const [hoveredItem, setHoveredItem] = useState<HoveredItem | null>(null);
+  const gradientId = `page-view-gradient-${useId()}`;
 
   const maxCount = useMemo(() => {
     if (data.length === 0) return 0;
-    return Math.max(...data.map((d) => d.count), ...(comparison ?? []), 1);
-  }, [data, comparison]);
+    return Math.max(...data.map((d) => d.count), 1);
+  }, [data]);
 
   const points = useMemo(
     () =>
@@ -51,14 +43,6 @@ export default function PageViewChart({
             maxCount,
           ),
     [data, maxCount],
-  );
-
-  const comparisonPoints = useMemo(
-    () =>
-      comparison === undefined || comparison.length === 0
-        ? ""
-        : toPoints(comparison, maxCount),
-    [comparison, maxCount],
   );
 
   if (data.length === 0) return null;
@@ -75,7 +59,7 @@ export default function PageViewChart({
         preserveAspectRatio="none"
       >
         <defs>
-          <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="currentColor" className="text-primary-text/30" />
             <stop
               offset="100%"
@@ -112,23 +96,8 @@ export default function PageViewChart({
           strokeWidth="1"
         />
 
-        {/* 이전 기간: 회색 점선이라 색을 구분하지 못해도 선 모양으로 구별된다. */}
-        {comparisonPoints !== "" && (
-          <polyline
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeDasharray="6 5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            vectorEffect="non-scaling-stroke"
-            points={comparisonPoints}
-            className="text-ink-muted"
-          />
-        )}
-
         {/* Area fill */}
-        <polyline fill="url(#chartGradient)" points={`0,200 ${points} 1000,200`} />
+        <polyline fill={`url(#${gradientId})`} points={`0,200 ${points} 1000,200`} />
 
         {/* Main line */}
         <polyline
@@ -151,7 +120,7 @@ export default function PageViewChart({
               cx={x}
               cy={y}
               r="2.5"
-              className="fill-surface stroke-primary stroke-[1.5] sm:r-[3]"
+              className="fill-surface stroke-primary stroke-[1.5]"
             />
           );
         })}
@@ -197,7 +166,6 @@ export default function PageViewChart({
                 setHoveredItem({
                   date: d.date,
                   count: d.count,
-                  previous: comparison?.[i],
                   x: x / 10, // scale out of 100
                   y: y / 2, // scale out of 100
                 })
@@ -207,7 +175,6 @@ export default function PageViewChart({
                 setHoveredItem({
                   date: d.date,
                   count: d.count,
-                  previous: comparison?.[i],
                   x: x / 10,
                   y: y / 2,
                 })
@@ -225,23 +192,15 @@ export default function PageViewChart({
             // 좁은 화면에서 툴팁이 차트 밖으로 삐져나가 가로 스크롤을 만들지
             // 않도록 0 ~ (컨테이너 폭 - max-w-32) 범위로 고정한다.
             left: `clamp(0px, calc(${Math.max(6, Math.min(94, hoveredItem.x))}% - 60px), calc(100% - 8rem))`,
-            // 이전 기간 줄이 붙으면 툴팁이 한 줄 길어지므로 그만큼 더 올린다.
-            top: `calc(${hoveredItem.y}% - ${hoveredItem.previous !== undefined ? 72 : 56}px)`,
+            top: `calc(${hoveredItem.y}% - 56px)`,
           }}
         >
           <p className="text-[9px] font-semibold text-ink-muted uppercase tracking-wider">
             {hoveredItem.date}
           </p>
           <p className="text-xs font-bold text-ink mt-0.5">
-            {hoveredItem.count.toLocaleString()}
-            {unit}
+            {hoveredItem.count.toLocaleString()}명
           </p>
-          {hoveredItem.previous !== undefined && (
-            <p className="text-[11px] text-ink-muted">
-              이전 {hoveredItem.previous.toLocaleString()}
-              {unit}
-            </p>
-          )}
         </div>
       )}
 

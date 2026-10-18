@@ -2,6 +2,7 @@ import Image from "next/image";
 import type { CSSProperties } from "react";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import type { PhotoGalleryItem } from "./photo-gallery";
+import { storedAspect } from "./photo-gallery-aspect";
 
 type PhotoGalleryTileProps = {
   item: PhotoGalleryItem;
@@ -26,7 +27,7 @@ const TILE_SIZES = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 34vw";
  * 디코딩을 끝내면 컨트롤러가 naturalWidth/naturalHeight 로 실제 비율을 보정한다.
  */
 export function PhotoGalleryTile({ item, aspect, index }: PhotoGalleryTileProps) {
-  const hasStoredSize = item.width !== null && item.height !== null;
+  const hasStoredSize = storedAspect(item) !== null;
 
   return (
     <li

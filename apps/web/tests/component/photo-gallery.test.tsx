@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 
 import {
   PhotoGallery,
+  toDetailGalleryItems,
   type PhotoGalleryItem,
 } from "@/app/(home)/_components/photo-gallery";
 
@@ -330,5 +331,60 @@ describe("PhotoGallery 확대 이미지 미리 로딩", () => {
 
     expect(screen.getByTestId("gallery-lightbox")).toBeInTheDocument();
     expect(screen.queryByTestId("gallery-preload-layer")).toBeNull();
+  });
+});
+
+describe("toDetailGalleryItems", () => {
+  const image = (id: string, sortOrder: number, size: number | null) => ({
+    id,
+    imageUrl: `https://images.mock.local/${id}.jpg`,
+    sortOrder,
+    width: size,
+    height: size,
+  });
+
+  it("상세 이미지를 sortOrder 순으로 늘어놓고 순번을 alt 에 붙인다", () => {
+    expect(
+      toDetailGalleryItems({
+        id: "act-1",
+        title: "교내 출사",
+        coverImageUrl: "https://images.mock.local/cover.jpg",
+        detailImages: [image("b", 2, null), image("a", 1, 800)],
+      }),
+    ).toEqual([
+      {
+        key: "a",
+        imageUrl: "https://images.mock.local/a.jpg",
+        alt: "교내 출사 상세 이미지 1",
+        width: 800,
+        height: 800,
+      },
+      {
+        key: "b",
+        imageUrl: "https://images.mock.local/b.jpg",
+        alt: "교내 출사 상세 이미지 2",
+        width: null,
+        height: null,
+      },
+    ]);
+  });
+
+  it("상세 이미지가 없으면 대표 이미지 한 장으로 대체한다", () => {
+    expect(
+      toDetailGalleryItems({
+        id: "exh-1",
+        title: "정기 사진전",
+        coverImageUrl: "https://images.mock.local/cover.jpg",
+        detailImages: [],
+      }),
+    ).toEqual([
+      {
+        key: "exh-1-cover",
+        imageUrl: "https://images.mock.local/cover.jpg",
+        alt: "정기 사진전 대표 이미지",
+        width: null,
+        height: null,
+      },
+    ]);
   });
 });

@@ -1,36 +1,28 @@
 "use client";
 
 import { IMAGE_UPLOAD_ACCEPT } from "@yonyoung/contracts";
-import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import type { ApiRecruitingPlan } from "@yonyoung/contracts";
+import { type ChangeEvent, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { PRESIGN_PATHS } from "@/features/dashboard/api/admin-api/upload";
 import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/upload-batch";
-import { AdminApiError } from "@/shared/http/http";
+import { readErrorMessage } from "@/shared/http/read-error-message";
 import { createExistingUploadImageItem } from "@/features/media/upload/image-upload-state";
 import { hasMeaningfulRichTextHtml } from "@/features/media/rich-text/rich-text";
 import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";
-import { Skeleton } from "@/components/ui/skeleton";
 import RichTextEditor from "@/app/(dashboard)/_components/rich-text-editor";
 import SortableImageGrid from "@/app/(dashboard)/_components/sortable-image-grid";
 import UploadProgressBar from "@/app/(dashboard)/_components/upload-progress-bar";
+import { useIsMounted } from "@/shared/react/use-is-mounted";
 
 const RECRUITING_MAX_IMAGES = 10;
 
 const inputClassName =
   "w-full rounded-lg border border-hairline-strong px-3 py-2 text-sm text-ink outline-none transition focus-visible:border-primary focus-visible:shadow-(--shadow-focus)";
 
-const readErrorMessage = (error: unknown): string => {
-  if (error instanceof AdminApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error && error.message.length > 0) {
-    return error.message;
-  }
-
-  return "모집 계획 저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
-};
+const ERROR_FALLBACK_MESSAGE =
+  "모집 계획 저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
 
 const formatTimestampToDateTimeLocal = (timestampMs: number): string => {
   const date = new Date(timestampMs);
@@ -55,22 +47,37 @@ const toUploadImageItems = (urls: string[]) =>
     }),
   );
 
-export default function RecruitingPlanSettingsForm() {
+type RecruitingPlanSettingsFormProps = {
+  /** 서버 컴포넌트가 읽어 내려 준 현재 모집 계획. 아직 없으면 null이다. 읽기에 실패하면 폼 자체를 렌더링하지 않는다. */
+  initialPlan: ApiRecruitingPlan | null;
+};
+
+export default function RecruitingPlanSettingsForm({
+  initialPlan,
+}: RecruitingPlanSettingsFormProps) {
   const router = useRouter();
+  const isMounted = useIsMounted();
   const promotionFileInputRef = useRef<HTMLInputElement | null>(null);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [recruitmentStartAtInput, setRecruitmentStartAtInput] = useState("");
-  const [recruitmentEndAtInput, setRecruitmentEndAtInput] = useState("");
+  const [title, setTitle] = useState(initialPlan?.title ?? "");
+  const [content, setContent] = useState(initialPlan?.content ?? "");
+  // 브라우저 시간대로 바꾼 값이라 서버 렌더 값과 다를 수 있다. 입력에는 마운트 뒤에만 보여 준다.
+  const [recruitmentStartAtInput, setRecruitmentStartAtInput] = useState(() =>
+    initialPlan ? formatTimestampToDateTimeLocal(initialPlan.recruitmentStartAt) : "",
+  );
+  const [recruitmentEndAtInput, setRecruitmentEndAtInput] = useState(() =>
+    initialPlan ? formatTimestampToDateTimeLocal(initialPlan.recruitmentEndAt) : "",
+  );
   const {
     items: promotionImageItems,
     replaceItems: replacePromotionImageItems,
     appendExistingUrls: appendPromotionImageUrls,
     removeItemById: removePromotionImageById,
     reorderByIds: reorderPromotionImageByIds,
-  } = useImageUploadState({ maxItems: RECRUITING_MAX_IMAGES });
+  } = useImageUploadState({
+    initialItems: toUploadImageItems(initialPlan?.promotionImageUrls ?? []),
+    maxItems: RECRUITING_MAX_IMAGES,
+  });
 
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
@@ -81,56 +88,10 @@ export default function RecruitingPlanSettingsForm() {
     () => promotionImageItems.map((item) => item.imageUrl),
     [promotionImageItems],
   );
+  // 서버 렌더 직후 hydration 전에는 입력을 막는다(기본 설정 폼과 같다).
+  const isFormDisabled = !isMounted || isSaving || isUploadingImage;
   const isPromotionUploadDisabled =
-    isSaving || isUploadingImage || promotionImageUrls.length >= RECRUITING_MAX_IMAGES;
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadCurrentRecruitingPlan = async () => {
-      setIsLoading(true);
-      setErrorMessage(null);
-
-      try {
-        const plan = await adminResourceApi.getCurrentRecruitingPlan();
-        if (!isMounted) {
-          return;
-        }
-
-        if (!plan) {
-          setTitle("");
-          setContent("");
-          setRecruitmentStartAtInput("");
-          setRecruitmentEndAtInput("");
-          replacePromotionImageItems([]);
-          return;
-        }
-
-        setTitle(plan.title);
-        setContent(plan.content);
-        setRecruitmentStartAtInput(
-          formatTimestampToDateTimeLocal(plan.recruitmentStartAt),
-        );
-        setRecruitmentEndAtInput(formatTimestampToDateTimeLocal(plan.recruitmentEndAt));
-        replacePromotionImageItems(toUploadImageItems(plan.promotionImageUrls));
-      } catch (error) {
-        if (!isMounted) {
-          return;
-        }
-        setErrorMessage(readErrorMessage(error));
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    void loadCurrentRecruitingPlan();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [replacePromotionImageItems]);
+    isFormDisabled || promotionImageUrls.length >= RECRUITING_MAX_IMAGES;
 
   const handleUploadPromotionImages = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
@@ -159,7 +120,7 @@ export default function RecruitingPlanSettingsForm() {
       });
       appendPromotionImageUrls(uploadedUrls);
     } catch (error) {
-      setErrorMessage(readErrorMessage(error));
+      setErrorMessage(readErrorMessage(error, ERROR_FALLBACK_MESSAGE));
     } finally {
       setIsUploadingImage(false);
       setUploadProgressPercent(null);
@@ -225,33 +186,11 @@ export default function RecruitingPlanSettingsForm() {
       setSuccessMessage("올해 모집 계획을 저장했습니다.");
       router.refresh();
     } catch (error) {
-      setErrorMessage(readErrorMessage(error));
+      setErrorMessage(readErrorMessage(error, ERROR_FALLBACK_MESSAGE));
     } finally {
       setIsSaving(false);
     }
   };
-
-  if (isLoading) {
-    return (
-      <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
-        <div className="space-y-4" aria-hidden="true">
-          <Skeleton className="h-4 w-28" />
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-3 w-full max-w-lg" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-48 w-full" />
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <Skeleton
-                key={`recruiting-plan-image-loading-${index + 1}`}
-                className="aspect-square w-full"
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
@@ -282,7 +221,7 @@ export default function RecruitingPlanSettingsForm() {
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             className={inputClassName}
-            disabled={isSaving || isUploadingImage}
+            disabled={isFormDisabled}
             placeholder="예: 2030 연영회 신입 부원 모집"
           />
         </label>
@@ -292,7 +231,7 @@ export default function RecruitingPlanSettingsForm() {
           <RichTextEditor
             value={content}
             onChange={setContent}
-            disabled={isSaving || isUploadingImage}
+            disabled={isFormDisabled}
           />
         </div>
 
@@ -303,10 +242,10 @@ export default function RecruitingPlanSettingsForm() {
             </span>
             <input
               type="datetime-local"
-              value={recruitmentStartAtInput}
+              value={isMounted ? recruitmentStartAtInput : ""}
               onChange={(event) => setRecruitmentStartAtInput(event.target.value)}
               className={inputClassName}
-              disabled={isSaving || isUploadingImage}
+              disabled={isFormDisabled}
             />
           </label>
           <label className="flex flex-col gap-2">
@@ -315,10 +254,10 @@ export default function RecruitingPlanSettingsForm() {
             </span>
             <input
               type="datetime-local"
-              value={recruitmentEndAtInput}
+              value={isMounted ? recruitmentEndAtInput : ""}
               onChange={(event) => setRecruitmentEndAtInput(event.target.value)}
               className={inputClassName}
-              disabled={isSaving || isUploadingImage}
+              disabled={isFormDisabled}
             />
           </label>
         </div>
@@ -375,7 +314,7 @@ export default function RecruitingPlanSettingsForm() {
                 reorderPromotionImageByIds(nextItems.map((item) => item.id))
               }
               onRemoveItem={removePromotionImageById}
-              disabled={isSaving || isUploadingImage}
+              disabled={isFormDisabled}
               emptyMessage="등록된 홍보 이미지가 없습니다."
             />
           </div>
@@ -386,7 +325,7 @@ export default function RecruitingPlanSettingsForm() {
             type="button"
             data-testid="recruiting-plan-save"
             onClick={() => void handleSubmit()}
-            disabled={isSaving || isUploadingImage}
+            disabled={isFormDisabled}
             className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition hover:bg-primary-active disabled:cursor-not-allowed disabled:bg-hairline-strong"
           >
             {isSaving ? "저장 중..." : "저장"}

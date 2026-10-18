@@ -4,7 +4,6 @@ import { forbidden } from "next/navigation";
 import { canManageGlobalUsers } from "@/features/auth/model/auth-shared";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import {
-  readNoContentSchema,
   writeRequest,
   type AdminWriteActionResult,
   toSessionUnavailableFailure,
@@ -75,7 +74,7 @@ export const updateUserAction = async (
   const payload = parsedPayload.data;
 
   return writeRequest({
-    path: `/users/${id}`,
+    path: `/users/${encodeURIComponent(id)}`,
     method: "PATCH",
     body: payload,
     responseSchema: apiUserSchema,
@@ -87,28 +86,12 @@ export const updateUserAction = async (
 export const bulkUpdateUsersRoleAction = async (
   input: ApiBulkUpdateUserRoleInput,
 ): Promise<BulkUpdateUsersRoleActionResult> => {
-  const parsedPayload = parseActionInput(apiBulkUpdateUserRoleInputSchema, input);
-  if (!parsedPayload.ok) {
-    return parsedPayload;
-  }
-  const payload = parsedPayload.data;
   return writeRequest({
     path: "/users/bulk-role",
     method: "PATCH",
-    body: payload,
+    bodySchema: apiBulkUpdateUserRoleInputSchema,
+    body: input,
     responseSchema: apiUserSchema.array(),
-    accessScope: "user_manager",
-    tags: USER_CACHE_TAGS,
-  });
-};
-
-export const deleteUserAction = async (
-  id: string,
-): Promise<AdminWriteActionResult<void>> => {
-  return writeRequest({
-    path: `/users/${id}`,
-    method: "DELETE",
-    responseSchema: readNoContentSchema,
     accessScope: "user_manager",
     tags: USER_CACHE_TAGS,
   });

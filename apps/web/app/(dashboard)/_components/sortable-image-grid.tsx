@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import Image from "next/image";
 import {
   DndContext,
@@ -117,7 +117,7 @@ const SortableImageCard = ({ item, disabled, onRemoveItem }: SortableCardProps) 
   );
 };
 
-export default function SortableImageGrid({
+function SortableImageGrid({
   items,
   onReorder,
   onRemoveItem,
@@ -215,3 +215,7 @@ export default function SortableImageGrid({
     </DndContext>
   );
 }
+
+// 폼의 다른 입력(제목 등)이 바뀔 때는 이미지 그리드를 다시 그리지 않는다.
+// 호출부는 items와 핸들러를 메모해 넘겨야 효과가 있다.
+export default memo(SortableImageGrid);

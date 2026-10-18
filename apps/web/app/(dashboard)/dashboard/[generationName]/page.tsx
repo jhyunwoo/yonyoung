@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { formatAuditActor } from "@/features/dashboard/ui/audit-display";
 import { formatKoreanDate, formatKoreanDateRange } from "@/shared/utils/date-formatters";
-import { readCookieHeader } from "@/shared/http/http";
+import { sortByStartDateDesc } from "@/shared/utils/date-input";
 import {
   listAdminActivities,
   listAdminExhibitions,
@@ -12,19 +12,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import DashboardR2StorageUsage from "@/app/(dashboard)/_components/dashboard-r2-storage-usage";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
 
-const sortByStartDateDesc = <T extends { startDate: number }>(list: T[]): T[] => {
-  return [...list].sort((left, right) => right.startDate - left.startDate);
-};
-
 const GenerationDashboardSummary = async (input: {
   generationId: string;
   generationPath: string;
 }) => {
-  const cookieHeader = await readCookieHeader();
   const [activitiesResult, exhibitionsResult, membersResult] = await Promise.all([
-    listAdminActivities(input.generationId, cookieHeader),
-    listAdminExhibitions(input.generationId, cookieHeader),
-    listAdminGenerationMembers(input.generationId, cookieHeader),
+    listAdminActivities(input.generationId),
+    listAdminExhibitions(input.generationId),
+    listAdminGenerationMembers(input.generationId),
   ]);
 
   // 요약 카드는 읽기 실패 시에도 나머지 항목을 계속 보여 준다.

@@ -1,14 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  apiActivityImageSchema,
   apiActivitySchema,
-  apiExhibitionImageSchema,
+  apiCreateActivityInputSchema,
+  apiCreateExhibitionInputSchema,
+  apiCreateGenerationInputSchema,
+  apiCreateLinktreeInputSchema,
+  apiCreateLinktreeItemInputSchema,
   apiExhibitionSchema,
   apiGenerationSchema,
   apiLinktreeItemSchema,
   apiLinktreeSchema,
   apiRecruitingPlanSchema,
+  apiReorderGenerationsInputSchema,
   apiSiteSettingsSchema,
+  apiUpdateActivityInputSchema,
+  apiUpdateExhibitionInputSchema,
+  apiUpdateGenerationInputSchema,
+  apiUpdateLinktreeInputSchema,
+  apiUpdateLinktreeItemInputSchema,
+  apiUpsertCurrentRecruitingPlanInputSchema,
 } from "@yonyoung/contracts/schemas";
 
 type CapturedWriteRequest = {
@@ -16,6 +26,7 @@ type CapturedWriteRequest = {
   method: "POST" | "PATCH" | "DELETE";
   body?: unknown;
   responseSchema: unknown;
+  bodySchema?: { safeParse: (value: unknown) => { success: boolean } };
   accessScope?: string;
   tags: readonly string[];
 };
@@ -41,23 +52,19 @@ vi.mock("@/features/dashboard/actions/admin-write-core", () => ({
 }));
 
 import {
-  addActivityImageAction,
   addActivityImagesAction,
   createActivityAction,
   deleteActivityAction,
   deleteActivityImageAction,
   updateActivityAction,
-  updateActivityImageAction,
   updateActivityImagesAction,
 } from "@/features/dashboard/actions/activities";
 import {
-  addExhibitionImageAction,
   addExhibitionImagesAction,
   createExhibitionAction,
   deleteExhibitionAction,
   deleteExhibitionImageAction,
   updateExhibitionAction,
-  updateExhibitionImageAction,
   updateExhibitionImagesAction,
 } from "@/features/dashboard/actions/exhibitions";
 import {
@@ -126,6 +133,7 @@ type ActionContract = {
   accessScope: string;
   tags: readonly string[];
   responseSchema: unknown | "array";
+  bodySchema?: unknown | "array";
 };
 
 const actionContracts: ActionContract[] = [
@@ -137,6 +145,7 @@ const actionContracts: ActionContract[] = [
     accessScope: "manager",
     tags: ["admin:activities", "public:activities"],
     responseSchema: apiActivitySchema,
+    bodySchema: apiCreateActivityInputSchema,
   },
   {
     name: "활동 수정",
@@ -146,6 +155,7 @@ const actionContracts: ActionContract[] = [
     accessScope: "manager",
     tags: ["admin:activities", "public:activities", "public:activity:activity-1"],
     responseSchema: apiActivitySchema,
+    bodySchema: apiUpdateActivityInputSchema,
   },
   {
     name: "활동 삭제",
@@ -157,15 +167,6 @@ const actionContracts: ActionContract[] = [
     responseSchema: noContentSchema,
   },
   {
-    name: "활동 이미지 생성",
-    invoke: () => addActivityImageAction("activity-1", activityImageInput),
-    path: "/activities/activity-1/images",
-    method: "POST",
-    accessScope: "manager",
-    tags: ["admin:activities", "public:activities", "public:activity:activity-1"],
-    responseSchema: apiActivityImageSchema,
-  },
-  {
     name: "활동 이미지 일괄 생성",
     invoke: () => addActivityImagesAction("activity-1", [activityImageInput]),
     path: "/activities/activity-1/images/batch",
@@ -173,15 +174,7 @@ const actionContracts: ActionContract[] = [
     accessScope: "manager",
     tags: ["admin:activities", "public:activities", "public:activity:activity-1"],
     responseSchema: "array",
-  },
-  {
-    name: "활동 이미지 수정",
-    invoke: () => updateActivityImageAction("activity-1", "image-1", { sortOrder: 1 }),
-    path: "/activities/activity-1/images/image-1",
-    method: "PATCH",
-    accessScope: "manager",
-    tags: ["admin:activities", "public:activities", "public:activity:activity-1"],
-    responseSchema: apiActivityImageSchema,
+    bodySchema: "array",
   },
   {
     name: "활동 이미지 일괄 수정",
@@ -192,6 +185,7 @@ const actionContracts: ActionContract[] = [
     accessScope: "manager",
     tags: ["admin:activities", "public:activities", "public:activity:activity-1"],
     responseSchema: "array",
+    bodySchema: "array",
   },
   {
     name: "활동 이미지 삭제",
@@ -210,6 +204,7 @@ const actionContracts: ActionContract[] = [
     accessScope: "manager",
     tags: ["admin:exhibitions", "public:exhibitions"],
     responseSchema: apiExhibitionSchema,
+    bodySchema: apiCreateExhibitionInputSchema,
   },
   {
     name: "전시 수정",
@@ -219,6 +214,7 @@ const actionContracts: ActionContract[] = [
     accessScope: "manager",
     tags: ["admin:exhibitions", "public:exhibitions", "public:exhibition:exhibition-1"],
     responseSchema: apiExhibitionSchema,
+    bodySchema: apiUpdateExhibitionInputSchema,
   },
   {
     name: "전시 삭제",
@@ -230,15 +226,6 @@ const actionContracts: ActionContract[] = [
     responseSchema: noContentSchema,
   },
   {
-    name: "전시 이미지 생성",
-    invoke: () => addExhibitionImageAction("exhibition-1", exhibitionImageInput),
-    path: "/exhibitions/exhibition-1/images",
-    method: "POST",
-    accessScope: "manager",
-    tags: ["admin:exhibitions", "public:exhibitions", "public:exhibition:exhibition-1"],
-    responseSchema: apiExhibitionImageSchema,
-  },
-  {
     name: "전시 이미지 일괄 생성",
     invoke: () => addExhibitionImagesAction("exhibition-1", [exhibitionImageInput]),
     path: "/exhibitions/exhibition-1/images/batch",
@@ -246,16 +233,7 @@ const actionContracts: ActionContract[] = [
     accessScope: "manager",
     tags: ["admin:exhibitions", "public:exhibitions", "public:exhibition:exhibition-1"],
     responseSchema: "array",
-  },
-  {
-    name: "전시 이미지 수정",
-    invoke: () =>
-      updateExhibitionImageAction("exhibition-1", "image-1", { sortOrder: 1 }),
-    path: "/exhibitions/exhibition-1/images/image-1",
-    method: "PATCH",
-    accessScope: "manager",
-    tags: ["admin:exhibitions", "public:exhibitions", "public:exhibition:exhibition-1"],
-    responseSchema: apiExhibitionImageSchema,
+    bodySchema: "array",
   },
   {
     name: "전시 이미지 일괄 수정",
@@ -268,6 +246,7 @@ const actionContracts: ActionContract[] = [
     accessScope: "manager",
     tags: ["admin:exhibitions", "public:exhibitions", "public:exhibition:exhibition-1"],
     responseSchema: "array",
+    bodySchema: "array",
   },
   {
     name: "전시 이미지 삭제",
@@ -297,6 +276,7 @@ const actionContracts: ActionContract[] = [
       "public:photographers",
     ],
     responseSchema: apiGenerationSchema,
+    bodySchema: apiCreateGenerationInputSchema,
   },
   {
     name: "기수 수정",
@@ -311,6 +291,7 @@ const actionContracts: ActionContract[] = [
       "public:photographers",
     ],
     responseSchema: apiGenerationSchema,
+    bodySchema: apiUpdateGenerationInputSchema,
   },
   {
     name: "기수 순서 변경",
@@ -331,6 +312,7 @@ const actionContracts: ActionContract[] = [
       "public:photographers",
     ],
     responseSchema: "array",
+    bodySchema: apiReorderGenerationsInputSchema,
   },
   {
     name: "기수 삭제",
@@ -354,6 +336,7 @@ const actionContracts: ActionContract[] = [
     accessScope: "manager",
     tags: ["admin:linktree", "public:linktree"],
     responseSchema: apiLinktreeSchema,
+    bodySchema: apiCreateLinktreeInputSchema,
   },
   {
     name: "링크트리 수정",
@@ -363,6 +346,7 @@ const actionContracts: ActionContract[] = [
     accessScope: "manager",
     tags: ["admin:linktree", "public:linktree"],
     responseSchema: apiLinktreeSchema,
+    bodySchema: apiUpdateLinktreeInputSchema,
   },
   {
     name: "링크트리 삭제",
@@ -385,6 +369,7 @@ const actionContracts: ActionContract[] = [
     accessScope: "manager",
     tags: ["admin:linktree", "public:linktree"],
     responseSchema: apiLinktreeItemSchema,
+    bodySchema: apiCreateLinktreeItemInputSchema,
   },
   {
     name: "링크트리 항목 수정",
@@ -397,6 +382,7 @@ const actionContracts: ActionContract[] = [
     accessScope: "manager",
     tags: ["admin:linktree", "public:linktree"],
     responseSchema: apiLinktreeItemSchema,
+    bodySchema: apiUpdateLinktreeItemInputSchema,
   },
   {
     name: "링크트리 항목 삭제",
@@ -422,6 +408,7 @@ const actionContracts: ActionContract[] = [
     accessScope: "leadership",
     tags: ["admin:recruiting-plan", "public:recruiting-plan"],
     responseSchema: apiRecruitingPlanSchema,
+    bodySchema: apiUpsertCurrentRecruitingPlanInputSchema,
   },
   {
     name: "사이트 설정 수정",
@@ -457,26 +444,41 @@ describe("dashboard domain action contracts", () => {
       } else {
         expect(request.responseSchema).toBe(contract.responseSchema);
       }
+
+      if (contract.bodySchema === "array") {
+        expect(request.bodySchema).toHaveProperty("safeParse");
+      } else {
+        expect(request.bodySchema).toBe(contract.bodySchema);
+      }
     });
   }
 
-  it("batch payload의 request schema를 실행한다", async () => {
-    await expect(
-      addActivityImagesAction("activity-1", [
-        {
-          imageUrl: "invalid-url",
-          sortOrder: 0,
-        },
-      ]),
-    ).resolves.toMatchObject({ ok: false, status: 400, code: "VALIDATION_ERROR" });
-    await expect(
-      updateExhibitionImagesAction("exhibition-1", [
-        {
-          imageId: "image-1",
-          sortOrder: 1.5,
-        },
-      ]),
-    ).resolves.toMatchObject({ ok: false, status: 400, code: "VALIDATION_ERROR" });
-    expect(writeRequestMock).not.toHaveBeenCalled();
+  it("경로의 id는 인코딩하고 캐시 태그에는 원본 id를 쓴다", async () => {
+    await deleteActivityImageAction("activity/1", "image?1");
+
+    expect(lastRequest()).toMatchObject({
+      path: "/activities/activity%2F1/images/image%3F1",
+      tags: ["admin:activities", "public:activities", "public:activity:activity/1"],
+    });
+  });
+
+  it("batch payload를 request schema와 함께 넘겨 writeRequest가 검증하게 한다", async () => {
+    await addActivityImagesAction("activity-1", [
+      {
+        imageUrl: "invalid-url",
+        sortOrder: 0,
+      },
+    ]);
+    const addRequest = lastRequest();
+    expect(addRequest.bodySchema?.safeParse(addRequest.body).success).toBe(false);
+
+    await updateExhibitionImagesAction("exhibition-1", [
+      {
+        imageId: "image-1",
+        sortOrder: 1.5,
+      },
+    ]);
+    const updateRequest = lastRequest();
+    expect(updateRequest.bodySchema?.safeParse(updateRequest.body).success).toBe(false);
   });
 });

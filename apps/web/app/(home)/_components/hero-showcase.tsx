@@ -87,7 +87,9 @@ export default function HeroShowcase({
                       unoptimized={shouldUseUnoptimizedImage(
                         featuredExhibition.coverImageUrl,
                       )}
-                      sizes="(min-width: 768px) 40vw, 100vw"
+                      // md 이상은 1.1fr/0.9fr 두 칸(gap-10) 중 오른쪽이라 (콘텐츠 폭 - 40) × 0.45 다.
+                      // 콘텐츠가 max-w-300(1200px)에 닿는 1264px 부터는 522px 로 고정된다.
+                      sizes="(min-width: 1264px) 522px, (min-width: 768px) 45vw, 100vw"
                       className="h-full w-full object-cover"
                       data-testid="home-hero-exhibition-image"
                     />

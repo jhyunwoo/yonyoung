@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import type { ApiGeneration, ApiUser } from "@yonyoung/contracts";
-import { AdminApiError } from "@/shared/http/http";
+import { readErrorMessage } from "@/shared/http/read-error-message";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { useConfirm } from "@/app/(dashboard)/_components/ui/confirm-provider";
 import {
@@ -32,17 +32,8 @@ import {
 
 export { readRoleFilterLabel } from "@/app/(dashboard)/dashboard/settings/generations/generation-management-selectors";
 
-const readErrorMessage = (error: unknown): string => {
-  if (error instanceof AdminApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error && error.message.length > 0) {
-    return error.message;
-  }
-
-  return "요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
-};
+const ERROR_FALLBACK_MESSAGE =
+  "요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
 
 /** 수정 폼은 선택된 기수가 바뀌면 서버 값으로 되돌아가야 한다. */
 type EditDraft = {
@@ -154,7 +145,7 @@ export const useGenerationManagement = ({
       setSuccessMessage("새 기수를 생성했습니다.");
       router.refresh();
     } catch (error) {
-      setErrorMessage(readErrorMessage(error));
+      setErrorMessage(readErrorMessage(error, ERROR_FALLBACK_MESSAGE));
     } finally {
       setIsSavingGeneration(false);
     }
@@ -197,7 +188,7 @@ export const useGenerationManagement = ({
       setSuccessMessage("선택한 기수 정보를 수정했습니다.");
       router.refresh();
     } catch (error) {
-      setErrorMessage(readErrorMessage(error));
+      setErrorMessage(readErrorMessage(error, ERROR_FALLBACK_MESSAGE));
     } finally {
       setIsSavingGeneration(false);
     }
@@ -231,7 +222,7 @@ export const useGenerationManagement = ({
       setSuccessMessage(`"${current.name}"의 순서를 바꿨습니다.`);
       router.refresh();
     } catch (error) {
-      setErrorMessage(readErrorMessage(error));
+      setErrorMessage(readErrorMessage(error, ERROR_FALLBACK_MESSAGE));
     } finally {
       setIsSavingGeneration(false);
     }
@@ -265,7 +256,7 @@ export const useGenerationManagement = ({
       setSuccessMessage("선택한 기수를 삭제했습니다.");
       router.refresh();
     } catch (error) {
-      setErrorMessage(readErrorMessage(error));
+      setErrorMessage(readErrorMessage(error, ERROR_FALLBACK_MESSAGE));
     } finally {
       setIsSavingGeneration(false);
     }
@@ -323,10 +314,10 @@ export const useGenerationManagement = ({
         setSuccessMessage(input.successMessage(updatedUsers.length));
       }
       setErrorMessage(
-        `${failures.length}명은 변경하지 못했습니다${failedNames ? ` (${failedNames})` : ""}: ${readErrorMessage(failures[0]?.error)}`,
+        `${failures.length}명은 변경하지 못했습니다${failedNames ? ` (${failedNames})` : ""}: ${readErrorMessage(failures[0]?.error, ERROR_FALLBACK_MESSAGE)}`,
       );
     } catch (error) {
-      setErrorMessage(readErrorMessage(error));
+      setErrorMessage(readErrorMessage(error, ERROR_FALLBACK_MESSAGE));
     } finally {
       input.setPending(false);
     }

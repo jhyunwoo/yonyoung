@@ -117,6 +117,39 @@ describe("writeRequest", () => {
     expect(updateTagMock).toHaveBeenCalledWith("public:activities");
   });
 
+  it("bodySchema 검증에 실패하면 권한 확인과 API 호출 없이 실패 결과를 돌려준다", async () => {
+    const result = await writeRequest({
+      path: "/activities",
+      method: "POST",
+      bodySchema: z.object({ title: z.string().min(1) }),
+      body: { title: "" },
+      responseSchema: z.object({ id: z.string() }),
+      tags: ["public:activities"],
+    });
+
+    expect(result).toMatchObject({ ok: false, status: 400, code: "VALIDATION_ERROR" });
+    expect(requireSessionMock).not.toHaveBeenCalled();
+    expect(honoRequestMock).not.toHaveBeenCalled();
+    expect(updateTagMock).not.toHaveBeenCalled();
+  });
+
+  it("bodySchema가 있으면 파싱된 값을 body로 보낸다", async () => {
+    honoRequestMock.mockResolvedValue({ id: "a1" });
+
+    await writeRequest({
+      path: "/activities",
+      method: "POST",
+      bodySchema: z.object({ n: z.coerce.number() }),
+      body: { n: "3", extra: true },
+      responseSchema: z.object({ id: z.string() }),
+      tags: [],
+    });
+
+    expect(honoRequestMock).toHaveBeenCalledWith(
+      expect.objectContaining({ body: { n: 3 } }),
+    );
+  });
+
   it("API 오류면 캐시를 건드리지 않는다", async () => {
     honoRequestMock.mockRejectedValue(
       new HonoApiError({ status: 409, code: "CONFLICT", message: "충돌" }),

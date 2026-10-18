@@ -12,11 +12,15 @@ import { summarizeRichTextHtml } from "@/features/media/rich-text/rich-text";
 import { RichTextContent } from "@/features/media/rich-text/rich-text-content";
 import { createPageMetadata, resolveSiteUrl } from "@/features/seo/metadata/seo";
 import JsonLd from "@/features/seo/structured-data/json-ld";
+import {
+  buildBreadcrumbJsonLd,
+  buildOrganizationRef,
+} from "@/features/seo/structured-data/schema-builders";
 import PageViewTracker from "@/app/_components/page-view-tracker";
 import ArchiveDetailSkeleton from "@/app/(home)/_components/archive-detail-skeleton";
 import {
   PhotoGallery,
-  type PhotoGalleryItem,
+  toDetailGalleryItems,
 } from "@/app/(home)/_components/photo-gallery";
 import { AttachmentList } from "@/app/(home)/_components/attachment-list";
 
@@ -77,7 +81,7 @@ async function RecordDetailContent({ params }: RecordDetailPageProps) {
   // 활동 정보와 첨부 자료는 독립적이므로 병렬로 조회한다
   const [activity, attachments] = await Promise.all([
     getActivity(id),
-    getPublicAttachments("activity", id).catch(() => []),
+    getPublicAttachments("activity", id),
   ]);
 
   if (!activity) {
@@ -101,70 +105,20 @@ async function RecordDetailContent({ params }: RecordDetailPageProps) {
     datePublished: new Date(activity.createdAt).toISOString(),
     dateModified: new Date(activity.updatedAt).toISOString(),
     inLanguage: "ko-KR",
-    author: {
-      "@type": "Organization",
-      "@id": `${siteUrl}/#organization`,
-      name: "연영회",
-      url: siteUrl,
-    },
+    author: buildOrganizationRef(siteUrl),
     publisher: {
-      "@type": "Organization",
-      "@id": `${siteUrl}/#organization`,
-      name: "연영회",
-      url: siteUrl,
+      ...buildOrganizationRef(siteUrl),
       logo: {
         "@type": "ImageObject",
         url: `${siteUrl}/android-chrome-512x512.png`,
       },
     },
   };
-  const breadcrumbJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "홈",
-        item: siteUrl,
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: "활동 기록",
-        item: `${siteUrl}/archive/records`,
-      },
-      {
-        "@type": "ListItem",
-        position: 3,
-        name: activity.title,
-        item: pageUrl,
-      },
-    ],
-  };
-
-  // 상세 이미지가 없으면 커버 이미지 한 장으로 대체 (커버는 크기 정보가 없어 폴백 측정 사용)
-  const galleryItems: PhotoGalleryItem[] =
-    activity.detailImages.length > 0
-      ? activity.detailImages
-          .slice()
-          .sort((a, b) => a.sortOrder - b.sortOrder)
-          .map((image, index) => ({
-            key: image.id,
-            imageUrl: image.imageUrl,
-            alt: `${activity.title} 상세 이미지 ${index + 1}`,
-            width: image.width,
-            height: image.height,
-          }))
-      : [
-          {
-            key: `${activity.id}-cover`,
-            imageUrl: activity.coverImageUrl,
-            alt: `${activity.title} 대표 이미지`,
-            width: null,
-            height: null,
-          },
-        ];
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: "홈", url: siteUrl },
+    { name: "활동 기록", url: `${siteUrl}/archive/records` },
+    { name: activity.title, url: pageUrl },
+  ]);
 
   return (
     <>
@@ -185,7 +139,7 @@ async function RecordDetailContent({ params }: RecordDetailPageProps) {
       </header>
 
       <PhotoGallery
-        items={galleryItems}
+        items={toDetailGalleryItems(activity)}
         fallbackAspect={4 / 3}
         refAspect={1.5}
         data-testid="record-detail-gallery"

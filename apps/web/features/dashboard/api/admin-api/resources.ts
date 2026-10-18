@@ -1,19 +1,9 @@
 import type {
-  ApiActivity,
-  ApiAdminDashboardStats,
   ApiAttachment,
   ApiAttachmentScope,
   ApiAuditLog,
   ApiAuditResourceType,
-  ApiExhibition,
-  ApiGeneration,
-  ApiGenerationMemberSummary,
   ApiLinktree,
-  ApiListActivitiesQuery,
-  ApiListExhibitionsQuery,
-  ApiRecruitingPlan,
-  ApiSiteSettings,
-  ApiUser,
   ApiUserResourceHistory,
 } from "@yonyoung/contracts";
 import { adminRequest } from "@/features/dashboard/api/admin-api/http";
@@ -24,23 +14,19 @@ import {
   updateAttachmentAction,
 } from "@/features/dashboard/actions/attachments";
 import {
-  addActivityImageAction,
   addActivityImagesAction,
   createActivityAction,
   deleteActivityAction,
   deleteActivityImageAction,
   updateActivityAction,
-  updateActivityImageAction,
   updateActivityImagesAction,
 } from "@/features/dashboard/actions/activities";
 import {
-  addExhibitionImageAction,
   addExhibitionImagesAction,
   createExhibitionAction,
   deleteExhibitionAction,
   deleteExhibitionImageAction,
   updateExhibitionAction,
-  updateExhibitionImageAction,
   updateExhibitionImagesAction,
 } from "@/features/dashboard/actions/exhibitions";
 import {
@@ -61,7 +47,6 @@ import { upsertCurrentRecruitingPlanAction } from "@/features/dashboard/actions/
 import { updateSiteSettingsAction } from "@/features/dashboard/actions/site-settings";
 import {
   bulkUpdateUsersRoleAction,
-  deleteUserAction,
   updateUserAction,
 } from "@/features/dashboard/actions/users";
 
@@ -96,40 +81,22 @@ export const adminResourceApi = {
     );
   },
 
-  listGenerations: () => apiRequest.get<ApiGeneration[]>("/generations"),
   createGeneration: bindAdminWriteAction(createGenerationAction),
-  getGenerationById: (id: string) => apiRequest.get<ApiGeneration>(`/generations/${id}`),
-  listGenerationMembers: (generationId: string) =>
-    apiRequest.get<ApiGenerationMemberSummary[]>(`/generations/${generationId}/members`),
   updateGeneration: bindAdminWriteAction(updateGenerationAction),
   reorderGenerations: bindAdminWriteAction(reorderGenerationsAction),
   deleteGeneration: bindAdminWriteAction(deleteGenerationAction),
 
-  listActivities: (input: ApiListActivitiesQuery = {}) =>
-    apiRequest.get<ApiActivity[]>(
-      withOptionalQuery("/activities", { generationId: input.generationId }),
-    ),
   createActivity: bindAdminWriteAction(createActivityAction),
-  getActivityById: (id: string) => apiRequest.get<ApiActivity>(`/activities/${id}`),
   updateActivity: bindAdminWriteAction(updateActivityAction),
   deleteActivity: bindAdminWriteAction(deleteActivityAction),
-  addActivityImage: bindAdminWriteAction(addActivityImageAction),
   addActivityImages: bindAdminWriteAction(addActivityImagesAction),
-  updateActivityImage: bindAdminWriteAction(updateActivityImageAction),
   updateActivityImages: bindAdminWriteAction(updateActivityImagesAction),
   deleteActivityImage: bindAdminWriteAction(deleteActivityImageAction),
 
-  listExhibitions: (input: ApiListExhibitionsQuery = {}) =>
-    apiRequest.get<ApiExhibition[]>(
-      withOptionalQuery("/exhibitions", { generationId: input.generationId }),
-    ),
   createExhibition: bindAdminWriteAction(createExhibitionAction),
-  getExhibitionById: (id: string) => apiRequest.get<ApiExhibition>(`/exhibitions/${id}`),
   updateExhibition: bindAdminWriteAction(updateExhibitionAction),
   deleteExhibition: bindAdminWriteAction(deleteExhibitionAction),
-  addExhibitionImage: bindAdminWriteAction(addExhibitionImageAction),
   addExhibitionImages: bindAdminWriteAction(addExhibitionImagesAction),
-  updateExhibitionImage: bindAdminWriteAction(updateExhibitionImageAction),
   updateExhibitionImages: bindAdminWriteAction(updateExhibitionImagesAction),
   deleteExhibitionImage: bindAdminWriteAction(deleteExhibitionImageAction),
 
@@ -141,24 +108,19 @@ export const adminResourceApi = {
   updateAttachment: bindAdminWriteAction(updateAttachmentAction),
   deleteAttachment: bindAdminWriteAction(deleteAttachmentAction),
 
-  listLinktrees: () => apiRequest.get<ApiLinktree[]>("/linktree"),
   createLinktree: bindAdminWriteAction(createLinktreeAction),
-  getLinktreeById: (id: string) => apiRequest.get<ApiLinktree>(`/linktree/${id}`),
+  getLinktreeById: (id: string) =>
+    apiRequest.get<ApiLinktree>(`/linktree/${encodeURIComponent(id)}`),
   updateLinktree: bindAdminWriteAction(updateLinktreeAction),
   deleteLinktree: bindAdminWriteAction(deleteLinktreeAction),
   addLinktreeItem: bindAdminWriteAction(addLinktreeItemAction),
   updateLinktreeItem: bindAdminWriteAction(updateLinktreeItemAction),
   deleteLinktreeItem: bindAdminWriteAction(deleteLinktreeItemAction),
 
-  getSiteSettings: () => apiRequest.get<ApiSiteSettings>("/site-settings"),
   updateSiteSettings: bindAdminWriteAction(updateSiteSettingsAction),
 
-  getCurrentRecruitingPlan: () =>
-    apiRequest.get<ApiRecruitingPlan | null>("/recruiting-plan/current"),
   upsertCurrentRecruitingPlan: bindAdminWriteAction(upsertCurrentRecruitingPlanAction),
 
-  listUsers: () => apiRequest.get<ApiUser[]>("/users"),
-  getUserById: (id: string) => apiRequest.get<ApiUser>(`/users/${id}`),
   getUserResourceHistory: (
     id: string,
     input: {
@@ -178,7 +140,7 @@ export const adminResourceApi = {
         ? Math.min(100, Math.floor(input.pageSize))
         : 10;
     return apiRequest.get<ApiUserResourceHistory>(
-      withOptionalQuery(`/users/${id}/resource-history`, {
+      withOptionalQuery(`/users/${encodeURIComponent(id)}/resource-history`, {
         page: String(safePage),
         pageSize: String(safePageSize),
         action: input.action,
@@ -187,24 +149,4 @@ export const adminResourceApi = {
   },
   updateUser: bindAdminWriteAction(updateUserAction),
   bulkUpdateUsersRole: bindAdminWriteAction(bulkUpdateUsersRoleAction),
-
-  getAdminDashboardStats: (generationSortOrder: number | null = null) => {
-    const search = new URLSearchParams();
-    if (typeof generationSortOrder === "number" && Number.isFinite(generationSortOrder)) {
-      search.set("generationSortOrder", String(generationSortOrder));
-    }
-
-    const suffix = search.size > 0 ? `?${search.toString()}` : "";
-    return apiRequest.get<ApiAdminDashboardStats>(`/admin/dashboard${suffix}`);
-  },
-
-  deleteUser: bindAdminWriteAction(deleteUserAction),
 } as const;
-
-type AdminResourceApi = typeof adminResourceApi;
-
-export type AdminResourceApiMethodName = keyof AdminResourceApi;
-
-export type AdminResourceApiMethodResult<T extends AdminResourceApiMethodName> = Awaited<
-  ReturnType<AdminResourceApi[T]>
->;

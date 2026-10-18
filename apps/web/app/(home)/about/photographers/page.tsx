@@ -1,9 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import {
-  listPublicPhotographers,
-  safeList,
-} from "@/features/public/services/public-read-service";
+import { listPublicPhotographers } from "@/features/public/services/public-read-service";
 import { formatKoreanYearRange } from "@/shared/utils/date-formatters";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
@@ -22,7 +19,7 @@ export const metadata: Metadata = createPageMetadata(PAGE_SEO.photographers);
 export const instant = true;
 
 export default async function PhotographersPage() {
-  const generations = await safeList(listPublicPhotographers, []);
+  const generations = await listPublicPhotographers();
 
   return (
     <div

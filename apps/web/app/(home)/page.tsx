@@ -10,26 +10,26 @@ import {
   getFeaturedPublicExhibition,
   listPublicActivities,
   listPublicLinktrees,
-  safeList,
 } from "@/features/public/services/public-read-service";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
 import { summarizeRichTextHtml } from "@/features/media/rich-text/rich-text";
 import { resolveSiteUrl } from "@/features/seo/metadata/seo";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
 import JsonLd from "@/features/seo/structured-data/json-ld";
+import { buildOrganizationId } from "@/features/seo/structured-data/schema-builders";
 import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
 
 const getHomePrimaryData = async () => {
   return Promise.all([
-    safeList(listPublicActivities, []),
+    listPublicActivities(),
     // 히어로에 띄울 전시는 "지금" 기준으로 골라야 해서 서버 캐시 안에서 결정한다.
     // 예전에는 클라이언트가 하이드레이션 후 다시 골라 LCP 이미지를 두 번 받았다.
-    safeList(getFeaturedPublicExhibition, null),
+    getFeaturedPublicExhibition(),
   ]);
 };
 
 const getHomeQuickLinks = async () => {
-  const linktrees = await safeList(listPublicLinktrees, []);
+  const linktrees = await listPublicLinktrees();
   return flattenLinktreeItems(linktrees).slice(0, 6);
 };
 
@@ -109,7 +109,7 @@ export default async function HomePage() {
 
   const recentActivities = activities.slice(0, 6);
   const siteUrl = resolveSiteUrl();
-  const organizationId = `${siteUrl}/#organization`;
+  const organizationId = buildOrganizationId(siteUrl);
   const websiteId = `${siteUrl}/#website`;
   const organizationJsonLd = {
     "@context": "https://schema.org",
@@ -185,7 +185,8 @@ export default async function HomePage() {
                       alt={activity.title}
                       fill
                       unoptimized={shouldUseUnoptimizedImage(activity.coverImageUrl)}
-                      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                      // SectionShell 이 max-w-[1200px] 라 3열(gap-8) 한 칸은 380px 을 넘지 않는다.
+                      sizes="(min-width: 1200px) 380px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                       className="h-full w-full object-cover"
                     />
                   </div>

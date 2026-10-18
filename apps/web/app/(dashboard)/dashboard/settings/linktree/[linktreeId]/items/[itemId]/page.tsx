@@ -4,7 +4,6 @@ import AdminReadErrorNotice from "@/app/(dashboard)/_components/admin-read-error
 import { findLinktreeItemById } from "@/app/(dashboard)/_components/linktree-shared";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import { isAdminRole } from "@/features/auth/model/auth-shared";
-import { readCookieHeader } from "@/shared/http/http";
 import { getAdminLinktreeById } from "@/features/dashboard/services/admin-read-service";
 
 export default async function SettingsLinktreeItemDetailPage({
@@ -17,7 +16,7 @@ export default async function SettingsLinktreeItemDetailPage({
     serverAuthGuard.requireSession(),
   ]);
 
-  const linktreeResult = await getAdminLinktreeById(linktreeId, await readCookieHeader());
+  const linktreeResult = await getAdminLinktreeById(linktreeId);
 
   if (!linktreeResult.ok) {
     if (linktreeResult.error.reason === "not_found") {

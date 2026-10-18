@@ -60,8 +60,3 @@ export type PublicCacheTag =
   PublicCollectionCacheTag | PublicActivityTag | PublicExhibitionTag;
 
 export type AdminCacheTag = (typeof CACHE_TAGS.admin)[keyof typeof CACHE_TAGS.admin];
-
-export const PUBLIC_CACHE_TAG_VALUES = Object.values(
-  CACHE_TAGS.public,
-) as PublicCollectionCacheTag[];
-export const ADMIN_CACHE_TAG_VALUES = Object.values(CACHE_TAGS.admin) as AdminCacheTag[];

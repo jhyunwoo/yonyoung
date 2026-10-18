@@ -1,12 +1,8 @@
 import "server-only";
+import { trimToNull } from "@/shared/utils/trim-to-null";
 
 const MAX_METADATA_KEYS = 20;
 const UNKNOWN_ROUTE = "/unknown";
-
-const trimToNull = (value: string | undefined): string | null => {
-  const trimmed = value?.trim();
-  return trimmed ? trimmed : null;
-};
 
 export const normalizeObservedRoute = (value: string): string => {
   const trimmed = value.trim();
