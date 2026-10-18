@@ -1,10 +1,8 @@
 import type {
-  ApiActivity,
   ApiAttachment,
   ApiAttachmentScope,
   ApiAuditLog,
   ApiAuditResourceType,
-  ApiExhibition,
   ApiLinktree,
   ApiUserResourceHistory,
 } from "@yonyoung/contracts";
@@ -89,8 +87,6 @@ export const adminResourceApi = {
   deleteGeneration: bindAdminWriteAction(deleteGenerationAction),
 
   createActivity: bindAdminWriteAction(createActivityAction),
-  getActivityById: (id: string) =>
-    apiRequest.get<ApiActivity>(`/activities/${encodeURIComponent(id)}`),
   updateActivity: bindAdminWriteAction(updateActivityAction),
   deleteActivity: bindAdminWriteAction(deleteActivityAction),
   addActivityImages: bindAdminWriteAction(addActivityImagesAction),
@@ -98,8 +94,6 @@ export const adminResourceApi = {
   deleteActivityImage: bindAdminWriteAction(deleteActivityImageAction),
 
   createExhibition: bindAdminWriteAction(createExhibitionAction),
-  getExhibitionById: (id: string) =>
-    apiRequest.get<ApiExhibition>(`/exhibitions/${encodeURIComponent(id)}`),
   updateExhibition: bindAdminWriteAction(updateExhibitionAction),
   deleteExhibition: bindAdminWriteAction(deleteExhibitionAction),
   addExhibitionImages: bindAdminWriteAction(addExhibitionImagesAction),
