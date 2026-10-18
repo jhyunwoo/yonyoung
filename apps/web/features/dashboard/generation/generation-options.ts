@@ -89,10 +89,7 @@ export const getAccessibleDashboardGenerationOptions = async (
 
   // 프로필 조회와 기수 목록 조회는 서로 독립 — 병렬로 실행해 왕복 시간을 줄인다
   const generationsPromise = fetchGenerationsFromServer();
-  let profile = await profilePromise;
-  if (!profile && options?.profile === undefined) {
-    profile = await serverAuthGuard.getCurrentUserProfile(session);
-  }
+  const profile = await profilePromise;
   const generations = await generationsPromise;
   const mergedUser = {
     ...session.user,
