@@ -33,7 +33,7 @@ describe("LinktreeCreateForm", () => {
 
   it("shows validation errors", async () => {
     const user = userEvent.setup();
-    render(<LinktreeCreateForm canWrite listPath="/dashboard/settings/linktree" />);
+    render(<LinktreeCreateForm listPath="/dashboard/settings/linktree" />);
 
     await user.click(screen.getByTestId("linktree-create-submit"));
     expect(await screen.findByText("분류 이름을 입력해 주세요.")).toBeInTheDocument();
@@ -48,7 +48,7 @@ describe("LinktreeCreateForm", () => {
     addLinktreeItemMock.mockResolvedValue({ id: "item-1" });
 
     const user = userEvent.setup();
-    render(<LinktreeCreateForm canWrite listPath="/dashboard/settings/linktree" />);
+    render(<LinktreeCreateForm listPath="/dashboard/settings/linktree" />);
 
     await user.type(screen.getByTestId("linktree-group-name-input"), "공식 채널");
     await user.type(screen.getByTestId("linktree-item-name-input-0"), "Instagram");
@@ -80,7 +80,7 @@ describe("LinktreeCreateForm", () => {
       .mockResolvedValue({ id: "item-2" });
 
     const user = userEvent.setup();
-    render(<LinktreeCreateForm canWrite listPath="/dashboard/settings/linktree" />);
+    render(<LinktreeCreateForm listPath="/dashboard/settings/linktree" />);
 
     await user.type(screen.getByTestId("linktree-group-name-input"), "공식 채널");
     await user.type(screen.getByTestId("linktree-item-name-input-0"), "Instagram");
