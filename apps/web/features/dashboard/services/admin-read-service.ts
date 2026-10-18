@@ -1,6 +1,5 @@
 import "server-only";
 import { z, type ZodType } from "zod";
-import { readCookieHeader } from "@/shared/http/http";
 import {
   apiMcpConnectionSchema,
   apiMcpOverviewSchema,
@@ -13,6 +12,7 @@ import {
   honoRequest,
 } from "@/server/http/hono-client";
 import { readCorrelationHeaders } from "@/server/http/request-context";
+import { readCookieHeader } from "@/server/http/cookie-header";
 import type {
   ApiActivity,
   ApiAdminDashboardStats,

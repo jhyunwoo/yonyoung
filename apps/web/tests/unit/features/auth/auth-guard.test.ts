@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const readCookieHeaderMock = vi.hoisted(() => vi.fn());
-const resolveApiBaseUrlMock = vi.hoisted(() => vi.fn());
+const getApiBaseUrlMock = vi.hoisted(() => vi.fn());
 const readServerForwardedRequestContextMock = vi.hoisted(() =>
   vi.fn(async () => ({
     host: "yonyoung.yonsei.ac.kr",
@@ -51,10 +51,16 @@ vi.mock("@/shared/http/http", () => {
       }
       return payload as T;
     },
-    readCookieHeader: readCookieHeaderMock,
-    resolveApiBaseUrl: resolveApiBaseUrlMock,
   };
 });
+
+vi.mock("@/server/http/cookie-header", () => ({
+  readCookieHeader: readCookieHeaderMock,
+}));
+
+vi.mock("@/server/env", () => ({
+  getApiBaseUrl: getApiBaseUrlMock,
+}));
 
 vi.mock("@/server/http/request-context", () => ({
   readServerForwardedRequestContext: readServerForwardedRequestContextMock,
@@ -89,8 +95,8 @@ describe("features/auth/server/auth-guard", () => {
   beforeEach(() => {
     readCookieHeaderMock.mockReset();
     readCookieHeaderMock.mockResolvedValue("better-auth.session_token=session-token");
-    resolveApiBaseUrlMock.mockReset();
-    resolveApiBaseUrlMock.mockReturnValue("https://api.example.com");
+    getApiBaseUrlMock.mockReset();
+    getApiBaseUrlMock.mockReturnValue("https://api.example.com");
     readServerForwardedRequestContextMock.mockClear();
   });
 

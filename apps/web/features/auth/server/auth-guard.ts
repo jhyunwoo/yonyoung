@@ -16,10 +16,10 @@ import {
   applyForwardedRequestContextHeaders,
   clearTimeoutController,
   createTimeoutController,
-  readCookieHeader,
-  resolveApiBaseUrl,
   unwrapDataEnvelope,
 } from "@/shared/http/http";
+import { getApiBaseUrl } from "@/server/env";
+import { readCookieHeader } from "@/server/http/cookie-header";
 import { readServerForwardedRequestContext } from "@/server/http/request-context";
 import { trimToNull } from "@/shared/utils/trim-to-null";
 
@@ -126,7 +126,7 @@ const getCurrentUserMe = cache(async (): Promise<Record<string, unknown> | null>
   const { controller, timeoutId } = createTimeoutController(PROFILE_REQUEST_TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${resolveApiBaseUrl()}${CURRENT_USER_PATH}`, {
+    const response = await fetch(`${getApiBaseUrl()}${CURRENT_USER_PATH}`, {
       method: "GET",
       headers,
       cache: "no-store",
@@ -160,7 +160,7 @@ const getCurrentUserProfile = cache(
 
     try {
       const userByIdResponse = await fetch(
-        `${resolveApiBaseUrl()}${USER_PATH_PREFIX}/${encodeURIComponent(session.user.id)}`,
+        `${getApiBaseUrl()}${USER_PATH_PREFIX}/${encodeURIComponent(session.user.id)}`,
         {
           method: "GET",
           headers,
@@ -179,7 +179,7 @@ const getCurrentUserProfile = cache(
         return null;
       }
 
-      const usersResponse = await fetch(`${resolveApiBaseUrl()}${USER_PATH_PREFIX}`, {
+      const usersResponse = await fetch(`${getApiBaseUrl()}${USER_PATH_PREFIX}`, {
         method: "GET",
         headers,
         cache: "no-store",

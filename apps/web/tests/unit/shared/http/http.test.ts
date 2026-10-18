@@ -1,11 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("next/headers", () => ({
-  cookies: vi.fn(async () => ({
-    toString: () => "mock_session=abc123",
-  })),
-}));
-
 import {
   AdminApiError,
   applyForwardedRequestContextHeaders,
@@ -17,7 +11,6 @@ import {
   normalizePath,
   parseApiErrorEnvelope,
   parseJsonBody,
-  readCookieHeader,
   resolveApiBaseUrl,
   resolveBaseUrl,
   resolveForwardedRequestContext,
@@ -135,10 +128,6 @@ describe("shared/http/http", () => {
       id: "1",
     });
     expect(unwrapDataEnvelope<{ id: string }>({ id: "2" })).toEqual({ id: "2" });
-  });
-
-  it("reads cookie headers from next/headers", async () => {
-    await expect(readCookieHeader()).resolves.toBe("mock_session=abc123");
   });
 
   it("resolves forwarded request context from proxy-aware headers", () => {

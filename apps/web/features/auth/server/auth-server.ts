@@ -2,8 +2,8 @@ import {
   asRecord,
   clearTimeoutController,
   createTimeoutController,
-  resolveApiBaseUrl,
 } from "@/shared/http/http";
+import { getApiBaseUrl } from "@/server/env";
 import { applyForwardedRequestContextHeaders } from "@/shared/http/http";
 import { readServerForwardedRequestContext } from "@/server/http/request-context";
 import { trimToNull } from "@/shared/utils/trim-to-null";
@@ -151,7 +151,7 @@ export const fetchSessionFromApi = async (
   const { controller, timeoutId } = createTimeoutController(SESSION_REQUEST_TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${resolveApiBaseUrl()}${SESSION_PATH}`, {
+    const response = await fetch(`${getApiBaseUrl()}${SESSION_PATH}`, {
       method: "GET",
       headers,
       cache: "no-store",

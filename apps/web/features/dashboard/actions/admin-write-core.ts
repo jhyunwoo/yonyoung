@@ -12,7 +12,6 @@ import {
   type AdminWriteAccessScope,
 } from "@/features/dashboard/actions/admin-write-access";
 import { parseActionInput } from "@/features/dashboard/actions/action-input";
-import { readCookieHeader } from "@/shared/http/http";
 import type { AdminCacheTag, PublicCacheTag } from "@/server/cache/tags";
 import {
   HonoApiError,
@@ -20,6 +19,7 @@ import {
   honoRequest,
 } from "@/server/http/hono-client";
 import { readCorrelationHeaders } from "@/server/http/request-context";
+import { readCookieHeader } from "@/server/http/cookie-header";
 
 /**
  * 관리자 쓰기 서버 액션 공통 코어.

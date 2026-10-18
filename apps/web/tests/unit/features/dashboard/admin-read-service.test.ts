@@ -8,10 +8,9 @@ vi.mock("@/server/http/request-context", () => ({
   readCorrelationHeaders: async () => ({ requestId: "req-1", traceId: "trace-1" }),
 }));
 
-vi.mock("@/shared/http/http", async (importOriginal) => {
-  const actual = await importOriginal<Record<string, unknown>>();
-  return { ...actual, readCookieHeader: readCookieHeaderMock };
-});
+vi.mock("@/server/http/cookie-header", () => ({
+  readCookieHeader: readCookieHeaderMock,
+}));
 
 import {
   getAdminCurrentRecruitingPlan,

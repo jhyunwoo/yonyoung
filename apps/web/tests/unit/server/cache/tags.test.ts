@@ -39,10 +39,9 @@ vi.mock("@/features/dashboard/actions/admin-write-access", () => ({
   assertAdminWriteAccess: () => {},
 }));
 
-vi.mock("@/shared/http/http", async (importOriginal) => {
-  const actual = await importOriginal<Record<string, unknown>>();
-  return { ...actual, readCookieHeader: async () => "cookie=1" };
-});
+vi.mock("@/server/http/cookie-header", () => ({
+  readCookieHeader: async () => "cookie=1",
+}));
 
 vi.mock("@/server/http/hono-client", () => ({
   HonoApiError: class HonoApiError extends Error {},
