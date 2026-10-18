@@ -18,18 +18,19 @@ export default async function GenerationActivityEditPage({
   params: Promise<{ generationName: string; activityId: string }>;
   searchParams: SearchParams;
 }>) {
-  const [{ activityId }, generation, session, initialMessage] = await Promise.all([
-    params,
-    requireDashboardGeneration(params),
-    serverAuthGuard.requireSession(),
-    resolveInitialNoticeMessage(searchParams, "활동은"),
-  ]);
+  // 수정할 항목 읽기는 경로 값만 있으면 되므로 기수·세션 확인과 동시에 시작한다.
+  const [{ activityId }, generation, session, initialMessage, activityResult] =
+    await Promise.all([
+      params,
+      requireDashboardGeneration(params),
+      serverAuthGuard.requireSession(),
+      resolveInitialNoticeMessage(searchParams, "활동은"),
+      params.then((routeParams) => getAdminActivityById(routeParams.activityId)),
+    ]);
 
   if (!isAdminRole(session.user.role)) {
     redirect(`${generation.path}/activities/${activityId}`);
   }
-
-  const activityResult = await getAdminActivityById(activityId);
 
   if (!activityResult.ok && activityResult.error.reason === "not_found") {
     notFound();

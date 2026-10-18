@@ -17,18 +17,19 @@ export default async function GenerationExhibitionEditPage({
   params: Promise<{ generationName: string; id: string }>;
   searchParams: SearchParams;
 }>) {
-  const [{ id }, generation, session, initialMessage] = await Promise.all([
-    params,
-    requireDashboardGeneration(params),
-    serverAuthGuard.requireSession(),
-    resolveInitialNoticeMessage(searchParams, "전시는"),
-  ]);
+  // 수정할 항목 읽기는 경로 값만 있으면 되므로 기수·세션 확인과 동시에 시작한다.
+  const [{ id }, generation, session, initialMessage, exhibitionResult] =
+    await Promise.all([
+      params,
+      requireDashboardGeneration(params),
+      serverAuthGuard.requireSession(),
+      resolveInitialNoticeMessage(searchParams, "전시는"),
+      params.then((routeParams) => getAdminExhibitionById(routeParams.id)),
+    ]);
 
   if (!isAdminRole(session.user.role)) {
     redirect(`${generation.path}/exhibitions/${id}`);
   }
-
-  const exhibitionResult = await getAdminExhibitionById(id);
 
   if (!exhibitionResult.ok && exhibitionResult.error.reason === "not_found") {
     notFound();
