@@ -3,7 +3,7 @@ export type ResolvedTheme = "light" | "dark";
 
 const THEME_STORAGE_KEY = "theme";
 
-const isThemeMode = (value: unknown): value is ThemeMode =>
+export const isThemeMode = (value: unknown): value is ThemeMode =>
   value === "light" || value === "dark" || value === "system";
 
 const isResolvedTheme = (value: unknown): value is ResolvedTheme =>
