@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { formatAuditActor } from "@/features/dashboard/ui/audit-display";
 import { formatKoreanDate, formatKoreanDateRange } from "@/shared/utils/date-formatters";
+import { sortByStartDateDesc } from "@/shared/utils/date-input";
 import {
   listAdminActivities,
   listAdminExhibitions,
@@ -10,10 +11,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import DashboardR2StorageUsage from "@/app/(dashboard)/_components/dashboard-r2-storage-usage";
 import { requireDashboardGeneration } from "@/app/(dashboard)/dashboard/[generationName]/_lib/resolve-generation";
-
-const sortByStartDateDesc = <T extends { startDate: number }>(list: T[]): T[] => {
-  return [...list].sort((left, right) => right.startDate - left.startDate);
-};
 
 const GenerationDashboardSummary = async (input: {
   generationId: string;

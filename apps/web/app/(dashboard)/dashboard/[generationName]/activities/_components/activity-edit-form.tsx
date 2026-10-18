@@ -30,11 +30,8 @@ import RichTextEditor from "@/app/(dashboard)/_components/rich-text-editor";
 import DateRangeFields from "@/app/(dashboard)/_components/date-range-fields";
 import CoverImageField from "@/app/(dashboard)/_components/media/cover-image-field";
 import DetailImagesField from "@/app/(dashboard)/_components/media/detail-images-field";
-import {
-  formatTimestampToDateInput,
-  readActivityErrorMessage,
-  validateActivityDateRange,
-} from "@/app/(dashboard)/dashboard/[generationName]/activities/_components/activity-shared";
+import { readActivityErrorMessage } from "@/app/(dashboard)/dashboard/[generationName]/activities/_components/activity-shared";
+import { formatTimestampToDateInput, validateDateRange } from "@/shared/utils/date-input";
 
 type ActivityEditFormProps = {
   activity: ApiActivity;
@@ -96,10 +93,7 @@ export default function ActivityEditForm({
       return;
     }
 
-    const dateRangeResult = validateActivityDateRange({
-      startDateInput,
-      endDateInput,
-    });
+    const dateRangeResult = validateDateRange({ startDateInput, endDateInput }, "활동");
     if ("errorMessage" in dateRangeResult) {
       setErrorMessage(dateRangeResult.errorMessage);
       return;

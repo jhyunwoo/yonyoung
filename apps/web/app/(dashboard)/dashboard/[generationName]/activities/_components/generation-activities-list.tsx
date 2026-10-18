@@ -5,10 +5,8 @@ import AdminReadErrorNotice from "@/app/(dashboard)/_components/admin-read-error
 import { formatAuditActor } from "@/features/dashboard/ui/audit-display";
 import { formatKoreanDate, formatKoreanDateRange } from "@/shared/utils/date-formatters";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
-import {
-  sortActivitiesByStartDateDesc,
-  summarizeActivityDescription,
-} from "@/app/(dashboard)/dashboard/[generationName]/activities/_components/activity-shared";
+import { summarizeRichTextHtml } from "@/features/media/rich-text/rich-text";
+import { sortByStartDateDesc } from "@/shared/utils/date-input";
 
 type GenerationActivitiesListProps = {
   generationId: string;
@@ -24,7 +22,7 @@ export default async function GenerationActivitiesList({
   canManage,
 }: GenerationActivitiesListProps) {
   const result = await listAdminActivities(generationId);
-  const activities = result.ok ? sortActivitiesByStartDateDesc(result.data) : [];
+  const activities = result.ok ? sortByStartDateDesc(result.data) : [];
 
   return (
     <section className="mx-auto w-full max-w-6xl rounded-lg border border-hairline bg-surface p-6 md:p-8">
@@ -92,7 +90,7 @@ export default async function GenerationActivitiesList({
                     {formatKoreanDateRange(activity.startDate, activity.endDate)}
                   </p>
                   <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-ink-muted">
-                    {summarizeActivityDescription(activity.description)}
+                    {summarizeRichTextHtml(activity.description)}
                   </p>
                   <p className="mt-3 text-xs text-ink-muted">
                     최근 수정: {formatKoreanDate(activity.updatedAt)} ·{" "}

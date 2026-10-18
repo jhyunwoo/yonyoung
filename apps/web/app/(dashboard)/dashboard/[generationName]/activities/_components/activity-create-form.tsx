@@ -25,10 +25,8 @@ import RichTextEditor, {
 import DateRangeFields from "@/app/(dashboard)/_components/date-range-fields";
 import CoverImageField from "@/app/(dashboard)/_components/media/cover-image-field";
 import DetailImagesField from "@/app/(dashboard)/_components/media/detail-images-field";
-import {
-  readActivityErrorMessage,
-  validateActivityDateRange,
-} from "@/app/(dashboard)/dashboard/[generationName]/activities/_components/activity-shared";
+import { readActivityErrorMessage } from "@/app/(dashboard)/dashboard/[generationName]/activities/_components/activity-shared";
+import { validateDateRange } from "@/shared/utils/date-input";
 
 type ActivityCreateFormProps = {
   generationId: string;
@@ -77,10 +75,7 @@ export default function ActivityCreateForm({
       return;
     }
 
-    const dateRangeResult = validateActivityDateRange({
-      startDateInput,
-      endDateInput,
-    });
+    const dateRangeResult = validateDateRange({ startDateInput, endDateInput }, "활동");
 
     if ("errorMessage" in dateRangeResult) {
       setErrorMessage(dateRangeResult.errorMessage);

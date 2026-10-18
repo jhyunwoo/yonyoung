@@ -22,11 +22,9 @@ import DateRangeFields from "@/app/(dashboard)/_components/date-range-fields";
 import CoverImageField from "@/app/(dashboard)/_components/media/cover-image-field";
 import DetailImagesField from "@/app/(dashboard)/_components/media/detail-images-field";
 import ExhibitionRichTextEditor from "@/app/(dashboard)/dashboard/[generationName]/exhibitions/_components/exhibition-rich-text-editor";
-import {
-  hasMeaningfulExhibitionDescription,
-  readExhibitionErrorMessage,
-  validateExhibitionDateRange,
-} from "@/app/(dashboard)/dashboard/[generationName]/exhibitions/_components/exhibition-shared";
+import { readExhibitionErrorMessage } from "@/app/(dashboard)/dashboard/[generationName]/exhibitions/_components/exhibition-shared";
+import { hasMeaningfulRichTextHtml } from "@/features/media/rich-text/rich-text";
+import { validateDateRange } from "@/shared/utils/date-input";
 
 type ExhibitionCreateFormProps = {
   generationId: string;
@@ -60,7 +58,7 @@ export default function ExhibitionCreateForm({
     isSaving ||
     title.trim().length === 0 ||
     place.trim().length === 0 ||
-    !hasMeaningfulExhibitionDescription(descriptionHtml) ||
+    !hasMeaningfulRichTextHtml(descriptionHtml) ||
     startDateInput.trim().length === 0 ||
     endDateInput.trim().length === 0 ||
     coverFile === null;
@@ -76,7 +74,7 @@ export default function ExhibitionCreateForm({
       return;
     }
 
-    if (!hasMeaningfulExhibitionDescription(descriptionHtml)) {
+    if (!hasMeaningfulRichTextHtml(descriptionHtml)) {
       setErrorMessage("전시 상세 설명을 입력해 주세요.");
       return;
     }
@@ -86,10 +84,7 @@ export default function ExhibitionCreateForm({
       return;
     }
 
-    const dateRangeResult = validateExhibitionDateRange({
-      startDateInput,
-      endDateInput,
-    });
+    const dateRangeResult = validateDateRange({ startDateInput, endDateInput }, "전시");
 
     if ("errorMessage" in dateRangeResult) {
       setErrorMessage(dateRangeResult.errorMessage);
