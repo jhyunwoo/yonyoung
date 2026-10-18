@@ -1,4 +1,5 @@
 import { initializeBrowserSentry } from "@/lib/observability/sentry-client";
+import { shouldSample } from "@/lib/observability/sampling";
 
 void initializeBrowserSentry();
 
@@ -15,28 +16,13 @@ const ENDPOINT = "/api/internal/client-error";
 const SAMPLE_RATE = 0.2;
 const FLAG_KEY = "__yy_client_instrumentation_registered";
 
-const deterministicSampleValue = (input: string): number => {
-  let hash = 0;
-  for (let index = 0; index < input.length; index += 1) {
-    hash = (hash * 31 + input.charCodeAt(index)) >>> 0;
-  }
-  return hash / 2 ** 32;
-};
-
-const shouldSample = (key: string): boolean => {
-  if (SAMPLE_RATE >= 1) {
-    return true;
-  }
-
-  if (SAMPLE_RATE <= 0) {
-    return false;
-  }
-
-  return deterministicSampleValue(key) < SAMPLE_RATE;
-};
-
 const report = (payload: ClientErrorPayload): void => {
-  if (!shouldSample(`${payload.event}:${payload.path}:${payload.message ?? ""}`)) {
+  if (
+    !shouldSample(
+      SAMPLE_RATE,
+      `${payload.event}:${payload.path}:${payload.message ?? ""}`,
+    )
+  ) {
     return;
   }
 
