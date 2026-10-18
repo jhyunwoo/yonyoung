@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { headers } from "next/headers";
+import { connection } from "next/server";
 import { createPageMetadata } from "@/features/seo/metadata/seo";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
 import { getPublicCurrentRecruitingPlan } from "@/features/public/services/public-read-service";
@@ -102,7 +102,9 @@ async function RecruitingStatusBadge({
   endAt: number;
 }) {
   // 요청 시점 렌더로 확정한다. `Date.now()` 를 읽는 근거가 이 한 줄이다.
-  await headers();
+  // `headers()` 는 Partial Prefetching 의 세션 App Shell 프리렌더에서 값이 풀려
+  // 그 뒤의 `Date.now()` 가 프리렌더 중에 실행된다. `connection()` 은 실제 요청까지 멈춘다.
+  await connection();
   const status = readRecruitingStatus(
     // 서버 컴포넌트이고 위에서 동적 렌더링으로 확정됐으므로 요청 시각을 읽는 것이
     // 맞다. 클라이언트 렌더 규칙을 보는 react-hooks/purity 는 여기에 해당하지 않는다.
