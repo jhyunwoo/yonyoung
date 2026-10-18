@@ -89,6 +89,8 @@ test.describe("관리자 업로드", () => {
         !url.pathname.endsWith("/edit"),
       { timeout: 60_000 },
     );
+    await expect(page.getByText(title, { exact: true })).toBeVisible();
+    await expect(page.getByTestId("generation-activity-delete")).toBeEnabled();
 
     const state = await getMockState(request, namespace);
     const created = state.activities.find((activity) => activity.title === title);
