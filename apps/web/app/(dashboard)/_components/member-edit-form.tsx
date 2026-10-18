@@ -1,7 +1,7 @@
 "use client";
 
 import { useResetOnChange } from "@/shared/react/use-reset-on-change";
-import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import type {
   ApiAdminUpdateUserInput,
   ApiGeneration,
@@ -22,6 +22,7 @@ import {
 import FormSubmitButton from "@/app/(dashboard)/_components/form-submit-button";
 import { useGuardedSubmit } from "@/shared/react/use-guarded-submit";
 import UploadProgressBar from "@/app/(dashboard)/_components/upload-progress-bar";
+import { useSelectedImageFile } from "@/features/media/upload/use-selected-image-file";
 
 type MemberEditFormProps = {
   user: ApiUser;
@@ -48,7 +49,6 @@ export default function MemberEditForm({
   inline = false,
 }: MemberEditFormProps) {
   const [name, setName] = useState(user.name);
-  const [image, setImage] = useState(user.image ?? "");
   const [familyName, setFamilyName] = useState(user.familyName ?? "");
   const [givenName, setGivenName] = useState(user.givenName ?? "");
   const [college, setCollege] = useState(user.college ?? "");
@@ -63,17 +63,21 @@ export default function MemberEditForm({
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
-  const [selectedImageObjectUrl, setSelectedImageObjectUrl] = useState<string | null>(
-    null,
-  );
   const [uploadProgressPercent, setUploadProgressPercent] = useState<number | null>(null);
-  const profileFileInputRef = useRef<HTMLInputElement | null>(null);
+  const {
+    imageUrl: image,
+    selectedFile: selectedImageFile,
+    fileInputRef: profileFileInputRef,
+    previewUrl: imagePreviewUrl,
+    selectFile: handleImageChange,
+    openFilePicker: openProfileFilePicker,
+    reset: resetImageSelection,
+  } = useSelectedImageFile(user.image ?? "");
 
   // 다른 멤버를 편집하기 시작하면 폼 초안을 그 멤버의 서버 값으로 되돌린다.
   useResetOnChange(user, () => {
     setName(user.name);
-    setImage(user.image ?? "");
+    resetImageSelection(user.image ?? "");
     setFamilyName(user.familyName ?? "");
     setGivenName(user.givenName ?? "");
     setCollege(user.college ?? "");
@@ -84,42 +88,10 @@ export default function MemberEditForm({
     setGenerationIds(
       user.generationIds ?? (user.generationId ? [user.generationId] : []),
     );
-    setSelectedImageFile(null);
-    setSelectedImageObjectUrl((previous) => {
-      if (previous) {
-        URL.revokeObjectURL(previous);
-      }
-      return null;
-    });
     setUploadProgressPercent(null);
     setErrorMessage(null);
     setSuccessMessage(null);
   });
-
-  useEffect(() => {
-    return () => {
-      if (selectedImageObjectUrl) {
-        URL.revokeObjectURL(selectedImageObjectUrl);
-      }
-    };
-  }, [selectedImageObjectUrl]);
-
-  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextFile = event.target.files?.[0] ?? null;
-
-    if (selectedImageObjectUrl) {
-      URL.revokeObjectURL(selectedImageObjectUrl);
-      setSelectedImageObjectUrl(null);
-    }
-
-    setSelectedImageFile(nextFile);
-    if (!nextFile) {
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(nextFile);
-    setSelectedImageObjectUrl(objectUrl);
-  };
 
   const generationIdSet = useMemo(() => new Set(generationIds), [generationIds]);
 
@@ -172,12 +144,7 @@ export default function MemberEditForm({
       };
 
       const updated = await adminResourceApi.updateUser(user.id, payload);
-      setImage(updated.image ?? "");
-      setSelectedImageFile(null);
-      if (selectedImageObjectUrl) {
-        URL.revokeObjectURL(selectedImageObjectUrl);
-      }
-      setSelectedImageObjectUrl(null);
+      resetImageSelection(updated.image ?? "");
       setUploadProgressPercent(null);
       onSaved(updated);
       setSuccessMessage("사용자 정보가 저장되었습니다.");
@@ -195,10 +162,8 @@ export default function MemberEditForm({
       return;
     }
 
-    profileFileInputRef.current?.click();
+    openProfileFilePicker();
   };
-
-  const imagePreviewUrl = selectedImageObjectUrl ?? image;
 
   return (
     <section

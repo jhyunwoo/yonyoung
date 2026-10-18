@@ -20,7 +20,7 @@ import {
   type ProfileFieldErrors,
   type ProfileFormValues,
 } from "@/features/auth/profile/profile-form-model";
-import { useProfileImageSelection } from "@/features/auth/profile/use-profile-image-selection";
+import { useSelectedImageFile } from "@/features/media/upload/use-selected-image-file";
 import ProfileFields from "@/app/(dashboard)/auth/profile/_components/profile-fields";
 import ProfileImageField from "@/app/(dashboard)/auth/profile/_components/profile-image-field";
 
@@ -64,7 +64,7 @@ export default function AuthProfileForm({
     selectFile: selectImageFile,
     openFilePicker: openImageFilePicker,
     reset: resetImageSelection,
-  } = useProfileImageSelection(initialProfile.image);
+  } = useSelectedImageFile(initialProfile.image);
 
   const [fieldErrors, setFieldErrors] = useState<ProfileFieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
