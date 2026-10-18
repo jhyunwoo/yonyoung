@@ -49,14 +49,3 @@ export function useViewCounts(
 
   return counts;
 }
-
-/**
- * 단일 리소스의 조회수를 조회하는 편의 훅.
- */
-export function useSingleViewCount(
-  resourceType: "activity" | "exhibition",
-  resourceId: string,
-): number {
-  const counts = useViewCounts(resourceType, [resourceId]);
-  return counts[resourceId] ?? 0;
-}

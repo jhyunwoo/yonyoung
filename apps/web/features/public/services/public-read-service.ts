@@ -30,7 +30,7 @@ import { CACHE_TAGS, publicActivityTag, publicExhibitionTag } from "@/server/cac
 import { logger } from "@/server/observability/logger";
 import { pickFeaturedPublicExhibition } from "@/features/public/model/public-exhibition";
 
-export const PUBLIC_CACHE_TAGS = CACHE_TAGS.public;
+const PUBLIC_CACHE_TAGS = CACHE_TAGS.public;
 
 /**
  * 아카이브(활동·전시·기수·사진가·첨부)의 캐시 수명.

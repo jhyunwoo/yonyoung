@@ -82,5 +82,3 @@ export const PAGE_SEO = {
     path: "/auth/pending-approval",
   },
 } satisfies Record<string, PageMetadataInput>;
-
-export type PageSeoKey = keyof typeof PAGE_SEO;

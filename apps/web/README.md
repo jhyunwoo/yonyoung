@@ -109,7 +109,7 @@ App Router의 route group 두 개가 각각 독립적인 루트 레이아웃과 
 - `app/api/[...path]`: 허용된 일반 API를 같은 origin으로 프록시
 - `app/api/auth/[...path]`: Better Auth 요청과 `Set-Cookie`를 보존하는 인증 전용 프록시
 - `app/api/internal/*`: 클라이언트 오류와 Web Vitals 수집
-- `app/og/[payload]`: 동적 Open Graph 이미지
+- `app/(home)/**/opengraph-image.tsx`: 라우트별 Open Graph 이미지(`features/seo/og/og-card.tsx`로 그린다)
 - `app/manifest.ts`, `app/robots.ts`, `app/sitemap.ts`: PWA·검색 엔진 메타데이터
 
 `/archive`는 `next.config.ts`에서 `/archive/records`로 영구 리디렉션됩니다.
@@ -119,11 +119,10 @@ App Router의 route group 두 개가 각각 독립적인 루트 레이아웃과 
 ```text
 .
 ├── app/
-│   ├── (home)/                 # 공개 사이트, 공개 전용 layout·CSS·컴포넌트
+│   ├── (home)/                 # 공개 사이트, 공개 전용 layout·CSS·컴포넌트, 라우트별 opengraph-image.tsx
 │   ├── (dashboard)/            # 인증/대시보드, 내부 전용 layout·CSS·컴포넌트
 │   ├── _components/            # 두 영역이 공유하는 앱 수준 컴포넌트
 │   ├── api/                    # BFF 프록시와 내부 관측 API
-│   ├── og/                     # 동적 OG 이미지
 │   ├── manifest.ts
 │   ├── robots.ts
 │   └── sitemap.ts
