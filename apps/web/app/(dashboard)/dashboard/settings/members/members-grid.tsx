@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import type { ApiGeneration, ApiUser } from "@yonyoung/contracts";
 import { readErrorMessage } from "@/shared/http/read-error-message";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
@@ -89,10 +89,12 @@ export default function MembersGrid({ initialUsers, generations }: MembersGridPr
     setSuccessMessage(null);
   };
 
-  const handleToggleUser = (userId: string) => {
+  // MemberCard가 memo라 참조가 바뀌면 카드 전체가 다시 그려진다. 세터만 쓰므로 의존성이 없다.
+  const handleToggleUser = useCallback((userId: string) => {
     setSelectedUserIds((previous) => toggleSelectedUserId(previous, userId));
-    clearMessages();
-  };
+    setErrorMessage(null);
+    setSuccessMessage(null);
+  }, []);
 
   const handleSelectVisibleUsers = () => {
     setSelectedUserIds((previous) =>
