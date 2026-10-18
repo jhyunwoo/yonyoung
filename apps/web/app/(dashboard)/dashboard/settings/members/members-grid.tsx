@@ -2,7 +2,7 @@
 
 import { useDeferredValue, useMemo, useState } from "react";
 import type { ApiGeneration, ApiUser } from "@yonyoung/contracts";
-import { AdminApiError } from "@/shared/http/http";
+import { readErrorMessage } from "@/shared/http/read-error-message";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { type BulkMemberRoleValue } from "@/features/dashboard/members/member-role-options";
 import { buildMemberRoleLabel } from "@/features/dashboard/members/member-role-label";
@@ -32,17 +32,8 @@ const EMPTY_FILTERS: MemberFilterState = {
   generationId: "",
 };
 
-const readErrorMessage = (error: unknown): string => {
-  if (error instanceof AdminApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error && error.message.length > 0) {
-    return error.message;
-  }
-
-  return "전체 멤버 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
-};
+const ERROR_FALLBACK_MESSAGE =
+  "전체 멤버 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 type MembersGridProps = {
   initialUsers: ApiUser[];
@@ -151,7 +142,7 @@ export default function MembersGrid({ initialUsers, generations }: MembersGridPr
         `${targetIds.length}명의 권한을 ${roleLabel}(으)로 변경했습니다.`,
       );
     } catch (error) {
-      setErrorMessage(readErrorMessage(error));
+      setErrorMessage(readErrorMessage(error, ERROR_FALLBACK_MESSAGE));
     } finally {
       setIsBulkUpdating(false);
     }

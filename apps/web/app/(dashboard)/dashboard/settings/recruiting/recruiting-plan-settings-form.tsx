@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { PRESIGN_PATHS } from "@/features/dashboard/api/admin-api/upload";
 import { uploadFilesWithPresign } from "@/features/dashboard/api/admin-api/upload-batch";
-import { AdminApiError } from "@/shared/http/http";
+import { readErrorMessage } from "@/shared/http/read-error-message";
 import { createExistingUploadImageItem } from "@/features/media/upload/image-upload-state";
 import { hasMeaningfulRichTextHtml } from "@/features/media/rich-text/rich-text";
 import { useImageUploadState } from "@/features/media/upload/use-image-upload-state";
@@ -20,17 +20,8 @@ const RECRUITING_MAX_IMAGES = 10;
 const inputClassName =
   "w-full rounded-lg border border-hairline-strong px-3 py-2 text-sm text-ink outline-none transition focus-visible:border-primary focus-visible:shadow-(--shadow-focus)";
 
-const readErrorMessage = (error: unknown): string => {
-  if (error instanceof AdminApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error && error.message.length > 0) {
-    return error.message;
-  }
-
-  return "모집 계획 저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
-};
+const ERROR_FALLBACK_MESSAGE =
+  "모집 계획 저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
 
 const formatTimestampToDateTimeLocal = (timestampMs: number): string => {
   const date = new Date(timestampMs);
@@ -117,7 +108,7 @@ export default function RecruitingPlanSettingsForm() {
         if (!isMounted) {
           return;
         }
-        setErrorMessage(readErrorMessage(error));
+        setErrorMessage(readErrorMessage(error, ERROR_FALLBACK_MESSAGE));
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -159,7 +150,7 @@ export default function RecruitingPlanSettingsForm() {
       });
       appendPromotionImageUrls(uploadedUrls);
     } catch (error) {
-      setErrorMessage(readErrorMessage(error));
+      setErrorMessage(readErrorMessage(error, ERROR_FALLBACK_MESSAGE));
     } finally {
       setIsUploadingImage(false);
       setUploadProgressPercent(null);
@@ -225,7 +216,7 @@ export default function RecruitingPlanSettingsForm() {
       setSuccessMessage("올해 모집 계획을 저장했습니다.");
       router.refresh();
     } catch (error) {
-      setErrorMessage(readErrorMessage(error));
+      setErrorMessage(readErrorMessage(error, ERROR_FALLBACK_MESSAGE));
     } finally {
       setIsSaving(false);
     }

@@ -19,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import AuditHistoryPanel from "@/app/(dashboard)/_components/audit-history-panel";
 import LastUpdatedMeta from "@/app/(dashboard)/_components/last-updated-meta";
 import MemberEditForm from "@/app/(dashboard)/_components/member-edit-form";
+import { readErrorMessage } from "@/shared/http/read-error-message";
 
 type MemberDetailClientProps = {
   generation: {
@@ -33,17 +34,8 @@ type MemberDetailClientProps = {
   };
 };
 
-const readErrorMessage = (error: unknown): string => {
-  if (error instanceof AdminApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error && error.message.length > 0) {
-    return error.message;
-  }
-
-  return "멤버 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
-};
+const ERROR_FALLBACK_MESSAGE =
+  "멤버 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 const readGenerationNameText = (
   user: ApiUser,
@@ -141,7 +133,7 @@ export default function MemberDetailClient({
 
         setSummary(null);
         setFullUser(null);
-        setErrorMessage(readErrorMessage(error));
+        setErrorMessage(readErrorMessage(error, ERROR_FALLBACK_MESSAGE));
         setIsEditing(false);
       } finally {
         if (isMounted) {

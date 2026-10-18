@@ -8,7 +8,7 @@ import type {
   ApiUser,
 } from "@yonyoung/contracts";
 import { IMAGE_UPLOAD_ACCEPT } from "@yonyoung/contracts";
-import { AdminApiError } from "@/shared/http/http";
+import { readErrorMessage } from "@/shared/http/read-error-message";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import {
   PRESIGN_PATHS,
@@ -36,17 +36,8 @@ const toNullableText = (value: string): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const readErrorMessage = (error: unknown): string => {
-  if (error instanceof AdminApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error && error.message.length > 0) {
-    return error.message;
-  }
-
-  return "사용자 정보를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
-};
+const ERROR_FALLBACK_MESSAGE =
+  "사용자 정보를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 export default function MemberEditForm({
   user,
@@ -224,7 +215,7 @@ export default function MemberEditForm({
       setSuccessMessage("사용자 정보가 저장되었습니다.");
     } catch (error) {
       setUploadProgressPercent(null);
-      setErrorMessage(readErrorMessage(error));
+      setErrorMessage(readErrorMessage(error, ERROR_FALLBACK_MESSAGE));
     } finally {
       setIsSaving(false);
     }

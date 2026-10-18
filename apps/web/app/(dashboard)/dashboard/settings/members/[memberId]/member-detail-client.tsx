@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { ApiUser } from "@yonyoung/contracts";
-import { AdminApiError } from "@/shared/http/http";
+import { readErrorMessage } from "@/shared/http/read-error-message";
 import { adminResourceApi } from "@/features/dashboard/api/admin-api/resources";
 import { formatKoreanDate } from "@/shared/utils/date-formatters";
 import {
@@ -20,17 +20,8 @@ import LastUpdatedMeta from "@/app/(dashboard)/_components/last-updated-meta";
 import MemberEditForm from "@/app/(dashboard)/_components/member-edit-form";
 import { PaginatedHistorySection } from "@/app/(dashboard)/_components/members/member-resource-history";
 
-const readErrorMessage = (error: unknown): string => {
-  if (error instanceof AdminApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error && error.message.length > 0) {
-    return error.message;
-  }
-
-  return "멤버 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
-};
+const ERROR_FALLBACK_MESSAGE =
+  "멤버 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 type MemberDetailClientProps = {
   memberId: string;
@@ -84,7 +75,7 @@ export default function MemberDetailClient({
           return;
         }
         setUser(null);
-        setErrorMessage(readErrorMessage(error));
+        setErrorMessage(readErrorMessage(error, ERROR_FALLBACK_MESSAGE));
       } finally {
         if (isMounted) {
           setIsLoading(false);

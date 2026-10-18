@@ -2,7 +2,7 @@ import type {
   ApiExhibition,
   ApiUpdateExhibitionImageBatchItemInput,
 } from "@yonyoung/contracts";
-import { AdminApiError } from "@/shared/http/http";
+import { readErrorMessage } from "@/shared/http/read-error-message";
 import {
   hasMeaningfulRichTextHtml,
   summarizeRichTextHtml,
@@ -32,17 +32,8 @@ const toNonNegativeInteger = (value: number): number => {
   return rounded < 0 ? 0 : rounded;
 };
 
-export const readExhibitionErrorMessage = (error: unknown): string => {
-  if (error instanceof AdminApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error && error.message.length > 0) {
-    return error.message;
-  }
-
-  return "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
-};
+export const readExhibitionErrorMessage = (error: unknown): string =>
+  readErrorMessage(error, "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.");
 
 export const sortExhibitionsByStartDateDesc = (
   exhibitions: ApiExhibition[],

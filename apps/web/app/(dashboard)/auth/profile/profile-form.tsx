@@ -7,7 +7,7 @@ import {
   PRESIGN_PATHS,
   uploadWithPresign,
 } from "@/features/dashboard/api/admin-api/upload";
-import { AdminApiError } from "@/shared/http/http";
+import { readErrorMessage } from "@/shared/http/read-error-message";
 import {
   AUTH_PROFILE_PATH,
   hasCompletedRequiredProfile,
@@ -35,18 +35,6 @@ type ProfileFormProps = {
 
 const DEFAULT_SAVE_ERROR_MESSAGE =
   "기본 정보 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.";
-
-const readErrorMessage = (error: unknown): string => {
-  if (error instanceof AdminApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  return DEFAULT_SAVE_ERROR_MESSAGE;
-};
 
 export default function AuthProfileForm({
   userId,
@@ -147,7 +135,7 @@ export default function AuthProfileForm({
       router.refresh();
     } catch (error) {
       setUploadProgressPercent(null);
-      setSubmitError(readErrorMessage(error));
+      setSubmitError(readErrorMessage(error, DEFAULT_SAVE_ERROR_MESSAGE));
     } finally {
       setIsSaving(false);
     }
