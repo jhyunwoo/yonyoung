@@ -117,7 +117,20 @@ const NAMED_HTML_ENTITIES: Record<string, string> = {
   gt: ">",
   quot: '"',
   apos: "'",
-  nbsp: " ",
+  nbsp: "\u00a0",
+  // 에디터는 문자로 저장하지만 MCP 등으로 들어온 HTML 에는 이름 있는 구두점이 섞일 수 있다
+  mdash: "\u2014",
+  ndash: "\u2013",
+  hellip: "\u2026",
+  lsquo: "\u2018",
+  rsquo: "\u2019",
+  ldquo: "\u201c",
+  rdquo: "\u201d",
+  middot: "\u00b7",
+  laquo: "\u00ab",
+  raquo: "\u00bb",
+  times: "\u00d7",
+  copy: "\u00a9",
 };
 
 // 한 번만 훑으므로 &amp;lt; 는 &lt; 로 남는다(이중 디코딩하지 않는다).

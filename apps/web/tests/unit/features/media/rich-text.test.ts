@@ -26,6 +26,14 @@ describe("features/media/rich-text", () => {
     );
   });
 
+  it("decodes common named punctuation the way browsers render it", () => {
+    expect(
+      summarizeRichTextHtml(
+        "<p>첫 전시 &mdash; 다시 &ldquo;시작&rdquo;&hellip; &#8212;</p>",
+      ),
+    ).toBe("첫 전시 \u2014 다시 \u201c시작\u201d\u2026 \u2014");
+  });
+
   it("sanitizes dangerous tags, attributes, and javascript links", () => {
     const sanitized = sanitizeRichTextHtml(
       '<p>Hello</p><script>alert(1)</script><a href="javascript:alert(1)" onclick="x()">bad</a>',
