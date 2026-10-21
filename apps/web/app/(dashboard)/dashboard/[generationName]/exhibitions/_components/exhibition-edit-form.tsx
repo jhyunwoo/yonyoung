@@ -58,6 +58,7 @@ export default function ExhibitionEditForm({
 
   const [title, setTitle] = useState(exhibition.title);
   const [place, setPlace] = useState(exhibition.place);
+  const [placeAddress, setPlaceAddress] = useState(exhibition.placeAddress ?? "");
   const [descriptionHtml, setDescriptionHtml] = useState(
     exhibition.description.length > 0 ? exhibition.description : EMPTY_RICH_TEXT_HTML,
   );
@@ -132,6 +133,7 @@ export default function ExhibitionEditForm({
       await adminResourceApi.updateExhibition(exhibition.id, {
         title: trimmedTitle,
         place: trimmedPlace,
+        placeAddress: placeAddress.trim() || null,
         description: descriptionHtml,
         startDate: dateRangeResult.startDate,
         endDate: dateRangeResult.endDate,
@@ -210,6 +212,19 @@ export default function ExhibitionEditForm({
             disabled={isSaving}
             className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm"
           />
+        </label>
+
+        <label className="block space-y-1">
+          <span className="text-sm font-semibold text-ink">전시 장소 주소 (선택)</span>
+          <input
+            value={placeAddress}
+            onChange={(event) => setPlaceAddress(event.target.value)}
+            disabled={isSaving}
+            className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm"
+          />
+          <span className="block text-xs text-ink-muted">
+            지도에서 찾을 수 있는 도로명 주소를 적으면 검색 결과에 전시 위치로 표시됩니다.
+          </span>
         </label>
 
         <div className="space-y-1">

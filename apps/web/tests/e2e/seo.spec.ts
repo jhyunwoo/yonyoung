@@ -63,3 +63,20 @@ test("unmatched URLs return a Korean 404 page", async ({ page }) => {
     "찾으시는 페이지가 없습니다.",
   );
 });
+
+test("exhibition events carry the venue address for event search results", async ({
+  page,
+}) => {
+  await page.goto("/archive/exhibitions/exh-1");
+  const schemas = await page
+    .locator('script[type="application/ld+json"]')
+    .allTextContents();
+  const event = schemas
+    .map((schema) => JSON.parse(schema))
+    .find((schema) => schema["@type"] === "Event");
+  expect(event?.location).toEqual({
+    "@type": "Place",
+    name: "연세대학교 학생회관",
+    address: "서울특별시 서대문구 연세로 50",
+  });
+});

@@ -156,6 +156,9 @@ test.describe("관리자 업로드", () => {
     const title = `전시 업로드 ${Date.now()}`;
     await page.getByPlaceholder("예: 연영회 60기 정기전").fill(title);
     await page.getByPlaceholder("예: 서울시립미술관").fill("학생회관");
+    await page
+      .getByPlaceholder("예: 서울특별시 마포구 월드컵북로1길 74")
+      .fill("  서울특별시 서대문구 연세로 50  ");
     await page.locator(".ProseMirror").click();
     await page.keyboard.type("전시 설명");
     const dateInputs = page.locator('input[type="date"]');
@@ -178,6 +181,7 @@ test.describe("관리자 업로드", () => {
     const state = await getMockState(request, namespace);
     const created = state.exhibitions.find((exhibition) => exhibition.title === title);
     expect(created?.place).toBe("학생회관");
+    expect(created?.placeAddress).toBe("서울특별시 서대문구 연세로 50");
     expect(created?.detailImages).toHaveLength(2);
   });
 });

@@ -116,6 +116,8 @@ async function ExhibitionDetailContent({ params }: ExhibitionDetailPageProps) {
     location: {
       "@type": "Place",
       name: exhibition.place,
+      // Google 이벤트 결과는 오프라인 행사의 주소를 요구한다. 입력된 전시만 담는다.
+      ...(exhibition.placeAddress ? { address: exhibition.placeAddress } : {}),
     },
     organizer: buildOrganizationRef(siteUrl),
   };
@@ -139,6 +141,11 @@ async function ExhibitionDetailContent({ params }: ExhibitionDetailPageProps) {
           {formatKoreanDateCompact(exhibition.endDate)}
         </p>
         <p className="mb-0 mt-[0.4rem] text-(--text-secondary)">{exhibition.place}</p>
+        {exhibition.placeAddress ? (
+          <p className="mb-0 mt-1 text-[0.9rem] text-(--text-muted)">
+            {exhibition.placeAddress}
+          </p>
+        ) : null}
         <RichTextContent
           html={exhibition.description}
           className="exhibition-description mb-0 mt-3 leading-[1.6]"
