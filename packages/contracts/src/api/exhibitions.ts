@@ -24,6 +24,8 @@ export const apiExhibitionSchema = z.object({
   endDate: apiTimestampSchema,
   generationId: z.string(),
   place: z.string(),
+  // 구버전 API 응답(필드 없음)도 허용하도록 default(null) 처리
+  placeAddress: z.string().nullable().default(null),
   coverImageUrl: z.url(),
   description: z.string(),
   createdAt: apiTimestampSchema,
@@ -40,6 +42,7 @@ export const apiCreateExhibitionInputSchema = z.object({
   endDate: apiTimestampSchema,
   generationId: z.string(),
   place: z.string().trim().min(1),
+  placeAddress: z.string().trim().max(200).nullable().optional(),
   coverImageUrl: z.url(),
   description: z.string(),
 });

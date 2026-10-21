@@ -65,6 +65,10 @@ export const ApiExhibitionSchema = z
       description: "전시 장소",
       example: "서울시 성동구 아트홀 2관",
     }),
+    placeAddress: z.string().nullable().openapi({
+      description: "전시 장소 주소 (없으면 null)",
+      example: "서울특별시 마포구 월드컵북로1길 74",
+    }),
     coverImageUrl: urlField(
       "전시 대표 이미지 공개 URL",
       "https://cdn.yonyoung.example/exhibitions/cover/cover-1.jpg",
@@ -107,6 +111,10 @@ export const ExhibitionInputObjectSchema = z.object({
   place: z.string().min(1).openapi({
     description: "전시 장소",
     example: "서울시 성동구 아트홀 2관",
+  }),
+  placeAddress: z.string().trim().max(200).nullable().optional().openapi({
+    description: "전시 장소 주소. 비우려면 null",
+    example: "서울특별시 마포구 월드컵북로1길 74",
   }),
   coverImageUrl: httpUrlInputField(
     "전시 대표 이미지 공개 URL",

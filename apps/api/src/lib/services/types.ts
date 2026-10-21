@@ -94,6 +94,7 @@ export type ExhibitionEntity = {
   endDate: Date;
   generationId: string;
   place: string;
+  placeAddress: string | null;
   coverImageUrl: string;
   description: string;
   createdAt: Date;
@@ -506,6 +507,7 @@ export type DataService = {
     endDate: number;
     generationId: string;
     place: string;
+    placeAddress?: string | null;
     coverImageUrl: string;
     description: string;
   }) => Promise<ExhibitionEntity>;
@@ -518,6 +520,7 @@ export type DataService = {
       endDate: number;
       generationId: string;
       place: string;
+      placeAddress: string | null;
       coverImageUrl: string;
       description: string;
     }>,
