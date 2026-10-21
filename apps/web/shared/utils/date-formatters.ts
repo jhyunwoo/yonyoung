@@ -28,8 +28,12 @@ export const formatKoreanDateCompact = (timestampMs: number): string =>
 export const formatKoreanDateRange = (
   startTimestampMs: number,
   endTimestampMs: number,
-): string =>
-  `${formatKoreanDate(startTimestampMs)} - ${formatKoreanDate(endTimestampMs)}`;
+): string => {
+  const start = formatKoreanDate(startTimestampMs);
+  const end = formatKoreanDate(endTimestampMs);
+  // 하루짜리 일정(한국 시각 기준 같은 날)은 "9월 30일 - 9월 30일" 대신 날짜 하나로 쓴다
+  return start === end ? start : `${start} - ${end}`;
+};
 
 const formatKoreanYear = (timestampMs: number): string =>
   koreanYearFormatter.format(timestampMs);
