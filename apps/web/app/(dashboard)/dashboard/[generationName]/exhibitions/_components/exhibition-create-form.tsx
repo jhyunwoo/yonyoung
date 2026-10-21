@@ -197,6 +197,8 @@ export default function ExhibitionCreateForm({
           <input
             value={placeAddress}
             onChange={(event) => setPlaceAddress(event.target.value)}
+            // API 한도와 같다. 넘치면 대표 사진을 올린 뒤에야 거절되므로 입력에서 막는다
+            maxLength={200}
             disabled={isSaving}
             placeholder="예: 서울특별시 마포구 월드컵북로1길 74"
             className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm"
