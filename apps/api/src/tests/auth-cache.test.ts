@@ -38,17 +38,14 @@ const createFlakyDatabase = () => {
 };
 
 describe("createAuth 캐시", () => {
-  it("초기화에 실패한 인스턴스는 캐시에서 빠지고 다음 호출이 새로 만든다", async () => {
+  it("시작 시 시드 조회가 일시 오류로 실패해도 인스턴스는 살아 있고 캐시에서 재사용된다", async () => {
     const database = createFlakyDatabase();
 
-    const failed = createAuth(database, AUTH_ENV);
-    await expect(failed.$context).rejects.toThrow("network connection lost");
-    // 캐시 제거는 $context의 catch 콜백에서 일어난다.
+    // oauth-provider 1.7.11부터 시작 시드 실패는 reject하지 않고 첫 리소스 접근 때 다시 시도한다.
+    const auth = createAuth(database, AUTH_ENV);
+    await expect(auth.$context).resolves.toBeDefined();
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    const retried = createAuth(database, AUTH_ENV);
-    expect(retried).not.toBe(failed);
-    await expect(retried.$context).resolves.toBeDefined();
-    expect(createAuth(database, AUTH_ENV)).toBe(retried);
+    expect(createAuth(database, AUTH_ENV)).toBe(auth);
   });
 });
