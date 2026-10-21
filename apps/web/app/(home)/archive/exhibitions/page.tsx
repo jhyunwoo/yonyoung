@@ -51,7 +51,7 @@ export default async function ArchiveExhibitionsPage() {
                 className="mx-auto grid max-w-[1060px] grid-cols-3 gap-10 px-8 max-[768px]:max-w-[400px] max-[768px]:grid-cols-1 max-[768px]:gap-8 max-[768px]:px-6"
                 data-testid="archive-exhibitions-grid"
               >
-                {exhibitions.map((exhibition) => (
+                {exhibitions.map((exhibition, index) => (
                   <Link
                     key={exhibition.id}
                     href={`/archive/exhibitions/${exhibition.id}`}
@@ -73,6 +73,9 @@ export default async function ArchiveExhibitionsPage() {
                         // 3열(px-8, gap-10)의 한 칸 (1060 - 64 - 80) / 3 ≈ 306px 이 최대다.
                         sizes="(max-width: 768px) 352px, 306px"
                         className="object-cover"
+                        // 첫 카드가 목록의 LCP 요소다. 상세 갤러리 첫 장과 같은 이유로 그 한 장만 eager.
+                        loading={index === 0 ? "eager" : "lazy"}
+                        fetchPriority={index === 0 ? "high" : undefined}
                       />
                     </div>
                     <div className="absolute top-4 right-4 z-[3] opacity-0 transition-opacity duration-300 group-hover:opacity-100 max-[768px]:opacity-100">
