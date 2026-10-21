@@ -176,7 +176,7 @@ export default function RecordDetailPage({ params }: RecordDetailPageProps) {
       <div className="mx-auto max-w-[1200px] px-4 md:px-8">
         <Link
           href="/archive/records"
-          className="mb-4 inline-flex text-[0.9rem] text-(--text-primary) no-underline hover:underline"
+          className="mb-4 inline-flex min-h-11 items-center text-[0.9rem] text-(--text-primary) no-underline hover:underline"
         >
           활동 기록으로 돌아가기
         </Link>

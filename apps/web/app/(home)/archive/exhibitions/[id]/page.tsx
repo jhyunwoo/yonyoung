@@ -173,7 +173,7 @@ export default function ExhibitionDetailPage({ params }: ExhibitionDetailPagePro
       <div className="mx-auto max-w-[1200px] px-4 md:px-8">
         <Link
           href="/archive/exhibitions"
-          className="mb-4 inline-flex text-[0.9rem] text-(--text-primary) no-underline hover:underline"
+          className="mb-4 inline-flex min-h-11 items-center text-[0.9rem] text-(--text-primary) no-underline hover:underline"
         >
           전시 아카이브로 돌아가기
         </Link>

@@ -78,7 +78,7 @@ export default async function AboutPage() {
               </p>
               <Link
                 href="/archive/records"
-                className="mt-4 inline-flex text-sm font-semibold text-(--text-primary) underline underline-offset-4"
+                className="mt-4 inline-flex min-h-11 items-center text-sm font-semibold text-(--text-primary) underline underline-offset-4"
               >
                 실제 활동 기록 보기
               </Link>
@@ -92,7 +92,7 @@ export default async function AboutPage() {
               </p>
               <Link
                 href="/archive/exhibitions"
-                className="mt-4 inline-flex text-sm font-semibold text-(--text-primary) underline underline-offset-4"
+                className="mt-4 inline-flex min-h-11 items-center text-sm font-semibold text-(--text-primary) underline underline-offset-4"
               >
                 지난 전시회 보기
               </Link>
@@ -106,7 +106,7 @@ export default async function AboutPage() {
               </p>
               <Link
                 href="/about/recruiting"
-                className="mt-4 inline-flex text-sm font-semibold text-(--text-primary) underline underline-offset-4"
+                className="mt-4 inline-flex min-h-11 items-center text-sm font-semibold text-(--text-primary) underline underline-offset-4"
               >
                 리크루팅 안내 보기
               </Link>
