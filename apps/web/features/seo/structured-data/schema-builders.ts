@@ -5,6 +5,9 @@
 export const buildOrganizationId = (siteUrl: string): string =>
   `${siteUrl}/#organization`;
 
+/** 홈이 정의하는 WebSite 노드의 `@id`. 다른 페이지 노드는 isPartOf 로 이 id 를 가리킨다. */
+export const buildWebsiteId = (siteUrl: string): string => `${siteUrl}/#website`;
+
 /** 다른 노드가 연영회를 가리킬 때(author·publisher·organizer) 쓰는 Organization 참조. */
 export const buildOrganizationRef = (siteUrl: string) => ({
   "@type": "Organization",
@@ -41,4 +44,34 @@ export const buildJsonLdImages = (
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .slice(0, JSON_LD_DETAIL_IMAGE_LIMIT)
     .map((image) => image.imageUrl),
+];
+
+type SectionPageType = "AboutPage" | "CollectionPage" | "WebPage";
+
+/**
+ * 정적 섹션 페이지의 페이지 노드와 BreadcrumbList. 한 `<JsonLd>` 에 배열로 넣는다.
+ * isPartOf·about 으로 홈의 WebSite·Organization 에 이어 붙여 사이트 그래프를 한 덩어리로 만든다.
+ * trail 은 홈 다음 단계부터 이 페이지까지의 경로다.
+ */
+export const buildSectionPageJsonLd = (
+  siteUrl: string,
+  type: SectionPageType,
+  page: { title: string; description: string; path: string },
+  trail: { name: string; path: string }[],
+) => [
+  {
+    "@context": "https://schema.org",
+    "@type": type,
+    "@id": `${siteUrl}${page.path}#webpage`,
+    url: `${siteUrl}${page.path}`,
+    name: page.title,
+    description: page.description,
+    inLanguage: "ko-KR",
+    isPartOf: { "@id": buildWebsiteId(siteUrl) },
+    about: { "@id": buildOrganizationId(siteUrl) },
+  },
+  buildBreadcrumbJsonLd([
+    { name: "홈", url: siteUrl },
+    ...trail.map((item) => ({ name: item.name, url: `${siteUrl}${item.path}` })),
+  ]),
 ];

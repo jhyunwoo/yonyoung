@@ -4,8 +4,10 @@ import Link from "next/link";
 import { listPublicExhibitions } from "@/features/public/services/public-read-service";
 import { formatKoreanDateCompact } from "@/shared/utils/date-formatters";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
-import { createPageMetadata } from "@/features/seo/metadata/seo";
+import { createPageMetadata, resolveSiteUrl } from "@/features/seo/metadata/seo";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
+import JsonLd from "@/features/seo/structured-data/json-ld";
+import { buildSectionPageJsonLd } from "@/features/seo/structured-data/schema-builders";
 import PageTitleHero from "@/app/(home)/_components/page-title-hero";
 import ArchiveViewCounts, {
   ArchiveViewCountsProvider,
@@ -29,6 +31,14 @@ export default async function ArchiveExhibitionsPage() {
 
   return (
     <div className="min-h-screen bg-(--bg-primary)">
+      <JsonLd
+        data={buildSectionPageJsonLd(
+          resolveSiteUrl(),
+          "CollectionPage",
+          PAGE_SEO.archiveExhibitions,
+          [{ name: "전시회", path: "/archive/exhibitions" }],
+        )}
+      />
       <div className="mx-auto max-w-300 px-4 md:px-8">
         <PageTitleHero
           title="전시회"

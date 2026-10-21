@@ -4,8 +4,10 @@ import Link from "next/link";
 import { listPublicActivities } from "@/features/public/services/public-read-service";
 import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
-import { createPageMetadata } from "@/features/seo/metadata/seo";
+import { createPageMetadata, resolveSiteUrl } from "@/features/seo/metadata/seo";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
+import JsonLd from "@/features/seo/structured-data/json-ld";
+import { buildSectionPageJsonLd } from "@/features/seo/structured-data/schema-builders";
 import PageTitleHero from "@/app/(home)/_components/page-title-hero";
 import ArchiveViewCounts, {
   ArchiveViewCountsProvider,
@@ -29,6 +31,14 @@ export default async function ArchiveRecordsPage() {
 
   return (
     <div className="min-h-screen bg-(--bg-primary)">
+      <JsonLd
+        data={buildSectionPageJsonLd(
+          resolveSiteUrl(),
+          "CollectionPage",
+          PAGE_SEO.archiveRecords,
+          [{ name: "활동 기록", path: "/archive/records" }],
+        )}
+      />
       <div className="mx-auto max-w-300 px-4 md:px-8">
         <PageTitleHero
           title="활동 기록"

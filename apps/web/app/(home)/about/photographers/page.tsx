@@ -2,8 +2,10 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { listPublicPhotographers } from "@/features/public/services/public-read-service";
 import { formatKoreanYearRange } from "@/shared/utils/date-formatters";
-import { createPageMetadata } from "@/features/seo/metadata/seo";
+import { createPageMetadata, resolveSiteUrl } from "@/features/seo/metadata/seo";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
+import JsonLd from "@/features/seo/structured-data/json-ld";
+import { buildSectionPageJsonLd } from "@/features/seo/structured-data/schema-builders";
 import GenerationMembersGrid from "@/app/(home)/about/photographers/generation-members-grid";
 
 export const metadata: Metadata = createPageMetadata(PAGE_SEO.photographers);
@@ -26,6 +28,17 @@ export default async function PhotographersPage() {
       className="bg-(--bg-primary) pb-14 md:pb-20 md:pt-10"
       data-testid="about-photographers-page"
     >
+      <JsonLd
+        data={buildSectionPageJsonLd(
+          resolveSiteUrl(),
+          "CollectionPage",
+          PAGE_SEO.photographers,
+          [
+            { name: "소개", path: "/about" },
+            { name: "사진가", path: "/about/photographers" },
+          ],
+        )}
+      />
       <div
         className="mx-auto w-full max-w-300 space-y-10 px-4 md:space-y-20 md:px-8"
         data-testid="about-photographers-main"

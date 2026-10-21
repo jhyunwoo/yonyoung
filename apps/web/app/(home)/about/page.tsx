@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { listPublicGenerations } from "@/features/public/services/public-read-service";
 import { formatKoreanYearRange } from "@/shared/utils/date-formatters";
-import { createPageMetadata } from "@/features/seo/metadata/seo";
+import { createPageMetadata, resolveSiteUrl } from "@/features/seo/metadata/seo";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
+import JsonLd from "@/features/seo/structured-data/json-ld";
+import { buildSectionPageJsonLd } from "@/features/seo/structured-data/schema-builders";
 import PageTitleHero from "@/app/(home)/_components/page-title-hero";
 
 const annualActivities = [
@@ -37,6 +39,11 @@ export default async function AboutPage() {
 
   return (
     <div className="min-h-screen bg-(--bg-primary)">
+      <JsonLd
+        data={buildSectionPageJsonLd(resolveSiteUrl(), "AboutPage", PAGE_SEO.about, [
+          { name: "소개", path: "/about" },
+        ])}
+      />
       <div className="mx-auto max-w-300 px-4 md:px-8">
         <PageTitleHero
           title="연영회 소개"
