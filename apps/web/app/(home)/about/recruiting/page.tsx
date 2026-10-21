@@ -234,7 +234,9 @@ export default async function RecruitingPage() {
                 </p>
 
                 <Suspense fallback={null}>
-                  <RecruitingClosedNotice endAt={currentRecruitingPlan.recruitmentEndAt} />
+                  <RecruitingClosedNotice
+                    endAt={currentRecruitingPlan.recruitmentEndAt}
+                  />
                 </Suspense>
 
                 <RichTextContent
