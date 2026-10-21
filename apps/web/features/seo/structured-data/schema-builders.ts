@@ -24,3 +24,21 @@ export const buildBreadcrumbJsonLd = (items: { name: string; url: string }[]) =>
     item: item.url,
   })),
 });
+
+const JSON_LD_DETAIL_IMAGE_LIMIT = 5;
+
+/**
+ * 상세 페이지 JSON-LD 의 image 배열. 대표 이미지 + 갤러리에 보이는 순서의 앞 몇 장만 담는다.
+ * 사진이 수십 장인 게시물에서 전부 넣으면 HTML 이 수백 KB 로 불어나는데, 검색엔진은 몇 장만 쓴다.
+ */
+export const buildJsonLdImages = (
+  coverImageUrl: string,
+  detailImages: { imageUrl: string; sortOrder: number }[],
+): string[] => [
+  coverImageUrl,
+  ...detailImages
+    .slice()
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .slice(0, JSON_LD_DETAIL_IMAGE_LIMIT)
+    .map((image) => image.imageUrl),
+];

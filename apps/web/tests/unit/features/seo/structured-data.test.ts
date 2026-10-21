@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { serializeJsonLd } from "@/features/seo/structured-data/json-ld";
 import {
   buildBreadcrumbJsonLd,
+  buildJsonLdImages,
   buildOrganizationId,
   buildOrganizationRef,
 } from "@/features/seo/structured-data/schema-builders";
@@ -60,5 +61,22 @@ describe("structured-data builders", () => {
     expect(serializeJsonLd({ publisher })).toBe(
       '{"publisher":{"@type":"Organization","@id":"http://127.0.0.1:3305/#organization","name":"연영회","url":"http://127.0.0.1:3305","logo":{"@type":"ImageObject","url":"http://127.0.0.1:3305/android-chrome-512x512.png"}}}',
     );
+  });
+
+  it("JSON-LD 이미지는 대표 이미지와 보이는 순서의 상세 이미지 앞 5장만 담는다", () => {
+    const detailImages = [7, 1, 3, 2, 6, 5, 4].map((sortOrder) => ({
+      imageUrl: `detail-${sortOrder}.jpg`,
+      sortOrder,
+    }));
+
+    expect(buildJsonLdImages("cover.jpg", detailImages)).toEqual([
+      "cover.jpg",
+      "detail-1.jpg",
+      "detail-2.jpg",
+      "detail-3.jpg",
+      "detail-4.jpg",
+      "detail-5.jpg",
+    ]);
+    expect(buildJsonLdImages("cover.jpg", [])).toEqual(["cover.jpg"]);
   });
 });

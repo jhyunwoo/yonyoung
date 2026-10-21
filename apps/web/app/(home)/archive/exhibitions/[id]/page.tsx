@@ -11,6 +11,7 @@ import { createPageMetadata, resolveSiteUrl } from "@/features/seo/metadata/seo"
 import JsonLd from "@/features/seo/structured-data/json-ld";
 import {
   buildBreadcrumbJsonLd,
+  buildJsonLdImages,
   buildOrganizationRef,
 } from "@/features/seo/structured-data/schema-builders";
 import PageViewTracker from "@/app/_components/page-view-tracker";
@@ -106,10 +107,7 @@ async function ExhibitionDetailContent({ params }: ExhibitionDetailPageProps) {
     name: exhibition.title,
     description,
     url: pageUrl,
-    image: [
-      exhibition.coverImageUrl,
-      ...exhibition.detailImages.map((image) => image.imageUrl),
-    ],
+    image: buildJsonLdImages(exhibition.coverImageUrl, exhibition.detailImages),
     startDate: formatKoreanIsoDate(exhibition.startDate),
     endDate: formatKoreanIsoDate(exhibition.endDate),
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
