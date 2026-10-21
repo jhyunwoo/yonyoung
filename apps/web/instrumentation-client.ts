@@ -1,17 +1,27 @@
-import { initializeBrowserSentry } from "@/lib/observability/sentry-client";
+import {
+  captureBrowserException,
+  initializeBrowserSentry,
+} from "@/lib/observability/sentry-client";
 import { shouldSample } from "@/lib/observability/sampling";
 
 /*
   SDK 청크(전송 약 160KB)가 첫 화면과 대역폭·메인 스레드를 다투면 모바일 LCP 가 밀린다
   (SEO 감사, Lighthouse 모바일). load 뒤 유휴 시간에 받는다. 그 전에 난 오류는 아래
-  client-error beacon 이 보고하고, 오류 화면은 captureBrowserException 이 즉시 초기화한다.
+  captureBeforeSentryStarts 가 곧바로 SDK 를 받아 넘기고, 오류 화면은
+  captureBrowserException 이 즉시 초기화한다.
 */
+let sentryStarted = false;
+
 const initializeSentryWhenIdle = (): void => {
   if (typeof window === "undefined") {
     return;
   }
 
-  const start = () => void initializeBrowserSentry();
+  const start = () => {
+    void initializeBrowserSentry().then(() => {
+      sentryStarted = true;
+    });
+  };
   const startWhenIdle = () => {
     if ("requestIdleCallback" in window) {
       window.requestIdleCallback(start, { timeout: 5000 });
@@ -28,6 +38,20 @@ const initializeSentryWhenIdle = (): void => {
 };
 
 initializeSentryWhenIdle();
+
+/*
+  SDK 가 뜨기 전 오류는 SDK 전역 핸들러가 보지 못하고, beacon 은 20% 만 샘플링한다(PR #20 리뷰).
+  그래서 그 구간의 오류는 직접 넘긴다. 넘기는 순간 SDK 가 초기화되므로 이후 오류는 SDK 가 받는다.
+*/
+const captureBeforeSentryStarts = (error: unknown): void => {
+  if (sentryStarted) {
+    return;
+  }
+
+  void captureBrowserException(error).then(() => {
+    sentryStarted = true;
+  });
+};
 
 type ClientErrorPayload = {
   event: "client.error" | "client.unhandledrejection" | "router.transition.start";
@@ -112,6 +136,7 @@ const registerGlobalClientErrorHandlers = (): void => {
   globalWindow[FLAG_KEY] = true;
 
   window.addEventListener("error", (event) => {
+    captureBeforeSentryStarts(event.error ?? event.message);
     report({
       event: "client.error",
       path: getPath(),
@@ -127,6 +152,7 @@ const registerGlobalClientErrorHandlers = (): void => {
   });
 
   window.addEventListener("unhandledrejection", (event) => {
+    captureBeforeSentryStarts(event.reason);
     report({
       event: "client.unhandledrejection",
       path: getPath(),
