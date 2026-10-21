@@ -53,3 +53,13 @@ test("search crawlers can discover public pages", async ({ request, baseURL }) =
   }
   expect(xml).not.toContain("/dashboard");
 });
+
+test("unmatched URLs return a Korean 404 page", async ({ page }) => {
+  const response = await page.goto("/this-page-does-not-exist");
+  expect(response?.status()).toBe(404);
+  await expect(page).toHaveTitle("페이지를 찾을 수 없습니다 | 연영회");
+  await expect(page.locator("html")).toHaveAttribute("lang", "ko");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "찾으시는 페이지가 없습니다.",
+  );
+});
