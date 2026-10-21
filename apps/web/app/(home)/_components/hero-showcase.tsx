@@ -84,6 +84,7 @@ export default function HeroShowcase({
                       alt={featuredExhibition.title}
                       fill
                       priority
+                      fetchPriority="high"
                       unoptimized={shouldUseUnoptimizedImage(
                         featuredExhibition.coverImageUrl,
                       )}

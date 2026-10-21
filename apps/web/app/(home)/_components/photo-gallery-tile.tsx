@@ -13,6 +13,10 @@ type PhotoGalleryTileProps = {
 
 const TILE_SIZES = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 34vw";
 
+// 데스크톱 첫 줄(최대 3장)은 화면 안에 있으므로 지연 로딩하지 않는다.
+// 첫 장은 기록 상세의 LCP 요소라 우선순위도 올린다. preload 는 홈 히어로 한 장에만 쓴다.
+const EAGER_TILE_COUNT = 3;
+
 /**
  * justified rows 갤러리의 한 칸 — 서버 컴포넌트다.
  *
@@ -57,6 +61,8 @@ export function PhotoGalleryTile({ item, aspect, index }: PhotoGalleryTileProps)
           // 프레임 비율이 곧 사진 비율이라 실제로는 크롭이 일어나지 않는다
           className="object-cover"
           sizes={TILE_SIZES}
+          loading={index < EAGER_TILE_COUNT ? "eager" : "lazy"}
+          fetchPriority={index === 0 ? "high" : undefined}
         />
       </button>
     </li>

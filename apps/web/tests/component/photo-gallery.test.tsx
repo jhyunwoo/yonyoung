@@ -80,6 +80,26 @@ describe("PhotoGallery 레이아웃", () => {
     expect(tileAlts).toEqual(["가로 사진", "레거시 사진"]);
   });
 
+  it("첫 줄 사진은 바로 받고 첫 장은 우선순위를 높인다(상세 페이지의 LCP 요소)", () => {
+    const items = Array.from({ length: 5 }, (_, index) => ({
+      ...makeItems()[0],
+      key: `photo-${index}`,
+      alt: `사진 ${index}`,
+    }));
+    renderGallery(items);
+    const images = getTiles().map((tile) => within(tile).getByRole("img"));
+
+    expect(images.map((image) => image.getAttribute("loading"))).toEqual([
+      "eager",
+      "eager",
+      "eager",
+      "lazy",
+      "lazy",
+    ]);
+    expect(images[0].getAttribute("fetchpriority")).toBe("high");
+    expect(images[1].getAttribute("fetchpriority")).toBeNull();
+  });
+
   it("치수가 저장된 이미지는 원본 비율을 그대로 쓴다", () => {
     renderGallery();
 
