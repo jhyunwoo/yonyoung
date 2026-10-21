@@ -80,7 +80,7 @@ describe("PhotoGallery 레이아웃", () => {
     expect(tileAlts).toEqual(["가로 사진", "레거시 사진"]);
   });
 
-  it("첫 줄 사진은 바로 받고 첫 장은 우선순위를 높인다(상세 페이지의 LCP 요소)", () => {
+  it("첫 장만 바로 받고 우선순위를 높인다(상세 페이지의 LCP 요소)", () => {
     const items = Array.from({ length: 5 }, (_, index) => ({
       ...makeItems()[0],
       key: `photo-${index}`,
@@ -91,8 +91,8 @@ describe("PhotoGallery 레이아웃", () => {
 
     expect(images.map((image) => image.getAttribute("loading"))).toEqual([
       "eager",
-      "eager",
-      "eager",
+      "lazy",
+      "lazy",
       "lazy",
       "lazy",
     ]);
