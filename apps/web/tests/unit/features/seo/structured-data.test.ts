@@ -5,6 +5,8 @@ import {
   buildJsonLdImages,
   buildOrganizationId,
   buildOrganizationRef,
+  buildSectionPageJsonLd,
+  buildWebsiteId,
 } from "@/features/seo/structured-data/schema-builders";
 
 /*
@@ -78,5 +80,31 @@ describe("structured-data builders", () => {
       "detail-5.jpg",
     ]);
     expect(buildJsonLdImages("cover.jpg", [])).toEqual(["cover.jpg"]);
+  });
+
+  it("섹션 페이지 노드는 홈의 WebSite·Organization 을 가리키고 홈부터 빵부스러기를 잇는다", () => {
+    const [page, breadcrumb] = buildSectionPageJsonLd(
+      SITE_URL,
+      "CollectionPage",
+      { title: "사진가", description: "기수별 멤버", path: "/about/photographers" },
+      [
+        { name: "소개", path: "/about" },
+        { name: "사진가", path: "/about/photographers" },
+      ],
+    );
+
+    expect(buildWebsiteId(SITE_URL)).toBe("http://127.0.0.1:3305/#website");
+    expect(page).toMatchObject({
+      "@type": "CollectionPage",
+      "@id": "http://127.0.0.1:3305/about/photographers#webpage",
+      url: "http://127.0.0.1:3305/about/photographers",
+      isPartOf: { "@id": "http://127.0.0.1:3305/#website" },
+      about: { "@id": "http://127.0.0.1:3305/#organization" },
+    });
+    expect(breadcrumb.itemListElement.map((item) => [item.position, item.item])).toEqual([
+      [1, "http://127.0.0.1:3305"],
+      [2, "http://127.0.0.1:3305/about"],
+      [3, "http://127.0.0.1:3305/about/photographers"],
+    ]);
   });
 });

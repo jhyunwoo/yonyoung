@@ -193,6 +193,19 @@ const nextConfig: NextConfig = {
           "/:path((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
         headers: securityHeaders,
       },
+      {
+        // public/ 의 기본값 max-age=0 이면 렌더 차단 스크립트인 theme-init.js 와 로고를
+        // 페이지마다 재검증한다(SEO 감사). 파일명에 해시가 없어 배포 후 낡은 사본이 오래
+        // 남지 않도록 1시간만 신선하게 두고, 그 뒤 하루는 쓰면서 뒤에서 갱신한다.
+        source:
+          "/:file(theme-init\\.js|yonyoung-logo-black\\.png|yonyong-logo-white\\.png|apple-touch-icon\\.png|android-chrome-\\d+x\\d+\\.png|favicon-\\d+x\\d+\\.png)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=3600, stale-while-revalidate=86400",
+          },
+        ],
+      },
     ];
   },
 };

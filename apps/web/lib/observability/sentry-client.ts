@@ -3,6 +3,10 @@ import { sentryPrivacyOptions } from "@/lib/observability/sentry";
 
 type BrowserSentry = typeof Sentry;
 let initialization: Promise<BrowserSentry | null> | undefined;
+let ready = false;
+
+/** SDK 가 실제로 초기화돼 전역 오류 핸들러를 달았는지. 누가 초기화를 시작했든 같은 값이다. */
+export const isBrowserSentryReady = (): boolean => ready;
 
 /** DSN이 없으면 SDK 청크도 받지 않는다. 모든 브라우저 호출은 초기화를 공유한다. */
 export function initializeBrowserSentry(): Promise<BrowserSentry | null> {
@@ -22,6 +26,7 @@ export function initializeBrowserSentry(): Promise<BrowserSentry | null> {
         // 브라우저 확장 프로그램이 페이지 컨텍스트에서 남기는 rejection. 앱 코드는 extension API를 쓰지 않는다.
         ignoreErrors: [/runtime\.sendMessage\(\)/],
       });
+      ready = true;
       return sentry;
     })
     // SDK 다운로드/초기화 실패가 또 다른 unhandledrejection을 만들지 않게 한다.

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Suspense } from "react";
 import { getPublicSiteSettings } from "@/features/public/services/public-read-service";
 import CurrentYear from "@/app/(home)/_components/current-year";
@@ -96,6 +97,16 @@ export default async function SiteFooter() {
             익명 방문 분석을 위해 브라우저에 무작위 식별값을 저장합니다. 개인을 식별하는
             정보는 수집하지 않습니다.
           </p>
+          {/* 헤더 메뉴에 두면 네이버가 로그인 화면을 사이트링크로 띄운다(SEO 감사). */}
+          <Link
+            href="/dashboard"
+            prefetch={false}
+            rel="nofollow"
+            className="mt-1 inline-flex min-h-11 items-center text-[0.75rem] text-(--footer-muted) underline-offset-2 transition-colors duration-300 hover:text-(--footer-text) hover:underline"
+            data-testid="public-footer-dashboard"
+          >
+            회원 페이지
+          </Link>
         </div>
       </div>
     </footer>

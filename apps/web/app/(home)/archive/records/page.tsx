@@ -4,8 +4,10 @@ import Link from "next/link";
 import { listPublicActivities } from "@/features/public/services/public-read-service";
 import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
 import { shouldUseUnoptimizedImage } from "@/features/media/images/image-utils";
-import { createPageMetadata } from "@/features/seo/metadata/seo";
+import { createPageMetadata, resolveSiteUrl } from "@/features/seo/metadata/seo";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
+import JsonLd from "@/features/seo/structured-data/json-ld";
+import { buildSectionPageJsonLd } from "@/features/seo/structured-data/schema-builders";
 import PageTitleHero from "@/app/(home)/_components/page-title-hero";
 import ArchiveViewCounts, {
   ArchiveViewCountsProvider,
@@ -29,6 +31,14 @@ export default async function ArchiveRecordsPage() {
 
   return (
     <div className="min-h-screen bg-(--bg-primary)">
+      <JsonLd
+        data={buildSectionPageJsonLd(
+          resolveSiteUrl(),
+          "CollectionPage",
+          PAGE_SEO.archiveRecords,
+          [{ name: "활동 기록", path: "/archive/records" }],
+        )}
+      />
       <div className="mx-auto max-w-300 px-4 md:px-8">
         <PageTitleHero
           title="활동 기록"
@@ -47,7 +57,7 @@ export default async function ArchiveRecordsPage() {
               className="mx-auto grid max-w-[1400px] [grid-template-columns:repeat(4,minmax(0,1fr))] gap-6 px-4 md:px-8 max-[1024px]:[grid-template-columns:repeat(auto-fit,minmax(180px,1fr))] max-[768px]:grid-cols-1 max-[768px]:gap-3"
               data-testid="archive-records-grid"
             >
-              {activities.map((activity) => (
+              {activities.map((activity, index) => (
                 <Link
                   key={activity.id}
                   href={`/archive/records/${activity.id}`}
@@ -69,6 +79,9 @@ export default async function ArchiveRecordsPage() {
                       // 넘지 않고, 그 위는 max-w-[1400px] 4열(px-8, gap-6) → 최대 316px 이다.
                       sizes="(max-width: 768px) 100vw, (max-width: 1024px) 30vw, (max-width: 1400px) 25vw, 316px"
                       className="object-cover"
+                      // 첫 카드가 목록의 LCP 요소다. 상세 갤러리 첫 장과 같은 이유로 그 한 장만 eager.
+                      loading={index === 0 ? "eager" : "lazy"}
+                      fetchPriority={index === 0 ? "high" : undefined}
                     />
                   </div>
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgba(0,0,0,0.7)] to-transparent p-4 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 max-[768px]:opacity-100 md:p-6">

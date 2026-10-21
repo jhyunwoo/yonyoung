@@ -9,7 +9,6 @@ export type NavItem = {
   testId: string;
   children?: NavChild[];
   prefetch?: boolean;
-  rel?: "nofollow";
 };
 
 /*
@@ -45,12 +44,6 @@ export const navItems: NavItem[] = [
   },
   { href: "/linktree", label: "LINKTREE", testId: "linktree" },
   { href: "/donate", label: "DONATE US", testId: "donate" },
-  {
-    href: "/dashboard",
-    label: "DASHBOARD",
-    testId: "dashboard",
-    rel: "nofollow",
-  },
 ];
 
 export const isActivePath = (pathname: string, item: NavItem): boolean => {

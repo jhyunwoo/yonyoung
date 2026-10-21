@@ -113,4 +113,11 @@ describe("browser Sentry loading", () => {
       client.captureBrowserException(new Error("original")),
     ).resolves.toBeUndefined();
   });
+
+  it("reports readiness only after the SDK initializes, whoever started it", async () => {
+    const client = await import("@/lib/observability/sentry-client");
+    expect(client.isBrowserSentryReady()).toBe(false);
+    await client.captureBrowserException(new Error("boundary error"));
+    expect(client.isBrowserSentryReady()).toBe(true);
+  });
 });

@@ -59,7 +59,6 @@ export default function SiteHeaderMobileNav({
                 <Link
                   href={item.href}
                   prefetch={item.prefetch}
-                  rel={item.rel}
                   className={`${mobileLinkBaseClass} ${active ? "after:w-12" : ""}`.trim()}
                   data-testid={`public-nav-mobile-${item.testId}`}
                   onClick={onClose}

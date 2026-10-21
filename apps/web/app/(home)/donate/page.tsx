@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
-import { createPageMetadata } from "@/features/seo/metadata/seo";
+import { createPageMetadata, resolveSiteUrl } from "@/features/seo/metadata/seo";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
+import JsonLd from "@/features/seo/structured-data/json-ld";
+import { buildSectionPageJsonLd } from "@/features/seo/structured-data/schema-builders";
 import {
   getPublicAttachments,
   getPublicSiteSettings,
@@ -29,6 +31,11 @@ export default async function DonatePage() {
 
   return (
     <div className="min-h-screen bg-(--bg-primary)">
+      <JsonLd
+        data={buildSectionPageJsonLd(resolveSiteUrl(), "WebPage", PAGE_SEO.donate, [
+          { name: "후원 안내", path: "/donate" },
+        ])}
+      />
       <div className="mx-auto max-w-300 px-4 md:px-8">
         <PageTitleHero
           title="후원 안내"

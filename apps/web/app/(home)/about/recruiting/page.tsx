@@ -3,8 +3,10 @@ import Link from "next/link";
 import { getImageProps } from "next/image";
 import { Suspense } from "react";
 import { connection } from "next/server";
-import { createPageMetadata } from "@/features/seo/metadata/seo";
+import { createPageMetadata, resolveSiteUrl } from "@/features/seo/metadata/seo";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
+import JsonLd from "@/features/seo/structured-data/json-ld";
+import { buildSectionPageJsonLd } from "@/features/seo/structured-data/schema-builders";
 import { getPublicCurrentRecruitingPlan } from "@/features/public/services/public-read-service";
 import {
   HIGH_CONTRAST_RICH_TEXT_CLASS_NAMES,
@@ -184,8 +186,17 @@ export default async function RecruitingPage() {
 
   return (
     <div className="min-h-screen bg-(--bg-primary)" data-testid="about-recruiting-page">
+      <JsonLd
+        data={buildSectionPageJsonLd(resolveSiteUrl(), "WebPage", PAGE_SEO.recruiting, [
+          { name: "소개", path: "/about" },
+          { name: "신입 회원 모집", path: "/about/recruiting" },
+        ])}
+      />
       <div className="mx-auto max-w-300 px-4 md:px-8">
-        <PageTitleHero title="신입 회원 모집" description="연영회 리크루팅 안내" />
+        <PageTitleHero
+          title="연영회 신입 회원 모집"
+          description="연세대학교 중앙사진동아리 연영회 리크루팅 안내"
+        />
         <div className="mx-auto w-full max-w-300 space-y-10 pb-16 md:pb-20">
           <section className="space-y-3 border border-(--surface-border) p-5">
             <h2 className="text-[1.7rem] font-semibold text-(--text-primary)">

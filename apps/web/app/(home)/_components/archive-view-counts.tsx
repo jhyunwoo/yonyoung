@@ -42,7 +42,12 @@ export default function ArchiveViewCounts({
   className = "",
 }: ArchiveViewCountsProps) {
   const counts = useContext(ViewCountsContext);
-  const count = counts[resourceId] ?? 0;
+  const count = counts[resourceId];
+
+  // 서버 HTML 에 "조회수 0" 이 박히면 크롤러에는 아무도 안 본 사이트로 보인다.
+  if (count === undefined) {
+    return null;
+  }
 
   return <ViewCountBadge count={count} className={`text-white/90 ${className}`} />;
 }

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { listPublicLinktrees } from "@/features/public/services/public-read-service";
-import { createPageMetadata } from "@/features/seo/metadata/seo";
+import { createPageMetadata, resolveSiteUrl } from "@/features/seo/metadata/seo";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
+import JsonLd from "@/features/seo/structured-data/json-ld";
+import { buildSectionPageJsonLd } from "@/features/seo/structured-data/schema-builders";
 import PageTitleHero from "@/app/(home)/_components/page-title-hero";
 
 export const metadata: Metadata = createPageMetadata(PAGE_SEO.linktree);
@@ -21,6 +23,11 @@ export default async function LinktreePage() {
 
   return (
     <div className="min-h-screen bg-(--bg-primary)">
+      <JsonLd
+        data={buildSectionPageJsonLd(resolveSiteUrl(), "WebPage", PAGE_SEO.linktree, [
+          { name: "공식 링크", path: "/linktree" },
+        ])}
+      />
       <div className="mx-auto max-w-[1200px] px-4 md:px-8">
         <PageTitleHero title="공식 링크" description="연영회 공식 채널 및 서비스" />
 
