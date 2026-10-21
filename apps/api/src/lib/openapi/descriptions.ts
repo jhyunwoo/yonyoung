@@ -365,6 +365,7 @@ const internalOperationSpecs: Record<string, OperationDocSpec> = {
       "`startDate`, `endDate`: 전시 기간 Unix timestamp(ms)",
       "`generationId`: 연결 기수 UUID",
       "`place`: 전시 장소 텍스트",
+      "`placeAddress`: 전시 장소 주소 (선택, 비우려면 null)",
       "`coverImageUrl`: 대표 이미지 공개 URL",
     ],
     internalFlow: [

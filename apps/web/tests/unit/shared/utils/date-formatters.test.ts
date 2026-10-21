@@ -27,4 +27,11 @@ describe("shared/utils/date-formatters", () => {
 
     expect(formatKoreanYearRange(start, end)).toBe("2025년 - 2026년");
   });
+
+  it("하루짜리 일정은 범위 대신 날짜 하나로 쓴다", () => {
+    const morning = new Date("2026-09-30T09:00:00+09:00").getTime();
+    const evening = new Date("2026-09-30T21:00:00+09:00").getTime();
+    expect(formatKoreanDateRange(morning, evening)).toBe(formatKoreanDate(morning));
+    expect(formatKoreanDateRange(morning, evening)).not.toContain(" - ");
+  });
 });

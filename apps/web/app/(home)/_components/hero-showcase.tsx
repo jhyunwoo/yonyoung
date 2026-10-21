@@ -61,6 +61,13 @@ export default function HeroShowcase({
             >
               사진 동아리 활동 소개
             </Link>
+            <Link
+              href="/about/recruiting"
+              data-testid="home-cta-recruiting"
+              className="pressable inline-flex border border-(--surface-strong-border) px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-(--text-primary) transition hover:bg-(--text-primary) hover:text-white"
+            >
+              신입 회원 모집 안내
+            </Link>
           </div>
         </div>
 
@@ -84,6 +91,7 @@ export default function HeroShowcase({
                       alt={featuredExhibition.title}
                       fill
                       priority
+                      fetchPriority="high"
                       unoptimized={shouldUseUnoptimizedImage(
                         featuredExhibition.coverImageUrl,
                       )}

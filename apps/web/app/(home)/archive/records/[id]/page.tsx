@@ -14,6 +14,7 @@ import { createPageMetadata, resolveSiteUrl } from "@/features/seo/metadata/seo"
 import JsonLd from "@/features/seo/structured-data/json-ld";
 import {
   buildBreadcrumbJsonLd,
+  buildJsonLdImages,
   buildOrganizationRef,
 } from "@/features/seo/structured-data/schema-builders";
 import PageViewTracker from "@/app/_components/page-view-tracker";
@@ -98,10 +99,7 @@ async function RecordDetailContent({ params }: RecordDetailPageProps) {
     mainEntityOfPage: pageUrl,
     headline: activity.title,
     description,
-    image: [
-      activity.coverImageUrl,
-      ...activity.detailImages.map((image) => image.imageUrl),
-    ],
+    image: buildJsonLdImages(activity.coverImageUrl, activity.detailImages),
     datePublished: new Date(activity.createdAt).toISOString(),
     dateModified: new Date(activity.updatedAt).toISOString(),
     inLanguage: "ko-KR",
@@ -176,7 +174,7 @@ export default function RecordDetailPage({ params }: RecordDetailPageProps) {
       <div className="mx-auto max-w-[1200px] px-4 md:px-8">
         <Link
           href="/archive/records"
-          className="mb-4 inline-flex text-[0.9rem] text-(--text-primary) no-underline hover:underline"
+          className="mb-4 inline-flex min-h-11 items-center text-[0.9rem] text-(--text-primary) no-underline hover:underline"
         >
           활동 기록으로 돌아가기
         </Link>

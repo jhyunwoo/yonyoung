@@ -53,3 +53,30 @@ test("search crawlers can discover public pages", async ({ request, baseURL }) =
   }
   expect(xml).not.toContain("/dashboard");
 });
+
+test("unmatched URLs return a Korean 404 page", async ({ page }) => {
+  const response = await page.goto("/this-page-does-not-exist");
+  expect(response?.status()).toBe(404);
+  await expect(page).toHaveTitle("페이지를 찾을 수 없습니다 | 연영회");
+  await expect(page.locator("html")).toHaveAttribute("lang", "ko");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "찾으시는 페이지가 없습니다.",
+  );
+});
+
+test("exhibition events carry the venue address for event search results", async ({
+  page,
+}) => {
+  await page.goto("/archive/exhibitions/exh-1");
+  const schemas = await page
+    .locator('script[type="application/ld+json"]')
+    .allTextContents();
+  const event = schemas
+    .map((schema) => JSON.parse(schema))
+    .find((schema) => schema["@type"] === "Event");
+  expect(event?.location).toEqual({
+    "@type": "Place",
+    name: "연세대학교 학생회관",
+    address: "서울특별시 서대문구 연세로 50",
+  });
+});

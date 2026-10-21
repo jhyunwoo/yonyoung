@@ -116,13 +116,21 @@ export default async function HomePage() {
     "@type": "Organization",
     "@id": organizationId,
     name: "연영회",
-    alternateName: ["YonYoung", "연세대학교 중앙사진동아리 연영회"],
+    alternateName: [
+      "YonYoung",
+      "연세대학교 중앙사진동아리 연영회",
+      "Yonsei University Photography Club",
+    ],
     url: siteUrl,
     logo: `${siteUrl}/android-chrome-512x512.png`,
     image: `${siteUrl}/android-chrome-512x512.png`,
     description: PAGE_SEO.home.description,
     foundingDate: "1966",
-    sameAs: ["https://www.instagram.com/yonyoungpage"],
+    sameAs: [
+      "https://www.instagram.com/yonyoungpage",
+      // 연세대학교 총동아리연합회 중앙동아리 소개 페이지
+      "https://dongari.yonsei.ac.kr/kr/dongari/dongari_view.php?idx=166",
+    ],
     parentOrganization: {
       "@type": "CollegeOrUniversity",
       name: "연세대학교",

@@ -15,6 +15,9 @@ export const exhibitions = sqliteTable(
       .notNull()
       .references(() => generations.id),
     place: text("place").notNull(),
+    // 도로명 주소 등 지도에서 찾을 수 있는 위치. place 는 전시 공간 이름이라 따로 둔다.
+    // 검색엔진 Event 구조화 데이터의 location.address 로 쓰인다. 기존 행은 null.
+    placeAddress: text("place_address"),
     coverImageUrl: text("cover_image_url").notNull(),
     description: text("description").notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" })

@@ -1,0 +1,1 @@
+ALTER TABLE `exhibitions` ADD `place_address` text;

@@ -67,6 +67,9 @@ export default function GenerationExhibitionDetail({
             {formatKoreanDateRange(exhibition.startDate, exhibition.endDate)}
           </p>
           <p className="mt-1 text-sm text-ink-muted">장소: {exhibition.place}</p>
+          {exhibition.placeAddress ? (
+            <p className="mt-1 text-sm text-ink-muted">주소: {exhibition.placeAddress}</p>
+          ) : null}
           <div className="mt-3">
             <RichTextContent html={exhibition.description} />
           </div>

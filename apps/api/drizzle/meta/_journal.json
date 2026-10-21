@@ -120,6 +120,13 @@
       "when": 1792149039825,
       "tag": "0016_analytics_pending_engagement",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1792565368271,
+      "tag": "0017_exhibition_place_address",
+      "breakpoints": true
     }
   ]
 }

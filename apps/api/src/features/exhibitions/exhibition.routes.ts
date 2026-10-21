@@ -301,6 +301,7 @@ export const registerExhibitionRoutes = (
         "endDate",
         "generationId",
         "place",
+        "placeAddress",
         "coverImageUrl",
         "description",
       ]),

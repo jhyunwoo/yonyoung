@@ -1286,6 +1286,10 @@ const handleRequest = async (
             ? body.generationId
             : (state.generations[0]?.id ?? "gen-59"),
         place: typeof body?.place === "string" ? body.place : "장소 미정",
+        placeAddress:
+          typeof body?.placeAddress === "string" && body.placeAddress.trim()
+            ? body.placeAddress.trim()
+            : null,
         coverImageUrl:
           typeof body?.coverImageUrl === "string"
             ? body.coverImageUrl

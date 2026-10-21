@@ -11,6 +11,7 @@ import { createPageMetadata, resolveSiteUrl } from "@/features/seo/metadata/seo"
 import JsonLd from "@/features/seo/structured-data/json-ld";
 import {
   buildBreadcrumbJsonLd,
+  buildJsonLdImages,
   buildOrganizationRef,
 } from "@/features/seo/structured-data/schema-builders";
 import PageViewTracker from "@/app/_components/page-view-tracker";
@@ -106,10 +107,7 @@ async function ExhibitionDetailContent({ params }: ExhibitionDetailPageProps) {
     name: exhibition.title,
     description,
     url: pageUrl,
-    image: [
-      exhibition.coverImageUrl,
-      ...exhibition.detailImages.map((image) => image.imageUrl),
-    ],
+    image: buildJsonLdImages(exhibition.coverImageUrl, exhibition.detailImages),
     startDate: formatKoreanIsoDate(exhibition.startDate),
     endDate: formatKoreanIsoDate(exhibition.endDate),
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
@@ -118,6 +116,8 @@ async function ExhibitionDetailContent({ params }: ExhibitionDetailPageProps) {
     location: {
       "@type": "Place",
       name: exhibition.place,
+      // Google 이벤트 결과는 오프라인 행사의 주소를 요구한다. 입력된 전시만 담는다.
+      ...(exhibition.placeAddress ? { address: exhibition.placeAddress } : {}),
     },
     organizer: buildOrganizationRef(siteUrl),
   };
@@ -141,6 +141,11 @@ async function ExhibitionDetailContent({ params }: ExhibitionDetailPageProps) {
           {formatKoreanDateCompact(exhibition.endDate)}
         </p>
         <p className="mb-0 mt-[0.4rem] text-(--text-secondary)">{exhibition.place}</p>
+        {exhibition.placeAddress ? (
+          <p className="mb-0 mt-1 text-[0.9rem] text-(--text-muted)">
+            {exhibition.placeAddress}
+          </p>
+        ) : null}
         <RichTextContent
           html={exhibition.description}
           className="exhibition-description mb-0 mt-3 leading-[1.6]"
@@ -173,7 +178,7 @@ export default function ExhibitionDetailPage({ params }: ExhibitionDetailPagePro
       <div className="mx-auto max-w-[1200px] px-4 md:px-8">
         <Link
           href="/archive/exhibitions"
-          className="mb-4 inline-flex text-[0.9rem] text-(--text-primary) no-underline hover:underline"
+          className="mb-4 inline-flex min-h-11 items-center text-[0.9rem] text-(--text-primary) no-underline hover:underline"
         >
           전시 아카이브로 돌아가기
         </Link>

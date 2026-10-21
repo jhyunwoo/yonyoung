@@ -132,6 +132,7 @@ export const createExhibition = (
   endDate: new Date("2031-02-15T00:00:00.000Z"),
   generationId: IDs.generation,
   place: "아트홀",
+  placeAddress: null,
   coverImageUrl: "https://example.com/exhibition-cover.jpg",
   description: "전시 설명",
   createdAt: BASE_DATE,

@@ -115,6 +115,8 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   experimental: {
     authInterrupts: true,
+    // 루트 레이아웃이 둘이라 매칭되지 않는 주소에 쓸 404 는 app/global-not-found.tsx 뿐이다.
+    globalNotFound: true,
   },
   /*
    * React Compiler 는 켜지 않는다 — 측정한 뒤 되돌린 결정이다.

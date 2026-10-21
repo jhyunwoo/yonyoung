@@ -17,6 +17,7 @@ const exhibitionRow = (overrides: Record<string, unknown> = {}) => ({
   startDate: BASE_DATE,
   endDate: BASE_DATE,
   place: "아트홀",
+  placeAddress: null,
   coverImageUrl: "https://example.com/cover.jpg",
   generationId: "10000000-0000-4000-8000-000000000001",
   createdAt: BASE_DATE,
@@ -133,6 +134,37 @@ describe("exhibition repository", () => {
       "title",
       "updatedAt",
     ]);
+  });
+
+  it("전시 주소는 빈 문자열이면 null 로 저장하고, 수정에서도 같은 규칙을 쓴다", async () => {
+    const { fake, repository } = createRepository();
+    vi.spyOn(crypto, "randomUUID").mockReturnValue(EXHIBITION_ID);
+    fake.queueFindFirst("exhibitions", exhibitionRow());
+    fake.queueSelect(exhibitionImages, []);
+
+    await repository.createExhibition({
+      title: "정기전",
+      description: "설명",
+      startDate: BASE_DATE.getTime(),
+      endDate: BASE_DATE.getTime(),
+      place: "아트홀",
+      placeAddress: "",
+      coverImageUrl: "https://example.com/cover.jpg",
+      generationId: "10000000-0000-4000-8000-000000000001",
+    });
+    expect(fake.insertsFor("exhibitions")[0]?.values).toMatchObject({
+      placeAddress: null,
+    });
+
+    fake.queueFindFirst("exhibitions", exhibitionRow());
+    fake.queueFindFirst("exhibitions", exhibitionRow());
+    fake.queueSelect(exhibitionImages, []);
+    await repository.updateExhibition(EXHIBITION_ID, {
+      placeAddress: "서울특별시 마포구 월드컵북로1길 74",
+    });
+    expect(fake.updatesFor("exhibitions")[0]?.values).toMatchObject({
+      placeAddress: "서울특별시 마포구 월드컵북로1길 74",
+    });
   });
 
   it("전시 삭제는 소속 세부 이미지까지 soft delete 한다", async () => {

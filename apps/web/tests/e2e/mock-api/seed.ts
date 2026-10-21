@@ -247,6 +247,7 @@ const exhibitions = [
     endDate: new Date("2025-08-16").getTime(),
     generationId: "gen-59",
     place: "연세대학교 학생회관",
+    placeAddress: "서울특별시 서대문구 연세로 50",
     coverImageUrl: "https://images.mock.local/exhibitions/exh-1-cover.jpg",
     description: "<p>59기 정기 사진전입니다.</p>",
     createdAt: now - 1000 * 60 * 60 * 96,

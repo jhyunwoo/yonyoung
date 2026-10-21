@@ -23,6 +23,7 @@ export type CreateExhibitionInput = {
   endDate: number;
   generationId: string;
   place: string;
+  placeAddress?: string | null;
   coverImageUrl: string;
   description: string;
 };
@@ -150,6 +151,7 @@ export const createExhibitionRepository = (
         endDate: new Date(input.endDate),
         generationId: input.generationId,
         place: input.place,
+        placeAddress: input.placeAddress || null,
         coverImageUrl: input.coverImageUrl,
         description: input.description,
       });
@@ -179,6 +181,9 @@ export const createExhibitionRepository = (
             ? { generationId: input.generationId }
             : {}),
           ...(input.place !== undefined ? { place: input.place } : {}),
+          ...(input.placeAddress !== undefined
+            ? { placeAddress: input.placeAddress || null }
+            : {}),
           ...(input.coverImageUrl !== undefined
             ? { coverImageUrl: input.coverImageUrl }
             : {}),

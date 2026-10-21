@@ -44,6 +44,7 @@ export default function ExhibitionCreateForm({
 
   const [title, setTitle] = useState("");
   const [place, setPlace] = useState("");
+  const [placeAddress, setPlaceAddress] = useState("");
   const [descriptionHtml, setDescriptionHtml] = useState(EMPTY_RICH_TEXT_HTML);
   const [startDateInput, setStartDateInput] = useState("");
   const [endDateInput, setEndDateInput] = useState("");
@@ -113,6 +114,7 @@ export default function ExhibitionCreateForm({
       const createdExhibition = await adminResourceApi.createExhibition({
         title: trimmedTitle,
         place: trimmedPlace,
+        placeAddress: placeAddress.trim() || null,
         description: descriptionHtml,
         startDate: dateRangeResult.startDate,
         endDate: dateRangeResult.endDate,
@@ -188,6 +190,22 @@ export default function ExhibitionCreateForm({
             placeholder="예: 서울시립미술관"
             className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm"
           />
+        </label>
+
+        <label className="block space-y-1">
+          <span className="text-sm font-semibold text-ink">전시 장소 주소 (선택)</span>
+          <input
+            value={placeAddress}
+            onChange={(event) => setPlaceAddress(event.target.value)}
+            // API 한도와 같다. 넘치면 대표 사진을 올린 뒤에야 거절되므로 입력에서 막는다
+            maxLength={200}
+            disabled={isSaving}
+            placeholder="예: 서울특별시 마포구 월드컵북로1길 74"
+            className="w-full rounded-lg border border-hairline-strong bg-surface px-3 py-2 text-sm"
+          />
+          <span className="block text-xs text-ink-muted">
+            지도에서 찾을 수 있는 도로명 주소를 적으면 검색 결과에 전시 위치로 표시됩니다.
+          </span>
         </label>
 
         <div className="space-y-1">

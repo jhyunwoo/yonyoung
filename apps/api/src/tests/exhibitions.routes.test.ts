@@ -325,6 +325,41 @@ describe("exhibition routes",() => {
     expect(body.data.title).toBe("updated");
   });
 
+  it("전시 주소를 수정하고 응답에 담아 돌려준다", async () => {
+    const address = "서울특별시 마포구 월드컵북로1길 74";
+    const updateExhibition = fn(async () => createExhibition({ placeAddress: address }));
+    const app = createTestApp({
+      actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ updateExhibition }),
+    });
+
+    const response = await app.request(`/api/exhibitions/${IDs.exhibition}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ placeAddress: `  ${address}  ` }),
+    });
+
+    expect(response.status).toBe(200);
+    const body = await readJson<{ data: { placeAddress: string | null } }>(response);
+    expect(body.data.placeAddress).toBe(address);
+    expect(updateExhibition).toHaveBeenCalledWith(IDs.exhibition, {
+      placeAddress: address,
+    });
+  });
+
+  it("전시 주소가 200자를 넘으면 400을 반환한다", async () => {
+    const app = createTestApp({ actor: createActor("manager", IDs.manager) });
+
+    const response = await app.request(`/api/exhibitions/${IDs.exhibition}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ placeAddress: "가".repeat(201) }),
+    });
+
+    expect(response.status).toBe(400);
+    await expectErrorCode(response, "BAD_REQUEST");
+  });
+
   it("vice_president는 전시를 수정할 수 있다", async () => {
     const updateExhibition = fn(async () => createExhibition({ title: "vp-updated" }));
     const app = createTestApp({
