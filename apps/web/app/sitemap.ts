@@ -63,28 +63,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     listPublicExhibitions(),
   ]);
 
-  // 목록·홈은 새 게시물이 붙을 때 바뀌므로 가장 최근 게시물의 수정 시각을 쓴다.
-  // 나머지 정적 페이지는 게시물과 무관해 lastModified 를 비워 둔다.
-  const latestActivity = Math.max(0, ...activities.map((activity) => activity.updatedAt));
-  const latestExhibition = Math.max(
-    0,
-    ...exhibitions.map((exhibition) => exhibition.updatedAt),
-  );
-  const routeLastModified: Record<string, number> = {
-    "/": Math.max(latestActivity, latestExhibition),
-    "/archive/records": latestActivity,
-    "/archive/exhibitions": latestExhibition,
-  };
-
-  const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((route) => {
-    const lastModified = routeLastModified[route.path];
-    return {
-      url: `${siteUrl}${route.path}`,
-      ...(lastModified ? { lastModified: toDate(lastModified) } : {}),
-      changeFrequency: route.changeFrequency,
-      priority: route.priority,
-    };
-  });
+  // 정적 경로는 lastModified 를 비운다. 홈·목록은 링크트리 수정이나 게시물 삭제로도 바뀌는데
+  // 그 시각을 다 추적할 수 없어, 게시물 시각으로 채우면 틀린 lastmod 가 된다(PR #20 리뷰).
+  const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((route) => ({
+    url: `${siteUrl}${route.path}`,
+    changeFrequency: route.changeFrequency,
+    priority: route.priority,
+  }));
 
   const activityEntries: MetadataRoute.Sitemap = activities.map((activity) => ({
     url: `${siteUrl}/archive/records/${activity.id}`,
