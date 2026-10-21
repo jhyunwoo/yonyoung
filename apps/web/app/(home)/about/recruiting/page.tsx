@@ -193,7 +193,10 @@ export default async function RecruitingPage() {
         ])}
       />
       <div className="mx-auto max-w-300 px-4 md:px-8">
-        <PageTitleHero title="신입 회원 모집" description="연영회 리크루팅 안내" />
+        <PageTitleHero
+          title="연영회 신입 회원 모집"
+          description="연세대학교 중앙사진동아리 연영회 리크루팅 안내"
+        />
         <div className="mx-auto w-full max-w-300 space-y-10 pb-16 md:pb-20">
           <section className="space-y-3 border border-(--surface-border) p-5">
             <h2 className="text-[1.7rem] font-semibold text-(--text-primary)">
