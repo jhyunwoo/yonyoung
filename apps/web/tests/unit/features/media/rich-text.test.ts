@@ -18,6 +18,14 @@ describe("features/media/rich-text", () => {
     expect(summarizeRichTextHtml(html, 100)).toBe("Hello World Second line");
   });
 
+  it("decodes html entities once so summaries read as plain text", () => {
+    const html =
+      "<p>월간 연영회 &lt;9월 호&gt;이 발행! &#x27;쉼&#39; &quot;컷&quot; A&amp;B &amp;lt;</p>";
+    expect(summarizeRichTextHtml(html, 200)).toBe(
+      "월간 연영회 <9월 호>이 발행! '쉼' \"컷\" A&B &lt;",
+    );
+  });
+
   it("sanitizes dangerous tags, attributes, and javascript links", () => {
     const sanitized = sanitizeRichTextHtml(
       '<p>Hello</p><script>alert(1)</script><a href="javascript:alert(1)" onclick="x()">bad</a>',

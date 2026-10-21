@@ -110,9 +110,37 @@ export const sanitizeRichTextHtml = (html: string): string => {
   return ensureSafeLinkRel(filterXss(html, SANITIZE_OPTIONS));
 };
 
+const HTML_ENTITY_PATTERN = /&(?:#(\d+)|#x([0-9a-f]+)|([a-z]+));/gi;
+const NAMED_HTML_ENTITIES: Record<string, string> = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+  nbsp: " ",
+};
+
+// 한 번만 훑으므로 &amp;lt; 는 &lt; 로 남는다(이중 디코딩하지 않는다).
+const decodeHtmlEntities = (text: string): string => {
+  return text.replace(
+    HTML_ENTITY_PATTERN,
+    (entity, decimal?: string, hex?: string, name?: string) => {
+      if (name) {
+        return NAMED_HTML_ENTITIES[name.toLowerCase()] ?? entity;
+      }
+
+      const codePoint = Number.parseInt(decimal ?? hex ?? "", decimal ? 10 : 16);
+      return codePoint > 0 && codePoint <= 0x10ffff
+        ? String.fromCodePoint(codePoint)
+        : entity;
+    },
+  );
+};
+
+// 결과는 HTML이 아닌 일반 텍스트다. 메타 태그·React 텍스트처럼 다시 이스케이프되는 곳에만 쓴다.
 const stripRichTextHtml = (html: string): string => {
   return normalizeWhitespace(
-    sanitizeRichTextHtml(html).replace(RICH_TEXT_TAG_PATTERN, " "),
+    decodeHtmlEntities(sanitizeRichTextHtml(html).replace(RICH_TEXT_TAG_PATTERN, " ")),
   );
 };
 
