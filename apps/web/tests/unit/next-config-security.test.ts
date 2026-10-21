@@ -4,10 +4,8 @@ import nextConfig from "../../next.config";
 describe("next.config security headers", () => {
   it("sets security headers on non-API routes", async () => {
     const headersConfig = await nextConfig.headers?.();
-    expect(headersConfig).toHaveLength(1);
-
-    const [routeConfig] = headersConfig ?? [];
-    expect(routeConfig?.source).toContain("(?!api");
+    const routeConfig = headersConfig?.find((config) => config.source.includes("(?!api"));
+    expect(routeConfig).toBeDefined();
 
     const headers = new Map(
       routeConfig?.headers.map((header) => [header.key, header.value]),
@@ -46,5 +44,22 @@ describe("next.config security headers", () => {
     expect(remotePatterns).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ hostname: "**" })]),
     );
+  });
+
+  it("public 의 테마 스크립트와 로고는 짧게 캐시하고 페이지 경로에는 걸리지 않는다", async () => {
+    const headersConfig = await nextConfig.headers?.();
+    const cacheConfig = headersConfig?.find((config) =>
+      config.source.includes("theme-init"),
+    );
+    expect(cacheConfig?.headers).toEqual([
+      {
+        key: "Cache-Control",
+        value: "public, max-age=3600, stale-while-revalidate=86400",
+      },
+    ]);
+    const pattern = new RegExp(`^/${cacheConfig?.source.slice("/:file".length)}$`);
+    expect(pattern.test("/theme-init.js")).toBe(true);
+    expect(pattern.test("/android-chrome-512x512.png")).toBe(true);
+    expect(pattern.test("/about")).toBe(false);
   });
 });
