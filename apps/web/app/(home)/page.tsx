@@ -16,7 +16,10 @@ import { summarizeRichTextHtml } from "@/features/media/rich-text/rich-text";
 import { resolveSiteUrl } from "@/features/seo/metadata/seo";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
 import JsonLd from "@/features/seo/structured-data/json-ld";
-import { buildOrganizationId } from "@/features/seo/structured-data/schema-builders";
+import {
+  buildOrganizationId,
+  buildWebsiteId,
+} from "@/features/seo/structured-data/schema-builders";
 import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
 
 const getHomePrimaryData = async () => {
@@ -110,7 +113,7 @@ export default async function HomePage() {
   const recentActivities = activities.slice(0, 6);
   const siteUrl = resolveSiteUrl();
   const organizationId = buildOrganizationId(siteUrl);
-  const websiteId = `${siteUrl}/#website`;
+  const websiteId = buildWebsiteId(siteUrl);
   const organizationJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -135,6 +138,11 @@ export default async function HomePage() {
       "@type": "CollegeOrUniversity",
       name: "연세대학교",
       url: "https://www.yonsei.ac.kr",
+      // 같은 이름의 다른 단체와 섞이지 않도록 학교 엔티티를 위키백과로 못 박는다.
+      sameAs: [
+        "https://ko.wikipedia.org/wiki/연세대학교",
+        "https://en.wikipedia.org/wiki/Yonsei_University",
+      ],
     },
   };
   const websiteJsonLd = {

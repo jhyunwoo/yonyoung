@@ -73,7 +73,7 @@ test("exhibition events carry the venue address for event search results", async
     .allTextContents();
   const event = schemas
     .map((schema) => JSON.parse(schema))
-    .find((schema) => schema["@type"] === "Event");
+    .find((schema) => schema["@type"] === "ExhibitionEvent");
   expect(event?.location).toEqual({
     "@type": "Place",
     name: "연세대학교 학생회관",

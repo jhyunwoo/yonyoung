@@ -102,7 +102,8 @@ async function ExhibitionDetailContent({ params }: ExhibitionDetailPageProps) {
   );
   const exhibitionJsonLd = {
     "@context": "https://schema.org",
-    "@type": "Event",
+    // Event 의 하위 유형이라 Google 이벤트 결과 대상은 그대로다.
+    "@type": "ExhibitionEvent",
     "@id": `${pageUrl}#event`,
     name: exhibition.title,
     description,

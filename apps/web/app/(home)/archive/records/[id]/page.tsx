@@ -16,6 +16,7 @@ import {
   buildBreadcrumbJsonLd,
   buildJsonLdImages,
   buildOrganizationRef,
+  buildWebsiteId,
 } from "@/features/seo/structured-data/schema-builders";
 import PageViewTracker from "@/app/_components/page-view-tracker";
 import ArchiveDetailSkeleton from "@/app/(home)/_components/archive-detail-skeleton";
@@ -97,6 +98,7 @@ async function RecordDetailContent({ params }: RecordDetailPageProps) {
     "@type": "Article",
     "@id": `${pageUrl}#article`,
     mainEntityOfPage: pageUrl,
+    isPartOf: { "@id": buildWebsiteId(siteUrl) },
     headline: activity.title,
     description,
     image: buildJsonLdImages(activity.coverImageUrl, activity.detailImages),
