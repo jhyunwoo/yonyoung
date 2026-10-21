@@ -1,7 +1,33 @@
 import { initializeBrowserSentry } from "@/lib/observability/sentry-client";
 import { shouldSample } from "@/lib/observability/sampling";
 
-void initializeBrowserSentry();
+/*
+  SDK 청크(전송 약 160KB)가 첫 화면과 대역폭·메인 스레드를 다투면 모바일 LCP 가 밀린다
+  (SEO 감사, Lighthouse 모바일). load 뒤 유휴 시간에 받는다. 그 전에 난 오류는 아래
+  client-error beacon 이 보고하고, 오류 화면은 captureBrowserException 이 즉시 초기화한다.
+*/
+const initializeSentryWhenIdle = (): void => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const start = () => void initializeBrowserSentry();
+  const startWhenIdle = () => {
+    if ("requestIdleCallback" in window) {
+      window.requestIdleCallback(start, { timeout: 5000 });
+    } else {
+      setTimeout(start, 2000);
+    }
+  };
+
+  if (document.readyState === "complete") {
+    startWhenIdle();
+  } else {
+    window.addEventListener("load", startWhenIdle, { once: true });
+  }
+};
+
+initializeSentryWhenIdle();
 
 type ClientErrorPayload = {
   event: "client.error" | "client.unhandledrejection" | "router.transition.start";
