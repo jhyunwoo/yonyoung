@@ -215,7 +215,7 @@ test.describe("Instant Navigation", () => {
       await clickHeaderLink(page, "LINKTREE");
 
       await expect(
-        page.getByRole("heading", { name: "LINKTREE", level: 1 }),
+        page.getByRole("heading", { name: "공식 링크", level: 1 }),
       ).toBeVisible();
       await expect(page.getByTestId("linktree-groups")).toBeVisible();
       await expectSharedShell(page);

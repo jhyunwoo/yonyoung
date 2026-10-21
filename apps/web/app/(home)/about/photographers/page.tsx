@@ -32,7 +32,7 @@ export default async function PhotographersPage() {
       >
         <section className="space-y-6 pt-6 md:space-y-10 md:pt-10">
           <h1 className="text-4xl leading-none font-normal tracking-[-0.02em] text-(--text-primary) md:text-6xl">
-            PHOTOGRAPHERS
+            연영회 사진가
           </h1>
           {generations.length > 0 ? (
             <nav aria-label="기수 바로가기">

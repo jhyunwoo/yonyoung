@@ -22,7 +22,7 @@ export default async function LinktreePage() {
   return (
     <div className="min-h-screen bg-(--bg-primary)">
       <div className="mx-auto max-w-[1200px] px-4 md:px-8">
-        <PageTitleHero title="LINKTREE" description="연영회 공식 채널 및 서비스" />
+        <PageTitleHero title="공식 링크" description="연영회 공식 채널 및 서비스" />
 
         <section
           className="mx-auto grid max-w-[1400px] grid-cols-5 gap-6 px-8 pb-16 max-[1200px]:grid-cols-3 max-[900px]:grid-cols-2 max-[768px]:grid-cols-1 max-[768px]:gap-6 max-[768px]:px-6 max-[768px]:pb-12"

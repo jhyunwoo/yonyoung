@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getImageProps } from "next/image";
 import { Suspense } from "react";
 import { connection } from "next/server";
@@ -144,6 +145,31 @@ async function RecruitingStatusBadge({
 }
 
 /**
+ * 마감 뒤에 들어온 지원 희망자가 막다른 길에 서지 않도록 다음 모집 시기와 소식 채널을 알려 준다.
+ * 배지와 같은 이유로 요청 시각이 필요해 따로 스트리밍한다.
+ */
+async function RecruitingClosedNotice({ endAt }: { endAt: number }) {
+  await connection();
+  // eslint-disable-next-line react-hooks/purity -- RecruitingStatusBadge 와 같은 근거
+  if (Date.now() <= endAt) {
+    return null;
+  }
+
+  return (
+    <p
+      className="border border-(--surface-border) bg-(--surface-base) p-4 text-sm text-(--text-primary)"
+      data-testid="about-recruiting-closed-notice"
+    >
+      이번 모집은 마감되었습니다. 다음 신입 회원 모집은 3월에 진행하며, 일정은{" "}
+      <Link href="/linktree" className="font-semibold underline underline-offset-4">
+        연영회 공식 채널
+      </Link>
+      에서 가장 먼저 안내합니다.
+    </p>
+  );
+}
+
+/**
  * Instant Navigation 계약 (Next.js 16.3).
  *
  * 이 라우트로 이동할 때 요청 시점 작업을 기다리지 않고 곧바로 의미 있는 UI 가
@@ -159,7 +185,7 @@ export default async function RecruitingPage() {
   return (
     <div className="min-h-screen bg-(--bg-primary)" data-testid="about-recruiting-page">
       <div className="mx-auto max-w-300 px-4 md:px-8">
-        <PageTitleHero title="RECRUITING" description="연영회 모집 안내" />
+        <PageTitleHero title="신입 회원 모집" description="연영회 리크루팅 안내" />
         <div className="mx-auto w-full max-w-300 space-y-10 pb-16 md:pb-20">
           <section className="space-y-3 border border-(--surface-border) p-5">
             <h2 className="text-[1.7rem] font-semibold text-(--text-primary)">
@@ -206,6 +232,10 @@ export default async function RecruitingPage() {
                   {formatKoreanDateTime(currentRecruitingPlan.recruitmentStartAt)} ~{" "}
                   {formatKoreanDateTime(currentRecruitingPlan.recruitmentEndAt)}
                 </p>
+
+                <Suspense fallback={null}>
+                  <RecruitingClosedNotice endAt={currentRecruitingPlan.recruitmentEndAt} />
+                </Suspense>
 
                 <RichTextContent
                   html={currentRecruitingPlan.content}
