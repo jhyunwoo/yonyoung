@@ -41,10 +41,10 @@ const getActivity = cache(async (id: string) => {
 });
 
 const buildActivityDescription = (description: string, title: string): string => {
-  return (
-    summarizeRichTextHtml(description, 145) ||
-    `연세대학교 중앙사진동아리 연영회의 ${title} 활동 사진과 기록을 확인하세요.`
-  );
+  const summary = summarizeRichTextHtml(description, 145);
+  const context = `연세대학교 중앙사진동아리 연영회의 ${title} 활동 사진과 기록을 확인하세요.`;
+  // "61기 OT" 같은 한 줄 본문만 쓰면 검색 결과 설명에 누가·무엇인지가 빠진다.
+  return summary.length < 50 ? `${summary} ${context}`.trim() : summary;
 };
 
 export async function generateMetadata({

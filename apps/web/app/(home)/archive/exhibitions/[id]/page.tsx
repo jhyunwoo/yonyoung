@@ -51,10 +51,10 @@ const buildExhibitionDescription = (
   title: string,
   place: string,
 ): string => {
-  return (
-    summarizeRichTextHtml(description, 135) ||
-    `${place}에서 열린 연영회 ${title}의 전시 정보와 작품 사진을 확인하세요.`
-  );
+  const summary = summarizeRichTextHtml(description, 135);
+  const context = `${place}에서 열린 연세대학교 중앙사진동아리 연영회 ${title}의 전시 정보와 작품 사진을 확인하세요.`;
+  // 한 줄 본문만 쓰면 검색 결과 설명에 누가·어디서인지가 빠진다.
+  return summary.length < 50 ? `${summary} ${context}`.trim() : summary;
 };
 
 export async function generateMetadata({
