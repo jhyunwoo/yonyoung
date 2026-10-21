@@ -80,7 +80,6 @@ function DesktopNavItem({
         <Link
           href={item.href}
           prefetch={item.prefetch}
-          rel={item.rel}
           className={linkClassName}
           data-testid={`public-nav-desktop-${item.testId}`}
         >
@@ -139,7 +138,6 @@ function DesktopNavItem({
       <Link
         href={item.href}
         prefetch={item.prefetch}
-        rel={item.rel}
         className={linkClassName}
         data-testid={`public-nav-desktop-${item.testId}`}
         aria-expanded={isOpen}
