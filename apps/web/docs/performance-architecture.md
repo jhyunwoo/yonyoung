@@ -72,6 +72,23 @@ Component outside of \`<Suspense>\``). 작업 중 실제로 한 번 이렇게 �
 최상단에서 await 하면 셸이 특정 URL 에 묶여 라우트 공용 셸이 성립하지 않는다.
 **되돌리지 말 것.**
 
+### 검색엔진이 보는 상세 라우트 (2026-10 SEO 감사)
+
+이 구조 때문에 SEO 도구가 두 가지를 지적하지만, 둘 다 알고 둔 비용이다.
+
+- **본문이 `<div hidden id="S:…">` 안에 있다.** 프리렌더된 HTML 에서도 상세 본문은
+  스켈레톤 셸 뒤에 숨은 조각으로 붙고 인라인 스크립트가 제자리로 옮긴다. 텍스트는 HTML
+  에 그대로 있고 Googlebot 은 JS 를 실행한다. 감사 시점에 Naver AI 답변이 전시 상세
+  본문을 인용하고 있었다.
+- **목록에 없는 id 는 일반 브라우저·Googlebot 에게 `200 + noindex` 다(소프트 404).**
+  스트리밍이 시작된 뒤의 `notFound()` 라 상태 코드를 바꿀 수 없다(Next 문서의 의도된
+  동작). HTML-limited bot(Naver Yeti, Bingbot 등, `htmlLimitedBots`)은 셸 없이
+  `generateMetadata` 를 먼저 기다리므로 같은 주소에서 **진짜 404** 를 받는다.
+  형식이 틀린 id 는 모두 404 다.
+
+진짜 404 를 모두에게 주려면 존재 확인을 Suspense 밖(페이지 최상단)이나 프록시로 옮겨야
+하는데, 앞의 것은 Instant Navigation 계약을 깨고 뒤의 것은 상세 요청마다 API 왕복을 더한다.
+
 ## 3. Partial Prefetching
 
 `<Link>` 는 전부 기본 프리페치를 쓴다. `prefetch={true}` 를 붙인 곳은 없다.
