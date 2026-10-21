@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const captureBrowserException = vi.fn(() => Promise.resolve());
+let sentryReady = false;
+const captureBrowserException = vi.fn(() => {
+  sentryReady = true;
+  return Promise.resolve();
+});
 const initializeBrowserSentry = vi.fn(() => Promise.resolve(null));
 
 beforeEach(() => {
@@ -13,6 +17,7 @@ beforeEach(() => {
   vi.doMock("@/lib/observability/sentry-client", () => ({
     captureBrowserException,
     initializeBrowserSentry,
+    isBrowserSentryReady: () => sentryReady,
   }));
 });
 
@@ -31,8 +36,7 @@ describe("client instrumentation Sentry 시작", () => {
     window.dispatchEvent(new ErrorEvent("error", { error: early, message: "early" }));
     expect(captureBrowserException).toHaveBeenCalledWith(early);
 
-    // captureBrowserException 이 끝나면 SDK 가 떠 있으므로 이후 오류는 SDK 전역 핸들러 몫이다.
-    await vi.waitFor(() => Promise.resolve());
+    // SDK 가 떠 있으면 이후 오류는 SDK 전역 핸들러 몫이다.
     window.dispatchEvent(new ErrorEvent("error", { error: new Error("late") }));
     expect(captureBrowserException).toHaveBeenCalledOnce();
 
