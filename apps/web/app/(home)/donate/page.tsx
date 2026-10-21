@@ -127,7 +127,7 @@ export default async function DonatePage() {
             </p>
             <p>작은 관심과 응원이 저희에게 큰 힘이 됩니다.</p>
             {attachments.length === 0 ? (
-              <p>후원금 사용 내역은 60기 운영진으로 연락주시면 열람하실 수 있습니다.</p>
+              <p>후원금 사용 내역은 현 운영진에게 연락주시면 열람하실 수 있습니다.</p>
             ) : null}
           </div>
         </section>
