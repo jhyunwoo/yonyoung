@@ -1,5 +1,6 @@
 import { getPublicActivityById } from "@/features/public/services/public-read-service";
 import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
+import { isUuid } from "@/shared/utils/uuid";
 import { loadOgCoverImage } from "@/features/seo/og/og-cover-image";
 import { OG_CONTENT_TYPE, OG_IMAGE_SIZE, renderOgCard } from "@/features/seo/og/og-card";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
@@ -20,7 +21,8 @@ type OpenGraphImageProps = {
 
 export default async function OpenGraphImage({ params }: OpenGraphImageProps) {
   const { id } = await params;
-  const activity = await getPublicActivityById(id).catch(() => null);
+  // 형식이 틀린 id로 API를 부르면 400이 서버 오류로 보고된다(YONYOUNG-WEB-C).
+  const activity = isUuid(id) ? await getPublicActivityById(id).catch(() => null) : null;
 
   if (!activity) {
     // 삭제되었거나 아직 없는 id — 사이트 기본 카드로 대체한다.
