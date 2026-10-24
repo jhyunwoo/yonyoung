@@ -105,6 +105,25 @@ const readPublicWithFallback = async <T>(input: {
   }
 };
 
+/**
+ * 상세 하나를 읽는다. 형식이 틀린 id(400)나 없는·비공개 게시물(404)은 던지지 않고 `null`이다.
+ * 던지면 페이지가 잡아도 id 자리에 `abc`가 온 상세 주소가 렌더 오류로 보고됐다(YONYOUNG-WEB-C).
+ * 없다는 결과는 폴백처럼 짧게만 캐시한다. 그 밖의 실패는 던져서 캐시하지 않는다.
+ */
+const readPublicDetail = async <T>(
+  path: string,
+  schema: z.ZodType<T>,
+): Promise<T | null> => {
+  try {
+    return await readPublic<T>(path, schema);
+  } catch (error) {
+    if (error instanceof HonoApiError && (error.status === 400 || error.status === 404)) {
+      return null;
+    }
+    throw error;
+  }
+};
+
 export const listPublicActivities = async (): Promise<ApiActivity[]> => {
   "use cache";
 
@@ -131,13 +150,21 @@ export const listPublicActivities = async (): Promise<ApiActivity[]> => {
  * 고쳤을 때 B·C·D 의 상세 캐시까지 버리지 않기 위해서다 — 자세한 근거와, 이를
  * 고정하는 테스트는 `server/cache/tags.ts` 주석 참고.
  */
-export const getPublicActivityById = async (id: string): Promise<ApiActivity> => {
+export const getPublicActivityById = async (id: string): Promise<ApiActivity | null> => {
   "use cache";
 
-  cacheLife(ARCHIVE_CACHE_PROFILE);
   cacheTag(publicActivityTag(id));
 
-  return readPublic<ApiActivity>(`/api/public/activities/${id}`, apiActivitySchema);
+  const activity = await readPublicDetail(
+    `/api/public/activities/${id}`,
+    apiActivitySchema,
+  );
+  if (activity) {
+    cacheLife(ARCHIVE_CACHE_PROFILE);
+  } else {
+    cacheLife(FAILURE_CACHE_PROFILE);
+  }
+  return activity;
 };
 
 /**
@@ -170,13 +197,23 @@ export const listPublicExhibitions = async (): Promise<ApiExhibition[]> =>
   (await readPublicExhibitions()).data;
 
 /** 전시 하나의 상세. 활동 상세와 같은 이유로 엔티티 태그만 붙인다. */
-export const getPublicExhibitionById = async (id: string): Promise<ApiExhibition> => {
+export const getPublicExhibitionById = async (
+  id: string,
+): Promise<ApiExhibition | null> => {
   "use cache";
 
-  cacheLife(ARCHIVE_CACHE_PROFILE);
   cacheTag(publicExhibitionTag(id));
 
-  return readPublic<ApiExhibition>(`/api/public/exhibitions/${id}`, apiExhibitionSchema);
+  const exhibition = await readPublicDetail(
+    `/api/public/exhibitions/${id}`,
+    apiExhibitionSchema,
+  );
+  if (exhibition) {
+    cacheLife(ARCHIVE_CACHE_PROFILE);
+  } else {
+    cacheLife(FAILURE_CACHE_PROFILE);
+  }
+  return exhibition;
 };
 
 /**

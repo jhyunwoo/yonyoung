@@ -8,7 +8,6 @@ import {
   getPublicAttachments,
 } from "@/features/public/services/public-read-service";
 import { formatKoreanDateRange } from "@/shared/utils/date-formatters";
-import { isUuid } from "@/shared/utils/uuid";
 import { summarizeRichTextHtml } from "@/features/media/rich-text/rich-text";
 import { RichTextContent } from "@/features/media/rich-text/rich-text-content";
 import { createPageMetadata, resolveSiteUrl } from "@/features/seo/metadata/seo";
@@ -38,11 +37,6 @@ type RecordDetailPageProps = {
 };
 
 const getActivity = cache(async (id: string) => {
-  // 형식이 틀린 id는 API가 400으로 거절하고 그 오류가 서버 오류로 보고된다(YONYOUNG-WEB-C).
-  // 부르지 않고 바로 없는 게시물로 다룬다.
-  if (!isUuid(id)) {
-    return null;
-  }
   return getPublicActivityById(id).catch(() => null);
 });
 
@@ -86,9 +80,6 @@ export async function generateMetadata({
  */
 async function RecordDetailContent({ params }: RecordDetailPageProps) {
   const { id } = await params;
-  if (!isUuid(id)) {
-    notFound();
-  }
   // 활동 정보와 첨부 자료는 독립적이므로 병렬로 조회한다
   const [activity, attachments] = await Promise.all([
     getActivity(id),

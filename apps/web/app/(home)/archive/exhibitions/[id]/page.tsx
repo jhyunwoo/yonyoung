@@ -5,7 +5,6 @@ import { cache } from "react";
 import { Suspense } from "react";
 import { getPublicExhibitionById } from "@/features/public/services/public-read-service";
 import { formatKoreanDateCompact } from "@/shared/utils/date-formatters";
-import { isUuid } from "@/shared/utils/uuid";
 import { summarizeRichTextHtml } from "@/features/media/rich-text/rich-text";
 import { RichTextContent } from "@/features/media/rich-text/rich-text-content";
 import { createPageMetadata, resolveSiteUrl } from "@/features/seo/metadata/seo";
@@ -33,11 +32,6 @@ type ExhibitionDetailPageProps = {
 };
 
 const getExhibition = cache(async (id: string) => {
-  // 형식이 틀린 id는 API가 400으로 거절하고 그 오류가 서버 오류로 보고된다(YONYOUNG-WEB-C).
-  // 부르지 않고 바로 없는 게시물로 다룬다.
-  if (!isUuid(id)) {
-    return null;
-  }
   return getPublicExhibitionById(id).catch(() => null);
 });
 

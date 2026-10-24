@@ -1,6 +1,5 @@
 import { getPublicExhibitionById } from "@/features/public/services/public-read-service";
 import { formatKoreanDateCompact } from "@/shared/utils/date-formatters";
-import { isUuid } from "@/shared/utils/uuid";
 import { loadOgCoverImage } from "@/features/seo/og/og-cover-image";
 import { OG_CONTENT_TYPE, OG_IMAGE_SIZE, renderOgCard } from "@/features/seo/og/og-card";
 import { PAGE_SEO } from "@/features/seo/metadata/page-seo";
@@ -20,10 +19,7 @@ type OpenGraphImageProps = {
 
 export default async function OpenGraphImage({ params }: OpenGraphImageProps) {
   const { id } = await params;
-  // 형식이 틀린 id로 API를 부르면 400이 서버 오류로 보고된다(YONYOUNG-WEB-C).
-  const exhibition = isUuid(id)
-    ? await getPublicExhibitionById(id).catch(() => null)
-    : null;
+  const exhibition = await getPublicExhibitionById(id).catch(() => null);
 
   if (!exhibition) {
     // 삭제되었거나 아직 없는 id — 전시 아카이브 기본 카드로 대체한다.
