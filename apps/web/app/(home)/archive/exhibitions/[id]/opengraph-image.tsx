@@ -21,7 +21,9 @@ type OpenGraphImageProps = {
 export default async function OpenGraphImage({ params }: OpenGraphImageProps) {
   const { id } = await params;
   // 형식이 틀린 id로 API를 부르면 400이 서버 오류로 보고된다(YONYOUNG-WEB-C).
-  const exhibition = isUuid(id) ? await getPublicExhibitionById(id).catch(() => null) : null;
+  const exhibition = isUuid(id)
+    ? await getPublicExhibitionById(id).catch(() => null)
+    : null;
 
   if (!exhibition) {
     // 삭제되었거나 아직 없는 id — 전시 아카이브 기본 카드로 대체한다.
