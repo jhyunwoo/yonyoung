@@ -156,7 +156,7 @@ export const getPublicActivityById = async (id: string): Promise<ApiActivity | n
   cacheTag(publicActivityTag(id));
 
   const activity = await readPublicDetail(
-    `/api/public/activities/${id}`,
+    `/api/public/activities/${encodeURIComponent(id)}`,
     apiActivitySchema,
   );
   if (activity) {
@@ -205,7 +205,7 @@ export const getPublicExhibitionById = async (
   cacheTag(publicExhibitionTag(id));
 
   const exhibition = await readPublicDetail(
-    `/api/public/exhibitions/${id}`,
+    `/api/public/exhibitions/${encodeURIComponent(id)}`,
     apiExhibitionSchema,
   );
   if (exhibition) {

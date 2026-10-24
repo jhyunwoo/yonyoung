@@ -53,6 +53,15 @@ describe.each(readers)("공개 %s 상세 읽기", (_label, read) => {
     await expect(read("abc")).rejects.toBe(outage);
   });
 
+  it("id를 API 경로 한 칸으로만 넣는다", async () => {
+    honoRequest.mockResolvedValueOnce({ id: "x" });
+
+    await read("../admin?x=1");
+    const { path } = honoRequest.mock.calls[0]![0] as { path: string };
+    expect(path).toContain("..%2Fadmin%3Fx%3D1");
+    expect(path).not.toContain("../admin");
+  });
+
   it("찾으면 길게 캐시한다", async () => {
     honoRequest.mockResolvedValueOnce({ id: "found" });
 
