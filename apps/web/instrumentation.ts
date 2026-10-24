@@ -33,7 +33,13 @@ export const onRequestError: Instrumentation.onRequestError = (
   errorRequest,
   errorContext,
 ) => {
-  Sentry.captureRequestError(error, errorRequest, errorContext);
+  // 없는 경로로 온 POST는 스캐너다(.php, .jsp 업로드 시도 등). Next가 multipart 본문을 서버 액션으로
+  // 파싱하다 던지는 오류라 사이트 결함이 아니다(YONYOUNG-WEB-2·4·5·6). 로그에는 남긴다.
+  const isProbeToMissingRoute =
+    errorRequest.method === "POST" && errorContext.routePath === "/_not-found/page";
+  if (!isProbeToMissingRoute) {
+    Sentry.captureRequestError(error, errorRequest, errorContext);
+  }
   logger.error({
     event: "request.error",
     route: errorContext.routePath,
