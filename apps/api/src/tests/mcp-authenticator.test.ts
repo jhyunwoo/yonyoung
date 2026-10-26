@@ -1,5 +1,11 @@
 import { Hono } from "hono";
-import { exportJWK, generateKeyPair, SignJWT, type JWTPayload } from "jose";
+import {
+  exportJWK,
+  generateKeyPair,
+  SignJWT,
+  type JSONWebKeySet,
+  type JWTPayload,
+} from "jose";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   createBetterAuthMcpAuthenticator,
@@ -19,24 +25,15 @@ beforeAll(async () => {
   publicJwk = { ...(await exportJWK(keys.publicKey)), kid: KEY_ID, alg: "ES256" };
 });
 
-// 보호 핸들러와 JWKS는 issuer별로 캐시되므로 테스트마다 issuer를 다르게 둔다.
+// 키 세트는 issuer별로 캐시되므로 테스트마다 issuer를 다르게 둔다.
 const createEnv = (name: string) => ({
   BETTER_AUTH_URL: "https://web.example.test",
   MCP_RESOURCE_URL: RESOURCE_URL,
   MCP_AUTH_ISSUER: `https://${name}.auth.example.test/api/auth`,
 });
 
-const stubJwks = (issuer: string) => {
-  const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-    const url = input instanceof Request ? input.url : String(input);
-    if (url !== `${issuer}/jwks`) {
-      return new Response("not found", { status: 404 });
-    }
-    return Response.json({ keys: [publicJwk] });
-  });
-  vi.stubGlobal("fetch", fetchMock);
-  return fetchMock;
-};
+const createJwksLoader = () =>
+  vi.fn(async () => ({ keys: [publicJwk] }) as JSONWebKeySet);
 
 const signToken = (claims: JWTPayload) =>
   new SignJWT(claims)
@@ -45,8 +42,8 @@ const signToken = (claims: JWTPayload) =>
     .setExpirationTime("5m")
     .sign(privateKey);
 
-const createProtectedApp = () => {
-  const authenticate = createBetterAuthMcpAuthenticator();
+const createProtectedApp = (loadJwks = createJwksLoader()) => {
+  const authenticate = createBetterAuthMcpAuthenticator(loadJwks);
   const received: McpTokenIdentity[] = [];
   const app = new Hono<HonoAppType>();
   app.post("/mcp", (c) =>
@@ -55,7 +52,7 @@ const createProtectedApp = () => {
       return c.json({ ok: true });
     }),
   );
-  return { app, received };
+  return { app, received, loadJwks };
 };
 
 const callMcp = (
@@ -79,8 +76,7 @@ afterEach(() => {
 describe("createBetterAuthMcpAuthenticator", () => {
   it("유효한 토큰이면 후속 처리에 사용자, 클라이언트, scope를 넘긴다", async () => {
     const env = createEnv("valid");
-    const fetchMock = stubJwks(env.MCP_AUTH_ISSUER);
-    const { app, received } = createProtectedApp();
+    const { app, received, loadJwks } = createProtectedApp();
     const token = await signToken({
       iss: env.MCP_AUTH_ISSUER,
       aud: RESOURCE_URL,
@@ -95,12 +91,11 @@ describe("createBetterAuthMcpAuthenticator", () => {
     expect(received).toEqual([
       { userId: "user-1", clientId: "client-1", scopes: ["openid", "mcp"] },
     ]);
-    expect(fetchMock).toHaveBeenCalled();
+    expect(loadJwks).toHaveBeenCalledTimes(1);
   });
 
   it("audience가 다르면 401", async () => {
     const env = createEnv("wrong-aud");
-    stubJwks(env.MCP_AUTH_ISSUER);
     const { app, received } = createProtectedApp();
     const token = await signToken({
       iss: env.MCP_AUTH_ISSUER,
@@ -118,7 +113,6 @@ describe("createBetterAuthMcpAuthenticator", () => {
 
   it("issuer가 다르면 401", async () => {
     const env = createEnv("wrong-iss");
-    stubJwks(env.MCP_AUTH_ISSUER);
     const { app, received } = createProtectedApp();
     const token = await signToken({
       iss: "https://evil.example.test/api/auth",
@@ -136,7 +130,6 @@ describe("createBetterAuthMcpAuthenticator", () => {
 
   it("mcp scope가 없으면 403", async () => {
     const env = createEnv("no-scope");
-    stubJwks(env.MCP_AUTH_ISSUER);
     const { app, received } = createProtectedApp();
     const token = await signToken({
       iss: env.MCP_AUTH_ISSUER,
@@ -157,7 +150,6 @@ describe("createBetterAuthMcpAuthenticator", () => {
 
   it("client_credentials 토큰(sub=azp)은 401", async () => {
     const env = createEnv("client-token");
-    stubJwks(env.MCP_AUTH_ISSUER);
     const { app, received } = createProtectedApp();
     const token = await signToken({
       iss: env.MCP_AUTH_ISSUER,
@@ -176,10 +168,10 @@ describe("createBetterAuthMcpAuthenticator", () => {
     expect(received).toEqual([]);
   });
 
-  it("JWKS 조회가 한 번 실패하면 다시 시도해 통과시킨다", async () => {
-    const env = createEnv("jwks-blip");
-    const fetchMock = stubJwks(env.MCP_AUTH_ISSUER);
-    fetchMock.mockResolvedValueOnce(new Response("origin error", { status: 522 }));
+  it("키를 네트워크로 받지 않아 웹 오리진이 멈춰도 통과시킨다", async () => {
+    const env = createEnv("no-network");
+    const fetchMock = vi.fn(() => new Promise<Response>(() => {}));
+    vi.stubGlobal("fetch", fetchMock);
     const { app, received } = createProtectedApp();
     const token = await signToken({
       iss: env.MCP_AUTH_ISSUER,
@@ -193,13 +185,82 @@ describe("createBetterAuthMcpAuthenticator", () => {
 
     expect(response.status).toBe(200);
     expect(received).toHaveLength(1);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("키 세트를 issuer별로 캐시해 요청마다 다시 읽지 않는다", async () => {
+    const env = createEnv("jwks-cache");
+    const { app, received, loadJwks } = createProtectedApp();
+    const token = await signToken({
+      iss: env.MCP_AUTH_ISSUER,
+      aud: RESOURCE_URL,
+      sub: "user-1",
+      azp: "client-1",
+      scope: "mcp",
+    });
+
+    await callMcp(app, env, token);
+    await callMcp(app, env, token);
+
+    expect(received).toHaveLength(2);
+    expect(loadJwks).toHaveBeenCalledTimes(1);
+  });
+
+  it("키 조회가 실패하면 401로 감추지 않고 던진다", async () => {
+    const env = createEnv("jwks-failure");
+    const loadJwks = vi.fn(async (): Promise<JSONWebKeySet> => {
+      throw new Error("D1 unavailable");
+    });
+    const { app, received } = createProtectedApp(loadJwks);
+    const token = await signToken({
+      iss: env.MCP_AUTH_ISSUER,
+      aud: RESOURCE_URL,
+      sub: "user-1",
+      azp: "client-1",
+      scope: "mcp",
+    });
+
+    const response = await callMcp(app, env, token);
+
+    expect(response.status).toBe(500);
+    expect(received).toEqual([]);
+  });
+
+  it("만료된 토큰은 401", async () => {
+    const env = createEnv("expired");
+    const { app, received } = createProtectedApp();
+    const token = await new SignJWT({
+      iss: env.MCP_AUTH_ISSUER,
+      aud: RESOURCE_URL,
+      sub: "user-1",
+      azp: "client-1",
+      scope: "mcp",
+    })
+      .setProtectedHeader({ alg: "ES256", kid: KEY_ID })
+      .setIssuedAt(Math.floor(Date.now() / 1000) - 600)
+      .setExpirationTime(Math.floor(Date.now() / 1000) - 300)
+      .sign(privateKey);
+
+    const response = await callMcp(app, env, token);
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get("www-authenticate")).toContain("resource_metadata=");
+    expect(received).toEqual([]);
+  });
+
+  it("형식이 깨진 토큰은 401", async () => {
+    const env = createEnv("malformed");
+    const { app, received } = createProtectedApp();
+
+    const response = await callMcp(app, env, "not-a-jwt");
+
+    expect(response.status).toBe(401);
+    expect(received).toEqual([]);
   });
 
   it("후속 처리가 던진 오류는 다시 시도하지 않는다", async () => {
     const env = createEnv("handler-error");
-    stubJwks(env.MCP_AUTH_ISSUER);
-    const authenticate = createBetterAuthMcpAuthenticator();
+    const authenticate = createBetterAuthMcpAuthenticator(createJwksLoader());
     const onAuthenticated = vi.fn(async () => {
       throw new Error("tool failed");
     });
@@ -221,7 +282,6 @@ describe("createBetterAuthMcpAuthenticator", () => {
 
   it("Authorization 헤더가 없으면 resource_metadata를 담은 401", async () => {
     const env = createEnv("no-header");
-    stubJwks(env.MCP_AUTH_ISSUER);
     const { app, received } = createProtectedApp();
 
     const response = await callMcp(app, env);
