@@ -152,7 +152,9 @@ export const createDefaultDependencies = (): AppDependencies => ({
     createD1MultipartUploadStateStore(createRequestDatabase(c)),
   getUploadReservationStore: (c) =>
     createD1UploadReservationStore(createRequestDatabase(c)),
-  authenticateMcpRequest: createBetterAuthMcpAuthenticator(),
+  authenticateMcpRequest: createBetterAuthMcpAuthenticator((c) =>
+    createAuth(resolveD1Database(c.env), c.env).api.getJwks(),
+  ),
   loadActorByUserId: (c, userId) =>
     loadActorByUserId(resolveD1Database(c.env), userId),
   getMcpConnectionStore: (c) =>

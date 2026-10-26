@@ -213,7 +213,6 @@ export const resolveDocsEnabled = (
 export type McpRuntimeEnv = {
   resourceUrl: string;
   issuer: string;
-  jwksUrl: string;
   resourceMetadataUrl: string;
 };
 
@@ -245,7 +244,6 @@ export const resolveMcpRuntimeEnv = (
   return {
     resourceUrl,
     issuer,
-    jwksUrl: `${issuer}/jwks`,
     resourceMetadataUrl: `${resource.origin}/.well-known/oauth-protected-resource${resource.pathname}`,
   };
 };
