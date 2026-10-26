@@ -77,16 +77,41 @@ describe("fetchSessionFromApi", () => {
     },
   );
 
-  it("연결 실패도 일시 장애로 알린다", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => {
-        throw new TypeError("fetch failed");
-      }),
-    );
+  it("연결 실패가 이어지면 일시 장애로 알린다", async () => {
+    const fetchMock = vi.fn(async () => {
+      throw new TypeError("fetch failed");
+    });
+    vi.stubGlobal("fetch", fetchMock);
 
     await expect(fetchSessionFromApi("session=1")).rejects.toBeInstanceOf(
       SessionUnavailableError,
     );
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  // 재사용한 keep-alive 연결이 이미 끊겨 있으면 첫 요청만 ECONNRESET 으로 실패한다(YONYOUNG-WEB-A).
+  it("한 번 끊긴 연결은 다시 시도해 세션을 읽는다", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError("fetch failed"))
+      .mockResolvedValueOnce(Response.json(sessionPayload));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(fetchSessionFromApi("session=1")).resolves.toMatchObject({
+      user: { id: "u1" },
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("타임아웃(abort)은 다시 시도하지 않는다", async () => {
+    const fetchMock = vi.fn(async () => {
+      throw new DOMException("aborted", "AbortError");
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(fetchSessionFromApi("session=1")).rejects.toBeInstanceOf(
+      SessionUnavailableError,
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
