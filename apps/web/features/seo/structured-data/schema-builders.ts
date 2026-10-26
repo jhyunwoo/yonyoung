@@ -16,9 +16,7 @@ export const buildOrganizationRef = (siteUrl: string) => ({
   url: siteUrl,
 });
 
-/** 순서대로 position 1, 2, … 를 매긴 BreadcrumbList. */
-export const buildBreadcrumbJsonLd = (items: { name: string; url: string }[]) => ({
-  "@context": "https://schema.org",
+const buildBreadcrumbNode = (items: { name: string; url: string }[]) => ({
   "@type": "BreadcrumbList",
   itemListElement: items.map((item, index) => ({
     "@type": "ListItem",
@@ -26,6 +24,12 @@ export const buildBreadcrumbJsonLd = (items: { name: string; url: string }[]) =>
     name: item.name,
     item: item.url,
   })),
+});
+
+/** 순서대로 position 1, 2, … 를 매긴 BreadcrumbList. */
+export const buildBreadcrumbJsonLd = (items: { name: string; url: string }[]) => ({
+  "@context": "https://schema.org",
+  ...buildBreadcrumbNode(items),
 });
 
 const JSON_LD_DETAIL_IMAGE_LIMIT = 5;
@@ -49,7 +53,9 @@ export const buildJsonLdImages = (
 type SectionPageType = "AboutPage" | "CollectionPage" | "WebPage";
 
 /**
- * 정적 섹션 페이지의 페이지 노드와 BreadcrumbList. 한 `<JsonLd>` 에 배열로 넣는다.
+ * 정적 섹션 페이지의 페이지 노드와 BreadcrumbList. 한 `<JsonLd>` 에 `@graph` 로 넣는다.
+ * 최상위를 배열로 두면 JSON-LD 를 읽는 인앱 브라우저·확장 스크립트가 `@context` 를 못 찾아
+ * TypeError 를 낸다(YONYOUNG-WEB-E·F). 그래서 @context 를 가진 객체로 감싼다.
  * isPartOf·about 으로 홈의 WebSite·Organization 에 이어 붙여 사이트 그래프를 한 덩어리로 만든다.
  * trail 은 홈 다음 단계부터 이 페이지까지의 경로다.
  */
@@ -58,20 +64,26 @@ export const buildSectionPageJsonLd = (
   type: SectionPageType,
   page: { title: string; description: string; path: string },
   trail: { name: string; path: string }[],
-) => [
-  {
-    "@context": "https://schema.org",
-    "@type": type,
-    "@id": `${siteUrl}${page.path}#webpage`,
-    url: `${siteUrl}${page.path}`,
-    name: page.title,
-    description: page.description,
-    inLanguage: "ko-KR",
-    isPartOf: { "@id": buildWebsiteId(siteUrl) },
-    about: { "@id": buildOrganizationId(siteUrl) },
-  },
-  buildBreadcrumbJsonLd([
+) => {
+  const breadcrumb = buildBreadcrumbNode([
     { name: "홈", url: siteUrl },
     ...trail.map((item) => ({ name: item.name, url: `${siteUrl}${item.path}` })),
-  ]),
-];
+  ]);
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": type,
+        "@id": `${siteUrl}${page.path}#webpage`,
+        url: `${siteUrl}${page.path}`,
+        name: page.title,
+        description: page.description,
+        inLanguage: "ko-KR",
+        isPartOf: { "@id": buildWebsiteId(siteUrl) },
+        about: { "@id": buildOrganizationId(siteUrl) },
+      },
+      breadcrumb,
+    ],
+  };
+};

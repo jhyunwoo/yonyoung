@@ -150,12 +150,25 @@ export const fetchSessionFromApi = async (
 
   const { controller, timeoutId } = createTimeoutController(SESSION_REQUEST_TIMEOUT_MS);
 
-  try {
-    const response = await fetch(`${getApiBaseUrl()}${SESSION_PATH}`, {
+  const requestSession = () =>
+    fetch(`${getApiBaseUrl()}${SESSION_PATH}`, {
       method: "GET",
       headers,
       cache: "no-store",
       signal: controller.signal,
+    });
+
+  try {
+    /*
+      undici 는 keep-alive 연결을 재사용하는데, 그 사이 API 쪽이 연결을 닫았으면 첫 요청이
+      ECONNRESET("fetch failed" TypeError)으로 바로 실패한다(YONYOUNG-WEB-A). GET 이라 한 번 더
+      보내도 안전하다. 타임아웃(abort)은 같은 제한 시간을 쓰므로 다시 보내지 않는다.
+    */
+    const response = await requestSession().catch((error: unknown) => {
+      if (error instanceof TypeError && !controller.signal.aborted) {
+        return requestSession();
+      }
+      throw error;
     });
 
     if (!response.ok) {

@@ -83,7 +83,7 @@ describe("structured-data builders", () => {
   });
 
   it("섹션 페이지 노드는 홈의 WebSite·Organization 을 가리키고 홈부터 빵부스러기를 잇는다", () => {
-    const [page, breadcrumb] = buildSectionPageJsonLd(
+    const jsonLd = buildSectionPageJsonLd(
       SITE_URL,
       "CollectionPage",
       { title: "사진가", description: "기수별 멤버", path: "/about/photographers" },
@@ -92,6 +92,7 @@ describe("structured-data builders", () => {
         { name: "사진가", path: "/about/photographers" },
       ],
     );
+    const [page, breadcrumb] = jsonLd["@graph"];
 
     expect(buildWebsiteId(SITE_URL)).toBe("http://127.0.0.1:3305/#website");
     expect(page).toMatchObject({
@@ -105,6 +106,30 @@ describe("structured-data builders", () => {
       [1, "http://127.0.0.1:3305"],
       [2, "http://127.0.0.1:3305/about"],
       [3, "http://127.0.0.1:3305/about/photographers"],
+    ]);
+  });
+
+  /*
+    최상위가 배열이면 JSON-LD 를 읽는 인앱 브라우저·확장 스크립트가 `data["@context"]` 를
+    객체로 가정하다 TypeError 를 낸다(YONYOUNG-WEB-E·F). 최상위는 늘 @context 를 가진 객체여야 한다.
+  */
+  it("섹션 페이지 JSON-LD 의 최상위는 @context 를 가진 객체다", () => {
+    const jsonLd = JSON.parse(
+      serializeJsonLd(
+        buildSectionPageJsonLd(
+          SITE_URL,
+          "WebPage",
+          { title: "모집", description: "모집 안내", path: "/about/recruiting" },
+          [{ name: "모집", path: "/about/recruiting" }],
+        ),
+      ),
+    );
+
+    expect(Array.isArray(jsonLd)).toBe(false);
+    expect(jsonLd["@context"]).toBe("https://schema.org");
+    expect(jsonLd["@graph"].map((node: { "@type": string }) => node["@type"])).toEqual([
+      "WebPage",
+      "BreadcrumbList",
     ]);
   });
 });
