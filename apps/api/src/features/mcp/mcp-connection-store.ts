@@ -7,8 +7,35 @@ export type McpConnection = {
   updatedAt: number;
 };
 
+/**
+ * 액세스 토큰은 서명만으로 검증되는 JWT라 연결 해제로 지워지지 않는다. 해제 후 같은
+ * 클라이언트를 다시 연결하면 동의 행이 새로 생겨, 해제 전에 발급된 토큰이 만료 전까지
+ * 되살아난다. 동의보다 먼저 발급된 토큰은 그 동의의 것이 아니다.
+ * iat는 초 단위로 버려지므로 동의와 같은 초에 발급된 토큰은 받아들인다.
+ */
+export const isTokenIssuedUnderConsent = (
+  tokenIssuedAtSeconds: number | null,
+  consentCreatedAtMs: number | null,
+): boolean => {
+  if (consentCreatedAtMs === null) {
+    return true;
+  }
+  if (tokenIssuedAtSeconds === null) {
+    return false;
+  }
+  return tokenIssuedAtSeconds >= Math.floor(consentCreatedAtMs / 1000);
+};
+
 export interface McpConnectionStore {
-  hasConsent(userId: string, clientId: string): Promise<boolean>;
+  /**
+   * tokenIssuedAtSeconds를 주면 그 시각에 발급된 토큰이 현재 동의로 유효한지까지 본다.
+   * 생략하면 동의 행이 있는지만 본다.
+   */
+  hasConsent(
+    userId: string,
+    clientId: string,
+    tokenIssuedAtSeconds?: number | null,
+  ): Promise<boolean>;
   list(userId: string): Promise<McpConnection[]>;
   /** 동의를 지우고 그 클라이언트의 토큰을 폐기한다. 지운 동의가 있었으면 true. */
   revoke(userId: string, clientId: string, now: number): Promise<boolean>;
@@ -51,14 +78,23 @@ const parseScopes = (value: string | null): string[] => {
 export const createD1McpConnectionStore = (
   database: ConnectionDatabase,
 ): McpConnectionStore => ({
-  async hasConsent(userId, clientId) {
+  async hasConsent(userId, clientId, tokenIssuedAtSeconds) {
     const row = await database
       .prepare(
-        "SELECT 1 AS found FROM oauth_consent WHERE user_id = ? AND client_id = ? LIMIT 1",
+        "SELECT created_at FROM oauth_consent WHERE user_id = ? AND client_id = ? ORDER BY created_at DESC LIMIT 1",
       )
       .bind(userId, clientId)
-      .first<{ found: number }>();
-    return row !== null;
+      .first<{ created_at: number | null }>();
+    if (row === null) {
+      return false;
+    }
+    if (tokenIssuedAtSeconds === undefined) {
+      return true;
+    }
+    return isTokenIssuedUnderConsent(
+      tokenIssuedAtSeconds,
+      row.created_at === null ? null : Number(row.created_at),
+    );
   },
 
   async list(userId) {
@@ -119,7 +155,12 @@ export const createD1McpConnectionStore = (
 });
 
 export const createMemoryMcpConnectionStore = (
-  seed: Array<{ userId: string; clientId: string; clientName?: string }> = [],
+  seed: Array<{
+    userId: string;
+    clientId: string;
+    clientName?: string;
+    connectedAt?: number;
+  }> = [],
 ): McpConnectionStore => {
   const consents = new Map<string, McpConnection & { userId: string }>();
   const key = (userId: string, clientId: string) =>
@@ -131,14 +172,21 @@ export const createMemoryMcpConnectionStore = (
       clientName: entry.clientName ?? null,
       clientUri: null,
       scopes: ["openid", "mcp"],
-      connectedAt: 0,
-      updatedAt: 0,
+      connectedAt: entry.connectedAt ?? 0,
+      updatedAt: entry.connectedAt ?? 0,
     });
   }
 
   return {
-    async hasConsent(userId, clientId) {
-      return consents.has(key(userId, clientId));
+    async hasConsent(userId, clientId, tokenIssuedAtSeconds) {
+      const consent = consents.get(key(userId, clientId));
+      if (!consent) {
+        return false;
+      }
+      return (
+        tokenIssuedAtSeconds === undefined ||
+        isTokenIssuedUnderConsent(tokenIssuedAtSeconds, consent.connectedAt)
+      );
     },
     async list(userId) {
       return [...consents.values()]

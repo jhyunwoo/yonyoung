@@ -20,6 +20,8 @@ export type McpTokenIdentity = {
   userId: string;
   clientId: string;
   scopes: string[];
+  /** 토큰 발급 시각(iat, 초). 연결 해제 이전에 발급된 토큰을 가려내는 데 쓴다. */
+  issuedAt: number | null;
 };
 
 export type McpRequestAuthenticator = (
@@ -43,7 +45,11 @@ export const toMcpTokenIdentity = (
     typeof claims.scope === "string"
       ? claims.scope.split(" ").filter(Boolean)
       : [];
-  return { userId, clientId, scopes };
+  const issuedAt =
+    typeof claims.iat === "number" && Number.isFinite(claims.iat)
+      ? claims.iat
+      : null;
+  return { userId, clientId, scopes, issuedAt };
 };
 
 /** 헤더 값은 ASCII여야 하므로 사람이 읽을 한국어 설명은 JSON-RPC 본문에만 넣는다. */

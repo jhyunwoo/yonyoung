@@ -24,6 +24,8 @@ type TestApp = ReturnType<typeof createTestApp>;
 export const createMcpTestApp = (input: {
   getActor: () => Actor | null;
   consent?: boolean;
+  /** 토큰의 iat(초). 생략하면 지금 발급된 토큰으로 본다. */
+  tokenIssuedAt?: number;
   dataService?: DataService;
   connectionStore?: McpConnectionStore;
   overrides?: Partial<AppDependencies>;
@@ -49,6 +51,7 @@ export const createMcpTestApp = (input: {
           userId: initialActor?.id ?? "missing-user",
           clientId: TEST_MCP_CLIENT_ID,
           scopes: ["mcp"],
+          issuedAt: input.tokenIssuedAt ?? Math.floor(Date.now() / 1000),
         });
       },
       loadActorByUserId: async (_c, userId) => {

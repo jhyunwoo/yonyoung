@@ -2,7 +2,9 @@ import { captureException } from "@sentry/cloudflare";
 import { describe, expect, it, vi } from "vitest";
 import { MCP_TOOL_CATALOG } from "@yonyoung/contracts/mcp";
 import { MCP_TOOL_DEFINITIONS } from "../features/mcp/tools";
+import { createMemoryMcpConnectionStore } from "../features/mcp/mcp-connection-store";
 import {
+  TEST_MCP_CLIENT_ID,
   connectMcpClient,
   createMcpTestApp,
   resultText,
@@ -96,6 +98,32 @@ describe("MCP 엔드포인트 거부 응답", () => {
     );
     expect(response.status).toBe(401);
     expect(response.headers.get("www-authenticate")).toContain("resource_metadata=");
+  });
+
+  it("연결 해제 전에 발급된 토큰은 다시 연결해도 401이다", async () => {
+    const actor = createActor("regular_member");
+    const reconnectedAt = Date.now();
+    const connectionStore = createMemoryMcpConnectionStore([
+      { userId: actor.id, clientId: TEST_MCP_CLIENT_ID, connectedAt: reconnectedAt },
+    ]);
+
+    const stale = await postInitialize(
+      createMcpTestApp({
+        getActor: () => actor,
+        connectionStore,
+        tokenIssuedAt: Math.floor(reconnectedAt / 1000) - 60,
+      }),
+    );
+    expect(stale.status).toBe(401);
+
+    const current = await postInitialize(
+      createMcpTestApp({
+        getActor: () => actor,
+        connectionStore,
+        tokenIssuedAt: Math.floor(reconnectedAt / 1000) + 1,
+      }),
+    );
+    expect(current.status).toBe(200);
   });
 
   it("삭제된 사용자는 401과 resource_metadata를 받는다", async () => {

@@ -118,7 +118,13 @@ export const registerMcpRoutes = (app: App, dependencies: AppDependencies) => {
     dependencies.authenticateMcpRequest(c, async (identity) => {
       const mcpEnv = resolveMcpRuntimeEnv(c.env);
       const connections = dependencies.getMcpConnectionStore(c);
-      if (!(await connections.hasConsent(identity.userId, identity.clientId))) {
+      if (
+        !(await connections.hasConsent(
+          identity.userId,
+          identity.clientId,
+          identity.issuedAt,
+        ))
+      ) {
         return mcpUnauthorizedResponse(
           mcpEnv,
           "연결이 해제되었습니다. 커넥터를 다시 연결해 주세요.",
