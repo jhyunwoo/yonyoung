@@ -61,6 +61,30 @@ describe("auth routes", () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
+  it("문서가 꺼져 있으면 인증 OpenAPI 스키마를 내보내지 않는다", async () => {
+    const handler = vi.fn(async () => new Response("{}", { status: 200 }));
+    mockCreateAuth.mockReturnValue({ handler } as never);
+
+    const app = new OpenAPIHono<HonoAppType>();
+    registerAuthRoutes(app);
+
+    const hidden = await app.request(
+      "/api/auth/open-api/generate-schema",
+      { method: "GET" },
+      { ...bindings, DOCS_ENABLED: "false" },
+    );
+    expect(hidden.status).toBe(404);
+    expect(handler).not.toHaveBeenCalled();
+
+    const shown = await app.request(
+      "/api/auth/open-api/generate-schema",
+      { method: "GET" },
+      { ...bindings, DOCS_ENABLED: "true" },
+    );
+    expect(shown.status).toBe(200);
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
   it("웹 프록시가 넘긴 sec-fetch-mode를 복원해 Better Auth에 넘긴다", async () => {
     const handler = vi.fn(async (_request: Request) => new Response(null, { status: 302 }));
     mockCreateAuth.mockReturnValue({ handler } as never);

@@ -1,5 +1,7 @@
 import { type OpenAPIHono } from "@hono/zod-openapi";
 import { createAuth } from "../../lib/auth";
+import { resolveDocsEnabled } from "../../lib/config/runtime-env";
+import { notFound } from "../../lib/http/response";
 import { resolveD1Database } from "../../infra/db/client";
 import type HonoAppType from "../../types/honoAppType";
 
@@ -24,6 +26,15 @@ const restoreSecFetchMode = (request: Request): Request => {
 };
 
 export function registerAuthRoutes(app: App) {
+  // openAPI 플러그인의 disableDefaultReference는 HTML 문서만 끈다. 스키마 JSON은 다른 문서
+  // 라우트와 같은 스위치를 따른다(문서 빌더는 auth.handler를 직접 불러 이 라우트를 거치지 않는다).
+  app.get("/api/auth/open-api/*", async (c, next) => {
+    if (!resolveDocsEnabled(c.env)) {
+      return notFound(c);
+    }
+    await next();
+  });
+
   app.on(["GET", "POST"], "/api/auth/*", async (c) => {
     const requestOrigin = new URL(c.req.url).origin;
     const auth = createAuth(resolveD1Database(c.env), {
