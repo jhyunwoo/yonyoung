@@ -21,6 +21,7 @@ import {
   noContentResponse,
 } from "../../lib/openapi/responses";
 import { AppError, isAppError } from "../../shared/errors/AppError";
+import { logger } from "../../shared/logging/logger";
 import { requireAuthenticatedActor } from "../../shared/http/route-guards";
 import { readValidated } from "../../shared/http/validated-input";
 import type HonoAppType from "../../types/honoAppType";
@@ -792,20 +793,41 @@ export const registerUploadRoutes = (
     // 객체가 예약한 크기로 실제 올라왔는지로만 판단한다. 올라온 뒤에는 같은 URL로 같은 키를
     // 같은 크기로 덮어쓸 수밖에 없어 사용량이 더 늘지 않는다.
     let uploadedSize: number | null = null;
-    if (isUploadObjectKeyPrefixOwnedBy(reservation.id, actor.id)) {
+    let lookupFailed = false;
+    const isBoundToObjectKey = isUploadObjectKeyPrefixOwnedBy(
+      reservation.id,
+      actor.id,
+    );
+    if (isBoundToObjectKey) {
       try {
         uploadedSize = await dependencies.findUploadedObjectSize(
           c,
           `${reservation.id}-`,
         );
       } catch {
-        uploadedSize = null;
+        lookupFailed = true;
       }
     }
 
     if (uploadedSize === reservation.fileSize) {
       await settleUploadReservation(store, reservation.id, c);
     } else {
+      // 성공했다는 업로드를 확인하지 못하면 용량이 URL 만료까지 잡혀 사용자가 한도에 일찍
+      // 닿는다. 응답으로는 드러나지 않으므로 원인을 로그로 남긴다.
+      if (body.outcome === "completed") {
+        logger.warn({
+          event: "upload.settle.unverified",
+          reason: !isBoundToObjectKey
+            ? "reservation_not_bound"
+            : lookupFailed
+              ? "lookup_failed"
+              : uploadedSize === null
+                ? "object_missing"
+                : "size_mismatch",
+          reservedBytes: reservation.fileSize,
+          uploadedBytes: uploadedSize,
+        });
+      }
       await holdUploadReservationUntilUrlExpiry(store, reservation.id);
     }
 
