@@ -166,6 +166,31 @@ describe("app/api/[...path]/route", () => {
     ]);
   });
 
+  it("업스트림이 Cache-Control을 주지 않으면 공유 캐시에 남지 않게 no-store로 내보낸다", async () => {
+    const proxyUsersMe = async (upstreamHeaders: Record<string, string>) => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => new Response("{}", { status: 200, headers: upstreamHeaders })),
+      );
+      const handlers = await import("@/app/api/[...path]/route");
+      return handlers.GET(
+        new NextRequest("https://yonyoung.yonsei.ac.kr/api/users/me", { method: "GET" }),
+        { params: Promise.resolve({ path: ["users", "me"] }) },
+      );
+    };
+
+    const withoutPolicy = await proxyUsersMe({ "content-type": "application/json" });
+    expect(withoutPolicy.headers.get("cache-control")).toBe(
+      "private, no-store, max-age=0",
+    );
+
+    const withPolicy = await proxyUsersMe({
+      "content-type": "application/json",
+      "cache-control": "public, s-maxage=120",
+    });
+    expect(withPolicy.headers.get("cache-control")).toBe("public, s-maxage=120");
+  });
+
   it("공유 비밀이 설정되면 방문자 IP를 API에 전달하고, 들어온 위조 헤더는 버린다", async () => {
     process.env.PROXY_CLIENT_IP_SECRET = "shared-secret-for-client-ip";
     const fetchSpy = vi.fn(async () => new Response("{}", { status: 200 }));
