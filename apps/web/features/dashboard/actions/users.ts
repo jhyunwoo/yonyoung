@@ -86,9 +86,7 @@ export const updateUserAction = async (
     body: payload,
     responseSchema: apiUserSchema,
     requireAdminAccess: canManageUsers,
-    tags: canAccessAdminPage(session)
-      ? USER_CACHE_TAGS
-      : UNVERIFIED_USER_CACHE_TAGS,
+    tags: canAccessAdminPage(session) ? USER_CACHE_TAGS : UNVERIFIED_USER_CACHE_TAGS,
   });
 };
 

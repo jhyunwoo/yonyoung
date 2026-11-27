@@ -86,8 +86,6 @@ export const summarizeWebVitalForLog = (input: {
   rating: truncateForLog(input.rating),
   delta: input.delta,
   navigationType:
-    input.navigationType === undefined
-      ? undefined
-      : truncateForLog(input.navigationType),
+    input.navigationType === undefined ? undefined : truncateForLog(input.navigationType),
   sampledAt: input.sampledAt,
 });
