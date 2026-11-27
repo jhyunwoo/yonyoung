@@ -89,7 +89,12 @@ describe("createBetterAuthMcpAuthenticator", () => {
 
     expect(response.status).toBe(200);
     expect(received).toEqual([
-      { userId: "user-1", clientId: "client-1", scopes: ["openid", "mcp"] },
+      {
+        userId: "user-1",
+        clientId: "client-1",
+        scopes: ["openid", "mcp"],
+        issuedAt: expect.any(Number),
+      },
     ]);
     expect(loadJwks).toHaveBeenCalledTimes(1);
   });

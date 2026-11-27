@@ -4,7 +4,8 @@ import { ok } from "../../lib/http/response";
 import type { AppDependencies } from "../../lib/services/dependencies";
 import { requireAuthenticatedActor } from "../../shared/http/route-guards";
 import { readValidated } from "../../shared/http/validated-input";
-import { isManagerLikeRole } from "../../lib/authorization/policy";
+import { can, isManagerLikeRole } from "../../lib/authorization/policy";
+import type { Resource } from "../../lib/authorization/types";
 import { dataResponse, errorResponses } from "../../lib/openapi/responses";
 import {
   ApiAuditLogSchema,
@@ -23,6 +24,15 @@ export type AuditRouteDependencies = Pick<
   AppDependencies,
   "resolveActor" | "getDataService"
 >;
+
+/**
+ * 운영진이 읽기만 할 수 있는 리소스의 변경 이력은 그 리소스를 수정할 수 있는 역할에만 보여 준다.
+ * 이력에는 누가 어떤 필드를 바꿨는지가 담겨, 조회 권한보다 넓은 정보를 준다.
+ */
+const AUDIT_RESOURCES_REQUIRING_UPDATE: Partial<Record<string, Resource>> = {
+  user: "user",
+  site_settings: "site_setting",
+};
 
 const listAuditLogsRoute = createRoute({
   method: "get",
@@ -54,6 +64,12 @@ export const registerAuditRoutes = (
     }
 
     const params = readValidated(c, "param", ApiAuditParamSchema);
+
+    const restrictedResource =
+      AUDIT_RESOURCES_REQUIRING_UPDATE[params.resourceType];
+    if (restrictedResource && !can(actor.role, restrictedResource, "update")) {
+      throw AppError.forbidden();
+    }
 
     const query = readValidated(c, "query", ApiAuditQuerySchema);
 

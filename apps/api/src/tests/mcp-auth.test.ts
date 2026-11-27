@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { toMcpTokenIdentity } from "../features/mcp/mcp-auth";
-import { createMemoryMcpConnectionStore } from "../features/mcp/mcp-connection-store";
+import {
+  createMemoryMcpConnectionStore,
+  isTokenIssuedUnderConsent,
+} from "../features/mcp/mcp-connection-store";
 import { resolveMcpRuntimeEnv } from "../lib/config/runtime-env";
 import { createApp } from "../app";
 
@@ -36,7 +39,18 @@ describe("토큰 클레임 해석", () => {
   it("사용자 토큰에서 sub, azp, scope를 꺼낸다", () => {
     expect(
       toMcpTokenIdentity({ sub: "user-1", azp: "client-1", scope: "openid mcp" }),
-    ).toEqual({ userId: "user-1", clientId: "client-1", scopes: ["openid", "mcp"] });
+    ).toEqual({
+      userId: "user-1",
+      clientId: "client-1",
+      scopes: ["openid", "mcp"],
+      issuedAt: null,
+    });
+  });
+
+  it("iat를 발급 시각으로 꺼낸다", () => {
+    expect(
+      toMcpTokenIdentity({ sub: "user-1", azp: "client-1", scope: "mcp", iat: 1_700_000_000 }),
+    ).toMatchObject({ issuedAt: 1_700_000_000 });
   });
 
   it("client_credentials 토큰(sub=client)은 거부한다", () => {
@@ -46,6 +60,32 @@ describe("토큰 클레임 해석", () => {
   it("sub나 클라이언트가 없으면 거부한다", () => {
     expect(toMcpTokenIdentity({ azp: "client-1" })).toBeNull();
     expect(toMcpTokenIdentity({ sub: "user-1" })).toBeNull();
+  });
+});
+
+describe("동의 이전에 발급된 토큰", () => {
+  const consentCreatedAtMs = 1_700_000_000_500;
+
+  it("동의보다 먼저 발급된 토큰은 그 동의로 인정하지 않는다", () => {
+    expect(isTokenIssuedUnderConsent(1_699_999_999, consentCreatedAtMs)).toBe(false);
+  });
+
+  it("동의와 같은 초 또는 그 뒤에 발급된 토큰은 인정한다", () => {
+    expect(isTokenIssuedUnderConsent(1_700_000_000, consentCreatedAtMs)).toBe(true);
+    expect(isTokenIssuedUnderConsent(1_700_000_060, consentCreatedAtMs)).toBe(true);
+  });
+
+  it("발급 시각이 없는 토큰은 거부하고, 생성 시각이 없는 동의는 막지 않는다", () => {
+    expect(isTokenIssuedUnderConsent(null, consentCreatedAtMs)).toBe(false);
+    expect(isTokenIssuedUnderConsent(1_699_999_999, null)).toBe(true);
+  });
+
+  it("연결을 해제하고 다시 연결하면 해제 전 토큰은 통과하지 못한다", async () => {
+    const store = createMemoryMcpConnectionStore([
+      { userId: "u1", clientId: "c1", connectedAt: consentCreatedAtMs },
+    ]);
+    expect(await store.hasConsent("u1", "c1", 1_699_999_000)).toBe(false);
+    expect(await store.hasConsent("u1", "c1", 1_700_000_100)).toBe(true);
   });
 });
 

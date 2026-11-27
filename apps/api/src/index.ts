@@ -126,6 +126,9 @@ const scheduled: ExportedHandlerScheduledHandler<Bindings> = async (
       visitorEvents.purgeAnalyticsEventsBefore(
         Date.now() - ANALYTICS_EVENT_RETENTION_MS,
       ),
+      visitorEvents.purgePageViewEntriesBefore(
+        Date.now() - ANALYTICS_EVENT_RETENTION_MS,
+      ),
       visitorEvents.purgePendingEngagement(Date.now()),
     ]).catch((error: unknown) => {
       logger.error({

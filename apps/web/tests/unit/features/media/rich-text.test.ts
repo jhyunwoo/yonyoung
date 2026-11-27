@@ -1,3 +1,4 @@
+import { JSDOM } from "jsdom";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -5,6 +6,12 @@ import {
   sanitizeRichTextHtml,
   summarizeRichTextHtml,
 } from "@/features/media/rich-text/rich-text";
+
+// 문자열 포함 여부가 아니라 브라우저가 실제로 해석하는 속성 목록으로 검증한다.
+const readAnchorAttributeNames = (html: string): string[][] =>
+  [...new JSDOM(html).window.document.querySelectorAll("a")].map((anchor) =>
+    anchor.getAttributeNames().sort(),
+  );
 
 describe("features/media/rich-text", () => {
   it("detects meaningful html content", () => {
@@ -67,5 +74,35 @@ describe("features/media/rich-text", () => {
     expect(sanitized).toContain('rowspan="3"');
     expect(sanitized).not.toContain('rowspan="0"');
     expect(sanitized).not.toContain('colspan="abc"');
+  });
+
+  it("does not let a rel= inside the href value break out of the attribute", () => {
+    const sanitized = sanitizeRichTextHtml(
+      `<p><a href="https://example.com/?rel='x' onmouseover=alert(document.domain)//">link</a></p>`,
+    );
+
+    expect(readAnchorAttributeNames(sanitized)).toEqual([["href", "rel"]]);
+    expect(sanitized).toContain(
+      `href="https://example.com/?rel='x' onmouseover=alert(document.domain)//"`,
+    );
+  });
+
+  it("escapes double quotes carried in a single-quoted href", () => {
+    const sanitized = sanitizeRichTextHtml(
+      `<p><a href='https://example.com/" onmouseover=alert(1) x="'>link</a></p>`,
+    );
+
+    expect(readAnchorAttributeNames(sanitized)).toEqual([["href", "rel"]]);
+  });
+
+  it("adds rel to every link, including an href that contains an unquoted rel=", () => {
+    const sanitized = sanitizeRichTextHtml(
+      '<a href="https://example.com/?rel=1">a</a><a href="https://example.com/" rel="opener">b</a>',
+    );
+
+    expect(sanitized).toBe(
+      '<a href="https://example.com/?rel=1" rel="noopener noreferrer nofollow">a</a>' +
+        '<a href="https://example.com/" rel="noopener noreferrer nofollow">b</a>',
+    );
   });
 });

@@ -327,6 +327,44 @@ describe("public routes", () => {
     expect(body.data.updatedBy).toBeNull();
   });
 
+  it("공개 링크트리와 기수 목록에도 마지막 수정 관리자 정보를 싣지 않는다", async () => {
+    const editor = {
+      id: IDs.president,
+      name: "관리자",
+      familyName: null,
+      givenName: null,
+      role: "president",
+    };
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock({
+        listLinktrees: fn(async () => [
+          createLinktree({
+            updatedBy: editor,
+            items: [createLinktreeItem({ updatedBy: editor })],
+          }),
+        ]),
+        listGenerations: fn(async () => [
+          createGeneration({ updatedBy: editor }),
+        ]),
+      }),
+    });
+
+    const linktree = await readJson<{
+      data: Array<{ updatedBy: unknown; items: Array<{ updatedBy: unknown }> }>;
+    }>(await app.request("/api/public/linktree"));
+    const generations = await readJson<{ data: Array<{ updatedBy: unknown }> }>(
+      await app.request("/api/public/generations"),
+    );
+
+    expect(linktree.data).toHaveLength(1);
+    expect(linktree.data[0]?.updatedBy).toBeNull();
+    expect(linktree.data[0]?.items).toHaveLength(1);
+    expect(linktree.data[0]?.items[0]?.updatedBy).toBeNull();
+    expect(generations.data).toHaveLength(1);
+    expect(generations.data[0]?.updatedBy).toBeNull();
+  });
+
   it("공개 활동 상세는 unsafe 세부 이미지를 제외하고 unsafe 대표 이미지는 404로 숨긴다", async () => {
     const getActivityById = fn(async (id: string) =>
       id === IDs.activity

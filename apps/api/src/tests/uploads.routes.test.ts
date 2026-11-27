@@ -47,6 +47,7 @@ const createObservedUploadReservationStore = () => {
   const reservedIds: string[] = [];
   const removedIds: string[] = [];
   const settledIds: string[] = [];
+  const heldIds: string[] = [];
   const store: UploadReservationStore = {
     assertActorCapacity: (actorId, fileSize, now) =>
       backingStore.assertActorCapacity(actorId, fileSize, now),
@@ -63,9 +64,13 @@ const createObservedUploadReservationStore = () => {
       await backingStore.settle(id, expiresAt);
       settledIds.push(id);
     },
+    async holdUntilGrantExpiry(id, now, graceMs) {
+      await backingStore.holdUntilGrantExpiry(id, now, graceMs);
+      heldIds.push(id);
+    },
   };
 
-  return { store, reservedIds, removedIds, settledIds };
+  return { store, reservedIds, removedIds, settledIds, heldIds };
 };
 
 describe("upload presign routes",() => {
@@ -156,6 +161,8 @@ describe("upload presign routes",() => {
         get: (id) => backingStore.get(id),
         remove: (id) => backingStore.remove(id),
         settle: (id, expiresAt) => backingStore.settle(id, expiresAt),
+        holdUntilGrantExpiry: (id, now, graceMs) =>
+          backingStore.holdUntilGrantExpiry(id, now, graceMs),
       };
       return { store, reservations };
     };
@@ -377,41 +384,169 @@ describe("upload presign routes",() => {
       expect(observedStore.reservedIds).toContain(body.data.reservationId);
     });
 
-    it("업로드 완료 정산은 동시 예약 슬롯을 반납한다", async () => {
+    it("예약 ID를 발급한 객체 키의 앞부분으로 묶는다", async () => {
       const observedStore = createObservedUploadReservationStore();
-      await reserveFor(observedStore.store, "settle-me", IDs.manager);
+      const issuePresignedPutUrl = fn(async () => ({
+        uploadUrl: "https://upload.example.com/signed",
+        objectKey: "object-key",
+        publicUrl: "https://cdn.example.com/object-key",
+        requiredHeaders: { "Content-Type": "image/png" },
+      }));
       const app = createTestApp({
         actor: createActor("manager", IDs.manager),
+        presignService: createPresignServiceMock({ issuePresignedPutUrl }),
         uploadReservationStore: observedStore.store,
       });
 
+      const response = await app.request("/api/activities/presign/detail", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          fileName: "cover.png",
+          contentType: "image/png",
+          fileSize: 1024,
+        }),
+      });
+
+      const body = await readJson<{ data: { reservationId: string } }>(response);
+      const [{ fileId }] = issuePresignedPutUrl.mock.calls[0] as unknown as [
+        { fileId: string },
+      ];
+      expect(fileId).toMatch(/^[0-9a-f-]{36}$/);
+      expect(body.data.reservationId).toBe(
+        `activities/${IDs.manager}/detail/${fileId}`,
+      );
+    });
+
+    const BOUND_RESERVATION_ID = `activities/${IDs.manager}/detail/8f14e45f-ceea-467a-9575-9b5a4a4c1234`;
+    const SETTLEMENT_GRACE_MS = 2 * 60 * 1000;
+
+    it("올라온 객체가 예약한 크기로 확인되면 용량을 정산 유예 뒤에 푼다", async () => {
+      const observedStore = createObservedUploadReservationStore();
+      await reserveFor(observedStore.store, BOUND_RESERVATION_ID, IDs.manager);
+      const lookedUpPrefixes: string[] = [];
+      const app = createTestApp({
+        actor: createActor("manager", IDs.manager),
+        uploadReservationStore: observedStore.store,
+        overrides: {
+          findUploadedObjectSize: async (_c, keyPrefix) => {
+            lookedUpPrefixes.push(keyPrefix);
+            return 1024;
+          },
+        },
+      });
+
       const response = await settleRequest(app, {
-        reservationId: "settle-me",
+        reservationId: BOUND_RESERVATION_ID,
         outcome: "completed",
       });
 
       expect(response.status).toBe(204);
-      expect(observedStore.settledIds).toContain("settle-me");
-      const settled = await observedStore.store.get("settle-me");
+      expect(lookedUpPrefixes).toEqual([`${BOUND_RESERVATION_ID}-`]);
+      expect(observedStore.settledIds).toContain(BOUND_RESERVATION_ID);
+      const settled = await observedStore.store.get(BOUND_RESERVATION_ID);
       expect(settled?.grantExpiresAt).toBeLessThanOrEqual(Date.now());
+      expect(settled?.expiresAt).toBeLessThanOrEqual(
+        Date.now() + SETTLEMENT_GRACE_MS,
+      );
     });
 
-    it("업로드 실패 정산은 예약을 제거한다", async () => {
+    it.each(["completed", "aborted"] as const)(
+      "객체가 없으면 %s라고 알려도 슬롯만 반납하고 용량은 URL 만료까지 잡아 둔다",
+      async (outcome) => {
+        const observedStore = createObservedUploadReservationStore();
+        await reserveFor(observedStore.store, BOUND_RESERVATION_ID, IDs.manager);
+        const before = await observedStore.store.get(BOUND_RESERVATION_ID);
+        const app = createTestApp({
+          actor: createActor("manager", IDs.manager),
+          uploadReservationStore: observedStore.store,
+          overrides: { findUploadedObjectSize: async () => null },
+        });
+
+        const response = await settleRequest(app, {
+          reservationId: BOUND_RESERVATION_ID,
+          outcome,
+        });
+
+        expect(response.status).toBe(204);
+        expect(observedStore.removedIds).toEqual([]);
+        expect(observedStore.settledIds).toEqual([]);
+        const held = await observedStore.store.get(BOUND_RESERVATION_ID);
+        expect(held?.grantExpiresAt).toBeLessThanOrEqual(Date.now());
+        expect(held?.expiresAt).toBe(
+          (before?.grantExpiresAt ?? 0) + SETTLEMENT_GRACE_MS,
+        );
+      },
+    );
+
+    it("정산을 반복해도 잡아 둔 용량이 일찍 풀리지 않는다", async () => {
       const observedStore = createObservedUploadReservationStore();
-      await reserveFor(observedStore.store, "drop-me", IDs.manager);
+      await reserveFor(observedStore.store, BOUND_RESERVATION_ID, IDs.manager);
       const app = createTestApp({
         actor: createActor("manager", IDs.manager),
         uploadReservationStore: observedStore.store,
+        overrides: { findUploadedObjectSize: async () => null },
+      });
+
+      await settleRequest(app, {
+        reservationId: BOUND_RESERVATION_ID,
+        outcome: "aborted",
+      });
+      const first = await observedStore.store.get(BOUND_RESERVATION_ID);
+      await settleRequest(app, {
+        reservationId: BOUND_RESERVATION_ID,
+        outcome: "completed",
+      });
+      const second = await observedStore.store.get(BOUND_RESERVATION_ID);
+
+      expect(second?.expiresAt).toBe(first?.expiresAt);
+      expect(second?.expiresAt).toBeGreaterThan(Date.now() + 30_000);
+    });
+
+    it("크기가 다른 객체나 조회 실패는 확인된 것으로 보지 않는다", async () => {
+      for (const findUploadedObjectSize of [
+        async () => 2048,
+        async () => {
+          throw new Error("r2 unavailable");
+        },
+      ]) {
+        const observedStore = createObservedUploadReservationStore();
+        await reserveFor(observedStore.store, BOUND_RESERVATION_ID, IDs.manager);
+        const app = createTestApp({
+          actor: createActor("manager", IDs.manager),
+          uploadReservationStore: observedStore.store,
+          overrides: { findUploadedObjectSize },
+        });
+
+        const response = await settleRequest(app, {
+          reservationId: BOUND_RESERVATION_ID,
+          outcome: "completed",
+        });
+
+        expect(response.status).toBe(204);
+        expect(observedStore.settledIds).toEqual([]);
+        expect(observedStore.heldIds).toEqual([BOUND_RESERVATION_ID]);
+      }
+    });
+
+    it("객체 키에 묶이지 않은 예약 ID는 객체를 찾지 않고 용량을 잡아 둔다", async () => {
+      const observedStore = createObservedUploadReservationStore();
+      await reserveFor(observedStore.store, "legacy-id", IDs.manager);
+      const findUploadedObjectSize = fn(async () => 1024);
+      const app = createTestApp({
+        actor: createActor("manager", IDs.manager),
+        uploadReservationStore: observedStore.store,
+        overrides: { findUploadedObjectSize },
       });
 
       const response = await settleRequest(app, {
-        reservationId: "drop-me",
-        outcome: "aborted",
+        reservationId: "legacy-id",
+        outcome: "completed",
       });
 
       expect(response.status).toBe(204);
-      expect(observedStore.removedIds).toContain("drop-me");
-      expect(await observedStore.store.get("drop-me")).toBeNull();
+      expect(findUploadedObjectSize).not.toHaveBeenCalled();
+      expect(observedStore.heldIds).toEqual(["legacy-id"]);
     });
 
     it("다른 사용자의 예약은 정산할 수 없다", async () => {
@@ -587,6 +722,7 @@ async () => ({
         fileName: "cover.png",
         contentType: "image/png",
         fileSize: 1024,
+        fileId: expect.any(String),
       });
     });
 
@@ -879,6 +1015,7 @@ async () => ({
       fileName: "profile.png",
       contentType: "image/png",
       fileSize: 1024,
+      fileId: expect.any(String),
     });
   });
 
@@ -914,6 +1051,7 @@ async () => ({
       fileName: "profile.png",
       contentType: "image/png",
       fileSize: 1024,
+      fileId: expect.any(String),
     });
   });
 
@@ -2361,6 +2499,7 @@ describe("attachment file presign routes", () => {
       fileName: pdfPayload.fileName,
       contentType: "application/pdf",
       fileSize: pdfPayload.fileSize,
+      fileId: expect.any(String),
     });
   });
 
@@ -2390,6 +2529,7 @@ describe("attachment file presign routes", () => {
       fileName: pdfPayload.fileName,
       contentType: "application/pdf",
       fileSize: pdfPayload.fileSize,
+      fileId: expect.any(String),
     });
   });
 

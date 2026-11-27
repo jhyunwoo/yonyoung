@@ -69,6 +69,15 @@
         "period": 60,
       },
     },
+    // 익명 OAuth 클라이언트 등록(DCR). src/features/auth/auth.routes.ts
+    {
+      "name": "OAUTH_REGISTER_RATE_LIMITER",
+      "namespace_id": "817941617",
+      "simple": {
+        "limit": 5,
+        "period": 60,
+      },
+    },
   ],
   "vars": {
     "BETTER_AUTH_URL": "https://yonyoung.yonsei.ac.kr",
@@ -145,6 +154,14 @@
           "namespace_id": "817941616",
           "simple": {
             "limit": 30,
+            "period": 60,
+          },
+        },
+        {
+          "name": "OAUTH_REGISTER_RATE_LIMITER",
+          "namespace_id": "817941618",
+          "simple": {
+            "limit": 5,
             "period": 60,
           },
         },

@@ -44,13 +44,23 @@ const readExecutionContext = (
   }
 };
 
-/** 동의 화면이 실제로 돌아갈 주소를 보여주도록 redirect_uri의 호스트만 꺼낸다. */
+/**
+ * 동의 화면이 실제로 돌아갈 주소를 보여주도록 redirect_uri의 호스트를 꺼낸다.
+ * 네이티브 클라이언트는 `x-app://claude.ai/cb` 같은 사설 스킴을 등록할 수 있어, https가
+ * 아니면 스킴을 붙여 돌려준다. 호스트만 주면 화면이 claude.ai로 돌아간다고 안내한다.
+ */
 const readRedirectHost = (redirectUri: string | null): string | null => {
   if (!redirectUri) {
     return null;
   }
   try {
-    return new URL(redirectUri).host || null;
+    const url = new URL(redirectUri);
+    if (!url.host) {
+      return null;
+    }
+    return url.protocol === "https:"
+      ? url.host
+      : `${url.protocol}//${url.host}`;
   } catch {
     return null;
   }
@@ -108,7 +118,13 @@ export const registerMcpRoutes = (app: App, dependencies: AppDependencies) => {
     dependencies.authenticateMcpRequest(c, async (identity) => {
       const mcpEnv = resolveMcpRuntimeEnv(c.env);
       const connections = dependencies.getMcpConnectionStore(c);
-      if (!(await connections.hasConsent(identity.userId, identity.clientId))) {
+      if (
+        !(await connections.hasConsent(
+          identity.userId,
+          identity.clientId,
+          identity.issuedAt,
+        ))
+      ) {
         return mcpUnauthorizedResponse(
           mcpEnv,
           "연결이 해제되었습니다. 커넥터를 다시 연결해 주세요.",

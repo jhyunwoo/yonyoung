@@ -37,6 +37,12 @@ export const copyProxyResponse = (upstream: Response): NextResponse => {
     response.headers.append("set-cookie", cookie);
   }
 
+  // API는 공개 캐시 대상에만 Cache-Control을 붙인다. 나머지(세션·사용자 데이터)는 앞단에
+  // CDN이나 캐시가 생겨도 저장되지 않게 기본값을 준다.
+  if (!response.headers.has("cache-control")) {
+    response.headers.set("Cache-Control", "private, no-store, max-age=0");
+  }
+
   return response;
 };
 

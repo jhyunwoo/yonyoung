@@ -9,6 +9,7 @@ import {
   resolvePublicRequestOrigin,
 } from "@/server/security/request-guards";
 import { isServerToServerOAuthPath } from "@/server/security/oauth-proxy-paths";
+import { buildClientIpHeaders } from "@/server/http/client-ip-headers";
 import { fetchWithTimeout } from "@/server/http/fetch-with-timeout";
 import {
   copyProxyResponse,
@@ -78,6 +79,7 @@ const handle = async (
     extraHeaders: {
       "x-forwarded-host": forwardedRequestOrigin.host,
       "x-forwarded-proto": forwardedRequestOrigin.protocol,
+      ...buildClientIpHeaders(request),
     },
   });
   // Node fetch는 sec-fetch-mode를 항상 cors로 덮어쓴다. 그대로 두면 Better Auth가 브라우저 이동을

@@ -5,7 +5,9 @@ import { MissingStorageConfigError } from "../../lib/storage/presign";
 import {
   ALLOWED_ATTACHMENT_CONTENT_TYPES,
   UPLOAD_LIMITS,
+  buildUploadObjectKeyPrefix,
   isNoSuchMultipartUploadError,
+  isUploadObjectKeyPrefixOwnedBy,
 } from "../../lib/storage/presign";
 import {
   MULTIPART_UPLOAD_STATE_TTL_MS,
@@ -19,6 +21,7 @@ import {
   noContentResponse,
 } from "../../lib/openapi/responses";
 import { AppError, isAppError } from "../../shared/errors/AppError";
+import { logger } from "../../shared/logging/logger";
 import { requireAuthenticatedActor } from "../../shared/http/route-guards";
 import { readValidated } from "../../shared/http/validated-input";
 import type HonoAppType from "../../types/honoAppType";
@@ -38,6 +41,7 @@ import {
   MULTIPART_UPLOAD_CAPACITY_RESERVATION_TTL_MS,
   SINGLE_UPLOAD_CAPACITY_RESERVATION_TTL_MS,
   SINGLE_UPLOAD_GRANT_TTL_MS,
+  holdUploadReservationUntilUrlExpiry,
   releaseUploadReservation,
   reserveStorageCapacityForUpload,
   settleUploadReservation,
@@ -147,6 +151,7 @@ const registerResourcePresignRoute = (
       allowedContentTypes: options.allowedContentTypes,
     });
 
+    const fileId = crypto.randomUUID();
     const reservation = await reserveStorageCapacityForUpload({
       c,
       dependencies,
@@ -154,6 +159,12 @@ const registerResourcePresignRoute = (
       fileSize: body.fileSize,
       grantTtlMs: SINGLE_UPLOAD_GRANT_TTL_MS,
       capacityTtlMs: SINGLE_UPLOAD_CAPACITY_RESERVATION_TTL_MS,
+      id: buildUploadObjectKeyPrefix({
+        actorId: actor.id,
+        resource: options.uploadResourcePath,
+        slot: options.slot,
+        fileId,
+      }),
     });
 
     try {
@@ -166,6 +177,7 @@ const registerResourcePresignRoute = (
           fileName: body.fileName,
           contentType: body.contentType,
           fileSize: body.fileSize,
+          fileId,
         });
       return ok(c, { ...data, reservationId: reservation.id }, 201);
     } catch (error) {
@@ -502,6 +514,7 @@ export const registerUploadRoutes = (
       maxFileSizeBytes: UPLOAD_LIMITS.maxSinglePartBytes,
     });
 
+    const fileId = crypto.randomUUID();
     const reservation = await reserveStorageCapacityForUpload({
       c,
       dependencies,
@@ -509,6 +522,12 @@ export const registerUploadRoutes = (
       fileSize: body.fileSize,
       grantTtlMs: SINGLE_UPLOAD_GRANT_TTL_MS,
       capacityTtlMs: SINGLE_UPLOAD_CAPACITY_RESERVATION_TTL_MS,
+      id: buildUploadObjectKeyPrefix({
+        actorId: actor.id,
+        resource: "users",
+        slot: "profile",
+        fileId,
+      }),
     });
 
     try {
@@ -521,6 +540,7 @@ export const registerUploadRoutes = (
           fileName: body.fileName,
           contentType: body.contentType,
           fileSize: body.fileSize,
+          fileId,
         });
       return ok(c, { ...data, reservationId: reservation.id }, 201);
     } catch (error) {
@@ -753,6 +773,7 @@ export const registerUploadRoutes = (
    * 단일 PUT 업로드에는 R2가 알려주는 완료 신호가 없다. 정산 호출이 없으면 예약이
    * presign 서명 수명(1시간) 내내 동시 예약 슬롯을 붙들어, 업로드가 모두 성공해도
    * 같은 사용자가 시간당 10건에서 막힌다. 클라이언트가 업로드 종료를 알려준다.
+   * 슬롯은 알림만으로 반납하지만, 용량은 객체가 확인될 때만 일찍 푼다.
    */
   app.openapi(uploadSettleRoute, async (c) => {
     const actor = await requireAuthenticatedActor(c, dependencies);
@@ -768,10 +789,46 @@ export const registerUploadRoutes = (
       throw AppError.forbidden();
     }
 
-    if (body.outcome === "completed") {
+    // outcome은 클라이언트의 주장일 뿐이다. 용량을 일찍 풀어도 되는지는 이 예약이 내준
+    // 객체가 예약한 크기로 실제 올라왔는지로만 판단한다. 올라온 뒤에는 같은 URL로 같은 키를
+    // 같은 크기로 덮어쓸 수밖에 없어 사용량이 더 늘지 않는다.
+    let uploadedSize: number | null = null;
+    let lookupFailed = false;
+    const isBoundToObjectKey = isUploadObjectKeyPrefixOwnedBy(
+      reservation.id,
+      actor.id,
+    );
+    if (isBoundToObjectKey) {
+      try {
+        uploadedSize = await dependencies.findUploadedObjectSize(
+          c,
+          `${reservation.id}-`,
+        );
+      } catch {
+        lookupFailed = true;
+      }
+    }
+
+    if (uploadedSize === reservation.fileSize) {
       await settleUploadReservation(store, reservation.id, c);
     } else {
-      await store.remove(reservation.id).catch(() => undefined);
+      // 성공했다는 업로드를 확인하지 못하면 용량이 URL 만료까지 잡혀 사용자가 한도에 일찍
+      // 닿는다. 응답으로는 드러나지 않으므로 원인을 로그로 남긴다.
+      if (body.outcome === "completed") {
+        logger.warn({
+          event: "upload.settle.unverified",
+          reason: !isBoundToObjectKey
+            ? "reservation_not_bound"
+            : lookupFailed
+              ? "lookup_failed"
+              : uploadedSize === null
+                ? "object_missing"
+                : "size_mismatch",
+          reservedBytes: reservation.fileSize,
+          uploadedBytes: uploadedSize,
+        });
+      }
+      await holdUploadReservationUntilUrlExpiry(store, reservation.id);
     }
 
     return noContent(c);

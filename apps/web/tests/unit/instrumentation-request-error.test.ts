@@ -2,8 +2,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const captureRequestError = vi.hoisted(() => vi.fn());
 vi.mock("@sentry/nextjs", () => ({ captureRequestError }));
+const logError = vi.hoisted(() => vi.fn());
 vi.mock("@/server/observability/logger", () => ({
-  logger: { info: vi.fn(), error: vi.fn() },
+  logger: { info: vi.fn(), error: logError },
 }));
 
 import { onRequestError } from "../../instrumentation";
@@ -42,5 +43,19 @@ describe("onRequestError", () => {
   it("still reports POSTs to real routes", () => {
     report("POST", "/dashboard/stats", "/(dashboard)/dashboard/stats/page");
     expect(captureRequestError).toHaveBeenCalledTimes(1);
+  });
+
+  // OAuth 콜백·동의 화면 주소에는 code, state, 서명된 oauth_query가 실린다.
+  it("logs the path without its query string", () => {
+    report(
+      "GET",
+      "/auth/mcp-consent?client_id=abc&sig=secret-signature",
+      "/(dashboard)/auth/mcp-consent/page",
+    );
+
+    expect(logError).toHaveBeenCalledTimes(1);
+    expect(logError.mock.calls[0]?.[0]).toMatchObject({
+      request: { path: "/auth/mcp-consent" },
+    });
   });
 });

@@ -15,6 +15,7 @@ import {
   analyticsEvents,
   analyticsPendingEngagement,
   exhibitions,
+  pageViewEntries,
   pageViews,
 } from "../../platform/db/schema";
 import type {
@@ -159,6 +160,16 @@ export const createVisitorEventRepository = (
     await db
       .delete(analyticsEvents)
       .where(lt(analyticsEvents.visitedAt, new Date(cutoffMs)));
+  },
+
+  /**
+   * 유입 경로 집계는 (일자, 호스트)마다 한 행이고 호스트는 요청이 정한다. 지우지 않으면
+   * 누구나 임의 호스트로 행을 끝없이 쌓을 수 있으므로 원본 이벤트와 같은 기간만 보관한다.
+   */
+  async purgePageViewEntriesBefore(cutoffMs: number): Promise<void> {
+    await db
+      .delete(pageViewEntries)
+      .where(lt(pageViewEntries.visitedAt, new Date(cutoffMs)));
   },
 
   async getVisitorInsights(

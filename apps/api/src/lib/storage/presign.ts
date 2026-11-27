@@ -200,9 +200,9 @@ const encodeKeyForPublicUrl = (key: string) => {
     .join("/");
 };
 
-const createFileToken = (fileName: string): string => {
+const createFileToken = (fileName: string, fileId?: string): string => {
   const safeFileName = sanitizeFileName(fileName);
-  return `${crypto.randomUUID()}-${safeFileName}`;
+  return `${fileId ?? crypto.randomUUID()}-${safeFileName}`;
 };
 
 const isManagedResourcePath = (
@@ -311,9 +311,28 @@ const buildObjectKey = (input: {
   resource: ManagedUploadResourcePath;
   slot: ManagedUploadSlot;
   fileName: string;
+  fileId?: string;
 }): string => {
-  return `${input.resource}/${input.actorId}/${input.slot}/${createFileToken(input.fileName)}`;
+  return `${input.resource}/${input.actorId}/${input.slot}/${createFileToken(input.fileName, input.fileId)}`;
 };
+
+/**
+ * fileId로 발급한 객체 키에서 파일명을 뺀 앞부분. 단일 업로드 용량 예약의 ID로 써서,
+ * 정산 때 예약 행만으로 그 예약이 내준 객체를 찾을 수 있게 한다.
+ */
+export const buildUploadObjectKeyPrefix = (input: {
+  actorId: string;
+  resource: ManagedUploadResourcePath;
+  slot: ManagedUploadSlot;
+  fileId: string;
+}): string =>
+  `${input.resource}/${input.actorId}/${input.slot}/${input.fileId}`;
+
+/** 예약 ID가 그 사용자의 관리 객체 키 앞부분 형식인지 확인한다. */
+export const isUploadObjectKeyPrefixOwnedBy = (
+  keyPrefix: string,
+  actorId: string,
+): boolean => parseManagedObjectKey(`${keyPrefix}-x`)?.actorId === actorId;
 
 const signObjectKey = async (
   objectKey: string,
@@ -449,6 +468,9 @@ export const createR2PresignService = (env: AppBindings): PresignService => {
 
       const uploadUrl = await getSignedUrl(client, command, {
         expiresIn: PRESIGNED_URL_EXPIRES_IN_SECONDS,
+        // presigner는 content-type을 기본으로 서명에서 뺀다. 묶지 않으면 허용 목록을 통과한
+        // 선언과 다른 형식(text/html 등)으로 올려 스토리지 도메인에서 그대로 서빙할 수 있다.
+        signableHeaders: new Set(["content-type"]),
       });
 
       return {

@@ -10,7 +10,10 @@ import { withInternalActorResolution } from "../features/mcp/internal-actor";
 import { mountDomainRouters } from "../routes";
 import { errorHandler } from "./middleware/errorHandler";
 import { loggerMiddleware } from "./middleware/logger";
-import { maxBodySizeMiddleware } from "./middleware/body-size";
+import {
+  createMaxBodySizeMiddleware,
+  maxBodySizeMiddleware,
+} from "./middleware/body-size";
 import { apiCorsMiddleware } from "./middleware/cors";
 import { apiCsrfProtectionMiddleware } from "./middleware/csrf";
 import { requestIdMiddleware } from "./middleware/requestId";
@@ -19,6 +22,9 @@ import { apiSecurityHeadersMiddleware } from "./middleware/securityHeaders";
 import { legacyApiRedirectMiddleware } from "./middleware/legacyApiRedirect";
 import { sessionMiddleware } from "./middleware/session";
 import { registerSystemRoutes } from "./system/system.routes";
+
+const AUTH_MAX_BODY_BYTES = 64 * 1024;
+const OAUTH_REGISTER_MAX_BODY_BYTES = 16 * 1024;
 
 const createValidationMessage = (result: {
   error: {
@@ -67,6 +73,13 @@ const registerMiddleware = (
   app.use("/users", legacyApiRedirectMiddleware);
   app.use("/users/*", legacyApiRedirectMiddleware);
 
+  // 익명 클라이언트 등록(DCR)이 받은 값을 그대로 D1에 쓴다. 인증 요청은 본문이 작으므로
+  // 요청 하나가 수 MB짜리 행을 만들지 못하게 한도를 따로 둔다.
+  app.use(
+    "/api/auth/oauth2/register",
+    createMaxBodySizeMiddleware(OAUTH_REGISTER_MAX_BODY_BYTES),
+  );
+  app.use("/api/auth/*", createMaxBodySizeMiddleware(AUTH_MAX_BODY_BYTES));
   app.use("/api/*", maxBodySizeMiddleware);
 
   // Better Auth requires CORS to be configured before route registration.

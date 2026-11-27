@@ -143,10 +143,44 @@ describe("audit routes", () => {
     expect(listAuditLogs).not.toHaveBeenCalled();
   });
 
-  it("user 감사 로그는 UUID가 아닌 resourceId도 허용한다", async () => {
+  it("manager는 수정 권한이 없는 사용자·사이트 설정의 감사 로그를 볼 수 없다", async () => {
     const listAuditLogs = fn(async () => []);
     const app = createTestApp({
       actor: createActor("manager", IDs.manager),
+      dataService: createDataServiceMock({ listAuditLogs }),
+    });
+
+    for (const path of [
+      `/api/audit/user/${IDs.member}`,
+      "/api/audit/site_settings/default",
+    ]) {
+      const response = await app.request(path);
+      expect(response.status).toBe(403);
+      await expectErrorCode(response, "FORBIDDEN");
+    }
+    expect(listAuditLogs).not.toHaveBeenCalled();
+  });
+
+  it("부회장은 사용자·사이트 설정의 감사 로그를 볼 수 있다", async () => {
+    const listAuditLogs = fn(async () => []);
+    const app = createTestApp({
+      actor: createActor("vice_president", IDs.manager),
+      dataService: createDataServiceMock({ listAuditLogs }),
+    });
+
+    for (const path of [
+      `/api/audit/user/${IDs.member}`,
+      "/api/audit/site_settings/default",
+    ]) {
+      const response = await app.request(path);
+      expect(response.status).toBe(200);
+    }
+  });
+
+  it("user 감사 로그는 UUID가 아닌 resourceId도 허용한다", async () => {
+    const listAuditLogs = fn(async () => []);
+    const app = createTestApp({
+      actor: createActor("vice_president", IDs.manager),
       dataService: createDataServiceMock({ listAuditLogs }),
     });
 

@@ -8,6 +8,10 @@ overrides:
   "@esbuild-kit/core-utils>esbuild": "0.28.2"
   # Both Wrangler and the Workers test pool pin sharp; use its latest patched release.
   "miniflare>sharp": "0.35.5"
+  # API의 better-auth가 선택적 peer로 끌어오는 next도 보안 패치 버전으로 맞춘다.
+  "next@<16.4.5": "16.4.5"
+  # Sentry가 끌어오는 wrangler>miniflare의 undici(7.29.1) 보안 패치. 같은 7.x 안에서만 올린다.
+  "undici@>=7.0.0 <7.30.1": "7.30.1"
 
 allowBuilds:
   "@sentry/cli": true

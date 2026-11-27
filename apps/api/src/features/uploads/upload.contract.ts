@@ -63,7 +63,7 @@ export const ApiUploadSettleRequestSchema = z
     }),
     outcome: z.enum(["completed", "aborted"]).openapi({
       description:
-        "completed는 업로드 성공(용량은 정산 유예 동안 유지), aborted는 업로드 실패(예약 즉시 폐기)",
+        "업로드 종료 알림. 어느 값이든 동시 예약 슬롯을 반납한다. 용량은 올라온 객체가 확인되면 정산 유예 뒤에, 아니면 업로드 URL이 만료될 때 풀린다",
       example: "completed",
     }),
   })

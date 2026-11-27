@@ -12,6 +12,8 @@ type RuntimeBindingOverrides = {
   PUBLIC_API_CACHE?: KVNamespace;
   PERF_ANALYTICS?: AnalyticsEngineDataset;
   PAGE_VIEW_RATE_LIMITER?: RateLimit;
+  /** 익명 OAuth 클라이언트 등록(DCR) 횟수 제한 */
+  OAUTH_REGISTER_RATE_LIMITER?: RateLimit;
   /** 웹 BFF가 전달한 방문자 IP를 신뢰하기 위한 공유 비밀 (Worker secret, 선택) */
   PROXY_CLIENT_IP_SECRET?: string;
   /** "true"일 때만 R2 고아 객체 정리가 실제로 삭제한다(기본 dry-run). */
