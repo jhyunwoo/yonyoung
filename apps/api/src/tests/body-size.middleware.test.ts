@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createMaxBodySizeMiddleware } from "../app/middleware/body-size";
 import { errorHandler } from "../app/middleware/errorHandler";
 import type HonoAppType from "../types/honoAppType";
+import { createDataServiceMock, createTestApp } from "./test-helpers";
 
 const MAX_BYTES = 8;
 
@@ -83,5 +84,42 @@ describe("max body size middleware", () => {
 
     expect(response.status).toBe(200);
     expect(await response.text()).toBe("12345678");
+  });
+});
+
+describe("인증 라우트 본문 한도", () => {
+  const oversizedAuthBody = JSON.stringify({
+    redirect_uris: ["https://client.example/callback"],
+    client_name: "x".repeat(100 * 1024),
+  });
+
+  it("익명으로 열려 있는 /api/auth/* 는 64KB를 넘는 본문을 받지 않는다", async () => {
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock(),
+    });
+
+    const response = await app.request("/api/auth/oauth2/register", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: oversizedAuthBody,
+    });
+
+    await expectPayloadTooLarge(response);
+  });
+
+  it("다른 /api/* 라우트의 5MB 한도는 그대로다", async () => {
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock(),
+    });
+
+    const response = await app.request("/api/activities", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: oversizedAuthBody,
+    });
+
+    expect(response.status).not.toBe(413);
   });
 });
