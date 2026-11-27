@@ -735,6 +735,7 @@ describe("RBAC routes",() => {
       fileName: "profile.png",
       contentType: "image/png",
       fileSize: 1024,
+      fileId: expect.any(String),
     });
   });
 
@@ -774,6 +775,7 @@ describe("RBAC routes",() => {
       fileName: "cover.png",
       contentType: "image/png",
       fileSize: 1024,
+      fileId: expect.any(String),
     });
   });
 });

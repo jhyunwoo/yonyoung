@@ -37,6 +37,7 @@ afterEach(() => {
 
 describe("MCP 토큰 검증 (Workers 런타임)", () => {
   it("Better Auth가 서명한 토큰을 D1의 키로 네트워크 없이 검증한다", async () => {
+    const issuedAt = Math.floor(Date.now() / 1000);
     const { token } = await auth.api.signJWT({
       body: {
         payload: {
@@ -45,6 +46,8 @@ describe("MCP 토큰 검증 (Workers 런타임)", () => {
           sub: "user-1",
           azp: "client-1",
           scope: "mcp",
+          // 실제 액세스 토큰(oauth-provider의 createJwtAccessToken)은 iat를 항상 넣는다.
+          iat: issuedAt,
         },
       },
     });
@@ -73,7 +76,12 @@ describe("MCP 토큰 검증 (Workers 런타임)", () => {
 
     expect(response.status).toBe(200);
     expect(received).toEqual([
-      { userId: "user-1", clientId: "client-1", scopes: ["mcp"] },
+      {
+        userId: "user-1",
+        clientId: "client-1",
+        scopes: ["mcp"],
+        issuedAt,
+      },
     ]);
     expect(fetchMock).not.toHaveBeenCalled();
   });
