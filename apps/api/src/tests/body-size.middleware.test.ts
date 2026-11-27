@@ -108,6 +108,24 @@ describe("인증 라우트 본문 한도", () => {
     await expectPayloadTooLarge(response);
   });
 
+  it("클라이언트 등록은 16KB를 넘는 본문을 받지 않는다", async () => {
+    const app = createTestApp({
+      actor: null,
+      dataService: createDataServiceMock(),
+    });
+
+    const response = await app.request("/api/auth/oauth2/register", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        redirect_uris: ["https://client.example/callback"],
+        client_name: "x".repeat(20 * 1024),
+      }),
+    });
+
+    await expectPayloadTooLarge(response);
+  });
+
   it("다른 /api/* 라우트의 5MB 한도는 그대로다", async () => {
     const app = createTestApp({
       actor: null,

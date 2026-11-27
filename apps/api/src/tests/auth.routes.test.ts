@@ -61,6 +61,84 @@ describe("auth routes", () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
+  describe("OAuth 클라이언트 등록 횟수 제한", () => {
+    const register = (
+      app: OpenAPIHono<HonoAppType>,
+      env: HonoAppType["Bindings"],
+    ) =>
+      app.request(
+        "/api/auth/oauth2/register",
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "cf-connecting-ip": "203.0.113.7",
+          },
+          body: JSON.stringify({ redirect_uris: ["https://claude.ai/cb"] }),
+        },
+        env,
+      );
+
+    it("한도를 넘으면 429로 막고 Better Auth를 부르지 않는다", async () => {
+      const handler = vi.fn(async () => new Response("ok", { status: 200 }));
+      mockCreateAuth.mockReturnValue({ handler } as never);
+      const limit = vi.fn(async () => ({ success: false }));
+      const app = new OpenAPIHono<HonoAppType>();
+      registerAuthRoutes(app);
+
+      const response = await register(app, {
+        ...bindings,
+        OAUTH_REGISTER_RATE_LIMITER: { limit } as unknown as RateLimit,
+      });
+
+      expect(response.status).toBe(429);
+      expect(response.headers.get("retry-after")).toBe("60");
+      expect(limit).toHaveBeenCalledWith({
+        key: "oauth-register:203.0.113.7",
+      });
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it("한도 안이면 Better Auth에 위임한다", async () => {
+      const handler = vi.fn(async () => new Response("ok", { status: 200 }));
+      mockCreateAuth.mockReturnValue({ handler } as never);
+      const app = new OpenAPIHono<HonoAppType>();
+      registerAuthRoutes(app);
+
+      const response = await register(app, {
+        ...bindings,
+        OAUTH_REGISTER_RATE_LIMITER: {
+          limit: async () => ({ success: true }),
+        } as unknown as RateLimit,
+      });
+
+      expect(response.status).toBe(200);
+      expect(handler).toHaveBeenCalledTimes(1);
+    });
+
+    it("바인딩이 없거나 한도 조회가 실패하면 등록을 막지 않는다", async () => {
+      const handler = vi.fn(async () => new Response("ok", { status: 200 }));
+      mockCreateAuth.mockReturnValue({ handler } as never);
+      const app = new OpenAPIHono<HonoAppType>();
+      registerAuthRoutes(app);
+
+      expect((await register(app, bindings)).status).toBe(200);
+      expect(
+        (
+          await register(app, {
+            ...bindings,
+            OAUTH_REGISTER_RATE_LIMITER: {
+              limit: async () => {
+                throw new Error("limiter unavailable");
+              },
+            } as unknown as RateLimit,
+          })
+        ).status,
+      ).toBe(200);
+      expect(handler).toHaveBeenCalledTimes(2);
+    });
+  });
+
   it("문서가 꺼져 있으면 인증 OpenAPI 스키마를 내보내지 않는다", async () => {
     const handler = vi.fn(async () => new Response("{}", { status: 200 }));
     mockCreateAuth.mockReturnValue({ handler } as never);

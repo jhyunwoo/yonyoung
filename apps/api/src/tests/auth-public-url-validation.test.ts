@@ -83,4 +83,13 @@ describe("Better Auth 기본 엔드포인트 노출", () => {
     };
     expect(options.disabledPaths).toContain("/update-user");
   });
+
+  it("로그인 사용자용 OAuth 클라이언트 생성 엔드포인트를 비활성화한다", () => {
+    createHooks();
+
+    const options = betterAuthMock.mock.calls[0]?.[0] as {
+      disabledPaths: string[];
+    };
+    expect(options.disabledPaths).toContain("/oauth2/create-client");
+  });
 });

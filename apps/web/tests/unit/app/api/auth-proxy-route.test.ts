@@ -224,4 +224,38 @@ describe("app/api/auth/[...path]/route", () => {
     expect(response.status).toBe(403);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
+
+  it("공유 비밀이 설정되면 클라이언트 등록 요청에 방문자 IP를 실어 보낸다", async () => {
+    process.env.PROXY_CLIENT_IP_SECRET = "shared-secret-for-client-ip";
+    const fetchSpy = vi.fn(async () => new Response("{}", { status: 201 }));
+    vi.stubGlobal("fetch", fetchSpy);
+
+    try {
+      const handlers = await import("@/app/api/auth/[...path]/route");
+      const request = new NextRequest(
+        "https://yonyoung.yonsei.ac.kr/api/auth/oauth2/register",
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-forwarded-for": "203.0.113.7, 10.0.0.1",
+            "x-yonyoung-client-ip": "198.51.100.1",
+            "x-yonyoung-proxy-auth": "forged",
+          },
+          body: JSON.stringify({ redirect_uris: ["https://claude.ai/cb"] }),
+        },
+      );
+
+      await handlers.POST(request, {
+        params: Promise.resolve({ path: ["oauth2", "register"] }),
+      });
+
+      const [, init] = fetchSpy.mock.calls[0] as unknown as [string, RequestInit];
+      const headers = init.headers as Headers;
+      expect(headers.get("x-yonyoung-client-ip")).toBe("203.0.113.7");
+      expect(headers.get("x-yonyoung-proxy-auth")).toBe("shared-secret-for-client-ip");
+    } finally {
+      delete process.env.PROXY_CLIENT_IP_SECRET;
+    }
+  });
 });

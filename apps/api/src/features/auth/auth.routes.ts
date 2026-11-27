@@ -1,6 +1,7 @@
 import { type OpenAPIHono } from "@hono/zod-openapi";
 import { createAuth } from "../../lib/auth";
 import { resolveDocsEnabled } from "../../lib/config/runtime-env";
+import { resolveTrustedClientIp } from "../../lib/http/client-ip";
 import { notFound } from "../../lib/http/response";
 import { resolveD1Database } from "../../infra/db/client";
 import type HonoAppType from "../../types/honoAppType";
@@ -31,6 +32,36 @@ export function registerAuthRoutes(app: App) {
   app.get("/api/auth/open-api/*", async (c, next) => {
     if (!resolveDocsEnabled(c.env)) {
       return notFound(c);
+    }
+    await next();
+  });
+
+  // 동적 클라이언트 등록(DCR)은 로그인 없이 D1에 행을 만든다. 등록은 사용자가 새 MCP
+  // 클라이언트를 연결할 때 한 번뿐이라 낮은 한도로도 충분하다. 바인딩이 없는 환경(로컬·테스트)과
+  // 한도 조회 실패는 통과시킨다 — 등록이 막히면 MCP 연결 자체가 불가능해진다.
+  app.post("/api/auth/oauth2/register", async (c, next) => {
+    const limiter = c.env.OAUTH_REGISTER_RATE_LIMITER;
+    if (limiter) {
+      let allowed = true;
+      try {
+        const result = await limiter.limit({
+          key: `oauth-register:${resolveTrustedClientIp(c)}`,
+        });
+        allowed = result.success;
+      } catch {
+        allowed = true;
+      }
+      if (!allowed) {
+        return c.json(
+          {
+            error: "too_many_requests",
+            error_description:
+              "클라이언트 등록 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.",
+          },
+          429,
+          { "Retry-After": "60", "Cache-Control": "no-store" },
+        );
+      }
     }
     await next();
   });
