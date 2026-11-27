@@ -42,7 +42,7 @@ export function registerAuthRoutes(app: App) {
   app.post("/api/auth/oauth2/register", async (c, next) => {
     const limiter = c.env.OAUTH_REGISTER_RATE_LIMITER;
     if (limiter) {
-      let allowed = true;
+      let allowed: boolean;
       try {
         const result = await limiter.limit({
           key: `oauth-register:${resolveTrustedClientIp(c)}`,
