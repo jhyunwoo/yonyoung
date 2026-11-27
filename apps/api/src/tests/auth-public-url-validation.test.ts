@@ -69,3 +69,18 @@ describe("Better Auth public URL validation", () => {
     ).resolves.toBeUndefined();
   });
 });
+
+describe("Better Auth 기본 엔드포인트 노출", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("프로필 계약을 우회하는 /update-user 를 비활성화한다", () => {
+    createHooks();
+
+    const options = betterAuthMock.mock.calls[0]?.[0] as {
+      disabledPaths: string[];
+    };
+    expect(options.disabledPaths).toContain("/update-user");
+  });
+});

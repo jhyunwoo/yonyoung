@@ -174,7 +174,9 @@ export const createAuthWithEnv = (database: D1Database, env: AuthRuntimeEnv) => 
     },
     basePath: "/api/auth",
     // jwt 플러그인의 /token은 OAuth 토큰 엔드포인트와 겹친다(Better Auth 문서 권장).
-    disabledPaths: ["/token"],
+    // /update-user는 프로필 계약(PATCH /api/users/{id})의 검증·감사 로그를 거치지 않고 이름과
+    // 학번·연락처를 바꿀 수 있어 막는다. 웹은 이 엔드포인트를 쓰지 않는다.
+    disabledPaths: ["/token", "/update-user"],
     secret: env.secret,
     trustedOrigins: env.trustedOrigins,
     database: drizzleAdapter(db, {
