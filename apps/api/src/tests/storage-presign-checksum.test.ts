@@ -34,3 +34,33 @@ describe("multipart presigned URL checksum policy", () => {
     });
   });
 });
+
+describe("single PUT presigned URL", () => {
+  it("선언한 Content-Type을 서명에 묶어 다른 형식으로 올릴 수 없게 한다", async () => {
+    const service = createR2PresignService({
+      R2_S3_ENDPOINT: "https://example-account.r2.cloudflarestorage.com",
+      R2_ACCESS_KEY_ID: "key",
+      R2_SECRET_ACCESS_KEY: "secret",
+      R2_BUCKET: "yonyoung-storage",
+      R2_PUBLIC_URL_SIGNING_SECRET:
+        "test-public-url-signing-secret-at-least-32-chars",
+      BETTER_AUTH_URL: "https://app.example.com",
+      BETTER_AUTH_SECRET: "test-better-auth-secret-with-at-least-32-chars",
+    } as never);
+
+    const result = await service.issuePresignedPutUrl({
+      resource: "activities",
+      actorId: "user-1",
+      slot: "cover",
+      fileName: "example.png",
+      contentType: "image/png",
+      fileSize: 1024,
+    });
+    const uploadUrl = new URL(result.uploadUrl);
+
+    expect(uploadUrl.searchParams.get("X-Amz-SignedHeaders")).toBe(
+      "content-length;content-type;host",
+    );
+    expect(result.requiredHeaders).toEqual({ "Content-Type": "image/png" });
+  });
+});

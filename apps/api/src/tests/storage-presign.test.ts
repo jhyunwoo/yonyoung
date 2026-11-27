@@ -148,7 +148,7 @@ describe("createR2PresignService", () => {
     expect(mockGetSignedUrl).toHaveBeenCalledWith(
       expect.anything(),
       expect.anything(),
-      { expiresIn: 3600 },
+      { expiresIn: 3600, signableHeaders: new Set(["content-type"]) },
     );
     expect(result.requiredHeaders).toEqual({
       "Content-Type": "image/png",

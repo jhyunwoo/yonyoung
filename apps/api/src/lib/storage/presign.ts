@@ -449,6 +449,9 @@ export const createR2PresignService = (env: AppBindings): PresignService => {
 
       const uploadUrl = await getSignedUrl(client, command, {
         expiresIn: PRESIGNED_URL_EXPIRES_IN_SECONDS,
+        // presigner는 content-type을 기본으로 서명에서 뺀다. 묶지 않으면 허용 목록을 통과한
+        // 선언과 다른 형식(text/html 등)으로 올려 스토리지 도메인에서 그대로 서빙할 수 있다.
+        signableHeaders: new Set(["content-type"]),
       });
 
       return {
