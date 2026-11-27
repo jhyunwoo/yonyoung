@@ -77,6 +77,11 @@ export type AppDependencies = {
   getUploadReservationStore: (
     c: Context<HonoAppType>,
   ) => UploadReservationStore;
+  /** 키가 keyPrefix로 시작하는 업로드 객체의 크기. 없으면 null. */
+  findUploadedObjectSize: (
+    c: Context<HonoAppType>,
+    keyPrefix: string,
+  ) => Promise<number | null>;
   authenticateMcpRequest: McpRequestAuthenticator;
   loadActorByUserId: (
     c: Context<HonoAppType>,
@@ -152,6 +157,13 @@ export const createDefaultDependencies = (): AppDependencies => ({
     createD1MultipartUploadStateStore(createRequestDatabase(c)),
   getUploadReservationStore: (c) =>
     createD1UploadReservationStore(createRequestDatabase(c)),
+  findUploadedObjectSize: async (c, keyPrefix) => {
+    const listing = await resolveR2Bucket(c.env).list({
+      prefix: keyPrefix,
+      limit: 1,
+    });
+    return listing.objects[0]?.size ?? null;
+  },
   authenticateMcpRequest: createBetterAuthMcpAuthenticator((c) =>
     createAuth(resolveD1Database(c.env), c.env).api.getJwks(),
   ),

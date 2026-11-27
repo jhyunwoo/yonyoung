@@ -687,6 +687,8 @@ export type PresignService = {
     fileName: string;
     contentType: string;
     fileSize: number;
+    /** 객체 키의 무작위 부분. 생략하면 새로 만든다. */
+    fileId?: string;
   }) => Promise<{
     uploadUrl: string;
     objectKey: string;

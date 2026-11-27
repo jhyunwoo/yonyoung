@@ -51,6 +51,8 @@ export const reserveStorageCapacityForUpload = async (input: {
   fileSize: number;
   grantTtlMs: number;
   capacityTtlMs: number;
+  /** 예약 ID. 단일 업로드는 객체 키 앞부분을 넘겨 예약과 객체를 묶는다. */
+  id?: string;
 }): Promise<ActiveUploadReservation> => {
   let store: UploadReservationStore;
   try {
@@ -103,7 +105,7 @@ export const reserveStorageCapacityForUpload = async (input: {
     );
   }
 
-  const id = crypto.randomUUID();
+  const id = input.id ?? crypto.randomUUID();
   const now = Date.now();
   try {
     await store.reserve({
@@ -156,4 +158,20 @@ export const settleUploadReservation = async (
       // 무시한다.
     }
   }
+};
+
+/**
+ * 업로드된 객체를 확인하지 못한 단일 업로드 정산. presigned URL은 만료 전까지 계속 쓸 수
+ * 있으므로, 클라이언트가 실패나 완료를 알려 왔다는 이유만으로 용량을 풀면 URL을 쌓아 두었다가
+ * 한꺼번에 올려 한도를 넘길 수 있다. 슬롯만 반납하고 용량은 URL 만료까지 잡아 둔다.
+ */
+export const holdUploadReservationUntilUrlExpiry = async (
+  store: UploadReservationStore,
+  reservationId: string,
+): Promise<void> => {
+  await store.holdUntilGrantExpiry(
+    reservationId,
+    Date.now(),
+    UPLOAD_RESERVATION_SETTLEMENT_GRACE_MS,
+  );
 };

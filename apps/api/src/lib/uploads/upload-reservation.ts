@@ -48,6 +48,12 @@ export interface UploadReservationStore {
   get(id: string): Promise<UploadReservation | null>;
   remove(id: string): Promise<void>;
   settle(id: string, expiresAt: number): Promise<void>;
+  /**
+   * 동시 예약 슬롯만 반납하고 용량은 발급한 URL이 만료될 때(+graceMs)까지 점유한다.
+   * 슬롯을 이미 반납한 예약에는 아무것도 하지 않는다 — 반납 시 URL 만료 시각이 지워지므로
+   * 다시 호출해 점유를 줄일 수 없어야 한다.
+   */
+  holdUntilGrantExpiry(id: string, now: number, graceMs: number): Promise<void>;
 }
 
 type UploadReservationDatabase = Pick<D1Database, "prepare">;
@@ -216,6 +222,20 @@ export const createD1UploadReservationStore = (
         .bind(expiresAt, Date.now(), id)
         .run();
     },
+
+    async holdUntilGrantExpiry(id, now, graceMs) {
+      // SQLite는 SET 우변을 갱신 전 값으로 계산하므로 expires_at은 원래 grant 만료 기준이다.
+      await database
+        .prepare(
+          `
+          UPDATE upload_reservations
+          SET expires_at = grant_expires_at + ?, grant_expires_at = ?
+          WHERE id = ? AND grant_expires_at > ?
+          `,
+        )
+        .bind(graceMs, now, id, now)
+        .run();
+    },
   };
 };
 
@@ -309,6 +329,17 @@ export const createMemoryUploadReservationStore = (): UploadReservationStore => 
           ...reservation,
           expiresAt,
           grantExpiresAt: Math.min(reservation.grantExpiresAt, Date.now()),
+        });
+      }
+    },
+
+    async holdUntilGrantExpiry(id, now, graceMs) {
+      const reservation = reservations.get(id);
+      if (reservation && reservation.grantExpiresAt > now) {
+        reservations.set(id, {
+          ...reservation,
+          expiresAt: reservation.grantExpiresAt + graceMs,
+          grantExpiresAt: now,
         });
       }
     },
