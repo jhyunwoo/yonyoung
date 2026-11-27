@@ -237,6 +237,51 @@ describe("features/dashboard/actions/users bulkUpdateUsersRoleAction", () => {
     );
   });
 
+  it("승인된 회원의 프로필 수정은 공개 작가 캐시까지 비운다", async () => {
+    requireSessionMock.mockResolvedValue({
+      session: { id: "s", userId: "user-member", expiresAt: Date.now() + 60_000 },
+      user: {
+        id: "user-member",
+        email: "member@example.com",
+        name: "일반 회원",
+        role: "regular_member",
+      },
+    });
+    honoRequestMock.mockResolvedValue(
+      createUser({ id: "user-member", name: "일반 회원", email: "member@example.com" }),
+    );
+
+    await updateUserAction("user-member", { familyName: "김" });
+
+    expect(updateTagMock.mock.calls.map(([tag]) => tag)).toContain(
+      "public:photographers",
+    );
+  });
+
+  it("승인 대기 사용자의 프로필 수정은 공개 캐시를 비우지 않는다", async () => {
+    requireSessionMock.mockResolvedValue({
+      session: { id: "s", userId: "user-pending", expiresAt: Date.now() + 60_000 },
+      user: {
+        id: "user-pending",
+        email: "pending@example.com",
+        name: "대기",
+        role: "unverified",
+      },
+    });
+    honoRequestMock.mockResolvedValue(
+      createUser({
+        id: "user-pending",
+        name: "대기",
+        email: "pending@example.com",
+        role: "unverified",
+      }),
+    );
+
+    await updateUserAction("user-pending", { familyName: "김" });
+
+    expect(updateTagMock.mock.calls.map(([tag]) => tag)).toEqual(["admin:users"]);
+  });
+
   it("forbids a member from updating another user's profile", async () => {
     requireSessionMock.mockResolvedValue({
       session: {

@@ -136,7 +136,8 @@ export default function MemberDetailClient({
           )}
         </section>
 
-        {fullUser ? (
+        {/* 사용자 변경 이력은 사용자를 수정할 수 있는 역할(회장·부회장)만 조회할 수 있다. */}
+        {fullUser && canEdit ? (
           <AuditHistoryPanel resourceType="user" resourceId={fullUser.id} />
         ) : null}
       </div>

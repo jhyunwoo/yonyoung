@@ -1,7 +1,10 @@
 "use server";
 
 import { forbidden } from "next/navigation";
-import { canManageGlobalUsers } from "@/features/auth/model/auth-shared";
+import {
+  canAccessAdminPage,
+  canManageGlobalUsers,
+} from "@/features/auth/model/auth-shared";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
 import {
   writeRequest,
@@ -29,6 +32,10 @@ const USER_CACHE_TAGS = [
   CACHE_TAGS.admin.generations,
   CACHE_TAGS.public.photographers,
 ] as const;
+
+// 승인 대기 사용자는 공개 페이지나 기수 명단에 나오지 않는다. 누구나 가입만 하면 프로필을
+// 고칠 수 있으므로, 그 쓰기가 공개 캐시까지 비우게 두면 캐시를 계속 무효화할 수 있다.
+const UNVERIFIED_USER_CACHE_TAGS = [CACHE_TAGS.admin.users] as const;
 
 export type BulkUpdateUsersRoleActionResult = AdminWriteActionResult<ApiUser[]>;
 
@@ -79,7 +86,9 @@ export const updateUserAction = async (
     body: payload,
     responseSchema: apiUserSchema,
     requireAdminAccess: canManageUsers,
-    tags: USER_CACHE_TAGS,
+    tags: canAccessAdminPage(session)
+      ? USER_CACHE_TAGS
+      : UNVERIFIED_USER_CACHE_TAGS,
   });
 };
 
