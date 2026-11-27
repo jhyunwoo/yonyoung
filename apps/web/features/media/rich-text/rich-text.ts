@@ -1,4 +1,8 @@
-import filterXss, { type IFilterXSSOptions } from "xss";
+import filterXss, { type EscapeHandler, type IFilterXSSOptions } from "xss";
+
+const { escapeAttrValue } = filterXss as unknown as {
+  escapeAttrValue: EscapeHandler;
+};
 
 /** 에디터가 비어 있을 때 내보내는 HTML. */
 export const EMPTY_RICH_TEXT_HTML = "<p></p>";
@@ -34,6 +38,7 @@ const ALLOWED_ATTRS = {
   td: ["colspan", "rowspan"],
 } as const;
 const ALLOWED_LINK_PREFIXES = ["http://", "https://", "mailto:"] as const;
+const LINK_REL = "noopener noreferrer nofollow";
 
 const trim = (value: string): string => value.trim();
 
@@ -68,17 +73,26 @@ const SANITIZE_OPTIONS: IFilterXSSOptions = {
   stripIgnoreTag: true,
   stripIgnoreTagBody: ["script", "style", "iframe", "object", "embed"],
   css: false,
-  safeAttrValue(tag, name, value) {
-    if (tag === "a" && name === "href") {
-      return isAllowedLink(value) ? trim(value) : "";
+  // rel은 작성자 값을 버리고 허용된 href와 함께 여기서 직접 내보낸다. 완성된 HTML을
+  // 정규식으로 다시 고치면 href 값 안의 `rel=`을 속성으로 오인해 따옴표가 깨진다.
+  onTagAttr(tag, name, value) {
+    if (tag !== "a") {
+      return undefined;
     }
 
+    if (name === "rel") {
+      return "";
+    }
+
+    if (name === "href" && isAllowedLink(value)) {
+      return `href="${escapeAttrValue(trim(value))}" rel="${LINK_REL}"`;
+    }
+
+    return undefined;
+  },
+  safeAttrValue(tag, name, value) {
     if (tag === "a" && name === "target") {
       return value === "_blank" ? "_blank" : "";
-    }
-
-    if (tag === "a" && name === "rel") {
-      return "noopener noreferrer nofollow";
     }
 
     if ((tag === "th" || tag === "td") && (name === "colspan" || name === "rowspan")) {
@@ -89,25 +103,8 @@ const SANITIZE_OPTIONS: IFilterXSSOptions = {
   },
 };
 
-const ensureSafeLinkRel = (html: string): string => {
-  return html.replace(/<a\b([^>]*?)>/gi, (fullMatch, attributes: string) => {
-    if (!/\bhref\s*=/i.test(attributes)) {
-      return fullMatch;
-    }
-
-    if (/\brel\s*=/i.test(attributes)) {
-      return fullMatch.replace(
-        /\brel\s*=\s*(['"]).*?\1/i,
-        'rel="noopener noreferrer nofollow"',
-      );
-    }
-
-    return `<a${attributes} rel="noopener noreferrer nofollow">`;
-  });
-};
-
 export const sanitizeRichTextHtml = (html: string): string => {
-  return ensureSafeLinkRel(filterXss(html, SANITIZE_OPTIONS));
+  return filterXss(html, SANITIZE_OPTIONS);
 };
 
 const HTML_ENTITY_PATTERN = /&(?:#(\d+)|#x([0-9a-f]+)|([a-z]+));/gi;
