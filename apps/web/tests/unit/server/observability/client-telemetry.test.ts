@@ -84,4 +84,27 @@ describe("server/observability/client-telemetry", () => {
       sampledAt: 1700000000000,
     });
   });
+
+  it("요청이 정하는 문자열은 길이를 잘라 로그 한 줄의 크기를 묶는다", () => {
+    expect(normalizeObservedRoute(`/${"a".repeat(5000)}`)).toHaveLength(512);
+    expect(
+      summarizeClientErrorForLog({ metadata: { ["k".repeat(5000)]: 1 } }).metadataKeys,
+    ).toEqual(["k".repeat(64)]);
+    expect(
+      summarizeRouterTransitionForLog({
+        metadata: { navigationType: "n".repeat(5000), url: "/dashboard" },
+      }).navigationType,
+    ).toHaveLength(64);
+
+    const metric = summarizeWebVitalForLog({
+      id: "i".repeat(5000),
+      name: "LCP",
+      value: 1,
+      rating: "r".repeat(5000),
+      navigationType: "t".repeat(5000),
+    });
+    expect(metric.id).toHaveLength(64);
+    expect(metric.rating).toHaveLength(64);
+    expect(metric.navigationType).toHaveLength(64);
+  });
 });

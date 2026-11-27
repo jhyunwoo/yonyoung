@@ -11,8 +11,10 @@ import {
   enforceSameOriginProtection,
 } from "@/server/security/request-guards";
 import {
+  allowIngestLog,
   createIngestAcceptedResponse,
   parseIngestBody,
+  readCorrelationHeader,
 } from "@/app/api/internal/ingest-request";
 
 const webVitalsPayloadSchema = z.object({
@@ -32,6 +34,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return csrfProtectionResponse;
   }
 
+  if (!allowIngestLog()) {
+    return createIngestAcceptedResponse();
+  }
+
   const bodyLimitResponse = await enforceRequestBodyLimit(
     request,
     INTERNAL_EVENT_BODY_LIMIT_BYTES,
@@ -46,8 +52,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
 
-  const requestId = request.headers.get("x-request-id")?.trim();
-  const traceId = request.headers.get("x-trace-id")?.trim();
+  const requestId = readCorrelationHeader(request, "x-request-id");
+  const traceId = readCorrelationHeader(request, "x-trace-id");
   const route = normalizeObservedRoute(parsed.data.path);
 
   logger.info({
@@ -55,8 +61,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     route,
     method: request.method,
     status: 202,
-    requestId: requestId || undefined,
-    traceId: traceId || undefined,
+    requestId,
+    traceId,
     metric: summarizeWebVitalForLog(parsed.data),
   });
 

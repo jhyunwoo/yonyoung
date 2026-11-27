@@ -12,8 +12,10 @@ import {
   enforceSameOriginProtection,
 } from "@/server/security/request-guards";
 import {
+  allowIngestLog,
   createIngestAcceptedResponse,
   parseIngestBody,
+  readCorrelationHeader,
 } from "@/app/api/internal/ingest-request";
 
 const clientErrorPayloadSchema = z.object({
@@ -31,6 +33,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return csrfProtectionResponse;
   }
 
+  if (!allowIngestLog()) {
+    return createIngestAcceptedResponse();
+  }
+
   const bodyLimitResponse = await enforceRequestBodyLimit(
     request,
     INTERNAL_EVENT_BODY_LIMIT_BYTES,
@@ -46,16 +52,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
 
-  const requestId = request.headers.get("x-request-id")?.trim();
-  const traceId = request.headers.get("x-trace-id")?.trim();
+  const requestId = readCorrelationHeader(request, "x-request-id");
+  const traceId = readCorrelationHeader(request, "x-trace-id");
   const route = normalizeObservedRoute(parsed.data.path);
 
   const baseLogPayload = {
     event: parsed.data.event,
     route,
     status: 202,
-    requestId: requestId || undefined,
-    traceId: traceId || undefined,
+    requestId,
+    traceId,
     ingestPath: request.nextUrl.pathname,
     ingestMethod: request.method,
   };

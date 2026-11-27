@@ -121,4 +121,45 @@ describe("app/api/internal/client-error/route", () => {
     expect(logger.info).not.toHaveBeenCalled();
     expect(logger.warn).not.toHaveBeenCalled();
   });
+
+  it("프로세스 상한(분당 600건)을 넘은 이벤트는 기록하지 않고 202로 버린다", async () => {
+    const { allowIngestLog } = await import("@/app/api/internal/ingest-request");
+    const { POST } = await import("@/app/api/internal/client-error/route");
+    const now = Date.now();
+    for (let count = 0; count < 600; count += 1) {
+      expect(allowIngestLog(now)).toBe(true);
+    }
+
+    const response = await POST(
+      createRequest({
+        event: "client.error",
+        path: "/",
+        message: "boom",
+        sampledAt: 1700000000000,
+      }),
+    );
+
+    expect(response.status).toBe(202);
+    expect(logger.warn).not.toHaveBeenCalled();
+    expect(allowIngestLog(now + 60_000)).toBe(true);
+  });
+
+  it("추적 헤더는 길이를 잘라 기록한다", async () => {
+    const { POST } = await import("@/app/api/internal/client-error/route");
+    const request = new NextRequest("https://app.example.com/api/internal/client-error", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        origin: "https://app.example.com",
+        "sec-fetch-site": "same-origin",
+        "x-request-id": "r".repeat(4000),
+      },
+      body: JSON.stringify({ event: "client.error", path: "/", sampledAt: 1 }),
+    });
+
+    await POST(request);
+
+    const [payload] = logger.warn.mock.calls[0] as [{ requestId: string }];
+    expect(payload.requestId).toHaveLength(128);
+  });
 });
