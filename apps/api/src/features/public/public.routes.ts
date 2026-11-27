@@ -140,14 +140,20 @@ const sanitizePublicExhibition = <
 };
 
 const sanitizePublicLinktree = <
-  T extends { items: Array<{ link: string }> },
+  T extends {
+    items: Array<{ link: string; updatedBy?: unknown }>;
+    updatedBy?: unknown;
+  },
 >(
   linktree: T,
-): T => ({
-  ...linktree,
-  // 기존 데이터에 남아 있을 수 있는 실행 가능 URL 스킴을 공개 링크로 재노출하지 않는다.
-  items: linktree.items.filter((item) => isHttpUrl(item.link)),
-});
+): T =>
+  withoutEditorInfo({
+    ...linktree,
+    // 기존 데이터에 남아 있을 수 있는 실행 가능 URL 스킴을 공개 링크로 재노출하지 않는다.
+    items: linktree.items
+      .filter((item) => isHttpUrl(item.link))
+      .map(withoutEditorInfo),
+  });
 
 const sanitizePublicSiteSettings = <T extends { footerOpenChatUrl: string }>(
   settings: T,
@@ -555,7 +561,7 @@ export const registerPublicRoutes = (
         .getDataService(c)
         .listGenerations()
         .then((rows) => [...rows].sort((a, b) => a.sortOrder - b.sortOrder));
-      return ok(c, data);
+      return ok(c, data.map(withoutEditorInfo));
     }),
   );
 
