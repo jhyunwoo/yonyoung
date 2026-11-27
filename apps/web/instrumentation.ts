@@ -46,7 +46,8 @@ export const onRequestError: Instrumentation.onRequestError = (
     method: errorRequest.method,
     error: serializeError(error),
     request: {
-      path: errorRequest.path,
+      // 쿼리에는 OAuth code·state나 서명 값이 실릴 수 있어 경로만 남긴다.
+      path: errorRequest.path.split("?", 1)[0],
       headers: errorRequest.headers,
       context: errorContext,
     },
