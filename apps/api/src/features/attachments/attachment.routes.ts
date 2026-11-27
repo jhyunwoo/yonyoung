@@ -234,9 +234,20 @@ export const registerAttachmentRoutes = (
 
     assertPermission(actor, policyResourceByScope[query.scope], "read");
 
-    const data = await dependencies
-      .getDataService(c)
-      .listAttachments(query.scope, query.resourceId ?? null);
+    const dataService = dependencies.getDataService(c);
+    // 활동 삭제는 첨부를 함께 지우지 않는다. 공개 목록과 같이 살아 있는 활동의 첨부만 준다.
+    if (
+      query.scope === "activity" &&
+      query.resourceId &&
+      !(await dataService.getActivityById(query.resourceId))
+    ) {
+      return ok(c, []);
+    }
+
+    const data = await dataService.listAttachments(
+      query.scope,
+      query.resourceId ?? null,
+    );
 
     return ok(c, data);
   });

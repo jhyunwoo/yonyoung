@@ -4,6 +4,7 @@ import {
   IDs,
   MANAGED_FILE_TEST_ENV,
   buildManagedFileUrl,
+  createActivity,
   createActor,
   createAttachment,
   createDataServiceMock,
@@ -67,7 +68,10 @@ describe("attachments routes", () => {
       const listAttachments = fn(async () => [] as AttachmentEntity[]);
       const app = createTestApp({
         actor: createActor("manager", IDs.manager),
-        dataService: createDataServiceMock({ listAttachments }),
+        dataService: createDataServiceMock({
+          listAttachments,
+          getActivityById: fn(async () => createActivity({ id: IDs.activity })),
+        }),
       });
 
       const response = await app.request(
@@ -76,6 +80,25 @@ describe("attachments routes", () => {
 
       expect(response.status).toBe(200);
       expect(listAttachments).toHaveBeenCalledWith("activity", IDs.activity);
+    });
+
+    it("삭제된 활동의 첨부는 목록으로 내주지 않는다", async () => {
+      const listAttachments = fn(async () => [createAttachment()]);
+      const app = createTestApp({
+        actor: createActor("regular_member", IDs.member),
+        dataService: createDataServiceMock({
+          listAttachments,
+          getActivityById: fn(async () => null),
+        }),
+      });
+
+      const response = await app.request(
+        `/api/attachments?scope=activity&resourceId=${IDs.activity}`,
+      );
+
+      expect(response.status).toBe(200);
+      expect((await readJson<{ data: unknown[] }>(response)).data).toEqual([]);
+      expect(listAttachments).not.toHaveBeenCalled();
     });
 
     it("잘못된 scope는 400을 반환한다", async () => {
