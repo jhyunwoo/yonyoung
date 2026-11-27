@@ -58,7 +58,9 @@ const readRedirectHost = (redirectUri: string | null): string | null => {
     if (!url.host) {
       return null;
     }
-    return url.protocol === "https:" ? url.host : `${url.protocol}//${url.host}`;
+    return url.protocol === "https:"
+      ? url.host
+      : `${url.protocol}//${url.host}`;
   } catch {
     return null;
   }
