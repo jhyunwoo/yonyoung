@@ -173,6 +173,29 @@ describe("analytics_events 쓰기", () => {
       .all<{ id: string }>();
     expect(ids.results.map((row) => row.id)).toEqual(["new-1"]);
   });
+
+  it("보관 기간이 지난 유입 경로 집계 행만 지운다", async () => {
+    const repository = createVisitorEventRepository(createDB(db));
+    const now = Date.now();
+    const insertEntry = (id: string, visitedAt: number) =>
+      db
+        .prepare(
+          "INSERT INTO page_view_entries (id, dimension, value, entry_count, visited_at) VALUES (?, 'referrer', 'example.com', 1, ?)",
+        )
+        .bind(id, visitedAt)
+        .run();
+    await insertEntry("entry-old", now - 800 * 24 * HOUR_MS);
+    await insertEntry("entry-new", now);
+
+    await repository.purgePageViewEntriesBefore(now - 731 * 24 * HOUR_MS);
+
+    const ids = await db
+      .prepare(
+        "SELECT id FROM page_view_entries WHERE id IN ('entry-old', 'entry-new')",
+      )
+      .all<{ id: string }>();
+    expect(ids.results.map((row) => row.id)).toEqual(["entry-new"]);
+  });
 });
 describe("방문자 인사이트 조회", () => {
   const kst = (value: string) => Date.parse(`${value}:00+09:00`);
