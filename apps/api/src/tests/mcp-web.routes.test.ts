@@ -92,6 +92,12 @@ describe("GET /api/mcp/consent-context", () => {
     };
     const redirect = encodeURIComponent("https://evil.example:8443/callback?x=1");
     expect(await redirectHostOf(`&redirect_uri=${redirect}`)).toBe("evil.example:8443");
+    // https가 아니면 호스트만으로는 claude.ai처럼 보일 수 있어 스킴까지 돌려준다.
+    expect(
+      await redirectHostOf(
+        `&redirect_uri=${encodeURIComponent("x-evil://claude.ai/cb")}`,
+      ),
+    ).toBe("x-evil://claude.ai");
     expect(await redirectHostOf("&redirect_uri=not-a-url")).toBeNull();
     expect(await redirectHostOf("")).toBeNull();
   });
