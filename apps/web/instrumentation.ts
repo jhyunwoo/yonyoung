@@ -28,6 +28,28 @@ const serializeError = (error: unknown): Record<string, unknown> => {
   };
 };
 
+// 요청 헤더를 통째로 남기면 방문자 IP와 Referer 쿼리(서명된 동의 주소 등)가 로그에 쌓인다.
+// 요청을 추적하는 데 필요한 것만 남긴다.
+const LOGGED_REQUEST_HEADERS = [
+  "x-request-id",
+  "x-trace-id",
+  "content-type",
+  "user-agent",
+];
+
+const pickLoggedHeaders = (
+  headers: Record<string, string | string[] | undefined>,
+): Record<string, string | string[]> => {
+  const picked: Record<string, string | string[]> = {};
+  for (const name of LOGGED_REQUEST_HEADERS) {
+    const value = headers[name];
+    if (value !== undefined) {
+      picked[name] = value;
+    }
+  }
+  return picked;
+};
+
 export const onRequestError: Instrumentation.onRequestError = (
   error,
   errorRequest,
@@ -48,7 +70,7 @@ export const onRequestError: Instrumentation.onRequestError = (
     request: {
       // 쿼리에는 OAuth code·state나 서명 값이 실릴 수 있어 경로만 남긴다.
       path: errorRequest.path.split("?", 1)[0],
-      headers: errorRequest.headers,
+      headers: pickLoggedHeaders(errorRequest.headers),
       context: errorContext,
     },
   });

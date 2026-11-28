@@ -58,4 +58,42 @@ describe("onRequestError", () => {
       request: { path: "/auth/mcp-consent" },
     });
   });
+  // 방문자 IP와 Referer 쿼리(서명된 동의 주소 등)는 로그에 남기지 않는다.
+  it("logs only the headers needed to trace the request", () => {
+    const context: RequestErrorArgs[2] = {
+      routerKind: "App Router",
+      routePath: "/(home)/page",
+      routeType: "render",
+      renderSource: "react-server-components",
+      revalidateReason: undefined,
+    };
+    void onRequestError(
+      new Error("boom"),
+      {
+        method: "GET",
+        path: "/",
+        headers: {
+          "x-request-id": "req-1",
+          "x-trace-id": "trace-1",
+          "content-type": "text/html",
+          "user-agent": "Mozilla/5.0",
+          "x-forwarded-for": "203.0.113.7",
+          "x-real-ip": "203.0.113.7",
+          "cf-connecting-ip": "203.0.113.7",
+          referer:
+            "https://example.com/auth/mcp-consent?client_id=abc&sig=secret-signature",
+          cookie: "session=secret",
+          "x-anything-else": "value",
+        },
+      },
+      context,
+    );
+
+    expect(logError.mock.calls[0]?.[0].request.headers).toEqual({
+      "x-request-id": "req-1",
+      "x-trace-id": "trace-1",
+      "content-type": "text/html",
+      "user-agent": "Mozilla/5.0",
+    });
+  });
 });
