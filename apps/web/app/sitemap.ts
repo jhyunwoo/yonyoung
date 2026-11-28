@@ -56,6 +56,14 @@ const STATIC_ROUTES: StaticSitemapRoute[] = [
 
 const toDate = (timestamp: number): Date => new Date(timestamp);
 
+/**
+ * Next는 사이트맵의 `<image:loc>`에 값을 이스케이프 없이 넣는다. 우리가 만든 서명 URL에는
+ * XML 특수문자가 없지만 API는 외부 http(s) 주소도 받으므로, 그런 문자가 든 주소는 싣지 않는다
+ * (직접 이스케이프하면 Next가 나중에 이스케이프를 추가할 때 이중으로 적용된다).
+ */
+const toSitemapImages = (imageUrl: string): string[] =>
+  /[&<>"']/.test(imageUrl) ? [] : [imageUrl];
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = resolveSiteUrl();
   const [activities, exhibitions] = await Promise.all([
@@ -75,7 +83,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: `${siteUrl}/archive/records/${activity.id}`,
     lastModified: toDate(activity.updatedAt),
     // 이미지 검색용 대표 사진. 서명 URL 은 키와 비밀값으로만 정해져 만료되지 않는다.
-    images: [activity.coverImageUrl],
+    images: toSitemapImages(activity.coverImageUrl),
     changeFrequency: "monthly",
     priority: 0.8,
   }));
@@ -83,7 +91,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const exhibitionEntries: MetadataRoute.Sitemap = exhibitions.map((exhibition) => ({
     url: `${siteUrl}/archive/exhibitions/${exhibition.id}`,
     lastModified: toDate(exhibition.updatedAt),
-    images: [exhibition.coverImageUrl],
+    images: toSitemapImages(exhibition.coverImageUrl),
     changeFrequency: "monthly",
     priority: 0.8,
   }));
