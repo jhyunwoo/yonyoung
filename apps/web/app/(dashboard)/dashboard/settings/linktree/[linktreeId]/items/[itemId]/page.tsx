@@ -13,7 +13,7 @@ export default async function SettingsLinktreeItemDetailPage({
 }>) {
   const [{ linktreeId, itemId }, session] = await Promise.all([
     params,
-    serverAuthGuard.requireSession(),
+    serverAuthGuard.requireAdminPageAccess(),
   ]);
 
   const linktreeResult = await getAdminLinktreeById(linktreeId);

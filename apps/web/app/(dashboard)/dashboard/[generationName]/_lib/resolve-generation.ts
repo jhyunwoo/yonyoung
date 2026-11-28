@@ -12,7 +12,7 @@ export const requireDashboardGeneration = async (
   params: GenerationRouteParams,
 ): Promise<DashboardGenerationOption> => {
   const { generationName } = await params;
-  const session = await serverAuthGuard.requireSession();
+  const session = await serverAuthGuard.requireAdminPageAccess();
   const generationOptions = await getAccessibleDashboardGenerationOptions(session);
   const generation = resolveGenerationOptionFromRouteName(
     generationOptions,

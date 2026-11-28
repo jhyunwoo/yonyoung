@@ -6,7 +6,7 @@ import { isAdminRole } from "@/features/auth/model/auth-shared";
 const LIST_PATH = "/dashboard/settings/linktree";
 
 export default async function SettingsLinktreeCreatePage() {
-  const session = await serverAuthGuard.requireSession();
+  const session = await serverAuthGuard.requireAdminPageAccess();
 
   // 쓰기 권한이 없으면 생성 화면을 보여 줄 이유가 없다. 목록으로 되돌린다.
   if (!isAdminRole(session.user.role)) {

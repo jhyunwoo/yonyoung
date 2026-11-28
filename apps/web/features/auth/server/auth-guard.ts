@@ -4,7 +4,6 @@ import { fetchSessionFromApi } from "@/features/auth/server/auth-server";
 import {
   AUTH_PROFILE_PATH,
   DASHBOARD_PATH,
-  canAccessAdminPage,
   canManageGenerations,
   canManageGlobalUsers,
   hasCompletedRequiredProfile,
@@ -237,18 +236,6 @@ const requireAccess = async (
   return session;
 };
 
-const requireAdminPageAccess = async (
-  redirectTo = SIGN_IN_PATH,
-): Promise<AuthSession> => {
-  const session = await requireSession(redirectTo);
-
-  if (!canAccessAdminPage(session)) {
-    forbidden();
-  }
-
-  return session;
-};
-
 const redirectIfProfileIncomplete = async (
   session: AuthSession,
   redirectTo = AUTH_PROFILE_PATH,
@@ -269,6 +256,28 @@ const resolveAdminLandingPath = async (session: AuthSession): Promise<string> =>
     role: session.user.role,
     isProfileComplete,
   });
+};
+
+/**
+ * 대시보드 진입 판정 — 레이아웃과 각 페이지가 같이 부른다.
+ *
+ * 레이아웃의 검사는 페이지 세그먼트의 렌더를 막지 못한다. 레이아웃만 검사하면 승인
+ * 대기·프로필 미작성 사용자에게도 페이지 내용이 RSC 페이로드로 나간다. 조회는 모두
+ * `cache()` 로 묶여 있어 여러 번 불러도 API 왕복은 늘지 않는다.
+ */
+const requireAdminPageAccess = async (): Promise<AuthSession> => {
+  // 프로필 조회는 세션을 기다릴 필요가 없다(쿠키만 필요). 먼저 띄워 두면 세션
+  // 왕복과 겹쳐서 대시보드 진입의 직렬 왕복이 하나 줄어든다.
+  const currentUserRequest = getCurrentUserMe();
+  const session = await requireSession();
+  await currentUserRequest;
+  const redirectPath = await resolveAdminLandingPath(session);
+
+  if (redirectPath !== DASHBOARD_PATH) {
+    redirect(redirectPath);
+  }
+
+  return session;
 };
 
 const requirePresidentAccess = async (

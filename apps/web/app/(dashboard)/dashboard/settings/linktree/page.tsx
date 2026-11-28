@@ -5,7 +5,7 @@ import { isAdminRole } from "@/features/auth/model/auth-shared";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default async function SettingsLinktreePage() {
-  const session = await serverAuthGuard.requireSession();
+  const session = await serverAuthGuard.requireAdminPageAccess();
 
   return (
     <div className="px-4 py-6 md:px-8 md:py-8">

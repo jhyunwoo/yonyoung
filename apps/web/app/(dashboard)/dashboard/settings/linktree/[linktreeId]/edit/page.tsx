@@ -14,7 +14,7 @@ export default async function SettingsLinktreeEditPage({
 }>) {
   const [{ linktreeId }, session] = await Promise.all([
     params,
-    serverAuthGuard.requireSession(),
+    serverAuthGuard.requireAdminPageAccess(),
   ]);
 
   // 쓰기 권한이 없으면 편집 화면을 보여 줄 이유가 없다. 상세로 되돌린다.

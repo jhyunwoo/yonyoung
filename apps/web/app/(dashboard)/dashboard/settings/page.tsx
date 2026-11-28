@@ -9,7 +9,7 @@ import { buildDashboardSettingsMenuItems } from "@/features/dashboard/settings/d
 import { isMemberLikeRoleValue } from "@yonyoung/contracts/auth-roles";
 
 export default async function SettingsPage() {
-  const session = await serverAuthGuard.requireSession();
+  const session = await serverAuthGuard.requireAdminPageAccess();
   const settingsItems = buildDashboardSettingsMenuItems({
     canManagePrivilegedSettings: isPresidentOrVicePresidentRole(session.user.role),
     isMemberLikeRole: isMemberLikeRoleValue(session.user.role),
