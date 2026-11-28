@@ -51,6 +51,25 @@ describe("Sentry event privacy", () => {
     expect(result.contexts?.runtime).toEqual({ name: "node" });
   });
 
+  it("removes bound query parameters from exception messages", () => {
+    const event: ErrorEvent = {
+      type: undefined,
+      exception: {
+        values: [
+          {
+            type: "Error",
+            value:
+              'Failed query: update "user" set "phone_number" = ? where "id" = ?\nparams: 010-1234-5678,u-1',
+          },
+        ],
+      },
+    };
+
+    const value = scrubSentryEvent(event).exception?.values?.[0]?.value;
+    expect(value).toContain('update "user"');
+    expect(value).not.toContain("010-1234-5678");
+  });
+
   it("accepts errors with no request", () => {
     expect(scrubSentryEvent({ type: undefined, message: "failure" })).toEqual({
       message: "failure",

@@ -1,3 +1,5 @@
+import { redactQueryParams } from "../errors/queryError";
+
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
 export type LogPayload = {
@@ -27,7 +29,7 @@ const sanitizeString = (value: string): string => {
         }
         return "[REDACTED]";
       }),
-    value,
+    redactQueryParams(value),
   );
 };
 

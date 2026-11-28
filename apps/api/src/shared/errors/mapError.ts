@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 import { MissingStorageConfigError } from "../../lib/storage/presign";
 import { AppError, isAppError } from "./AppError";
 import { ERROR_CODES, type ErrorCode } from "./errorCodes";
+import { unwrapQueryError } from "./queryError";
 
 type LegacyHttpErrorLike = {
   status: number;
@@ -187,7 +188,9 @@ export const mapErrorToAppError = (error: unknown): AppError => {
       });
     }
 
-    if (looksLikeForeignKeyViolation(error)) {
+    const source = unwrapQueryError(error);
+
+    if (looksLikeForeignKeyViolation(source)) {
       return new AppError({
         httpStatus: 400,
         code: ERROR_CODES.BAD_REQUEST,
@@ -198,7 +201,7 @@ export const mapErrorToAppError = (error: unknown): AppError => {
       });
     }
 
-    if (looksLikeD1ConstraintError(error)) {
+    if (looksLikeD1ConstraintError(source)) {
       return new AppError({
         httpStatus: 409,
         code: ERROR_CODES.DB_ERROR,
@@ -208,7 +211,7 @@ export const mapErrorToAppError = (error: unknown): AppError => {
       });
     }
 
-    if (looksLikeD1Error(error)) {
+    if (looksLikeD1Error(source)) {
       return new AppError({
         httpStatus: 500,
         code: ERROR_CODES.DB_ERROR,
@@ -218,7 +221,7 @@ export const mapErrorToAppError = (error: unknown): AppError => {
       });
     }
 
-    if (looksLikeR2NotFoundError(error)) {
+    if (looksLikeR2NotFoundError(source)) {
       return new AppError({
         httpStatus: 404,
         code: ERROR_CODES.R2_ERROR,
@@ -228,7 +231,7 @@ export const mapErrorToAppError = (error: unknown): AppError => {
       });
     }
 
-    if (looksLikeR2TooLargeError(error)) {
+    if (looksLikeR2TooLargeError(source)) {
       return new AppError({
         httpStatus: 413,
         code: ERROR_CODES.R2_ERROR,
@@ -238,7 +241,7 @@ export const mapErrorToAppError = (error: unknown): AppError => {
       });
     }
 
-    if (looksLikeR2Error(error)) {
+    if (looksLikeR2Error(source)) {
       return new AppError({
         httpStatus: 500,
         code: ERROR_CODES.R2_ERROR,

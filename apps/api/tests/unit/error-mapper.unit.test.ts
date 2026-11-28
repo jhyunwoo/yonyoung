@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
+import { DrizzleQueryError } from "drizzle-orm/errors";
 import { mapErrorToAppError } from "../../src/shared/errors/mapError";
+import { logger } from "../../src/shared/logging/logger";
 
 describe("mapErrorToAppError", () => {
   it("maps Zod errors to validation app errors", () => {
@@ -22,6 +24,56 @@ describe("mapErrorToAppError", () => {
 
     expect(mapped.httpStatus).toBe(409);
     expect(mapped.code).toBe("DB_ERROR");
+  });
+
+  // drizzle은 batch가 아닌 쿼리 실패를 DrizzleQueryError로 감싼다. 실제 D1 오류는 cause에만 있다.
+  it("drizzle이 감싼 제약 조건 위반도 cause를 보고 409로 분류한다", () => {
+    const mapped = mapErrorToAppError(
+      new DrizzleQueryError(
+        'insert into "generations" ("id", "name") values (?, ?)',
+        ["id-1", "60기"],
+        new Error("D1_ERROR: UNIQUE constraint failed: generations.name"),
+      ),
+    );
+
+    expect(mapped.httpStatus).toBe(409);
+    expect(mapped.code).toBe("DB_ERROR");
+  });
+
+  it("drizzle이 감싼 오류는 바인딩 값이 아니라 cause로만 분류한다", () => {
+    const mapped = mapErrorToAppError(
+      new DrizzleQueryError(
+        'update "user" set "department" = ? where "id" = ?',
+        ["unique constraint failed", "u-1"],
+        new Error("Network connection lost."),
+      ),
+    );
+
+    expect(mapped.httpStatus).toBe(500);
+  });
+
+  it("실패한 쿼리의 바인딩 값은 로그에 남기지 않는다", () => {
+    const lines: string[] = [];
+    const original = console.log;
+    console.log = (line: string) => {
+      lines.push(line);
+    };
+    try {
+      logger.error({
+        event: "request.failed",
+        message: new DrizzleQueryError(
+          'update "user" set "phone_number" = ? where "id" = ?',
+          ["010-1234-5678", "u-1"],
+          new Error("Network connection lost."),
+        ).message,
+      });
+    } finally {
+      console.log = original;
+    }
+
+    const output = lines.join("");
+    expect(output).toContain("Failed query: update");
+    expect(output).not.toContain("010-1234-5678");
   });
 
   it("maps r2 missing key messages to not found", () => {
