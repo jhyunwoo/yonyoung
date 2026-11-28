@@ -76,6 +76,28 @@ describe("mapErrorToAppError", () => {
     expect(output).not.toContain("010-1234-5678");
   });
 
+  it("앞에 다른 글자가 붙은 쿼리 실패 메시지에서도 바인딩 값을 지운다", () => {
+    const lines: string[] = [];
+    const original = console.log;
+    console.log = (line: string) => {
+      lines.push(line);
+    };
+    try {
+      logger.error({
+        event: "auth.log",
+        message: `Error: ${
+          new DrizzleQueryError('insert into "session" ("token") values (?)', [
+            "session-token-value",
+          ]).message
+        }`,
+      });
+    } finally {
+      console.log = original;
+    }
+
+    expect(lines.join("")).not.toContain("session-token-value");
+  });
+
   it("maps r2 missing key messages to not found", () => {
     const mapped = mapErrorToAppError(
       new Error("NoSuchKey: The specified key does not exist"),

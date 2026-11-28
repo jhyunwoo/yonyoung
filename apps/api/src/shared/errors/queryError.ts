@@ -13,7 +13,4 @@ export const unwrapQueryError = (error: Error): Error =>
 
 /** 실패한 쿼리 메시지에서 SQL은 남기고 바인딩 값(개인정보일 수 있다)만 지운다. */
 export const redactQueryParams = (message: string): string =>
-  message.replace(
-    /^(Failed query: [\s\S]*?\nparams: )[\s\S]*$/,
-    "$1[REDACTED]",
-  );
+  message.replace(/(Failed query: [\s\S]*?\nparams: )[\s\S]*$/, "$1[REDACTED]");
