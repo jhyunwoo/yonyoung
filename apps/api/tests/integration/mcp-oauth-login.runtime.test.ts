@@ -63,6 +63,52 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe("MCP 인가 redirect_uri 허용 목록", () => {
+  it("허용 목록 밖 주소로 등록한 클라이언트는 인가 오류로도 그 주소에 보내지 않는다", async () => {
+    const registration = await auth.handler(
+      new Request(`${WEB_ORIGIN}/api/auth/oauth2/register`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          client_name: "Claude",
+          redirect_uris: ["https://evil.example/cb"],
+          token_endpoint_auth_method: "none",
+        }),
+      }),
+    );
+    expect(registration.status).toBe(201);
+    const { client_id: clientId } = (await registration.json()) as { client_id: string };
+
+    const variants: Record<string, string>[] = [
+      { scope: "bogus" },
+      { scope: "openid mcp", prompt: "none" },
+      { scope: "openid mcp" },
+    ];
+    for (const extra of variants) {
+      const authorizeUrl = new URL(`${WEB_ORIGIN}/api/auth/oauth2/authorize`);
+      authorizeUrl.search = new URLSearchParams({
+        response_type: "code",
+        client_id: clientId,
+        redirect_uri: "https://evil.example/cb",
+        state: "client-state",
+        code_challenge: "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+        code_challenge_method: "S256",
+        resource: "https://api.example.test/mcp",
+        ...extra,
+      }).toString();
+      const authorize = await auth.handler(
+        new Request(authorizeUrl, { headers: BROWSER_NAVIGATION_HEADERS }),
+      );
+
+      expect(authorize.status).toBe(302);
+      const location = new URL(authorize.headers.get("location")!, WEB_ORIGIN);
+      expect(location.origin).toBe(WEB_ORIGIN);
+      expect(location.pathname).not.toBe("/auth/sign-in");
+      expect(location.searchParams.get("error")).toBe("invalid_redirect");
+    }
+  });
+});
+
 describe("MCP 인가 중 로그인", () => {
   it("로그인하지 않은 사용자가 Google 로그인을 마치면 동의 화면으로 간다", async () => {
     const registration = await auth.handler(

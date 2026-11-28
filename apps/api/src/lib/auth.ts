@@ -11,6 +11,7 @@ import {
   type AuthRuntimeEnv,
 } from "./config/runtime-env";
 import { isHttpUrl } from "./validation/url";
+import { isAllowedMcpRedirectUri } from "./auth/mcp-redirect";
 
 const LOCAL_HOSTNAME = "localhost";
 
@@ -286,6 +287,9 @@ export const createAuthWithEnv = (database: D1Database, env: AuthRuntimeEnv) => 
         // Claude·ChatGPT가 쓰는 DCR. CIMD는 Workers에서 DNS 고정을 보장할 수 없어 쓰지 않는다.
         allowDynamicClientRegistration: true,
         allowUnauthenticatedClientRegistration: true,
+        // 등록은 열려 있으므로 돌아갈 주소는 인가 시점에 허용 목록으로 제한한다.
+        validateRedirectUri: (uri, _registeredUris, defaultResult) =>
+          defaultResult && isAllowedMcpRedirectUri(uri),
         accessTokenExpiresIn: MCP_ACCESS_TOKEN_TTL_SECONDS,
         refreshTokenExpiresIn: MCP_REFRESH_TOKEN_TTL_SECONDS,
       }),
