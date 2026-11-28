@@ -139,6 +139,65 @@ describe("auth routes", () => {
     });
   });
 
+  describe("로그인 시작 횟수 제한", () => {
+    const signIn = (
+      app: OpenAPIHono<HonoAppType>,
+      env: HonoAppType["Bindings"],
+    ) =>
+      app.request(
+        "/api/auth/sign-in/social",
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "cf-connecting-ip": "203.0.113.7",
+          },
+          body: JSON.stringify({ provider: "google" }),
+        },
+        env,
+      );
+
+    it("한도를 넘으면 429로 막고 Better Auth를 부르지 않는다", async () => {
+      const handler = vi.fn(async () => new Response("ok", { status: 200 }));
+      mockCreateAuth.mockReturnValue({ handler } as never);
+      const limit = vi.fn(async () => ({ success: false }));
+      const app = new OpenAPIHono<HonoAppType>();
+      registerAuthRoutes(app);
+
+      const response = await signIn(app, {
+        ...bindings,
+        AUTH_SIGN_IN_RATE_LIMITER: { limit } as unknown as RateLimit,
+      });
+
+      expect(response.status).toBe(429);
+      expect(response.headers.get("retry-after")).toBe("60");
+      expect(limit).toHaveBeenCalledWith({ key: "auth-sign-in:203.0.113.7" });
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it("한도 안이거나 바인딩이 없거나 한도 조회가 실패하면 로그인을 막지 않는다", async () => {
+      const handler = vi.fn(async () => new Response("ok", { status: 200 }));
+      mockCreateAuth.mockReturnValue({ handler } as never);
+      const app = new OpenAPIHono<HonoAppType>();
+      registerAuthRoutes(app);
+
+      expect((await signIn(app, bindings)).status).toBe(200);
+      for (const limit of [
+        async () => ({ success: true }),
+        async () => {
+          throw new Error("limiter unavailable");
+        },
+      ]) {
+        const response = await signIn(app, {
+          ...bindings,
+          AUTH_SIGN_IN_RATE_LIMITER: { limit } as unknown as RateLimit,
+        });
+        expect(response.status).toBe(200);
+      }
+      expect(handler).toHaveBeenCalledTimes(3);
+    });
+  });
+
   it("문서가 꺼져 있으면 인증 OpenAPI 스키마를 내보내지 않는다", async () => {
     const handler = vi.fn(async () => new Response("{}", { status: 200 }));
     mockCreateAuth.mockReturnValue({ handler } as never);

@@ -1,4 +1,5 @@
 import { type OpenAPIHono } from "@hono/zod-openapi";
+import type { MiddlewareHandler } from "hono";
 import { createAuth } from "../../lib/auth";
 import { resolveDocsEnabled } from "../../lib/config/runtime-env";
 import { resolveTrustedClientIp } from "../../lib/http/client-ip";
@@ -26,6 +27,43 @@ const restoreSecFetchMode = (request: Request): Request => {
   return new Request(request, { headers });
 };
 
+/**
+ * 로그인 없이 D1에 쓰는 인증 경로의 방문자별 횟수 제한. 바인딩이 없는 환경(로컬·테스트)과
+ * 한도 조회 실패는 통과시킨다 — 여기서 막히면 로그인·MCP 연결 자체가 불가능해진다.
+ */
+const limitByClientIp =
+  (
+    readLimiter: (env: HonoAppType["Bindings"]) => RateLimit | undefined,
+    keyPrefix: string,
+    description: string,
+  ): MiddlewareHandler<HonoAppType> =>
+  async (c, next) => {
+    const limiter = readLimiter(c.env);
+    if (limiter) {
+      let allowed: boolean;
+      try {
+        const result = await limiter.limit({
+          key: `${keyPrefix}:${resolveTrustedClientIp(c)}`,
+        });
+        allowed = result.success;
+      } catch {
+        allowed = true;
+      }
+      if (!allowed) {
+        return c.json(
+          {
+            error: "too_many_requests",
+            error_description: description,
+            message: description,
+          },
+          429,
+          { "Retry-After": "60", "Cache-Control": "no-store" },
+        );
+      }
+    }
+    await next();
+  };
+
 export function registerAuthRoutes(app: App) {
   // openAPI 플러그인의 disableDefaultReference는 HTML 문서만 끈다. 스키마 JSON은 다른 문서
   // 라우트와 같은 스위치를 따른다(문서 빌더는 auth.handler를 직접 불러 이 라우트를 거치지 않는다).
@@ -37,34 +75,26 @@ export function registerAuthRoutes(app: App) {
   });
 
   // 동적 클라이언트 등록(DCR)은 로그인 없이 D1에 행을 만든다. 등록은 사용자가 새 MCP
-  // 클라이언트를 연결할 때 한 번뿐이라 낮은 한도로도 충분하다. 바인딩이 없는 환경(로컬·테스트)과
-  // 한도 조회 실패는 통과시킨다 — 등록이 막히면 MCP 연결 자체가 불가능해진다.
-  app.post("/api/auth/oauth2/register", async (c, next) => {
-    const limiter = c.env.OAUTH_REGISTER_RATE_LIMITER;
-    if (limiter) {
-      let allowed: boolean;
-      try {
-        const result = await limiter.limit({
-          key: `oauth-register:${resolveTrustedClientIp(c)}`,
-        });
-        allowed = result.success;
-      } catch {
-        allowed = true;
-      }
-      if (!allowed) {
-        return c.json(
-          {
-            error: "too_many_requests",
-            error_description:
-              "클라이언트 등록 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.",
-          },
-          429,
-          { "Retry-After": "60", "Cache-Control": "no-store" },
-        );
-      }
-    }
-    await next();
-  });
+  // 클라이언트를 연결할 때 한 번뿐이라 낮은 한도로도 충분하다.
+  app.post(
+    "/api/auth/oauth2/register",
+    limitByClientIp(
+      (env) => env.OAUTH_REGISTER_RATE_LIMITER,
+      "oauth-register",
+      "클라이언트 등록 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.",
+    ),
+  );
+
+  // 로그인 시작도 로그인 없이 D1(verification)에 행을 만든다. Better Auth 내장 한도는
+  // Workers에서 NODE_ENV를 읽지 못해 꺼져 있고, 켜더라도 isolate 메모리 기준이라 쓸 수 없다.
+  app.post(
+    "/api/auth/sign-in/*",
+    limitByClientIp(
+      (env) => env.AUTH_SIGN_IN_RATE_LIMITER,
+      "auth-sign-in",
+      "로그인 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.",
+    ),
+  );
 
   app.on(["GET", "POST"], "/api/auth/*", async (c) => {
     const requestOrigin = new URL(c.req.url).origin;

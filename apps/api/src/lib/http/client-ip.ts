@@ -27,6 +27,40 @@ const timingSafeEqualString = (left: string, right: string): boolean => {
   return timingSafeEqual(leftBuffer, rightBuffer);
 };
 
+/**
+ * IPv6 회선은 보통 /64 대역을 통째로 받는다. 주소 전체를 키로 쓰면 같은 회선 안에서 주소만
+ * 바꿔 한도를 무제한으로 피할 수 있으므로 앞 64비트로 묶는다. IPv4(및 IPv4-mapped)는 그대로 둔다.
+ */
+const toRateLimitKey = (ip: string): string => {
+  if (!ip.includes(":") || ip.includes(".")) {
+    return ip;
+  }
+
+  const [head = "", tail] = ip.toLowerCase().split("::");
+  const headGroups = head ? head.split(":") : [];
+  const tailGroups = tail ? tail.split(":") : [];
+  const groups =
+    tail === undefined
+      ? headGroups
+      : [
+          ...headGroups,
+          ...Array<string>(
+            Math.max(0, 8 - headGroups.length - tailGroups.length),
+          ).fill("0"),
+          ...tailGroups,
+        ];
+  if (groups.length !== 8) {
+    return ip;
+  }
+
+  const prefix = groups
+    .slice(0, 4)
+    .map((group) => group.replace(/^0+(?=.)/, ""))
+    .join(":");
+  return `${prefix}::/64`;
+};
+
+/** rate limit 키로 쓸 방문자 식별값. IPv6는 /64 대역으로 묶어서 돌려준다. */
 export const resolveTrustedClientIp = (c: Context<HonoAppType>): string => {
   const secret = c.env?.PROXY_CLIENT_IP_SECRET?.trim();
   const presented = c.req.header(PROXY_AUTH_HEADER)?.trim();
@@ -39,8 +73,8 @@ export const resolveTrustedClientIp = (c: Context<HonoAppType>): string => {
     PLAUSIBLE_IP_PATTERN.test(forwardedIp) &&
     timingSafeEqualString(presented, secret)
   ) {
-    return forwardedIp;
+    return toRateLimitKey(forwardedIp);
   }
 
-  return c.req.header("cf-connecting-ip")?.trim() || "unknown";
+  return toRateLimitKey(c.req.header("cf-connecting-ip")?.trim() || "unknown");
 };
