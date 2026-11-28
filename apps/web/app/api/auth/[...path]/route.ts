@@ -8,7 +8,10 @@ import {
   normalizeProxyPath,
   resolvePublicRequestOrigin,
 } from "@/server/security/request-guards";
-import { isServerToServerOAuthPath } from "@/server/security/oauth-proxy-paths";
+import {
+  acceptsOAuthClientCredentials,
+  isServerToServerOAuthPath,
+} from "@/server/security/oauth-proxy-paths";
 import { buildClientIpHeaders } from "@/server/http/client-ip-headers";
 import { fetchWithTimeout } from "@/server/http/fetch-with-timeout";
 import {
@@ -91,6 +94,10 @@ const handle = async (
   if (isServerToServer) {
     // 동일 출처 검사를 건너뛰는 경로라 클라이언트 등록·토큰 호출이 사용자 세션을 타지 않게 한다.
     upstreamHeaders.delete("cookie");
+  }
+  const authorization = request.headers.get("authorization");
+  if (authorization && acceptsOAuthClientCredentials(joinedPath)) {
+    upstreamHeaders.set("authorization", authorization);
   }
 
   let upstreamResponse: Response;
