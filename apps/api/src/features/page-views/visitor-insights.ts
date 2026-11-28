@@ -420,7 +420,13 @@ export const computeVisitorInsights = (
   const cohortMembers = new Map<string, string[]>();
   for (const visitorId of newVisitorIds) {
     const week = mondayOf(toKstDate(firstSeenOf(visitorId)));
-    cohortMembers.set(week, [...(cohortMembers.get(week) ?? []), visitorId]);
+    // 주마다 배열을 새로 복사하면 방문자 수의 제곱만큼 걸려, 방문자가 많은 주에서 요청이 시간 초과된다.
+    const members = cohortMembers.get(week);
+    if (members) {
+      members.push(visitorId);
+    } else {
+      cohortMembers.set(week, [visitorId]);
+    }
   }
   const cohorts = [...cohortMembers.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
