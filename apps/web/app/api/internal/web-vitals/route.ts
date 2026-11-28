@@ -11,8 +11,8 @@ import {
   enforceSameOriginProtection,
 } from "@/server/security/request-guards";
 import {
-  allowIngestLog,
   createIngestAcceptedResponse,
+  createIngestLogBudget,
   parseIngestBody,
   readCorrelationHeader,
 } from "@/app/api/internal/ingest-request";
@@ -28,14 +28,12 @@ const webVitalsPayloadSchema = z.object({
   sampledAt: z.number().finite().optional(),
 });
 
+const allowIngestLog = createIngestLogBudget();
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const csrfProtectionResponse = enforceSameOriginProtection(request);
   if (csrfProtectionResponse) {
     return csrfProtectionResponse;
-  }
-
-  if (!allowIngestLog()) {
-    return createIngestAcceptedResponse();
   }
 
   const bodyLimitResponse = await enforceRequestBodyLimit(
@@ -50,6 +48,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const parsed = webVitalsPayloadSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ ok: false }, { status: 400 });
+  }
+
+  if (!allowIngestLog(request)) {
+    return createIngestAcceptedResponse();
   }
 
   const requestId = readCorrelationHeader(request, "x-request-id");
