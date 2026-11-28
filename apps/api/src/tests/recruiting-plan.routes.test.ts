@@ -142,6 +142,30 @@ describe("recruiting plan routes", () => {
     expect(upsertCurrentRecruitingPlan).not.toHaveBeenCalled();
   });
 
+  // JS Date가 표현할 수 있는 범위(8.64e15ms)를 넘는 값은 Invalid Date가 되어 저장 단계에서 500을 냈다.
+  it("Date로 표현할 수 없는 시각은 400으로 거절한다", async () => {
+    const upsertCurrentRecruitingPlan = fn(async () => createRecruitingPlan());
+    const app = createTestApp({
+      actor: createActor("president", IDs.president),
+      dataService: createDataServiceMock({ upsertCurrentRecruitingPlan }),
+    });
+
+    const response = await app.request("/api/recruiting-plan/current", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        title: "모집 계획",
+        content: "<p>안내</p>",
+        promotionImageUrls: [],
+        recruitmentStartAt: 8_640_000_000_000_001,
+        recruitmentEndAt: 9_007_199_254_740_991,
+      }),
+    });
+
+    expect(response.status).toBe(400);
+    expect(upsertCurrentRecruitingPlan).not.toHaveBeenCalled();
+  });
+
   it("부회장은 모집 계획을 수정할 수 있다", async () => {
     const upsertCurrentRecruitingPlan = fn(async () =>
       createRecruitingPlan({
