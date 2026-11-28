@@ -20,8 +20,9 @@ export default async function DashboardPage() {
   await serverAuthGuard.requireSession();
 
   const reqHeaders = await headers();
+  // cf-connecting-ip는 읽지 않는다. 웹 앞단(Traefik)은 x-real-ip·x-forwarded-for만 덮어쓰므로
+  // 그 헤더는 방문자가 마음대로 보낼 수 있다.
   const clientIp =
-    reqHeaders.get("cf-connecting-ip") ||
     reqHeaders.get("x-real-ip") ||
     reqHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     "";
