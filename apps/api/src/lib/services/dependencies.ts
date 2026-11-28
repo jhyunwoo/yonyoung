@@ -16,6 +16,7 @@ import type HonoAppType from "../../types/honoAppType";
 import { parseBooleanEnv, parseNumberEnv } from "../../bindings/env";
 import { resolveD1Database } from "../../infra/db/client";
 import { resolveR2Bucket } from "../../infra/r2/client";
+import { deleteUnreferencedObjects } from "../storage/removed-upload-cleanup";
 import { type DataService, type PresignService } from "./types";
 import { createR2PresignService } from "../storage/presign";
 import type { OpenAPIDocument } from "../openapi/merge";
@@ -82,6 +83,11 @@ export type AppDependencies = {
     c: Context<HonoAppType>,
     keyPrefix: string,
   ) => Promise<number | null>;
+  /** 주어진 객체 키 가운데 살아 있는 행이 더는 가리키지 않는 것을 R2에서 지운다. */
+  deleteUnreferencedUploads: (
+    c: Context<HonoAppType>,
+    keys: readonly string[],
+  ) => Promise<void>;
   authenticateMcpRequest: McpRequestAuthenticator;
   loadActorByUserId: (
     c: Context<HonoAppType>,
@@ -163,6 +169,13 @@ export const createDefaultDependencies = (): AppDependencies => ({
       limit: 1,
     });
     return listing.objects[0]?.size ?? null;
+  },
+  deleteUnreferencedUploads: async (c, keys) => {
+    await deleteUnreferencedObjects({
+      database: resolveD1Database(c.env),
+      bucket: resolveR2Bucket(c.env),
+      keys,
+    });
   },
   authenticateMcpRequest: createBetterAuthMcpAuthenticator((c) =>
     createAuth(resolveD1Database(c.env), c.env).api.getJwks(),

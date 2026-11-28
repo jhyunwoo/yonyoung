@@ -6,6 +6,11 @@ import {
 import type HonoAppType from "../../types/honoAppType";
 import { noContent, ok } from "../../lib/http/response";
 import { type AppDependencies } from "../../lib/services/dependencies";
+import type { ExhibitionEntity } from "../../lib/services/types";
+import {
+  readBeforeUploadCleanup,
+  scheduleRemovedUploadCleanup,
+} from "../../lib/http/removed-upload-cleanup";
 import {
   assertPermission,
   requireAuthenticatedActor,
@@ -52,8 +57,23 @@ type App = OpenAPIHono<HonoAppType>;
  */
 export type ExhibitionRouteDependencies = Pick<
   AppDependencies,
-  "resolveActor" | "getDataService"
+  "resolveActor" | "getDataService" | "deleteUnreferencedUploads"
 >;
+
+/** 전시가 담고 있는 업로드 주소(커버·본문·세부 이미지). 지워진 파일을 찾는 데 쓴다. */
+const readExhibitionUploadValues = (
+  exhibition: Pick<
+    ExhibitionEntity,
+    "coverImageUrl" | "description" | "detailImages"
+  > | null,
+): unknown[] =>
+  exhibition
+    ? [
+        exhibition.coverImageUrl,
+        exhibition.description,
+        exhibition.detailImages.map((image) => image.imageUrl),
+      ]
+    : [];
 
 const sanitizeExhibitionDescriptionField = <T extends { description: string }>(
   exhibition: T,
@@ -366,10 +386,22 @@ export const registerExhibitionRoutes = (
     }
 
     const dataService = dependencies.getDataService(c);
+    const before =
+      nextBody.coverImageUrl !== undefined || nextBody.description !== undefined
+        ? await readBeforeUploadCleanup(() =>
+            dataService.getExhibitionById(params.id),
+          )
+        : null;
     const data = await dataService.updateExhibition(params.id, nextBody);
     if (!data) {
       throw AppError.notFound();
     }
+    await scheduleRemovedUploadCleanup(
+      c,
+      dependencies,
+      readExhibitionUploadValues(before),
+      readExhibitionUploadValues(data),
+    );
 
     await recordAuditLog({
       dataService,
@@ -393,10 +425,18 @@ export const registerExhibitionRoutes = (
     const params = readValidated(c, "param", ApiIdParamSchema);
 
     const dataService = dependencies.getDataService(c);
+    const before = await readBeforeUploadCleanup(() =>
+      dataService.getExhibitionById(params.id),
+    );
     const deleted = await dataService.deleteExhibition(params.id);
     if (!deleted) {
       throw AppError.notFound();
     }
+    await scheduleRemovedUploadCleanup(
+      c,
+      dependencies,
+      readExhibitionUploadValues(before),
+    );
 
     await recordAuditLog({
       dataService,
@@ -469,10 +509,20 @@ export const registerExhibitionRoutes = (
     const body = readValidated(c, "json", ApiUpdateExhibitionImageBatchSchema);
 
     const dataService = dependencies.getDataService(c);
+    const before = body.some((item) => item.imageUrl !== undefined)
+      ? await readBeforeUploadCleanup(() =>
+          dataService.getExhibitionById(params.id),
+        )
+      : null;
     const data = await dataService.updateExhibitionImages(params.id, body);
     if (!data) {
       throw AppError.notFound("세부 이미지를 찾을 수 없습니다.");
     }
+    await scheduleRemovedUploadCleanup(
+      c,
+      dependencies,
+      readExhibitionUploadValues(before),
+    );
 
     await recordAuditLog({
       dataService,
@@ -497,6 +547,12 @@ export const registerExhibitionRoutes = (
     }
 
     const dataService = dependencies.getDataService(c);
+    const before =
+      body.imageUrl !== undefined
+        ? await readBeforeUploadCleanup(() =>
+            dataService.getExhibitionById(params.id),
+          )
+        : null;
     const data = await dataService.updateExhibitionImage(
       params.id,
       params.imageId,
@@ -505,6 +561,11 @@ export const registerExhibitionRoutes = (
     if (!data) {
       throw AppError.notFound("세부 이미지를 찾을 수 없습니다.");
     }
+    await scheduleRemovedUploadCleanup(
+      c,
+      dependencies,
+      readExhibitionUploadValues(before),
+    );
 
     await recordAuditLog({
       dataService,
@@ -525,6 +586,9 @@ export const registerExhibitionRoutes = (
     const params = readValidated(c, "param", ApiImageIdParamSchema);
 
     const dataService = dependencies.getDataService(c);
+    const before = await readBeforeUploadCleanup(() =>
+      dataService.getExhibitionById(params.id),
+    );
     const deleted = await dataService.deleteExhibitionImage(
       params.id,
       params.imageId,
@@ -532,6 +596,11 @@ export const registerExhibitionRoutes = (
     if (!deleted) {
       throw AppError.notFound("세부 이미지를 찾을 수 없습니다.");
     }
+    await scheduleRemovedUploadCleanup(
+      c,
+      dependencies,
+      readExhibitionUploadValues(before),
+    );
 
     await recordAuditLog({
       dataService,

@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   ORPHAN_SWEEP_MIN_OBJECT_AGE_MS,
-  ORPHAN_SWEEP_SOFT_DELETE_GRACE_MS,
   ORPHAN_SWEEP_STATE_KEY,
   extractManagedObjectKeys,
   runR2OrphanSweep,
@@ -13,6 +12,7 @@ const RECENT = new Date(NOW - 60 * 1000);
 
 const KEYS = {
   liveCover: "activities/user-1/cover/aaaa-cover.jpg",
+  liveDetail: "activities/user-1/detail/abab-detail.jpg",
   recentlyDeleted: "activities/user-1/detail/bbbb-detail.jpg",
   longDeleted: "activities/user-1/detail/cccc-detail.jpg",
   orphan: "exhibitions/user-2/detail/dddd-detail.jpg",
@@ -64,11 +64,10 @@ const fixture = () => {
   const database = createDatabase({
     activities: [{ a: signedUrl(KEYS.liveCover), b: "<p>본문</p>", deleted_at: null }],
     activity_images: [
-      {
-        a: signedUrl(KEYS.recentlyDeleted),
-        deleted_at: NOW - ORPHAN_SWEEP_SOFT_DELETE_GRACE_MS + 60_000,
-      },
-      { a: signedUrl(KEYS.longDeleted), deleted_at: NOW - ORPHAN_SWEEP_SOFT_DELETE_GRACE_MS - 1 },
+      { a: signedUrl(KEYS.liveDetail), deleted_at: null },
+      // soft delete된 행은 삭제 시점과 무관하게 참조로 보지 않는다.
+      { a: signedUrl(KEYS.recentlyDeleted), deleted_at: NOW - 60_000 },
+      { a: signedUrl(KEYS.longDeleted), deleted_at: NOW - 90 * 24 * 60 * 60 * 1000 },
     ],
     exhibitions: [
       { a: null, b: `<img src="${signedUrl(KEYS.richText)}">`, deleted_at: null },
@@ -76,6 +75,7 @@ const fixture = () => {
   });
   const bucket = createBucket([
     { key: KEYS.liveCover, uploaded: OLD },
+    { key: KEYS.liveDetail, uploaded: OLD },
     { key: KEYS.recentlyDeleted, uploaded: OLD },
     { key: KEYS.longDeleted, uploaded: OLD },
     { key: KEYS.orphan, uploaded: OLD },
@@ -100,19 +100,21 @@ describe("R2 orphan sweep", () => {
 
     const result = await runR2OrphanSweep({ database: database as never, bucket: bucket as never, enabled: false, now: NOW });
 
-    expect(result).toMatchObject({ mode: "dry-run", orphanCount: 2, deletedCount: 0 });
+    expect(result).toMatchObject({ mode: "dry-run", orphanCount: 3, deletedCount: 0 });
     expect(bucket.delete).not.toHaveBeenCalled();
   });
 
-  it("활성화하면 오래된 고아와 유예가 지난 soft delete 객체만 지운다", async () => {
+  it("활성화하면 오래된 고아와 soft delete된 행의 객체만 지운다", async () => {
     const { database, bucket } = fixture();
 
     const result = await runR2OrphanSweep({ database: database as never, bucket: bucket as never, enabled: true, now: NOW });
 
-    expect(result.deletedCount).toBe(2);
+    expect(result.deletedCount).toBe(3);
     expect(bucket.delete).toHaveBeenCalledTimes(1);
     const deleted = (bucket.delete.mock.calls[0] as unknown as [string[]])[0];
-    expect(new Set(deleted)).toEqual(new Set([KEYS.orphan, KEYS.longDeleted]));
+    expect(new Set(deleted)).toEqual(
+      new Set([KEYS.orphan, KEYS.recentlyDeleted, KEYS.longDeleted]),
+    );
   });
 
   it("한 번에 지우는 수를 제한한다", async () => {
@@ -126,7 +128,7 @@ describe("R2 orphan sweep", () => {
       maxDeletes: 1,
     });
 
-    expect(result.orphanCount).toBe(2);
+    expect(result.orphanCount).toBe(3);
     expect(result.deletedCount).toBe(1);
   });
 

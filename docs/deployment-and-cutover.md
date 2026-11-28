@@ -105,13 +105,16 @@ These are off by default; the service behaves as before until they are set.
   (`wrangler secret put PROXY_CLIENT_IP_SECRET`) and as the Dokploy web
   environment variable of the same name. The API only trusts the forwarded
   IP when the values match.
-- **R2 orphan cleanup.** A daily cron (`17 18 * * *` UTC, 03:17 KST) scans R2
-  for uploads no longer referenced by any row. It runs in dry-run mode and only
-  logs `r2.orphan_sweep.completed` with counts and sample keys. After reviewing
-  a few dry-run logs, set `R2_ORPHAN_SWEEP_ENABLED=true` (Worker var or
-  secret) to delete up to 200 objects per run. Objects uploaded within 7 days,
-  and objects referenced by rows soft-deleted within 30 days, are always kept.
-  `env.dev` disables the cron because it currently shares production D1/R2.
+- **R2 cleanup.** Deleting an item or replacing/removing a photo deletes the
+  files that no live row references any more right after the request
+  (`r2.removed_upload_cleanup.completed`). A daily cron (`17 18 * * *` UTC,
+  03:17 KST) is the safety net for what that misses and for uploads that were
+  never saved: with `R2_ORPHAN_SWEEP_ENABLED=true` (set in `wrangler.jsonc`) it
+  deletes up to 200 unreferenced objects per run and logs
+  `r2.orphan_sweep.completed`; any other value makes it a dry run. Objects
+  uploaded within 7 days are always kept, and soft-deleted rows do not count as
+  references. `env.dev` disables the cron because it currently shares
+  production D1/R2.
 
 ### GitHub
 

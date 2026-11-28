@@ -384,6 +384,7 @@ export const createTestApp = (input: {
         : await input.allowPageViewWrite(),
     getMultipartUploadStateStore: () => multipartUploadStateStore,
     getUploadReservationStore: () => uploadReservationStore,
+    deleteUnreferencedUploads: async () => undefined,
     ...input.overrides,
   });
 };

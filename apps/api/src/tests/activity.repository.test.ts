@@ -300,13 +300,17 @@ describe("activity repository", () => {
     expect(sortOrders).toEqual([...sortOrders].sort((left, right) => left - right));
   });
 
-  it("활동 삭제는 활동과 세부 이미지 soft delete를 한 트랜잭션으로 묶는다", async () => {
+  it("활동 삭제는 활동, 세부 이미지, 첨부파일 soft delete를 한 트랜잭션으로 묶는다", async () => {
     const { fake, repository } = createRepository();
     fake.queueFindFirst("activities", activityRow());
 
     await repository.deleteActivity(ACTIVITY_ID);
 
-    expect(fake.batches).toEqual([2]);
+    expect(fake.batches).toEqual([3]);
+    // 첨부파일이 살아 있는 행으로 남으면 그 파일은 R2에서 영영 지워지지 않는다.
+    expect(fake.updatesFor("attachments")[0]?.values).toHaveProperty(
+      "deletedAt",
+    );
   });
 
   it("빈 목록 일괄 수정은 조회 없이 빈 배열을 반환한다", async () => {
