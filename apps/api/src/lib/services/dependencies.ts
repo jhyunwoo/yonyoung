@@ -16,6 +16,7 @@ import type HonoAppType from "../../types/honoAppType";
 import { parseBooleanEnv, parseNumberEnv } from "../../bindings/env";
 import { resolveD1Database } from "../../infra/db/client";
 import { resolveR2Bucket } from "../../infra/r2/client";
+import { deleteUnreferencedObjects } from "../storage/removed-upload-cleanup";
 import { type DataService, type PresignService } from "./types";
 import { createR2PresignService } from "../storage/presign";
 import type { OpenAPIDocument } from "../openapi/merge";
@@ -24,6 +25,7 @@ import { resolveDocsEnabled } from "../config/runtime-env";
 import { createD1SequentialSession, resolveD1SessionMode } from "../db/d1-session";
 import { createRetryingD1Database } from "../db/d1-client";
 import {
+  invalidateR2UsageCache,
   readR2TotalUsageBytesCached,
   type R2UsageScanResult,
 } from "../storage/usage";
@@ -82,6 +84,11 @@ export type AppDependencies = {
     c: Context<HonoAppType>,
     keyPrefix: string,
   ) => Promise<number | null>;
+  /** 주어진 객체 키 가운데 살아 있는 행이 더는 가리키지 않는 것을 R2에서 지운다. */
+  deleteUnreferencedUploads: (
+    c: Context<HonoAppType>,
+    keys: readonly string[],
+  ) => Promise<void>;
   authenticateMcpRequest: McpRequestAuthenticator;
   loadActorByUserId: (
     c: Context<HonoAppType>,
@@ -163,6 +170,17 @@ export const createDefaultDependencies = (): AppDependencies => ({
       limit: 1,
     });
     return listing.objects[0]?.size ?? null;
+  },
+  deleteUnreferencedUploads: async (c, keys) => {
+    const deleted = await deleteUnreferencedObjects({
+      database: resolveD1Database(c.env),
+      bucket: resolveR2Bucket(c.env),
+      keys,
+    });
+    // 지운 직후 대시보드 사용량이 캐시된 옛 수치(최대 5분)로 남지 않게 한다.
+    if (deleted.length > 0) {
+      await invalidateR2UsageCache({ bucketName: c.env.R2_BUCKET });
+    }
   },
   authenticateMcpRequest: createBetterAuthMcpAuthenticator((c) =>
     createAuth(resolveD1Database(c.env), c.env).api.getJwks(),

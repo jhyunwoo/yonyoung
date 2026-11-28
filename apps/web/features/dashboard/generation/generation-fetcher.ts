@@ -1,7 +1,10 @@
 import { z } from "zod";
 import { cacheLife, cacheTag } from "next/cache";
 import { CACHE_TAGS } from "@/server/cache/tags";
-import { toFreshPublicReadPath } from "@/server/http/fresh-public-read";
+import {
+  freshPublicReadHeaders,
+  toFreshPublicReadPath,
+} from "@/server/http/fresh-public-read";
 import { HonoApiError, honoRequest } from "@/server/http/hono-client";
 import { logger } from "@/server/observability/logger";
 import { apiGenerationSchema } from "@yonyoung/contracts/schemas";
@@ -33,6 +36,7 @@ export const fetchGenerationsFromServer = async (): Promise<ApiGeneration[]> => 
     const generations = await honoRequest({
       path: toFreshPublicReadPath(PUBLIC_GENERATIONS_PATH),
       method: "GET",
+      headers: freshPublicReadHeaders(),
       responseSchema: z.array(apiGenerationSchema),
       timeoutMs: GENERATIONS_READ_TIMEOUT_MS,
     });

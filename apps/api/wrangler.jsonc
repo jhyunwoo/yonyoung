@@ -27,7 +27,7 @@
   },
   "compatibility_flags": ["nodejs_compat"],
   // 매일 03:17 KST: R2 고아 객체 정리(src/lib/storage/orphan-sweep.ts).
-  // 기본은 dry-run이며 R2_ORPHAN_SWEEP_ENABLED="true"(secret/var)일 때만 삭제한다.
+  // R2_ORPHAN_SWEEP_ENABLED="true"일 때만 삭제하고, 그 밖에는 dry-run으로 로그만 남긴다.
   "triggers": {
     "crons": ["17 18 * * *"],
   },
@@ -95,6 +95,7 @@
     "MCP_AUTH_ISSUER": "https://yonyoung.yonsei.ac.kr/api/auth",
     "R2_PUBLIC_BASE_URL": "https://storage.yonyoung.moveto.kr",
     "R2_BUCKET": "yonyoung-storage",
+    "R2_ORPHAN_SWEEP_ENABLED": "true",
     "DOCS_ENABLED": "false",
     "CSP_REPORT_ONLY": "false",
     "D1_SESSION_CONSISTENCY": "off",

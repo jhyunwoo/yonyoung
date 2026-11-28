@@ -205,6 +205,44 @@ describe("page-views routes", () => {
       expect(recordView).not.toHaveBeenCalled();
     });
 
+    // 방문 단위 기록(유입 경로·방문 이벤트)은 요청마다 행이 늘고 2년간 보관된다. 하루 조회가
+    // 상한을 넘으면(정상 트래픽으로는 닿지 않는 수치) 집계 카운터만 올리고 나머지는 멈춘다.
+    it("하루 조회가 상한을 넘으면 방문 단위 기록을 멈추고 집계만 올린다", async () => {
+      const recordPageView = fn(async () => undefined);
+      const recordPageViewEntry = fn(async () => undefined);
+      const recordAnalyticsEvent = fn(async () => undefined);
+      const app = createTestApp({
+        actor: null,
+        dataService: createDataServiceMock({
+          getTodayPageViewTotal: async () => 10_000,
+          recordPageView,
+          recordPageViewEntry,
+          recordAnalyticsEvent,
+        }),
+      });
+
+      const response = await app.request("/api/public/page-views", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        },
+        body: JSON.stringify({
+          pageType: "home",
+          entry: true,
+          referrerHost: "spam.example",
+          visitorId: "11111111-1111-4111-8111-111111111111",
+          sessionId: "22222222-2222-4222-8222-222222222222",
+          pageviewId: "33333333-3333-4333-8333-333333333333",
+        }),
+      });
+
+      expect(response.status).toBe(200);
+      expect(recordPageView).toHaveBeenCalledTimes(1);
+      expect(recordPageViewEntry).not.toHaveBeenCalled();
+      expect(recordAnalyticsEvent).not.toHaveBeenCalled();
+    });
+
     it("진입이면 정규화한 유입 경로와 UA로 판별한 기기를 기록한다", async () => {
       const recordPageViewEntry = fn(async () => undefined);
       const app = createTestApp({

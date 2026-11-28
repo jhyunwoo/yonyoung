@@ -10,6 +10,22 @@ const readServerForwardedRequestContextMock = vi.hoisted(() =>
   })),
 );
 
+const redirectMock = vi.hoisted(() =>
+  vi.fn((path: string) => {
+    throw new Error(`NEXT_REDIRECT:${path}`);
+  }),
+);
+const forbiddenMock = vi.hoisted(() =>
+  vi.fn(() => {
+    throw new Error("NEXT_FORBIDDEN");
+  }),
+);
+
+vi.mock("next/navigation", () => ({
+  redirect: redirectMock,
+  forbidden: forbiddenMock,
+}));
+
 vi.mock("@/features/auth/server/auth-server", () => ({
   fetchSessionFromApi: vi.fn(),
 }));
@@ -68,6 +84,7 @@ vi.mock("@/server/http/request-context", () => ({
 
 import type { AuthSession } from "@/features/auth/model/auth-shared";
 import { serverAuthGuard } from "@/features/auth/server/auth-guard";
+import { fetchSessionFromApi } from "@/features/auth/server/auth-server";
 
 const createJsonResponse = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body), {
@@ -188,5 +205,82 @@ describe("features/auth/server/auth-guard", () => {
     expect(requestHeaders.get("x-forwarded-host")).toBe("yonyoung.yonsei.ac.kr");
     expect(requestHeaders.get("x-forwarded-proto")).toBe("https");
     expect(requestHeaders.get("origin")).toBe("https://yonyoung.yonsei.ac.kr");
+  });
+
+  describe("requireAdminPageAccess", () => {
+    const completeProfile = {
+      id: "user-id",
+      email: "member@example.com",
+      familyName: "김",
+      givenName: "연영",
+      college: "문과대학",
+      department: "국어국문학과",
+      studentNumber: "2020123456",
+      phoneNumber: "010-1234-5678",
+    };
+
+    const mockSessionAndProfile = (
+      role: string,
+      profile: Record<string, unknown>,
+    ): AuthSession => {
+      const base = createSession();
+      const session: AuthSession = { ...base, user: { ...base.user, role } };
+      vi.mocked(fetchSessionFromApi).mockResolvedValue(session);
+      vi.spyOn(globalThis, "fetch").mockImplementation(async () =>
+        createJsonResponse({ data: profile }),
+      );
+      return session;
+    };
+
+    beforeEach(() => {
+      vi.mocked(fetchSessionFromApi).mockReset();
+      redirectMock.mockClear();
+      forbiddenMock.mockClear();
+    });
+
+    it("세션이 없으면 로그인으로 보낸다", async () => {
+      vi.mocked(fetchSessionFromApi).mockResolvedValue(null);
+      vi.spyOn(globalThis, "fetch").mockImplementation(async () =>
+        createJsonResponse({ error: { code: "UNAUTHORIZED" } }, 401),
+      );
+
+      await expect(serverAuthGuard.requireAdminPageAccess()).rejects.toThrow(
+        "NEXT_REDIRECT:/auth/sign-in",
+      );
+    });
+
+    it("승인 대기(unverified) 사용자는 승인 대기 화면으로 보낸다", async () => {
+      mockSessionAndProfile("unverified", completeProfile);
+
+      await expect(serverAuthGuard.requireAdminPageAccess()).rejects.toThrow(
+        "NEXT_REDIRECT:/auth/pending-approval",
+      );
+      expect(forbiddenMock).not.toHaveBeenCalled();
+    });
+
+    it("프로필을 채우지 않은 승인 대기 사용자는 프로필 작성으로 보낸다", async () => {
+      mockSessionAndProfile("unverified", { ...completeProfile, phoneNumber: null });
+
+      await expect(serverAuthGuard.requireAdminPageAccess()).rejects.toThrow(
+        "NEXT_REDIRECT:/auth/profile",
+      );
+      expect(forbiddenMock).not.toHaveBeenCalled();
+    });
+
+    it("승인된 역할이어도 프로필이 비어 있으면 프로필 작성으로 보낸다", async () => {
+      mockSessionAndProfile("regular_member", { ...completeProfile, college: null });
+
+      await expect(serverAuthGuard.requireAdminPageAccess()).rejects.toThrow(
+        "NEXT_REDIRECT:/auth/profile",
+      );
+    });
+
+    it("승인된 역할이고 프로필을 채웠으면 세션을 돌려준다", async () => {
+      const session = mockSessionAndProfile("regular_member", completeProfile);
+
+      await expect(serverAuthGuard.requireAdminPageAccess()).resolves.toBe(session);
+      expect(redirectMock).not.toHaveBeenCalled();
+      expect(forbiddenMock).not.toHaveBeenCalled();
+    });
   });
 });

@@ -7,6 +7,11 @@ import type HonoAppType from "../../types/honoAppType";
 import type { Actor } from "../../lib/authorization/types";
 import { noContent, ok } from "../../lib/http/response";
 import { type AppDependencies } from "../../lib/services/dependencies";
+import type { ActivityEntity } from "../../lib/services/types";
+import {
+  readBeforeUploadCleanup,
+  scheduleRemovedUploadCleanup,
+} from "../../lib/http/removed-upload-cleanup";
 import { AppError } from "../../shared/errors/AppError";
 import {
   assertPermission,
@@ -53,8 +58,23 @@ type App = OpenAPIHono<HonoAppType>;
  */
 export type ActivityRouteDependencies = Pick<
   AppDependencies,
-  "resolveActor" | "getDataService"
+  "resolveActor" | "getDataService" | "deleteUnreferencedUploads"
 >;
+
+/** 활동이 담고 있는 업로드 주소(커버·본문·세부 이미지). 지워진 파일을 찾는 데 쓴다. */
+const readActivityUploadValues = (
+  activity: Pick<
+    ActivityEntity,
+    "coverImageUrl" | "description" | "detailImages"
+  > | null,
+): unknown[] =>
+  activity
+    ? [
+        activity.coverImageUrl,
+        activity.description,
+        activity.detailImages.map((image) => image.imageUrl),
+      ]
+    : [];
 
 const sanitizeActivityDescriptionField = <T extends { description: string }>(
   activity: T,
@@ -372,10 +392,20 @@ export const registerActivityRoutes = (
     }
 
     const dataService = dependencies.getDataService(c);
+    const before =
+      patch.coverImageUrl !== undefined || patch.description !== undefined
+        ? await readBeforeUploadCleanup(() => dataService.getActivityById(id))
+        : null;
     const data = await dataService.updateActivity(id, patch);
     if (!data) {
       throw AppError.notFound();
     }
+    await scheduleRemovedUploadCleanup(
+      c,
+      dependencies,
+      readActivityUploadValues(before),
+      readActivityUploadValues(data),
+    );
 
     await recordAuditLog({
       dataService,
@@ -399,10 +429,22 @@ export const registerActivityRoutes = (
     const { id } = readValidated(c, "param", ApiIdParamSchema);
 
     const dataService = dependencies.getDataService(c);
+    const before = await readBeforeUploadCleanup(() =>
+      dataService.getActivityById(id),
+    );
+    // 활동을 지우면 그 활동의 첨부파일도 함께 지워진다.
+    const attachments =
+      (await readBeforeUploadCleanup(() =>
+        dataService.listAttachments("activity", id),
+      )) ?? [];
     const deleted = await dataService.deleteActivity(id);
     if (!deleted) {
       throw AppError.notFound();
     }
+    await scheduleRemovedUploadCleanup(c, dependencies, [
+      ...readActivityUploadValues(before),
+      attachments.map((attachment) => attachment.fileUrl),
+    ]);
 
     await recordAuditLog({
       dataService,
@@ -461,10 +503,18 @@ export const registerActivityRoutes = (
     const input = readValidated(c, "json", ApiUpdateActivityImageBatchSchema);
 
     const dataService = dependencies.getDataService(c);
+    const before = input.some((item) => item.imageUrl !== undefined)
+      ? await readBeforeUploadCleanup(() => dataService.getActivityById(id))
+      : null;
     const data = await dataService.updateActivityImages(id, input);
     if (!data) {
       throw AppError.notFound("세부 이미지를 찾을 수 없습니다.");
     }
+    await scheduleRemovedUploadCleanup(
+      c,
+      dependencies,
+      readActivityUploadValues(before),
+    );
 
     await recordDetailImageAudit(dataService, actor, id);
 
@@ -482,10 +532,19 @@ export const registerActivityRoutes = (
     }
 
     const dataService = dependencies.getDataService(c);
+    const before =
+      input.imageUrl !== undefined
+        ? await readBeforeUploadCleanup(() => dataService.getActivityById(id))
+        : null;
     const data = await dataService.updateActivityImage(id, imageId, input);
     if (!data) {
       throw AppError.notFound("세부 이미지를 찾을 수 없습니다.");
     }
+    await scheduleRemovedUploadCleanup(
+      c,
+      dependencies,
+      readActivityUploadValues(before),
+    );
 
     await recordDetailImageAudit(dataService, actor, id);
 
@@ -499,10 +558,18 @@ export const registerActivityRoutes = (
     const { id, imageId } = readValidated(c, "param", ApiImageIdParamSchema);
 
     const dataService = dependencies.getDataService(c);
+    const before = await readBeforeUploadCleanup(() =>
+      dataService.getActivityById(id),
+    );
     const deleted = await dataService.deleteActivityImage(id, imageId);
     if (!deleted) {
       throw AppError.notFound("세부 이미지를 찾을 수 없습니다.");
     }
+    await scheduleRemovedUploadCleanup(
+      c,
+      dependencies,
+      readActivityUploadValues(before),
+    );
 
     await recordDetailImageAudit(dataService, actor, id);
 

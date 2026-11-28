@@ -1,4 +1,3 @@
-import { toTimestampDate } from "../../platform/db/row-values";
 import { logger } from "../../shared/logging/logger";
 import {
   MANAGED_UPLOAD_RESOURCE_PATHS,
@@ -14,13 +13,13 @@ import {
  * 안전장치
  * - 기본은 dry-run(로그만). `R2_ORPHAN_SWEEP_ENABLED="true"`일 때만 실제로 지운다.
  * - 참조 조회가 하나라도 실패하면 아무것도 지우지 않는다(참조를 모르면 전부 사용 중으로 본다).
- * - soft delete된 행도 삭제 후 30일까지는 참조로 본다(복구 여지).
+ * - soft delete된 행은 참조로 보지 않는다. 삭제·교체된 파일은 그 자리에서 바로 지우므로
+ *   (`removed-upload-cleanup.ts`), 여기서는 그때 놓친 것과 저장하지 않은 업로드만 걸린다.
  * - 올린 지 7일이 안 된 객체는 건드리지 않는다(저장 중인 업로드·예약 보호).
  * - 관리 형식(`<resource>/<actor>/<slot>/<token>`)의 키만 대상이며 한 번에 지우는 수를 제한한다.
  */
 
 export const ORPHAN_SWEEP_MIN_OBJECT_AGE_MS = 7 * 24 * 60 * 60 * 1000;
-export const ORPHAN_SWEEP_SOFT_DELETE_GRACE_MS = 30 * 24 * 60 * 60 * 1000;
 export const ORPHAN_SWEEP_MAX_DELETES_PER_RUN = 200;
 const R2_LIST_PAGE_LIMIT = 1000;
 const R2_LIST_MAX_PAGES_PER_PREFIX = 50;
@@ -30,6 +29,7 @@ const LOGGED_SAMPLE_SIZE = 20;
 type ReferenceRow = {
   a?: unknown;
   b?: unknown;
+  c?: unknown;
   deleted_at?: unknown;
 };
 
@@ -43,9 +43,10 @@ const REFERENCE_QUERIES = [
   "SELECT cover_image_url AS a, description AS b, deleted_at FROM exhibitions",
   "SELECT image_url AS a, deleted_at FROM exhibition_images",
   "SELECT file_url AS a, link_url AS b, deleted_at FROM attachments",
-  'SELECT image AS a, showcase_image_urls AS b, deleted_at FROM "user"',
+  'SELECT image AS a, showcase_image_urls AS b, personal_link AS c, deleted_at FROM "user"',
   "SELECT promotion_image_urls AS a, content AS b FROM recruiting_plans",
   "SELECT link AS a, deleted_at FROM linktree_items",
+  "SELECT footer_open_chat_url AS a FROM site_settings",
   "SELECT object_key AS a FROM multipart_uploads",
 ] as const;
 
@@ -77,33 +78,54 @@ export const extractManagedObjectKeys = (value: unknown): string[] => {
   return [...keys];
 };
 
-const isStillReferenced = (deletedAt: unknown, now: number): boolean => {
-  if (deletedAt === null || deletedAt === undefined) {
-    return true;
+/** 살아 있는(soft delete되지 않은) 행이 담고 있는 모든 참조 문자열. */
+const readLiveReferenceValues = async (
+  database: Pick<D1Database, "prepare">,
+): Promise<string[]> => {
+  const values: string[] = [];
+  for (const query of REFERENCE_QUERIES) {
+    const result = await database.prepare(query).all<ReferenceRow>();
+    for (const row of result.results ?? []) {
+      if (row.deleted_at !== null && row.deleted_at !== undefined) {
+        continue;
+      }
+      for (const value of [row.a, row.b, row.c]) {
+        if (typeof value === "string" && value.length > 0) {
+          values.push(value);
+        }
+      }
+    }
   }
-  return toTimestampDate(deletedAt).getTime() > now - ORPHAN_SWEEP_SOFT_DELETE_GRACE_MS;
+  return values;
 };
 
 export const collectReferencedObjectKeys = async (
   database: Pick<D1Database, "prepare">,
-  now: number,
 ): Promise<Set<string>> => {
   const referenced = new Set<string>();
-  for (const query of REFERENCE_QUERIES) {
-    const result = await database.prepare(query).all<ReferenceRow>();
-    for (const row of result.results ?? []) {
-      if (!isStillReferenced(row.deleted_at, now)) {
-        continue;
-      }
-      for (const key of [
-        ...extractManagedObjectKeys(row.a),
-        ...extractManagedObjectKeys(row.b),
-      ]) {
-        referenced.add(key);
-      }
+  for (const value of await readLiveReferenceValues(database)) {
+    for (const key of extractManagedObjectKeys(value)) {
+      referenced.add(key);
     }
   }
   return referenced;
+};
+
+/**
+ * 주어진 키 가운데 살아 있는 행 어디에도 나오지 않는 것만 돌려준다.
+ * 키 추출 대신 부분 문자열로 찾는다 — 본문 속 주소 뒤에 다른 글자가 붙어 있어도 참조로 잡혀,
+ * 틀릴 때는 항상 "지우지 않는" 쪽으로 틀린다.
+ */
+export const findUnreferencedObjectKeys = async (
+  database: Pick<D1Database, "prepare">,
+  keys: readonly string[],
+): Promise<string[]> => {
+  const haystacks = (await readLiveReferenceValues(database)).flatMap(
+    (value) => [value, safeDecode(value)],
+  );
+  return keys.filter(
+    (key) => !haystacks.some((haystack) => haystack.includes(key)),
+  );
 };
 
 type SweepBucket = Pick<R2Bucket, "list" | "delete" | "get" | "put">;
@@ -211,7 +233,7 @@ export const runR2OrphanSweep = async (input: {
   const maxDeletes = input.maxDeletes ?? ORPHAN_SWEEP_MAX_DELETES_PER_RUN;
 
   // 참조 수집이 실패하면 예외가 그대로 전파되어 아래 삭제 단계에 도달하지 않는다.
-  const referenced = await collectReferencedObjectKeys(input.database, now);
+  const referenced = await collectReferencedObjectKeys(input.database);
   const previousState = await readSweepState(input.bucket);
   const { objects, nextState } = await listManagedObjects(input.bucket, previousState);
 

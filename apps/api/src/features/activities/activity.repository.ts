@@ -1,7 +1,11 @@
 import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
 import { runAtomically } from "../../platform/db/batch";
 import type createDB from "../../lib/db";
-import { activities, activityImages } from "../../platform/db/schema";
+import {
+  activities,
+  activityImages,
+  attachments,
+} from "../../platform/db/schema";
 import type {
   ActivityEntity,
   ActivityImageEntity,
@@ -365,6 +369,18 @@ export const createActivityRepository = (
             and(
               eq(activityImages.activityId, id),
               isNull(activityImages.deletedAt),
+            ),
+          ),
+        // 활동의 첨부파일은 활동 없이는 어디에도 보이지 않는다. 살아 있는 행으로 남으면
+        // 그 파일이 계속 "사용 중"으로 잡혀 R2에서 영영 지워지지 않는다.
+        db
+          .update(attachments)
+          .set({ deletedAt })
+          .where(
+            and(
+              eq(attachments.scope, "activity"),
+              eq(attachments.resourceId, id),
+              isNull(attachments.deletedAt),
             ),
           ),
       ]);

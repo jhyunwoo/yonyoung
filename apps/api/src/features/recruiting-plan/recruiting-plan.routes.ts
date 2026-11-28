@@ -2,6 +2,10 @@ import { type OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import type HonoAppType from "../../types/honoAppType";
 import { ok } from "../../lib/http/response";
 import type { AppDependencies } from "../../lib/services/dependencies";
+import {
+  readBeforeUploadCleanup,
+  scheduleRemovedUploadCleanup,
+} from "../../lib/http/removed-upload-cleanup";
 import { requireAuthenticatedActor } from "../../shared/http/route-guards";
 import { readValidated } from "../../shared/http/validated-input";
 import {
@@ -27,7 +31,7 @@ type App = OpenAPIHono<HonoAppType>;
  */
 export type RecruitingPlanRouteDependencies = Pick<
   AppDependencies,
-  "resolveActor" | "getDataService"
+  "resolveActor" | "getDataService" | "deleteUnreferencedUploads"
 >;
 
 const isPrivilegedActor = (role: string): boolean =>
@@ -113,15 +117,23 @@ export const registerRecruitingPlanRoutes = (
       );
     }
 
-    const data = await dependencies
-      .getDataService(c)
-      .upsertCurrentRecruitingPlan({
-        title: body.title.trim(),
-        content: sanitizedContent,
-        promotionImageUrls: body.promotionImageUrls,
-        recruitmentStartAt: new Date(body.recruitmentStartAt),
-        recruitmentEndAt: new Date(body.recruitmentEndAt),
-      });
+    const dataService = dependencies.getDataService(c);
+    const before = await readBeforeUploadCleanup(() =>
+      dataService.getCurrentRecruitingPlan(),
+    );
+    const data = await dataService.upsertCurrentRecruitingPlan({
+      title: body.title.trim(),
+      content: sanitizedContent,
+      promotionImageUrls: body.promotionImageUrls,
+      recruitmentStartAt: new Date(body.recruitmentStartAt),
+      recruitmentEndAt: new Date(body.recruitmentEndAt),
+    });
+    await scheduleRemovedUploadCleanup(
+      c,
+      dependencies,
+      before ? [before.content, before.promotionImageUrls] : [],
+      [data.content, data.promotionImageUrls],
+    );
     return ok(c, sanitizeRecruitingPlanContentField(data));
   });
 };

@@ -10,6 +10,7 @@ import {
 import { readValidated } from "../../shared/http/validated-input";
 import { recordAuditLog } from "../../lib/audit";
 import { respondWithPublicCache } from "../../lib/http/public-cache";
+import { scheduleRemovedUploadCleanup } from "../../lib/http/removed-upload-cleanup";
 import { can } from "../../lib/authorization/policy";
 import type { Resource, Role } from "../../lib/authorization/types";
 import type {
@@ -47,7 +48,7 @@ type App = OpenAPIHono<HonoAppType>;
  */
 export type AttachmentRouteDependencies = Pick<
   AppDependencies,
-  "resolveActor" | "getDataService"
+  "resolveActor" | "getDataService" | "deleteUnreferencedUploads"
 >;
 
 // 첨부파일 권한은 scope별로 다른 리소스 정책을 따른다:
@@ -367,6 +368,7 @@ export const registerAttachmentRoutes = (
     if (!deleted) {
       throw AppError.notFound("첨부파일을 찾을 수 없습니다.");
     }
+    await scheduleRemovedUploadCleanup(c, dependencies, [existing.fileUrl]);
 
     await recordAuditLog({
       dataService,

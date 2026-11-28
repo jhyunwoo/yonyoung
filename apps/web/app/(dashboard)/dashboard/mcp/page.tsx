@@ -23,7 +23,7 @@ export const metadata = {
 };
 
 export default async function McpGuidePage() {
-  await serverAuthGuard.requireSession();
+  await serverAuthGuard.requireAdminPageAccess();
   const [overview, connections] = await Promise.all([
     getMcpOverview(),
     getMcpConnections(),

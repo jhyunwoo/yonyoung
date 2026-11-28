@@ -5,6 +5,10 @@ const cacheLife = vi.fn<(profile: string) => void>();
 const honoRequest = vi.fn();
 
 vi.mock("server-only", () => ({}));
+vi.mock("@/server/env", () => ({
+  getApiBaseUrl: () => "https://api.example.com",
+  getProxyClientIpSecret: () => undefined,
+}));
 vi.mock("next/cache", () => ({
   cacheLife: (profile: string) => cacheLife(profile),
   cacheTag: () => {},

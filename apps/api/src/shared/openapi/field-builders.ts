@@ -12,6 +12,9 @@ export const EXAMPLE_AUDIT_ID = "77777777-7777-4777-8777-777777777777";
 export const EXAMPLE_TIMESTAMP_MS = 1735689600000;
 export const EXAMPLE_TIMESTAMP_MS_END = 1738368000000;
 
+// JS Date가 표현할 수 있는 범위. 이를 넘는 값은 Invalid Date가 되어 저장 단계에서 예외가 난다.
+const MAX_DATE_TIMESTAMP_MS = 8_640_000_000_000_000;
+
 export const timestampField = (
   description: string,
   example = EXAMPLE_TIMESTAMP_MS,
@@ -19,6 +22,8 @@ export const timestampField = (
   z
     .number()
     .int()
+    .min(-MAX_DATE_TIMESTAMP_MS)
+    .max(MAX_DATE_TIMESTAMP_MS)
     .openapi({
       description: `${description} (Unix timestamp(ms), 클라이언트에서 연-월-일로 포맷 변환 권장)`,
       example,

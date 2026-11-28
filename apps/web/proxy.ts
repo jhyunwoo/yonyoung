@@ -18,10 +18,11 @@ import { type NextRequest, NextResponse } from "next/server";
  * ## 보안 경계는 어디인가
  *
  * 프록시는 **인가 경계가 아니다**. 권한 판정은 예전과 동일하게 세 곳이 한다.
- *   1. `app/(dashboard)/dashboard/layout.tsx` — `requireSession()` 후 역할/프로필에
- *      따라 sign-in · 프로필 작성 · 승인 대기로 보낸다.
- *   2. 각 페이지의 `serverAuthGuard.requireAdminPageAccess()` /
- *      `requirePresidentAccess()` / `requireGlobalUserManagementAccess()`.
+ *   1. `app/(dashboard)/dashboard/layout.tsx` — `requireAdminPageAccess()` 가 세션과
+ *      역할/프로필에 따라 sign-in · 프로필 작성 · 승인 대기로 보낸다.
+ *   2. 각 페이지 — 레이아웃 검사는 페이지 렌더를 막지 못하므로 같은
+ *      `serverAuthGuard.requireAdminPageAccess()` 를 다시 부르거나, 더 좁은
+ *      `requirePresidentAccess()` / `requireGlobalUserManagementAccess()` 를 부른다.
  *   3. 서버 액션(`features/dashboard/actions/*`)의 `requireAdminAccess()` 와,
  *      최종 판정자인 `apps/api` 의 라우트 정책.
  *

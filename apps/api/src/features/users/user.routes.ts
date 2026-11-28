@@ -3,6 +3,11 @@ import { z } from "../../shared/openapi/zod";
 import type HonoAppType from "../../types/honoAppType";
 import { noContent, ok } from "../../lib/http/response";
 import { type AppDependencies } from "../../lib/services/dependencies";
+import type { UserEntity } from "../../lib/services/types";
+import {
+  readBeforeUploadCleanup,
+  scheduleRemovedUploadCleanup,
+} from "../../lib/http/removed-upload-cleanup";
 import { requireAuthenticatedActor } from "../../shared/http/route-guards";
 import { readValidated } from "../../shared/http/validated-input";
 import { parseBody } from "../../lib/validation/request";
@@ -44,8 +49,13 @@ type App = OpenAPIHono<HonoAppType>;
  */
 export type UserRouteDependencies = Pick<
   AppDependencies,
-  "resolveActor" | "getDataService"
+  "resolveActor" | "getDataService" | "deleteUnreferencedUploads"
 >;
+
+/** 회원이 올린 파일 주소(프로필·대표 사진). 지워진 파일을 찾는 데 쓴다. */
+const readUserUploadValues = (
+  target: Pick<UserEntity, "image" | "showcaseImageUrls"> | null,
+): unknown[] => (target ? [target.image, target.showcaseImageUrls] : []);
 
 const updateUserRequestSchema = z
   .union([ApiAdminUpdateUserSchema, ApiMemberProfileUpdateSchema])
@@ -478,6 +488,12 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
       if (!data) {
         throw AppError.notFound();
       }
+      await scheduleRemovedUploadCleanup(
+        c,
+        dependencies,
+        readUserUploadValues(currentUser),
+        readUserUploadValues(data),
+      );
       await recordAuditLog({
         dataService,
         actor: actor,
@@ -499,10 +515,23 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
       if (Object.keys(body.data).length === 0) {
         throw AppError.badRequest("수정할 필드를 하나 이상 전달해야 합니다.");
       }
+      const before =
+        body.data.image !== undefined ||
+        body.data.showcaseImageUrls !== undefined
+          ? await readBeforeUploadCleanup(() =>
+              dataService.getUserById(params.id),
+            )
+          : null;
       const data = await dataService.updateUser(params.id, body.data);
       if (!data) {
         throw AppError.notFound();
       }
+      await scheduleRemovedUploadCleanup(
+        c,
+        dependencies,
+        readUserUploadValues(before),
+        readUserUploadValues(data),
+      );
       await recordAuditLog({
         dataService,
         actor: actor,
@@ -560,6 +589,11 @@ export const registerUserRoutes = (app: App, dependencies: AppDependencies) => {
     if (!deleted) {
       throw AppError.notFound();
     }
+    await scheduleRemovedUploadCleanup(
+      c,
+      dependencies,
+      readUserUploadValues(targetUser),
+    );
     await recordAuditLog({
       dataService,
       actor: actor,

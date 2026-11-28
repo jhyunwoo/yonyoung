@@ -1,6 +1,7 @@
 import { type Context } from "hono";
 import type HonoAppType from "../../types/honoAppType";
 import { runInBackground } from "./background-task";
+import { isTrustedProxyRequest } from "./client-ip";
 
 const PUBLIC_CACHE_TTL_SECONDS = 120;
 const PUBLIC_CACHE_STALE_REVALIDATE_SECONDS = 300;
@@ -346,7 +347,10 @@ const respondFromPublicCache = async (
   buildResponse: () => Promise<Response>,
 ): Promise<Response> => {
   const request = c.req.raw;
-  if (isFreshReadRequest(request)) {
+  // 공유 비밀이 설정된 구성에서는 웹 서버가 보낸 fresh 요청만 캐시를 건너뛴다. 그렇지 않으면
+  // 누구나 `?fresh=1`로 요청마다 D1을 읽게 만들 수 있다. 비밀이 없는 구성은 예전처럼 동작한다.
+  const freshRequested = isFreshReadRequest(request);
+  if (freshRequested && isTrustedProxyRequest(c) !== false) {
     setCacheStatusVariable(c, "bypass");
     const origin = await buildResponse();
     const headers = new Headers(origin.headers);
@@ -490,5 +494,18 @@ export const respondWithPublicCache = async <TResponse extends Response>(
   c: Context<HonoAppType>,
   buildResponse: () => Promise<TResponse>,
 ): Promise<TResponse> => {
-  return (await respondFromPublicCache(c, buildResponse)) as TResponse;
+  const response = await respondFromPublicCache(c, buildResponse);
+  if (!isFreshReadRequest(c.req.raw)) {
+    return response as TResponse;
+  }
+
+  // fresh 요청의 응답은 캐시에서 왔더라도 바깥(엔트리포인트 캐시)에 남기지 않는다. 그 캐시는
+  // URL로만 구분해서, 비밀 없이 온 요청의 응답이 남으면 웹 서버의 재조회가 낡은 값을 받는다.
+  const headers = new Headers(response.headers);
+  headers.set("Cache-Control", PUBLIC_FRESH_CACHE_CONTROL);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  }) as TResponse;
 };

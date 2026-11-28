@@ -195,7 +195,7 @@ HTTP 리다이렉트 대신 **200 + 스켈레톤 깜빡임**을 보고 클라이
 프록시가 HTTP 403 을 돌려줬다. 역할은 네트워크 없이 알 수 없으므로 이제는 통과시킨 뒤
 대시보드 레이아웃이 `/auth/pending-approval` 로 보낸다 — `resolvePostSignInPath` 가
 원래 의도하던 목적지다. 진짜 권한 부족(예: manager 가 회장 전용 설정에 접근)에 대한
-403 은 `requireAdminPageAccess()` / `requireGlobalUserManagementAccess()` 가 그대로 낸다.
+403 은 `requireGlobalUserManagementAccess()` 가 그대로 낸다.
 
 ## 6. 클라이언트 컴포넌트 정책
 

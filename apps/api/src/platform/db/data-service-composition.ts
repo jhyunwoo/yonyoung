@@ -106,6 +106,7 @@ export const createDbDataService = (database: D1Database): DataService => {
     getAdminDashboardStats: dashboardReadRepository.getAdminDashboardStats,
 
     isActiveViewResource: pageViewRepository.isActiveViewResource,
+    getTodayPageViewTotal: pageViewRepository.getTodayPageViewTotal,
     recordPageView: pageViewRepository.recordPageView,
     recordPageViewEntry: pageViewRepository.recordPageViewEntry,
     getPageViewStats: pageViewRepository.getPageViewStats,

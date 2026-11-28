@@ -17,7 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const YEONYOUNG_NAS_URL = "https://165.132.176.27:8080";
 
 export default async function DashboardPage() {
-  await serverAuthGuard.requireSession();
+  await serverAuthGuard.requireAdminPageAccess();
 
   const reqHeaders = await headers();
   // cf-connecting-ip는 읽지 않는다. 웹 앞단(Traefik)은 x-real-ip·x-forwarded-for만 덮어쓰므로

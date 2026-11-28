@@ -17,7 +17,7 @@ type StatsPageProps = {
 };
 
 export default async function StatsPage({ searchParams }: StatsPageProps) {
-  await serverAuthGuard.requireSession();
+  await serverAuthGuard.requireAdminPageAccess();
   // 날짜 입력의 max와 실시간 갱신 여부가 서버·클라이언트에서 같도록 오늘 날짜를 서버에서 정해 내려준다.
   const today = kstToday();
   const query = parseStatsSearchParams(await searchParams, today);

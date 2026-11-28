@@ -3,6 +3,7 @@ import { HardDrive } from "lucide-react";
 import { Card, CardHeader } from "@/app/(dashboard)/_components/ui/card";
 import { EmptyState } from "@/app/(dashboard)/_components/ui/empty-state";
 import type { ApiAdminDashboardStats } from "@yonyoung/contracts";
+import type { AdminReadError } from "@/features/dashboard/services/admin-read-service";
 
 const DEFAULT_R2_STORAGE_LIMIT_BYTES = 10 * 1024 * 1024 * 1024;
 
@@ -30,9 +31,42 @@ const formatBytes = (bytes: number): string => {
 
 type R2StorageUsageCardProps = {
   stats: ApiAdminDashboardStats | null;
+  error: AdminReadError | null;
 };
 
-export default function R2StorageUsageCard({ stats }: R2StorageUsageCardProps) {
+// 실패를 한 가지 문구로 뭉개면 원인을 알 수 없다. 어디서 막혔는지 구분해서 보여 준다.
+const READ_FAILURE_MESSAGE: Record<AdminReadError["reason"], string> = {
+  unauthorized: "로그인이 만료되었습니다. 다시 로그인해 주세요.",
+  forbidden: "이 정보를 볼 권한이 없습니다.",
+  not_found: "사용량 정보를 찾을 수 없습니다.",
+  invalid_response: "서버 응답 형식이 예상과 달라 표시할 수 없습니다.",
+  request_failed: "서버에 연결하지 못했습니다. 잠시 후 새로고침해 주세요.",
+};
+
+const SCAN_FAILURE_MESSAGE: Record<
+  NonNullable<ApiAdminDashboardStats["r2StorageUsageReason"]>,
+  string
+> = {
+  ok: "",
+  partial: "파일이 많아 집계를 끝내지 못했습니다. 잠시 후 새로고침해 주세요.",
+  scan_failed: "저장소를 읽는 중 오류가 발생했습니다. 잠시 후 새로고침해 주세요.",
+  binding_missing: "저장소 연결 설정이 없습니다. 관리자에게 문의해 주세요.",
+};
+
+const DEFAULT_FAILURE_MESSAGE =
+  "저장공간 정보를 가져오는 중 문제가 발생했습니다. 잠시 후 새로고침해 주세요.";
+
+export default function R2StorageUsageCard({ stats, error }: R2StorageUsageCardProps) {
+  // 통계 API는 운영진 이상만 읽을 수 있다. 일반 회원에게 항상 실패하는 카드를 보여 주지 않는다.
+  if (error?.reason === "forbidden") {
+    return null;
+  }
+
+  const failureMessage = error
+    ? READ_FAILURE_MESSAGE[error.reason]
+    : (stats?.r2StorageUsageReason && SCAN_FAILURE_MESSAGE[stats.r2StorageUsageReason]) ||
+      DEFAULT_FAILURE_MESSAGE;
+
   const limitBytes =
     stats && stats.r2StorageLimitBytes > 0
       ? stats.r2StorageLimitBytes
@@ -89,7 +123,7 @@ export default function R2StorageUsageCard({ stats }: R2StorageUsageCardProps) {
             Icon={HardDrive}
             accent="teal"
             title="사용량을 불러오지 못했습니다"
-            description="저장공간 정보를 가져오는 중 문제가 발생했습니다. 잠시 후 새로고침해 주세요."
+            description={failureMessage}
           />
         </div>
       )}

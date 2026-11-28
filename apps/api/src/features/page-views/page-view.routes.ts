@@ -154,6 +154,12 @@ const getVisitorInsightsRoute = createRoute({
 });
 
 // 조회수 기록은 fire-and-forget이다. 기록 단계의 실패는 무시하고 항상 200으로 응답한다.
+/**
+ * 하루에 방문 단위로 기록하는 조회 수의 상한. 동아리 사이트의 정상 트래픽으로는 닿지 않는
+ * 수치이며, 넘으면 그날의 유입 경로·방문 분석만 비고 조회수 집계는 계속된다.
+ */
+const DAILY_DETAILED_PAGE_VIEW_LIMIT = 10_000;
+
 export const registerPageViewRoutes = (
   app: App,
   dependencies: PageViewRouteDependencies,
@@ -197,13 +203,24 @@ export const registerPageViewRoutes = (
       return c.json({ ok: true } as const, 200);
     }
 
+    // 방문 단위 기록(유입 경로·방문 이벤트)은 요청마다 행이 늘고 2년간 보관된다. 익명 요청이
+    // D1을 끝없이 채우지 못하도록, 하루 조회가 상한을 넘으면 집계 카운터만 올리고 나머지는 멈춘다.
+    let detailAllowed = false;
+    try {
+      detailAllowed =
+        (await dataService.getTodayPageViewTotal()) <
+        DAILY_DETAILED_PAGE_VIEW_LIMIT;
+    } catch {
+      // 확인하지 못하면 방문 단위 기록을 남기지 않는다.
+    }
+
     try {
       await dataService.recordPageView(pageType, resourceId);
     } catch {
       // fire-and-forget: 기록 실패는 무시
     }
 
-    if (parsed.data.entry === true) {
+    if (detailAllowed && parsed.data.entry === true) {
       try {
         await dataService.recordPageViewEntry({
           referrerHost: normalizeReferrerHost(parsed.data.referrerHost),
@@ -226,6 +243,7 @@ export const registerPageViewRoutes = (
     const { visitorId, sessionId, pageviewId } = parsed.data;
     const userAgent = c.req.header("user-agent");
     if (
+      detailAllowed &&
       isUuid(visitorId) &&
       isUuid(sessionId) &&
       isUuid(pageviewId) &&
