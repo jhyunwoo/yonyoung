@@ -511,7 +511,7 @@ export const registerUploadRoutes = (
       readValidated(c, "json", ApiPresignRequestSchema),
     );
     assertUploadPayloadAllowed(body, {
-      maxFileSizeBytes: UPLOAD_LIMITS.maxSinglePartBytes,
+      maxFileSizeBytes: UPLOAD_LIMITS.maxProfileImageBytes,
     });
 
     const fileId = crypto.randomUUID();
@@ -559,7 +559,7 @@ export const registerUploadRoutes = (
       readValidated(c, "json", ApiMultipartUploadInitRequestSchema),
     );
     assertUploadPayloadAllowed(body, {
-      maxFileSizeBytes: UPLOAD_LIMITS.maxMultipartBytes,
+      maxFileSizeBytes: UPLOAD_LIMITS.maxProfileImageBytes,
     });
 
     const expectedPartCount = assertMultipartPartCountWithinLimit(

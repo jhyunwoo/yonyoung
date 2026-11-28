@@ -19,6 +19,9 @@ export { ALLOWED_ATTACHMENT_CONTENT_TYPES, ALLOWED_IMAGE_CONTENT_TYPES };
 export const UPLOAD_LIMITS = {
   maxSinglePartBytes: 1024 * 1024 * 1024,
   maxMultipartBytes: 1024 * 1024 * 1024,
+  // 프로필·대표 사진은 임원이 아닌 일반 회원도 올린다. 1GiB를 그대로 허용하면 회원 한 명이
+  // 10번의 업로드로 공용 버킷(10GiB)을 채워 모든 업로드를 막을 수 있다.
+  maxProfileImageBytes: 50 * 1024 * 1024,
   multipartPartSizeBytes: 8 * 1024 * 1024,
   multipartMaxParts: 10_000,
 } as const;
