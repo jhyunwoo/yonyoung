@@ -32,6 +32,7 @@ import {
 import { ApiGenerationMemberSummarySchema } from "../users/user.contract";
 import { ApiIdParamSchema } from "../../shared/openapi/common.contract";
 import { AppError, isAppError } from "../../shared/errors/AppError";
+import { unwrapQueryError } from "../../shared/errors/queryError";
 
 type App = OpenAPIHono<HonoAppType>;
 
@@ -181,10 +182,12 @@ const deleteGenerationRoute = createRoute({
 });
 
 const isUniqueError = (error: unknown): boolean => {
-  return (
-    error instanceof Error &&
-    (error.message.includes("UNIQUE") || error.message.includes("unique"))
-  );
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const { message } = unwrapQueryError(error);
+  return message.includes("UNIQUE") || message.includes("unique");
 };
 
 const readUniqueConflictMessage = (error: unknown): string => {
@@ -192,11 +195,12 @@ const readUniqueConflictMessage = (error: unknown): string => {
     return "중복된 값이 이미 존재합니다.";
   }
 
-  if (error.message.includes("generations.name")) {
+  const { message } = unwrapQueryError(error);
+  if (message.includes("generations.name")) {
     return "name 값이 이미 존재합니다.";
   }
 
-  if (error.message.includes("generations.sort_order")) {
+  if (message.includes("generations.sort_order")) {
     return "다른 기수가 이미 이 정렬 순서를 쓰고 있습니다. 두 기수의 자리를 바꾸려면 목록의 위/아래 이동 버튼을 사용해 주세요.";
   }
 

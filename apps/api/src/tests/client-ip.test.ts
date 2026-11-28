@@ -54,4 +54,24 @@ describe("resolveTrustedClientIp", () => {
 
     expect(resolveTrustedClientIp(c)).toBe("unknown");
   });
+
+  it("IPv6는 /64 대역으로 묶어 같은 회선의 주소 바꾸기로 한도를 피하지 못하게 한다", () => {
+    const keyOf = (ip: string) =>
+      resolveTrustedClientIp(createContext({ headers: { "cf-connecting-ip": ip } }));
+
+    expect(keyOf("2001:db8:1234:5678:aaaa:bbbb:cccc:dddd")).toBe("2001:db8:1234:5678::/64");
+    expect(keyOf("2001:db8:1234:5678::1")).toBe("2001:db8:1234:5678::/64");
+    expect(keyOf("2001:DB8:1234:5678:1:2:3:4")).toBe("2001:db8:1234:5678::/64");
+    expect(keyOf("2001:db8::1")).toBe("2001:db8:0:0::/64");
+    expect(keyOf("::1")).toBe("0:0:0:0::/64");
+    expect(keyOf("2001:db8:1234:5679::1")).not.toBe(keyOf("2001:db8:1234:5678::1"));
+  });
+
+  it("IPv4와 IPv4-mapped 주소는 그대로 쓴다", () => {
+    const keyOf = (ip: string) =>
+      resolveTrustedClientIp(createContext({ headers: { "cf-connecting-ip": ip } }));
+
+    expect(keyOf("192.0.2.10")).toBe("192.0.2.10");
+    expect(keyOf("::ffff:192.0.2.10")).toBe("::ffff:192.0.2.10");
+  });
 });

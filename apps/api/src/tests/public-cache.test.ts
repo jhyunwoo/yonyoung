@@ -421,4 +421,31 @@ describe("public cache helpers", () => {
     expect(kv.binding.get).not.toHaveBeenCalled();
     expect(kv.binding.put).not.toHaveBeenCalled();
   });
+  it("캐시 키는 공개 라우트가 실제로 쓰는 쿼리만 반영한다", async () => {
+    vi.stubGlobal("caches", { default: createCacheMock() });
+    const kv = createKvMock();
+    const build = vi.fn(async () => Response.json({ data: [] }));
+    const read = async (url: string) => {
+      const collector = createWaitUntilCollector();
+      const response = await respondWithPublicCache(
+        createContext({ url, waitUntil: collector.waitUntil, kv: kv.binding }),
+        build,
+      );
+      await collector.flush();
+      return response.headers.get("x-public-cache-status");
+    };
+    const base = "https://example.com/api/public/attachments";
+
+    // 임의의 쿼리로 매번 새 캐시 항목(=D1 조회 + KV 쓰기)을 만들 수 없어야 한다.
+    expect(await read(`${base}?scope=site_donate&x=1`)).toBe("miss");
+    expect(await read(`${base}?x=2&scope=site_donate`)).toBe("hit");
+    expect(await read(`${base}?scope=site_donate&y=${"a".repeat(600)}`)).toBe("hit");
+    expect(build).toHaveBeenCalledTimes(1);
+    expect(kv.put).toHaveBeenCalledTimes(1);
+
+    // 라우트가 쓰는 쿼리가 다르면 다른 항목이다.
+    expect(await read(`${base}?scope=activity&resourceId=r-1`)).toBe("miss");
+    expect(await read(`${base}?scope=activity&resourceId=r-2`)).toBe("miss");
+    expect(build).toHaveBeenCalledTimes(3);
+  });
 });

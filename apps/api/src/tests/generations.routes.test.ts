@@ -1,3 +1,4 @@
+import { DrizzleQueryError } from "drizzle-orm/errors";
 import { describe, expect, it } from "vitest";
 import {
   IDs,
@@ -125,6 +126,37 @@ describe("generation routes",() => {
 
     expect(response.status).toBe(409);
     await expectErrorCode(response, "CONFLICT");
+  });
+
+  it("drizzle이 감싼 UNIQUE 충돌도 409와 필드별 안내를 반환한다", async () => {
+    const createGenerationMock = fn(async () => {
+      throw new DrizzleQueryError(
+        'insert into "generations" ("id", "name", "sort_order") values (?, ?, ?)',
+        ["id-1", "11기", 11],
+        new Error(
+          "D1_ERROR: UNIQUE constraint failed: generations.sort_order: SQLITE_CONSTRAINT",
+        ),
+      );
+    });
+    const app = createTestApp({
+      actor: createActor("president", IDs.president),
+      dataService: createDataServiceMock({ createGeneration: createGenerationMock }),
+    });
+
+    const response = await app.request("/api/generations", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        name: "11기",
+        sortOrder: 11,
+        startDate: Date.parse("2031-01-01T00:00:00.000Z"),
+        endDate: Date.parse("2031-12-31T00:00:00.000Z"),
+      }),
+    });
+
+    expect(response.status).toBe(409);
+    const body = await readJson<{ error: { message: string } }>(response);
+    expect(JSON.stringify(body)).toContain("정렬 순서");
   });
 
   it("generation 생성 시 알 수 없는 예외는 500을 반환한다",async () => {

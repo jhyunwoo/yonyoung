@@ -13,7 +13,12 @@ import { authClient } from "@/features/auth/client/auth-client";
 import { groupToolsByCategory } from "@/features/mcp/mcp-tool-groups";
 
 /** 앱 이름은 등록한 쪽이 마음대로 정하므로, 돌아갈 주소가 이 목록 밖이면 경고한다. */
-const KNOWN_REDIRECT_HOSTS = new Set(["claude.ai", "chatgpt.com", "chat.openai.com"]);
+const KNOWN_REDIRECT_HOSTS = new Set([
+  "claude.ai",
+  "claude.com",
+  "chatgpt.com",
+  "chat.openai.com",
+]);
 
 type LoadState =
   | { status: "loading" }

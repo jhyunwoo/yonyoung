@@ -206,6 +206,41 @@ describe("app/api/auth/[...path]/route", () => {
     expect(headers.get("content-type")).toBe("application/x-www-form-urlencoded");
   });
 
+  // 메타데이터가 client_secret_basic을 광고하므로, 토큰 엔드포인트는 Basic 자격 증명을 받아야 한다.
+  it("OAuth 클라이언트 자격 증명(Authorization)은 토큰 계열 엔드포인트에만 넘긴다", async () => {
+    const fetchSpy = vi.fn(async () => new Response("{}", { status: 200 }));
+    vi.stubGlobal("fetch", fetchSpy);
+    const { POST } = await import("@/app/api/auth/[...path]/route");
+    const forwardedAuthorization = async (path: string[], headers: HeadersInit) => {
+      fetchSpy.mockClear();
+      await POST(
+        new NextRequest(`https://localhost:3000/api/auth/${path.join("/")}`, {
+          method: "POST",
+          headers: { authorization: "Basic Y2xpZW50OnNlY3JldA==", ...headers },
+          body: "x=1",
+        }),
+        { params: Promise.resolve({ path }) },
+      );
+      const [, init] = fetchSpy.mock.calls[0] ?? [];
+      return (init?.headers as Headers).get("authorization");
+    };
+    const form = { "content-type": "application/x-www-form-urlencoded" };
+    const sameOrigin = {
+      "content-type": "application/json",
+      origin: "https://yonyoung.yonsei.ac.kr",
+      "sec-fetch-site": "same-origin",
+      [CSRF_HEADER_NAME]: CSRF_HEADER_VALUE,
+    };
+
+    for (const path of ["token", "revoke", "introspect"]) {
+      expect(await forwardedAuthorization(["oauth2", path], form)).toBe(
+        "Basic Y2xpZW50OnNlY3JldA==",
+      );
+    }
+    expect(await forwardedAuthorization(["oauth2", "register"], form)).toBeNull();
+    expect(await forwardedAuthorization(["sign-in", "social"], sameOrigin)).toBeNull();
+  });
+
   it("Origin 없는 일반 인증 요청은 여전히 막는다", async () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);

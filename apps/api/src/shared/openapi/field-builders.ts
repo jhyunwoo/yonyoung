@@ -30,11 +30,15 @@ export const urlField = (description: string, example: string) =>
     example,
   });
 
+// URL 경로에는 임의 글자를 실을 수 있어, 길이 제한이 없으면 본문 한도(5MB)까지 저장된다.
+const HTTP_URL_INPUT_MAX_LENGTH = 2048;
+
 /** 공개 응답에 노출될 URL을 받는 쓰기 입력은 실행 가능한 비-HTTP 스킴을 허용하지 않는다. */
 export const httpUrlInputField = (description: string, example: string) =>
   z
     .string()
     .url()
+    .max(HTTP_URL_INPUT_MAX_LENGTH, "URL이 너무 깁니다.")
     .refine(isHttpUrl, "URL은 http(s) 스킴만 사용할 수 있습니다.")
     .openapi({
       description,

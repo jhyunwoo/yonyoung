@@ -78,6 +78,15 @@
         "period": 60,
       },
     },
+    // 익명 로그인 시작(sign-in). src/features/auth/auth.routes.ts
+    {
+      "name": "AUTH_SIGN_IN_RATE_LIMITER",
+      "namespace_id": "817941619",
+      "simple": {
+        "limit": 30,
+        "period": 60,
+      },
+    },
   ],
   "vars": {
     "BETTER_AUTH_URL": "https://yonyoung.yonsei.ac.kr",
@@ -162,6 +171,15 @@
           "namespace_id": "817941618",
           "simple": {
             "limit": 5,
+            "period": 60,
+          },
+        },
+        // 익명 로그인 시작(sign-in). src/features/auth/auth.routes.ts
+        {
+          "name": "AUTH_SIGN_IN_RATE_LIMITER",
+          "namespace_id": "817941620",
+          "simple": {
+            "limit": 30,
             "period": 60,
           },
         },

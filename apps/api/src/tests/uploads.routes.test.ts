@@ -103,12 +103,12 @@ describe("upload presign routes",() => {
   ];
 
   describe("upload capacity reservations", () => {
-    it("서로 다른 11명의 1GiB 프로필 업로드 중 11번째를 presign 전에 차단한다", async () => {
+    it("서로 다른 11명의 1GiB 커버 업로드 중 11번째를 presign 전에 차단한다", async () => {
       const reservationStore = createMemoryUploadReservationStore();
       const issuePresignedPutUrl = fn(async () => ({
         uploadUrl: "https://upload.example.com/signed",
-        objectKey: "users/profile-key",
-        publicUrl: "https://cdn.example.com/users/profile-key",
+        objectKey: "activities/cover-key",
+        publicUrl: "https://cdn.example.com/activities/cover-key",
         requiredHeaders: { "Content-Type": "image/png" },
       }));
       const presignService = createPresignServiceMock({ issuePresignedPutUrl });
@@ -117,16 +117,16 @@ describe("upload presign routes",() => {
       for (let index = 0; index < 11; index += 1) {
         const actorId = `00000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`;
         const app = createTestApp({
-          actor: createActor("regular_member", actorId),
+          actor: createActor("manager", actorId),
           presignService,
           readR2TotalUsageBytes: () => 0,
           uploadReservationStore: reservationStore,
         });
-        const response = await app.request("/api/users/presign/profile", {
+        const response = await app.request("/api/activities/presign/cover", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
-            fileName: `profile-${index}.png`,
+            fileName: `cover-${index}.png`,
             contentType: "image/png",
             fileSize: oneGiB,
           }),
@@ -1178,6 +1178,53 @@ async () => {
 
     expect(response.status).toBe(413);
     await expectErrorCode(response, "BAD_REQUEST");
+  });
+
+  it("프로필 이미지는 일반 회원도 올릴 수 있으므로 훨씬 낮은 크기 한도를 적용한다", async () => {
+    const app = createTestApp({
+      actor: createActor("regular_member", IDs.member),
+      presignService: createPresignServiceMock({
+        issuePresignedPutUrl: fn(async () => ({
+          uploadUrl: "https://upload.example.com/signed",
+          objectKey: "users/profile-key",
+          publicUrl: "https://cdn.example.com/users/profile-key",
+          requiredHeaders: { "Content-Type": "image/png" },
+        })),
+        initiateMultipartUpload: fn(async () => ({
+          uploadId: "profile-upload-id",
+          objectKey: `users/${IDs.member}/profile/profile-key`,
+          publicUrl: "https://cdn.example.com/users/profile-key",
+          partSize: UPLOAD_LIMITS.multipartPartSizeBytes,
+          maxPartNumber: 7,
+        })),
+      }),
+    });
+    const request = (path: string, fileSize: number) =>
+      app.request(path, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          fileName: "profile.png",
+          contentType: "image/png",
+          fileSize,
+        }),
+      });
+
+    for (const path of [
+      "/api/users/presign/profile",
+      "/api/users/multipart/profile/init",
+    ]) {
+      expect(
+        (await request(path, UPLOAD_LIMITS.maxProfileImageBytes)).status,
+      ).toBe(201);
+      const tooLarge = await request(
+        path,
+        UPLOAD_LIMITS.maxProfileImageBytes + 1,
+      );
+      expect(tooLarge.status).toBe(413);
+      await expectErrorCode(tooLarge, "BAD_REQUEST");
+    }
+    expect(UPLOAD_LIMITS.maxProfileImageBytes).toBe(50 * 1024 * 1024);
   });
 
   it("단일 업로드는 허용되지 않은 content-type 요청을 거부한다", async () => {

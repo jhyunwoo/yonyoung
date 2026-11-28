@@ -75,7 +75,6 @@ const shouldBypassPublicCache = (request: Request): boolean =>
  * 여기 엣지/KV 캐시(최대 120초 + stale 300초)에 걸리면 수정 전 데이터를 받아 며칠짜리
  * Next 캐시에 다시 굽는다. 이 요청은 어떤 캐시 계층도 읽거나 쓰지 않고, 응답을
  * `no-store`로 표시해 엔트리포인트 캐시(Workers Caching)에도 남지 않게 한다.
- * 임의의 쿼리 문자열로도 캐시를 우회할 수 있는 것은 원래와 같다.
  */
 export const PUBLIC_CACHE_FRESH_QUERY_PARAM = "fresh";
 
@@ -156,11 +155,30 @@ const setCacheStatusVariable = (
   c.set("cacheStatus", status);
 };
 
+/**
+ * 공개 캐시 라우트가 실제로 읽는 쿼리. 캐시 키에는 이것만 넣는다 — 요청 쿼리를 그대로 쓰면
+ * `?x=<임의값>`만 바꿔도 매번 새 항목이 되어 요청마다 D1 조회와 KV 쓰기가 일어난다.
+ * 쿼리를 읽는 공개 라우트를 추가하면 여기에도 추가해야 한다(빠뜨리면 서로 다른 쿼리가 한 항목을 공유한다).
+ */
+const PUBLIC_CACHE_KEY_QUERY_PARAMS = ["scope", "resourceId"] as const;
+
+const toCacheKeyUrl = (requestUrl: string): URL => {
+  const requested = new URL(requestUrl);
+  const keyUrl = new URL(requested.pathname, requested.origin);
+  for (const name of PUBLIC_CACHE_KEY_QUERY_PARAMS) {
+    const value = requested.searchParams.get(name);
+    if (value !== null) {
+      keyUrl.searchParams.set(name, value);
+    }
+  }
+  return keyUrl;
+};
+
 const createEdgeCacheKey = (requestUrl: string): Request =>
-  new Request(requestUrl, { method: "GET" });
+  new Request(toCacheKeyUrl(requestUrl), { method: "GET" });
 
 const createKvCacheKey = (requestUrl: string): string | null => {
-  const url = new URL(requestUrl);
+  const url = toCacheKeyUrl(requestUrl);
   const sortedSearch = new URLSearchParams(
     [...url.searchParams.entries()].sort(([leftKey, leftValue], [rightKey, rightValue]) => {
       const keyComparison = leftKey.localeCompare(rightKey);

@@ -318,12 +318,22 @@ export const ApiPublicGenerationWithMembersSchema = z
   })
   .openapi("ApiPublicGenerationWithMembers");
 
+// 프로필 글자는 임원 화면과 MCP 도구 결과에 그대로 실린다. 미인증 가입자도 자기 프로필을
+// 쓸 수 있으므로 입력 길이를 제한한다(응답 스키마는 기존 데이터를 위해 제한하지 않는다).
+const PROFILE_NAME_MAX_LENGTH = 50;
+const PROFILE_AFFILIATION_MAX_LENGTH = 100;
+
 export const ApiAdminUpdateUserSchema = z
   .object({
-    name: z.string().min(1).optional().openapi({
-      description: "사용자 이름(관리자 수정 가능)",
-      example: "홍길동",
-    }),
+    name: z
+      .string()
+      .min(1)
+      .max(PROFILE_AFFILIATION_MAX_LENGTH)
+      .optional()
+      .openapi({
+        description: "사용자 이름(관리자 수정 가능)",
+        example: "홍길동",
+      }),
     image: httpUrlInputField(
       "프로필 이미지 URL(관리자 수정 가능)",
       "https://cdn.yonyoung.example/users/profile/member-new.png",
@@ -338,6 +348,7 @@ export const ApiAdminUpdateUserSchema = z
       .string()
       .trim()
       .min(1, "성은 비워둘 수 없습니다.")
+      .max(PROFILE_NAME_MAX_LENGTH, "성이 너무 깁니다.")
       .nullable()
       .optional()
       .openapi({
@@ -348,6 +359,7 @@ export const ApiAdminUpdateUserSchema = z
       .string()
       .trim()
       .min(1, "이름은 비워둘 수 없습니다.")
+      .max(PROFILE_NAME_MAX_LENGTH, "이름이 너무 깁니다.")
       .nullable()
       .optional()
       .openapi({
@@ -358,6 +370,7 @@ export const ApiAdminUpdateUserSchema = z
       .string()
       .trim()
       .min(1, "대학명은 비워둘 수 없습니다.")
+      .max(PROFILE_AFFILIATION_MAX_LENGTH, "대학명이 너무 깁니다.")
       .nullable()
       .optional()
       .openapi({
@@ -368,6 +381,7 @@ export const ApiAdminUpdateUserSchema = z
       .string()
       .trim()
       .min(1, "학과명은 비워둘 수 없습니다.")
+      .max(PROFILE_AFFILIATION_MAX_LENGTH, "학과명이 너무 깁니다.")
       .nullable()
       .optional()
       .openapi({
@@ -441,6 +455,7 @@ export const ApiMemberProfileUpdateSchema = z
       .string()
       .trim()
       .min(1, "성은 비워둘 수 없습니다.")
+      .max(PROFILE_NAME_MAX_LENGTH, "성이 너무 깁니다.")
       .nullable()
       .optional()
       .openapi({
@@ -451,6 +466,7 @@ export const ApiMemberProfileUpdateSchema = z
       .string()
       .trim()
       .min(1, "이름은 비워둘 수 없습니다.")
+      .max(PROFILE_NAME_MAX_LENGTH, "이름이 너무 깁니다.")
       .nullable()
       .optional()
       .openapi({
@@ -461,6 +477,7 @@ export const ApiMemberProfileUpdateSchema = z
       .string()
       .trim()
       .min(1, "대학명은 비워둘 수 없습니다.")
+      .max(PROFILE_AFFILIATION_MAX_LENGTH, "대학명이 너무 깁니다.")
       .nullable()
       .optional()
       .openapi({
@@ -471,6 +488,7 @@ export const ApiMemberProfileUpdateSchema = z
       .string()
       .trim()
       .min(1, "학과명은 비워둘 수 없습니다.")
+      .max(PROFILE_AFFILIATION_MAX_LENGTH, "학과명이 너무 깁니다.")
       .nullable()
       .optional()
       .openapi({
