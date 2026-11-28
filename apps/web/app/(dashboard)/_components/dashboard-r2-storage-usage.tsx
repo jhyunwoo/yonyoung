@@ -3,5 +3,10 @@ import R2StorageUsageCard from "@/app/(dashboard)/_components/r2-storage-usage-c
 
 export default async function DashboardR2StorageUsage() {
   const result = await getAdminDashboardStats();
-  return <R2StorageUsageCard stats={result.ok ? result.data : null} />;
+  return (
+    <R2StorageUsageCard
+      stats={result.ok ? result.data : null}
+      error={result.ok ? null : result.error}
+    />
+  );
 }

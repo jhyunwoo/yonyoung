@@ -11,6 +11,9 @@ export const apiAdminDashboardStatsSchema = z.object({
   r2StorageUsedBytes: z.number().int(),
   r2StorageLimitBytes: z.number().int(),
   r2StorageUsageAvailable: z.boolean(),
+  r2StorageUsageReason: z
+    .enum(["ok", "partial", "binding_missing", "scan_failed"])
+    .optional(),
 });
 
 export type ApiAdminDashboardStats = z.infer<

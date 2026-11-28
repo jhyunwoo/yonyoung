@@ -25,6 +25,7 @@ import { resolveDocsEnabled } from "../config/runtime-env";
 import { createD1SequentialSession, resolveD1SessionMode } from "../db/d1-session";
 import { createRetryingD1Database } from "../db/d1-client";
 import {
+  invalidateR2UsageCache,
   readR2TotalUsageBytesCached,
   type R2UsageScanResult,
 } from "../storage/usage";
@@ -171,11 +172,15 @@ export const createDefaultDependencies = (): AppDependencies => ({
     return listing.objects[0]?.size ?? null;
   },
   deleteUnreferencedUploads: async (c, keys) => {
-    await deleteUnreferencedObjects({
+    const deleted = await deleteUnreferencedObjects({
       database: resolveD1Database(c.env),
       bucket: resolveR2Bucket(c.env),
       keys,
     });
+    // 지운 직후 대시보드 사용량이 캐시된 옛 수치(최대 5분)로 남지 않게 한다.
+    if (deleted.length > 0) {
+      await invalidateR2UsageCache({ bucketName: c.env.R2_BUCKET });
+    }
   },
   authenticateMcpRequest: createBetterAuthMcpAuthenticator((c) =>
     createAuth(resolveD1Database(c.env), c.env).api.getJwks(),
