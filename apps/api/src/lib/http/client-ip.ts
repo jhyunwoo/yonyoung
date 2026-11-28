@@ -28,6 +28,22 @@ const timingSafeEqualString = (left: string, right: string): boolean => {
 };
 
 /**
+ * 웹 BFF가 보낸 요청인지(공유 비밀 일치) 확인한다. 비밀이 설정되지 않은 구성에서는
+ * 구분할 방법이 없으므로 `null`을 돌려준다.
+ */
+export const isTrustedProxyRequest = (
+  c: Context<HonoAppType>,
+): boolean | null => {
+  const secret = c.env?.PROXY_CLIENT_IP_SECRET?.trim();
+  if (!secret) {
+    return null;
+  }
+
+  const presented = c.req.header(PROXY_AUTH_HEADER)?.trim();
+  return Boolean(presented) && timingSafeEqualString(presented ?? "", secret);
+};
+
+/**
  * IPv6 회선은 보통 /64 대역을 통째로 받는다. 주소 전체를 키로 쓰면 같은 회선 안에서 주소만
  * 바꿔 한도를 무제한으로 피할 수 있으므로 앞 64비트로 묶는다. IPv4(및 IPv4-mapped)는 그대로 둔다.
  */

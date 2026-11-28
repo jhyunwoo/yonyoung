@@ -34,6 +34,7 @@ const createContext = (
     headers?: HeadersInit;
     waitUntil?: (promise: Promise<unknown>) => void;
     kv?: KVNamespace;
+    proxySecret?: string;
   },
 ) => {
   const url = input?.url ?? "https://example.com/api/public/activities";
@@ -44,17 +45,19 @@ const createContext = (
       raw: new Request(url, {
         headers: input?.headers,
       }),
+      header: (name: string) => new Headers(input?.headers).get(name) ?? undefined,
     },
     executionCtx: input?.waitUntil
       ? {
           waitUntil: input.waitUntil,
         }
       : undefined,
-    env: input?.kv
-      ? {
-          PUBLIC_API_CACHE: input.kv,
-        }
-      : {},
+    env: {
+      ...(input?.kv ? { PUBLIC_API_CACHE: input.kv } : {}),
+      ...(input?.proxySecret
+        ? { PROXY_CLIENT_IP_SECRET: input.proxySecret }
+        : {}),
+    },
     set: (key: string, value: unknown) => {
       variables.set(key, value);
     },
@@ -447,5 +450,67 @@ describe("public cache helpers", () => {
     expect(await read(`${base}?scope=activity&resourceId=r-1`)).toBe("miss");
     expect(await read(`${base}?scope=activity&resourceId=r-2`)).toBe("miss");
     expect(build).toHaveBeenCalledTimes(3);
+  });
+  // fresh=1은 웹 서버의 재조회용이다. 누구나 쓸 수 있으면 요청마다 D1을 읽게 만들 수 있으므로,
+  // 공유 비밀이 설정된 구성에서는 비밀을 보낸 요청만 캐시를 건너뛴다.
+  describe("공유 비밀이 설정된 구성의 fresh=1", () => {
+    const SECRET = "shared-secret-for-client-ip";
+    const read = async (
+      kv: ReturnType<typeof createKvMock>,
+      build: () => Promise<Response>,
+      headers?: HeadersInit,
+    ) => {
+      const collector = createWaitUntilCollector();
+      const response = await respondWithPublicCache(
+        createContext({
+          url: "https://example.com/api/public/activities?fresh=1",
+          waitUntil: collector.waitUntil,
+          kv: kv.binding,
+          proxySecret: SECRET,
+          headers,
+        }),
+        build,
+      );
+      await collector.flush();
+      return response;
+    };
+
+    it("비밀 없이 온 요청은 캐시를 거치고, 응답은 바깥 캐시에 남지 않게 한다", async () => {
+      vi.stubGlobal("caches", { default: createCacheMock() });
+      const kv = createKvMock();
+      const build = vi.fn(async () => Response.json({ data: "v1" }));
+
+      const first = await read(kv, build);
+      const second = await read(kv, build, {
+        "x-yonyoung-proxy-auth": "wrong-secret-value-xxxxxxxxxxx",
+      });
+
+      expect(first.headers.get("x-public-cache-status")).toBe("miss");
+      expect(second.headers.get("x-public-cache-status")).toBe("hit");
+      expect(build).toHaveBeenCalledTimes(1);
+      // 엔트리포인트 캐시는 URL로만 구분하므로, 여기에 남으면 웹 서버의 재조회가 낡은 값을 받는다.
+      for (const response of [first, second]) {
+        expect(response.headers.get("cache-control")).toBe(
+          "private, no-store, max-age=0",
+        );
+      }
+    });
+
+    it("비밀을 보낸 요청은 어떤 캐시도 읽거나 쓰지 않는다", async () => {
+      const edgeCache = createCacheMock();
+      vi.stubGlobal("caches", { default: edgeCache });
+      const kv = createKvMock();
+      const build = vi.fn(async () => Response.json({ data: "latest" }));
+
+      const response = await read(kv, build, { "x-yonyoung-proxy-auth": SECRET });
+
+      expect(response.headers.get("x-public-cache-status")).toBe("bypass");
+      expect(response.headers.get("cache-control")).toBe(
+        "private, no-store, max-age=0",
+      );
+      expect(edgeCache.match).not.toHaveBeenCalled();
+      expect(kv.get).not.toHaveBeenCalled();
+      expect(kv.put).not.toHaveBeenCalled();
+    });
   });
 });

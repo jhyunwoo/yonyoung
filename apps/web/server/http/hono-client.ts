@@ -54,6 +54,8 @@ type HonoRequestOptions<TResponse> = {
   requestId?: string;
   traceId?: string;
   cookieHeader?: string | null;
+  /** 요청에 그대로 실을 추가 헤더. */
+  headers?: Record<string, string>;
 };
 
 const tryReadJson = async (response: Response): Promise<unknown> => {
@@ -77,6 +79,7 @@ export const honoRequest = async <TResponse>(
   const targetUrl = `${getApiBaseUrl()}${normalizePath(options.path)}`;
 
   const headers = new Headers({
+    ...options.headers,
     Accept: "application/json",
   });
 
