@@ -272,6 +272,7 @@ export const createDataServiceMock = (
     listUsersByGenerationIds: async () => [],
     countUsersByRole: async () => 0,
     isActiveViewResource: async () => true,
+    getTodayPageViewTotal: async () => 0,
     listUserResourceHistory: async () => ({
       items: [],
       page: 1,

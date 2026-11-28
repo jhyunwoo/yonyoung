@@ -654,6 +654,8 @@ export type DataService = {
     pageType: PageViewType,
     resourceId: string | undefined,
   ) => Promise<boolean>;
+  /** 오늘(KST) 기록된 전체 조회수. */
+  getTodayPageViewTotal: () => Promise<number>;
   recordPageView: (
     pageType: PageViewType,
     resourceId: string | undefined,

@@ -65,6 +65,19 @@ export const createPageViewRepository = (db: Database) => ({
     return rows.length > 0;
   },
   /**
+   * 오늘(KST) 기록된 전체 조회수. 일자·리소스별 집계 행만 더하므로 읽는 행 수는
+   * 오늘 조회된 리소스 수를 넘지 않는다.
+   */
+  async getTodayPageViewTotal(): Promise<number> {
+    const rows = await db
+      .select({ value: sql<number>`coalesce(sum(${pageViews.viewCount}), 0)` })
+      .from(pageViews)
+      .where(
+        eq(pageViews.visitedAt, new Date(toKstDailyBucketStart(Date.now()))),
+      );
+    return Number(rows[0]?.value ?? 0);
+  },
+  /**
    * KST 일자와 리소스별로 한 행만 유지하고 조회수를 원자적으로 누적합니다.
    */
   async recordPageView(
