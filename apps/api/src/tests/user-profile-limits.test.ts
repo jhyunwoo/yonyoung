@@ -36,4 +36,13 @@ describe("프로필 텍스트 길이 제한", () => {
     expect(ApiAdminUpdateUserSchema.safeParse({ name: "가".repeat(100) }).success).toBe(true);
     expect(ApiAdminUpdateUserSchema.safeParse({ name: "가".repeat(101) }).success).toBe(false);
   });
+  it("URL 입력도 길이를 제한한다", () => {
+    const longUrl = `https://example.com/${"a".repeat(2100)}`;
+    for (const [, schema] of schemas) {
+      expect(schema.safeParse({ personalLink: "https://example.com/portfolio" }).success).toBe(true);
+      expect(schema.safeParse({ personalLink: longUrl }).success).toBe(false);
+      expect(schema.safeParse({ image: longUrl }).success).toBe(false);
+      expect(schema.safeParse({ showcaseImageUrls: [longUrl] }).success).toBe(false);
+    }
+  });
 });
